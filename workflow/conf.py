@@ -1,6 +1,7 @@
 """Configuration"""
 
 import sys,os
+import numpy as np
 import fiona
 import rasterio
 
@@ -20,6 +21,11 @@ rcParams = { "data dir" : "/Users/uec/research/water/data/meshing/data",
 def default_crs():
     return fiona.crs.from_epsg(rcParams['epsg'])
 
+
+def round(list_of_hucs):
+    for h in list_of_hucs:
+        h['geometry']['coordinates'] = np.array(h['geometry']['coordinates']).round(7)
+    return list_of_hucs
 
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
@@ -52,7 +58,16 @@ def load_huc(huc):
         profile = fid.profile
     if len(matching) is not 1:
         raise RuntimeError("Invalid collection of HUC?")
-    return profile, matching[0]
+    return profile, round(matching)[0]
+
+def load_hucs_in(huc, size):
+    """Reads a file to get a huc"""
+    huc = huc_str(huc)
+    filename = huc_path(huc+'0'*(size-len(huc)))
+    with fiona.open(filename, 'r') as fid:
+        matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(huc)]
+        profile = fid.profile
+    return profile, round(matching)
 
 def load_dem(filename, index=1):
     """Reads a file to get an image raster"""
