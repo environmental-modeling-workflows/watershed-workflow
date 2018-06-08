@@ -45,9 +45,13 @@ def triangulate(shp, max_area=0.0001, needs_refinement_func=None, debug=False):
 if __name__ == "__main__":
     import workflow.conf
     import workflow.smooth
+    import workflow.download
     import shapely
     
     import matplotlib.pyplot as plt
+
+    workflow.download.collect_huc('06')
+    
     plt.figure()
     profile, hucs = workflow.conf.load_hucs_in('06010208', 12)
 
