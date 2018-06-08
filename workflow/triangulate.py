@@ -49,30 +49,28 @@ if __name__ == "__main__":
     import shapely
     
     import matplotlib.pyplot as plt
-
-    workflow.download.collect_huc('06')
     
     plt.figure()
+    # load shapefiles for all HUC 12s in the Obed HUC 8.
     profile, hucs = workflow.conf.load_hucs_in('06010208', 12)
 
     # convert to shapely
     hucs_s = [shapely.geometry.shape(s['geometry']) for s in hucs]
 
-    # intersect
+    # intersect, finding shared boundaries
     uniques, intersections = workflow.smooth.intersect_and_split(hucs_s)
-    #_plot(uniques,intersections,'-x')
 
-    # smooth
+    # smooth/simplify/resample to a given spacing (in meters)
     uniques_sm, intersections_sm = workflow.smooth.smooth(uniques,intersections,100)
-    #_plot(uniques_sm,intersections_sm,'-+')
 
     # recombine
     hucs_sm = workflow.smooth.recombine(uniques_sm, intersections_sm)
 
-    # triangulate
+    # triangulate (to a refinement with max_area, units a bit unclear?
+    # I believe these should be degrees^2, but the magnitude seems
+    # wrong for that.  Takes some fiddling.
     for huc in hucs_sm:
         mesh_points, mesh_tris = triangulate(huc, max_area=0.0001)
         plt.triplot(mesh_points[:, 0], mesh_points[:, 1], mesh_tris)
-
     plt.show()
         

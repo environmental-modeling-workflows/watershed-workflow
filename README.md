@@ -57,9 +57,9 @@ Check your python installation:
 A first test
 --------------
 
-A good way to get started is to simply run the __main__ in workflow.triangulate.
+A good way to get started is to simply run go:
 
-    python workflow/triangulate.py
+    python workflow/go.py
 
 This downloads a HUC file (not small, so takes a minute) then
 extracts, smooths, and triangulates some HUCs in it.

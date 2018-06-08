@@ -42,15 +42,15 @@ def intersect_and_split(list_of_shapes):
             uniques[i] = shapely.ops.linemerge(uniques[i])
     return uniques, intersections
     
-def smooth(uniques, intersections, tolerance=10):
+def smooth(uniques, intersections, tolerance):
     """Smooths the resulting segments."""
-    uniques_sm = [u.simplify(tolerance=1./111000.*tolerance) for u in uniques]
+    uniques_sm = [u.simplify(tolerance=tolerance) for u in uniques]
 
     intersections_sm = [[None for i in range(len(uniques))] for j in range(len(uniques))]
     for i,s1 in enumerate(intersections):
         for j,s2 in enumerate(s1):
             if s2 is not None:
-                intersections_sm[i][j] = s2.simplify(tolerance=1./111000.*tolerance)
+                intersections_sm[i][j] = s2.simplify(tolerance=tolerance)
     return uniques_sm, intersections_sm
 
 def recombine(uniques, intersections):
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     #_plot(uniques,intersections,'-x')
 
     # smooth
-    uniques_sm, intersections_sm = smooth(uniques,intersections,100)
+    uniques_sm, intersections_sm = smooth(uniques,intersections,1./111000.*100) # converts 100m to degrees
     #_plot(uniques_sm,intersections_sm,'-+')
 
     # recombine
