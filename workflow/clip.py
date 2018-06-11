@@ -15,24 +15,20 @@ import workflow.conf
 import workflow.download
 
 
-def merge_and_clip(huc, feather=10, nodata=-999, precision=7, dst_crs=None):
-    """Writes a raster which provides the dem for a range that covers a given huc"""
-    logging.info('Clipping: "%s"'%huc)
-    if dst_crs is None:
-        dst_crs = workflow.conf.default_crs()
+def clip_dem(shp, feather=10, nodata=-999, precision=7):
+    """Writes a raster which provides the dem for a range that covers a given huc.
+    """
+    hname = shp['properties'][next(k for k in shp['properties'].keys() if k.startswith('HUC'))]
+    logging.info('Clipping: "%s"'%hname)
 
-    # collect the huc data
-    workflow.download.collect_huc(huc)
-    
     # determine the bounds, in lat-long, at 1 degree granularity, of the huc
-    shp_profile, shp = workflow.conf.load_huc(huc)
     xy = np.array(shp['geometry']['coordinates'][0])
     bounds = [xy[:,0].min(), xy[:,1].min(), xy[:,0].max(), xy[:,1].max()]
     bounds_1deg = [math.floor(bounds[0]), math.floor(bounds[1]), math.ceil(bounds[2]), math.ceil(bounds[3])]
     dst_bounds = []  # must snap these to the raster
 
     # collect the raster data covering those bounds
-    infiles = workflow.download.collect_dem(bounds_1deg)
+    infiles = workflow.download.download_dem(bounds_1deg)
     assert(len(infiles) > 0)
 
     # merge and clip
@@ -110,7 +106,7 @@ def merge_and_clip(huc, feather=10, nodata=-999, precision=7, dst_crs=None):
             region = dst_array[:, roff:roff + trows, coff:coff + tcols]
             np.copyto(region, temp, where=np.logical_and(region == dst_profile['nodata'], temp.mask == False))
 
-    return (shp_profile, shp), (dst_profile, dst_array)
+    return dst_profile, dst_array
 
 
         

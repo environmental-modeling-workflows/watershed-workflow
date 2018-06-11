@@ -1,4 +1,7 @@
-"""The base interfaces of workflow."""
+"""Generates a collection of Polygons and DEMs for use in mesh making.
+
+This should not really be used yet?  Instead prefer go.py
+"""
 
 import os,sys
 

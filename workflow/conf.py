@@ -21,6 +21,9 @@ rcParams = { "data dir" : "/Users/uec/research/water/data/meshing/data",
 def default_crs():
     return fiona.crs.from_epsg(rcParams['epsg'])
 
+def latlon_crs():
+    return fiona.crs.from_epsg(4269)
+
 
 def round(list_of_hucs):
     for h in list_of_hucs:

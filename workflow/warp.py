@@ -9,36 +9,33 @@ import pyproj
 import fiona
 import fiona.crs
 import rasterio.warp
+import shapely.geometry
 
 import warnings
 import workflow.conf
 
-
-def warp_shape(feature, old_crs, new_crs):
-    """Uses proj to reproject shapes, IN PLACE"""
-    try:
-        name = feature['properties']['NAME']
-    except KeyError:
-        try:
-            name = feature['properties']['TNMID']
-        except KeyError:
-            name = feature['type']
-    logging.debug('Warping feature: "%r" to CRS: "%s"'%(name, new_crs['init']))
-    
+def warp_xy(x, y, old_crs, new_crs):
+    """Warps a set of points from old_crs to new_crs."""
     if old_crs == new_crs:
-        return feature
+        return x,y
 
     old_crs_proj = pyproj.Proj(old_crs)
     new_crs_proj = pyproj.Proj(new_crs)
+    return pyproj.transform(old_crs_proj, new_crs_proj, x,y)
 
-    coords =  np.array(feature['geometry']['coordinates'][0])
-    x,y = pyproj.transform(old_crs_proj, new_crs_proj, coords[:,0], coords[:,1])
+def warp_shapely(shp, old_crs, new_crs):
+    """Uses proj to reproject shapes, NOT IN PLACE"""
+    x,y = warp_xy(shp.boundary.xy[0], shp.boundary.xy[1], old_crs, new_crs)
+    return shapely.geometry.Polygon(x,y)
+
+def warp_shape(feature, old_crs, new_crs):
+    """Uses proj to reproject shapes, IN PLACE"""
+    coords = np.array(feature['geometry']['coordinates'][0])
+    x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
     new_coords = [xy for xy in zip(x,y)]
 
     # change only the coordinates of the feature
     feature['geometry']['coordinates'][0] = new_coords
-    return feature
-
     
 def warp_shapefile(infile, outfile, epsg=None):
     """Changes the projection of a shapefile."""
@@ -56,7 +53,7 @@ def warp_shapefile(infile, outfile, epsg=None):
         else:
             with fiona.open(outfile, 'w', 'ESRI Shapefile', schema=shp.schema.copy(), crs=new_crs) as fid:
                 for feat in shp:
-                    feat = warp_shape(feat, old_crs, new_crs)
+                    warp_shape(feat, old_crs, new_crs)
                     fid.write(feat)
 
 
