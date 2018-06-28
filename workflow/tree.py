@@ -1,0 +1,136 @@
+"""Module for working with tree data structures, built on tinytree"""
+
+
+import logging
+import collections
+import numpy as np
+
+import shapely.geometry
+import shapely.ops
+
+import workflow.utils
+import workflow.tinytree
+
+
+_tol = 1.e-7
+
+class Tree(workflow.tinytree.Tree):
+    """A tree node data structure"""
+    def __init__(self, segment=None, children=None):
+        super(Tree, self).__init__(children)
+        self.segment = segment
+
+    def addChild(self, segment):
+        if type(segment) is Tree:
+            super(Tree,self).addChild(segment)
+        else:
+            super(Tree,self).addChild(type(self)(segment))
+        return self.children[-1]
+
+    def dfs(self):
+        for node in self.preOrder():
+            if node.segment is not None:
+                yield node.segment
+
+
+    def leaf_nodes(self):
+        """Generator for all leaves of the tree."""
+        for it in self.preOrder():
+            if len(it.children) is 0 and it.segment is not None:
+                yield it
+
+    def leaves(self):
+        """Generator for all leaves of the tree."""
+        for n in self.leaf_nodes():
+            yield n.segment
+
+
+            
+def _get_matches(seg, segments, segment_found):
+    """Find segments attached to seg amongst those not already found"""
+    matches = [i for i in range(len(segments)) if not segment_found[i]
+               and workflow.utils.close(segments[i].coords[-1], seg.coords[0])]
+    segment_found[matches] = True
+    return matches
+
+def _go(i_seg, tree, segments, segments_found):
+    """Recursive helper function for generating a tree based on a matching function."""
+    count = 0
+    tree.addChild(segments[i_seg])
+    for m in _get_matches(segments[i_seg], segments, segments_found):
+        count += _go(m, tree, segments, segments_found)
+    return count + 1
+
+def make_trees(segments):
+    """Forms tree(s) from a list of segments."""
+    logging.debug("Generating trees")
+    endpoint_indices = find_endpoints(segments)
+    logging.debug("  found: %i outlets"%len(endpoint_indices))
+    for endp in endpoint_indices:
+        logging.debug("    at: %r"%list(segments[endp].coords[-1]))
+
+    # check if any endpoint lives on another segment
+    segs_to_remove = []
+    segs_to_add = []
+    for endpoint_index in endpoint_indices:
+        endpoint_seg = shapely.geometry.LineString(segments[endpoint_index].coords[-2:])
+        try:
+            inter = next(i for i,seg in enumerate(segments)
+                         if endpoint_seg.intersects(seg)
+                         and i is not endpoint_index
+                         and workflow.utils.close(endpoint_seg.intersection(seg).coords[0], endpoint_seg.coords[-1], 1.e-5))
+        except StopIteration:
+            logging.debug("   outlet %i is not faux"%endpoint_index)
+        else:
+            logging.debug("   faux outlet: %i segment: %i"%(endpoint_index, inter))
+            segs_to_remove.append(inter)
+            
+            print("splitting segment: %r"%list(segments[inter].coords))
+            print("   at: %r"%list(segments[endpoint_index].coords[-1]))
+            segs_to_add.extend(workflow.utils.cut(segments[inter], endpoint_seg))
+            
+    if len(segs_to_remove) is not 0:
+        segments = list(segments)
+        for i in sorted(segs_to_remove, reverse=True):
+            segments.pop(i)
+        segments.extend(segs_to_add)
+        segments = shapely.geometry.MultiLineString(segments)
+
+        # regenerate endpoints (indicies may have changed)
+        endpoint_indices = find_endpoints(segments)
+        logging.debug("  found: %i outlets"%len(endpoint_indices))
+
+    # generate all trees
+    segment_found = np.full((len(segments),), False)
+    gcount = 0
+    trees = []
+    for endpoint_index in endpoint_indices:
+        tree = Tree()
+        gcount += _go(endpoint_index, tree, segments, segment_found)
+        trees.append(tree)
+    assert(gcount == len(segments))
+    return trees
+
+def find_endpoints(segments):
+    """Finds a list of indices of all segments whose endpoint is not a beginpoint.
+
+    Note these may truely be the tree root, or they may end at a
+    midpoint on another segment (mistake in input data).
+    """
+    endpoints = []
+    for i,s in enumerate(segments):
+        c = s.coords[-1]
+        try:
+            next(s2 for s2 in segments if workflow.utils.close(s2.coords[0], c))
+        except StopIteration:
+            endpoints.append(i)
+    return endpoints
+
+
+def forest_to_list(forest):
+    """A forest is a list of trees.  Returns a flattened list of trees."""
+    return shapely.geometry.MultiLineString([n for tree in forest for n in tree.dfs()])
+
+def forests_to_list(forests):
+    """A forest is a list of trees.  Returns a flattened list of trees."""
+    return shapely.geometry.MultiLineString([n for forest in forests for tree in forest for n in tree.dfs()])

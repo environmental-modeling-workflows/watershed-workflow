@@ -30,12 +30,19 @@ def warp_shapely(shp, old_crs, new_crs):
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""
-    coords = np.array(feature['geometry']['coordinates'][0])
+    coords = np.array(feature['geometry']['coordinates'])
+    d3 = False
+    if len(coords.shape) is 3:
+        d3 = True
+        coords = coords[0,:,:]
     x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
     new_coords = [xy for xy in zip(x,y)]
 
     # change only the coordinates of the feature
-    feature['geometry']['coordinates'][0] = new_coords
+    if d3:
+        feature['geometry']['coordinates'][0] = new_coords
+    else:
+        feature['geometry']['coordinates'][:] = new_coords
     
 def warp_shapefile(infile, outfile, epsg=None):
     """Changes the projection of a shapefile."""

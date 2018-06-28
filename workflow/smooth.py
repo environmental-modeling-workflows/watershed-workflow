@@ -23,7 +23,7 @@ def intersect_and_split(list_of_shapes):
                         | Note this is upper triangular only.
     """
     intersections = [[None for i in range(len(list_of_shapes))] for j in range(len(list_of_shapes))]
-    uniques = [sh.boundary for sh in list_of_shapes]
+    uniques = [shapely.geometry.LineString(sh.boundary.coords) for sh in list_of_shapes]
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
@@ -40,16 +40,21 @@ def intersect_and_split(list_of_shapes):
     for i,u in enumerate(uniques):
         if type(u) is shapely.geometry.MultiLineString:
             uniques[i] = shapely.ops.linemerge(uniques[i])
-    return uniques, intersections
+
+    uniques_r = [None,]*len(uniques)
+    for i,u in enumerate(uniques):
+        if type(u) is not shapely.geometry.GeometryCollection:
+            uniques_r[i] = u
+    return uniques_r, intersections
     
-def smooth(uniques, intersections, tolerance):
+def simplify(uniques, intersections, tolerance):
     """Smooths the resulting segments."""
     uniques_sm = [u.simplify(tolerance=tolerance) for u in uniques]
 
     intersections_sm = [[None for i in range(len(uniques))] for j in range(len(uniques))]
     for i,s1 in enumerate(intersections):
         for j,s2 in enumerate(s1):
-            if s2 is not None:
+            if type(s2) is not shapely.geometry.GeometryCollection():
                 intersections_sm[i][j] = s2.simplify(tolerance=tolerance)
     return uniques_sm, intersections_sm
 
@@ -60,7 +65,10 @@ def recombine(uniques, intersections):
         try:
             segs = [seg for seg in u]
         except TypeError: # single seg
-            segs = [u,]
+            if u is None:
+                segs = []
+            else:
+                segs = [u,]
 
         
         segs.extend([p for p in intersections[i] if p is not None])
@@ -111,7 +119,7 @@ if __name__ == "__main__":
     #_plot(uniques,intersections,'-x')
 
     # smooth
-    uniques_sm, intersections_sm = smooth(uniques,intersections,1./111000.*100) # converts 100m to degrees
+    uniques_sm, intersections_sm = simplify(uniques,intersections,1./111000.*100) # converts 100m to degrees
     #_plot(uniques_sm,intersections_sm,'-+')
 
     # recombine
