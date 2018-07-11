@@ -2,6 +2,7 @@ import copy
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
+import scipy.spatial
 
 import shapely.geometry
 
@@ -9,6 +10,72 @@ import workflow.conf
 import workflow.utils
 import workflow.tree
 import workflow.hucs
+import workflow.plot
+
+def snap(hucs, rivers, tol=0.1):
+    """Snap HUCs to rivers."""
+    assert(type(hucs) is workflow.hucs.HUCs)
+    assert(type(rivers) is list)
+    for r in rivers:
+        assert type(r) is workflow.tree.Tree
+
+
+    
+
+        
+def snap_endpoints(rivers, shps, tol=0.1):
+    """Snap river endpoints to shp boundaries
+
+    Note this is O(n^2), and could be made more efficient using a
+    KDTree
+    """
+    if type(rivers) is shapely.geometry.MultiLineString:
+        rivers = list(rivers)
+
+    for i, river in enumerate(rivers):
+        rcentroid = river.centroid
+        rlength = river.length
+        for j,seg in enumerate(shps.segments):
+            # do the lines potentially overlap?
+            if rcentroid.distance(seg.centroid) < 0.5*(rlength + seg.length):
+                altered = False
+                rc0 = shapely.geometry.Point(river.coords[0])
+                if rc0.distance(seg) < tol:
+                    # snap
+                    new_coord = seg.interpolate(seg.project(rc0))
+                    new_coord = (new_coord.x, new_coord.y)
+                    logging.info("  - snapped river %d: %r to %r"%(i,river.coords[0], new_coord))
+
+                    # remove points that are closer
+                    coords = list(river.coords)
+                    done = False
+                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[1]) < \
+                          workflow.utils.distance(new_coord, coords[0]):
+                        coords.pop(0)
+                    coords[0] = new_coord
+                    altered = True
+
+                rc1 = shapely.geometry.Point(river.coords[-1])
+                if rc1.distance(seg) < tol:
+                    # snap
+                    new_coord = seg.interpolate(seg.project(rc1))
+                    new_coord = (new_coord.x, new_coord.y)
+                    logging.info("  - snapped river %d: %r to %r"%(i,river.coords[-1], new_coord))
+
+                    # remove points that are closer
+                    coords = list(river.coords)
+                    done = False
+                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[-2]) < \
+                          workflow.utils.distance(new_coord, coords[-1]):
+                        coords.pop()
+                    coords[-1] = new_coord
+                    altered = True
+
+                if altered:
+                    rivers[i] = shapely.geometry.LineString(coords)
+                    continue
+    return rivers
+                    
 
 def quick_cleanup(rivers, tol=0.1):
     """First pass to clean up hydro data"""
@@ -18,31 +85,74 @@ def quick_cleanup(rivers, tol=0.1):
     return rivers
 
 def bin_rivers(shps, rivers):
-    """Bins rivers in shapes.  
-
-    Returns a list (of len n-shps) of 2-tuples, the first being all
-    interior river entries, the second being all river entries that
-    touch the boundary.  Note crossing river entries may appear in
-    multiple bins.
-    """
+    """Bins rivers in shapes by their beginpoint."""
     assert(type(shps) is list)
     # bin by shape
     bins = []
-    not_done = np.ones((len(rivers),))
+    done = np.zeros((len(rivers),), bool)
     for j,s in enumerate(shps):
         inside = []
-        boundary = []
         for i,r in enumerate(rivers):
-            if not_done[i]:
-                if s.intersects(r):
-                    if s.exterior.intersects(r):
-                        boundary.append(r)
-                    else:
-                        inside.append(r)
-                        not_done[i] = 0
-        bins.append((inside,boundary))
+            if not done[i]:
+                if s.intersects(shapely.geometry.Point(r.coords[0])):
+                    inside.append(r)
+                    done[i] = True
+        bins.append(inside)
     return bins
 
+def make_global_tree(rivers, tol=0.1):
+    # make a kdtree of beginpoints
+    coords = np.array([r.coords[0] for r in rivers])
+    kdtree = scipy.spatial.cKDTree(coords)
+
+    # make a node for each segment
+    nodes = [workflow.tree.Tree(r) for r in rivers]
+
+    # match nodes to their parent through the kdtree
+    trees = []
+    doublesegs = []
+    doublesegs_matches = []
+    doublesegs_winner = []
+    for j,n in enumerate(nodes):
+        # find the closest beginpoint the this node's endpoint
+        closest = kdtree.query_ball_point(n.segment.coords[-1], tol)
+        if len(closest) > 1:
+            logging.debug("Bad multi segment:")
+            logging.debug(" connected to %d: %r"%(j,list(n.segment.coords[-1])))
+            doublesegs.append(j)
+            doublesegs_matches.append(closest)
+
+            # end at the same point, pick the min angle deviation
+            my_tan = np.array(n.segment.coords[-1]) - np.array(n.segment.coords[-2])
+            my_tan = my_tan / np.linalg.norm(my_tan)
+            
+            other_tans = [np.array(rivers[c].coords[1]) - np.array(rivers[c].coords[0]) for c in closest]
+            other_tans = [ot/np.linalg.norm(ot) for ot in other_tans]
+            dots = [np.inner(ot,my_tan) for ot in other_tans]
+            for i,c in enumerate(closest):
+                logging.debug("  %d: %r --> %r with dot product = %g"%(c,coords[c],rivers[c].coords[-1], dots[i]))
+            c = closest[np.argmax(dots)]
+            doublesegs_winner.append(c)
+            nodes[c].addChild(n)
+
+        elif len(closest) is 0:
+            trees.append(n)
+        else:
+            nodes[closest[0]].addChild(n)
+
+    if len(doublesegs) > 0:
+        plt.figure()
+        for r in rivers:
+            plt.plot(r.xy[0], r.xy[1], 'k')
+        for r in doublesegs:
+            plt.plot(rivers[r].xy[0], rivers[r].xy[1], 'r')
+        for matches in doublesegs_matches:
+            for m in matches:
+                plt.plot(rivers[m].xy[0], rivers[m].xy[1], 'b')
+        for r in doublesegs_winner:
+            plt.plot(rivers[r].xy[0], rivers[r].xy[1], 'g')
+        plt.show()            
+    return trees
 
 def cut_and_bin(hucs, rivers):
     """Two-pass cut and bin."""
@@ -63,8 +173,17 @@ def cut_and_bin(hucs, rivers):
             for k_seg_handle, seg_handle in list(spine.items()):
                 seg = hucs.segments[seg_handle]
                 if r.intersects(seg):
-                    new_rivers = workflow.utils.cut(r, seg)
-                    new_spine = workflow.utils.cut(seg, r)
+                    try:
+                        new_rivers = workflow.utils.cut(r, seg)
+                        new_spine = workflow.utils.cut(seg, r)
+                    except RuntimeError as err:
+                        # workflow.plot.river(rivers, color='c')
+                        # for poly in hucs.polygons():
+                        #     workflow.plot.huc(poly, color='m')
+                        # plt.show()
+                        plt.show()
+                        raise err
+                        
                     if len(new_rivers) > 1:
                         rivers.extend(new_rivers)
                         to_remove.append(i)
@@ -97,197 +216,6 @@ def cut_and_bin(hucs, rivers):
             logging.warning("Skipping DEAD segment with length: %g"%r.length)
     return bins
     
-
-def cut_and_bin_another(hucs, rivers):
-    """Cuts all hucs and rivers at crossings, and bins the rivers into their containing huc."""
-    assert(type(hucs) is workflow.hucs.HUCs)
-    assert(type(rivers) is shapely.geometry.MultiLineString)
-
-    bins = [list() for h in range(len(hucs))]
-    polys = list(hucs.polygons())
-
-    for lcv_river, r in enumerate(rivers):
-        try:
-            # is it contained by a poly?
-            containing = next(lcv_poly for (lcv_poly, poly) in enumerate(polys) if workflow.utils.contains(poly,r))
-        except StopIteration:
-            # not contained in one polygon -- either split across multiple or partially out of the domain
-            intersections = [lcv_poly for (lcv_poly, poly) in enumerate(polys) if poly.intersects(r)]
-            if len(intersections) is 0:
-                raise RuntimeError("Reach out of the huc domain?")
-            elif len(intersections) is 1:
-                lcv_poly = intersections[0]
-                # partially outside the domain
-                boundary, inter = hucs.gons[lcv_poly]
-                for h_boundary in boundary:
-                    bspine = hucs.boundaries[h_boundary]
-                    bspine_intersections = [(k_seg_handle, seg_handle) for (k_seg_handle, seg_handle) in bspine.items() if hucs.segments[seg_handle].intersects(r)]
-                    if len(bspine_intersections) is 0:
-                        continue # no intersection here!
-                    elif len(bspine_intersections) is 1:
-                        # if so, ensure the intersection point is in the boundary
-                        k_seg_handle, seg_handle = bspine_intersections[0]
-                        seg = hucs.segments[seg_handle]
-                        new_segs = workflow.utils.cut(seg, r)
-                        if len(new_segs) > 1:
-                            hucs.segments.pop(seg_handle)
-                            bspine.pop(k_seg_handle)
-                            new_handles = hucs.segments.add_many(new_segs)
-                            bspine.add_many(new_handles)
-                        intersecting_boundaryseg = seg
-                    elif len(bspine_intersections) is 2:
-                        # boundary intersection point already there, just need to cut
-                        intersecting_boundaryseg = shapely.ops.linemerge([hucs.segments[bspine_intersections[0][1]], hucs.segments[bspine_intersections[1][1]]])
-                        assert(type(intersecting_boundaryseg) is shapely.geometry.LineString)
-                    else:
-                        raise RuntimeError("Ruh roh... should be no more than 2 intersections with the boundary!")
-                        
-                    # now cut the river itself
-                    new_rivers = workflow.utils.cut(r, intersecting_boundaryseg)
-                    assert(len(new_rivers) is 2)
-                    break
-
-                for new_river in new_rivers:
-                    if workflow.utils.contains(polys[lcv_poly],new_river):
-                        bins[lcv_poly].append(new_river)
-
-            elif len(intersections) is 2:
-                # find the union of spines
-                inters1 = set(hucs.gons[intersections[0]][1])
-                inters2 = set(hucs.gons[intersections[1]][1])
-                inters = inters1.intersection(inters2)
-                new_rivers = []
-                for h_inter in inters:
-                    # find the intersection
-                    ispine = hucs.intersections[h_spine]
-                    ispine_intersections = [(k_seg_handle, seg_handle) for (k_seg_handle, seg_handle) in ispine.items() if hucs.segments[seg_handle].intersects(r)]
-                    if len(ispine_intersections) is 0:
-                        continue # no intersection here!
-                    elif len(ispine_intersections) is 1:
-                        # put the intersection point in the spine
-                        k_seg_handle, seg_handle = ispine_intersections[0]
-                        seg = hucs.segments[seg_handle]
-                        new_segs = workflow.utils.cut(seg, r)
-                        if len(new_segs) > 1:
-                            hucs.segments.pop(seg_handle)
-                            ispine.pop(k_seg_handle)
-                            new_handles = hucs.segments.add_many(new_segs)
-                            ispine.add_many(new_handles)
-                        intersecting_interseg = seg
-                    elif len(bspine_intersections) is 2:
-                        # boundary intersection point already there, just need to cut
-                        intersecting_interseg = shapely.ops.linemerge([hucs.segments[ispine_intersections[0][1]], hucs.segments[ispine_intersections[1][1]]])
-                        assert(type(intersecting_interseg) is shapely.geometry.LineString)
-                    else:
-                        raise RuntimeError("Ruh roh... should be no more than 2 intersections with the interior spine!")
-
-                    # now cut the river itself
-                    new_rivers.extend(workflow.utils.cut(r, intersecting_interseg))
-                    assert(len(new_rivers) is 2)
-                    break
-
-                for new_river in new_rivers:
-                    for lcv_poly in intersections:
-                        if workflow.utils.contains(polys[lcv_poly], new_river):
-                            bins[lcv_poly].append(new_river)
-
-            elif len(intersections) > 2:
-                raise RuntimeError("Ruh roh... reaches that touch 3 or more HUCs?")
-            
-        else:
-            # contained in one polygon
-            bins[containing].append(r)
-
-            # check if it intersects the boundary and a boundary point must be added
-            boundary,inter = hucs.gons[containing]
-            for h_boundary in boundary:
-                bspine = hucs.boundaries[h_boundary]
-                bspine_intersections = [(k_seg_handle, seg_handle) for (k_seg_handle, seg_handle) in bspine.items() if hucs.segments[seg_handle].intersects(r)]
-                if len(bspine_intersections) is 2:
-                    pass # already added
-                elif len(bspine_intersections) is 1:
-                    # if so, ensure the intersection point is in the boundary
-                    k_seg_handle, seg_handle = bspine_intersections[0]
-                    seg = hucs.segments[seg_handle]
-                    new_segs = workflow.utils.cut(seg, r)
-                    if len(new_segs) > 1:
-                        hucs.segments.pop(seg_handle)
-                        bspine.pop(k_seg_handle)
-                        new_handles = hucs.segments.add_many(new_segs)
-                        bspine.add_many(new_handles)
-                else:
-                    assert(len(bspine_intersections) is 0)
-
-    return bins
-    
-                
-
-                    
-                
-                
-        
-        
-    
-    
-           
-    
-
-def _split_and_find(segment, crossing, shp):
-    # handle the case of the crossing is an endpoint of the segment
-    if (workflow.utils.close(crossing.coords[0], segment.coords[0]) or
-        workflow.utils.close(crossing.coords[0], segment.coords[-1])):
-        inter = segment.intersection(shp)
-        if type(inter) is shapely.geometry.Point:
-            return None
-        else:
-            assert(type(inter) is shapely.geometry.LineString)
-            return segment
-
-    # handle the proper crossing case
-    segs = workflow.utils.cut(segment, shp.boundary)
-    inter0 = segs[0].intersection(shp)
-    inter1 = segs[1].intersection(shp)
-    if type(inter0) is shapely.geometry.LineString and type(inter1) is shapely.geometry.LineString:
-        if inter0.length < 1.e-4 * inter1.length:
-            return segs[1]
-        elif inter1.length < 1.e-4 * inter0.length:
-            return segs[0]
-        else:
-            raise RuntimeError("crossing messed up, both Lines")
-    elif (type(inter0) is shapely.geometry.Point or (type(inter0) is shapely.geometry.GeometryCollection and len(inter0) is 0)):
-        assert(type(inter1) is shapely.geometry.LineString)
-        return segs[1]
-    elif (type(inter1) is shapely.geometry.Point or (type(inter1) is shapely.geometry.GeometryCollection and len(inter1) is 0)):
-        assert(type(inter0) is shapely.geometry.LineString)
-        return segs[0]
-    else:
-        raise RuntimeError("crossing messed up, types: %r,%r"%(type(segs[0].intersection(shp)), type(segs[1].intersection(shp))))
-    
-def split_and_bin(shps, rivers):
-    """Bins rivers in shapes, first splitting any rivers that cross shape
-    boundaries so that the partial segment can be included in the
-    correct bin.
-    """
-    bins = bin_rivers(shps, rivers)
-    for shp, abin in zip(shps, bins):
-        for boundary in abin[1]:
-            crossing = shp.boundary.intersection(boundary)
-            if type(crossing) is shapely.geometry.Point:
-                mine = _split_and_find(boundary, crossing, shp)
-                if mine is not None:
-                    abin[0].append(mine)
-            elif type(crossing) is shapely.geometry.MultiPoint:
-                #if len(crossing) > 2:
-                raise NotImplementedError("2 or more crossings not handled")
-                # HAVE TO DO SOMETHING SPECIAL HERE?
-                # seg = boundary
-                # for cross in crossing:
-                #     seg = _split_and_find(seg, cross, shp)
-                #     if seg is None:
-                #         break
-                # if seg is not None:
-                #     abin[0].append(seg)
-    return [abin[0] for abin in bins]
                 
 
 def cleanup(shps, rivers, simp_tol=0.1, prune_tol=10):

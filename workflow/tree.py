@@ -32,7 +32,6 @@ class Tree(workflow.tinytree.Tree):
             if node.segment is not None:
                 yield node.segment
 
-
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
         for it in self.preOrder():
@@ -44,6 +43,9 @@ class Tree(workflow.tinytree.Tree):
         for n in self.leaf_nodes():
             yield n.segment
 
+    def __len__(self):
+        # kinda hacky way of getting the count
+        return sum(1 for i in self.dfs())
 
             
 def _get_matches(seg, segments, segment_found):
@@ -101,7 +103,7 @@ def make_trees(segments):
         logging.debug("  found: %i outlets"%len(endpoint_indices))
 
     # generate all trees
-    segment_found = np.full((len(segments),), False)
+    segment_found = np.zeros((len(segments),), bool)
     gcount = 0
     trees = []
     for endpoint_index in endpoint_indices:

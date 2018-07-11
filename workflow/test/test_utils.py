@@ -25,6 +25,24 @@ def test_close():
     # fails
     assert(not workflow.utils.close((0,0,0),(0,0)))
 
+    # lineseg
+    l0 = shapely.geometry.LineString([(0,0), (1,0), (2,0)])
+    l1 = shapely.geometry.LineString([(0,0.001), (1,0), (2,0)])
+    l2 = shapely.geometry.LineString([(0,0.001), (2,0)])
+    assert(workflow.utils.close(l0,l1,0.01))
+    assert(not workflow.utils.close(l0,l1,0.0001))
+    assert(not workflow.utils.close(l0,l2,100))
+
+    # polygon
+    p0 = shapely.geometry.Polygon([(0,0), (1,0), (1,1), (0,1)])
+    p1 = shapely.geometry.Polygon([(1,0.001), (1.001,1), (0,1), (0,0)])
+    p2 = shapely.geometry.Polygon([(0,0),(0,1), (1.001,1), (1,0.001)])
+    assert(workflow.utils.close(p0,p1, 0.01))
+    assert(not workflow.utils.close(p0,p1, 0.0001))
+    assert(workflow.utils.close(p0,p2, 0.01))
+    assert(not workflow.utils.close(p0,p2, 0.0001))
+    
+
 
 def test_contains():
     coords = np.array([[1.03425,0.0013], [0.0035,1.03523], [-1.09824,0.0033], [0.0012,-1.04856]])
@@ -118,25 +136,47 @@ def test_raises():
     with pytest.raises(AssertionError):
         workflow.utils.cut(line, cut)
 
-def test_intersect_and_split(two_boxes):
-    boundaries, intersections = workflow.utils.intersect_and_split(two_boxes)
-    assert(len(boundaries) is 2)
 
-    for b in boundaries:
-        assert type(b) is shapely.geometry.LineString
-        assert len(b.coords) == 4
+def test_intersect_point_to_segment():
+    from shapely.geometry import Point as P
 
-    assert(len(intersections) is 2)
-    for i,row in enumerate(intersections):
-        assert(len(row) is 2)
-        for j,entry in enumerate(row):
-            print("At i,j=%d,%d type is %r"%(i,j,type(entry)))
-            if i <= j:
-                assert entry is None
-            else:
-                assert type(entry) is shapely.geometry.LineString
-                assert len(entry.coords) is 2
-                workflow.utils.close(entry.coords[0], (10,-5))
-                workflow.utils.close(entry.coords[1], (10,5))
-        
+    # test on the first point
+    p0 = workflow.utils.intersect_point_to_segment(P(0,0), P(0,0), P(0,1))
+    assert(workflow.utils.close(p0, (0,0)))
+
+    # test on the last point
+    p0 = workflow.utils.intersect_point_to_segment(P(0,1), P(0,0), P(0,1))
+    assert(workflow.utils.close(p0, (0,1)))
     
+    # test on the line
+    p0 = workflow.utils.intersect_point_to_segment(P(0,0), P(0,-1), P(0,1))
+    assert(workflow.utils.close(p0, (0,0)))
+
+    # test x-perp
+    p0 = workflow.utils.intersect_point_to_segment(P(1,0), P(0,-1), P(0,1))
+    assert(workflow.utils.close(p0, (0,0)))
+
+    # test diagonal perp
+    p0 = workflow.utils.intersect_point_to_segment(P(1,-1), P(-1,-1), P(1,1))
+    assert(workflow.utils.close(p0, (0,0)))            
+
+    # test colinear but negative
+    p0 = workflow.utils.intersect_point_to_segment(P(-2,-2), P(-1,-1), P(1,1))
+    assert(workflow.utils.close(p0, (-1,-1)))            
+
+    # test colinear but positive
+    p0 = workflow.utils.intersect_point_to_segment(P(2,2), P(-1,-1), P(1,1))
+    assert(workflow.utils.close(p0, (1,1)))            
+
+    # test not colinear but past end
+    p0 = workflow.utils.intersect_point_to_segment(P(-3.3,-2.1), P(-1,-1), P(1,1))
+    assert(workflow.utils.close(p0, (-1,-1)))            
+
+    # test end but close
+    p0 = workflow.utils.intersect_point_to_segment(P(-.9,-1.1), P(-1,-1), P(1,1))
+    assert(workflow.utils.close(p0, (-1,-1)))            
+
+    # test throws
+    with pytest.raises(AssertionError):
+        p0 = workflow.utils.intersect_point_to_segment(P(-.9,-1.1), P(1,1), P(1,1))
+        

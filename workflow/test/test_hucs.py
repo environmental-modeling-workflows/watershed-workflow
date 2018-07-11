@@ -5,6 +5,8 @@ import workflow.hucs
 
 from workflow.test.shapes import two_boxes, three_boxes
 
+
+
 def test_hc():
     # construction
     things = ['a','b','c','d']
@@ -25,6 +27,28 @@ def test_hc():
     for i,j in zip(remaining, hc):
         assert i == j
 
+
+def test_intersect_and_split(two_boxes):
+    boundaries, intersections = workflow.hucs.intersect_and_split(two_boxes)
+    assert(len(boundaries) is 2)
+
+    for b in boundaries:
+        assert type(b) is shapely.geometry.LineString
+        assert len(b.coords) == 4
+
+    assert(len(intersections) is 2)
+    for i,row in enumerate(intersections):
+        assert(len(row) is 2)
+        for j,entry in enumerate(row):
+            print("At i,j=%d,%d type is %r"%(i,j,type(entry)))
+            if i <= j:
+                assert entry is None
+            else:
+                assert type(entry) is shapely.geometry.LineString
+                assert len(entry.coords) is 2
+                workflow.utils.close(entry.coords[0], (10,-5))
+                workflow.utils.close(entry.coords[1], (10,5))
+        
     
 def test_hucs(two_boxes):
     # test construction

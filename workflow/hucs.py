@@ -83,7 +83,7 @@ class HUCs:
         self.intersections = HandledCollection() # stores handles into segments
 
         # initialize
-        uniques, intersections = workflow.utils.intersect_and_split(shapes)
+        uniques, intersections = intersect_and_split(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
         for i,u in enumerate(uniques):
@@ -151,6 +151,9 @@ class HUCs:
             yield b
         for i in self.intersections:
             yield i
+
+    def __len__(self):
+        return len(self.gons)
         
 
 def simplify(hucs, tol=0.1):
@@ -158,6 +161,52 @@ def simplify(hucs, tol=0.1):
     for i,seg in hucs.segments.items():
         hucs.segments[i] = seg.simplify(tol)
 
+def intersect_and_split(list_of_shapes):
+    """Given a list of shapes which share boundaries (i.e. they partition
+    some space), return a compilation of their segments.
+
+    Given a list of shapes of length N, returns:
+
+    uniques             | An N-length-list of either None, LineString,
+                        |  or MultiLineString, describing the exterior 
+                        |  boundary
+    intersections       | A NxN list of lists of either None, LineString, 
+                        |  or MultiLineString, describing the interior
+                        |  boundary.
+    """
+    intersections = [[None for i in range(len(list_of_shapes))] for j in range(len(list_of_shapes))]
+    uniques = [shapely.geometry.LineString(sh.boundary.coords) for sh in list_of_shapes]
+
+    for i, s1 in enumerate(list_of_shapes):
+        for j, s2 in enumerate(list_of_shapes):
+            if i != j and s1.intersects(s2):
+                inter = s1.intersection(s2)
+                if type(inter) is shapely.geometry.MultiLineString:
+                    inter = shapely.ops.linemerge(inter)
+                elif type(inter) is shapely.geometry.LineString:
+                    pass
+                elif type(inter) is shapely.geometry.Point:
+                    continue
+                else:
+                    raise RuntimeError("Invalid type of intersection: %r"%type(inter))
+                
+                uniques[i] = uniques[i].difference(inter)
+
+                # only save once!
+                if i > j:
+                    intersections[i][j] = inter
+
+    # merge uniques, as we have a bunch of segments.
+    for i,u in enumerate(uniques):
+        if type(u) is shapely.geometry.MultiLineString:
+            uniques[i] = shapely.ops.linemerge(uniques[i])
+
+    uniques_r = [None,]*len(uniques)
+    for i,u in enumerate(uniques):
+        if type(u) is not shapely.geometry.GeometryCollection:
+            uniques_r[i] = u
+    return uniques_r, intersections
+        
 
 
 

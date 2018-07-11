@@ -48,3 +48,19 @@ def test_simplify():
     print("Good % = ", sum(1 for i in good if i)/100.0)
     assert(all(good))
 
+
+def test_snap():
+    """How does snap work?"""
+    coords = np.array([(-.001, -.001), (100,0), (100.001,.001)])
+    l = shapely.geometry.LineString(coords)
+
+
+    c2 = np.array([(100, -100), (0,0), (-100,100)])
+    l2 = shapely.geometry.LineString(c2)
+
+    ls = shapely.ops.snap(l, l2, 1)
+    print(list(ls.coords))
+    assert(len(ls.coords) is 3)
+    assert(workflow.utils.close(l2.coords[1], ls.coords[0], 1.e-8))
+
+    

@@ -1,5 +1,6 @@
 """Shapely-only utilities not provided by shapely"""
 import logging
+import numpy as np
 import shapely.geometry
 import shapely.ops
 
@@ -19,10 +20,8 @@ def close(s1, s2, tol=_tol):
     elif type(s1) is shapely.geometry.LineString:
         if len(s1.coords) != len(s2.coords):
             return False
-        for c1, c2 in zip(s1.coords, s2.coords):
-            if (c1[0] - c2[0])**2 + (c1[1] - c2[1])**2 > tol**2:
-                return False
-        return True
+        print("allclose?", tol, list(s1.coords), list(s2.coords), np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol))
+        return np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol)
     elif type(s1) is shapely.geometry.MultiLineString:
         if len(s1) != len(s2):
             return False
@@ -38,52 +37,36 @@ def close(s1, s2, tol=_tol):
             if not found:
                 return False
         return True
-    raise NotImplementedError("Not implemented for type '%r'"%type(s1))
+    elif type(s1) is shapely.geometry.Polygon:
+        if len(s1.boundary.coords) != len(s2.boundary.coords):
+            return False
+        ls1 = s1.boundary.coords[:-1]
+        ls2 = np.array(s2.boundary.coords[:-1])
+        ls2f = np.flipud(ls2)
+        return any(np.allclose(ls1, np.roll(ls2, i, 0), tol, tol) for i in range(len(ls2))) or \
+            any(np.allclose(ls1, np.roll(ls2f, i, 0), tol, tol) for i in range(len(ls2)))
+    else:
+        raise NotImplementedError("Not implemented for type '%r'"%type(s1))
 
 def contains(s1, s2, tol=_tol):
     """A contains algorithm that deals with close/roundoff issues"""
     return s1.buffer(tol,2).contains(s2)
 
-# def _cut_seg_seg(seg1, seg2):
-#     """Cuts seg1 and seg2, returning two lists of segments.
-    
-#     Note seg1 and seg2 must be length-2 coordinate LineString objects.
-#     """
-#     assert(type(seg1) is shapely.geometry.LineString)
-#     assert(type(seg2) is shapely.geometry.LineString)
-#     assert(len(seg1.coords) == 2)
-#     assert(len(seg2.coords) == 2)
-#     assert(seg1.intersects(seg2))
-
-#     inter = seg1.intersection(seg2)
-#     assert(type(inter) is shapely.geometry.Point)
-
-#     if close(inter.coords[0], seg1.coords[0]):
-#         seg1_split = [None, seg1]
-#     elif close(inter.coords[0], seg1.coords[-1]):
-#         seg1_split = [seg1, None]
-#     else:
-#         seg1_split = [shapely.geometry.LineString([seg1.coords[0], inter]),
-#                       shapely.geometry.LineString([inter, seg1.coords[-1]])]
-
-#     if close(inter.coords[0], seg2.coords[0]):
-#         seg2_split = [None, seg2]
-#     if close(inter.coords[0], seg2.coords[-1]):
-#         seg2_split = [seg2, None]
-#     else:
-#         seg2_split = [shapely.geometry.LineString([seg2.coords[0], inter]),
-#                       shapely.geometry.LineString([inter, seg2.coords[-1]])]
-#     return seg1_split, seg2_split
-
 
 def cut(line, cutline):
-    """Cuts line at its intersection with cutline."""
+    """Cuts a line at all intersections with cutline."""
+
+    def plot():
+        from matplotlib import pyplot as plt
+        plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
+        plt.plot(line.xy[0], line.xy[1], 'g-+', linewidth=3)
+
     assert(type(line) is shapely.geometry.LineString)
     assert(type(cutline) is shapely.geometry.LineString)
     assert(line.intersects(cutline))
 
     segs = []
-    coords = line.coords
+    coords = list(line.coords)
 
     segcoords = [coords[0],]
     i = 0
@@ -99,7 +82,7 @@ def cut(line, cutline):
             logging.debug("Cut intersected at point")
             logging.debug("  inter point: %r"%list(point.coords[0]))
             logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-            logging.debug("  close? = %r"%(close(point, seg.coords[-1])))
+            logging.debug("  close? = %r"%(close(point, seg.coords[-1], 1.e-5)))
             if close(point, seg.coords[-1], 1.e-5):
                 # intersects at the far point
                 segs.append(shapely.geometry.LineString(segcoords+[seg.coords[-1],]))
@@ -113,9 +96,16 @@ def cut(line, cutline):
                     segcoords = [seg.coords[-1],]
                 i += 2 # also skip the next seg, which would also
                        # intersect at that seg's start point
-            elif close(point, seg.coords[0]):
+            elif close(point, seg.coords[0], 1.e-5):
                 # intersects at the near point
-                assert(i == 0)
+                if i != 0:
+                    print("Wierdness: i = %d"%i)
+                    print("  seg coords: %r"%list(seg.coords))
+                    print("  intersection p: %r"%list(point.coords[0]))
+                    print("  linestring: %r"%list(coords))
+                    print("  cutline: %r"%list(cutline.coords))
+                    plot()
+                    raise RuntimeError("Wierdness, matches first coord but missed in previous seg?")
                 segcoords.append(seg.coords[-1])
                 i += 1
             else:
@@ -125,6 +115,7 @@ def cut(line, cutline):
                 segcoords = [point,seg.coords[-1]]
                 i += 1
         else:
+            plot()
             raise RuntimeError("Dual/multiple intersection in a single seg... ugh!")
 
     if len(segcoords) > 1:
@@ -132,48 +123,25 @@ def cut(line, cutline):
     return segs
         
 
-def intersect_and_split(list_of_shapes):
-    """Given a list of shapes which share boundaries (i.e. they partition
-    some space), return a compilation of their segments.
+def intersect_point_to_segment(point, line_start, line_end):
+    """Finds the nearest point on a line segment to a point"""
+    line_magnitude = line_end.distance(line_start)
+    assert(line_magnitude > _tol)    
+    u = ((point.x - line_start.x) * (line_end.x - line_start.x) +
+         (point.y - line_start.y) * (line_end.y - line_start.y)) \
+         / (line_magnitude ** 2)
 
-    Given a list of shapes of length N, returns:
+    # closest point does not fall within the line segment, 
+    # take the shorter distance to an endpoint
+    if u < 0.:
+        return line_start
+    elif u > 1.:
+        return line_end
+    else:
+        ix = line_start.x + u * (line_end.x - line_start.x)
+        iy = line_start.y + u * (line_end.y - line_start.y)
+        return shapely.geometry.Point([ix, iy])
 
-    uniques             | An N-length-list of either None, LineString,
-                        |  or MultiLineString, describing the exterior 
-                        |  boundary
-    intersections       | A NxN list of lists of either None, LineString, 
-                        |  or MultiLineString, describing the interior
-                        |  boundary.
-    """
-    intersections = [[None for i in range(len(list_of_shapes))] for j in range(len(list_of_shapes))]
-    uniques = [shapely.geometry.LineString(sh.boundary.coords) for sh in list_of_shapes]
-
-    for i, s1 in enumerate(list_of_shapes):
-        for j, s2 in enumerate(list_of_shapes):
-            if i != j and s1.intersects(s2):
-                inter = s1.intersection(s2)
-                if type(inter) is shapely.geometry.MultiLineString:
-                    inter = shapely.ops.linemerge(inter)
-                elif type(inter) is shapely.geometry.LineString:
-                    pass
-                elif type(inter) is shapely.geometry.Point:
-                    continue
-                else:
-                    raise RuntimeError("Invalid type of intersection: %r"%type(inter))
-                
-                uniques[i] = uniques[i].difference(inter)
-
-                # only save once!
-                if i > j:
-                    intersections[i][j] = inter
-
-    # merge uniques, as we have a bunch of segments.
-    for i,u in enumerate(uniques):
-        if type(u) is shapely.geometry.MultiLineString:
-            uniques[i] = shapely.ops.linemerge(uniques[i])
-
-    uniques_r = [None,]*len(uniques)
-    for i,u in enumerate(uniques):
-        if type(u) is not shapely.geometry.GeometryCollection:
-            uniques_r[i] = u
-    return uniques_r, intersections
+def distance(p1, p2):
+    """Distance between two points in tuple form"""
+    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
