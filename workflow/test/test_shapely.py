@@ -63,4 +63,14 @@ def test_snap():
     assert(len(ls.coords) is 3)
     assert(workflow.utils.close(l2.coords[1], ls.coords[0], 1.e-8))
 
+
+def test_kdtree():
+    """Does kdtree replicate duplicated points?  YES"""
+    import scipy.spatial
+    coords = np.array([(0.,0.), (0.,0.)])
+    kdtree = scipy.spatial.cKDTree(coords)
+    closest = kdtree.query_ball_point(np.array([0.0000001, 0.0000001]), 1.e-5)
+    assert(len(closest) is 2)
+
+    
     

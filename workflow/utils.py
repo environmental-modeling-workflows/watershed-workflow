@@ -53,7 +53,7 @@ def contains(s1, s2, tol=_tol):
     return s1.buffer(tol,2).contains(s2)
 
 
-def cut(line, cutline):
+def cut(line, cutline, tol=1.e-5):
     """Cuts a line at all intersections with cutline."""
 
     def plot():
@@ -82,30 +82,29 @@ def cut(line, cutline):
             logging.debug("Cut intersected at point")
             logging.debug("  inter point: %r"%list(point.coords[0]))
             logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-            logging.debug("  close? = %r"%(close(point, seg.coords[-1], 1.e-5)))
-            if close(point, seg.coords[-1], 1.e-5):
+            logging.debug("  close? = %r"%(close(point, seg.coords[-1], tol)))
+            if close(point, seg.coords[-1], tol):
                 # intersects at the far point
-                segs.append(shapely.geometry.LineString(segcoords+[seg.coords[-1],]))
+                segs.append(shapely.geometry.LineString(segcoords+[point,]))
                 logging.debug("  appended full segment: %r"%(list(segs[-1].coords)))
 
                 if (i < len(coords)-2):
                     logging.debug("    (not the end)")
-                    segcoords = [seg.coords[-1],coords[i+2]]
+                    segcoords = [point,coords[i+2]]
                 else:
                     logging.debug("    (the end)")
-                    segcoords = [seg.coords[-1],]
+                    segcoords = [point,]
                 i += 2 # also skip the next seg, which would also
                        # intersect at that seg's start point
-            elif close(point, seg.coords[0], 1.e-5):
+            elif close(point, seg.coords[0], tol):
                 # intersects at the near point
-                if i != 0:
-                    print("Wierdness: i = %d"%i)
-                    print("  seg coords: %r"%list(seg.coords))
-                    print("  intersection p: %r"%list(point.coords[0]))
-                    print("  linestring: %r"%list(coords))
-                    print("  cutline: %r"%list(cutline.coords))
-                    plot()
-                    raise RuntimeError("Wierdness, matches first coord but missed in previous seg?")
+                if i is not 0:
+                    assert(len(segcoords) > 1)
+                    segs.append(shapely.geometry.LineString(segcoords[:-1]+[point,]))
+                    segcoords = [point,]
+                else:
+                    assert(len(segcoords) is 1)
+                    segcoords[0] = point
                 segcoords.append(seg.coords[-1])
                 i += 1
             else:
@@ -121,7 +120,24 @@ def cut(line, cutline):
     if len(segcoords) > 1:
         segs.append(shapely.geometry.LineString(segcoords))
     return segs
-        
+
+def distance(p1, p2):
+    """Distance between two points in tuple form"""
+    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def in_neighborhood(obj1, obj2, tol=0.1):
+    """Determines if two objects can possibly intersect by performing a
+    quick check of their bounding boxes.
+    """
+    minx1,miny1,maxx1,maxy1 = obj1.bounds
+    minx2,miny2,maxx2,maxy2 = obj2.bounds
+    if maxx2 < minx1 - tol or \
+       maxy2 < miny1 - tol or \
+       minx2 > maxx1 + tol or \
+       miny2 > maxx1 + tol:
+        return False
+    return True
+
 
 def intersect_point_to_segment(point, line_start, line_end):
     """Finds the nearest point on a line segment to a point"""
@@ -142,6 +158,21 @@ def intersect_point_to_segment(point, line_start, line_end):
         iy = line_start.y + u * (line_end.y - line_start.y)
         return shapely.geometry.Point([ix, iy])
 
-def distance(p1, p2):
-    """Distance between two points in tuple form"""
-    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+def nearest_point(line, point):
+    """Returns the nearest coordinate on the line to point.  
+
+    Note point is expected as coordinates."""
+    return line.interpolate(line.project(shapely.geometry.Point(point))).coords[0]
+    
+def find_perp(line, point):
+    # need another point, perpendicular to the line, to intersect
+    k = line.project(shapely.geometry.Point(point))
+    if k < 0.001:
+        k2 = 0.001
+    else:
+        k2 = k - 0.001
+    p2 = line.interpolate(k2).coords[0]
+    dp = (p2[0] - point[0], p2[1] - point[1])
+    p3 = (point[0] - dp[1], point[1] - dp[0])
+    return p3
+    

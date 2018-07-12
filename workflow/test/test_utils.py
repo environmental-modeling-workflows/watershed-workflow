@@ -67,7 +67,7 @@ def test_contains():
     assert(all(contains))
 
     
-def test_point_not_there():
+def test_cut_point_not_there():
     line = shapely.geometry.LineString([(0,0), (1,0)])
     cut = shapely.geometry.LineString([(0.5, -1), (0.5, 1)])
     lines = workflow.utils.cut(line, cut)
@@ -79,7 +79,7 @@ def test_point_not_there():
     assert(l1 == shapely.geometry.LineString([(0,0), (0.5,0)]))
     assert(l2 == shapely.geometry.LineString([(0.5,0), (1,0)]))
 
-def test_point_there():
+def test_cut_point_there():
     line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0)])
     cut = shapely.geometry.LineString([(0.5, -1), (0.5, 1)])
     lines = workflow.utils.cut(line, cut)
@@ -91,23 +91,63 @@ def test_point_there():
     assert(l1 == shapely.geometry.LineString([(0,0), (0.5,0)]))
     assert(l2 == shapely.geometry.LineString([(0.5,0), (1,0)]))
 
-def test_first_point():
+def test_cut_point_nearly_there_after():
+    line = shapely.geometry.LineString([(0,0), (0.50001, 0), (1,0)])
+    cut = shapely.geometry.LineString([(0.5, -1), (0.5, 1)])
+    lines = workflow.utils.cut(line, cut, 0.01)
+    assert(len(lines) == 2)
+    l1 = lines[0]
+    l2 = lines[1]
+    print( l1.coords[:])
+    print( l2.coords[:])
+    assert(l1 == shapely.geometry.LineString([(0,0), (0.5,0)]))
+    assert(l2 == shapely.geometry.LineString([(0.5,0), (1,0)]))
+
+def test_cut_point_nearly_there_before():
+    line = shapely.geometry.LineString([(0,0), (0.49999, 0), (1,0)])
+    cut = shapely.geometry.LineString([(0.5, -1), (0.5, 1)])
+    lines = workflow.utils.cut(line, cut, 0.01)
+    assert(len(lines) == 2)
+    l1 = lines[0]
+    l2 = lines[1]
+    print( l1.coords[:])
+    print( l2.coords[:])
+    assert(l1 == shapely.geometry.LineString([(0,0), (0.5,0)]))
+    assert(l2 == shapely.geometry.LineString([(0.5,0), (1,0)]))
+    
+def test_cut_first_point():
     line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0)])
     cut = shapely.geometry.LineString([(0, -1), (0, 1)])
     lines = workflow.utils.cut(line, cut)
     assert(len(lines) == 1)
     print(list(lines[0].coords))
-    assert(lines[0] == line)
+    assert(workflow.utils.close(lines[0], line))
 
-def test_last_point():
+def test_cut_nearly_first_point():
+    line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0)])
+    cut = shapely.geometry.LineString([(0.001, -1), (0.001, 1)])
+    lines = workflow.utils.cut(line, cut,0.01)
+    assert(len(lines) == 1)
+    print(list(lines[0].coords))
+    assert(workflow.utils.close(lines[0], shapely.geometry.LineString([(0.001,0), (0.5, 0), (1,0)])))
+    
+def test_cut_last_point():
     line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0)])
     cut = shapely.geometry.LineString([(1, -1), (1, 1)])
     lines = workflow.utils.cut(line, cut)
     assert(len(lines) == 1)
     print(list(lines[0].coords))
-    assert(lines[0] == line)
+    assert(workflow.utils.close(lines[0], line))
 
-def test_two_crossings():
+def test_cut_nearly_last_point():
+    line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0)])
+    cut = shapely.geometry.LineString([(0.9999, -1), (0.9999, 1)])
+    lines = workflow.utils.cut(line, cut,0.01)
+    assert(len(lines) == 1)
+    print(list(lines[0].coords))
+    assert(workflow.utils.close(lines[0], shapely.geometry.LineString([(0.,0), (0.5, 0), (0.9999,0)])))
+    
+def test_cut_two_crossings():
     line = shapely.geometry.LineString([(0,0), (0.5, 0), (1,0), (1.5,0), (2, 0)])
     cut = shapely.geometry.LineString([(0.5, -1), (0.5, 1), (1.5,1), (1.5,-1)])
     lines = workflow.utils.cut(line, cut)
@@ -117,7 +157,7 @@ def test_two_crossings():
     assert(lines[1] == shapely.geometry.LineString([(0.5,0), (1, 0),(1.5, 0)]))
     assert(lines[2] == shapely.geometry.LineString([(1.5,0), (2, 0)]))
     
-def test_two_ways():
+def test_cut_two_ways():
     line1 = shapely.geometry.LineString([(-1,0), (1,0)])
     line2 = shapely.geometry.LineString([(0,-1),(0,1)])
     l1_segs = workflow.utils.cut(line1, line2)
@@ -180,3 +220,47 @@ def test_intersect_point_to_segment():
     with pytest.raises(AssertionError):
         p0 = workflow.utils.intersect_point_to_segment(P(-.9,-1.1), P(1,1), P(1,1))
         
+def test_neighborhood():
+    p1 = shapely.geometry.LineString([(0,0), (1,1)])
+
+    p2 = shapely.geometry.LineString([(2,2), (3,3)])
+    assert(not workflow.utils.in_neighborhood(p1,p2))
+
+    p2 = shapely.geometry.LineString([(0,3), (3,3)])
+    assert(not workflow.utils.in_neighborhood(p1,p2))
+
+    p2 = shapely.geometry.LineString([(3,0), (3,1)])
+    assert(not workflow.utils.in_neighborhood(p1,p2))
+    
+    p2 = shapely.geometry.LineString([(1,0), (0,1)])
+    assert(workflow.utils.in_neighborhood(p1,p2))
+
+    p2 = shapely.geometry.LineString([(1,1), (2,1)])
+    assert(workflow.utils.in_neighborhood(p1,p2))
+
+    p2 = shapely.geometry.LineString([(1.01,1), (2,1)])
+    assert(workflow.utils.in_neighborhood(p1,p2))
+
+    p2 = shapely.geometry.LineString([(1.01,1), (2,1)])
+    assert(not workflow.utils.in_neighborhood(p1,p2, 1.e-3))
+    
+def test_perp():
+    l1 = shapely.geometry.LineString([(0,0), (1,0)])
+    p = (0.5,0)
+    p3 = workflow.utils.find_perp(l1, p)
+    assert(abs(p3[0] - 0.5) < 1.e-6)
+    assert(abs(p3[1] - 0.) > 1.e-6)
+
+    l1 = shapely.geometry.LineString([(0,0), (0,1)])
+    p = (0,0.5)
+    p3 = workflow.utils.find_perp(l1, p)
+    assert(abs(p3[1] - 0.5) < 1.e-6)
+    assert(abs(p3[0] - 0.) > 1.e-6)
+
+    l1 = shapely.geometry.LineString([(0,0), (1,1)])
+    p = (0.5,0.5)
+    p3 = workflow.utils.find_perp(l1, p)
+    assert(abs( (p3[1] - 0.5) - (p3[0] - 0.5) ) < 1.e-6)
+
+    
+    

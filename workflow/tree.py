@@ -47,6 +47,15 @@ class Tree(workflow.tinytree.Tree):
         # kinda hacky way of getting the count
         return sum(1 for i in self.dfs())
 
+    def check_child_consistency(self, tol=1.e-8):
+        for child in self.children:
+            if not workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
+                logging.warning("  INCONSISTENT:")
+                logging.warning("    child: %r"%(child.segment.coords[:]))
+                logging.warning("    parent: %r"%(self.segment.coords[:]))
+                return False
+        return True
+
             
 def _get_matches(seg, segments, segment_found):
     """Find segments attached to seg amongst those not already found"""
@@ -136,3 +145,7 @@ def forest_to_list(forest):
 def forests_to_list(forests):
     """A forest is a list of trees.  Returns a flattened list of trees."""
     return shapely.geometry.MultiLineString([n for forest in forests for tree in forest for n in tree.dfs()])
+
+def is_consistent(tree, tol=1.e-8):
+    """Checks the geometric consistency of the tree."""
+    return not any(not node.check_child_consistency(tol) for node in tree.preOrder())

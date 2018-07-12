@@ -207,32 +207,3 @@ def intersect_and_split(list_of_shapes):
             uniques_r[i] = u
     return uniques_r, intersections
         
-
-
-
-# def get_polygon(ml):
-#     """Generates a polygon from the multiline"""
-#     assert(type(ml) is shapely.geometry.MultiLineString)
-#     line = shapely.ops.linemerge(ml)
-#     assert(type(line) is shapely.geometry.LineString)
-#     return shapely.geometry.Polygon(line)
-
-# def split_multiline(ml, seg):
-#     """Splits a multiline at an intersection"""
-#     topop = []
-#     topush = []
-#     for i, line in enumerate(ml):
-#         if seg.intersects(line):
-#             newlines = workflow.utils.split(line, seg)
-#             topop.append(i)
-#             topush.extend(newlines)
-
-#     new_ml = list(ml)
-#     for i in reversed(topop):
-#         new_ml.pop(i)
-#     new_ml.extend(topush)
-#     new_ml = shapely.geometry.MultiLineString(new_ml)
-
-#     # check
-#     poly = get_polygon(new_ml)
-#     return new_ml

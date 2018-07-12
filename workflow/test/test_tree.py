@@ -57,6 +57,14 @@ def test_ywj(y_with_junction):
            (segs[2] == newseg1 and segs[1] == y_with_junction[2]))
     assert(segs[3] == y_with_junction[1])
     
+def test_dfs():
+    points = [[(0,0), (1,0)],
+              [(1,0), (2,0)]]
+    ml = shapely.geometry.MultiLineString(points)
+    trees = workflow.tree.make_trees(ml)
+    riverlist = list(trees[0].dfs())
+    assert(riverlist[0] == ml[1])
+    assert(riverlist[1] == ml[0])
     
     
     

@@ -126,3 +126,38 @@ def test_hucs_three(three_boxes):
     # test correctness of keys
     assert(len(tb.boundaries) == 4)
     assert(len(tb.intersections) == 2)
+
+def test_hucs_triple():
+    b1 = [(0, -5), (10,-5), (10.,5.), (0,5)]
+    b2 = [(10, -5), (20,-5), (20,5), (10.,5.)]
+    b3 = [(0, 5), (10.,5.), (20,5), (20,10), (0,10)]
+    boxes = [shapely.geometry.Polygon(b1),
+             shapely.geometry.Polygon(b2),
+             shapely.geometry.Polygon(b3),]
+    hucs = workflow.hucs.HUCs(boxes)
+    assert(len(hucs) is 3)
+    assert(len(hucs.segments) is 6)
+    assert(len(hucs.intersections) is 3)
+    assert(len(hucs.boundaries) is 3)
+
+    # note order is not required here, but I don't have a good way of checking without order
+    boundaries = [shandle for b in hucs.boundaries for shandle in b]
+    bound1 = hucs.segments[boundaries[0]]
+    assert(workflow.utils.close(bound1, shapely.geometry.LineString([(0,5), (0,-5), (10,-5)])))
+    
+    bound2 = hucs.segments[boundaries[1]]
+    assert(workflow.utils.close(bound2, shapely.geometry.LineString([(10,-5), (20,-5), (20,5)])))
+
+    bound3 = hucs.segments[boundaries[2]]
+    assert(workflow.utils.close(bound3, shapely.geometry.LineString([(20,5), (20,10), (0,10), (0,5)])))
+
+    intersections = [shandle for b in hucs.intersections for shandle in b]
+    spine1 = hucs.segments[intersections[0]]
+    assert(workflow.utils.close(spine1, shapely.geometry.LineString([(10,5), (10,-5)])))
+    
+    spine2 = hucs.segments[intersections[1]]
+    assert(workflow.utils.close(spine2, shapely.geometry.LineString([(0,5), (10,5)])))
+
+    spine3 = hucs.segments[intersections[2]]
+    assert(workflow.utils.close(spine3, shapely.geometry.LineString([(10,5), (20,5)])))
+    
