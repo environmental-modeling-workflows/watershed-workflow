@@ -7,6 +7,7 @@ import workflow.utils
 import workflow.hucs
 import workflow.hydrography
 import workflow.tree
+import workflow.plot
 
 def test_null_cleanup(rivers):
     """Tests that cleanup on nice river network does nothing"""
@@ -21,17 +22,6 @@ def test_close_cleanup(rivers):
     rivers_wextra = shapely.geometry.MultiLineString(list(rivers)+[extra,])
     rivers_clean = workflow.hydrography.quick_cleanup(rivers_wextra)
     assert_close(rivers_clean, rivers, 0.1)
-
-def test_pruning_cleanup(two_boxes, rivers):
-    """Tests that cleanup can remove close points"""
-    extra = shapely.geometry.LineString([(12,-3.01), (12,-3)])
-    rivers_wextra = shapely.geometry.MultiLineString(list(rivers)+[extra,])
-    rivers_clean = workflow.hydrography.quick_cleanup(rivers_wextra)
-    assert_close(rivers_clean, rivers_wextra, 0.000001)
-
-    rivers_wextra_clean = workflow.tree.forests_to_list(workflow.hydrography.cleanup(two_boxes, rivers_wextra))
-    rivers_clean = workflow.tree.forests_to_list(workflow.hydrography.cleanup(two_boxes, rivers))
-    assert_close(rivers_clean, rivers_wextra_clean)
 
 def test_cut_and_bin_one_contained_seg(two_boxes):
     """Test of binning"""
@@ -177,6 +167,49 @@ def check2(hucs,rivers):
     for tree in rivers:
         assert(workflow.tree.is_consistent(tree))
     
+
+def check2b(hucs,rivers):
+    assert(len(hucs) is 2)
+    poly0 = hucs.polygon(0)
+    print(poly0.boundary.coords[:])
+    assert(workflow.utils.close(poly0, shapely.geometry.Polygon([(0,-5), (10,-5), (10,0), (10,5), (0,5)])))
+    poly1 = hucs.polygon(1)
+    print(poly1.boundary.coords[:])
+    assert(workflow.utils.close(poly1, shapely.geometry.Polygon([(10,-5), (20,-5), (20,5), (10,5), (10,0)])))
+
+    riverlist = list(rivers[0].dfs()) # dfs, preOrdered
+    assert(len(riverlist) is 3)
+    print(riverlist[0].coords[:])
+    assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(10,0), (11,0),(12,0),(15,0)])))
+    print(riverlist[1].coords[:])
+    assert(workflow.utils.close(riverlist[1], shapely.geometry.LineString([(5,2), (10,0)])))
+    print(riverlist[2].coords[:])
+    assert(workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10,0)])))
+    
+    for tree in rivers:
+        assert(workflow.tree.is_consistent(tree))
+
+def check2b_nullop(hucs,rivers):
+    assert(len(hucs) is 2)
+    poly0 = hucs.polygon(0)
+    print(poly0.boundary.coords[:])
+    assert(workflow.utils.close(poly0, shapely.geometry.Polygon([(0,-5), (10,-5), (10,0), (10,5), (0,5)])))
+    poly1 = hucs.polygon(1)
+    print(poly1.boundary.coords[:])
+    assert(workflow.utils.close(poly1, shapely.geometry.Polygon([(10,-5), (20,-5), (20,5), (10,5), (10,0)])))
+
+    riverlist = list(rivers[0].dfs()) # dfs, preOrdered
+    assert(len(riverlist) is 3)
+    print(riverlist[0].coords[:])
+    assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(10.1001,0), (11,0),(12,0),(15,0)])))
+    print(riverlist[1].coords[:])
+    assert(workflow.utils.close(riverlist[1], shapely.geometry.LineString([(5,2), (10.1001,0)])))
+    print(riverlist[2].coords[:])
+    assert(workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10.1001,0)])))
+    
+    for tree in rivers:
+        assert(workflow.tree.is_consistent(tree))
+        
 def check3(hucs,rivers):
     assert(len(hucs) is 3)
     poly0 = hucs.polygon(0)
@@ -316,3 +349,20 @@ def test_snap7():
     hucs, rivers = data(tb, rs)
     workflow.hydrography.snap(hucs, rivers, 0.1)
     check3(hucs,rivers)
+
+def test_snap8():
+    # two boxes, two rivers inside one box, intersection near an inner boundary
+    b1 = [(0, -5), (10,-5), (10,0), (10,5), (0,5)]
+    b2 = [(10, -5), (20,-5), (20,5), (10,5), (10,0)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    tb.append(shapely.geometry.Polygon(b2))
+
+    rs = [shapely.geometry.LineString([(5.,2.), (9.901,0.),]),
+          shapely.geometry.LineString([(5.,-2.), (9.901,0.),]),
+          shapely.geometry.LineString([(9.901,0.), (11,0), (12,0), (15,0)]),]
+    hucs, rivers = data(tb, rs)
+    workflow.hydrography.snap(hucs, rivers, 0.1)
+    check2b(hucs,rivers)
+
+    

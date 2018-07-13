@@ -72,27 +72,27 @@ def cut(line, cutline, tol=1.e-5):
     i = 0
     while i < len(coords)-1:
         seg = shapely.geometry.LineString(coords[i:i + 2])
-        logging.debug("Intersecting seg %d"%i)
+        #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
         if type(point) is shapely.geometry.GeometryCollection and len(point) is 0:
-            logging.debug("Cut seg no intersection")
+            #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])
             i += 1
         elif type(point) is shapely.geometry.Point:
-            logging.debug("Cut intersected at point")
-            logging.debug("  inter point: %r"%list(point.coords[0]))
-            logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-            logging.debug("  close? = %r"%(close(point, seg.coords[-1], tol)))
+            #logging.debug("Cut intersected at point")
+            #logging.debug("  inter point: %r"%list(point.coords[0]))
+            #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
+            #logging.debug("  close? = %r"%(close(point, seg.coords[-1], tol)))
             if close(point, seg.coords[-1], tol):
                 # intersects at the far point
                 segs.append(shapely.geometry.LineString(segcoords+[point,]))
-                logging.debug("  appended full segment: %r"%(list(segs[-1].coords)))
+                #logging.debug("  appended full segment: %r"%(list(segs[-1].coords)))
 
                 if (i < len(coords)-2):
-                    logging.debug("    (not the end)")
+                    #logging.debug("    (not the end)")
                     segcoords = [point,coords[i+2]]
                 else:
-                    logging.debug("    (the end)")
+                    #logging.debug("    (the end)")
                     segcoords = [point,]
                 i += 2 # also skip the next seg, which would also
                        # intersect at that seg's start point
@@ -110,7 +110,7 @@ def cut(line, cutline, tol=1.e-5):
             else:
                 # intersects in the middle
                 segs.append(shapely.geometry.LineString(segcoords+[point,]))
-                logging.debug("  appended partial segment: %r"%(list(segs[-1].coords)))
+                #logging.debug("  appended partial segment: %r"%(list(segs[-1].coords)))
                 segcoords = [point,seg.coords[-1]]
                 i += 1
         else:
@@ -134,7 +134,7 @@ def in_neighborhood(obj1, obj2, tol=0.1):
     if maxx2 < minx1 - tol or \
        maxy2 < miny1 - tol or \
        minx2 > maxx1 + tol or \
-       miny2 > maxx1 + tol:
+       miny2 > maxy1 + tol:
         return False
     return True
 

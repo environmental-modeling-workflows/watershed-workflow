@@ -50,12 +50,19 @@ class Tree(workflow.tinytree.Tree):
     def check_child_consistency(self, tol=1.e-8):
         for child in self.children:
             if not workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
-                logging.warning("  INCONSISTENT:")
-                logging.warning("    child: %r"%(child.segment.coords[:]))
-                logging.warning("    parent: %r"%(self.segment.coords[:]))
                 return False
         return True
 
+    def get_inconsistent(self, tol=1.e-8):
+        inconsistent = []
+        for child in self.children:
+            if not workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
+                logging.warning("  INCONSISTENT:")
+                logging.warning("    child: %r"%(child.segment.coords[:]))
+                logging.warning("    parent: %r"%(self.segment.coords[:]))
+                inconsistent.append(child)
+        return inconsistent
+    
             
 def _get_matches(seg, segments, segment_found):
     """Find segments attached to seg amongst those not already found"""
@@ -149,3 +156,7 @@ def forests_to_list(forests):
 def is_consistent(tree, tol=1.e-8):
     """Checks the geometric consistency of the tree."""
     return not any(not node.check_child_consistency(tol) for node in tree.preOrder())
+
+def get_inconsistent(tree, tol=1.e-8):
+    """Gets a list of inconsistent nodes of the tree."""
+    return [n for node in tree.preOrder() for n in node.get_inconsistent(tol)]

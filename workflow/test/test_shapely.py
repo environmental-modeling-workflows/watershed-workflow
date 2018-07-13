@@ -50,7 +50,7 @@ def test_simplify():
 
 
 def test_snap():
-    """How does snap work?"""
+    """How does snap work?  IT DOESN'T merge points"""
     coords = np.array([(-.001, -.001), (100,0), (100.001,.001)])
     l = shapely.geometry.LineString(coords)
 
@@ -64,6 +64,21 @@ def test_snap():
     assert(workflow.utils.close(l2.coords[1], ls.coords[0], 1.e-8))
 
 
+def test_snap2():
+    """How does snap work? will it snap to a midpoint of the segment?  NO"""
+    coords = np.array([(-.001, -.001), (100,0)])
+    l = shapely.geometry.LineString(coords)
+
+
+    c2 = np.array([(100, -100), (-100,100)])
+    l2 = shapely.geometry.LineString(c2)
+
+    ls = shapely.ops.snap(l, l2, 1)
+    print(list(ls.coords))
+    assert(len(ls.coords) is 2)
+    assert(workflow.utils.close(ls.coords[0], l.coords[0], 1.e-8))
+    
+
 def test_kdtree():
     """Does kdtree replicate duplicated points?  YES"""
     import scipy.spatial
@@ -71,6 +86,8 @@ def test_kdtree():
     kdtree = scipy.spatial.cKDTree(coords)
     closest = kdtree.query_ball_point(np.array([0.0000001, 0.0000001]), 1.e-5)
     assert(len(closest) is 2)
+
+
 
     
     

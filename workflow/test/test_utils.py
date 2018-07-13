@@ -243,6 +243,14 @@ def test_neighborhood():
 
     p2 = shapely.geometry.LineString([(1.01,1), (2,1)])
     assert(not workflow.utils.in_neighborhood(p1,p2, 1.e-3))
+
+    # single point
+    p3 = shapely.geometry.Point(978563.4249385255, 1512322.6640905372)
+    p4 = shapely.geometry.LineString([(977132.6302807415, 1507051.5674243502), (979578.2010028946, 1515834.394320889)])
+    assert(workflow.utils.in_neighborhood(p3,p4,0.))
+
+    
+    
     
 def test_perp():
     l1 = shapely.geometry.LineString([(0,0), (1,0)])
