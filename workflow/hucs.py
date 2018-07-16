@@ -206,4 +206,3 @@ def intersect_and_split(list_of_shapes):
         if type(u) is not shapely.geometry.GeometryCollection:
             uniques_r[i] = u
     return uniques_r, intersections
-        

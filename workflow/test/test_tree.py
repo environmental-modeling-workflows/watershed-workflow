@@ -65,6 +65,12 @@ def test_dfs():
     riverlist = list(trees[0].dfs())
     assert(riverlist[0] == ml[1])
     assert(riverlist[1] == ml[0])
+
+def test_to_list(y_with_junction):
+    forest = workflow.tree.make_trees(y_with_junction)
+    treelist = workflow.tree.tree_to_list(forest[0])
+    forestlist = workflow.tree.forest_to_list(forest)
+    
     
     
     

@@ -1,4 +1,6 @@
 """Triangulates polygons"""
+import logging
+import collections
 import numpy as np
 import numpy.linalg as la
 from matplotlib import pyplot as plt
@@ -6,243 +8,144 @@ from matplotlib import pyplot as plt
 import shapely
 import meshpy.triangle
 
-import workflow.hydrography
+import workflow.tree
 
-def round_trip_connect(start, end):
-    return [(i, i+1) for i in range(start, end)] + [(end, start)]
-def oneway_trip_connect(start, end):
-    return [(i, i+1) for i in range(start, end)]
 
-def triangulate(shp, max_area=0.0001, needs_refinement_func=None, debug=False):
-    """Triangulates a domain.
+class Nodes:
+    """A collection of nodes that are indexed in the order they are added.
 
-    Refines based upon max_area, unless a function is provided.
-
-    Such a function must be of the form:
- 
-    def needs_refinement_func(vertex_list, area)
-
-    where this function takes the list of vertices making up the
-    triangle and the area of the triangle.
+    Note this uses round() for an efficient solution, which is
+    potentially fragile if numbers were not generated consistently.
+    In this use case, however, it should be safe -- numbers were
+    originally rounded (in workflow.conf), and then any function which
+    inserted new points or moved points were always careful to ensure
+    that all duplicates were always assigned the identical values --
+    i.e. all math was done BEFORE assignment.  So duplicates have
+    identical representations in floating point.  This suggests we
+    shouldn't have to round here at all, but we do anyway to keep
+    things cleaner.
     """
-    points = [(x,y) for x,y in zip(*shp.boundary.xy)][:-1] # pop the last point as it is duplicate
-    facets = round_trip_connect(0, len(points)-1)
-    
-    def my_needs_refinement_func(vertices, area):
-        return bool(area > max_area)
-    if needs_refinement_func is None:
-        needs_refinement_func = my_needs_refinement_func
-        
-    info = meshpy.triangle.MeshInfo()
-    info.set_points(points)
-    info.set_facets(facets)
-    mesh = meshpy.triangle.build(info, debug, refinement_func=needs_refinement_func)
+    def __init__(self, decimals=7):
+        self.decimals = decimals
+        self._i = 0
+        self._store = collections.OrderedDict()
 
+    def __len__(self):
+        """Length is tracked by the counter"""
+        return self._i
+
+    def __getitem__(self,key):
+        """Get item index, setting if default."""
+        # Note this implementation could be optimized, and should be
+        # done so assuming keys are NOT there, which is the most
+        # likely case.
+        key = tuple(round(p, self.decimals) for p in key)
+        if key not in self._store:
+            self._store[key] = self._i
+            self._i += 1
+        return self._store[key]
+
+    def __iter__(self):
+        """Iterable collection"""
+        for k in self._store.keys():
+            yield k
+
+def oneway_trip_connect(inds):
+    """Connect indices in edges in a oneway fashion"""
+    return [(inds[i], inds[i+1]) for i in range(len(inds)-1)]
+def round_trip_connect(inds):
+    """Connect indices in edges in a round-trip fashion"""
+    return oneway_trip_connect(inds) + [(inds[-1],inds[0]),]
+
+class NodesEdges:
+    """A collection of nodes and edges."""
+    def __init__(self, objlist=None):
+        self.nodes = Nodes()
+        self.edges = list()
+
+        if objlist is not None:
+            [self.add(obj) for obj in objlist]
+
+    def add(self, obj):
+        """Adds nodes and edges from obj into collection."""
+        if type(obj) is shapely.geometry.LineString:
+            inds = [self.nodes[c] for c in obj.coords]
+            self.edges.extend(oneway_trip_connect(inds))
+        elif type(obj) is shapely.geometry.Polygon:
+            inds = [self.nodes[c] for c in obj.boundary.coords]
+            self.edges.extend(round_trip_connect(inds))
+        else:
+            raise TypeError("Invalid type for add, %r"%type(obj))
+
+
+def triangulate(hucs, rivers, **kwargs):
+    """Triangulates HUCs and rivers.
+
+    Arguments:
+      hucs              | a workflow.hucs.HUCs instance
+      rivers            | a list of workflow.tree.Tree instances
+
+    Additional keyword arguments include all options for meshpy.triangle.build()
+    """
+    logging.info("Triangulating...")
+    segments = list(hucs.segments) + list(workflow.tree.forest_to_list(rivers))
+    nodes_edges = NodesEdges(segments)
+
+    logging.info("   %i points and %i facets"%(len(nodes_edges.nodes), len(nodes_edges.edges)))
+
+    info = meshpy.triangle.MeshInfo()
+    info.set_points(list(nodes_edges.nodes))
+    info.set_facets(nodes_edges.edges)
+    logging.info("   ...building")
+    mesh = meshpy.triangle.build(info, **kwargs)
+    logging.info("   ...built")
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
+
+    logging.info("   %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
     return mesh_points, mesh_tris
 
-def _checkclose(all_points):
-    someclose = False
-    for i,p in enumerate(all_points):
-        for j,q in enumerate(all_points):
-            if j > i:
-                if np.allclose(p,q, 1.e-7):
-                    someclose = True
-                    print("GOT CLOSE", i,j, p, q)
-    return someclose
 
-def triangulate_with_rivers(shp, reaches, **kwargs):
-    """Triangulates a domain with reaches.
+def refine_from_max_area(max_area):
+    """Returns a refinement function used with triangulate's refinement_func argument."""
+    def refine(vertices, area):
+        """A function for use with workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
+        print("refine check: area=%g, max_area=%g"%(area, max_area))
+        return bool(area > max_area)
+    return refine
 
-    Refines based upon max_area, unless a function is provided.
+def refine_from_river_distance(near_distance, near_size, away_distance, away_size, rivers):
+    """Returns a graded refinement function based upon a distance function from rivers.
 
-    Such a function must be of the form:
- 
-    def refinement_func(vertex_list, area)
-
-    where this function takes the list of vertices making up the
-    triangle and the area of the triangle.
+    Typical triangle diameter (size) must be smaller than near_size when the triangle
+    centroid is within near_distance from the river network.
+    Size must be smaller than away_size when the triangle
+    centroid is at least away_distance from the river network.
+    Size must be smaller than a linear interpolant between
+    near_size and away_size when between
+    near_distance and away_distance from the river
+    network.
     """
-    # make the multiline object
-    river_networks = workflow.hydrography.graph(reaches)
-
-    # find the where water enters/leaves the domain
-    spillpoints = shp.boundary.intersection(reaches)
-    assert(type(spillpoints) is shapely.geometry.MultiPoint)
-    spillpoint_indices = [next(i for (i,c) in enumerate(shp.boundary.coords[:-1]) if np.allclose(sp.coords, c, 1.e-7)) for sp in spillpoints]
-
-    # set up the boundary points and facets
-    g_points = [np.array(shp.boundary.coords[:-1]),] # pop the last point as it is duplicate
-    g_facets = [np.array(round_trip_connect(0, len(g_points[0])-1), 'i'),]
-    assert(g_facets[0].min() == 0)
-    assert(g_facets[0].max() == len(g_points[0])-1)
-    
-
-    print("Triangulating polygon: %i points and %i facets"%(len(g_points[0]), len(g_facets[0])))
-    print("  with spill points at:")
-    print("  %r"%spillpoints)
-    print("  %r"%spillpoint_indices)
-    
-    def get_points_and_connections(reaches, i, subnetwork):
-        """Helper to collect points and facets"""
-        my_points = np.array(reaches[i].coords)
-        my_facets = np.array(oneway_trip_connect(0,len(my_points)-1),'i')
-        assert(len(my_points) == len(my_facets)+1)
-        if len(subnetwork.keys()) is 0:
-            # leaf node
-            # check if start node is an outlet
-            try:
-                start_is_spillpoint = next(i for (i,sp) in enumerate(spillpoints) if np.allclose(my_points[0], sp.coords, 1.e-7))
-            except StopIteration:
-                pass
-            else:
-                print("found inlet")
-                my_points = my_points[1:]
-                my_facets = my_facets - 1
-                my_facets[0][0] = - 10 - start_is_spillpoint # negative at -10 or lower indicates map to spillpoint index
-            #print("leaf  %i with total %i points and %i facets"%(i,len(my_points), len(my_facets)))
-            #print("  facets:", my_facets)
-            return my_points, my_facets
-        else:
-            points = []
-            n_points = 0
-            facets = []
-
-            #print("interior %i with children: %r"%(i,subnetwork.keys()))
-            #print("   and  %i local points and %i local facets"%(len(my_points), len(my_facets)))
-            for j, child in subnetwork.items():
-                p, f = get_points_and_connections(reaches, j, child)
-                assert(np.allclose(p[-1], my_points[0], 1.e-7))
-
-                # take off the last, it will be my first
-                points.append(p[:-1])
-                
-                # shift facets
-                f = np.where(f >= 0, f + n_points, f)
-
-                # set the last facet to end at null until we know the actual index
-                f[-1][-1] = -1
-
-                facets.append(f)
-                n_points += len(p)-1
-
-            # note n_points now is the index of my first point, which is the junction
-            points.append(my_points)
-            facets.append(my_facets+n_points)
-
-            fin_points = np.concatenate(points)
-            fin_facets = np.concatenate(facets)
-            fin_facets = np.where(fin_facets == -1, n_points, fin_facets)
-            #print("interior %i with total %i points and %i facets"%(i,len(fin_points), len(fin_facets)))
-            #print("  facets:", fin_facets)
-            
-            #assert(fin_facets.min() == 0)
-            assert(fin_facets.max() == len(fin_points)-1)
-            #fail = _checkclose(fin_points)
-            #if fail:
-            #    print(fin_points)
-            #    assert(False)
-            return fin_points, fin_facets
-
-    n_g_points = len(g_points[0])
-    for network in river_networks:
-        k,v = list(network.items())[0]
-        p, f = get_points_and_connections(reaches, k, v)
-
-        # check if the end node is an outlet
-        try:
-            end_is_spillpoint = next(i for (i,sp) in enumerate(spillpoints) if np.allclose(p[-1], sp.coords, 1.e-7))
-        except StopIteration:
-            pass
-        else:
-            print("found outlet")
-            p = p[:-1]
-            f[-1][-1] = -10 - end_is_spillpoint
-
-        g_facets.append(np.where(f >= 0, f + n_g_points, f))
-        g_points.append(p)
-        n_g_points += len(p)
-
-    all_points = np.concatenate(g_points)
-    all_facets = np.concatenate(g_facets)
-
-    # fix the spillpoints
-    for i,sp in enumerate(spillpoint_indices):
-        all_facets = np.where(all_facets == -10 -i, sp, all_facets)
-    
-    # plot to check the data
-    if False:
-        for f in all_facets:
-            plt.plot([all_points[f[0],0],all_points[f[1],0]],
-                     [all_points[f[0],1],all_points[f[1],1]], 'r')
-        plt.scatter(all_points[:,0], all_points[:,1], color='r', marker='x')
-        plt.show()
-    
-    if False:
-        print(all_points.shape)
-        print(all_facets.shape)
-        for i,p in enumerate(all_points):
-            for j,q in enumerate(all_points):
-                if j > i:
-                    if np.allclose(p,q, 1.e-7):
-                        print("GOT CLOSE", p, q)
+    def max_size_valid(distance):
+        """A function to make sure max size scales with distance from river network
         
-    centroid = np.mean(all_points, axis=0)
-    assert(len(centroid) == 2)
+        Units in [m]
+        """
+        if distance > away_distance:
+            size = away_size
+        elif distance < near_distance:
+            size = near_size
+        else:
+            size = near_size + (distance - near_distance) / (away_distance - near_distance) * (away_size - near_size)
+        return size**2 / 2
 
-    all_points = all_points - np.expand_dims(centroid,0)
+    river_multiline = workflow.tree.forest_to_list(rivers)
+    def refine(vertices, area):
+        """A function for use with workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
+        bary = np.sum(np.array(vertices), axis=0)/3
+        bary_p = shapely.geometry.Point(bary[0], bary[1])
+        distance = bary_p.distance(river_multiline)
+        print("refine check: centroid=%r, distance=%g, maxsize=%g"%(bary, distance, max_size_valid(distance)))
+        return bool(area > max_size_valid(distance))
 
-    info = meshpy.triangle.MeshInfo()
-    print("Triangulating: %i points and %i facets"%(len(all_points), len(all_facets)))
-    np.savetxt("points.txt", all_points)
-    np.savetxt("facets.txt", all_facets)
-
-    pdata = [tuple(p) for p in all_points]
-    info.set_points(pdata)
-    fdata = [[int(i) for i in f] for f in all_facets]
-    info.set_facets(fdata)
-
-    print("building mesh...")
-    mesh = meshpy.triangle.build(info, **kwargs)
-    print("  built")
-
-    mesh_points = np.array(mesh.points) + np.expand_dims(centroid,0)
-    mesh_tris = np.array(mesh.elements)
-    return mesh_points, mesh_tris
-
-
-
-
-if __name__ == "__main__":
-    import workflow.conf
-    import workflow.smooth
-    import workflow.download
-    import shapely
-    
-    import matplotlib.pyplot as plt
-    
-    plt.figure()
-    # load shapefiles for all HUC 12s in the Obed HUC 8.
-    profile, hucs = workflow.conf.load_hucs_in('06010208', 12)
-
-    # convert to shapely
-    hucs_s = [shapely.geometry.shape(s['geometry']) for s in hucs]
-
-    # intersect, finding shared boundaries
-    uniques, intersections = workflow.smooth.intersect_and_split(hucs_s)
-
-    # smooth/simplify/resample to a given spacing (in meters)
-    uniques_sm, intersections_sm = workflow.smooth.smooth(uniques,intersections,100)
-
-    # recombine
-    hucs_sm = workflow.smooth.recombine(uniques_sm, intersections_sm)
-
-    # triangulate (to a refinement with max_area, units a bit unclear?
-    # I believe these should be degrees^2, but the magnitude seems
-    # wrong for that.  Takes some fiddling.
-    for huc in hucs_sm:
-        mesh_points, mesh_tris = triangulate(huc, max_area=0.0001)
-        plt.triplot(mesh_points[:, 0], mesh_points[:, 1], mesh_tris)
-    plt.show()
-        
+    return refine

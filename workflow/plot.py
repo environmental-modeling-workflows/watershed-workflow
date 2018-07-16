@@ -1,9 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import collections as mc
+from matplotlib import collections as pltc
 
-def tri(points, tris, color='gray'):
-    plt.triplot(points[:,0], points[:,1], tris, color=color)
 
 def huc(huc, color=None, style='-', linewidth=1):
     if color is not None:
@@ -30,7 +28,7 @@ def rivers(rivers, color=None, style='-', linewidth=1):
     for tree in rivers:
         lines = [river.coords[:] for river in tree.dfs()]
         if style is not None:
-            lc = mc.LineCollection(lines, colors=color, linewidths=linewidth, linestyle=style)
+            lc = pltc.LineCollection(lines, colors=color, linewidths=linewidth, linestyle=style)
             plt.gca().add_collection(lc)
         if marker is not None:
             marked_points = np.concatenate([np.array(l) for l in lines])
@@ -43,9 +41,19 @@ def rivers(rivers, color=None, style='-', linewidth=1):
 def river(river, color='b', style='-', linewidth=1):
     for r in river:
         plt.plot(r.xy[0], r.xy[1], style, color=color, linewidth=linewidth)
-
         
 def points(points, **kwargs):
     x = [p.xy[0][0] for p in points]
     y = [p.xy[1][0] for p in points]
     plt.scatter(x,y,**kwargs)
+
+def triangulation(points, tris, color='gray', linewidth=1):
+    plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
+    plt.gca().set_aspect('equal', 'datalim')
+
+    
+    
+        
+    
+
+    

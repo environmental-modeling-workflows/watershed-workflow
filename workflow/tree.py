@@ -1,9 +1,8 @@
 """Module for working with tree data structures, built on tinytree"""
-
-
 import logging
 import collections
 import numpy as np
+import itertools
 
 import shapely.geometry
 import shapely.ops
@@ -144,14 +143,12 @@ def find_endpoints(segments):
             endpoints.append(i)
     return endpoints
 
+def tree_to_list(tree):
+    return shapely.geometry.MultiLineString(list(tree.dfs()))
 
 def forest_to_list(forest):
     """A forest is a list of trees.  Returns a flattened list of trees."""
-    return shapely.geometry.MultiLineString([n for tree in forest for n in tree.dfs()])
-
-def forests_to_list(forests):
-    """A forest is a list of trees.  Returns a flattened list of trees."""
-    return shapely.geometry.MultiLineString([n for forest in forests for tree in forest for n in tree.dfs()])
+    return shapely.geometry.MultiLineString([r for tree in forest for r in tree.dfs()])
 
 def is_consistent(tree, tol=1.e-8):
     """Checks the geometric consistency of the tree."""
