@@ -127,12 +127,10 @@ def triangulate(hucs, rivers, **kwargs):
     
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
-    centroid = np.round(np.mean(nodes, axis=0),3)
-    shifted_nodes = nodes - np.expand_dims(centroid,0)
-    #np.savetxt("points.txt", shifted_nodes)
+    #np.savetxt("points.txt", nodes)
     #np.savetxt("facets.txt", np.array(list(nodes_edges.edges),dtype=np.int32))
     
-    pdata = [tuple([float(c) for c in p]) for p in shifted_nodes]
+    pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
@@ -147,7 +145,7 @@ def triangulate(hucs, rivers, **kwargs):
     logging.info("   ...building")
     mesh = meshpy.triangle.build(info, **kwargs)
     logging.info("   ...built")
-    mesh_points = np.array(mesh.points) + np.expand_dims(centroid,0)
+    mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
     logging.info("   %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
     return mesh_points, mesh_tris
@@ -163,30 +161,30 @@ def refine_from_max_area(max_area):
         return res
     return refine
 
-def refine_from_river_distance(near_distance, near_size, away_distance, away_size, rivers):
+def refine_from_river_distance(near_distance, near_area, away_distance, away_area, rivers):
     """Returns a graded refinement function based upon a distance function from rivers.
 
-    Typical triangle diameter (size) must be smaller than near_size when the triangle
+    Triangle area must be smaller than near_area when the triangle
     centroid is within near_distance from the river network.
-    Size must be smaller than away_size when the triangle
+    Area must be smaller than away_area when the triangle
     centroid is at least away_distance from the river network.
-    Size must be smaller than a linear interpolant between
-    near_size and away_size when between
+    Area must be smaller than a linear interpolant between
+    near_area and away_area when between
     near_distance and away_distance from the river
     network.
     """
-    def max_size_valid(distance):
-        """A function to make sure max size scales with distance from river network
+    def max_area_valid(distance):
+        """A function to make sure max area scales with distance from river network
         
         Units in [m]
         """
         if distance > away_distance:
-            size = away_size
+            area = away_area
         elif distance < near_distance:
-            size = near_size
+            area = near_area
         else:
-            size = near_size + (distance - near_distance) / (away_distance - near_distance) * (away_size - near_size)
-        return size**2 / 2
+            area = near_area + (distance - near_distance) / (away_distance - near_distance) * (away_area - near_area)
+        return area
 
     river_multiline = workflow.tree.forest_to_list(rivers)
     def refine(vertices, area):
@@ -194,6 +192,9 @@ def refine_from_river_distance(near_distance, near_size, away_distance, away_siz
         bary = np.sum(np.array(vertices), axis=0)/3
         bary_p = shapely.geometry.Point(bary[0], bary[1])
         distance = bary_p.distance(river_multiline)
-        return bool(area > max_size_valid(distance))
+        max_area = max_area_valid(distance)
+        res = bool(area > max_area_valid(distance))
+        #logging.debug("refine? area = %g, distance = %g, max_area = %g: refine = %r"%(area,distance,max_area,res))
+        return res
 
     return refine

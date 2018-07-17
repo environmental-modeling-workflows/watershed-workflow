@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import collections as pltc
+import workflow.colors
 
 
 def huc(huc, color=None, style='-', linewidth=1):
@@ -47,9 +48,18 @@ def points(points, **kwargs):
     y = [p.xy[1][0] for p in points]
     plt.scatter(x,y,**kwargs)
 
-def triangulation(points, tris, color='gray', linewidth=1):
-    plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
-    #plt.gca().set_aspect('equal', 'datalim')
+def triangulation(points, tris, color=None, linewidth=1, edgecolor='gray'):
+    monocolor = True
+    if color is None:
+        if points.shape[1] is 3:
+            monocolor = False
+        else:
+            color = 'gray'
+        
+    if monocolor:
+        plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
+    else:
+        plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor)
 
     
     

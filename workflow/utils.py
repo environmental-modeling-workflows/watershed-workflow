@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import shapely.geometry
 import shapely.ops
+import shapely.affinity
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
@@ -175,4 +176,26 @@ def find_perp(line, point):
     dp = (p2[0] - point[0], p2[1] - point[1])
     p3 = (point[0] - dp[1], point[1] - dp[0])
     return p3
+    
+def triangle_area(vertices):
+    """Area of a triangle in 2D"""
+    xy1 = vertices[0]
+    xy2 = vertices[1]
+    xy3 = vertices[2]
+
+    A = 0.5 * (xy2[0] * xy3[1] -
+            xy3[0] * xy2[1] -
+            xy1[0] * xy3[1] +
+            xy3[0] * xy1[1] +
+            xy1[0] * xy2[1] -
+            xy2[0] * xy1[1])
+    return A
+
+
+def center(objects):
+    """Centers a collection of objects by removing their collective centroid"""
+    union = shapely.ops.cascaded_union(objects)
+    centroid = union.centroid
+    new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
+    return new_objs, centroid
     
