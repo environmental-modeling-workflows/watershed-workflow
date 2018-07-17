@@ -198,6 +198,7 @@ def snap_endpoints(river, hucs, tol=0.1):
                     mag_seg = math.sqrt(seg_tan[0]*seg_tan[0] + seg_tan[1]*seg_tan[1])
                     mag_river = math.sqrt(river_tan[0]*river_tan[0] + river_tan[1]*river_tan[1])
                     angle = np.arccos((seg_tan[0]*river_tan[0] + seg_tan[1]*river_tan[1]) / mag_seg / mag_river)
+                    logging.info("angle measured at %g"%angle)
                     if angle < math.pi/16:
                         # dot of tans
                         logging.info("nearly parallel river with angle = %g degrees"%(angle/math.pi*180))
@@ -220,11 +221,9 @@ def snap_endpoints(river, hucs, tol=0.1):
                 # set the new segments
                 if len(new_segs) > 1:
                     assert(len(new_segs) is 2)
-                    component.pop(s)
-                    new_handle1 = hucs.segments.add(new_segs[0])
-                    component.add(new_handle1)
-                    new_handle2 = hucs.segments.add(new_segs[1])
-                    component.add(new_handle2)
+                    hucs.segments[seg_handle] = new_segs[0]
+                    new_handle = hucs.segments.add(new_segs[1])
+                    component.add(new_handle)
                 elif len(new_segs) is 1:
                     hucs.segments[seg_handle] = new_segs[0]
                     
@@ -268,6 +267,7 @@ def snap_endpoints(river, hucs, tol=0.1):
                     mag_seg = math.sqrt(seg_tan[0]*seg_tan[0] + seg_tan[1]*seg_tan[1])
                     mag_river = math.sqrt(river_tan[0]*river_tan[0] + river_tan[1]*river_tan[1])
                     angle = np.arccos((seg_tan[0]*river_tan[0] + seg_tan[1]*river_tan[1]) / mag_seg / mag_river)
+                    logging.info("angle measured at %g"%angle)
                     if angle < math.pi/16:
                         # dot of tans
                         logging.info("nearly parallel river with angle = %g degrees"%(angle/math.pi*180))
@@ -296,21 +296,12 @@ def snap_endpoints(river, hucs, tol=0.1):
 
                 if len(new_segs) > 1:
                     assert(len(new_segs) is 2)
-                    component.pop(s)
-                    new_handle1 = hucs.segments.add(new_segs[0])
-                    component.add(new_handle1)
-                    new_handle2 = hucs.segments.add(new_segs[1])
-                    component.add(new_handle2)
+                    assert(len(new_segs) is 2)
+                    hucs.segments[seg_handle] = new_segs[0]
+                    new_handle = hucs.segments.add(new_segs[1])
+                    component.add(new_handle)
                 break # can only intersect one component -- triple points are already dealt with
-            
     return river
-
-def quick_cleanup(rivers, tol=0.1):
-    """First pass to clean up hydro data"""
-    logging.info("  quick cleaning rivers")
-    assert(type(rivers) is shapely.geometry.MultiLineString)
-    rivers = shapely.ops.linemerge(rivers).simplify(tol)
-    return rivers
 
 def make_global_tree(rivers, tol=0.1):
     # make a kdtree of beginpoints
@@ -366,68 +357,30 @@ def make_global_tree(rivers, tol=0.1):
     #     plt.show()            
     return trees
 
-def cut_and_bin(hucs, rivers):
-    """Two-pass cut and bin.  Slightly deprecated?  Not used in the main workflow."""
-    assert(type(hucs) is workflow.hucs.HUCs)
-    if type(rivers) is list:
-        rivers = shapely.geometry.MultiLineString(rivers)
+
+
+def filter_rivers_to_huc(hucs, rivers, tol):
+    """Filters out rivers not inside the HUCs provided."""
+    # removes any rivers that are not at least partial contained in the hucs
+    union = shapely.ops.cascaded_union(list(hucs.polygons()))
+    union = union.buffer(tol, 4)
+
+    if type(rivers) is shapely.geometry.MultiLineString or \
+       (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
+        rivers2 = [r for r in rivers if union.intersects(r)]
+    elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
+        rivers2 = [r for river in rivers for r in river.dfs() if union.intersects(r)]
+
+    rivers_tree = workflow.hydrography.make_global_tree(rivers2, tol=0.1)
+    return rivers_tree
+
+def quick_cleanup(rivers, tol=0.1):
+    """First pass to clean up hydro data"""
+    logging.info("  quick cleaning rivers")
     assert(type(rivers) is shapely.geometry.MultiLineString)
-    rivers = list(rivers)
+    rivers = shapely.ops.linemerge(rivers).simplify(tol)
+    return rivers
 
-    # first do a pass to just intersect all segs with all other segs
-    # and brute force add any needed things.
-    logging.info("  - cut and bin pass 1: cut")
-    to_remove = []
-    i = 0
-    while i < len(rivers):
-        r = rivers[i]
-        for spine in hucs.spines():
-            for k_seg_handle, seg_handle in list(spine.items()):
-                seg = hucs.segments[seg_handle]
-                if r.intersects(seg):
-                    try:
-                        new_rivers = workflow.utils.cut(r, seg)
-                        new_spine = workflow.utils.cut(seg, r)
-                    except RuntimeError as err:
-                        # workflow.plot.river(rivers, color='c')
-                        # for poly in hucs.polygons():
-                        #     workflow.plot.huc(poly, color='m')
-                        # plt.show()
-                        plt.show()
-                        raise err
-                        
-                    if len(new_rivers) > 1:
-                        rivers.extend(new_rivers)
-                        to_remove.append(i)
-                    if len(new_spine) > 1:
-                        hucs.segments.pop(seg_handle)
-                        spine.pop(k_seg_handle)
-                        new_handles = hucs.segments.add_many(new_spine)
-                        spine.add_many(new_handles)
-        i += 1
-
-    # now rivers and boundaries are properly cut
-    logging.info("  - cut and bin pass 2: bin")
-    done = [False,]*len(rivers)
-    for i in to_remove:
-        done[i] = True
-
-    bins = []
-    for poly in hucs.polygons():
-        my_bin = []
-        poly_b = poly.buffer(1.e-5, 2)
-        for i,r in enumerate(rivers):
-            if not done[i]:
-                if poly_b.contains(r):
-                    my_bin.append(r)
-                    done[i] = True
-        bins.append(my_bin)
-    # check for unbinned
-    for i,r in enumerate(rivers):
-        if not done[i]:
-            logging.warning("Skipping DEAD segment with length: %g"%r.length)
-    return bins
-                
 def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
     """Some hydrography data seems to get some random branches, typically
     quite short, that are nearly perfectly parallel to other, longer
@@ -470,154 +423,85 @@ def simplify(tree, tol=0.1):
         if node.segment is not None:
             node.segment = node.segment.simplify(tol)
             
-def sort(shps, hydro):
-    """Returns a list, one for each shp in shps, of all (split) segments
-    in hydro that are properly contained in the corresponding shp.
-    """
-    not_done = copy.deepcopy(list(hydro))
-    result = []
-    for j,s in enumerate(shps):
-        s_result = []
-        for i,r in enumerate(not_done):
-            if r is not None:
-                if s.intersects(r):
-                    inter = s.intersection(r)
-                    assert(type(inter) is shapely.geometry.LineString)
-                    s_result.append(inter)
 
-                    if s.exterior.intersects(r):
-                        # insert the boundary point, make a new polygon
-                        polyring = shapely.geometry.LineString(list(s.exterior.coords))
-                        union = polyring.union(r)
-                        polys = [g for g in shapely.ops.polygonize(union)]
-                        if len(polys) is not 1:
-                            import workflow.plot
-                            from matplotlib import pyplot as plt
-                            for p in polys:
-                                workflow.plot.huc(p, style='-x')
-                            plt.show()
-                            assert(False)
-                            
-                        new_s = polys[0]
-                        assert(len(new_s.exterior.coords) == len(s.exterior.coords)+1)
-                        shps[j] = new_s
-                    else:
-                        not_done[i] = None
-        result.append(shapely.geometry.MultiLineString(s_result))
-    return result
+# def _split(l1, l2, merge_tolerance):
+#     """Cuts two lines, adding the intersection point to both."""
+#     segs = shapely.ops.polygonize_full(l1.union(l2))[2] # gets the cut edges
 
+#     #    inter1 = l1.intersection(segs)
+#     #    inter2 = l2.intersection(segs)
 
-def sort_precut(shps, hydro):
-    """Returns a list, one for each shp in shps, of all (split) segments in hydro that are properly contained in the corresponding shp."""
-    not_done = copy.deepcopy(list(hydro))
-    result = []
-    for j,s in enumerate(shps):
-        s_result = []
-        for i,r in enumerate(not_done):
-            if r is not None:
-                if s.intersects(r):
-                    inter = s.intersection(r)
-                    if type(inter) is shapely.geometry.Point:
-                        pass
-                    else:
-                        assert(type(inter) is shapely.geometry.LineString)
-                        s_result.append(inter)
-                        if workflow.utils.contains(s,r):
-                            not_done[i] = None
-        result.append(shapely.geometry.MultiLineString(s_result))
-    return result
+#     # try:
+#     #     l1b = shapely.ops.linemerge(inter1)
+#     # except ValueError:
+#     # find the first
+#     first = next(seg for seg in segs if np.allclose(seg.coords[0], l1.coords[0], 1.e-7))
+#     last = next(seg for seg in segs if np.allclose(seg.coords[-1], l1.coords[-1], 1.e-7))
 
+#     # check for repeated points
+#     if np.linalg.norm(np.array(first.coords[-2]) - np.array(first.coords[-1])) < merge_tolerance:
+#         print("removed point")
+#         if len(first.coords) == 2:
+#             first = None
+#         else:
+#             first = shapely.geometry.LineString(first.coords[:-2]+[first.coords[-1],])
+#     if np.linalg.norm(np.array(last.coords[0]) - np.array(last.coords[1])) < merge_tolerance:
+#         print("removed point")
+#         if len(last.coords) == 2:
+#             last = None
+#         else:
+#             last = shapely.geometry.LineString([last.coords[0],]+last.coords[2:])
 
+#     assert(not(first is None and last is None))
+#     if first is None:
+#         l1b = last
+#     elif last is None:
+#         l1b = first
+#     else:           
+#         l1b = shapely.ops.linemerge([first,last])
 
-def _split(l1, l2, merge_tolerance):
-    """Cuts two lines, adding the intersection point to both."""
-    segs = shapely.ops.polygonize_full(l1.union(l2))[2] # gets the cut edges
+#     # try:
+#     #     l2b = shapely.ops.linemerge(inter2)
+#     # except ValueError:
+#     # find the first
+#     first = next(seg for seg in segs if np.allclose(seg.coords[0], l2.coords[0], 1.e-7))
+#     last = next(seg for seg in segs if np.allclose(seg.coords[-1], l2.coords[-1], 1.e-7))
+#     # check for repeated points
+#     if np.linalg.norm(np.array(first.coords[-2]) - np.array(first.coords[-1])) < merge_tolerance:
+#         print("removed point")
+#         if len(first.coords) == 2:
+#             first = None
+#         else:
+#             first = shapely.geometry.LineString(first.coords[:-2]+[first.coords[-1],])
+#     if np.linalg.norm(np.array(last.coords[0]) - np.array(last.coords[1])) < merge_tolerance:
+#         print("removed point")
+#         if len(last.coords) == 2:
+#             last = None
+#         else:
+#             last = shapely.geometry.LineString([last.coords[0],]+last.coords[2:])
 
-    #    inter1 = l1.intersection(segs)
-    #    inter2 = l2.intersection(segs)
+#     assert(not(first is None and last is None))
+#     if first is None:
+#         l2b = last
+#     elif last is None:
+#         l2b = first
+#     else:           
+#         l2b = shapely.ops.linemerge([first,last])
 
-    # try:
-    #     l1b = shapely.ops.linemerge(inter1)
-    # except ValueError:
-    # find the first
-    first = next(seg for seg in segs if np.allclose(seg.coords[0], l1.coords[0], 1.e-7))
-    last = next(seg for seg in segs if np.allclose(seg.coords[-1], l1.coords[-1], 1.e-7))
-
-    # check for repeated points
-    if np.linalg.norm(np.array(first.coords[-2]) - np.array(first.coords[-1])) < merge_tolerance:
-        print("removed point")
-        if len(first.coords) == 2:
-            first = None
-        else:
-            first = shapely.geometry.LineString(first.coords[:-2]+[first.coords[-1],])
-    if np.linalg.norm(np.array(last.coords[0]) - np.array(last.coords[1])) < merge_tolerance:
-        print("removed point")
-        if len(last.coords) == 2:
-            last = None
-        else:
-            last = shapely.geometry.LineString([last.coords[0],]+last.coords[2:])
-
-    assert(not(first is None and last is None))
-    if first is None:
-        l1b = last
-    elif last is None:
-        l1b = first
-    else:           
-        l1b = shapely.ops.linemerge([first,last])
-
-    # try:
-    #     l2b = shapely.ops.linemerge(inter2)
-    # except ValueError:
-    # find the first
-    first = next(seg for seg in segs if np.allclose(seg.coords[0], l2.coords[0], 1.e-7))
-    last = next(seg for seg in segs if np.allclose(seg.coords[-1], l2.coords[-1], 1.e-7))
-    # check for repeated points
-    if np.linalg.norm(np.array(first.coords[-2]) - np.array(first.coords[-1])) < merge_tolerance:
-        print("removed point")
-        if len(first.coords) == 2:
-            first = None
-        else:
-            first = shapely.geometry.LineString(first.coords[:-2]+[first.coords[-1],])
-    if np.linalg.norm(np.array(last.coords[0]) - np.array(last.coords[1])) < merge_tolerance:
-        print("removed point")
-        if len(last.coords) == 2:
-            last = None
-        else:
-            last = shapely.geometry.LineString([last.coords[0],]+last.coords[2:])
-
-    assert(not(first is None and last is None))
-    if first is None:
-        l2b = last
-    elif last is None:
-        l2b = first
-    else:           
-        l2b = shapely.ops.linemerge([first,last])
-
-    assert(type(l1b) is shapely.geometry.LineString)
-    assert(type(l2b) is shapely.geometry.LineString)
-    return l1b, l2b
+#     assert(type(l1b) is shapely.geometry.LineString)
+#     assert(type(l2b) is shapely.geometry.LineString)
+#     return l1b, l2b
     
 
-def split_spine(segs, reaches, merge_tolerance):
-    """Splits both spine segments and rivers at their intersections."""
-    result = []
-    for i,s in enumerate(segs):
-        for k,r in enumerate(reaches):
-            if r.intersects(s):
-                assert(type(s) is shapely.geometry.LineString)
-                assert(type(r) is shapely.geometry.LineString)
-                s2,r2 = _split(s,r, merge_tolerance)
-                assert(type(s2) is shapely.geometry.LineString)
-                assert(type(r2) is shapely.geometry.LineString)
-                segs[i], reaches[k] = s2,r2
-    
-
-
-
-    
-    
-    
-                    
-        
-
-
+# def split_spine(segs, reaches, merge_tolerance):
+#     """Splits both spine segments and rivers at their intersections."""
+#     result = []
+#     for i,s in enumerate(segs):
+#         for k,r in enumerate(reaches):
+#             if r.intersects(s):
+#                 assert(type(s) is shapely.geometry.LineString)
+#                 assert(type(r) is shapely.geometry.LineString)
+#                 s2,r2 = _split(s,r, merge_tolerance)
+#                 assert(type(s2) is shapely.geometry.LineString)
+#                 assert(type(r2) is shapely.geometry.LineString)
+#                 segs[i], reaches[k] = s2,r2

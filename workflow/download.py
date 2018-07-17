@@ -46,7 +46,8 @@ def download_huc(huc):
 def download_hydro(huc):
     """Ensures hydrography data is downloaded."""
     huc = workflow.conf.huc_str(huc)
-    assert len(huc) == 8
+    assert len(huc) >= 8
+    huc = huc[0:8]
     logging.info('Collecting HUC Hydrography: "%s"'%(huc))
     filename = workflow.conf.hydro_path(huc)
     if not os.path.isfile(filename):
@@ -57,8 +58,6 @@ def download_hydro(huc):
         if not success:
             raise RuntimeError("Error in unzipping hydrography file for %s"%huc)
     return filename
-
-
 
 
 def _download(url, location, force=False):

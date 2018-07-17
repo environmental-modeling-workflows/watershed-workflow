@@ -51,6 +51,10 @@ class HandledCollection:
         for k in self._store.keys():
             yield k
 
+    def keys(self):
+        for it in self._store.keys():
+            yield it
+        
     def items(self):
         for it in self._store.items():
             yield it

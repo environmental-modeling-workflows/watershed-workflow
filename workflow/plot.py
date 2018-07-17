@@ -49,7 +49,7 @@ def points(points, **kwargs):
 
 def triangulation(points, tris, color='gray', linewidth=1):
     plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
-    plt.gca().set_aspect('equal', 'datalim')
+    #plt.gca().set_aspect('equal', 'datalim')
 
     
     

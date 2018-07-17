@@ -109,7 +109,8 @@ def hydro_path(huc):
 def load_hydro(huc):
     """Returns the path to hydrography in this huc."""
     huc = huc_str(huc)
-    assert(len(huc) == 8)
+    assert(len(huc) >= 8)
+    huc = huc[0:8]
     filename = hydro_path(huc)
     with fiona.open(filename, 'r') as fid:
         profile = fid.profile
