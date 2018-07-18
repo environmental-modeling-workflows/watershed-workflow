@@ -24,6 +24,12 @@ rcParams = { "data dir" : "/Users/uec/research/water/data/meshing/data",
 def default_crs():
     return fiona.crs.from_epsg(rcParams['epsg'])
 
+def set_default_crs(epsg):
+    crs = fiona.crs.from_epsg(epsg) # make sure valid now
+    global rcParams
+    rcParams['epsg'] = epsg
+        
+
 def latlon_crs():
     return fiona.crs.from_epsg(4269)
 
