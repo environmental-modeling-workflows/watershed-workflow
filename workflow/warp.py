@@ -30,19 +30,26 @@ def warp_shapely(shp, old_crs, new_crs):
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""
-    coords = np.array(feature['geometry']['coordinates'])
-    d3 = False
-    if len(coords.shape) is 3:
-        d3 = True
-        coords = coords[0,:,:]
-    x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
-    new_coords = [xy for xy in zip(x,y)]
-
-    # change only the coordinates of the feature
-    if d3:
-        feature['geometry']['coordinates'][0] = new_coords
+    if len(feature['geometry']['coordinates']) is 0:
+        return
+    
+    if type(feature['geometry']['coordinates']) is np.ndarray or type(feature['geometry']['coordinates'][0]) is tuple:
+        # single object
+        coords = np.array(feature['geometry']['coordinates'],'d')
+        assert(len(coords.shape) is 2)
+        assert(coords.shape[-1] is 2)
+        x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
+        new_coords = [xy for xy in zip(x,y)]
+        feature['geometry']['coordinates'] = new_coords
     else:
-        feature['geometry']['coordinates'][:] = new_coords
+        # object collection
+        for i,c in enumerate(feature['geometry']['coordinates']):
+            coords = np.array(c,'d')
+            assert(len(coords.shape) is 2)
+            assert(coords.shape[-1] is 2)
+            x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
+            new_coords = [xy for xy in zip(x,y)]
+            feature['geometry']['coordinates'][i] = new_coords
     
 def warp_shapefile(infile, outfile, epsg=None):
     """Changes the projection of a shapefile."""

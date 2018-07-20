@@ -1,5 +1,6 @@
 """Shapely-only utilities not provided by shapely"""
 import logging
+import subprocess
 import numpy as np
 import shapely.geometry
 import shapely.ops
@@ -199,3 +200,80 @@ def center(objects):
     new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
     return new_objs, centroid
     
+def get_git_revision_hash():
+    """Returns the git revision hash."""
+    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
+
+
+def merge(ml1, ml2):
+    """Merges two multilines that are assumed to overlap except at their endpoints."""
+    assert(len(ml1) > 1)
+    assert(len(ml2) > 1)
+    assert(close(ml1[0].coords[0], ml2[0].coords[0]))
+    assert(close(ml1[-1].coords[-1], ml2[-1].coords[-1]))
+
+    new_ml = []
+    i1 = 0
+    c1 = ml1[i1]
+    i2 = 0
+    c2 = ml2[i2]
+    done = False
+    tol = 1.e-5
+    while not done:
+        if close(c1,c2,tol):
+            new_ml.append(c1)
+            i1 += 1
+            if i1 < len(ml1):
+                c1 = ml1[i1]
+            else:
+                c1 = None
+                done = True
+            
+            i2 += 1
+            if i2 < len(ml2):
+                c2 = ml2[i2]
+            else:
+                c2 = None
+                done = True
+            
+        elif c1.length < c2.length:
+            for k in range(len(c1.coords)-1):
+                assert(close(c1.coords[k], c2.coords[k], tol))
+            new_ml.append(c1)
+
+            assert(not close(c1.coords[-1], c2.coords[len(c1.coords)-1], tol))
+            c2 = shapely.geometry.LineString([c1.coords[-1],]+c2.coords[len(c1.coords)-1:])
+
+            i1 += 1
+            if i1 < len(ml1):
+                c1 = ml1[i1]
+            else:
+                c1 = None
+                done = True
+
+        elif c2.length < c1.length:
+            for k in range(len(c2.coords)-1):
+                assert(close(c2.coords[k], c1.coords[k], tol))
+            new_ml.append(c2)
+
+            assert(not close(c2.coords[-1], c1.coords[len(c2.coords)-1], tol))
+            c1 = shapely.geometry.LineString([c2.coords[-1],]+c1.coords[len(c2.coords)-1:])
+
+            i2 += 1
+            if i2 < len(ml2):
+                c2 = ml2[i2]
+            else:
+                c2 = None
+                done = True
+
+        else:
+            raise RuntimeError("ruh roh rorge")
+
+    if c1 is not None:
+        new_ml.append(c1)
+    if c2 is not None:
+        new_ml.append(c2)
+    return new_ml
+
+        
+        

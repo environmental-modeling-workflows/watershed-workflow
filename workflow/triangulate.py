@@ -4,6 +4,7 @@ import collections
 import numpy as np
 import numpy.linalg as la
 from matplotlib import pyplot as plt
+import scipy.spatial
 
 import shapely
 import meshpy.triangle
@@ -87,23 +88,20 @@ class NodesEdges:
 
     def check(self, tol=0.1):
         """Checks consistency of the interal representation."""
-        logging.info("checking graph consistency")
+        logging.info(" checking graph consistency")
         min_dist = 1.e10
-        nodes = list(self.nodes)
-        for i in range(len(nodes)):
-            for j in range(i):
-                dist = workflow.utils.distance(nodes[i], nodes[j])
-                min_dist = min(min_dist, dist)
-                assert(dist > tol)
-        logging.info("  min internal nodal distance = %g"%min_dist)
+        coords = np.array(list(self.nodes))
+        kdtree = scipy.spatial.cKDTree(coords)
+        bad_pairs = kdtree.query_pairs(tol)
+        assert(len(bad_pairs) is 0)
         
         min_node = min(self.nodes[n] for n in self.nodes)
         max_node = max(self.nodes[n] for n in self.nodes)
-        logging.info("  min/max nodal index = %i, %i out of %i"%(min_node, max_node, len(self.nodes)))
+        assert(min_node == 0)
+        assert(max_node == len(self.nodes)-1)
         
         min_edge_node = min(n for e in self.edges for n in e)
         max_edge_node = max(n for e in self.edges for n in e)
-        logging.info("  min/max edge-nodal index = %i, %i out of %i"%(min_edge_node, max_edge_node, len(self.nodes)))
         assert(min_edge_node == 0)
         assert(max_edge_node == len(self.nodes)-1)
 
@@ -125,6 +123,7 @@ def triangulate(hucs, rivers, **kwargs):
     logging.info("   %i points and %i facets"%(len(nodes_edges.nodes), len(nodes_edges.edges)))
     nodes_edges.check(tol=1)
     
+    logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
     #np.savetxt("points.txt", nodes)
@@ -142,12 +141,11 @@ def triangulate(hucs, rivers, **kwargs):
     # plt.scatter([p[0] for p in pdata], [p[1] for p in pdata],marker='+')
     # plt.show()
     
-    logging.info("   ...building")
+    logging.info(" triangle.build...")
     mesh = meshpy.triangle.build(info, **kwargs)
-    logging.info("   ...built")
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
-    logging.info("   %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
+    logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
     return mesh_points, mesh_tris
 
 

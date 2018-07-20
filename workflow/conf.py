@@ -2,6 +2,7 @@
 
 import sys,os
 import numpy as np
+import logging
 import fiona
 import rasterio
 
@@ -34,17 +35,28 @@ def latlon_crs():
     return fiona.crs.from_epsg(4269)
 
 
-def round(list_of_hucs):
-    for h in list_of_hucs:
-        coords = np.array(h['geometry']['coordinates'],'d').round(7)
-
-        if coords.shape[-1] is 3:
-            if len(coords.shape) is 2:
+def normalize(list_of_shps):
+    """Rounds and standardizes shapefile formats to deal with multiple or single entry files."""
+    for shp in list_of_shps:
+        assert(type(shp['geometry']['coordinates']) is list)
+        if len(shp['geometry']['coordinates']) is 0:
+            continue
+        if type(shp['geometry']['coordinates'][0]) is tuple:
+            # single object
+            coords = np.array(shp['geometry']['coordinates'], 'd').round(7)
+            if coords.shape[-1] is 3:
                 coords = coords[:,0:2]
-            elif len(coords.shape) is 3:
-                coords = coords[:,:,0:2]
-        h['geometry']['coordinates'] = coords
-    return list_of_hucs
+            assert(len(coords.shape) is 2)
+            shp['geometry']['coordinates'] = coords
+        else:
+            # object collection
+            for i,c in enumerate(shp['geometry']['coordinates']):
+                coords = np.array(c,'d').round(7)
+                assert(len(coords.shape) is 2)
+                if coords.shape[-1] is 3:
+                    coords = coords[:,0:2]
+            shp['geometry']['coordinates'][i] = coords
+    return list_of_shps
 
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
@@ -72,12 +84,13 @@ def load_huc(huc):
     """Reads a file to get a huc"""
     huc = huc_str(huc)
     filename = huc_path(huc)
+    logging.debug("Searching '%s' for HUC '%s'"%(filename, huc))
     with fiona.open(filename, 'r') as fid:
         matching = [h for h in fid if h['properties']['HUC%i'%len(huc)] == huc]
         profile = fid.profile
     if len(matching) is not 1:
         raise RuntimeError("Invalid collection of HUC?")
-    return profile, round(matching)[0]
+    return profile, normalize(matching)[0]
 
 def load_hucs_in(huc, size):
     """Reads a file to get a huc"""
@@ -86,7 +99,7 @@ def load_hucs_in(huc, size):
     with fiona.open(filename, 'r') as fid:
         matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(huc)]
         profile = fid.profile
-    return profile, round(matching)
+    return profile, normalize(matching)
 
 def load_dem(filename, index=1):
     """Reads a file to get an image raster"""
@@ -121,7 +134,7 @@ def load_hydro(huc):
     with fiona.open(filename, 'r') as fid:
         profile = fid.profile
         shps = [s for s in fid]
-    return profile, round(shps)
+    return profile, normalize(shps)
 
 
 

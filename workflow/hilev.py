@@ -1,3 +1,11 @@
+"""High-level routines, espeically those that interact with data,
+i.e. call download_*() or load_*() functions from conf.
+
+Most scripts use these functions instead of directly using lower-level
+capability.
+
+"""
+
 import sys,os
 import numpy as np
 from mpl_toolkits.mplot3d.axes3d import Axes3D
@@ -5,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.collections as pltc
 import logging
 
+import fiona
 import shapely
 import meshpy.triangle
 
@@ -21,6 +30,97 @@ import workflow.rowcol
 
 import vtk_io # from ATS/tools/meshing_ats
 
+def _in_huc(shp, hucstr):
+    """Checks whether shp is in HUC"""
+    logging.debug("Checking: shp in '%s'?"%hucstr)
+
+    try:
+        profile, huc = workflow.hilev.get_huc(hucstr)
+    except RuntimeError as err:
+        logging.debug("No such HUC %s found? %s"%(hucstr,str(err)))
+        raise err
+
+    if profile['crs']['init'] != 'epsg:4269':
+        # latlong
+        raise RuntimeError("HUC file for '%s' not in Lat-Lon?"%hucstr)
+
+    huc_shp = shapely.geometry.shape(huc['geometry'])
+    logging.debug(" shp bounds = %r"%list(shp.bounds))
+    logging.debug(" huc bounds = %r"%list(huc_shp.bounds))
+    if huc_shp.contains(shp):
+        logging.debug('  yes!')
+        return 2
+    elif huc_shp.intersects(shp):
+        logging.debug('  sorta!')
+        return 1
+    else:
+        logging.debug('  no!')
+        return 0
+
+def _find_huc(shp, hint):
+    for i in range(0,100):
+        try_huc = hint+'%02i'%i
+        try:
+            inhuc = _in_huc(shp, try_huc)
+        except RuntimeError:
+            if try_huc.endswith('00'):
+                # some huc levels have 00, some don't?
+                continue
+            else:
+                return -1
+
+        if inhuc == 2:
+            # fully contained in try_huc, recurse if not HUC12
+            if len(try_huc) == 12:
+                return try_huc
+            else:
+                return _find_huc(shp, try_huc)
+        elif inhuc == 1:
+            # partially contained in try_huc, return this
+            return hint
+    return -1
+
+def find_huc(shp_profile, shply, hint=None):
+    """Finds the smallest HUC containing shp, starting with a potential
+    hint, i.e. '06' for Tennessee River Valley.
+
+    Expects shp in lat-lon, i.e. epsg:4269
+    """
+    if shp_profile['crs']['init'] != 'epsg:4269':
+        # latlong
+        raise RuntimeError("shapefile not in Lat-Lon")
+
+    shply = shply.buffer(-.001)
+
+    if hint is None:
+        hint = ''
+    if len(hint) is 12:
+        inhuc = _in_huc(shply, hint)
+        if inhuc is not 2:
+            raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
+        return hint
+        
+    result = _find_huc(shply, hint)
+    if type(result) is not str:
+        raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
+    return result
+
+def get_huc(myhuc):
+    """Collects shapefiles for a HUC given code in string form.
+
+    Arguments:
+        myhuc   | a length N string for the number of the requested HUC.
+                | Note this must be an even number of digits, i.e. 01, not 1.
+
+    Returns huc
+        huc     | the fiona shape representation of the requested HUC
+    """
+    # collect HUC shapefile
+    workflow.download.download_huc(myhuc[0:2])
+
+    # load shapefiles for the HUC of interest
+    return workflow.conf.load_huc(myhuc)
+            
 def get_hucs(myhuc, center=True):
     """Collects shapefiles for HUCs given a HUC code in string form.
 
@@ -41,12 +141,8 @@ def get_hucs(myhuc, center=True):
     logging.info("=====================")
 
     # collect HUC shapefile
-    logging.info("downloading HUC %s"%myhuc[0:2])
+    logging.info("collecting HUC %s"%myhuc[0:2])
     workflow.download.download_huc(myhuc[0:2])
-
-    # load shapefiles for the HUC of interest
-    logging.info("loading HUC %s"%myhuc)
-    profile, huc = workflow.conf.load_huc(myhuc)
 
     # load shapefiles for all HUC 12s
     logging.info("loading all 12s")
@@ -70,7 +166,7 @@ def get_hucs(myhuc, center=True):
     logging.info("Split form HUCs")
     hucs = workflow.hucs.HUCs(huc_shapes)
     logging.info("...done")
-    return huc, hucs, centroid
+    return hucs, centroid
 
 def get_rivers(myhuc):
     """Collects shapefiles for hydrography data within a given HUC.
@@ -89,7 +185,7 @@ def get_rivers(myhuc):
     logging.info("==========================")
 
     # collect hydrography
-    logging.info("downloading Hydrography %s"%myhuc)
+    logging.info("collecting Hydrography %s"%myhuc)
     workflow.download.download_hydro(myhuc)
 
     # load stream network
@@ -107,7 +203,7 @@ def get_rivers(myhuc):
     rivers_s2 = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
     return rivers_s2
 
-def get_dem(huc):
+def get_dem(myhuc):
     """Collects a raster DEM that covers the requested HUC.
 
     Arguments:
@@ -122,9 +218,77 @@ def get_dem(huc):
     logging.info("Preprocessing DEM")
     logging.info("==========================")
     logging.info("downloading DEM")
+
+    # load shapefiles for the HUC of interest
+    logging.info("loading HUC %s"%myhuc)
+    profile, huc = workflow.conf.load_huc(myhuc)
+    assert(profile['crs']['init'] == 'epsg:4269') # latlong
+
     dem_profile, dem = workflow.clip.clip_dem(huc)
     dem = dem[0,:,:] # only the first band
     return dem_profile, dem
+
+
+def get_shapes(filename, index, center=True):
+    """Collects shapefiles.
+
+    Arguments:
+        filename| File to parse, should end in .shp
+        index   | Index of the requested shape in filename, or -1 to get all.
+        center  | If true, subtract off the centroid.
+
+    Returns (profile, sheds, boundary, centroid)
+        profile | the fiona profile/projection/etc for the shapefile
+                | Note this includes original projection.
+        sheds   | a workflow.hucs.HUCs object for all watershed shapes requested, 
+                | in the default coordinate system.
+        boundary| The boundary of the union of watersheds, in the original
+                |  coordinate system.
+        centroid| The centroid of the watersheds requested, for use in uncentering.
+    """
+    logging.info("")
+    logging.info("Preprocessing Shapes")
+    logging.info("=====================")
+
+    # load shapefile
+    logging.info("loading file: %s"%filename)
+    with fiona.open(filename, 'r') as fid:
+        profile = fid.profile
+        if index < 0:
+            shps = [s for s in fid]
+        else:
+            shps = [fid[index],]
+
+    # convert the original coordinate system to lat-lon to get a lat-lon boundary
+    if profile['crs']['init'] != 'epsg:4269':
+        for shp in shps:
+            workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.latlon_crs())
+        profile['crs']['init'] = 'epsg:4269'
+            
+    # convert original coordinate system to shapely
+    huc_shapes = [shapely.geometry.shape(s['geometry']) for s in shps]
+    boundary = shapely.ops.cascaded_union(huc_shapes)
+            
+    # change coordinates to meters (in place)
+    logging.info("change coordinates to m")
+    for shp in shps:
+        workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.default_crs())
+
+    # convert to shapely
+    huc_shapes = [shapely.geometry.shape(s['geometry']) for s in shps]
+
+    # center the HUCs
+    if center:
+        huc_shapes, centroid = workflow.utils.center(huc_shapes)
+    else:
+        centroid = shapely.geometry.Point(0,0)
+
+    # split
+    logging.info("Split form subwatersheds")
+    hucs = workflow.hucs.HUCs(huc_shapes)
+    logging.info("...done")
+    return profile, hucs, boundary, centroid
+    
 
 def simplify_and_prune(hucs, rivers, args):
     """Cleans up the HUC and river shapes, making sure intersections are
@@ -138,16 +302,20 @@ def simplify_and_prune(hucs, rivers, args):
     logging.info("========================")
     logging.info("filtering rivers outside of the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, tol)
+    if len(rivers) is 0:
+        return rivers
 
     logging.info("removing rivers with only a few reaches")
     for i in reversed(range(len(rivers))):
         ltree = len(rivers[i])
-        if ltree < 10:
+        if ltree < args.prune_reach_size:
             rivers.pop(i)
             logging.info("  removing river with %d reaches"%ltree)
         else:
             logging.info("  keeping river with %d reaches"%ltree)
-
+    if len(rivers) is 0:
+        return rivers
+            
     logging.info("simplifying rivers")
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
     logging.info("simplify HUCs")
@@ -162,14 +330,15 @@ def simplify_and_prune(hucs, rivers, args):
     logging.info("...done")
 
     logging.info("Resulting info")
-    mins = []
-    for river in rivers:
-        for line in river.dfs():
-            coords = np.array(line.coords[:])
-            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-            mins.append(np.min(dz))
-    logging.info("  river min seg length: %g"%min(mins))
-    logging.info("  river median seg length: %g"%np.median(np.array(mins)))
+    if len(rivers) is not 0:
+        mins = []
+        for river in rivers:
+            for line in river.dfs():
+                coords = np.array(line.coords[:])
+                dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+                mins.append(np.min(dz))
+        logging.info("  river min seg length: %g"%min(mins))
+        logging.info("  river median seg length: %g"%np.median(np.array(mins)))
 
     mins = []
     for line in hucs.segments:
@@ -233,7 +402,7 @@ def elevate(mesh_points, dem, dem_profile):
     mesh_points_3[:,2] = elev
     return mesh_points_3
     
-def save(filename, points3, tris):
+def save(filename, points3, tris, metadata):
     """Save as a VTK mesh. 
 
     This could be Exodus, but meshing_ats is in python2 (and uses exodus which is in python2)
@@ -241,5 +410,7 @@ def save(filename, points3, tris):
     logging.info("saving mesh")
     cells = {'triangle':tris}
     vtk_io.write(filename, points3, cells)
+    with open(filename+'.readme','w') as fid:
+        fid.write(metadata)
 
     

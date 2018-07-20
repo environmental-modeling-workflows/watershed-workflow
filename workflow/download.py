@@ -30,7 +30,7 @@ def download_dem(bounds):
 def download_huc(huc):
     """Ensures a given huc is downloaded, and returns the containing filename."""
     huc = workflow.conf.huc_str(huc)
-    logging.info('Collecting HUC: "%s"'%(huc))
+    logging.debug('Collecting HUC: "%s"'%(huc))
     filename = workflow.conf.huc_path(huc)
     if not os.path.isfile(filename):
         huc2 = huc[0:2]
@@ -48,7 +48,7 @@ def download_hydro(huc):
     huc = workflow.conf.huc_str(huc)
     assert len(huc) >= 8
     huc = huc[0:8]
-    logging.info('Collecting HUC Hydrography: "%s"'%(huc))
+    logging.debug('Collecting HUC Hydrography: "%s"'%(huc))
     filename = workflow.conf.hydro_path(huc)
     if not os.path.isfile(filename):
         filebase = _download_hydro(huc)

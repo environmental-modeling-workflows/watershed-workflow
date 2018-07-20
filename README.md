@@ -12,6 +12,7 @@ Note that this package expects you to place the top-level directory in your PYTH
 Required Packages
 -------------------
 
+Standard packages needed (should be included in all distributions?) include argparse and subprocess, and for testing, pytest and dist_utils.
 Standard math packages include numpy, matplotlib, and scipy.
 
 GIS work uses packages: fiona, rasterio, and shapely.
@@ -54,12 +55,31 @@ Check your python installation:
      import meshpy.triangle
 
 
-A first test
---------------
+A first example
+----------------
 
 A good way to get started is to simply run go:
 
-    python workflow/go.py
+    python3 bin/mesh_hucs.py -c 060102080102
 
 This downloads a HUC file (not small, so takes a minute) then
 extracts, smooths, and triangulates some HUCs in it.
+
+A set of examples
+-------------------
+
+Basic triangulation of an existing HUC 12:
+
+    python3 bin/mesh_hucs.py -c 060102080102
+
+Triangulate a HUC 10, ensuring that HUC12 edges are included:
+
+    python3 bin/mesh_hucs.py -c 0601020801
+
+Triangulate with refinement, grading the max area to higher res near the river:
+
+    python3 bin/mesh_hucs.py --refine-distance 0 1000 1000 10000 -c 060102080102
+
+Triangulate a given user-provided shapefile, for instance a subwatershed from the Coweeta basin:
+
+    python3 bin/mesh_shape.py --refine-distance 10 100 1000 1000 --hint=06 --center --shape-index=0 data/hydrologic_units/others/Coweeta/coweeta_subwatersheds.shp            

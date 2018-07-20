@@ -272,3 +272,58 @@ def test_perp():
 
     
     
+def test_git():
+    hsh = workflow.utils.get_git_revision_hash()
+    assert(type(hsh) is str)
+    assert(len(hsh) == 40)
+
+
+def test_merge0():
+    l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l2 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])
+    l3 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l4 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])
+
+    ml1 = shapely.geometry.MultiLineString([l1,l2])
+    ml2 = shapely.geometry.MultiLineString([l3,l4])
+
+    new_ml = workflow.utils.merge(ml1,ml2)
+    assert(len(new_ml) == 2)
+    assert(workflow.utils.close(new_ml[0], l1))
+    assert(workflow.utils.close(new_ml[1], l2))
+                                           
+
+def test_merge1():
+    l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l2 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])
+    l3 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (3,3), (3.5,3.5)])
+    l4 = shapely.geometry.LineString([(3.5, 3.5), (4,4),(5,5)])
+
+    ml1 = shapely.geometry.MultiLineString([l1,l2])
+    ml2 = shapely.geometry.MultiLineString([l3,l4])
+
+    new_ml = workflow.utils.merge(ml1,ml2)
+    assert(len(new_ml) == 3)
+    assert(workflow.utils.close(new_ml[0], l1))
+    assert(workflow.utils.close(new_ml[1], shapely.geometry.LineString([(2.5,2.5),(3,3),(3.5,3.5)])))
+    assert(workflow.utils.close(new_ml[2], l4))
+
+
+def test_merge1():
+    l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l2 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])
+    l3 = shapely.geometry.LineString([(0,0), (1,1), (1.5,1.5)])
+    l4 = shapely.geometry.LineString([(1.5,1.5),(2,2),(3,3), (3.5, 3.5)])
+    l5 = shapely.geometry.LineString([(3.5, 3.5), (4,4),(5,5)])
+
+    ml1 = shapely.geometry.MultiLineString([l1,l2])
+    ml2 = shapely.geometry.MultiLineString([l3,l4,l5])
+
+    new_ml = workflow.utils.merge(ml1,ml2)
+    assert(len(new_ml) == 4)
+    assert(workflow.utils.close(new_ml[0], l3))
+    assert(workflow.utils.close(new_ml[1], shapely.geometry.LineString([(1.5,1.5),(2,2),(2.5,2.5)])))
+    assert(workflow.utils.close(new_ml[2], shapely.geometry.LineString([(2.5,2.5),(3,3),(3.5,3.5)])))
+    assert(workflow.utils.close(new_ml[3], l5))
+    
+    
