@@ -24,7 +24,6 @@ def setup_logging(verbosity, logfile=None):
         logging.basicConfig(level=level,
                             format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
-
 def get_basic_argparse(docstring):
     """Gets a basic argparse class with basic options for all scripts."""
     doclines = docstring.split('\n')
@@ -127,3 +126,11 @@ def center_options(parser):
                         help="Center the output mesh for cleaner simulation but harder provenance.  Note centroid is written to the output mesh's readme file")
 
 
+def source_options(parser, sourcename, default):
+    """Add options for sources."""
+    parser.add_argument('--source-%s'%sourcename, type=str, default=default,
+                        help="Name of the source for %s data."%sourcename)
+
+
+    
+    

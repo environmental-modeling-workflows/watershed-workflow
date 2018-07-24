@@ -7,24 +7,119 @@ import zipfile
 import logging
 import shutil
 
+import fiona
+
 import workflow.conf
 from workflow.conf import rcParams as rc
 
+class FileSystem:
+    """File system meta data for downloading a file."""
+    def __init__(self, name, url, base_folder, folder_template, file_template,
+                 download_template=None, zip=True):
+        self.name = name
+        self._url = url
+        self.base_folder = base_folder
+        self.folder_template = folder_template
+        self.file_template = file_template
 
-def download_dem(bounds):
-    """Collect all files that tile a given set of bounds."""
-    logging.info('Collecting DEM tiles in: "%r"'%(bounds))
-    latlons = []
-    dems = []
-    for west in range(bounds[0], bounds[2]):
-        for north in range(bounds[1]+1, bounds[3]+1):
-            latlons.append((north,-west))
-            dems.append(_download_dem(north, -west))
+        if download_template is None:
+            self.download_template = folder_template
+        else:
+            self.download_template = download_template
+        self.zip = zip
 
-    files = []
-    for (lat,lon), filebase in zip(latlons, dems):
-        files.append(_unzip_dem(filebase, lat, lon))
-    return files
+    def data_dir(self):
+        return os.path.join(rc['data dir'], self.base_folder)
+    
+    def zip_dir(self):
+        return os.path.join(self.data_dir(), 'zips')
+
+    def folder_name(self, *args):
+        if self.folder_template is not None:
+            args = self.format_args(args)
+            return os.path.join(self.data_dir(), self.folder_template.format(*args))
+        else:
+            self.data_dir()
+
+    def download_base(self, *args):
+        fname = self.download_template.format(*args)
+        if self.zip:
+            fname += '.zip'
+
+    def download(self, *args):
+        return os.path.join(self.zip_dir(), self.download_base(*args))
+
+    def url(self, *args):
+        return self._url + self.download_base()
+
+    def file_name_base(self, *args):
+        args = self.format_args(args)
+        return self.file_template.format(*args)
+
+    def file_name(self, *args):
+        return os.path.join(self.folder_name(*args), self.file_name_base(*args))
+    
+class HucFileSystem(FileSystem):
+    """A FileSystem class based on HUC digits."""
+    def __init__(self, digits, *args, **kwargs):
+        super(FileSystem,self).__init__(*args, **kwargs)
+        self.digits = digits
+
+    def format_args(self, huc):
+        huc = workflow.conf.huc_str(huc)
+        huc_level = len(huc)
+        assert(len(huc) >= self.digits)
+        return huc[0:self.digits], huc_level
+
+
+class LatLonFileSystem(FileSystem):
+    """A FileSystem class based upon lat/lon"""
+    def format_args(self, lat, lon):
+        if type(lat) is int:
+            lat = 'n%02i'%lat
+        if type(lon) is int:
+            lon = 'w%03i'%lon
+        return [lat,lon]
+
+
+class FileManager:
+    """A class that actually manages the files."""
+    def __init__(self, filesystems):
+        self.filesystems = filesystems
+
+    def download(self, *args, force=False):
+        for fs in self.filesystems:
+            filename = fs.filename(*args)
+            try:
+                if not os.path.isfile(filename) or force:
+                    url = fs.url(*args)
+                    downloadfile = fs.download(*args)
+                    _download(url, downloadfile, force)
+                    if fs.zip:
+                        _unzip(downloadfile, fs.folder_name(*args))
+                    else:
+                        _rename(downloadfile, fs.folder_name(*args))
+            except Exception as err:
+                logging.info(str(err))
+            else:
+                logging.info('success')
+                return fs.file_name(*args)
+
+class TiledFileManager(FileManager):
+    """A class that manages tiled downloads."""
+    def download(self, bounds, force=False):
+        logging.info('Collecting tiles in: "%r"'%(bounds))
+        latlons = []
+        dems = []
+        for west in range(bounds[0], bounds[2]):
+            for north in range(bounds[1]+1, bounds[3]+1):
+                latlons.append((north,-west))
+                dems.append(super(TiledFileManager,self).download(bounds,force))
+        return dems
+
+
+        
+        
 
 
 def download_huc(huc):
@@ -46,10 +141,12 @@ def download_huc(huc):
 def download_hydro(huc):
     """Ensures hydrography data is downloaded."""
     huc = workflow.conf.huc_str(huc)
+    filename = workflow.conf.hydro_path(huc)
+
+
     assert len(huc) >= 8
     huc = huc[0:8]
     logging.debug('Collecting HUC Hydrography: "%s"'%(huc))
-    filename = workflow.conf.hydro_path(huc)
     if not os.path.isfile(filename):
         filebase = _download_hydro(huc)
         if not filebase:
@@ -80,27 +177,6 @@ def _download(url, location, force=False):
         logging.info('  SUCCESS')
     return os.path.isfile(location)
 
-
-def _dem_filename_base(lat, lon, templatenum=0):
-    """Base filename of DEM data"""
-    if type(lat) is int:
-        lat = 'n%02i'%lat
-    if type(lon) is int:
-        lon = 'w%03i'%lon
-    return rc['NED file templates'][templatenum]%(lat,lon)
-
-def _dem_url(filebase):
-    """URL, filename for DEM data
-
-    10m proeduct from USGS NED.  Lat,lon are the upper-left corner, in format, e.g.:
-
-         n37, w86
-    """
-    return rc['NED base URL']+filebase+'.zip'
-
-def _dem_zip(filebase):
-    """Return the name of the downloaded zip."""
-    return os.path.join(rc['data dir'], rc['dem data dir'], 'zips', filebase+'.zip')
 
 def _download_dem(lat,lon, force=False):
     """Downloads a dem, storing it in the right place

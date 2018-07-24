@@ -160,6 +160,7 @@ class HUCs:
         return len(self.gons)
 
 
+
 def simplify(hucs, tol=0.1):
     """Simplify, IN PLACE, all segments in the polygon representation."""
     for i,seg in hucs.segments.items():

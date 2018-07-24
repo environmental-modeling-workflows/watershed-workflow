@@ -108,35 +108,45 @@ def snap_crossings(hucs, rivers, tol=0.1):
 def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     """Snaps the endpoints of HUC segments to endpoints of rivers."""
     # make the kdTree of endpoints of all rivers
-    coords = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
-    if len(coords.shape) is 1:
-        # only a single segment...
-        coords = np.reshape(coords,(1,2))
+    coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
+    coords2 = np.array([r.coords[0] for tree in rivers for r in tree.leaves()])
+    coords = np.concatenate([coords1, coords2], axis=0)
+    logging.debug("Snap coord options: %r"%coords)
     kdtree = scipy.spatial.cKDTree(coords)
 
     # for each segment of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it, deleting as need be.
     for seg_handle, seg in hucs.segments.items():
         # check point 0
-        closest_point = kdtree.query(seg.coords[0])
-        if workflow.utils.distance(closest_point, seg.coords[0]) < tol:
+        dist_ind = kdtree.query(np.array(seg.coords[0]))
+        dist = dist_ind[0]
+        closest_point = coords[dist_ind[1]]
+        logging.debug("checking point: %r, got point: %r"%(seg.coords[0],closest_point))
+        if dist < tol:
             # have a closest point, move the segment
-            #logging.debug("  Moving HUC segment point 0 river outlet at %r"%(close_point))
-            #logging.debug("    %r"%(seg.coords[:]))
+            logging.debug("  Moving HUC segment point 0 river outlet to %r"%(closest_point))
+            logging.debug("    seg coords (old): %r"%(seg.coords[:]))
             
             new_seg = seg.coords[:]
             new_seg[0] = closest_point
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
+        else:
+            logging.debug("  Not moving: %r, %r (dist=%g)"%(closest_point, seg.coords[0],dist))
 
         # check point -1
-        closest_point = kdtree.query(seg.coords[-1])
-        if workflow.utils.distance(closest_point, seg.coords[-1]) < tol:
-            #logging.debug("  Moving HUC segment point -1 river outlet at %r"%(close_point))
-            #logging.debug("    %r"%(seg.coords[:]))
+        dist_ind = kdtree.query(np.array(seg.coords[-1]))
+        dist = dist_ind[0]
+        closest_point = coords[dist_ind[1]]
+        logging.debug("checking point: %r, got point: %r"%(seg.coords[-1],closest_point))
+        if dist < tol:
             # have a closest point, move the segment
+            logging.debug("  Moving HUC segment point -1 river outlet to %r"%(closest_point))
+            logging.debug("    seg coords (old): %r"%(seg.coords[:]))
             new_seg = seg.coords[:]
             new_seg[-1] = closest_point
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
+        else:
+            logging.debug("  Not moving: %r, %r (dist=%g)"%(closest_point, seg.coords[0], dist))
 
             
 def snap_endpoints(river, hucs, tol=0.1):

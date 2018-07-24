@@ -9,6 +9,9 @@ Default DEMs come from the National Elevation Dataset (NED).
 See: "https://lta.cr.usgs.gov/NED"
 """
 
+import matplotlib
+#matplotlib.use("PDF")
+
 import os,sys
 import numpy as np
 from matplotlib import pyplot as plt
@@ -16,7 +19,7 @@ import shapely
 
 import workflow.hilev
 import workflow.ui
-
+import workflow.sources
 
 if __name__ == '__main__':
     # set up parser
@@ -25,16 +28,20 @@ if __name__ == '__main__':
     workflow.ui.simplify_options(parser)
     workflow.ui.refine_options(parser)
     workflow.ui.center_options(parser)
+    workflow.ui.source_options(parser, 'huc', 'HUC.WBD')
+    workflow.ui.source_options(parser, 'dem', 'DEM.NED')
+    workflow.ui.source_options(parser, 'hydro', 'Hydro.NHD')
     workflow.ui.huc_args(parser)
 
     # parse args, log
     args = parser.parse_args()
     workflow.ui.setup_logging(args.verbosity, args.logfile)
+    sources = workflow.sources.get_sources(args)
     
     # collect data
-    hucs, centroid = workflow.hilev.get_hucs(args.HUC, args.center)
-    rivers = workflow.hilev.get_rivers(args.HUC)
-    dem_profile, dem = workflow.hilev.get_dem(args.HUC)
+    hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], args.center)
+    rivers = workflow.hilev.get_rivers(args.HUC, sources['Hydro'])
+    dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
 
     # make 2D mesh
     if args.center:
@@ -59,11 +66,15 @@ if __name__ == '__main__':
 
     # plot the result
     if args.verbosity > 0:
-        plt.figure()
+        plt.figure(figsize=(5,3))
         workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
+        plt.colorbar()
         workflow.plot.hucs(hucs, 'k')
         workflow.plot.rivers(rivers, color='r')
-        plt.gca().set_aspect('equal', 'datalim')    
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.xlabel('')
+        plt.ylabel('')
+        #plt.savefig('my_mesh')
         plt.show()
 
     # save mesh

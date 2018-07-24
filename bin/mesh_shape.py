@@ -16,6 +16,7 @@ import shapely
 
 import workflow.hilev
 import workflow.ui
+import workflow.sources
 
 
 if __name__ == '__main__':
@@ -26,19 +27,23 @@ if __name__ == '__main__':
     workflow.ui.outmesh_options(parser)
     workflow.ui.simplify_options(parser)
     workflow.ui.center_options(parser)
+    workflow.ui.source_options(parser, 'huc', 'HUC.WBD')
+    workflow.ui.source_options(parser, 'dem', 'DEM.NED')
+    workflow.ui.source_options(parser, 'hydro', 'Hydro.NHD')
     workflow.ui.refine_options(parser)
 
     # parse args, log
     args = parser.parse_args()
     workflow.ui.setup_logging(args.verbosity, args.logfile)
+    sources = workflow.sources.get_sources(args)
     
     # collect data
     profile, watersheds, watershed_boundary, centroid = workflow.hilev.get_shapes(args.infile, args.shape_index, args.center)
-    hucstr = workflow.hilev.find_huc(profile, watershed_boundary, args.hint)
+    hucstr = workflow.hilev.find_huc(profile, watershed_boundary, sources['HUC'], args.hint)
     logging.info("found shapes in HUC %s"%hucstr)
 
-    dem_profile, dem = workflow.hilev.get_dem(hucstr)
-    rivers = workflow.hilev.get_rivers(hucstr)
+    dem_profile, dem = workflow.hilev.get_dem(hucstr, sources)
+    rivers = workflow.hilev.get_rivers(hucstr, sources['Hydro'])
 
     # make 2D mesh
     if len(rivers) is not 0:

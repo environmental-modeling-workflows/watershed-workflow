@@ -15,7 +15,7 @@ import workflow.conf
 import workflow.download
 
 
-def clip_dem(shp, feather=10, nodata=-999, precision=7):
+def clip_dem(shp, source, feather=10, nodata=-999, precision=7):
     """Writes a raster which provides the dem for a range that covers a given huc.
     """
     hname = shp['properties'][next(k for k in shp['properties'].keys() if k.startswith('HUC'))]
@@ -28,7 +28,7 @@ def clip_dem(shp, feather=10, nodata=-999, precision=7):
     dst_bounds = []  # must snap these to the raster
 
     # collect the raster data covering those bounds
-    infiles = workflow.download.download_dem(bounds_1deg)
+    infiles = source.download(bounds_1deg)
     assert(len(infiles) > 0)
 
     # merge and clip

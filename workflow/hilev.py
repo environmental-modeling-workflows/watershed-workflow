@@ -30,12 +30,12 @@ import workflow.rowcol
 
 import vtk_io # from ATS/tools/meshing_ats
 
-def _in_huc(shp, hucstr):
+def _in_huc(shp, hucstr, source):
     """Checks whether shp is in HUC"""
     logging.debug("Checking: shp in '%s'?"%hucstr)
 
     try:
-        profile, huc = workflow.hilev.get_huc(hucstr)
+        profile, huc = workflow.hilev.get_huc(hucstr, source)
     except RuntimeError as err:
         logging.debug("No such HUC %s found? %s"%(hucstr,str(err)))
         raise err
@@ -57,11 +57,11 @@ def _in_huc(shp, hucstr):
         logging.debug('  no!')
         return 0
 
-def _find_huc(shp, hint):
+def _find_huc(shp, hint, source):
     for i in range(0,100):
         try_huc = hint+'%02i'%i
         try:
-            inhuc = _in_huc(shp, try_huc)
+            inhuc = _in_huc(shp, try_huc, source)
         except RuntimeError:
             if try_huc.endswith('00'):
                 # some huc levels have 00, some don't?
@@ -74,13 +74,13 @@ def _find_huc(shp, hint):
             if len(try_huc) == 12:
                 return try_huc
             else:
-                return _find_huc(shp, try_huc)
+                return _find_huc(shp, try_huc, source)
         elif inhuc == 1:
             # partially contained in try_huc, return this
             return hint
     return -1
 
-def find_huc(shp_profile, shply, hint=None):
+def find_huc(shp_profile, shply, source, hint=None):
     """Finds the smallest HUC containing shp, starting with a potential
     hint, i.e. '06' for Tennessee River Valley.
 
@@ -95,17 +95,17 @@ def find_huc(shp_profile, shply, hint=None):
     if hint is None:
         hint = ''
     if len(hint) is 12:
-        inhuc = _in_huc(shply, hint)
+        inhuc = _in_huc(shply, hint, source)
         if inhuc is not 2:
             raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
         return hint
         
-    result = _find_huc(shply, hint)
+    result = _find_huc(shply, hint, source)
     if type(result) is not str:
         raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
     return result
 
-def get_huc(myhuc):
+def get_huc(myhuc, source):
     """Collects shapefiles for a HUC given code in string form.
 
     Arguments:
@@ -116,12 +116,12 @@ def get_huc(myhuc):
         huc     | the fiona shape representation of the requested HUC
     """
     # collect HUC shapefile
-    workflow.download.download_huc(myhuc[0:2])
+    source.download(myhuc)
 
     # load shapefiles for the HUC of interest
-    return workflow.conf.load_huc(myhuc)
+    return workflow.files.load_huc(myhuc, source)
             
-def get_hucs(myhuc, center=True):
+def get_hucs(myhuc, source, center=True):
     """Collects shapefiles for HUCs given a HUC code in string form.
 
     Arguments:
@@ -142,11 +142,11 @@ def get_hucs(myhuc, center=True):
 
     # collect HUC shapefile
     logging.info("collecting HUC %s"%myhuc[0:2])
-    workflow.download.download_huc(myhuc[0:2])
+    source.download(myhuc)
 
     # load shapefiles for all HUC 12s
     logging.info("loading all 12s")
-    profile, huc12s = workflow.conf.load_hucs_in(myhuc, 12)
+    profile, huc12s = workflow.files.load_hucs_in(myhuc, source, 12)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -168,7 +168,7 @@ def get_hucs(myhuc, center=True):
     logging.info("...done")
     return hucs, centroid
 
-def get_rivers(myhuc):
+def get_rivers(myhuc, source):
     """Collects shapefiles for hydrography data within a given HUC.
 
     Arguments:
@@ -186,11 +186,11 @@ def get_rivers(myhuc):
 
     # collect hydrography
     logging.info("collecting Hydrography %s"%myhuc)
-    workflow.download.download_hydro(myhuc)
+    source.download(myhuc)
 
     # load stream network
     logging.info("loading streams")
-    rprofile, rivers = workflow.conf.load_hydro(myhuc)
+    rprofile, rivers = workflow.files.load_hydro(myhuc, source)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -203,7 +203,7 @@ def get_rivers(myhuc):
     rivers_s2 = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
     return rivers_s2
 
-def get_dem(myhuc):
+def get_dem(myhuc, sources):
     """Collects a raster DEM that covers the requested HUC.
 
     Arguments:
@@ -221,10 +221,10 @@ def get_dem(myhuc):
 
     # load shapefiles for the HUC of interest
     logging.info("loading HUC %s"%myhuc)
-    profile, huc = workflow.conf.load_huc(myhuc)
+    profile, huc = workflow.files.load_huc(myhuc, sources['HUC'])
     assert(profile['crs']['init'] == 'epsg:4269') # latlong
 
-    dem_profile, dem = workflow.clip.clip_dem(huc)
+    dem_profile, dem = workflow.clip.clip_dem(huc, sources['DEM'])
     dem = dem[0,:,:] # only the first band
     return dem_profile, dem
 

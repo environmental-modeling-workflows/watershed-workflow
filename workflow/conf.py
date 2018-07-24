@@ -6,57 +6,27 @@ import logging
 import fiona
 import rasterio
 
-rcParams = { "data dir" : "/Users/uec/research/water/data/meshing/data",
-             "dem data dir" : "dem",
-             "HUC data dir" : "hydrologic_units",
-             "hydrography data dir" : "hydrography",
-             "packages data dir" : "packages",
-             "hydro data dir" : "hydrography",
-             "NED file templates" : ["USGS_NED_13_%s%s_IMG","%s%s"],
-             "NED base URL" : "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/IMG/",
-             "HUC file templates" : ["WBD_%s_HU2_Shape",],
-             "HUC base URL" : "https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/Shape/",
-             "hydrography base URL" : "https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/Shape/",
-             "hydrography file templates" : ["NHD_H_%s_HU8_Shape",],
-             "epsg" : 5070, # default Albers equal area conic
+rcParams = { 'data dir' : '/Users/uec/research/water/data/meshing/data',
+             'packages data dir' : 'packages',
+             'epsg' : 5070, # default Albers equal area conic
              }
 
+#
 
 def default_crs():
+    """Returns the fiona coordniate system used by default for all output."""
     return fiona.crs.from_epsg(rcParams['epsg'])
 
 def set_default_crs(epsg):
+    """Set the default fiona coordinate system from an EPSG integer"""
     crs = fiona.crs.from_epsg(epsg) # make sure valid now
     global rcParams
     rcParams['epsg'] = epsg
         
-
 def latlon_crs():
+    """Returns the fiona coordinate system for Lat/Lon products."""
     return fiona.crs.from_epsg(4269)
 
-
-def normalize(list_of_shps):
-    """Rounds and standardizes shapefile formats to deal with multiple or single entry files."""
-    for shp in list_of_shps:
-        assert(type(shp['geometry']['coordinates']) is list)
-        if len(shp['geometry']['coordinates']) is 0:
-            continue
-        if type(shp['geometry']['coordinates'][0]) is tuple:
-            # single object
-            coords = np.array(shp['geometry']['coordinates'], 'd').round(7)
-            if coords.shape[-1] is 3:
-                coords = coords[:,0:2]
-            assert(len(coords.shape) is 2)
-            shp['geometry']['coordinates'] = coords
-        else:
-            # object collection
-            for i,c in enumerate(shp['geometry']['coordinates']):
-                coords = np.array(c,'d').round(7)
-                assert(len(coords.shape) is 2)
-                if coords.shape[-1] is 3:
-                    coords = coords[:,0:2]
-            shp['geometry']['coordinates'][i] = coords
-    return list_of_shps
 
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
@@ -72,69 +42,7 @@ def huc_str(huc):
         raise RuntimeError("Cannot convert type %r to huc"%type(huc))
     return huc
 
-def huc_path(huc):
-    """Returns the path to the fully resolved final HUC.  If projected, in the standard coordinate system."""
-    huc = huc_str(huc)
-    huc2 = huc[0:2]
-    filebase = "WBDHU%i.shp"%len(huc)
-    return os.path.join(rcParams['data dir'], rcParams['HUC data dir'], rcParams['HUC file templates'][0]%huc2, filebase)
 
-
-def load_huc(huc):
-    """Reads a file to get a huc"""
-    huc = huc_str(huc)
-    filename = huc_path(huc)
-    logging.debug("Searching '%s' for HUC '%s'"%(filename, huc))
-    with fiona.open(filename, 'r') as fid:
-        matching = [h for h in fid if h['properties']['HUC%i'%len(huc)] == huc]
-        profile = fid.profile
-    if len(matching) is not 1:
-        raise RuntimeError("Invalid collection of HUC?")
-    return profile, normalize(matching)[0]
-
-def load_hucs_in(huc, size):
-    """Reads a file to get a huc"""
-    huc = huc_str(huc)
-    filename = huc_path(huc+'0'*(size-len(huc)))
-    with fiona.open(filename, 'r') as fid:
-        matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(huc)]
-        profile = fid.profile
-    return profile, normalize(matching)
-
-def load_dem(filename, index=1):
-    """Reads a file to get an image raster"""
-    with rasterio.open(filename, 'r') as fid:
-        profile = fid.profile.copy()
-        array = fid.read(index)
-    return profile, array
-
-def bounds_from_profile(profile):
-    """Uses a profile to determine a raster bounds.  
-
-    Note that if you have a file, this is equivalent to fid.bounds and
-    that should be preferred.
-    """
-    xmin, ymax = profile['affine'] * (0,0)
-    xmax, ymin = profile['affine'] * (profile['width'], profile['height'])
-    return [xmin, ymin, xmax, ymax]
-
-def hydro_path(huc):
-    """Returns the path to hydrography in this huc."""
-    huc = huc_str(huc)
-    assert(len(huc) == 8)
-    filebase = "NHDFlowline.shp"
-    return os.path.join(rcParams['data dir'], rcParams['hydrography data dir'], rcParams['hydrography file templates'][0]%huc, filebase)
-
-def load_hydro(huc):
-    """Returns the path to hydrography in this huc."""
-    huc = huc_str(huc)
-    assert(len(huc) >= 8)
-    huc = huc[0:8]
-    filename = hydro_path(huc)
-    with fiona.open(filename, 'r') as fid:
-        profile = fid.profile
-        shps = [s for s in fid]
-    return profile, normalize(shps)
 
 
 

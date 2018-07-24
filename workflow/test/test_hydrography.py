@@ -134,6 +134,8 @@ def check3(hucs,rivers):
     poly1 = hucs.polygon(1)
     assert(workflow.utils.close(poly1, shapely.geometry.Polygon([(10,-5),(20,-5),(20,5),(10,5)])))
     poly2 = hucs.polygon(2)
+    print(list(poly2.boundary.coords))
+    print(list(shapely.geometry.Polygon([(0,5),(10,5),(20,5),(20,10),(10,10),(0,10)]).boundary.coords))
     assert(workflow.utils.close(poly2, shapely.geometry.Polygon([(0,5),(10,5),(20,5),(20,10),(10,10),(0,10)])))
 
     assert(len(rivers[0]) is 3)
