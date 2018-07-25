@@ -19,7 +19,7 @@ import shapely
 
 import workflow.hilev
 import workflow.ui
-import workflow.sources
+import workflow.files
 
 if __name__ == '__main__':
     # set up parser
@@ -28,19 +28,18 @@ if __name__ == '__main__':
     workflow.ui.simplify_options(parser)
     workflow.ui.refine_options(parser)
     workflow.ui.center_options(parser)
-    workflow.ui.source_options(parser, 'huc', 'HUC.WBD')
-    workflow.ui.source_options(parser, 'dem', 'DEM.NED')
-    workflow.ui.source_options(parser, 'hydro', 'Hydro.NHD')
+    workflow.ui.huc_source_options(parser)
+    workflow.ui.dem_source_options(parser)
     workflow.ui.huc_args(parser)
 
     # parse args, log
     args = parser.parse_args()
     workflow.ui.setup_logging(args.verbosity, args.logfile)
-    sources = workflow.sources.get_sources(args)
+    sources = workflow.files.get_sources(args)
     
     # collect data
     hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], args.center)
-    rivers = workflow.hilev.get_rivers(args.HUC, sources['Hydro'])
+    rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
     dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
 
     # make 2D mesh

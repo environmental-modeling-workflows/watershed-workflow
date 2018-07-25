@@ -116,7 +116,7 @@ def cut(line, cutline, tol=1.e-5):
                 segcoords = [point,seg.coords[-1]]
                 i += 1
         else:
-            plot()
+            #plot()
             raise RuntimeError("Dual/multiple intersection in a single seg... ugh!")
 
     if len(segcoords) > 1:

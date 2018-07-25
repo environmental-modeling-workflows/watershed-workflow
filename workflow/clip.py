@@ -12,7 +12,6 @@ from rasterio.transform import Affine
 from rasterio._base import get_window
 
 import workflow.conf
-import workflow.download
 
 
 def clip_dem(shp, source, feather=10, nodata=-999, precision=7):

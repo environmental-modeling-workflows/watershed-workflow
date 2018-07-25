@@ -4,7 +4,7 @@ import pytest
 import fiona
 import shapely.geometry
 import workflow.hilev
-import workflow.sources
+import workflow.files
 
 @pytest.fixture
 def datadir(tmpdir, request):
@@ -21,7 +21,11 @@ def datadir(tmpdir, request):
 
 @pytest.fixture
 def sources():
-    return workflow.sources.get_sources()
+    sources = dict()
+    sources['HUC'] = workflow.files.NHDFileManager()
+    sources['DEM'] = workflow.files.NEDFileManager()
+    return sources
+
 
 def get_fiona(filename):
     with fiona.open(str(filename), 'r') as fid:

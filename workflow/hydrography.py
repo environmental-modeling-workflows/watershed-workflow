@@ -20,6 +20,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
     assert(type(hucs) is workflow.hucs.HUCs)
     assert(type(rivers) is list)
     assert(all(workflow.tree.is_consistent(river) for river in rivers))
+    list(hucs.polygons())
 
     if len(rivers) is 0:
         return True
@@ -33,15 +34,24 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
     if not all(workflow.tree.is_consistent(river) for river in rivers):
         logging.info("  ...resulted in inconsistent rivers!")
         return False
+    try:
+        list(hucs.polygons())
+    except AssertionError:
+        logging.info("  ...resulted in inconsistent HUCs")
+        return False
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
     logging.info(" Snapping river endpoints to the polygon")
     for tree in rivers:
-        for node in tree.preOrder():
-            node.segment = snap_endpoints(node.segment, hucs, tol)
+        snap_endpoints(tree, hucs, tol)
     if not all(workflow.tree.is_consistent(river) for river in rivers):
         logging.info("  ...resulted in inconsistent rivers!")
+        return False
+    try:
+        list(hucs.polygons())
+    except AssertionError:
+        logging.info("  ...resulted in inconsistent HUCs")
         return False
 
     # deal with intersections
@@ -50,7 +60,13 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
     consistent = all(workflow.tree.is_consistent(river) for river in rivers)
     if not consistent:
         logging.info("  ...resulted in inconsistent rivers!")
-    return consistent
+        return False
+    try:
+        list(hucs.polygons())
+    except AssertionError:
+        logging.info("  ...resulted in inconsistent HUCs")
+        return False
+    return True
 
 def _snap_and_cut(point, line, tol=0.1):
     """Determine the closest point to a line and, if it is within tol of
@@ -61,20 +77,12 @@ def _snap_and_cut(point, line, tol=0.1):
         nearest_p = workflow.utils.nearest_point(line, point)
         dist = workflow.utils.distance(nearest_p, point)
         if dist < tol:
-            #logging.debug("  snap and cut, dist = %g"%dist)
-            if dist == 0.:
-                point = workflow.utils.find_perp(line, point)
-            
-            # project out a point on the othe side of the line
-            p2 = (point[0] + 2*(nearest_p[0] - point[0]),
-                  point[1] + 2*(nearest_p[1] - point[1]))
-            cutline = shapely.geometry.LineString([point, p2])
-            if not(line.intersects(cutline)):
-                logging.debug("INTERSECTING ISSUE:")
-                logging.debug("  cutline:  %r, %r"%(point, p2))
-                logging.debug("  line: %r"%line.coords[:])
-            return nearest_p, workflow.utils.cut(line, cutline, tol)
-    return None, line
+            if dist < 1.e-7:
+                # filter case where the point is already there
+                if any(workflow.utils.close(point, c) for c in line.coords):
+                    return None 
+            return nearest_p
+    return None
 
 def _snap_crossing(hucs, river_node, tol=0.1):
     """Snap a single river node"""
@@ -85,7 +93,15 @@ def _snap_crossing(hucs, river_node, tol=0.1):
 
             if seg.intersects(r):
                 new_spine = workflow.utils.cut(seg, r, tol)
-                new_rivers = workflow.utils.cut(r, seg, tol)
+                try:
+                    new_rivers = workflow.utils.cut(r, seg, tol)
+                except RuntimeError as err:
+                    plt.figure()
+                    workflow.plot.hucs(hucs,color='gray')
+                    plt.plot(seg.xy[0], seg.xy[1], 'b-+')
+                    plt.plot(r.xy[0], r.xy[1], 'r-x')
+                    plt.show()
+                    raise err
                 
                 river_node.segment = new_rivers[-1]
                 if len(new_rivers) > 1:
@@ -115,187 +131,124 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     kdtree = scipy.spatial.cKDTree(coords)
 
     # for each segment of the HUC spine, find the river outlet that is
-    # closest.  If within tolerance, move it, deleting as need be.
+    # closest.  If within tolerance, move it
     for seg_handle, seg in hucs.segments.items():
         # check point 0
-        dist_ind = kdtree.query(np.array(seg.coords[0]))
-        dist = dist_ind[0]
-        closest_point = coords[dist_ind[1]]
-        logging.debug("checking point: %r, got point: %r"%(seg.coords[0],closest_point))
-        if dist < tol:
-            # have a closest point, move the segment
-            logging.debug("  Moving HUC segment point 0 river outlet to %r"%(closest_point))
-            logging.debug("    seg coords (old): %r"%(seg.coords[:]))
-            
-            new_seg = seg.coords[:]
-            new_seg[0] = closest_point
+        dists,inds = kdtree.query(np.array([seg.coords[0],seg.coords[-1]]))
+        if dists.min() < tol:
+            new_seg = list(seg.coords)
+            if dists[0] < tol:
+                new_seg[0] = coords[inds[0]]
+                logging.debug("  Moving HUC segment point 0 to river at %r"%list(new_seg[0]))
+            if dists[1] < tol:
+                new_seg[-1] = coords[inds[1]]
+                logging.debug("  Moving HUC segment point -1 to river at %r"%list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
-        else:
-            logging.debug("  Not moving: %r, %r (dist=%g)"%(closest_point, seg.coords[0],dist))
 
-        # check point -1
-        dist_ind = kdtree.query(np.array(seg.coords[-1]))
-        dist = dist_ind[0]
-        closest_point = coords[dist_ind[1]]
-        logging.debug("checking point: %r, got point: %r"%(seg.coords[-1],closest_point))
-        if dist < tol:
-            # have a closest point, move the segment
-            logging.debug("  Moving HUC segment point -1 river outlet to %r"%(closest_point))
-            logging.debug("    seg coords (old): %r"%(seg.coords[:]))
-            new_seg = seg.coords[:]
-            new_seg[-1] = closest_point
-            hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
-        else:
-            logging.debug("  Not moving: %r, %r (dist=%g)"%(closest_point, seg.coords[0], dist))
-
-            
-def snap_endpoints(river, hucs, tol=0.1):
+def snap_endpoints(tree, hucs, tol=0.1):
     """Snap river endpoints to huc segments and insert that point into
     the boundary.
 
     Note this is O(n^2), and could be made more efficient.
     """
-    assert(type(river) is shapely.geometry.LineString)
-    for b,component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
+    to_add = []
+    for node in tree.preOrder():
+        river = node.segment
+        for b,component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
+
+            # note, this is done in two stages to allow it deal with both endpoints touching
+            for s,seg_handle in component.items():
+                seg = hucs.segments[seg_handle]
+                #logging.debug("SNAP P0:")
+                #logging.debug("  huc seg: %r"%seg.coords[:])
+                #logging.debug("  river: %r"%river.coords[:])
+                altered = False
+                new_coord = _snap_and_cut(river.coords[0], seg, tol)
+                if new_coord is not None:
+                    logging.info("  - snapped river: %r to %r"%(river.coords[0], new_coord))
+
+                    # remove points that are closer
+                    coords = list(river.coords)
+                    done = False
+                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[1]) < \
+                          workflow.utils.distance(new_coord, coords[0]):
+                        coords.pop(0)
+                    coords[0] = new_coord
+                    river = shapely.geometry.LineString(coords)
+                    to_add.append((seg_handle, component, 0, node))
+                    break
+
+            # second stage
+            for s,seg_handle in component.items():
+                seg = hucs.segments[seg_handle]
+                # logging.debug("SNAP P1:")
+                # logging.debug("  huc seg: %r"%seg.coords[:])
+                # logging.debug("  river: %r"%river.coords[:])
+                altered = False
+                new_coord = _snap_and_cut(river.coords[-1], seg, tol)
+                if new_coord is not None:
+                    logging.info("  - snapped river: %r to %r"%(river.coords[-1], new_coord))
+
+                    # remove points that are closer
+                    coords = list(river.coords)
+                    done = False
+                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[-2]) < \
+                          workflow.utils.distance(new_coord, coords[-1]):
+                        coords.pop(-1)
+                    coords[-1] = new_coord
+                    river = shapely.geometry.LineString(coords)
+                    to_add.append((seg_handle, component, -1, node))
+                    break
+
+    # find the list of points to add to a give segment
+    to_add_dict = dict()
+    for seg_handle, component, endpoint, node in to_add:
+        if seg_handle not in to_add_dict.keys():
+            to_add_dict[seg_handle] = list()
+        to_add_dict[seg_handle].append((component, endpoint, node))
+
+    # find the set of points to add to each given segment
+    def equal(p1,p2):
+        if workflow.utils.close(p1[2].segment.coords[p1[1]], p2[2].segment.coords[p2[1]], 1.e-5):
+            assert(p1[0] == p2[0])
+            return True
+        else:
+            return False
+    to_add_dict2 = dict()
+    for seg_handle, insert_list in to_add_dict.items():
+        new_list = []
+        for p1 in insert_list:
+            if (all(not equal(p1, p2) for p2 in new_list)):
+                new_list.append(p1)
+        to_add_dict2[seg_handle] = new_list
+
+    # add these points to the segment
+    for seg_handle, insert_list in to_add_dict2.items():
+        seg = hucs.segments[seg_handle]
+        # make a list of the coords and a flag to indicate a new
+        # coord, then sort it by arclength along the segment.
+        new_coords = sorted(
+            [(c,0) for c in seg.coords]+[(p[2].segment.coords[p[1]],1) for p in insert_list],
+            key = lambda a:seg.project(shapely.geometry.Point(a)))
+
+        # determine the new coordinate indices, then break into new segments
+        breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+        new_segs = []
+        ind_start = 0
+        for ind_end in breakpoint_inds:
+            assert(ind_end is not 0)
+            new_segs.append(shapely.geometry.LineString([c for (c,f) in new_coords[ind_start:ind_end+1]]))
+            ind_start = ind_end
+
+        assert(ind_start < len(new_coords)-1)
+        new_segs.append(shapely.geometry.LineString([c for (c,f) in new_coords[ind_start:]]))
         
-        # note, this is done in two stages to allow it deal with both endpoints touching
-        for s,seg_handle in component.items():
-            seg = hucs.segments[seg_handle]
-            #logging.debug("SNAP P0:")
-            #logging.debug("  huc seg: %r"%seg.coords[:])
-            #logging.debug("  river: %r"%river.coords[:])
-            altered = False
-            new_coord, new_segs = _snap_and_cut(river.coords[0], seg, tol)
-            if new_coord is not None:
-                logging.info("  - snapped river: %r to %r"%(river.coords[0], new_coord))
 
-                # remove points that are closer
-                coords = list(river.coords)
-                done = False
-                while len(coords) > 2 and workflow.utils.distance(new_coord, coords[1]) < \
-                      workflow.utils.distance(new_coord, coords[0]):
-                    coords.pop(0)
-                coords[0] = new_coord
-                river = shapely.geometry.LineString(coords)
+        # put all new_segs into the huc list.  Note insert_list[0][0] is the component
+        hucs.segments[seg_handle] = new_segs.pop(0)
+        new_handles = hucs.segments.add_many(new_segs)
+        insert_list[0][0].add_many(new_handles)
 
-                # check for nearly parallel river and huc boundary
-                river_tan = (coords[1][0] - coords[0][0], coords[1][1] - coords[0][1])
-                for i, seg in enumerate(new_segs):
-                    # find the coincident point
-                    if workflow.utils.close(seg.coords[0], new_coord):
-                        seg_p = 1
-                        seg_tan = (seg.coords[1][0] - new_coord[0],
-                                   seg.coords[1][1] - new_coord[1])
-                    elif workflow.utils.close(seg.coords[-1], new_coord):
-                        seg_p = -2
-                        seg_tan = (seg.coords[-2][0] - new_coord[0],
-                                   seg.coords[-2][1] - new_coord[1])
-                    else:
-                        assert(False)
-
-                    mag_seg = math.sqrt(seg_tan[0]*seg_tan[0] + seg_tan[1]*seg_tan[1])
-                    mag_river = math.sqrt(river_tan[0]*river_tan[0] + river_tan[1]*river_tan[1])
-                    angle = np.arccos((seg_tan[0]*river_tan[0] + seg_tan[1]*river_tan[1]) / mag_seg / mag_river)
-                    logging.info("angle measured at %g"%angle)
-                    if angle < math.pi/16:
-                        # dot of tans
-                        logging.info("nearly parallel river with angle = %g degrees"%(angle/math.pi*180))
-                        if mag_river > 2*mag_seg:
-                            # insert segment point into river
-                            coords = [coords[0],seg.coords[seg_p],]+coords[1:]
-                            river = shapely.geometry.LineString(coords)
-                        elif mag_seg > 2*mag_river:
-                            # insert river point into segment
-                            if seg_p == 1:
-                                seg_coords = [seg.coords[0],coords[1],]+seg.coords[1:]
-                            else:
-                                seg_coords = seg.coords[:-1],[coords[1], seg.coords[-1],]
-                            new_segs[i] = shapely.geometry.LineString(seg_coords)
-                        else:
-                            # move river onto segment
-                            coords[1] = seg.coords[seg_p]
-                            river = shapely.geometry.LineString(coords)
-
-                # set the new segments
-                if len(new_segs) > 1:
-                    assert(len(new_segs) is 2)
-                    hucs.segments[seg_handle] = new_segs[0]
-                    new_handle = hucs.segments.add(new_segs[1])
-                    component.add(new_handle)
-                elif len(new_segs) is 1:
-                    hucs.segments[seg_handle] = new_segs[0]
-                    
-                break # can only intersect one component -- triple points are already dealt with
-
-        # second stage
-        for s,seg_handle in component.items():
-            seg = hucs.segments[seg_handle]
-            # logging.debug("SNAP P1:")
-            # logging.debug("  huc seg: %r"%seg.coords[:])
-            # logging.debug("  river: %r"%river.coords[:])
-            altered = False
-            new_coord, new_segs = _snap_and_cut(river.coords[-1], seg, tol)
-            if new_coord is not None:
-                logging.info("  - snapped river: %r to %r"%(river.coords[-1], new_coord))
-
-                # remove points that are closer
-                coords = list(river.coords)
-                done = False
-                while len(coords) > 2 and workflow.utils.distance(new_coord, coords[-2]) < \
-                      workflow.utils.distance(new_coord, coords[-1]):
-                    coords.pop(-1)
-                coords[-1] = new_coord
-                river = shapely.geometry.LineString(coords)
-
-                # check for nearly parallel river and huc boundary
-                river_tan = (coords[-2][0] - coords[-1][0], coords[-2][1] - coords[-1][1])
-                for i, seg in enumerate(new_segs):
-                    # find the coincident point
-                    if workflow.utils.close(seg.coords[0], new_coord):
-                        seg_p = 1
-                        seg_tan = (seg.coords[1][0] - new_coord[0],
-                                   seg.coords[1][1] - new_coord[1])
-                    elif workflow.utils.close(seg.coords[-1], new_coord):
-                        seg_p = -2
-                        seg_tan = (seg.coords[-2][0] - new_coord[0],
-                                   seg.coords[-2][1] - new_coord[1])
-                    else:
-                        assert(False)
-
-                    mag_seg = math.sqrt(seg_tan[0]*seg_tan[0] + seg_tan[1]*seg_tan[1])
-                    mag_river = math.sqrt(river_tan[0]*river_tan[0] + river_tan[1]*river_tan[1])
-                    angle = np.arccos((seg_tan[0]*river_tan[0] + seg_tan[1]*river_tan[1]) / mag_seg / mag_river)
-                    logging.info("angle measured at %g"%angle)
-                    if angle < math.pi/16:
-                        # dot of tans
-                        logging.info("nearly parallel river with angle = %g degrees"%(angle/math.pi*180))
-                        if mag_river > 2*mag_seg:
-                            # insert segment point into river
-                            coords = coords[:-1]+[seg.coords[seg_p],coords[-1]]
-                            river = shapely.geometry.LineString(coords)
-                        elif mag_seg > 2*mag_river:
-                            # insert river point into segment
-                            if seg_p == 1:
-                                seg_coords = [seg.coords[0],coords[-2],]+seg.coords[1:]
-                            else:
-                                seg_coords = seg.coords[:-1],[coords[-2], seg.coords[-1],]
-                            new_segs[i] = shapely.geometry.LineString(seg_coords)
-                        else:
-                            # move river onto segment
-                            coords[-2] = seg.coords[seg_p]
-                            river = shapely.geometry.LineString(coords)
-
-
-                # set the new segments
-                if len(new_segs) > 1:
-                    assert(len(new_segs) is 2)
-                    hucs.segments[seg_handle] = new_segs[0]
-                    new_handle = hucs.segments.add(new_segs[1])
-                    component.add(new_handle)
-                elif len(new_segs) is 1:
-                    hucs.segments[seg_handle] = new_segs[0]
-
-                break # can only intersect one component -- triple points are already dealt with
     return river
 
 def make_global_tree(rivers, tol=0.1):

@@ -126,11 +126,15 @@ def center_options(parser):
                         help="Center the output mesh for cleaner simulation but harder provenance.  Note centroid is written to the output mesh's readme file")
 
 
-def source_options(parser, sourcename, default):
+def huc_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-%s'%sourcename, type=str, default=default,
-                        help="Name of the source for %s data."%sourcename)
+    parser.add_argument('--source-huc', type=str, default='NHD', choices=set(['NHD','NHDPlus']),
+                        help="Name of the source for NHD data.")
 
-
+def dem_source_options(parser):
+    """Add options for sources."""
+    parser.add_argument('--source-dem', type=str, default='NED', choices=set(['NED',]),
+                        help="Name of the source for DEM data.")
     
-    
+        
+                        

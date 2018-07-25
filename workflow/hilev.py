@@ -18,7 +18,6 @@ import shapely
 import meshpy.triangle
 
 import workflow.conf
-import workflow.download
 import workflow.triangulate
 import workflow.warp
 import workflow.plot
@@ -35,7 +34,8 @@ def _in_huc(shp, hucstr, source):
     logging.debug("Checking: shp in '%s'?"%hucstr)
 
     try:
-        profile, huc = workflow.hilev.get_huc(hucstr, source)
+        fname = source.download(hucstr)
+        profile, huc = source.load_huc(hucstr)
     except RuntimeError as err:
         logging.debug("No such HUC %s found? %s"%(hucstr,str(err)))
         raise err
@@ -80,6 +80,7 @@ def _find_huc(shp, hint, source):
             return hint
     return -1
 
+
 def find_huc(shp_profile, shply, source, hint=None):
     """Finds the smallest HUC containing shp, starting with a potential
     hint, i.e. '06' for Tennessee River Valley.
@@ -105,22 +106,6 @@ def find_huc(shp_profile, shply, source, hint=None):
         raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
     return result
 
-def get_huc(myhuc, source):
-    """Collects shapefiles for a HUC given code in string form.
-
-    Arguments:
-        myhuc   | a length N string for the number of the requested HUC.
-                | Note this must be an even number of digits, i.e. 01, not 1.
-
-    Returns huc
-        huc     | the fiona shape representation of the requested HUC
-    """
-    # collect HUC shapefile
-    source.download(myhuc)
-
-    # load shapefiles for the HUC of interest
-    return workflow.files.load_huc(myhuc, source)
-            
 def get_hucs(myhuc, source, center=True):
     """Collects shapefiles for HUCs given a HUC code in string form.
 
@@ -146,7 +131,7 @@ def get_hucs(myhuc, source, center=True):
 
     # load shapefiles for all HUC 12s
     logging.info("loading all 12s")
-    profile, huc12s = workflow.files.load_hucs_in(myhuc, source, 12)
+    profile, huc12s = source.load_hucs_in(myhuc, 12)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -190,7 +175,7 @@ def get_rivers(myhuc, source):
 
     # load stream network
     logging.info("loading streams")
-    rprofile, rivers = workflow.files.load_hydro(myhuc, source)
+    rprofile, rivers = source.load_hydro(myhuc)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -221,7 +206,7 @@ def get_dem(myhuc, sources):
 
     # load shapefiles for the HUC of interest
     logging.info("loading HUC %s"%myhuc)
-    profile, huc = workflow.files.load_huc(myhuc, sources['HUC'])
+    profile, huc = sources['HUC'].load_huc(myhuc)
     assert(profile['crs']['init'] == 'epsg:4269') # latlong
 
     dem_profile, dem = workflow.clip.clip_dem(huc, sources['DEM'])
@@ -316,15 +301,20 @@ def simplify_and_prune(hucs, rivers, args):
     if len(rivers) is 0:
         return rivers
             
+    workflow.plot.hucs(hucs, color='gray')
+    workflow.plot.rivers(rivers)
+
     logging.info("simplifying rivers")
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
-    logging.info("simplify HUCs")
-    workflow.hucs.simplify(hucs, tol)
+
 
     # snap
     logging.info("snapping rivers and HUCs")
     workflow.hydrography.snap(hucs, rivers, tol, 10*tol)
 
+    logging.info("simplify HUCs")
+    workflow.hucs.simplify(hucs, tol)
+    
     logging.info("filtering cut reaches outside the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)
     logging.info("...done")
