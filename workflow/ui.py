@@ -8,7 +8,8 @@ import workflow.conf
 
 verb_to_level = {0:logging.WARNING,
                  1:logging.INFO,
-                 2:logging.DEBUG}
+                 2:logging.DEBUG,
+                 3:logging.DEBUG}
 
 def setup_logging(verbosity, logfile=None):
     """Sets the log level and log file."""

@@ -46,7 +46,31 @@ if __name__ == '__main__':
     if args.center:
         rivers = [shapely.affinity.translate(r, -centroid.coords[0][0], -centroid.coords[0][1]) for r in rivers]
     rivers = workflow.hilev.simplify_and_prune(hucs, rivers, args)
-    mesh_points2, mesh_tris = workflow.hilev.triangulate(hucs,rivers, args)
+
+    # plot the result
+    if args.verbosity > 0:
+        plt.figure(figsize=(5,3))
+        workflow.plot.hucs(hucs, 'k')
+        workflow.plot.rivers(rivers, color='r')
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.xlabel('')
+        plt.ylabel('')
+        #plt.savefig('my_mesh')
+        plt.show()
+
+    mesh_points2, mesh_tris = workflow.hilev.triangulate(hucs, rivers, args)
+
+    # plot the result
+    if args.verbosity > 0:
+        plt.figure(figsize=(5,3))
+        workflow.plot.triangulation(mesh_points2, mesh_tris, linewidth=0.5)
+        workflow.plot.hucs(hucs, 'k')
+        workflow.plot.rivers(rivers, color='r')
+        plt.gca().set_aspect('equal', 'datalim')
+        plt.xlabel('')
+        plt.ylabel('')
+        #plt.savefig('my_mesh')
+        plt.show()
 
     # elevate to 3D
     if args.center:

@@ -54,18 +54,18 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
         logging.info("  ...resulted in inconsistent HUCs")
         return False
 
-    # deal with intersections
-    logging.info(" Cutting at crossings")
-    snap_crossings(hucs, rivers, tol)
-    consistent = all(workflow.tree.is_consistent(river) for river in rivers)
-    if not consistent:
-        logging.info("  ...resulted in inconsistent rivers!")
-        return False
-    try:
-        list(hucs.polygons())
-    except AssertionError:
-        logging.info("  ...resulted in inconsistent HUCs")
-        return False
+    # # deal with intersections
+    # logging.info(" Cutting at crossings")
+    # snap_crossings(hucs, rivers, tol)
+    # consistent = all(workflow.tree.is_consistent(river) for river in rivers)
+    # if not consistent:
+    #     logging.info("  ...resulted in inconsistent rivers!")
+    #     return False
+    # try:
+    #     list(hucs.polygons())
+    # except AssertionError:
+    #     logging.info("  ...resulted in inconsistent HUCs")
+    #     return False
     return True
 
 def _snap_and_cut(point, line, tol=0.1):
@@ -127,7 +127,6 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
     coords2 = np.array([r.coords[0] for tree in rivers for r in tree.leaves()])
     coords = np.concatenate([coords1, coords2], axis=0)
-    logging.debug("Snap coord options: %r"%coords)
     kdtree = scipy.spatial.cKDTree(coords)
 
     # for each segment of the HUC spine, find the river outlet that is
@@ -175,6 +174,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                         coords.pop(0)
                     coords[0] = new_coord
                     river = shapely.geometry.LineString(coords)
+                    node.segment = river
                     to_add.append((seg_handle, component, 0, node))
                     break
 
@@ -197,6 +197,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                         coords.pop(-1)
                     coords[-1] = new_coord
                     river = shapely.geometry.LineString(coords)
+                    node.segment = river
                     to_add.append((seg_handle, component, -1, node))
                     break
 
@@ -227,12 +228,28 @@ def snap_endpoints(tree, hucs, tol=0.1):
         seg = hucs.segments[seg_handle]
         # make a list of the coords and a flag to indicate a new
         # coord, then sort it by arclength along the segment.
-        new_coords = sorted(
-            [(c,0) for c in seg.coords]+[(p[2].segment.coords[p[1]],1) for p in insert_list],
-            key = lambda a:seg.project(shapely.geometry.Point(a)))
+        #
+        # Note this needs special care if the seg is a loop, or else the endpoint gets sorted twice        
+        if not workflow.utils.close(seg.coords[0], seg.coords[-1]):
+            new_coords = sorted(
+                [[c,0] for c in seg.coords]+[[p[2].segment.coords[p[1]],1] for p in insert_list],
+                key = lambda a:seg.project(shapely.geometry.Point(a)))
 
-        # determine the new coordinate indices, then break into new segments
-        breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+            # determine the new coordinate indices
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+
+        else:
+            new_coords = sorted(
+                [[c,0] for c in seg.coords[:-1]]+[[p[2].segment.coords[p[1]],1] for p in insert_list],
+                key = lambda a:seg.project(shapely.geometry.Point(a)))
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+            assert(len(breakpoint_inds) > 0)
+            new_coords = new_coords[breakpoint_inds[0]:] + new_coords[0:breakpoint_inds[0]+1]
+            new_coords[0][1] = 0
+            new_coords[-1][1] = 0
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+
+        # now break into new segments
         new_segs = []
         ind_start = 0
         for ind_end in breakpoint_inds:
@@ -241,8 +258,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
             ind_start = ind_end
 
         assert(ind_start < len(new_coords)-1)
-        new_segs.append(shapely.geometry.LineString([c for (c,f) in new_coords[ind_start:]]))
-        
+        new_segs.append(shapely.geometry.LineString([tuple(c) for (c,f) in new_coords[ind_start:]]))
 
         # put all new_segs into the huc list.  Note insert_list[0][0] is the component
         hucs.segments[seg_handle] = new_segs.pop(0)

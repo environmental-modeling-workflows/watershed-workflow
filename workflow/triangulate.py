@@ -134,12 +134,13 @@ def triangulate(hucs, rivers, **kwargs):
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    # plt.figure()
-    # for e in fdata:
-    #     plt.plot([pdata[e[0]][0], pdata[e[1]][0]],
-    #              [pdata[e[0]][1], pdata[e[1]][1]], '-', color='gray')
-    # plt.scatter([p[0] for p in pdata], [p[1] for p in pdata],marker='+')
-    # plt.show()
+    plt.figure()
+    for e in fdata:
+        plt.plot([pdata[e[0]][0], pdata[e[1]][0]],
+                 [pdata[e[0]][1], pdata[e[1]][1]], '-', color='gray')
+    plt.scatter([p[0] for p in pdata], [p[1] for p in pdata],marker='+', color='lime')
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.show()
     
     logging.info(" triangle.build...")
     mesh = meshpy.triangle.build(info, **kwargs)

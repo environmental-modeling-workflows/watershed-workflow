@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import collections as pltc
+import shapely
 import workflow.colors
 
 
@@ -25,16 +26,27 @@ def rivers(rivers, color=None, style='-', linewidth=1):
             style = None
         else:
             style = style[:-1]        
+
+    if len(rivers) is 0:
+        return
+
+    # gather lines
+    if type(rivers[0]) is workflow.tree.Tree:
+        lines = []
+        for tree in rivers:
+            lines.extend([river.coords[:] for river in tree.dfs()])
+    elif type(rivers[0]) is shapely.geometry.LineString:
+        lines = [river.coords[:] for river in rivers]
+
+    # plot lines
+    if style is not None:
+        lc = pltc.LineCollection(lines, colors=color, linewidths=linewidth, linestyle=style)
+        plt.gca().add_collection(lc)
+    if marker is not None:
+        marked_points = np.concatenate([np.array(l) for l in lines])
+        assert(marked_points.shape[-1] == 2)
+        plt.scatter(marked_points[:,0], marked_points[:,1], c=color, marker=marker)
         
-    for tree in rivers:
-        lines = [river.coords[:] for river in tree.dfs()]
-        if style is not None:
-            lc = pltc.LineCollection(lines, colors=color, linewidths=linewidth, linestyle=style)
-            plt.gca().add_collection(lc)
-        if marker is not None:
-            marked_points = np.concatenate([np.array(l) for l in lines])
-            assert(marked_points.shape[-1] == 2)
-            plt.scatter(marked_points[:,0], marked_points[:,1], c=color, marker=marker)
     plt.gca().autoscale()
     plt.gca().margins(0.1)
 

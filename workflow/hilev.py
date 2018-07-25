@@ -307,13 +307,12 @@ def simplify_and_prune(hucs, rivers, args):
     logging.info("simplifying rivers")
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
 
+    logging.info("simplify HUCs")
+    workflow.hucs.simplify(hucs, tol)
 
     # snap
     logging.info("snapping rivers and HUCs")
     workflow.hydrography.snap(hucs, rivers, tol, 10*tol)
-
-    logging.info("simplify HUCs")
-    workflow.hucs.simplify(hucs, tol)
     
     logging.info("filtering cut reaches outside the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)
