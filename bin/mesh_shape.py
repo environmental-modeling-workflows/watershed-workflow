@@ -16,7 +16,7 @@ import shapely
 
 import workflow.hilev
 import workflow.ui
-import workflow.sources
+import workflow.files
 
 
 if __name__ == '__main__':
@@ -27,15 +27,17 @@ if __name__ == '__main__':
     workflow.ui.outmesh_options(parser)
     workflow.ui.simplify_options(parser)
     workflow.ui.center_options(parser)
-    workflow.ui.source_options(parser, 'huc', 'HUC.WBD')
-    workflow.ui.source_options(parser, 'dem', 'DEM.NED')
-    workflow.ui.source_options(parser, 'hydro', 'Hydro.NHD')
+    workflow.ui.huc_source_options(parser)
+    workflow.ui.dem_source_options(parser)
     workflow.ui.refine_options(parser)
 
     # parse args, log
     args = parser.parse_args()
     workflow.ui.setup_logging(args.verbosity, args.logfile)
-    sources = workflow.sources.get_sources(args)
+
+    args.source_hydro = args.source_huc
+    args.source_huc = 'NHD WBD' # hard-coded, but need to use the full WBD dataset
+    sources = workflow.files.get_sources(args)
     
     # collect data
     profile, watersheds, watershed_boundary, centroid = workflow.hilev.get_shapes(args.infile, args.shape_index, args.center)

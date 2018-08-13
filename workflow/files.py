@@ -125,12 +125,64 @@ class FileManager:
 class NHDFileManager(FileManager):
     def __init__(self):
         names = HucNames(name='NHD High Resolution Water Boundary Data',
-                         url='https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/Shape/',
+                         url='https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/Shape/',
                          base_folder='hydrography',
                          folder_template='NHD_H_{0}_HU8_Shape',
                          file_template='Shape',
                          digits=8)
         super(NHDFileManager,self).__init__(names)
+    
+    def load_huc(self, huc, digits=7):
+        """Reads a HUC file in WBD Shapefile format"""
+        hucstr = workflow.conf.huc_str(huc)
+        container = self.names.file_name(huc)
+        filename = os.path.join(container, 'WBDHU%d.shp'%len(hucstr))
+        logging.debug("Opening '%s' for HUC '%s'"%(filename, hucstr))
+        with fiona.open(filename, 'r') as fid:
+            matching = [h for h in fid if h['properties']['HUC%i'%len(hucstr)] == hucstr]
+            profile = fid.profile
+        if len(matching) is not 1:
+            raise RuntimeError("Invalid collection of HUC?")
+        return profile, _normalize(matching, digits)[0]
+
+    def load_hucs_in(self, huc, size, digits=7):
+        """Reads a HUC file in NHD Shapefile format to get all sub-HUCs of a given size"""
+        hucstr = workflow.conf.huc_str(huc)
+        container = self.names.file_name(huc)
+        filename = os.path.join(container, 'WBDHU%d.shp'%size)
+        logging.debug("Opening '%s' for HUC '%s' subhucs of size %d"%(filename, hucstr, size))
+        with fiona.open(filename, 'r') as fid:
+            matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(hucstr)]
+            profile = fid.profile
+        return profile, _normalize(matching, digits)
+
+    def load_hydro(self, huc, bounds=None):
+        """Returns the path to hydrography in this huc."""
+        hucstr = workflow.conf.huc_str(huc)
+        container = self.names.file_name(huc)
+        filename = os.path.join(container, 'NHDFlowline.shp')
+        logging.debug("Opening '%s' for streams in HUC '%s'"%(filename, hucstr))
+        if bounds is None:
+            with fiona.open(filename, 'r') as fid:
+                profile = fid.profile
+                shps = [s for s in fid]
+        else:
+            with fiona.open(filename, 'r') as fid:
+                profile = fid.profile
+                shplist = fid.items(bbox=bounds)
+                shps = [s[1] for s in shplist]
+        return profile, _normalize(shps)
+
+
+class NHDHucOnlyFileManager(FileManager):
+    def __init__(self):
+        names = HucNames(name='NHD High Resolution Water Boundary Data',
+                         url='https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/Shape/',
+                         base_folder='hydrologic_units',
+                         folder_template='WBD_{0}_HU2_Shape',
+                         file_template='Shape',
+                         digits=2)
+        super(NHDHucOnlyFileManager,self).__init__(names)
     
     def load_huc(self, huc, digits=7):
         """Reads a HUC file in NHD Shapefile format"""
@@ -156,17 +208,22 @@ class NHDFileManager(FileManager):
             profile = fid.profile
         return profile, _normalize(matching, digits)
 
-    def load_hydro(self, huc):
+    def load_hydro(self, huc, bounds=None):
         """Returns the path to hydrography in this huc."""
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
         filename = os.path.join(container, 'NHDFlowline.shp')
         logging.debug("Opening '%s' for streams in HUC '%s'"%(filename, hucstr))
-        with fiona.open(filename, 'r') as fid:
-            profile = fid.profile
-            shps = [s for s in fid]
+        if bounds is None:
+            with fiona.open(filename, 'r') as fid:
+                profile = fid.profile
+                shps = [s for s in fid]
+        else:
+            with fiona.open(filename, 'r') as fid:
+                profile = fid.profile
+                shps = list(fid.items(bbox=bounds))
         return profile, _normalize(shps)
-
+    
 
 class NHDPlusFileManager(FileManager):
     def __init__(self):
@@ -184,7 +241,7 @@ class NHDPlusFileManager(FileManager):
         container = self.names.file_name(huc)
         layer = 'WBDHU%d'%len(hucstr)
         logging.debug("Opening '%s' layer '%s' for HUC '%s'"%(filename, layer, hucstr))
-        with fiona.open(filename, mode='r', layer=layer) as fid:
+        with fiona.open(container, mode='r', layer=layer) as fid:
             matching = [h for h in fid if h['properties']['HUC%i'%len(hucstr)] == hucstr]
             profile = fid.profile
         if len(matching) is not 1:
@@ -195,22 +252,31 @@ class NHDPlusFileManager(FileManager):
         """Reads a HUC file in NHD Shapefile format to get all sub-HUCs of a given size"""
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
-        layer = 'WBDHU%d'%len(size)
-        logging.debug("Opening '%s' layer '%s' for HUC '%s'"%(filename, layer, hucstr))
-        with fiona.open(filename, mode='r', layer=layer) as fid:
+        layer = 'WBDHU%d'%size
+        logging.debug("Opening '%s' layer '%s' for HUC '%s'"%(container, layer, hucstr))
+        with fiona.open(container, mode='r', layer=layer) as fid:
             matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(hucstr)]
             profile = fid.profile
         return profile, _normalize(matching, digits)
 
-    def load_hydro(self, huc):
+    def load_hydro(self, huc, bounds=None):
         """Returns the path to hydrography in this huc."""
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
-        filename = os.path.join(container, 'NHDFlowlines.shp')
-        logging.debug("Opening '%s' layer '%s' for streams in HUC '%s'"%(filename, layer, hucstr))
-        with fiona.open(filename, mode='r', layer=layer) as fid:
-            profile = fid.profile
-            shps = [s for s in fid]
+        layer = 'NHDFlowline'
+        filename = os.path.join(container, '..', 'shp', layer+'.shp')
+        #logging.debug("Opening '%s' layer '%s' for streams in HUC '%s'"%(container, layer, hucstr))
+        logging.debug("Opening '%s' file for streams in HUC '%s'"%(filename, hucstr))
+        #with fiona.open(container, mode='r', layer=layer) as fid:
+        if bounds is None:
+            with fiona.open(filename, mode='r') as fid:                                
+                profile = fid.profile
+                shps = list(fid)
+        else:
+            with fiona.open(filename, mode='r') as fid:                                
+                profile = fid.profile
+                shps = list(fid.items(bbox=bounds))
+            
         return profile, _normalize(shps)
     
     
@@ -274,8 +340,8 @@ def _normalize(list_of_shps, digits=7):
     for shp in list_of_shps:
         assert(type(shp['geometry']['coordinates']) is list)
         if len(shp['geometry']['coordinates']) is 0:
-            continue
-        if type(shp['geometry']['coordinates'][0]) is tuple:
+            pass
+        elif type(shp['geometry']['coordinates'][0]) is tuple:
             # single object
             coords = np.array(shp['geometry']['coordinates'], 'd').round(digits)
             if coords.shape[-1] is 3:
@@ -286,9 +352,10 @@ def _normalize(list_of_shps, digits=7):
             # object collection
             for i,c in enumerate(shp['geometry']['coordinates']):
                 coords = np.array(c,'d').round(digits)
-                assert(len(coords.shape) is 2)
-                if coords.shape[-1] is 3:
+                if len(coords.shape) is 2 and coords.shape[-1] is 3:
                     coords = coords[:,0:2]
+                elif len(coords.shape) is 3 and coords.shape[-1] is 3:
+                    coords = coords[:,:,0:2]
             shp['geometry']['coordinates'][i] = coords
     return list_of_shps
 
@@ -298,11 +365,21 @@ def get_sources(args):
     if hasattr(args, 'source_huc'):
         if args.source_huc.upper() == 'NHD':
             sources['HUC'] = NHDFileManager()
+        elif args.source_huc.upper() == 'NHD WBD':
+            sources['HUC'] = NHDHucOnlyFileManager()
         elif args.source_huc.upper() == 'NHDPLUS':
             sources['HUC'] = NHDPlusFileManager()
         else:
             raise ValueError("Unknown HUC source '%s'"%args.source_huc)
 
+    if hasattr(args, 'source_hydro'):
+        if args.source_hydro.upper() == 'NHD':
+            sources['Hydro'] = NHDFileManager()
+        elif args.source_hydro.upper() == 'NHDPLUS':
+            sources['Hydro'] = NHDPlusFileManager()
+        else:
+            raise ValueError("Unknown HUC source '%s'"%args.source_huc)
+        
     if hasattr(args, 'source_dem'):
         if args.source_dem.upper() == 'NED':
             sources['DEM'] = NEDFileManager()

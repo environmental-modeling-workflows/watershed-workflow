@@ -37,19 +37,27 @@ def warp_shape(feature, old_crs, new_crs):
         # single object
         coords = np.array(feature['geometry']['coordinates'],'d')
         assert(len(coords.shape) is 2)
-        assert(coords.shape[-1] is 2)
         x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
         new_coords = [xy for xy in zip(x,y)]
         feature['geometry']['coordinates'] = new_coords
+                
     else:
         # object collection
         for i,c in enumerate(feature['geometry']['coordinates']):
             coords = np.array(c,'d')
-            assert(len(coords.shape) is 2)
-            assert(coords.shape[-1] is 2)
-            x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
-            new_coords = [xy for xy in zip(x,y)]
-            feature['geometry']['coordinates'][i] = new_coords
+            if len(coords.shape) is 2:
+                assert(coords.shape[-1] is 2)
+                x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
+                new_coords = [xy for xy in zip(x,y)]
+                feature['geometry']['coordinates'][i] = new_coords
+            elif len(coords.shape) is 3:
+                for j,c2 in enumerate(feature['geometry']['coordinates'][i]):
+                    coords = np.array(c2,'d')
+                    assert(coords.shape[-1] is 2)
+                    x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
+                    new_coords = [xy for xy in zip(x,y)]
+                    feature['geometry']['coordinates'][i][j] = new_coords
+                    
     
 def warp_shapefile(infile, outfile, epsg=None):
     """Changes the projection of a shapefile."""

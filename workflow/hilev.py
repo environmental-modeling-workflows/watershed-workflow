@@ -141,6 +141,16 @@ def get_hucs(myhuc, source, center=True):
     # convert to shapely
     huc_shapes = [shapely.geometry.shape(s['geometry']) for s in huc12s]
 
+    # if multi-poly, make sure we can convert to single-poly
+    single_huc_shapes = []
+    for huc_shp in huc_shapes:
+        if type(huc_shp) is not shapely.geometry.Polygon:
+            assert(len(huc_shp) is 1)
+            huc_shp = huc_shp[0]
+            assert(type(huc_shp) is shapely.geometry.Polygon)
+        single_huc_shapes.append(huc_shp)
+    huc_shapes = single_huc_shapes
+
     # center the HUCs
     if center:
         huc_shapes, centroid = workflow.utils.center(huc_shapes)
@@ -173,9 +183,13 @@ def get_rivers(myhuc, source):
     logging.info("collecting Hydrography %s"%myhuc)
     source.download(myhuc)
 
+    # load the HUC and get a bounding box
+    profile, huc = source.load_huc(myhuc)
+    bounds = shapely.geometry.shape(huc['geometry']).bounds
+    
     # load stream network
     logging.info("loading streams")
-    rprofile, rivers = source.load_hydro(myhuc)
+    rprofile, rivers = source.load_hydro(myhuc, bounds)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -301,9 +315,6 @@ def simplify_and_prune(hucs, rivers, args):
     if len(rivers) is 0:
         return rivers
             
-    workflow.plot.hucs(hucs, color='gray')
-    workflow.plot.rivers(rivers)
-
     logging.info("simplifying rivers")
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
 

@@ -55,6 +55,20 @@ Check your python installation:
      import meshpy.triangle
 
 
+Alternate Setup
+==================
+Alternative, use a docker container.
+
+On a mac:
+     docker build -t ats-meshing -f ./Dockerfile ./
+
+     brew install socat
+     nohup socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
+     IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
+     docker run -it --name container1 --net=host --env DISPLAY=${IP}:0  -v ~/codes/ats/ats-meshing/:/ats ats-meshing
+     cd ats-meshing
+
+
 A first example
 ----------------
 

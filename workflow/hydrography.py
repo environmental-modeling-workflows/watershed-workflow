@@ -309,19 +309,6 @@ def make_global_tree(rivers, tol=0.1):
             trees.append(n)
         else:
             nodes[closest[0]].addChild(n)
-
-    # if len(doublesegs) > 0:
-    #     plt.figure()
-    #     for r in rivers:
-    #         plt.plot(r.xy[0], r.xy[1], 'k')
-    #     for r in doublesegs:
-    #         plt.plot(rivers[r].xy[0], rivers[r].xy[1], 'r')
-    #     for matches in doublesegs_matches:
-    #         for m in matches:
-    #             plt.plot(rivers[m].xy[0], rivers[m].xy[1], 'b')
-    #     for r in doublesegs_winner:
-    #         plt.plot(rivers[r].xy[0], rivers[r].xy[1], 'g')
-    #     plt.show()            
     return trees
 
 
