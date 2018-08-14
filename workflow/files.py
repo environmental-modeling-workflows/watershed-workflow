@@ -17,17 +17,20 @@ from workflow.conf import rcParams as rc
 class Names:
     """File system meta data for downloading a file."""
     def __init__(self, name, url, base_folder, folder_template, file_template,
-                 download_template=None, zip=True):
+                 download_template=None, download_templates=None, zip=True):
         self.name = name
         self._url = url
         self.base_folder = base_folder
         self.folder_template = folder_template
         self.file_template = file_template
 
-        if download_template is None:
-            self.download_template = folder_template
+        self.download_templates = []
+        if download_templates is not None:
+            self.download_templates.extend(download_templates)
+        elif download_template is not None:
+            self.download_template.append(download_template)
         else:
-            self.download_template = download_template
+            self.download_templates.append(folder_template)
         self.zip = zip
 
     def data_dir(self):
@@ -43,9 +46,9 @@ class Names:
         else:
             return self.data_dir()
 
-    def download_base(self, *args):
+    def download_base(self, i, *args):
         args = self.format_args(*args)
-        fname = self.download_template.format(*args)
+        fname = self.download_templates[i].format(*args)
         if self.zip:
             fname += '.zip'
         return fname
@@ -87,7 +90,7 @@ class LatLonNames(Names):
         if type(lat) is int:
             lat = 'n%i'%lat
         if type(lon) is int:
-            lon = 'w%i'%lon
+            lon = 'w%03i'%lon
         return [lat,lon]
 
 class FileManager:
@@ -97,22 +100,31 @@ class FileManager:
 
     def download(self, *args, force=False):
         filename = self.names.file_name(*args)
-        logging.debug("Attempting to download '%s'"%filename)
-        try:
-            if not os.path.exists(filename) or force:
-                url = self.names.url(*args)
-                downloadfile = self.names.download(*args)
-                _download(url, downloadfile, force)
-                if self.names.zip:
-                    _unzip(downloadfile, self.names.folder_name(*args))
+        logging.debug("Attempting to download source for target '%s'"%filename)
+        if not os.path.exists(filename) or force:
+            for i in range(len(self.names.download_templates)):
+                try:
+                    url = self.names.url(i, *args)
+                    downloadfile = self.names.download(i, *args)
+                    _download(url, downloadfile, force)
+                    if self.names.zip:
+                        _unzip(downloadfile, self.names.folder_name(*args))
+                    else:
+                        _move(downloadfile, self.names.folder_name(*args))
+                    if i is not 0:
+                        print("Not sure what to move:")
+                        print(self.names.folder_name(*args))
+                        print(downloadfile)
+                        print(filename)
+                        raise RuntimeError("fixme")
+                except Exception as err:
+                    logging.info(str(err))
                 else:
-                    _move(downloadfile, self.names.folder_name(*args))
-        except Exception as err:
-            logging.info(str(err))
-        else:
-            logging.info('success')
-            return self.names.file_name(*args)
-
+                    logging.info('success')
+                    return filename
+            raise RuntimeError("Cannot find or download file for source target '%s'"%filename)
+        return filename
+            
     def file_name(self, *args):
         fname = self.names.file_name(*args)
         if os.path.exists(fname):
@@ -299,7 +311,7 @@ class NEDFileManager(TiledFileManager):
                             base_folder='dem',
                             folder_template=None,
                             file_template='USGS_NED_13_{0}{1}_IMG.img',
-                            download_template='USGS_NED_13_{0}{1}_IMG.zip')
+                            download_templates=['USGS_NED_13_{0}{1}_IMG', '{0}{1}'])
         super(NEDFileManager,self).__init__(names)
         
 

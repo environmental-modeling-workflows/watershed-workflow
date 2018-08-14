@@ -228,7 +228,7 @@ def get_dem(myhuc, sources):
     return dem_profile, dem
 
 
-def get_shapes(filename, index, center=True):
+def get_shapes(filename, index, center=True, make_hucs=True):
     """Collects shapefiles.
 
     Arguments:
@@ -284,7 +284,10 @@ def get_shapes(filename, index, center=True):
 
     # split
     logging.info("Split form subwatersheds")
-    hucs = workflow.hucs.HUCs(huc_shapes)
+    if make_hucs:
+        hucs = workflow.hucs.HUCs(huc_shapes)
+    else:
+        hucs = huc_shapes
     logging.info("...done")
     return profile, hucs, boundary, centroid
     
@@ -407,7 +410,7 @@ def save(filename, points3, tris, metadata):
 
     This could be Exodus, but meshing_ats is in python2 (and uses exodus which is in python2)
     """
-    logging.info("saving mesh")
+    logging.info("saving mesh: %s"%filename)
     cells = {'triangle':tris}
     vtk_io.write(filename, points3, cells)
     with open(filename+'.readme','w') as fid:

@@ -47,15 +47,12 @@ def check1(hucs,rivers):
     assert(len(hucs.intersections) == 0)
 
     segs0 = hucs.boundaries[0]
-    assert(len(segs0) is 2)
+    assert(len(segs0) is 1)
     assert(0 in segs0.keys())
-    assert(1 in segs0.keys())
     assert(segs0[0] == 0)
-    assert(segs0[1] == 1)
 
-    assert(len(hucs.segments) is 2)
+    assert(len(hucs.segments) is 1)
     assert(0 in hucs.segments.keys())
-    assert(1 in hucs.segments.keys())
 
     riverlist = list(rivers[0].dfs())
     assert(len(riverlist) is 1)
@@ -64,7 +61,41 @@ def check1(hucs,rivers):
 
     for tree in rivers:
         assert(workflow.tree.is_consistent(tree))
-    
+
+def check1b(hucs,rivers):
+    assert(len(hucs) is 1)
+    poly0 = hucs.polygon(0)
+    print(poly0.boundary.coords[:])
+    assert(workflow.utils.close(poly0, shapely.geometry.Polygon([(0,-5), (10,-5), (10,0),
+                                                                 (10,0.001), (10,5), (0,5)])))
+
+    gon0b, gon0i = hucs.gons[0]
+    assert(len(gon0b) is 1)
+    assert(0 in gon0b.keys())
+    assert(len(gon0i) is 0)
+    assert(gon0b[0] == 0)
+
+    assert(0 in hucs.boundaries.keys())
+    assert(len(hucs.boundaries) == 1)
+    assert(len(hucs.intersections) == 0)
+
+    segs0 = hucs.boundaries[0]
+    assert(len(segs0) is 1)
+    assert(0 in segs0.keys())
+    assert(segs0[0] == 0)
+
+    assert(len(hucs.segments) is 1)
+    assert(0 in hucs.segments.keys())
+
+    riverlist = list(rivers[0].dfs())
+    assert(len(riverlist) is 1)
+    print(riverlist[0].coords[:])
+    assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0)])))
+
+    for tree in rivers:
+        assert(workflow.tree.is_consistent(tree))
+
+        
 def check2(hucs,rivers):
     assert(len(hucs) is 2)
     poly0 = hucs.polygon(0)
@@ -188,7 +219,8 @@ def test_snap1():
     rs = [shapely.geometry.LineString([(5.,0.), (9.99,0)]),]
     hucs, rivers = data(tb, rs)
     workflow.hydrography.snap(hucs, rivers, 0.1)
-    check1(hucs,rivers)
+    check1b(hucs,rivers)
+    #check1(hucs,rivers)  # MAY NEED ATTENTION!
 
     
 def test_snap2():

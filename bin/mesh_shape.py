@@ -17,6 +17,7 @@ import shapely
 import workflow.hilev
 import workflow.ui
 import workflow.files
+import workflow.plot
 
 
 if __name__ == '__main__':

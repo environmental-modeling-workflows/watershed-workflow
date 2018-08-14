@@ -22,7 +22,8 @@ def datadir(tmpdir, request):
 @pytest.fixture
 def sources():
     sources = dict()
-    sources['HUC'] = workflow.files.NHDFileManager()
+    #sources['HUC08'] = workflow.files.NHDFileManager()
+    sources['HUC'] = workflow.files.NHDHucOnlyFileManager()
     sources['DEM'] = workflow.files.NEDFileManager()
     return sources
 

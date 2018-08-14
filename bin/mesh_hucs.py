@@ -67,7 +67,6 @@ if __name__ == '__main__':
     if args.verbosity > 0:
         plt.figure(figsize=(5,3))
         workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
-        plt.colorbar()
         workflow.plot.hucs(hucs, 'k')
         workflow.plot.rivers(rivers, color='r')
         plt.gca().set_aspect('equal', 'datalim')
