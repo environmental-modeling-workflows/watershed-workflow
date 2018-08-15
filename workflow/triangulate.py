@@ -63,7 +63,7 @@ def orient(e):
     elif e[0] < e[1]:
         return e[0],e[1]
     else:
-        raise RuntimeError("self-edge!")
+        return None
 
 
 class NodesEdges:
@@ -79,10 +79,10 @@ class NodesEdges:
         """Adds nodes and edges from obj into collection."""
         if type(obj) is shapely.geometry.LineString:
             inds = [self.nodes[c] for c in obj.coords]
-            [self.edges.add(orient(e)) for e in oneway_trip_connect(inds)]
+            [self.edges.add(orient(e)) for e in oneway_trip_connect(inds) if orient(e)]
         elif type(obj) is shapely.geometry.Polygon:
             inds = [self.nodes[c] for c in obj.boundary.coords]
-            [self.edges.add(orient(e)) for e in round_trip_connect(inds)]
+            [self.edges.add(orient(e)) for e in round_trip_connect(inds) if orient(e)]
         else:
             raise TypeError("Invalid type for add, %r"%type(obj))
 

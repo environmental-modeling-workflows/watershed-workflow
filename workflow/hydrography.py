@@ -15,7 +15,7 @@ import workflow.hucs
 import workflow.plot
 
 
-def snap(hucs, rivers, tol=0.1, tol_triples=None):
+def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
     assert(type(hucs) is workflow.hucs.HUCs)
     assert(type(rivers) is list)
@@ -40,9 +40,10 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
         logging.info("  ...resulted in inconsistent HUCs")
         return False
 
-    logging.info('snap part 1')
-    logging.info(list(rivers[0].segment.coords))
-    logging.info(list(hucs.polygon(0).boundary.coords))
+    # logging.info('snap part 1')
+    # logging.info(list(rivers[0].segment.coords))
+    # logging.info(list(hucs.polygon(0).boundary.coords))
+
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
@@ -58,26 +59,27 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None):
         logging.info("  ...resulted in inconsistent HUCs")
         return False
 
-    logging.info('snap part 2')
-    logging.info(list(rivers[0].segment.coords))
-    logging.info(list(hucs.polygon(0).boundary.coords))
-    
-    # deal with intersections
-    logging.info(" Cutting at crossings")
-    snap_crossings(hucs, rivers, tol)
-    consistent = all(workflow.tree.is_consistent(river) for river in rivers)
-    if not consistent:
-        logging.info("  ...resulted in inconsistent rivers!")
-        return False
-    try:
-        list(hucs.polygons())
-    except AssertionError:
-        logging.info("  ...resulted in inconsistent HUCs")
-        return False
+    # logging.info('snap part 2')
+    # logging.info(list(rivers[0].segment.coords))
+    # logging.info(list(hucs.polygon(0).boundary.coords))
 
-    logging.info('snap part 3')
-    logging.info(list(rivers[0].segment.coords))
-    logging.info(list(hucs.polygon(0).boundary.coords))
+    # deal with intersections
+    if cut_intersections:
+        logging.info(" Cutting at crossings")
+        snap_crossings(hucs, rivers, tol)
+        consistent = all(workflow.tree.is_consistent(river) for river in rivers)
+        if not consistent:
+            logging.info("  ...resulted in inconsistent rivers!")
+            return False
+        try:
+            list(hucs.polygons())
+        except AssertionError:
+            logging.info("  ...resulted in inconsistent HUCs")
+            return False
+
+    # logging.info('snap part 3')
+    # logging.info(list(rivers[0].segment.coords))
+    # logging.info(list(hucs.polygon(0).boundary.coords))
 
     return True
 

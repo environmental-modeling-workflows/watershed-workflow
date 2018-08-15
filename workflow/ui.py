@@ -76,6 +76,8 @@ def simplify_options(parser):
                         help='Tolerance for calls to GIS simplify [m] (default=10m)')
     parser.add_argument('--prune-reach-size', type=int, default=0,
                         help='Prune rivers with fewer than this number of reaches.')
+    parser.add_argument('--cut-intersections', action='store_true',
+                        help='Cut boundaries at river intersections.')
 
 def refine_options(parser):
     """Adds refinement options to the parser."""

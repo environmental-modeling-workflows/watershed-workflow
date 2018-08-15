@@ -326,7 +326,7 @@ def simplify_and_prune(hucs, rivers, args):
 
     # snap
     logging.info("snapping rivers and HUCs")
-    workflow.hydrography.snap(hucs, rivers, tol, 10*tol)
+    workflow.hydrography.snap(hucs, rivers, tol, 10*tol, args.cut_intersections)
     
     logging.info("filtering cut reaches outside the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)

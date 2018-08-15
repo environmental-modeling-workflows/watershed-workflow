@@ -21,7 +21,8 @@ import workflow.hilev
 import workflow.ui
 import workflow.files
 
-if __name__ == '__main__':
+
+def get_args():
     # set up parser
     parser = workflow.ui.get_basic_argparse(__doc__)
     workflow.ui.outmesh_options(parser)
@@ -33,7 +34,9 @@ if __name__ == '__main__':
     workflow.ui.huc_args(parser)
 
     # parse args, log
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def mesh_hucs(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
     sources = workflow.files.get_sources(args)
     
@@ -63,19 +66,26 @@ if __name__ == '__main__':
     else:
         mesh_points3 = mesh_ponts3_uncentered
 
-    # plot the result
-    if args.verbosity > 0:
-        plt.figure(figsize=(5,3))
-        workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
-        workflow.plot.hucs(hucs, 'k')
-        workflow.plot.rivers(rivers, color='r')
-        plt.gca().set_aspect('equal', 'datalim')
-        plt.xlabel('')
-        plt.ylabel('')
-        #plt.savefig('my_mesh')
-        plt.show()
+    return centroid, hucs, rivers, (mesh_points3, mesh_tris)
 
-    # save mesh
+def plot(args, hucs, rivers, triangulation):
+    mesh_points3, mesh_tris = triangulation
+    if args.verbosity > 0:    
+        fig = plt.figure(figsize=(4,5))
+        ax = fig.add_subplot(111)
+        workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0)
+        fig.colorbar(orientation="horizontal", pad=0.1)
+        workflow.plot.hucs(hucs, 'k', linewidth=0.7)
+        workflow.plot.rivers(rivers, color='white', linewidth=0.5)
+        ax.set_aspect('equal', 'datalim')
+        ax.set_xlabel('')
+        ax.set_xticklabels([round(0.001*tick) for tick in ax.get_xticks()])
+        plt.ylabel('')
+        ax.set_yticklabels([round(0.001*tick) for tick in ax.get_yticks()])
+        plt.savefig('my_mesh')
+
+def save(args, centroid, triangulation):
+    mesh_points3, mesh_tris = triangulation
     metadata_lines = ['Mesh of HUC: %s including all HUC 12 boundaries and hydrography.'%args.HUC,
                       '',
                       '  coordinate system = epsg:%04i'%(workflow.conf.rcParams['epsg']),
@@ -99,4 +109,12 @@ if __name__ == '__main__':
     else:
         outfile = args.outfile            
     workflow.hilev.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
+        
+
+if __name__ == '__main__':
+    args = get_args()
+    print(args.__dict__)
+    centroid, hucs, rivers, triangulation = mesh_hucs(args)
+    plot(args, hucs, rivers, triangulation)
+    save(args, centroid, triangulation)
     sys.exit(0)

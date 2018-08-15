@@ -111,12 +111,10 @@ class FileManager:
                         _unzip(downloadfile, self.names.folder_name(*args))
                     else:
                         _move(downloadfile, self.names.folder_name(*args))
-                    if i is not 0:
-                        print("Not sure what to move:")
-                        print(self.names.folder_name(*args))
-                        print(downloadfile)
-                        print(filename)
-                        raise RuntimeError("fixme")
+
+                    if not os.path.exists(filename):
+                        self.guess_rename(self.names.folder_name(*args), filename, *args)
+
                 except Exception as err:
                     logging.info(str(err))
                 else:
@@ -124,7 +122,10 @@ class FileManager:
                     return filename
             raise RuntimeError("Cannot find or download file for source target '%s'"%filename)
         return filename
-            
+
+    def guess_rename(self, *args):
+        raise RuntimeError("Unzipping file did not result in expected target!")
+    
     def file_name(self, *args):
         fname = self.names.file_name(*args)
         if os.path.exists(fname):
@@ -313,6 +314,24 @@ class NEDFileManager(TiledFileManager):
                             file_template='USGS_NED_13_{0}{1}_IMG.img',
                             download_templates=['USGS_NED_13_{0}{1}_IMG', '{0}{1}'])
         super(NEDFileManager,self).__init__(names)
+
+    def guess_rename(self, folder_name, file_name, *args):
+        args = self.names.format_args(*args)
+        file_base = os.path.basename(file_name)
+        for i in range(1,len(self.names.download_templates)):
+            current_location = os.path.join(folder_name, self.names.download_templates[i].format(*args)+'.img')
+            logging.info('  Guess rename?: "%s"'%(current_location))
+            if os.path.exists(current_location):
+                logging.info('    EXISTS!"')
+                _move(current_location, file_name)
+                return
+        current_location = os.path.join(folder_name, 'img{0}{1}_13.img'.format(*args))
+        logging.info('  Guess rename?: "%s"'%(current_location))
+        if os.path.exists(current_location):
+            _move(current_location, file_name)
+            return
+        super(NEDFileManager,self).guess_rename(folder_name,file_name,*args)
+    
         
 
 def _download(url, location, force=False):
@@ -323,7 +342,8 @@ def _download(url, location, force=False):
         else:
             return True
     try:
-        logging.info('Downloading: "%s" \n  to: "%s"'%(url, location))
+        logging.info('Downloading: "%s"')
+        logging.info('         to: "%s"'%(url, location))
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
