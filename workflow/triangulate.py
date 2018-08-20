@@ -116,7 +116,17 @@ def triangulate(hucs, rivers, **kwargs):
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     logging.info("Triangulating...")
-    segments = list(hucs.segments) + list(workflow.tree.forest_to_list(rivers))
+    if type(hucs) is workflow.hucs.HUCs:
+        segments = list(hucs.segments)
+    elif type(hucs) is list:
+        segments = hucs
+    elif type(hucs) is shapely.geometry.Polygon:
+        segments = [hucs,]
+    else:
+        raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
+        
+    if rivers is not None:
+        segments = segments + list(workflow.tree.forest_to_list(rivers))
 
     nodes_edges = NodesEdges(segments)
 

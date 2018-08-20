@@ -326,7 +326,7 @@ def simplify_and_prune(hucs, rivers, args):
 
     # snap
     logging.info("snapping rivers and HUCs")
-    workflow.hydrography.snap(hucs, rivers, tol, 10*tol, args.cut_intersections)
+    rivers = workflow.hydrography.snap(hucs, rivers, tol, 10*tol, args.cut_intersections)
     
     logging.info("filtering cut reaches outside the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)
@@ -352,7 +352,7 @@ def simplify_and_prune(hucs, rivers, args):
     logging.info("  HUC median seg length: %g"%np.median(np.array(mins)))
     return rivers
     
-def triangulate(hucs, rivers, args):
+def triangulate(hucs, rivers, args, diagnostics=True):
     verbose = args.verbosity > 2
     
     logging.info("")
@@ -369,29 +369,30 @@ def triangulate(hucs, rivers, args):
     mesh_points, mesh_tris = workflow.triangulate.triangulate(hucs, rivers, verbose=verbose,
                                                               refinement_func=refine_func)
 
-    logging.info("triangulation diagnostics")
-    river_multiline = workflow.tree.forest_to_list(rivers)
-    distances = []
-    areas = []
-    needs_refine = []
-    for tri in mesh_tris:
-        vertices = mesh_points[tri]
-        bary = np.sum(np.array(vertices), axis=0)/3
-        bary_p = shapely.geometry.Point(bary[0], bary[1])
-        distances.append(bary_p.distance(river_multiline))
-        areas.append(workflow.utils.triangle_area(vertices))
-        needs_refine.append(refine_func(vertices, areas[-1]))
+    if diagnostics:
+        logging.info("triangulation diagnostics")
+        river_multiline = workflow.tree.forest_to_list(rivers)
+        distances = []
+        areas = []
+        needs_refine = []
+        for tri in mesh_tris:
+            vertices = mesh_points[tri]
+            bary = np.sum(np.array(vertices), axis=0)/3
+            bary_p = shapely.geometry.Point(bary[0], bary[1])
+            distances.append(bary_p.distance(river_multiline))
+            areas.append(workflow.utils.triangle_area(vertices))
+            needs_refine.append(refine_func(vertices, areas[-1]))
 
-    if args.verbosity > 0:
-        plt.figure()
-        plt.subplot(121)
-        plt.hist(distances)
-        plt.xlabel("distance from river of triangle centroids [m]")
-        plt.ylabel("count [-]")
-        plt.subplot(122)
-        plt.scatter(distances, areas,c=needs_refine,marker='x')
-        plt.xlabel("distance [m]")
-        plt.ylabel("triangle area [m^2]")    
+        if args.verbosity > 0:
+            plt.figure()
+            plt.subplot(121)
+            plt.hist(distances)
+            plt.xlabel("distance from river of triangle centroids [m]")
+            plt.ylabel("count [-]")
+            plt.subplot(122)
+            plt.scatter(distances, areas,c=needs_refine,marker='x')
+            plt.xlabel("distance [m]")
+            plt.ylabel("triangle area [m^2]")    
     return mesh_points, mesh_tris
 
 def elevate(mesh_points, dem, dem_profile):

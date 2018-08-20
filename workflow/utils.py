@@ -116,7 +116,6 @@ def cut(line, cutline, tol=1.e-5):
                 segcoords = [point,seg.coords[-1]]
                 i += 1
         else:
-            #plot()
             raise RuntimeError("Dual/multiple intersection in a single seg... ugh!")
 
     if len(segcoords) > 1:
@@ -277,3 +276,11 @@ def merge(ml1, ml2):
 
         
         
+def non_point_intersection(shp1, shp2):
+    inter = shp1.intersection(shp2)
+    int_type = type(inter)
+    if int_type == shapely.geometry.Point:
+        return False
+    elif int_type == shapely.geometry.GeometryCollection and len(inter) is 0:
+        return False
+    return True

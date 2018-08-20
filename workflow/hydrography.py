@@ -40,9 +40,9 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
         logging.info("  ...resulted in inconsistent HUCs")
         return False
 
-    # logging.info('snap part 1')
-    # logging.info(list(rivers[0].segment.coords))
-    # logging.info(list(hucs.polygon(0).boundary.coords))
+    logging.debug('snap part 1')
+    logging.debug(list(rivers[0].segment.coords))
+    logging.debug(list(hucs.polygon(0).boundary.coords))
 
     
     # snap endpoints of all rivers to the boundary if close
@@ -59,9 +59,9 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
         logging.info("  ...resulted in inconsistent HUCs")
         return False
 
-    # logging.info('snap part 2')
-    # logging.info(list(rivers[0].segment.coords))
-    # logging.info(list(hucs.polygon(0).boundary.coords))
+    logging.debug('snap part 2')
+    logging.debug(list(rivers[0].segment.coords))
+    logging.debug(list(hucs.polygon(0).boundary.coords))
 
     # deal with intersections
     if cut_intersections:
@@ -77,11 +77,14 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
             logging.info("  ...resulted in inconsistent HUCs")
             return False
 
-    # logging.info('snap part 3')
-    # logging.info(list(rivers[0].segment.coords))
-    # logging.info(list(hucs.polygon(0).boundary.coords))
+    logging.debug('snap part 3')
+    logging.debug(list(rivers[0].segment.coords))
+    logging.debug(list(hucs.polygon(0).boundary.coords))
 
-    return True
+    # dealing with crossings might have generated river segments
+    # outside of my space.  remove these.  Note the use of negative tol
+    rivers = filter_rivers_to_huc(hucs, rivers, -tol)
+    return rivers
 
 def _snap_and_cut(point, line, tol=0.1):
     """Determine the closest point to a line and, if it is within tol of
@@ -89,8 +92,10 @@ def _snap_and_cut(point, line, tol=0.1):
     needed.
     """
     if workflow.utils.in_neighborhood(shapely.geometry.Point(point), line, tol):
+        logging.debug("  - in neighborhood")
         nearest_p = workflow.utils.nearest_point(line, point)
         dist = workflow.utils.distance(nearest_p, point)
+        logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
         if dist < tol:
             if dist < 1.e-7:
                 # filter case where the point is already there
@@ -102,12 +107,29 @@ def _snap_and_cut(point, line, tol=0.1):
 def _snap_crossing(hucs, river_node, tol=0.1):
     """Snap a single river node"""
     r = river_node.segment
-    for b,spine in hucs.intersections.items():
+    logging.debug("len spine, boundary = {0},{1}".format(len(hucs.intersections), len(hucs.boundaries)))
+    for b,spine in itertools.chain(hucs.intersections.items(), hucs.boundaries.items()):
+        logging.debug("len spine seg = {0}".format(len(spine)))
+        #for b,spine in hucs.intersections.items():
         for s,seg_handle in spine.items():
             seg = hucs.segments[seg_handle]
 
+            logging.debug("  - intersection?:")
+            logging.debug(list(r.coords))
+            logging.debug(list(seg.coords))
+
             if seg.intersects(r):
-                new_spine = workflow.utils.cut(seg, r, tol)
+                logging.debug("  - YES")
+                try:
+                    new_spine = workflow.utils.cut(seg, r, tol)
+                except RuntimeError as err:
+                    plt.figure()
+                    workflow.plot.hucs(hucs,color='gray')
+                    plt.plot(seg.xy[0], seg.xy[1], 'b-+')
+                    plt.plot(r.xy[0], r.xy[1], 'r-x')
+                    plt.show()
+                    raise err
+
                 try:
                     new_rivers = workflow.utils.cut(r, seg, tol)
                 except RuntimeError as err:
@@ -177,10 +199,21 @@ def snap_endpoints(tree, hucs, tol=0.1):
                 #logging.debug("  huc seg: %r"%seg.coords[:])
                 #logging.debug("  river: %r"%river.coords[:])
                 altered = False
+                logging.debug("  - checking river coord: %r"%list(river.coords[0]))
+                logging.debug("  - seg coords: {0}".format(list(seg.coords)))
                 new_coord = _snap_and_cut(river.coords[0], seg, tol)
+                logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord is not None:
                     logging.info("  - snapped river: %r to %r"%(river.coords[0], new_coord))
 
+                    # move new_coord onto an existing segment coord
+                    dist = np.linalg.norm(np.array(seg.coords) - np.expand_dims(new_coord,0), 2, axis=1)
+                    assert(len(dist) == len(seg.coords))
+                    assert(len(dist.shape) == 1)
+                    i = int(np.argmin(dist))
+                    if (dist[i] < tol):
+                        new_coord = seg.coords[i]
+                    
                     # remove points that are closer
                     coords = list(river.coords)
                     done = False
@@ -200,10 +233,21 @@ def snap_endpoints(tree, hucs, tol=0.1):
                 # logging.debug("  huc seg: %r"%seg.coords[:])
                 # logging.debug("  river: %r"%river.coords[:])
                 altered = False
+                logging.debug("  - checking river coord: %r"%list(river.coords[-1]))
+                logging.debug("  - seg coords: {0}".format(list(seg.coords)))
                 new_coord = _snap_and_cut(river.coords[-1], seg, tol)
+                logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord is not None:
                     logging.info("  - snapped river: %r to %r"%(river.coords[-1], new_coord))
 
+                    # move new_coord onto an existing segment coord
+                    dist = np.linalg.norm(np.array(seg.coords) - np.expand_dims(new_coord,0), 2, axis=1)
+                    assert(len(dist) == len(seg.coords))
+                    assert(len(dist.shape) == 1)
+                    i = int(np.argmin(dist))
+                    if (dist[i] < tol):
+                        new_coord = seg.coords[i]
+                    
                     # remove points that are closer
                     coords = list(river.coords)
                     done = False
@@ -216,7 +260,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                     to_add.append((seg_handle, component, -1, node))
                     break
 
-    # find the list of points to add to a give segment
+    # find the list of points to add to a given segment
     to_add_dict = dict()
     for seg_handle, component, endpoint, node in to_add:
         if seg_handle not in to_add_dict.keys():
@@ -246,34 +290,36 @@ def snap_endpoints(tree, hucs, tol=0.1):
         #
         # Note this needs special care if the seg is a loop, or else the endpoint gets sorted twice        
         if not workflow.utils.close(seg.coords[0], seg.coords[-1]):
-            new_coords = sorted(
-                [[c,0] for c in seg.coords]+[[p[2].segment.coords[p[1]],1] for p in insert_list],
-                key = lambda a:seg.project(shapely.geometry.Point(a)))
+            new_coords = [[p[2].segment.coords[p[1]],1] for p in insert_list]
+            old_coords = [[c,0] for c in seg.coords if not any(workflow.utils.close(c, nc, tol) for nc in new_coords)]
+            new_seg_coords = sorted(new_coords+old_coords,
+                                    key = lambda a:seg.project(shapely.geometry.Point(a)))
 
             # determine the new coordinate indices
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
 
         else:
-            new_coords = sorted(
-                [[c,0] for c in seg.coords[:-1]]+[[p[2].segment.coords[p[1]],1] for p in insert_list],
-                key = lambda a:seg.project(shapely.geometry.Point(a)))
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+            new_coords = [[p[2].segment.coords[p[1]],1] for p in insert_list]
+            old_coords = [[c,0] for c in seg.coords[:-1] if not any(workflow.utils.close(c, nc, tol) for nc in new_coords)]
+            new_seg_coords = sorted(new_coords+old_coords,
+                                    key = lambda a:seg.project(shapely.geometry.Point(a)))
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
             assert(len(breakpoint_inds) > 0)
-            new_coords = new_coords[breakpoint_inds[0]:] + new_coords[0:breakpoint_inds[0]+1]
-            new_coords[0][1] = 0
-            new_coords[-1][1] = 0
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_coords) if f is 1]
+            new_seg_coords = new_seg_coords[breakpoint_inds[0]:] + new_seg_coords[0:breakpoint_inds[0]+1]
+            new_seg_coords[0][1] = 0
+            new_seg_coords[-1][1] = 0
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
 
         # now break into new segments
         new_segs = []
         ind_start = 0
         for ind_end in breakpoint_inds:
             assert(ind_end is not 0)
-            new_segs.append(shapely.geometry.LineString([c for (c,f) in new_coords[ind_start:ind_end+1]]))
+            new_segs.append(shapely.geometry.LineString([c for (c,f) in new_seg_coords[ind_start:ind_end+1]]))
             ind_start = ind_end
 
-        assert(ind_start < len(new_coords)-1)
-        new_segs.append(shapely.geometry.LineString([tuple(c) for (c,f) in new_coords[ind_start:]]))
+        assert(ind_start < len(new_seg_coords)-1)
+        new_segs.append(shapely.geometry.LineString([tuple(c) for (c,f) in new_seg_coords[ind_start:]]))
 
         # put all new_segs into the huc list.  Note insert_list[0][0] is the component
         hucs.segments[seg_handle] = new_segs.pop(0)
@@ -340,9 +386,9 @@ def filter_rivers_to_huc(hucs, rivers, tol):
     logging.info("  ...filtering")
     if type(rivers) is shapely.geometry.MultiLineString or \
        (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
-        rivers2 = [r for r in rivers if union.intersects(r)]
+        rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(union,r)]
     elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
-        rivers2 = [r for river in rivers for r in river.dfs() if union.intersects(r)]
+        rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(union,r)]
 
     logging.info("  ...making global tree")
     rivers_tree = workflow.hydrography.make_global_tree(rivers2, tol=0.1)

@@ -36,23 +36,23 @@ def check1(hucs,rivers):
     print(poly0.boundary.coords[:])
     assert(workflow.utils.close(poly0, shapely.geometry.Polygon([(0,-5), (10,-5), (10,0), (10,5), (0,5)])))
 
-    gon0b, gon0i = hucs.gons[0]
-    assert(len(gon0b) is 1)
-    assert(0 in gon0b.keys())
-    assert(len(gon0i) is 0)
-    assert(gon0b[0] == 0)
+    # gon0b, gon0i = hucs.gons[0]
+    # assert(len(gon0b) is 1)
+    # assert(0 in gon0b.keys())
+    # assert(len(gon0i) is 0)
+    # assert(gon0b[0] == 0)
 
-    assert(0 in hucs.boundaries.keys())
-    assert(len(hucs.boundaries) == 1)
-    assert(len(hucs.intersections) == 0)
+    # assert(0 in hucs.boundaries.keys())
+    # assert(len(hucs.boundaries) == 1)
+    # assert(len(hucs.intersections) == 0)
 
-    segs0 = hucs.boundaries[0]
-    assert(len(segs0) is 1)
-    assert(0 in segs0.keys())
-    assert(segs0[0] == 0)
+    # segs0 = hucs.boundaries[0]
+    # assert(len(segs0) is 1)
+    # assert(0 in segs0.keys())
+    # assert(segs0[0] == 0)
 
-    assert(len(hucs.segments) is 1)
-    assert(0 in hucs.segments.keys())
+    # assert(len(hucs.segments) is 1)
+    # assert(0 in hucs.segments.keys())
 
     riverlist = list(rivers[0].dfs())
     assert(len(riverlist) is 1)
@@ -95,6 +95,40 @@ def check1b(hucs,rivers):
     for tree in rivers:
         assert(workflow.tree.is_consistent(tree))
 
+
+def check1c(hucs,rivers):
+    assert(len(hucs) is 1)
+    poly0 = hucs.polygon(0)
+    print(poly0.boundary.coords[:])
+    assert(workflow.utils.close(poly0, shapely.geometry.Polygon([(0,-5), (10,-5), (10,0),
+                                                                 (10,5), (0,5)])))
+
+    gon0b, gon0i = hucs.gons[0]
+    assert(len(gon0b) is 1)
+    assert(0 in gon0b.keys())
+    assert(len(gon0i) is 0)
+    assert(gon0b[0] == 0)
+
+    assert(0 in hucs.boundaries.keys())
+    assert(len(hucs.boundaries) == 1)
+    assert(len(hucs.intersections) == 0)
+
+    segs0 = hucs.boundaries[0]
+    assert(len(segs0) is 1)
+    assert(0 in segs0.keys())
+    assert(segs0[0] == 0)
+
+    assert(len(hucs.segments) is 1)
+    assert(0 in hucs.segments.keys())
+
+    riverlist = list(rivers[0].dfs())
+    assert(len(riverlist) is 1)
+    print(riverlist[0].coords[:])
+    assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0), (15,0.001)])))
+
+    for tree in rivers:
+        assert(workflow.tree.is_consistent(tree))
+        
         
 def check2(hucs,rivers):
     assert(len(hucs) is 2)
@@ -182,45 +216,127 @@ def check3(hucs,rivers):
         assert(workflow.tree.is_consistent(tree))
     
 def test_snap0():
-    # snap a river endpoint onto a huc
+    # snap a river endpoint onto a huc, exact point in river, none on huc
     b1 = [(0, -5), (10,-5), (10,5), (0,5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5.,0.), (10.,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check1(hucs,rivers)
 
-def test_snap0b():
-    # snap a river endpoint onto a huc
+def test_snap0a():
+    # snap a river endpoint onto a huc, nearby point on river, none on huc
     b1 = [(0, -5), (10,-5), (10,5), (0,5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5.,0.), (9.999,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check1(hucs,rivers)
 
+def test_snap0b():
+    # snap a river endpoint onto a huc, nearby point on river, none on huc
+    b1 = [(0, -5), (10,-5), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (10.001,0)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+    
 def test_snap0c():
-    # snap a river endpoint onto a huc
+    # snap a river endpoint onto a huc, exact point on river, point on huc
     b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
-    rs = [shapely.geometry.LineString([(5.,0.), (9.999,0)]),]
+    rs = [shapely.geometry.LineString([(5.,0.), (10.,0.)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check1(hucs,rivers)
+
+def test_snap0d():
+    # snap a river endpoint onto a huc, near point on river, point on huc
+    b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (9.999,0.)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+    
+def test_snap0e():
+    # snap a river endpoint onto a huc, near point on river, point on huc
+    b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (10.001,0.)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
+def test_snap0f():
+    # snap a river endpoint onto a huc, near point on river, point on huc
+    b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (9.999,0.001)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
+def test_snap0g():
+    # snap a river endpoint onto a huc, near point on river, point on huc
+    b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (10.001,0.001)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
+    
+def test_snap0h():
+    # snap a river midpoint onto a huc boundary, none on huc
+    b1 = [(0, -5), (10,-5), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (15,0.)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
+def test_snap0i():
+    # snap a river midpoint onto a huc boundary, exact on huc
+    b1 = [(0, -5), (10,-5), (10,0.), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (15,0.)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
+def test_snap0j():
+    # snap a river midpoint onto a huc boundary, nearby on huc
+    b1 = [(0, -5), (10,-5), (10,0.001), (10,5), (0,5)]
+    tb = []
+    tb.append(shapely.geometry.Polygon(b1))
+    rs = [shapely.geometry.LineString([(5.,0.), (15,0.)]),]
+    hucs, rivers = data(tb, rs)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    check1(hucs,rivers)
+
     
 def test_snap1():
     # snap a river endpoint onto a huc
-    b1 = [(0, -5), (10,-5), (10, 0.001), (10,5), (0,5)]
+    b1 = [(0, -5), (10,-5), (10, 0.), (10,5), (0,5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
-    rs = [shapely.geometry.LineString([(5.,0.), (9.99,0)]),]
+    rs = [shapely.geometry.LineString([(5.,0.), (9.99,0.001)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
-    check1b(hucs,rivers)
-    #check1(hucs,rivers)  # MAY NEED ATTENTION!
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    #check1b(hucs,rivers)
+    check1(hucs,rivers)  # MAY NEED ATTENTION!
 
     
 def test_snap2():
@@ -228,7 +344,7 @@ def test_snap2():
     tb = two_boxes()
     rs = [shapely.geometry.LineString([(5.,0.), (15,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check2(hucs,rivers)
         
 def test_snap3():
@@ -236,7 +352,7 @@ def test_snap3():
     tb = two_boxes()
     rs = [shapely.geometry.LineString([(5.,0.), (10.001,0), (15,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     poly0 = hucs.polygon(0)
     check2(hucs,rivers)
     
@@ -249,7 +365,7 @@ def test_snap4():
     tb.append(shapely.geometry.Polygon(b2))
     rs = [shapely.geometry.LineString([(5.,0.), (15,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check2(hucs,rivers)
     
 def test_snap5():
@@ -261,7 +377,7 @@ def test_snap5():
     tb.append(shapely.geometry.Polygon(b2))
     rs = [shapely.geometry.LineString([(5.,0.), (10.001,0), (15,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check2(hucs,rivers)
     
 def test_snap6():
@@ -280,7 +396,7 @@ def test_snap6():
     ]
 
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check3(hucs,rivers)
 
 def test_snap7():
@@ -298,7 +414,7 @@ def test_snap7():
           shapely.geometry.LineString([(10.,5.), (10,10)]),]
 
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check3(hucs,rivers)
 
 def test_snap8():
@@ -313,7 +429,7 @@ def test_snap8():
           shapely.geometry.LineString([(5.,-2.), (9.901,0.),]),
           shapely.geometry.LineString([(9.901,0.), (11,0), (12,0), (15,0)]),]
     hucs, rivers = data(tb, rs)
-    workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check2b(hucs,rivers)
 
     
