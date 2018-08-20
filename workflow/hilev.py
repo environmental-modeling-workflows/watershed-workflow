@@ -106,7 +106,7 @@ def find_huc(shp_profile, shply, source, hint=None):
         raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
     return result
 
-def get_hucs(myhuc, source, center=True):
+def get_hucs(myhuc, source, level=12, center=True):
     """Collects shapefiles for HUCs given a HUC code in string form.
 
     Arguments:
@@ -130,8 +130,8 @@ def get_hucs(myhuc, source, center=True):
     source.download(myhuc)
 
     # load shapefiles for all HUC 12s
-    logging.info("loading all 12s")
-    profile, huc12s = source.load_hucs_in(myhuc, 12)
+    logging.info("loading all %is"%level)
+    profile, huc12s = source.load_hucs_in(myhuc, level)
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")

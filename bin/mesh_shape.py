@@ -20,7 +20,7 @@ import workflow.files
 import workflow.plot
 
 
-if __name__ == '__main__':
+def get_args():
     # set up parser
     parser = workflow.ui.get_basic_argparse(__doc__)
     workflow.ui.inshape_args(parser)
@@ -31,9 +31,11 @@ if __name__ == '__main__':
     workflow.ui.huc_source_options(parser)
     workflow.ui.dem_source_options(parser)
     workflow.ui.refine_options(parser)
-
+    
     # parse args, log
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def mesh_shape(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
 
     args.source_hydro = args.source_huc
@@ -69,17 +71,27 @@ if __name__ == '__main__':
         mesh_points3[:,0:2] = mesh_points2
         mesh_points3[:,2] = mesh_points3_uncentered[:,2]
     else:
-        mesh_points3 = mesh_ponts3_uncentered
+        mesh_points3 = mesh_points3_uncentered
 
-    # plot the result
-    if args.verbosity > 0:
-        plt.figure()
+    return centroid, watersheds, rivers, (mesh_points3, mesh_tris)
+
+def plot(args, watersheds, rivers, triangulation):
+    mesh_points3, mesh_tris = triangulation
+    if args.verbosity > 0:    
+        fig = plt.figure(figsize=(4,5))
+        ax = fig.add_subplot(111)
+
         workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
         workflow.plot.hucs(watersheds, 'k')
         workflow.plot.rivers(rivers, color='r')
-        plt.gca().set_aspect('equal', 'datalim')    
+        ax.set_aspect('equal', 'datalim')
+        ax.set_xlabel('')
+        ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
+        plt.ylabel('')
+        ax.set_yticklabels([int(round(0.001*tick)) for tick in ax.get_yticks()])
         plt.show()
 
+def save(args, centroid, triangulation):
     # save mesh
     metadata_lines = ['Mesh of shapefile: %s'%args.infile,
                       ' including shapes index: %i (-1 indicates all shapes in the file)'%args.shape_index,
@@ -109,4 +121,11 @@ if __name__ == '__main__':
     else:
         outfile = args.outfile            
     workflow.hilev.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
+        
+if __name__ == '__main__':
+    args = get_args()
+    print(args.__dict__)
+    centroid, watersheds, rivers, triangulation = mesh_shape(args)
+    plot(args, watersheds, rivers, triangulation)
+    save(args, centroid, triangulation)
     sys.exit(0)

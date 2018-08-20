@@ -5,6 +5,7 @@ import numpy as np
 import logging
 import fiona
 import rasterio
+import math
 
 rcParams = { 'data dir' : '/Users/uec/research/water/data/meshing/data',
              'packages data dir' : 'packages',

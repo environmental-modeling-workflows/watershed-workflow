@@ -41,7 +41,7 @@ def mesh_hucs(args):
     sources = workflow.files.get_sources(args)
     
     # collect data
-    hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], args.center)
+    hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], center=args.center)
     rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
     dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
 
@@ -64,7 +64,7 @@ def mesh_hucs(args):
         mesh_points3[:,0:2] = mesh_points2
         mesh_points3[:,2] = mesh_points3_uncentered[:,2]
     else:
-        mesh_points3 = mesh_ponts3_uncentered
+        mesh_points3 = mesh_points3_uncentered
 
     return centroid, hucs, rivers, (mesh_points3, mesh_tris)
 

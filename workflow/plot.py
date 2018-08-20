@@ -60,7 +60,7 @@ def points(points, **kwargs):
     y = [p.xy[1][0] for p in points]
     plt.scatter(x,y,**kwargs)
 
-def triangulation(points, tris, color=None, linewidth=1, edgecolor='gray'):
+def triangulation(points, tris, color=None, linewidth=1, edgecolor='gray', norm=None):
     monocolor = True
     if color is None:
         if points.shape[1] is 3:
@@ -71,7 +71,7 @@ def triangulation(points, tris, color=None, linewidth=1, edgecolor='gray'):
     if monocolor:
         return plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
     else:
-        return plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor)
+        return plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor, norm=norm)
 
 
     
