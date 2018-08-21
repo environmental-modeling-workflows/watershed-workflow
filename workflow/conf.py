@@ -7,12 +7,17 @@ import fiona
 import rasterio
 import math
 
-rcParams = { 'data dir' : '/Users/uec/research/water/data/meshing/data',
-             'packages data dir' : 'packages',
-             'epsg' : 5070, # default Albers equal area conic
-             }
-
-#
+try:
+    rcParams = { 'data dir' : os.path.join(os.environ['ATS_MESHING_DIR'], 'data'),
+                 'packages data dir' : 'packages',
+                 'epsg' : 5070, # default Albers equal area conic
+                 }
+except KeyError:
+    rcParams = { 'data dir' : os.path.join(os.getcwd(), 'data'),
+                 'packages data dir' : 'packages',
+                 'epsg' : 5070, # default Albers equal area conic
+                 }
+                 
 
 def default_crs():
     """Returns the fiona coordniate system used by default for all output."""
