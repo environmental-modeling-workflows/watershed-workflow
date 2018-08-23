@@ -126,7 +126,7 @@ def get_hucs(myhuc, source, level=12, center=True):
     logging.info("=====================")
 
     # collect HUC shapefile
-    logging.info("collecting HUC %s"%myhuc[0:2])
+    logging.info("collecting HUC %s"%myhuc)
     source.download(myhuc)
 
     # load shapefiles for all HUC 12s

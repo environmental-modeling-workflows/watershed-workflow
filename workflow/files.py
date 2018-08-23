@@ -163,7 +163,7 @@ class NHDFileManager(FileManager):
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
         filename = os.path.join(container, 'WBDHU%d.shp'%size)
-        logging.debug("Opening '%s' for HUC '%s' subhucs of size %d"%(filename, hucstr, size))
+        logging.info("Opening '%s' for HUC '%s' subhucs of size %d"%(filename, hucstr, size))
         with fiona.open(filename, 'r') as fid:
             matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(hucstr)]
             profile = fid.profile
@@ -215,7 +215,7 @@ class NHDHucOnlyFileManager(FileManager):
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
         filename = os.path.join(container, 'WBDHU%d.shp'%size)
-        logging.debug("Opening '%s' for HUC '%s' subhucs of size %d"%(filename, hucstr, size))
+        logging.info("Opening '%s' for HUC '%s' subhucs of size %d"%(filename, hucstr, size))
         with fiona.open(filename, 'r') as fid:
             matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(hucstr)]
             profile = fid.profile
@@ -266,7 +266,7 @@ class NHDPlusFileManager(FileManager):
         hucstr = workflow.conf.huc_str(huc)
         container = self.names.file_name(huc)
         layer = 'WBDHU%d'%size
-        logging.debug("Opening '%s' layer '%s' for HUC '%s'"%(container, layer, hucstr))
+        logging.info("Opening '%s' layer '%s' for HUC '%s'"%(container, layer, hucstr))
         with fiona.open(container, mode='r', layer=layer) as fid:
             matching = [h for h in fid if h['properties']['HUC%i'%size].startswith(hucstr)]
             profile = fid.profile
@@ -342,8 +342,8 @@ def _download(url, location, force=False):
         else:
             return True
     try:
-        logging.info('Downloading: "%s"')
-        logging.info('         to: "%s"'%(url, location))
+        logging.info('Downloading: "%s"'%url)
+        logging.info('         to: "%s"'%location)
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
@@ -357,7 +357,8 @@ def _download(url, location, force=False):
 
 def _unzip(filename, to_location):
     """Unzip the corresponding, assumed to exist, zipped DEM into the DEM directory."""
-    logging.info('Unzipping: "%s" \n  to: "%s"'%(filename, to_location))
+    logging.info('Unzipping: "%s"'%filename)
+    logging.info('       to: "%s"'%to_location)
     
     with zipfile.ZipFile(filename, 'r') as zip_ref:
         zip_ref.extractall(to_location)
