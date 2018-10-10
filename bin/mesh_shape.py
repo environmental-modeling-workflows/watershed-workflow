@@ -92,6 +92,8 @@ def plot(args, watersheds, rivers, triangulation):
         plt.show()
 
 def save(args, centroid, triangulation):
+    mesh_points, mesh_tris = triangulation
+    
     # save mesh
     metadata_lines = ['Mesh of shapefile: %s'%args.infile,
                       ' including shapes index: %i (-1 indicates all shapes in the file)'%args.shape_index,
@@ -120,7 +122,7 @@ def save(args, centroid, triangulation):
         outfile = outfile_prefix + '.vtk'
     else:
         outfile = args.outfile            
-    workflow.hilev.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
+    workflow.hilev.save(outfile, mesh_points, mesh_tris, '\n'.join(metadata_lines))
         
 if __name__ == '__main__':
     args = get_args()
