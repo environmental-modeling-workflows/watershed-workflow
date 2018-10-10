@@ -73,8 +73,8 @@ def plot(args, hucs, rivers, triangulation):
     if args.verbosity > 0:    
         fig = plt.figure(figsize=(4,5))
         ax = fig.add_subplot(111)
-        workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0)
-        fig.colorbar(orientation="horizontal", pad=0.1)
+        mp = workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0)
+        fig.colorbar(mp, orientation="horizontal", pad=0.1)
         workflow.plot.hucs(hucs, 'k', linewidth=0.7)
         workflow.plot.rivers(rivers, color='white', linewidth=0.5)
         ax.set_aspect('equal', 'datalim')

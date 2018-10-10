@@ -400,7 +400,7 @@ def elevate(mesh_points, dem, dem_profile):
     logging.info("elevating")
     triangles_3d = []
     mesh_points_ll = np.array(workflow.warp.warp_xy(mesh_points[:,0], mesh_points[:,1], workflow.conf.default_crs(), workflow.conf.latlon_crs())).transpose()
-    elev = dem[workflow.rowcol.rowcol(dem_profile['affine'], mesh_points_ll[:,0], mesh_points_ll[:,1])]
+    elev = dem[workflow.rowcol.rowcol(dem_profile['transform'], mesh_points_ll[:,0], mesh_points_ll[:,1])]
     mesh_points_3 = np.zeros((len(mesh_points),3),'d')
     mesh_points_3[:,0:2] = mesh_points
     mesh_points_3[:,2] = elev
