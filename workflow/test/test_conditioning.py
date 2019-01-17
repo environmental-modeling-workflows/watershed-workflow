@@ -18,7 +18,7 @@ def make_points_1D(elevs):
 
 def run_test_1D(elev_in, elev_out):
     points = make_points_1D(elev_in)
-    workflow.condition.condition(points)
+    workflow.condition.condition(points, 0)
 
     for i in range(len(elev_in)):
         assert(points[i].coords[2] == elev_out[i])
@@ -34,6 +34,9 @@ def test_two_pit_backwards():
 
 def test_double_pit():
     run_test_1D([0,1,2,1,3,1,3,5], [0,1,2,2,3,3,3,5])
+
+def test_bad_outlet_pit():
+    run_test_1D([0,1,3,-1,4,5], [0,1,3,3,4,5])
     
 
 
