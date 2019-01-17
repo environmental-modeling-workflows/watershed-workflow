@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import logging
 
 import workflow.condition
 
@@ -13,15 +14,21 @@ def make_points_1D(elevs):
             neighbors = [i-1,]
         else:
             neighbors = [i-1,i+1]
-        points[i] = workflow.condition.Point(coords, neighbors))
+        points[i] = workflow.condition.Point(coords, neighbors)
     return points
 
 def run_test_1D(elev_in, elev_out):
     points = make_points_1D(elev_in)
     workflow.condition.condition(points, 0)
 
+    print("GOT COORDS:")
+    print(([points[i].coords[2] for i in range(len(points))]))
+    
     for i in range(len(elev_in)):
         assert(points[i].coords[2] == elev_out[i])
+
+def test_null():
+    run_test_1D([0,1,2,3,4,5], [0,1,2,3,4,5])
 
 def test_one_pit():
     run_test_1D([0,1,3,2,4,5], [0,1,3,3,4,5])
