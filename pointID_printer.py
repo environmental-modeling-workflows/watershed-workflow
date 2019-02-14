@@ -7,7 +7,7 @@ import time
 
 reader = vtk.vtkUnstructuredGridReader()
 
-reader.SetFileName('coweeta_basin2.vtk')
+reader.SetFileName('coweeta_basin.vtk')
 reader.Update()
 mesh = reader.GetOutput()
 ncells = mesh.GetNumberOfCells()
