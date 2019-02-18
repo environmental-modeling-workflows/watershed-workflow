@@ -17,26 +17,27 @@ mesh = reader.GetOutput()
 ncells = mesh.GetNumberOfCells()
 npoints = mesh.GetNumberOfPoints()
 
+def constructPointStructure(npoints):
+    PointStructure = {p : [] for p in range(0,npoints)}
+    return PointStructure
 
+def GetNeighborValues(PointId):
+    neighborValue = []
+    neighborIds = NeighboringPointId[PointId]
+    for j in range(len(neighborIds)): #iterate over all neighbors
+        thisNeighborId = neighborIds[j]
+        neighborValue += [meshId[0][thisNeighborId][2]]
+    return(neighborValue)
 
-#NeighboringPointId is a set of lists, one list per point
-NeighboringPointId = {p : [] for p in range(0,npoints)} 
-
-#iterate over all cells
-for c in range(ncells): 
-    #get data in given cell 'c'
-    cell = mesh.GetCell(c) 
-
-    #triangle means that three corners of a cell 'c' are stored
-    PointId0 = cell.GetPointId(0) 
+def GetNeighborIds(cell):
+    PointId0 = cell.GetPointId(0) # get Ids for the three corners of a triangle
     PointId1 = cell.GetPointId(1)
     PointId2 = cell.GetPointId(2)
 
     #internal edges will be visited twice, so to prevent data duplication we use conditions    
     #conditions and appends are used in place of 'union' operators. could be improved
-    #if it's not already there, we store the ID for the connected points, in one cell.
     if PointId1 not in NeighboringPointId[PointId0]: 
-        NeighboringPointId[PointId0] += [PointId1] 
+        NeighboringPointId[PointId0] += [PointId1]
     if PointId2 not in NeighboringPointId[PointId0]:
         NeighboringPointId[PointId0] += [PointId2] 
     if PointId0 not in NeighboringPointId[PointId1]:
@@ -47,15 +48,20 @@ for c in range(ncells):
         NeighboringPointId[PointId2] += [PointId0] 
     if PointId1 not in NeighboringPointId[PointId2]:
         NeighboringPointId[PointId2] += [PointId1]
-    else:continue
+
+#NeighboringPointId is a set of lists, one list per point
+NeighboringPointId = constructPointStructure(npoints)
+
+#iterate over all cells
+for c in range(ncells): 
+    #get data in given cell 'c'
+    cell = mesh.GetCell(c) 
+    GetNeighborIds(cell)
 
 #post condition check to make sure there's no disconnected points (which would be a problem)
 for i in range (npoints):
     if len(NeighboringPointId[i])==0:
          print("DISCONNECTED POINT:", i)
     else:
-         print("This Id:",i," Neighbor Ids: ", NeighboringPointId[i])
-         for neighbor in range(len(NeighboringPointId[i])):
-             print("This Val:", meshId[0][i][2],"Neighbor Vals:",meshId[0][neighbor][2],"\n")
-
-#print(NeighboringPointId)
+         Neighbor_Z_Values = GetNeighborValues(i)
+         print("i=",i,"neighbor z values:",Neighbor_Z_Values,"\n")
