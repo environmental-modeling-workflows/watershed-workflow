@@ -9,8 +9,6 @@ import attr
 import time
 
 meshId = vtk_io.read("coweeta_basin.vtk")
-#figure out how to use vtk_io ONLY
-#print(infile[1]['triangle'][1])
 
 reader = vtk.vtkUnstructuredGridReader()
 reader.SetFileName('coweeta_basin.vtk')
@@ -31,7 +29,15 @@ def GetNeighborValues(PointId):
         neighborValue += [meshId[0][thisNeighborId][2]] # [2] is hardcoded to only provide z axis
     return(neighborValue)
 
-def GetNeighborIds(cell):
+def GetValue(PointId):
+    value = [meshId[0][PointId][2]]
+    return value    
+
+def GetNeighborIdsByPnt(point):
+    neighborIds = NeighboringPointId[point]
+    return neighborIds
+
+def GetNeighborIdsByCell(cell):
     PointId0 = cell.GetPointId(0) # get Ids for the three corners of a triangle
     PointId1 = cell.GetPointId(1)
     PointId2 = cell.GetPointId(2)
@@ -53,25 +59,39 @@ def GetNeighborIds(cell):
     if PointId1 not in NeighboringPointId[PointId2]:
         NeighboringPointId[PointId2] += [PointId1]
 
+def GetIdSortedByZ():
+    for thisPointId in range(npoints):
+        Id_z_matrix[thisPointId] = [thisPointId,GetValue(thisPointId)] # get the Z axis value for an id 'i' 
+    Id_z_matrix.sort(key=lambda x: x[1]) #sort the tuples by Z (stored in 1)
+    return Id_z_matrix
 
 #end functions 
 
 #NeighboringPointId is a set of lists, one list per point
 NeighboringPointId = constructPointStructure(npoints)
+NeighborMatrix = [[0 for x in range(10)] for y in range(npoints)] 
+Id_z_matrix = [0 for y in range(npoints)] 
 
 #iterate over all cells
 for c in range(ncells): 
     #get data in given cell 'c'
     cell = mesh.GetCell(c) 
-    GetNeighborIds(cell)
+    GetNeighborIdsByCell(cell)
 
 #post condition check to make sure there's no disconnected points (which would be a problem)
-for i in range (npoints):
-    if len(NeighboringPointId[i])<=1:
-         print("DISCONNECTED POINT:", i)
-    if len(NeighboringPointId[i])>=10:
-         print("This mesh is looking very strange...")
-    else:
-         Neighbor_Z_Values = GetNeighborValues(i)
-         print("i=",i,"neighbor z values:",Neighbor_Z_Values,"\n")
+#for i in range (npoints):
+    #if len(NeighboringPointId[i])<=1:
+        #print("DISCONNECTED POINT:", i)
+    #if len(NeighboringPointId[i])>=10:
+    #     print("This mesh is looking very strange...i (pointid) = ", i, "neighboringpointid=",NeighboringPointId[i])
+    #else:
+Id_z_matrix = GetIdSortedByZ()
+#         Neighbor_Z_Values = GetNeighborValues(i)
+      #  print("i=",i,"neighbor z values:",Neighbor_Z_Values,"\n")
+      #   print(Neighbor_Z_Values)
 
+#         Id_z_matrix[i] = [i,GetValue(i)]
+#         NeighborMatrix[i]=[i,Neighbor_Z_Values]
+
+#Id_z_matrix.sort(key=lambda x: x[1])
+#print("ID Matrix:",Id_z_matrix)
