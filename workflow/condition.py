@@ -15,37 +15,32 @@ class Point:
 
 
 def condition(points, outletID):
-    elev = sortedcontainers.SortedList(list(points.items()), key=lambda id_p:id_p[1].coords[2]) # modify this to be x value is Id
-    #print(elev)
+    elev = sortedcontainers.SortedList(list(points.items()), key=lambda id_p:id_p[1].coords[2])
     waterway = set([outletID,])
     counter = 0
-    #while counter is not 10:
-    while len(elev) is not 0:
+    while counter != 1000:
+    #while len(elev) is not 0:
         counter += 1
-        current, current_point_metadata = elev.pop(0)
-        if current in waterway:# if current is already known to be in waterway, add current.neighbors to waterway
-            waterway.update(current_point_metadata.neighbors) 
-        else: #determine if current.neighbors are connected to a waterway
-            ww_neighbors = []
-            for n in range(len(current_point_metadata.neighbors)): #construct waterway neighbors dict
-                if current_point_metadata.neighbors[n] in waterway:
-                    ww_neighbors.append(current_point_metadata.neighbors[n])
-                else: continue #continue and deconstruct waterway neighbors dict
+        #print("len(elev), counter",len(elev),counter)
+        spacer, current_point_metadata = elev.pop(0) #spacer is a placeholder. clean this up
+        current = int(current_point_metadata.coords[0]) #current is the point
+        current_neighbors = find_neighbor.GetNeighborIdsByPnt(current)
+        #print("spacer",spacer,current)# we gotta fix this current issue... spacer vs current leads to loops
+        if current in waterway:
+            waterway.update(current_neighbors)
+
+        else:
+            ww_neighbors = [n for n in current_neighbors if n in waterway]
+            #print ("ww_neighbors",ww_neighbors)
             if len(ww_neighbors) != 0: #update z for a point to: minimum neighboring z (from ww_neighbor)
-                PId = (int(current_point_metadata.coords[0])) #the ID of the point (converted to int)
-                old_z = (current_point_metadata.coords[2]) #before
+                print("trying to fill")
                 current_point_metadata.coords[2] = min(points[n].coords[2] for n in ww_neighbors)
-                new_z = current_point_metadata.coords[2] #after
-                print("Filling: PId",PId,"| ",old_z, " -> ", new_z)
-            else:#not in waterway - still we update pit to neighboring elevations
-                neighboring_values = []
-                for n in range(len(current_point_metadata.neighbors)):
-                    neighboring_values += current_point_metadata.neighbors #data duplication may occur here
-                min_neighbor_id = min(neighboring_values)
-                min_neighbor_value_pre = find_neighbor.GetValue(min_neighbor_id)
-                min_neighbor_value = str(min_neighbor_value_pre)[1:-1] #this is to strip brackets.  i.e. str[brackets][1:-1] = brackets
-                current_point_metadata.coords[2] = min_neighbor_value
-    elev.add( (current,current_point_metadata) )
+                print("filling:",current,current_point_metadata.coords[2])
+
+            else:
+                current_point_metadata.coords[2] = min(points[n].coords[2] for n in current_neighbors)
+            print("elev.add")
+            elev.add((current, current_point_metadata))
     return
 
 if __name__ == "__main__":
@@ -54,9 +49,7 @@ if __name__ == "__main__":
         IdSortedByZ = find_neighbor.GetIdSortedByZ()
         
         for i,e in enumerate(elevs):
-            #print(e)
             thisID = IdSortedByZ[i][0]
-
             coords = np.array([thisID,0,e])
             neighbors = find_neighbor.GetNeighborIdsByPnt(i)
             points[i] = Point(coords, neighbors)
@@ -64,12 +57,7 @@ if __name__ == "__main__":
 
     def run_test_1D(elev_in, elev_out):
         points = make_points_1D(elev_in)
-        condition(points, 24)
-
-        #for i in range(len(elev_in)):
-        #    assert(points[i].coords[2] == elev_out[i])
-        #print("Run 2")
-        #condition(points, 180) #look  below for more options!
+        condition(points, 175)
 
     full_input = find_neighbor.GetIdSortedByZ()
     test_input = []
