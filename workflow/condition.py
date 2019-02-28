@@ -11,7 +11,7 @@ class Point:
     neighbors = attr.ib()
 
 
-def condition1(points, outletID):
+def condition1(points, outletID=None):
     """Conditions a mesh, in place, by removing pits.
 
     Inputs:
@@ -20,6 +20,8 @@ def condition1(points, outletID):
 
     This is the origional, 2-pass algorithm.
     """
+    if outletID is None:
+        outletID = np.argmin(np.array([points[i].coords[2] for i in range(len(points))]))
 
     # create a sorted list of elevations, from largest to smallest
     elev = sorted(list(points.items()), key=lambda id_p:-id_p[1].coords[2])
@@ -113,7 +115,7 @@ def condition3(points, outletID):
 
     while len(boundary) > 0:
         # pop the lowest boundary point and stick it in the waterway
-        next_p = boundary.pop()
+        next_p = boundary.pop(0)
         waterway.add(next_p[0])
 
         # increment the waterway elevation
