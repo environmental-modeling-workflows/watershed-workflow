@@ -16,6 +16,10 @@ def hucs(hucs, color=None, style='-', linewidth=1):
     for huc in hucs.polygons():
         plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], style, color=color, linewidth=linewidth)
 
+def shapes(shps, color=None, style='-', linewidth=1):
+    for shp in shps:
+        plt.plot(shp.exterior.xy[0], shp.exterior.xy[1], style, color=color, linewidth=linewidth)
+        
 
 def rivers(rivers, color=None, style='-', linewidth=1):
     if style.endswith('-') or style.endswith('.'):
@@ -60,18 +64,17 @@ def points(points, **kwargs):
     y = [p.xy[1][0] for p in points]
     plt.scatter(x,y,**kwargs)
 
-def triangulation(points, tris, color=None, linewidth=1, edgecolor='gray', norm=None):
-    monocolor = True
-    if color is None:
-        if points.shape[1] is 3:
-            monocolor = False
-        else:
-            color = 'gray'
-        
-    if monocolor:
+def triangulation(points, tris, color='gray', linewidth=1, edgecolor='gray', norm=None, vmin=None, vmax=None):
+    if color == 'elevation' and points.shape[1] != 3:
+        color = 'gray'
+
+    if color == 'elevation':
+        return plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor, norm=norm, vmin=vmin, vmax=vmax)
+    elif type(color) != str:
+        return plt.tripcolor(points[:,0], points[:,1], tris, color, linewidth=linewidth, edgecolor=edgecolor, norm=norm, vmin=vmin, vmax=vmax)
+    else:        
         return plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
-    else:
-        return plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor, norm=norm)
+        
 
 
     

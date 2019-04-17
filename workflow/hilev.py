@@ -8,7 +8,6 @@ capability.
 
 import sys,os
 import numpy as np
-from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib.collections as pltc
 import logging
@@ -106,7 +105,7 @@ def find_huc(shp_profile, shply, source, hint=None):
         raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
     return result
 
-def get_hucs(myhuc, source, level=12, center=True):
+def get_hucs(myhuc, source, level=12, center=True, crs=None):
     """Collects shapefiles for HUCs given a HUC code in string form.
 
     Arguments:
@@ -135,8 +134,10 @@ def get_hucs(myhuc, source, level=12, center=True):
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
+    if crs is None:
+        crs = workflow.conf.default_crs()
     for huc12 in huc12s:
-        workflow.warp.warp_shape(huc12, profile['crs'], workflow.conf.default_crs())
+        workflow.warp.warp_shape(huc12, profile['crs'], crs)
 
     # convert to shapely
     huc_shapes = [shapely.geometry.shape(s['geometry']) for s in huc12s]
@@ -163,7 +164,7 @@ def get_hucs(myhuc, source, level=12, center=True):
     logging.info("...done")
     return hucs, centroid
 
-def get_rivers(myhuc, source):
+def get_rivers(myhuc, source, filter_long=None):
     """Collects shapefiles for hydrography data within a given HUC.
 
     Arguments:
@@ -190,6 +191,10 @@ def get_rivers(myhuc, source):
     # load stream network
     logging.info("loading streams")
     rprofile, rivers = source.load_hydro(myhuc, bounds)
+
+    # some strange long segments show up in some strange cases?
+    if filter_long is not None:
+        rivers = [r for r in rivers if r['properties']['LengthKM'] < filter_long]
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -241,8 +246,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
                 | Note this includes original projection.
         sheds   | a workflow.hucs.HUCs object for all watershed shapes requested, 
                 | in the default coordinate system.
-        boundary| The boundary of the union of watersheds, in the original
-                |  coordinate system.
+        boundary| The boundary of the union of watersheds, in lat-lon
         centroid| The centroid of the watersheds requested, for use in uncentering.
     """
     logging.info("")
@@ -326,7 +330,7 @@ def simplify_and_prune(hucs, rivers, args):
 
     # snap
     logging.info("snapping rivers and HUCs")
-    rivers = workflow.hydrography.snap(hucs, rivers, tol, 10*tol, args.cut_intersections)
+    rivers = workflow.hydrography.snap(hucs, rivers, tol, 3*tol, args.cut_intersections)
     
     logging.info("filtering cut reaches outside the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)
@@ -392,7 +396,14 @@ def triangulate(hucs, rivers, args, diagnostics=True):
             plt.subplot(122)
             plt.scatter(distances, areas,c=needs_refine,marker='x')
             plt.xlabel("distance [m]")
-            plt.ylabel("triangle area [m^2]")    
+            plt.ylabel("triangle area [m^2]")
+
+            plt.figure()
+            plt.subplot(111)
+            workflow.plot.hucs(hucs)
+            workflow.plot.rivers(rivers)
+            workflow.plot.triangulation(mesh_points, mesh_tris, areas)
+            plt.title("triangle area [m^2]")
     return mesh_points, mesh_tris
 
 def elevate(mesh_points, dem, dem_profile):

@@ -43,7 +43,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     logging.debug('snap part 1')
     logging.debug(list(rivers[0].segment.coords))
     logging.debug(list(hucs.polygon(0).boundary.coords))
-
+    #workflow.plot.hucs(hucs, style='-x')
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above

@@ -411,7 +411,7 @@ def get_sources(args):
         elif args.source_hydro.upper() == 'NHDPLUS':
             sources['Hydro'] = NHDPlusFileManager()
         else:
-            raise ValueError("Unknown HUC source '%s'"%args.source_huc)
+            raise ValueError("Unknown hydro source '%s'"%args.source_huc)
         
     if hasattr(args, 'source_dem'):
         if args.source_dem.upper() == 'NED':
@@ -420,5 +420,11 @@ def get_sources(args):
             raise ValueError("Unknown DEM source '%s'"%args.source_dem)
     return sources
 
+def get_default_sources():
+    sources = dict()
+    sources['HUC'] = NHDFileManager()
+    sources['Hydro'] = sources['HUC']
+    sources['DEM'] = NEDFileManager()
+    return sources
 
 

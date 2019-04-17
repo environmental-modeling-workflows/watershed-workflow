@@ -31,7 +31,7 @@ def get_args():
     workflow.ui.center_options(parser)
     workflow.ui.huc_source_options(parser)
     workflow.ui.dem_source_options(parser)
-    workflow.ui.huc_args(parser)
+    workflow.ui.huc_arg(parser)
 
     # parse args, log
     return parser.parse_args()
@@ -42,7 +42,11 @@ def mesh_hucs(args):
     
     # collect data
     hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], center=args.center)
+    #workflow.plot.hucs(hucs, style='-x')
+
     rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
+    #workflow.plot.rivers(rivers, style='-x', color='k')
+
     dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
 
     # make 2D mesh
@@ -117,4 +121,5 @@ if __name__ == '__main__':
     centroid, hucs, rivers, triangulation = mesh_hucs(args)
     plot(args, hucs, rivers, triangulation)
     save(args, centroid, triangulation)
+    plt.show()
     sys.exit(0)

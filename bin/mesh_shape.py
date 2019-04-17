@@ -78,17 +78,21 @@ def mesh_shape(args):
 def plot(args, watersheds, rivers, triangulation):
     mesh_points3, mesh_tris = triangulation
     if args.verbosity > 0:    
-        fig = plt.figure(figsize=(4,5))
+        fig = plt.figure(figsize=(4,5), dpi=300)
         ax = fig.add_subplot(111)
 
         workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
         workflow.plot.hucs(watersheds, 'k')
-        workflow.plot.rivers(rivers, color='r')
+        workflow.plot.rivers(rivers, color='w')
         ax.set_aspect('equal', 'datalim')
         ax.set_xlabel('')
         ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
         plt.ylabel('')
         ax.set_yticklabels([int(round(0.001*tick)) for tick in ax.get_yticks()])
+
+        if args.plot:
+            assert(args.outfile[-4] == '.')
+            plt.savefig(args.outfile[:-4])
         plt.show()
 
 def save(args, centroid, triangulation):
@@ -111,6 +115,11 @@ def save(args, centroid, triangulation):
                            'with calling sequence:',
                            '  '+' '.join(sys.argv)])
 
+    workflow.hilev.save(args.outfile, mesh_points, mesh_tris, '\n'.join(metadata_lines))
+        
+if __name__ == '__main__':
+    args = get_args()
+
     if args.outfile is None:
         if args.infile.endswith('.shp'):
             outfile_prefix = args.infile[:-4]
@@ -119,13 +128,8 @@ def save(args, centroid, triangulation):
 
         if args.shape_index != -1:
             outfile_prefix += "_%i"%args.shape_index
-        outfile = outfile_prefix + '.vtk'
-    else:
-        outfile = args.outfile            
-    workflow.hilev.save(outfile, mesh_points, mesh_tris, '\n'.join(metadata_lines))
-        
-if __name__ == '__main__':
-    args = get_args()
+        args.outfile = outfile_prefix + '.vtk'
+                        
     print(args.__dict__)
     centroid, watersheds, rivers, triangulation = mesh_shape(args)
     plot(args, watersheds, rivers, triangulation)

@@ -65,11 +65,16 @@ def valid_hucstr(hucstr):
     else:
         return huc_valid
 
-def huc_args(parser):
+def huc_arg(parser):
     """Adds a HUC argument to the parser."""
     parser.add_argument('HUC', type=valid_hucstr,
                         help='HUC code, for example "060102080101"')
 
+def huc_args(parser):
+    """Adds a HUC argument to the parser."""
+    parser.add_argument('HUCS', type=valid_hucstr, nargs='+',
+                        help='A list of HUC codes, for example, "060102080101"')
+    
 def simplify_options(parser):
     """Adds a simplify tolerance option to the parser."""
     parser.add_argument('--simplify', type=float, default=10.0,
@@ -82,9 +87,15 @@ def simplify_options(parser):
 def refine_options(parser):
     """Adds refinement options to the parser."""
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--refine-max-area', type=float, 
+    refine_max_area_options(group)
+    refine_distance_options(group)
+
+def refine_max_area_options(parser):
+    parser.add_argument('--refine-max-area', type=float, 
                         help='Refine based upon max area of triangles [m^2]  (see note)')
-    group.add_argument('--refine-distance', type=float, nargs=4,
+
+def refine_distance_options(parser):
+    parser.add_argument('--refine-distance', type=float, nargs=4,
                        metavar=('CLOSE_DISTANCE', 'CLOSE_AREA','FAR_DISTANCE', 'FAR_AREA'),
                         help='\n'.join(['Refine based upon a distance from stream.',
                                         ' Distances are in [m] and areas in [m^2].  A',
@@ -116,6 +127,8 @@ def outmesh_options(parser):
     """Sets output filename and format options."""
     parser.add_argument('--outfile', '-o', type=str,
                         help='Write to output file.')
+    parser.add_argument('--plot', action='store_true',
+                        help='Save mesh image to file.')
 
 def huc_hint_options(parser):
     """Adds a HUC hint option for searching for shapes in HUCs"""
