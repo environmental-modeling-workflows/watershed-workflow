@@ -81,9 +81,9 @@ def plot(args, watersheds, rivers, triangulation):
         fig = plt.figure(figsize=(4,5), dpi=300)
         ax = fig.add_subplot(111)
 
-        workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0.5)
+        workflow.plot.triangulation(mesh_points3, mesh_tris, color='elevation', linewidth=0.5)
         workflow.plot.hucs(watersheds, 'k')
-        workflow.plot.rivers(rivers, color='w')
+        workflow.plot.rivers(rivers, color='r')
         ax.set_aspect('equal', 'datalim')
         ax.set_xlabel('')
         ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
