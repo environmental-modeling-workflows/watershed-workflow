@@ -18,7 +18,7 @@ Standard math packages include numpy, matplotlib, and scipy.
 GIS work uses packages: fiona, rasterio, and shapely.
 The packages for fiona and rasterio from conda-forge seem to work better?
 
-    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy basemap basemap-data-hires fiona rasterio shapely ipykernel 
+    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy basemap basemap-data-hires fiona rasterio shapely ipykernel requests
 
 Mesh generation uses Triangle, which can be wrapped for python using
 meshpy.  This one is a little more difficult, as there seem to be no
