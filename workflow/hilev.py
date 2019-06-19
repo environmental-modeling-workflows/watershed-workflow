@@ -4,6 +4,8 @@ i.e. call download_*() or load_*() functions from conf.
 Most scripts use these functions instead of directly using lower-level
 capability.
 
+Note, everything from here gets directly imported into the top level
+package.
 """
 
 import sys,os
@@ -25,6 +27,7 @@ import workflow.split_hucs
 import workflow.hydrography
 import workflow.clip
 import workflow.rowcol
+import workflow.sources.utils 
 
 import vtk_io # from ATS/tools/meshing_ats
 
@@ -47,86 +50,27 @@ def get_split_form_hucs(source, myhuc, level=None, crs=None, center=False):
     Returns: split_form_hucs, the hucs in tiled form for geometric
       manipulation.
     """
-    ## === Preprocess HUCs ===
     logging.info("")
     logging.info("Preprocessing HUCs")
     logging.info("=====================")
 
+    # set defaults
+    myhuc = workflow.sources.utils.huc_str(myhuc)
+    if level is None:
+        level = len(myhuc)
 
-def get_huc(source, myhuc, crs=None):
-    """Loads HUCs from a source.
-
-    Arguments:
-        source  | The source object, see workflow.sources
-        myhuc   | a string for the code of the requested HUC.
-        crs     | Output coordinate system.  Defaults to 
-                |  workflow.conf.default_crs()
-
-    Returns: (profile, huc)
-        profile       | The fiona profile of the HUCs.
-        huc           | The fiona shape representation of the 
-                      |  requested HUC
-    """
-    return get_hucs(source, myhuc, crs=None)
-   
-def get_hucs(source, myhuc, level=None, crs=None):
-    """Loads HUCs from a source.
-
-    Arguments:
-        source  | The source object, see workflow.sources
-        myhuc   | a string for the code of the requested HUC.
-        level   | additionally provide subhucs of this level
-        crs     | Output coordinate system.  Defaults to 
-                |  workflow.conf.default_crs()
-
-    Returns: (profile, huc, hucs_at_level)
-        profile       | The fiona profile of the HUCs.
-        huc           | The fiona shape representation of the 
-                      |  requested HUC
-        hucs_at_level | A list of all subhucs at level, in 
-                      |  fiona form.
-    """
-    ## === Preprocess HUCs ===
-    logging.info("")
-    logging.info("Preprocessing HUCs")
-    logging.info("=====================")
-
-    # load the containing HUC
-    logging.info("loading all level {} HUCs in {}".format(level, myhuc))
-
-
-    # load shapefiles for all HUC of the given level
-    logging.info("loading all level {} HUCs in {}".format(level, myhuc))
-    profile, hucLs = source.get_hucs(myhuc, level, crs=crs)
-    for hucL in hucLs:
-        logging.info("  found: %s"%hucL['properties']['HUC{}'.format(level)])        
-
-    # change coordinates to crs
-    logging.info('change coordinates to crs: "{}"'.format(crs['init']))
-    if crs is None:
-        crs = workflow.conf.default_crs()
-    for hucL in hucLs:
-        workflow.warp.warp_shape(hucL, profile['crs'], crs)
-
-    return profile, huc
-        
+    # load hucs
+    logging.info("Loading level {} HUCs in {}.".format(level, myhuc))
+    profile, hucs = source.get_hucs(myhuc, level, crs)
+    
     # convert to shapely
-    huc_shapes = [workflow.utils.shply(s['geometry']) for s in huc12s]
+    huc_shapes = [workflow.utils.shply(s['geometry']) for s in hucs]
 
-    # if multi-poly, make sure we can convert to single-poly
-    single_huc_shapes = []
-    for huc_shp in huc_shapes:
-        if type(huc_shp) is not shapely.geometry.Polygon:
-            assert(len(huc_shp) is 1)
-            huc_shp = huc_shp[0]
-            assert(type(huc_shp) is shapely.geometry.Polygon)
-        single_huc_shapes.append(huc_shp)
-    huc_shapes = single_huc_shapes
-
-    # center the HUCs
+    # center
     if center:
         huc_shapes, centroid = workflow.utils.center(huc_shapes)
     else:
+        logging.info("Centering".format(level, myhuc))
         centroid = shapely.geometry.Point(0,0)
 
     # split
@@ -135,44 +79,48 @@ def get_hucs(source, myhuc, level=None, crs=None):
     logging.info("...done")
     return hucs, centroid
 
-def get_rivers(myhuc, source, filter_long=None):
+        
+def get_rivers(source, *args, **kwargs):
     """Collects shapefiles for hydrography data within a given HUC.
 
     Arguments:
-        myhuc   | a length N string for the number of the requested HUC.
-                | Note this must be an even number of digits, i.e. 01, not 1.
+        source  | A source object providing get_hydro()
+
+        long    | float, if a river is longer than this value it 
+                | gets filtered.  Some NHD data has issues...
+        centroid|
+        *args   | Passed on to source.get_hydro()
+        kwargs  | Passed on to source.get_hydro()
 
     Returns:
         rivers  | A list of shapely LineString objects representing all 
-                | reaches within the HUC.
+                | reaches within the shape.
     """
-    ## === Preprocess hydrography ===
     logging.info("")
     logging.info("Preprocessing hydrography")
     logging.info("==========================")
 
-    # load the HUC and get a bounding box
-    profile, huc = source.load_huc(myhuc)
-    bounds = workflow.utils.shply(huc['geometry']).bounds
+    if 'long' in kwargs.keys():
+        filter_long = kwargs.pop('long')
+    if 'center' in kwargs.keys():
+        centering = kwargs.pop('center')
     
     # load stream network
     logging.info("loading streams")
-    rprofile, rivers = source.load_hydro(myhuc, bounds)
-
-    # some strange long segments show up in some strange cases?
-    if filter_long is not None:
-        rivers = [r for r in rivers if r['properties']['LengthKM'] < filter_long]
-
-    # change coordinates to meters (in place)
-    logging.info("change coordinates to m")
-    for river in rivers:
-        workflow.warp.warp_shape(river, rprofile['crs'], workflow.conf.default_crs())
+    rprofile, rivers = source.get_hydro(*args, **kwargs)
 
     # convert to shapely
     logging.info("merging reaches")
     rivers_s = shapely.geometry.MultiLineString([workflow.utils.shply(r['geometry']) for r in rivers])
-    rivers_s2 = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
-    return rivers_s2
+    rivers_s = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
+
+    # not too long
+    if filter_long is not None:
+        rivers_s = [l for l in rivers_s if l.length() < filter_long]
+
+    # center
+    rivers_s, centroid = workflow.utils.center(rivers_s, centering)
+    return shapely.geometry.MultiLineString(rivers_s), centroid
 
 def get_raster_on_huc(shape, source_dem):
     """Collects a raster DEM that covers the requested HUC.

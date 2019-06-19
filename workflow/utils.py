@@ -233,13 +233,19 @@ def triangle_area(vertices):
     return A
 
 
-def center(objects, center_of_mass=False):
+def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
-    union = shapely.ops.cascaded_union(objects)
-    if (center_of_mass):
+    if type(centering) is shapely.geometry.Point:
+        centroid = centering
+    elif centering is True or centering == 'geometric':
+        union = shapely.ops.cascaded_union(objects)
+        centroid = shapely.geometry.Point([(union.bounds[0] + union.bounds[2])/2., (union.bounds[1] + union.bounds[3])/2.])
+    elif centering == 'mass':
+        union = shapely.ops.cascaded_union(objects)
         centroid = union.centroid
     else:
-        centroid = shapely.geometry.Point([(union.bounds[0] + union.bounds[2])/2., (union.bounds[1] + union.bounds[3])/2.])
+        raise ValueError('Centering: option centering = "{}" unknown'.format(centering))
+
     new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
     return new_objs, centroid
     

@@ -10,62 +10,29 @@ import workflow.conf
 import workflow.sources.names
 import workflow.utils
 import workflow.warp
+import workflow.sources.manager_mixins
 
-class FileManagerNHDPlus:
+class FileManagerNHDPlus(workflow.sources.manager_mixins.FileManagerMixin_HUCs):
     def __init__(self):
-        self.name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
+        super().__init__('National Hydrography Dataset Plus High Resolution (NHDPlus HR)', 4, 12)
         self.names = workflow.sources.names.Names(self.name,
                                              'hydrography',
                                              'NHDPlus_H_{}_GDB',
                                              'NHDPlus_H_{}.gdb')
-        self.file_level = 4
-        self.lowest_level = 12
 
-    def get_huc(self, huc, crs=None):
-        profile, hucs = self.get_hucs(huc, crs=crs)
-        assert(len(hucs) is 1)
-        return profile, hucs[0]
-        
-    def get_hucs(self, huc, level=None, crs=None):
-        """Downloads and reads a HUC file."""
-        hucstr = source_utils.huc_str(huc)
-        huc_level = len(hucstr)
-        if crs is None:
-            crs = workflow.conf.default_crs()
-
-        if huc_level < self.file_level:
-            raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
-        elif huc_level > self.lowest_level:
-            raise ValueError("{}: files are have at max level {}.".format(self.name, self._lowest_level))
-
-        if level is None:
-            level = huc_level
-        else:
-            if level < huc_level:
-                raise ValueError("{}: cannot ask for HUC level {} in a HUC of level {}".format(self.name, level,huc_level))
-
+    def _get_hucs(self, hucstr, level):
+        """Loads HUCs from file, no error checking or coordinate transformation."""
         # download the file
-        filename = self.download(hucstr[0:self.file_level])
+        filename = self._download(hucstr[0:self.file_level])
 
-        # open the file, grab the contained hucs
+        # read the file
         layer = 'WBDHU{}'.format(level)
         logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, hucstr))
         with fiona.open(filename, mode='r', layer=layer) as fid:
             things = [h for h in fid if h['properties']['HUC{:d}'.format(level)].startswith(hucstr)]
             profile = fid.profile
-
-        # round
-        workflow.utils.round(things, workflow.conf.rcParams['digits'])
-
-        # map to the target crs
-        self._native_crs = profile['crs']
-        if crs != 'native':
-            for thing in things:
-                workflow.warp.warp_shape(thing, self._native_crs, crs)
-            profile['crs'] = crs
-
         return profile, things
-
+        
     def get_hydro(self, shape, crs=None, hint=None, intersect=None):
         """Downloads and reads hydrography in this shape.
 
@@ -136,7 +103,7 @@ class FileManagerNHDPlus:
         profile['crs'] = crs
         return profile, rivers
             
-    def url(self, hucstr):
+    def _url(self, hucstr):
         """Use the REST API to find the URL."""
         import requests
         rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
@@ -151,7 +118,7 @@ class FileManagerNHDPlus:
             raise ValueError('{}: not able to find HUC {}'.format(self.name, hucstr))
         return matches[0]['downloadURL']
 
-    def download(self, hucstr, force=False):
+    def _download(self, hucstr, force=False):
         """Download the data."""
         # check directory structure
         os.makedirs(self.names.data_dir(), exist_ok=True)
@@ -162,7 +129,7 @@ class FileManagerNHDPlus:
 
         filename = self.names.file_name(hucstr)
         if not os.path.exists(filename) or force:
-            url = self.url(hucstr)
+            url = self._url(hucstr)
 
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
             if not os.path.exists(downloadfile) or force:
