@@ -17,7 +17,7 @@ import shapely
 import meshpy.triangle
 
 import workflow.conf
-import workflow.triangulate
+import workflow.triangulation
 import workflow.warp
 import workflow.plot
 import workflow.tree
@@ -28,41 +28,90 @@ import workflow.rowcol
 
 import vtk_io # from ATS/tools/meshing_ats
 
-def get_hucs(source, myhuc, level=None, crs=None):
+def get_split_form_hucs(source, myhuc, level=None, crs=None, center=False):
     """Loads HUCs from a source.
 
     Arguments:
         source  | The source object, see workflow.sources
-        myhuc   | a length N string for the number of the requested HUC.
-                |  Note this must be an even number of digits, i.e. 01, not 1.
-        crs     | Destination coordinate reference system, e.g. 'epsg:5070',
-                |  defaults to workflow.conf.default_crs()
+        myhuc   | a string for the code of the requested HUC.
+        level   | additionally provide subhucs of this level
+        center  | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
+        crs     | Output coordinate system.  Defaults to
+                |  workflow.conf.default_crs()
 
-    Returns: (profile, huc, hucs_at_level)
-        profile       | The fiona profile for the shape.
-        huc           | The fiona shape representation of the requested HUC
-        hucs_at_level | A list of all 
+    Returns: split_form_hucs, the hucs in tiled form for geometric
+      manipulation.
     """
     ## === Preprocess HUCs ===
     logging.info("")
     logging.info("Preprocessing HUCs")
     logging.info("=====================")
 
-    # load shapefiles for all HUC of the given level
-    logging.info("loading all %is"%level)
-    profile, huc12s = source.load_hucs_in(myhuc, level)
-    for huc in huc12s:
-        logging.info("  found: %s"%huc['properties']['HUC12'])        
 
-    # change coordinates to meters (in place)
-    logging.info("change coordinates to m")
+def get_huc(source, myhuc, crs=None):
+    """Loads HUCs from a source.
+
+    Arguments:
+        source  | The source object, see workflow.sources
+        myhuc   | a string for the code of the requested HUC.
+        crs     | Output coordinate system.  Defaults to 
+                |  workflow.conf.default_crs()
+
+    Returns: (profile, huc)
+        profile       | The fiona profile of the HUCs.
+        huc           | The fiona shape representation of the 
+                      |  requested HUC
+    """
+    return get_hucs(source, myhuc, crs=None)
+   
+def get_hucs(source, myhuc, level=None, crs=None):
+    """Loads HUCs from a source.
+
+    Arguments:
+        source  | The source object, see workflow.sources
+        myhuc   | a string for the code of the requested HUC.
+        level   | additionally provide subhucs of this level
+        crs     | Output coordinate system.  Defaults to 
+                |  workflow.conf.default_crs()
+
+    Returns: (profile, huc, hucs_at_level)
+        profile       | The fiona profile of the HUCs.
+        huc           | The fiona shape representation of the 
+                      |  requested HUC
+        hucs_at_level | A list of all subhucs at level, in 
+                      |  fiona form.
+    """
+    ## === Preprocess HUCs ===
+    logging.info("")
+    logging.info("Preprocessing HUCs")
+    logging.info("=====================")
+
+    # load the containing HUC
+    logging.info("loading all level {} HUCs in {}".format(level, myhuc))
+
+
+    # load shapefiles for all HUC of the given level
+    logging.info("loading all level {} HUCs in {}".format(level, myhuc))
+    profile, hucLs = source.get_hucs(myhuc, level, crs=crs)
+    for hucL in hucLs:
+        logging.info("  found: %s"%hucL['properties']['HUC{}'.format(level)])        
+
+    # change coordinates to crs
+    logging.info('change coordinates to crs: "{}"'.format(crs['init']))
     if crs is None:
         crs = workflow.conf.default_crs()
-    for huc12 in huc12s:
-        workflow.warp.warp_shape(huc12, profile['crs'], crs)
+    for hucL in hucLs:
+        workflow.warp.warp_shape(hucL, profile['crs'], crs)
 
+    return profile, huc
+        
     # convert to shapely
-    huc_shapes = [shapely.geometry.shape(s['geometry']) for s in huc12s]
+    huc_shapes = [workflow.utils.shply(s['geometry']) for s in huc12s]
 
     # if multi-poly, make sure we can convert to single-poly
     single_huc_shapes = []
@@ -104,7 +153,7 @@ def get_rivers(myhuc, source, filter_long=None):
 
     # load the HUC and get a bounding box
     profile, huc = source.load_huc(myhuc)
-    bounds = shapely.geometry.shape(huc['geometry']).bounds
+    bounds = workflow.utils.shply(huc['geometry']).bounds
     
     # load stream network
     logging.info("loading streams")
@@ -121,7 +170,7 @@ def get_rivers(myhuc, source, filter_long=None):
 
     # convert to shapely
     logging.info("merging reaches")
-    rivers_s = shapely.geometry.MultiLineString([shapely.geometry.shape(r['geometry']) for r in rivers])
+    rivers_s = shapely.geometry.MultiLineString([workflow.utils.shply(r['geometry']) for r in rivers])
     rivers_s2 = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
     return rivers_s2
 
@@ -239,7 +288,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
         profile['crs']['init'] = 'epsg:4269'
             
     # convert original coordinate system to shapely
-    huc_shapes = [shapely.geometry.shape(s['geometry']) for s in shps]
+    huc_shapes = [workflow.utils.shply(s['geometry']) for s in shps]
     boundary = shapely.ops.cascaded_union(huc_shapes)
             
     # change coordinates to meters (in place)
@@ -248,7 +297,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
         workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.default_crs())
 
     # convert to shapely
-    huc_shapes = [shapely.geometry.shape(s['geometry']) for s in shps]
+    huc_shapes = [workflow.utils.shply(s['geometry']) for s in shps]
 
     # center the HUCs
     if center:
@@ -336,15 +385,15 @@ def triangulate(hucs, rivers, args, diagnostics=True):
 
     refine_funcs = []
     if args.refine_max_area is not None:
-        refine_funcs.append(workflow.triangulate.refine_from_max_area(args.refine_max_area))
+        refine_funcs.append(workflow.triangulation.refine_from_max_area(args.refine_max_area))
     if args.refine_distance is not None:
-        refine_funcs.append(workflow.triangulate.refine_from_river_distance(*args.refine_distance, rivers))
+        refine_funcs.append(workflow.triangulation.refine_from_river_distance(*args.refine_distance, rivers))
     if args.refine_max_edge_length is not None:
-        refine_funcs.append(workflow.triangulate.refine_from_max_edge_length(args.refine_max_edge_length))
+        refine_funcs.append(workflow.triangulation.refine_from_max_edge_length(args.refine_max_edge_length))
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)        
 
-    mesh_points, mesh_tris = workflow.triangulate.triangulate(hucs, rivers,
+    mesh_points, mesh_tris = workflow.triangulation.triangulate(hucs, rivers,
                                                               verbose=verbose,
                                                               refinement_func=my_refine_func,
                                                               min_angle=args.refine_min_angle,

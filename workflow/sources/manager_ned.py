@@ -35,7 +35,7 @@ class FileManagerNED:
         """Download and read a DEM for this shape, clipping to the shape."""
         # get shape as a shapely, single Polygon
         if type(shape) is dict:
-            shape = shapely.geometry.shape(shape['geometry'])
+            shape = workflow.utils.shply(shape['geometry'])
         if type(shape) is shapely.geometry.MultiPolygon:
             shape = shapely.ops.cascaded_union(shape)
 

@@ -22,7 +22,9 @@ class FileManagerNHDPlus:
         self.lowest_level = 12
 
     def get_huc(self, huc, crs=None):
-        return self.get_hucs(huc, None, crs=crs)
+        profile, hucs = self.get_hucs(huc, crs=crs)
+        assert(len(hucs) is 1)
+        return profile, hucs[0]
         
     def get_hucs(self, huc, level=None, crs=None):
         """Downloads and reads a HUC file."""
@@ -36,8 +38,6 @@ class FileManagerNHDPlus:
         elif huc_level > self.lowest_level:
             raise ValueError("{}: files are have at max level {}.".format(self.name, self._lowest_level))
 
-        
-        return_subhucs = level is not None
         if level is None:
             level = huc_level
         else:
@@ -47,40 +47,24 @@ class FileManagerNHDPlus:
         # download the file
         filename = self.download(hucstr[0:self.file_level])
 
-        # open the file, grab the containing huc
-        layer = 'WBDHU{:d}'.format(huc_level)
-        logging.debug("{}: opening '{}' layer '{}' for HUC '{}'".format(self.name, filename, layer, hucstr))
-        with fiona.open(filename, mode='r', layer=layer) as fid:
-            matching = [h for h in fid if h['properties']['HUC{:d}'.format(huc_level)] == hucstr]
-            profile = fid.profile
-            self._native_crs = profile['crs']
-            
-        if len(matching) is not 1:
-            raise RuntimeError("{}: invalid collection of HUCs for {}?".format(self.name, hucstr))
-        huc = matching[0]
-
-        # open the file, grab the things hucs
+        # open the file, grab the contained hucs
         layer = 'WBDHU{}'.format(level)
         logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, hucstr))
         with fiona.open(filename, mode='r', layer=layer) as fid:
             things = [h for h in fid if h['properties']['HUC{:d}'.format(level)].startswith(hucstr)]
+            profile = fid.profile
 
         # round
-        workflow.utils.round([huc,], workflow.conf.rcParams['digits'])
         workflow.utils.round(things, workflow.conf.rcParams['digits'])
 
         # map to the target crs
+        self._native_crs = profile['crs']
         if crs != 'native':
-            workflow.warp.warp_shape(huc, self._native_crs, crs)
             for thing in things:
                 workflow.warp.warp_shape(thing, self._native_crs, crs)
             profile['crs'] = crs
 
-        # return
-        if return_subhucs:
-            return profile, huc, things
-        else:
-            return profile, huc
+        return profile, things
 
     def get_hydro(self, shape, crs=None, hint=None, intersect=None):
         """Downloads and reads hydrography in this shape.
@@ -104,7 +88,7 @@ class FileManagerNHDPlus:
 
             containing_huc = source_utils.huc_str(shape)
             shp_profile, shape = self.get_huc(containing_huc, crs=crs)
-            shply = shapely.geometry.shape(shape['geometry'])
+            shply = workflow.utils.shply(shape['geometry'])
             if type(shply) is not shapely.geometry.Polygon:
                 shply = shapely.ops.cascaded_union(shply)
 
@@ -115,7 +99,7 @@ class FileManagerNHDPlus:
             if hint is None or len(hint) < self.file_level:
                 raise ValueError('{}: if providing get_hydro() with shape, must provide what hint of at least length {} to find the HUC.'.format(self.name, self.file_level))
             if type(shape) is not shapely.geometry.Polygon:
-                shply = shapely.geometry.shape(shape['geometry'])
+                shply = workflow.utils.shply(shape['geometry'])
                 if type(shply) is not shapely.geometry.Polygon:
                     shply = shapely.ops.cascaded_union(shply)
             else:
@@ -137,9 +121,9 @@ class FileManagerNHDPlus:
             if not intersect:
                 rivers = [r for (i,r) in fid.items(bbox=shply.bounds)]
             elif intersect == 'intersects':
-                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.intersects(shapely.geometry.shape(r['geometry']))]
+                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.intersects(workflow.utils.shply(r['geometry']))]
             elif intersect == 'contains':
-                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.contains(shapely.geometry.shape(r['geometry']))]
+                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.contains(workflow.utils.shply(r['geometry']))]
                 
             self._native_crs = profile['crs']
 

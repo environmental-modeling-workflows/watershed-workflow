@@ -32,6 +32,6 @@ def get_fiona(filename):
     with fiona.open(str(filename), 'r') as fid:
         profile = fid.profile
         shp = fid[0]
-    return profile,shapely.geometry.shape(shp['geometry'])
+    return profile,workflow.utils.shply(shp['geometry'])
 
 

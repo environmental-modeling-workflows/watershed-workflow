@@ -6,6 +6,22 @@ import shapely.geometry
 import shapely.ops
 import shapely.affinity
 
+def shply(shape):
+    """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
+
+    Note: shapely.geometry.shape() will not make, for instance,
+    Polygons out of MultiPolygons of length 1.  This gets really
+    difficult to work around at times.
+    """
+    thing = shapely.geometry.shape(shape)
+    if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
+        return thing[0]
+    elif type(thing) is shapely.geometry.MultiLineString and len(thing) is 1:
+        return thing[0]
+    elif type(thing) is shapely.geometry.MultiPolygon and len(thing) is 1:
+        return thing[0]
+    return thing    
+
 def round(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
     for shp in list_of_things:

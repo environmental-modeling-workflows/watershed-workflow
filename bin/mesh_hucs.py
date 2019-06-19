@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 """Downloads and meshes HUC and hydrography data.
 
-Default data for HUCs comes from The National Map's Watershed Boundary Dataset (WBD).
-Default data for hydrography comes from The National Map's National Hydrography Dataset (NHD).
+Default HUCs and Hydrography data comes from the NHDPlus High Res
+datasets.
 See: "https://nhd.usgs.gov/"
 
 Default DEMs come from the National Elevation Dataset (NED).
 See: "https://lta.cr.usgs.gov/NED"
 """
 
-import matplotlib
-#matplotlib.use("PDF")
+dead = """
+Default data for HUCs comes from The National Map's Watershed Boundary Dataset (WBD).
+Default data for hydrography comes from The National Map's National Hydrography Dataset (NHD).
+See: "https://nhd.usgs.gov/"
+"""
 
 import os,sys
 import numpy as np
 from matplotlib import pyplot as plt
 import shapely
 
-import workflow.hilev
-import workflow.ui
-import workflow.files
+import workflow
 
 
 def get_args():
@@ -30,6 +31,7 @@ def get_args():
     workflow.ui.refine_options(parser)
     workflow.ui.center_options(parser)
     workflow.ui.huc_source_options(parser)
+    workflow.ui.hydro_source_options(parser)
     workflow.ui.dem_source_options(parser)
     workflow.ui.huc_arg(parser)
 
@@ -38,14 +40,12 @@ def get_args():
 
 def mesh_hucs(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
-    sources = workflow.files.get_sources(args)
+    sources = workflow.sources.get_sources(args)
     
     # collect data
-    hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], center=args.center)
-    #workflow.plot.hucs(hucs, style='-x')
+    huc, centroid = workflow.get_huc(sources['HUC'], args.HUC, center=args.center)
+    rivers = workflow.get_rivers(sources['hydrography'], args.HUC, center=centroid)
 
-    rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
-    #workflow.plot.rivers(rivers, style='-x', color='k')
 
     dem_profile, dem = workflow.hilev.get_dem_on_huc(args.HUC, sources)
 

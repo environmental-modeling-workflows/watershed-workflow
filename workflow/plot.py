@@ -27,7 +27,7 @@ def shply(shps, color=None, style='-', linewidth=1):
                 
 
 def shapes(shps, *args, **kwargs):
-    shplys = [shapely.geometry.shape(shp['geometry']) for shp in shps]
+    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
     shply(shplys, *args, **kwargs)
         
 

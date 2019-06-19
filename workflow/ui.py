@@ -5,6 +5,7 @@ import argparse
 import fiona
 
 import workflow.conf
+import workflow.source_list
 
 verb_to_level = {0:logging.WARNING,
                  1:logging.INFO,
@@ -158,13 +159,21 @@ def center_options(parser):
 
 def huc_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-huc', type=str, default='NHD', choices=set(['NHD','NHDPlus']),
-                        help="Name of the source for NHD data.")
+    parser.add_argument('--source-huc', type=str, default=workflow.source_list.default_huc_source,
+                        choices=set(workflow.source_list.huc_sources.keys()),
+                        help="Name of the source for hydrologic unit data.")
 
 def dem_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-dem', type=str, default='NED', choices=set(['NED',]),
-                        help="Name of the source for DEM data.")
+    parser.add_argument('--source-dem', type=str, default=workflow.source_list.default_dem_source,
+                        choices=set(workflow.source_list.dem_sources.keys()),
+                        help="Name of the source for dem data.")
+
+def hydro_source_options(parser):
+    """Add options for sources."""
+    parser.add_argument('--source-hydro', type=str, default=workflow.source_list.default_hydrography_source,
+                        choices=set(workflow.source_list.hydrography_sources.keys()),
+                        help="Name of the source for hydrography data.")
     
         
                         
