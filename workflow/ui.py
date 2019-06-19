@@ -86,9 +86,12 @@ def simplify_options(parser):
 
 def refine_options(parser):
     """Adds refinement options to the parser."""
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_argument_group('Triangle Refinement')
     refine_max_area_options(group)
     refine_distance_options(group)
+    refine_min_angle(group)
+    refine_max_edge_length(group)
+    enforce_delaunay(parser)
 
 def refine_max_area_options(parser):
     parser.add_argument('--refine-max-area', type=float, 
@@ -103,6 +106,17 @@ def refine_distance_options(parser):
                                         ' when its distance is less than CLOSE_DISTANCE, or',
                                         ' FAR_AREA if its distance is greater than FAR_DISTANCE,',
                                         ' or a linear interpolant between those two otherwise.']))
+def refine_min_angle(parser):
+    parser.add_argument('--refine-min-angle', type=float,
+                        help='Refine to set a minimum angle constraint in [degrees]')
+
+def refine_max_edge_length(parser):
+    parser.add_argument('--refine-max-edge-length', type=float,
+                        help='Refine based upon a max edge length [m]')
+    
+def enforce_delaunay(parser):
+    parser.add_argument('--delaunay', action='store_true',
+                        help='Enforce Delaunay, and not just constrained Delaunay')
     
 def inshape_args(parser):
     """Sets input filename shapefile options."""

@@ -4,7 +4,7 @@ import pytest
 import fiona
 import shapely.geometry
 import workflow.hilev
-import workflow.files
+import workflow.sources
 
 @pytest.fixture
 def datadir(tmpdir, request):
@@ -23,8 +23,8 @@ def datadir(tmpdir, request):
 def sources():
     sources = dict()
     #sources['HUC08'] = workflow.files.NHDFileManager()
-    sources['HUC'] = workflow.files.NHDHucOnlyFileManager()
-    sources['DEM'] = workflow.files.NEDFileManager()
+    sources['HUC'] = workflow.sources.FileManagerNHDPlus()
+    sources['DEM'] = workflow.sources.FileManagerNED()
     return sources
 
 
@@ -34,41 +34,4 @@ def get_fiona(filename):
         shp = fid[0]
     return profile,shapely.geometry.shape(shp['geometry'])
 
-def test_12(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    shp = shp.buffer(-0.03)
-    print(shp.area)
-    assert('060300010402' == workflow.hilev.find_huc(profile, shp, sources['HUC'], '06'))
-
-def test_12_exact(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    shp = shp.buffer(-0.03)
-    print(shp.area)
-    assert('060300010402' == workflow.hilev.find_huc(profile, shp, sources['HUC'], '060300010402'))
-
-def test_12_raises(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    shp = shp.buffer(-0.03)
-    print(shp.area)
-    with pytest.raises(RuntimeError):
-         workflow.hilev.find_huc(profile, shp, sources['HUC'], '060300010403')
-    
-def test_08(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    assert('06030001' == workflow.hilev.find_huc(profile, shp, sources['HUC'], '06'))
-
-def test_08_exact(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    assert('06030001' == workflow.hilev.find_huc(profile, shp, sources['HUC'], '06030001'))
-
-def test_08_raises(datadir, sources):
-    testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    with pytest.raises(RuntimeError):
-        workflow.hilev.find_huc(profile, shp, sources['HUC'], '0604')
 

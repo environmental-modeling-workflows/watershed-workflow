@@ -10,6 +10,7 @@ import shapely
 import meshpy.triangle
 
 import workflow.tree
+import workflow.split_hucs
 
 
 class Nodes:
@@ -110,13 +111,13 @@ def triangulate(hucs, rivers, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
-      hucs              | a workflow.hucs.HUCs instance
+      hucs              | a workflow.split_hucs.SplitHUCs instance
       rivers            | a list of workflow.tree.Tree instances
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     logging.info("Triangulating...")
-    if type(hucs) is workflow.hucs.HUCs:
+    if type(hucs) is workflow.split_hucs.SplitHUCs:
         segments = list(hucs.segments)
     elif type(hucs) is list:
         segments = hucs
@@ -161,17 +162,17 @@ def triangulate(hucs, rivers, **kwargs):
 
 
 def refine_from_max_area(max_area):
-    """Returns a refinement function used with triangulate's refinement_func argument."""
+    """Returns a refinement function based on max area, for use with Triangle."""
     def refine(vertices, area):
         """A function for use with workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
         res = bool(area > max_area)
-        if area < 1.e-5:
-            raise RuntimeError("bah")
+        # if area < 1.e-5:
+        #     raise RuntimeError("TinyTriangle Error")
         return res
     return refine
 
 def refine_from_river_distance(near_distance, near_area, away_distance, away_area, rivers):
-    """Returns a graded refinement function based upon a distance function from rivers.
+    """Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.
 
     Triangle area must be smaller than near_area when the triangle
     centroid is within near_distance from the river network.
@@ -207,3 +208,12 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
         return res
 
     return refine
+
+def refine_from_max_edge_length(edge_length):
+    """Returns a refinement function based on max edge length, for use with Triangle."""
+    def refine(vertices, area):
+        verts4 = np.array([vertices[0], vertices[1], vertices[2], vertices[0]])
+        edge_lengths = la.norm(verts4[1:] - verts4[:-1], 2, 1)
+        return bool(edge_lengths.max() > edge_length)
+    return refine
+

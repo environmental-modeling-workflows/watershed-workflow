@@ -1,10 +1,35 @@
-"""Shapely-only utilities not provided by shapely"""
+"""Shape utilities not provided by shapely."""
 import logging
 import subprocess
 import numpy as np
 import shapely.geometry
 import shapely.ops
 import shapely.affinity
+
+def round(list_of_things, digits):
+    """Rounds coordinates in things or shapes to a given digits."""
+    for shp in list_of_things:
+        assert(type(shp['geometry']['coordinates']) is list)
+        if len(shp['geometry']['coordinates']) is 0:
+            pass
+        elif type(shp['geometry']['coordinates'][0]) is tuple:
+            # single object
+            coords = np.array(shp['geometry']['coordinates'], 'd').round(digits)
+            if coords.shape[-1] is 3:
+                coords = coords[:,0:2]
+            assert(len(coords.shape) is 2)
+            shp['geometry']['coordinates'] = coords
+        else:
+            # object collection
+            for i,c in enumerate(shp['geometry']['coordinates']):
+                coords = np.array(c,'d').round(digits)
+                if len(coords.shape) is 2 and coords.shape[-1] is 3:
+                    coords = coords[:,0:2]
+                elif len(coords.shape) is 3 and coords.shape[-1] is 3:
+                    coords = coords[:,:,0:2]
+            shp['geometry']['coordinates'][i] = coords
+    return list_of_things
+
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
@@ -192,10 +217,13 @@ def triangle_area(vertices):
     return A
 
 
-def center(objects):
+def center(objects, center_of_mass=False):
     """Centers a collection of objects by removing their collective centroid"""
     union = shapely.ops.cascaded_union(objects)
-    centroid = union.centroid
+    if (center_of_mass):
+        centroid = union.centroid
+    else:
+        centroid = shapely.geometry.Point([(union.bounds[0] + union.bounds[2])/2., (union.bounds[1] + union.bounds[3])/2.])
     new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
     return new_objs, centroid
     

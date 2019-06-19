@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 
 import workflow.triangulate
 import workflow.hydrography
-import workflow.hucs
+import workflow.split_hucs
 import workflow.plot
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def hucs_rivers():
     tb.append(shapely.geometry.Polygon(b1))
     tb.append(shapely.geometry.Polygon(b2))
     tb.append(shapely.geometry.Polygon(b3))
-    hucs = workflow.hucs.HUCs(tb)
+    hucs = workflow.split_hucs.SplitHUCs(tb)
 
     rs = [shapely.geometry.LineString([(5.,0.), (10.,5),]),
           shapely.geometry.LineString([(15.,0.), (10.,5),]),

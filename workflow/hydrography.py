@@ -11,13 +11,13 @@ import shapely.geometry
 import workflow.conf
 import workflow.utils
 import workflow.tree
-import workflow.hucs
+import workflow.split_hucs
 import workflow.plot
 
 
 def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
-    assert(type(hucs) is workflow.hucs.HUCs)
+    assert(type(hucs) is workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
     assert(all(workflow.tree.is_consistent(river) for river in rivers))
     list(hucs.polygons())

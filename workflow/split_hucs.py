@@ -59,7 +59,7 @@ class HandledCollection:
         for it in self._store.items():
             yield it
             
-class HUCs:
+class SplitHUCs:
     """Class for dealing with the multiple interacting views of HUCs
 
     Includes the following views into data:
@@ -158,7 +158,6 @@ class HUCs:
 
     def __len__(self):
         return len(self.gons)
-
 
 
 def simplify(hucs, tol=0.1):

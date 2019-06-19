@@ -21,116 +21,38 @@ import workflow.triangulate
 import workflow.warp
 import workflow.plot
 import workflow.tree
-import workflow.hucs
+import workflow.split_hucs
 import workflow.hydrography
 import workflow.clip
 import workflow.rowcol
 
 import vtk_io # from ATS/tools/meshing_ats
 
-def _in_huc(shp, hucstr, source):
-    """Checks whether shp is in HUC"""
-    logging.debug("Checking: shp in '%s'?"%hucstr)
-
-    try:
-        fname = source.download(hucstr)
-        profile, huc = source.load_huc(hucstr)
-    except RuntimeError as err:
-        logging.debug("No such HUC %s found? %s"%(hucstr,str(err)))
-        raise err
-
-    if profile['crs']['init'] != 'epsg:4269':
-        # latlong
-        raise RuntimeError("HUC file for '%s' not in Lat-Lon?"%hucstr)
-
-    huc_shp = shapely.geometry.shape(huc['geometry'])
-    logging.debug(" shp bounds = %r"%list(shp.bounds))
-    logging.debug(" huc bounds = %r"%list(huc_shp.bounds))
-    if huc_shp.contains(shp):
-        logging.debug('  yes!')
-        return 2
-    elif huc_shp.intersects(shp):
-        logging.debug('  sorta!')
-        return 1
-    else:
-        logging.debug('  no!')
-        return 0
-
-def _find_huc(shp, hint, source):
-    for i in range(0,100):
-        try_huc = hint+'%02i'%i
-        try:
-            inhuc = _in_huc(shp, try_huc, source)
-        except RuntimeError:
-            if try_huc.endswith('00'):
-                # some huc levels have 00, some don't?
-                continue
-            else:
-                return -1
-
-        if inhuc == 2:
-            # fully contained in try_huc, recurse if not HUC12
-            if len(try_huc) == 12:
-                return try_huc
-            else:
-                return _find_huc(shp, try_huc, source)
-        elif inhuc == 1:
-            # partially contained in try_huc, return this
-            return hint
-    return -1
-
-
-def find_huc(shp_profile, shply, source, hint=None):
-    """Finds the smallest HUC containing shp, starting with a potential
-    hint, i.e. '06' for Tennessee River Valley.
-
-    Expects shp in lat-lon, i.e. epsg:4269
-    """
-    if shp_profile['crs']['init'] != 'epsg:4269':
-        # latlong
-        raise RuntimeError("shapefile not in Lat-Lon")
-
-    shply = shply.buffer(-.001)
-
-    if hint is None:
-        hint = ''
-    if len(hint) is 12:
-        inhuc = _in_huc(shply, hint, source)
-        if inhuc is not 2:
-            raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
-        return hint
-        
-    result = _find_huc(shply, hint, source)
-    if type(result) is not str:
-        raise RuntimeError("Shape not found in hinted HUC '%s'"%hint)
-    return result
-
-def get_hucs(myhuc, source, level=12, center=True, crs=None):
-    """Collects shapefiles for HUCs given a HUC code in string form.
+def get_hucs(source, myhuc, level=None, crs=None):
+    """Loads HUCs from a source.
 
     Arguments:
+        source  | The source object, see workflow.sources
         myhuc   | a length N string for the number of the requested HUC.
-                | Note this must be an even number of digits, i.e. 01, not 1.
-        center  | If true, subtract off the HUC centroid.
+                |  Note this must be an even number of digits, i.e. 01, not 1.
+        crs     | Destination coordinate reference system, e.g. 'epsg:5070',
+                |  defaults to workflow.conf.default_crs()
 
-    Returns (huc,huc12s,centroid):
-        huc     | the fiona shape representation of the requested HUC
-        huc12s  | a workflow.hucs.HUCs object for shapely shapes of all HUC 
-                | 12s in myhuc
-        centroid| The centroid of the HUC requested, for use in uncentering.
+    Returns: (profile, huc, hucs_at_level)
+        profile       | The fiona profile for the shape.
+        huc           | The fiona shape representation of the requested HUC
+        hucs_at_level | A list of all 
     """
     ## === Preprocess HUCs ===
     logging.info("")
     logging.info("Preprocessing HUCs")
     logging.info("=====================")
 
-    # collect HUC shapefile
-    logging.info("collecting HUC %s"%myhuc)
-    source.download(myhuc)
-
-    # load shapefiles for all HUC 12s
+    # load shapefiles for all HUC of the given level
     logging.info("loading all %is"%level)
     profile, huc12s = source.load_hucs_in(myhuc, level)
+    for huc in huc12s:
+        logging.info("  found: %s"%huc['properties']['HUC12'])        
 
     # change coordinates to meters (in place)
     logging.info("change coordinates to m")
@@ -160,7 +82,7 @@ def get_hucs(myhuc, source, level=12, center=True, crs=None):
 
     # split
     logging.info("Split form HUCs")
-    hucs = workflow.hucs.HUCs(huc_shapes)
+    hucs = workflow.split_hucs.SplitHUCs(huc_shapes)
     logging.info("...done")
     return hucs, centroid
 
@@ -179,10 +101,6 @@ def get_rivers(myhuc, source, filter_long=None):
     logging.info("")
     logging.info("Preprocessing hydrography")
     logging.info("==========================")
-
-    # collect hydrography
-    logging.info("collecting Hydrography %s"%myhuc)
-    source.download(myhuc)
 
     # load the HUC and get a bounding box
     profile, huc = source.load_huc(myhuc)
@@ -207,7 +125,7 @@ def get_rivers(myhuc, source, filter_long=None):
     rivers_s2 = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
     return rivers_s2
 
-def get_dem(myhuc, sources):
+def get_raster_on_huc(shape, source_dem):
     """Collects a raster DEM that covers the requested HUC.
 
     Arguments:
@@ -221,15 +139,67 @@ def get_dem(myhuc, sources):
     logging.info("")
     logging.info("Preprocessing DEM")
     logging.info("==========================")
-    logging.info("downloading DEM")
-
     # load shapefiles for the HUC of interest
     logging.info("loading HUC %s"%myhuc)
     profile, huc = sources['HUC'].load_huc(myhuc)
     assert(profile['crs']['init'] == 'epsg:4269') # latlong
 
-    dem_profile, dem = workflow.clip.clip_dem(huc, sources['DEM'])
+    dem = sources['DEM'].load_dem(huc)
+    dem_profile, dem = workflow.clip.clip_dem(dem, huc)
     dem = dem[0,:,:] # only the first band
+    return dem_profile, dem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_dem_on_shape(profile, shape, sources):
+    """Collects a raster DEM that covers the requested shape.
+
+    Arguments:
+        profile | The fiona profile from the shape.
+                | Used to check the CRS
+        shape   | Shape to clip to.
+        sources | Source dictionary.
+
+    Returns (dem_profile, dem):
+        dem_profile     | A rasterio profile file descriptor object.
+        dem             | A raster, in lat/lon, of elevations.
+
+    NOTE: this WILL warp shape to the DEM's CRS!
+    """
+    logging.info("")
+    logging.info("Preprocessing DEM")
+    logging.info("==========================")
+    logging.info("downloading DEM")
+
+    dem_profile, dem = workflow.clip.clip_dem(shape, sources['DEM'])
+    if dem_profile['crs']['init'] != profile['crs']['init']:
+        workflow.warp.warp_shape(shape, profile['crs'], dem_profile['crs'])
+        profile['crs'] = dem_profile['crs']
+
+        
+
+        
+    
     return dem_profile, dem
 
 
@@ -244,7 +214,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
     Returns (profile, sheds, boundary, centroid)
         profile | the fiona profile/projection/etc for the shapefile
                 | Note this includes original projection.
-        sheds   | a workflow.hucs.HUCs object for all watershed shapes requested, 
+        sheds   | a workflow.split_hucs.SplitHUCs object for all watershed shapes requested, 
                 | in the default coordinate system.
         boundary| The boundary of the union of watersheds, in lat-lon
         centroid| The centroid of the watersheds requested, for use in uncentering.
@@ -283,13 +253,14 @@ def get_shapes(filename, index, center=True, make_hucs=True):
     # center the HUCs
     if center:
         huc_shapes, centroid = workflow.utils.center(huc_shapes)
+        logging.info("centering %d shapes to (%g,%g)"%(len(huc_shapes), centroid.xy[0][0], centroid.xy[1][0]))
     else:
         centroid = shapely.geometry.Point(0,0)
 
     # split
     logging.info("Split form subwatersheds")
     if make_hucs:
-        hucs = workflow.hucs.HUCs(huc_shapes)
+        hucs = workflow.split_hucs.SplitHUCs(huc_shapes)
     else:
         hucs = huc_shapes
     logging.info("...done")
@@ -326,7 +297,7 @@ def simplify_and_prune(hucs, rivers, args):
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
 
     logging.info("simplify HUCs")
-    workflow.hucs.simplify(hucs, tol)
+    workflow.split_hucs.simplify(hucs, tol)
 
     # snap
     logging.info("snapping rivers and HUCs")
@@ -362,16 +333,22 @@ def triangulate(hucs, rivers, args, diagnostics=True):
     logging.info("")
     logging.info("Meshing")
     logging.info("===============")
-    if args.refine_max_area is not None:
-        refine_func = workflow.triangulate.refine_from_max_area(args.refine_max_area)
-    elif args.refine_distance is not None:
-        refine_func = workflow.triangulate.refine_from_river_distance(*args.refine_distance, rivers)
-    else:
-        def refine_func(*args, **kwargs):
-            return False
 
-    mesh_points, mesh_tris = workflow.triangulate.triangulate(hucs, rivers, verbose=verbose,
-                                                              refinement_func=refine_func)
+    refine_funcs = []
+    if args.refine_max_area is not None:
+        refine_funcs.append(workflow.triangulate.refine_from_max_area(args.refine_max_area))
+    if args.refine_distance is not None:
+        refine_funcs.append(workflow.triangulate.refine_from_river_distance(*args.refine_distance, rivers))
+    if args.refine_max_edge_length is not None:
+        refine_funcs.append(workflow.triangulate.refine_from_max_edge_length(args.refine_max_edge_length))
+    def my_refine_func(*args):
+        return any(rf(*args) for rf in refine_funcs)        
+
+    mesh_points, mesh_tris = workflow.triangulate.triangulate(hucs, rivers,
+                                                              verbose=verbose,
+                                                              refinement_func=my_refine_func,
+                                                              min_angle=args.refine_min_angle,
+                                                              enforce_delaunay=args.delaunay)
 
     if diagnostics:
         logging.info("triangulation diagnostics")
@@ -385,7 +362,7 @@ def triangulate(hucs, rivers, args, diagnostics=True):
             bary_p = shapely.geometry.Point(bary[0], bary[1])
             distances.append(bary_p.distance(river_multiline))
             areas.append(workflow.utils.triangle_area(vertices))
-            needs_refine.append(refine_func(vertices, areas[-1]))
+            needs_refine.append(my_refine_func(vertices, areas[-1]))
 
         if args.verbosity > 0:
             plt.figure()
@@ -398,12 +375,12 @@ def triangulate(hucs, rivers, args, diagnostics=True):
             plt.xlabel("distance [m]")
             plt.ylabel("triangle area [m^2]")
 
-            plt.figure()
-            plt.subplot(111)
-            workflow.plot.hucs(hucs)
-            workflow.plot.rivers(rivers)
-            workflow.plot.triangulation(mesh_points, mesh_tris, areas)
-            plt.title("triangle area [m^2]")
+            # plt.figure()
+            # plt.subplot(111)
+            # workflow.plot.hucs(hucs)
+            # workflow.plot.rivers(rivers)
+            # workflow.plot.triangulation(mesh_points, mesh_tris, areas)
+            # plt.title("triangle area [m^2]")
     return mesh_points, mesh_tris
 
 def elevate(mesh_points, dem, dem_profile):

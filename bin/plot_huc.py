@@ -29,7 +29,7 @@ def get_huc(args, huc):
     # collect data
     hucs, centroid = workflow.hilev.get_hucs(huc, sources['HUC'], center=False)
     rivers = workflow.hilev.get_rivers(huc, sources['HUC'], filter_long=10)
-    dem_profile, dem = workflow.hilev.get_dem(huc, sources)
+    dem_profile, dem = workflow.hilev.get_dem_on_huc(huc, sources)
 
     # simple triangulation for elevation data
     footprint = shapely.ops.cascaded_union(list(hucs.polygons())).simplify(10)

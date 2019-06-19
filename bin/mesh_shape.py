@@ -47,7 +47,7 @@ def mesh_shape(args):
     hucstr = workflow.hilev.find_huc(profile, watershed_boundary, sources['HUC'], args.hint)
     logging.info("found shapes in HUC %s"%hucstr)
 
-    dem_profile, dem = workflow.hilev.get_dem(hucstr, sources)
+    dem_profile, dem = workflow.hilev.get_dem_on_huc(hucstr, sources)
     rivers = workflow.hilev.get_rivers(hucstr, sources['Hydro'])
 
     # make 2D mesh
@@ -73,22 +73,23 @@ def mesh_shape(args):
     else:
         mesh_points3 = mesh_points3_uncentered
 
+    logging.info("Bounds: [%g,%g] -- [%g,%g]"%(mesh_points3[:,0].min(), mesh_points3[:,1].min(), mesh_points3[:,0].max(), mesh_points3[:,1].max()))
     return centroid, watersheds, rivers, (mesh_points3, mesh_tris)
 
 def plot(args, watersheds, rivers, triangulation):
     mesh_points3, mesh_tris = triangulation
     if args.verbosity > 0:    
-        fig = plt.figure(figsize=(4,5), dpi=300)
+        fig = plt.figure()
         ax = fig.add_subplot(111)
 
         workflow.plot.triangulation(mesh_points3, mesh_tris, color='elevation', linewidth=0.5)
         workflow.plot.hucs(watersheds, 'k')
         workflow.plot.rivers(rivers, color='r')
-        ax.set_aspect('equal', 'datalim')
-        ax.set_xlabel('')
-        ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
-        plt.ylabel('')
-        ax.set_yticklabels([int(round(0.001*tick)) for tick in ax.get_yticks()])
+        #ax.set_aspect('equal', 'datalim')
+        #ax.set_xlabel('')
+        #ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
+        #plt.ylabel('')
+        #ax.set_yticklabels([int(round(0.001*tick)) for tick in ax.get_yticks()])
 
         if args.plot:
             assert(args.outfile[-4] == '.')

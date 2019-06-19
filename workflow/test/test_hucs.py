@@ -1,6 +1,6 @@
 import pytest
 import shapely.geometry
-import workflow.hucs
+import workflow.split_hucs
 
 
 from workflow.test.shapes import two_boxes, three_boxes
@@ -10,7 +10,7 @@ from workflow.test.shapes import two_boxes, three_boxes
 def test_hc():
     # construction
     things = ['a','b','c','d']
-    hc = workflow.hucs.HandledCollection(things)
+    hc = workflow.split_hucs.HandledCollection(things)
     assert(len(hc) == 4)
     for i,j in zip(things,hc):
         assert i == j
@@ -29,7 +29,7 @@ def test_hc():
 
 
 def test_intersect_and_split(two_boxes):
-    boundaries, intersections = workflow.hucs.intersect_and_split(two_boxes)
+    boundaries, intersections = workflow.split_hucs.intersect_and_split(two_boxes)
     assert(len(boundaries) is 2)
 
     for b in boundaries:
@@ -52,7 +52,7 @@ def test_intersect_and_split(two_boxes):
     
 def test_hucs(two_boxes):
     # test construction
-    tb = workflow.hucs.HUCs(two_boxes)
+    tb = workflow.split_hucs.SplitHUCs(two_boxes)
 
     # test uniqueness of the boundaries+intersections collections
     handles = [p for b in tb.boundaries for p in b] + [p for i in tb.intersections for p in i]
@@ -116,7 +116,7 @@ def test_hucs(two_boxes):
     
 def test_hucs_three(three_boxes):
     # test construction
-    tb = workflow.hucs.HUCs(three_boxes)
+    tb = workflow.split_hucs.SplitHUCs(three_boxes)
 
     # test uniqueness of the boundaries+intersections collections
     handles = [p for b in tb.boundaries for p in b] + [p for i in tb.intersections for p in i]
@@ -134,7 +134,7 @@ def test_hucs_triple():
     boxes = [shapely.geometry.Polygon(b1),
              shapely.geometry.Polygon(b2),
              shapely.geometry.Polygon(b3),]
-    hucs = workflow.hucs.HUCs(boxes)
+    hucs = workflow.split_hucs.SplitHUCs(boxes)
     assert(len(hucs) is 3)
     assert(len(hucs.segments) is 6)
     assert(len(hucs.intersections) is 3)

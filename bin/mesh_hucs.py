@@ -47,7 +47,7 @@ def mesh_hucs(args):
     rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
     #workflow.plot.rivers(rivers, style='-x', color='k')
 
-    dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
+    dem_profile, dem = workflow.hilev.get_dem_on_huc(args.HUC, sources)
 
     # make 2D mesh
     if args.center:
