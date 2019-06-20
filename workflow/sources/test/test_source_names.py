@@ -4,6 +4,7 @@ import workflow.sources.names
 import workflow.conf
 
 def test_names():
+    ddir = workflow.conf.rcParams['data dir']
     workflow.conf.rcParams['data dir'] = '/my'
     
     names = workflow.sources.names.Names('mynames', 'hydrography', 'rivers_{}', 'rivers_{}.gdb')
@@ -12,3 +13,4 @@ def test_names():
     assert('/my/hydrography/rivers_0102' == names.folder_name('0102'))
     assert('/my/hydrography/rivers_0102/raw' == names.raw_folder_name('0102'))
     assert('/my/hydrography/rivers_0102/rivers_0102.gdb' == names.file_name('0102'))
+    workflow.conf.rcParams['data dir'] = ddir

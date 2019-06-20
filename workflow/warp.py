@@ -23,6 +23,13 @@ def warp_xy(x, y, old_crs, new_crs):
     new_crs_proj = pyproj.Proj(new_crs)
     return pyproj.transform(old_crs_proj, new_crs_proj, x,y)
 
+def warp_bounds(bounds, old_crs, new_crs):
+    """Uses proj to reproject bounds, NOT IN PLACE"""
+    x = np.array([bounds[0], bounds[2]])
+    y = np.array([bounds[1], bounds[3]])
+    x2,y2 = warp_xy(x,y,old_crs, new_crs)
+    return [x2[0],y2[0],x2[1],y2[1]]
+
 def warp_shapely(shp, old_crs, new_crs):
     """Uses proj to reproject shapes, NOT IN PLACE"""
     x,y = warp_xy(shp.boundary.xy[0], shp.boundary.xy[1], old_crs, new_crs)

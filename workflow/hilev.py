@@ -31,83 +31,140 @@ import workflow.sources.utils
 
 import vtk_io # from ATS/tools/meshing_ats
 
-def get_split_form_hucs(source, myhuc, level=None, crs=None, center=False):
-    """Loads HUCs from a source.
+def get_hu(source, huc, crs=None, centering=None):
+    """Download and read a HUC file.
 
     Arguments:
-        source  | The source object, see workflow.sources
-        myhuc   | a string for the code of the requested HUC.
-        level   | additionally provide subhucs of this level
-        center  | if False or None (default) does nothing.
+      source    | source object providing get_huc()
+      huc       | hydrologic unit code
+      crs       | provides the output coordinate system, 
+                | defaults to workflow.conf.default_crs()
+      centering | if False or None (default) does nothing.
                 |  if True or 'geometric', centers based on the 
                 |  geometric center.
                 |  if 'mass', centers based on the center of mass.
                 |  if Point object or tuple of two floats, centers 
                 |  on this coordinate.
-        crs     | Output coordinate system.  Defaults to
-                |  workflow.conf.default_crs()
 
-    Returns: split_form_hucs, the hucs in tiled form for geometric
-      manipulation.
+    Returns: (hu, centroid) 
+      hu        | shapely polygon for the hydrologic unit
+      centroid  | shapely point for the centroid, based on the
+                |  value of centering.
     """
-    logging.info("")
-    logging.info("Preprocessing HUCs")
-    logging.info("=====================")
+    huc = workflow.sources.utils.hucstr(huc)
+    hu_shapes, centroid = get_hus(source, huc, len(huc), crs, centering)
+    assert(len(hu_shapes) == 1)
+    return h_shapes[0], centroid
 
-    # set defaults
-    myhuc = workflow.sources.utils.huc_str(myhuc)
-    if level is None:
-        level = len(myhuc)
+def get_hus(source, huc, level, crs=None, centering=None):
+    """Download and read a HUC file.
 
-    # load hucs
-    logging.info("Loading level {} HUCs in {}.".format(level, myhuc))
-    profile, hucs = source.get_hucs(myhuc, level, crs)
-    
+    Arguments:
+      source    | source object providing get_huc()
+      huc       | hydrologic unit code
+      level     | level of the requested sub-units
+      crs       | provides the output coordinate system, 
+                | defaults to workflow.conf.default_crs()
+      centering | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
+
+    Returns: (hus, centroid)
+      hus       | list of shapely polygons for the hydrologic units
+                |  at level within huc
+      centroid  | shapely point for the centroid, based on the
+                |  value of centering
+    """
+    # get the hu from source
+    logging.info("Loading level {} HUCs in {}.".format(level, huc))
+    huc = workflow.sources.utils.hucstr(huc)
+    profile, hus = source.get_hucs(huc, level)
+
+    # convert to destination crs
+    if crs is None:
+        crs = workflow.conf.default_crs()
+        if crs != profile['crs']:
+            for hu in hus:
+                workflow.warp.warp_shape(hu, profile['crs'], crs)
+
+    # round
+    workflow.utils.round(hus, workflow.conf.rcParams['digits'])
+
     # convert to shapely
-    huc_shapes = [workflow.utils.shply(s['geometry']) for s in hucs]
+    hu_shapes = [workflow.utils.shply(hu['geometry']) for hu in hus]
 
     # center
     if center:
-        huc_shapes, centroid = workflow.utils.center(huc_shapes)
+        hu_shapes, centroid = workflow.utils.center(hu_shapes)
     else:
-        logging.info("Centering".format(level, myhuc))
         centroid = shapely.geometry.Point(0,0)
+    return hu_shapes, centroid
+def get_split_form_hucs(source, myhuc, level=None, crs=None, centering=False):
+    """Loads HUCs from a source.
 
-    # split
-    logging.info("Split form HUCs")
-    hucs = workflow.split_hucs.SplitHUCs(huc_shapes)
-    logging.info("...done")
-    return hucs, centroid
+    Arguments:
+      source   | The source object, see workflow.sources
+      myhuc    | a string for the code of the requested HUC.
+      level    | additionally provide subhucs of this level
+      centering| if False or None (default) does nothing.
+               |  if True or 'geometric', centers based on the 
+               |  geometric center.
+               |  if 'mass', centers based on the center of mass.
+               |  if Point object or tuple of two floats, centers 
+               |  on this coordinate.
+      crs      | Output coordinate system.  Defaults to
+               |  workflow.conf.default_crs()
 
+    Returns: (split_form_hucs, centroid)
+      split_form_hucs | the hucs in tiled form for geometric manipulation
+      centroid        | shapely point for the centroid, based on the
+                      |  value of centering.
+
+    """
+    hu_shapes, centroid = get_hus(source, myhuc, level, crs, centering)
+    return workflow.split_form_hucs.SplitHUCs(hu_shapes), centroid
         
-def get_rivers(source, *args, **kwargs):
+def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, long=None):
     """Collects shapefiles for hydrography data within a given HUC.
 
     Arguments:
-        source  | A source object providing get_hydro()
-
-        long    | float, if a river is longer than this value it 
+      source    | A source object providing get_hydro()
+      bounds    | [xmin, ymin, xmax, ymax] within which to gather rivers
+      bounds_crs| Coordinate system of bounds (and coordinate system
+                |  in which rivers will be returned)
+      huc_hint  | A hint to help the source find the file containing
+                |  bounds.  For NHD, this is a HUC4 or smaller.  Eventually
+                |  this might be optional.
+      centering | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
+      long      | float, if a river is longer than this value it 
                 | gets filtered.  Some NHD data has issues...
-        centroid|
-        *args   | Passed on to source.get_hydro()
-        kwargs  | Passed on to source.get_hydro()
 
-    Returns:
-        rivers  | A list of shapely LineString objects representing all 
+    Returns: (rivers, centroid)
+      rivers    | A list of shapely LineString objects representing all 
                 | reaches within the shape.
-    """
-    logging.info("")
-    logging.info("Preprocessing hydrography")
-    logging.info("==========================")
+      centroid  | shapely point for the centroid, based on the
+                |  value of centering.
 
-    if 'long' in kwargs.keys():
-        filter_long = kwargs.pop('long')
-    if 'center' in kwargs.keys():
-        centering = kwargs.pop('center')
-    
+    """
     # load stream network
-    logging.info("loading streams")
-    rprofile, rivers = source.get_hydro(*args, **kwargs)
+    logging.info("loading streams in bounds {}".format(bounds))
+    rprofile, rivers = source.get_hydro(bounds, bounds_crs, huc_hint)
+
+    # convert to destination crs
+    if (bounds_crs != rprofile['crs']):
+        for river in rivers:
+            workflow.warp.warp_shape(river, rprofile['crs'], bounds_crs)
+
+    # round
+    workflow.utils.round(rivers, workflow.conf.rcParams['digits'])
 
     # convert to shapely
     logging.info("merging reaches")
@@ -115,11 +172,15 @@ def get_rivers(source, *args, **kwargs):
     rivers_s = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
 
     # not too long
-    if filter_long is not None:
-        rivers_s = [l for l in rivers_s if l.length() < filter_long]
+    if long is not None:
+        rivers_s = [l for l in rivers_s if l.length() < long]
 
     # center
-    rivers_s, centroid = workflow.utils.center(rivers_s, centering)
+    if centering:
+        rivers_s, centroid = workflow.utils.center(rivers_s, centering)
+    else:
+        centroid = shapely.geometry.Point(0,0)
+        
     return shapely.geometry.MultiLineString(rivers_s), centroid
 
 def get_raster_on_huc(shape, source_dem):
@@ -151,21 +212,70 @@ def get_raster_on_huc(shape, source_dem):
 
 
 
+def find_huc(source, shp, crs, hint, shrink=1.e-5):
+    """Finds the smallest HUC containing shp, starting with a potential
+    hint, i.e. '06' for Tennessee River Valley.
+    """
 
+    def _in_huc(shply, huc_shply):
+        """Checks whether shp is in HUC"""
+        if huc_shply.contains(shply):
+            return 2
+        elif huc_shply.intersects(shply):
+            return 1
+        else:
+            return 0
 
+    def _find_huc(source, shply, crs, hint):
+        """Searches in hint to find shp."""
+        print('searching: %s'%hint)
+        hint_level = len(hint)
+        search_level = hint_level + 2
+        if search_level > source.lowest_level:
+            return hint
 
+        profile, subhus = source.get_hucs(hint, search_level)
+        
+        for subhu in subhus:
+            workflow.warp.warp_shape(subhu, profile['crs'], crs)
+            subhu_shply = workflow.utils.shply(subhu['geometry'])        
+            inhuc = _in_huc(shply, subhu_shply)
 
+            if inhuc == 2:
+                # fully contained in try_huc, recurse
+                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                print('  subhuc: %s contains'%hname)
+                return _find_huc(source, shply, crs, hname)
+            elif inhuc == 1:
+                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                print('  subhuc: %s partially contains'%hname)
+                # partially contained in try_huc, return this
+                return hint
+            else:
+                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                print('  subhuc: %s does not contain'%hname)
+        assert(False)
 
+    if type(shp) is shapely.geometry.Polygon:
+        shply = shp
+    else:
+        shply = workflow.utils.shply(shp['geometry'])
 
+    # must shrink the poly a bit in case it is close to or on a boundary
+    radius = np.sqrt(shply.area/np.pi)
+    shply_s = shply.buffer(-shrink*radius)
 
+    hint = workflow.sources.utils.huc_str(hint)
 
+    profile, hint_hu = source.get_huc(hint)
+    workflow.warp.warp_shape(hint_hu, profile['crs'], crs)
+    
+    inhuc = _in_huc(shply_s, workflow.utils.shply(hint_hu['geometry']))
+    if inhuc is not 2:
+        raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
 
-
-
-
-
-
-
+    result = _find_huc(source, shply_s, crs, hint)
+    return result
 
 
 def get_dem_on_shape(profile, shape, sources):
@@ -192,10 +302,6 @@ def get_dem_on_shape(profile, shape, sources):
     if dem_profile['crs']['init'] != profile['crs']['init']:
         workflow.warp.warp_shape(shape, profile['crs'], dem_profile['crs'])
         profile['crs'] = dem_profile['crs']
-
-        
-
-        
     
     return dem_profile, dem
 

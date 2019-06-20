@@ -12,95 +12,69 @@ import workflow.utils
 import workflow.warp
 import workflow.sources.manager_mixins
 
-class FileManagerNHDPlus(workflow.sources.manager_mixins.FileManagerMixin_HUCs):
+class FileManagerNHDPlus:
     def __init__(self):
-        super().__init__('National Hydrography Dataset Plus High Resolution (NHDPlus HR)', 4, 12)
+        self.name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
+        self.file_level = 4
+        self.lowest_level = 12
         self.names = workflow.sources.names.Names(self.name,
                                              'hydrography',
                                              'NHDPlus_H_{}_GDB',
                                              'NHDPlus_H_{}.gdb')
 
-    def _get_hucs(self, hucstr, level):
-        """Loads HUCs from file, no error checking or coordinate transformation."""
+    def get_huc(self, huc):
+        huc = source_utils.huc_str(huc)
+        profile, hus = self.get_hucs(huc, len(huc))
+        assert(len(hus) == 1)
+        return profile, hus[0]
+
+    def get_hucs(self, huc, level):
+        """Loads HUCs from file."""
+        huc = source_utils.huc_str(huc)
+        huc_level = len(huc)
+
+        # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
+        if self.lowest_level < level:
+            raise ValueError("{}: files include HUs at max level {}.".format(self.name, self._lowest_level))
+        if level < huc_level:
+            raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(self.name, level, huc_level))
+        if huc_level < self.file_level:
+            raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
+
         # download the file
-        filename = self._download(hucstr[0:self.file_level])
+        filename = self._download(huc[0:self.file_level])
 
         # read the file
         layer = 'WBDHU{}'.format(level)
-        logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, hucstr))
+        logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, huc))
         with fiona.open(filename, mode='r', layer=layer) as fid:
-            things = [h for h in fid if h['properties']['HUC{:d}'.format(level)].startswith(hucstr)]
+            hus = [hu for hu in fid if hu['properties']['HUC{:d}'.format(level)].startswith(huc)]
             profile = fid.profile
-        return profile, things
+        return profile, hus
         
-    def get_hydro(self, shape, crs=None, hint=None, intersect=None):
-        """Downloads and reads hydrography in this shape.
+    def get_hydro(self, bounds, bounds_crs, huc_hint):
+        """Downloads and reads hydrography within these bounds.
 
-        shape     | either a fiona shape object, a shapely shape, or a HUC
-        crs       | crs of the shape (not required if shape is a HUC)
-        hint      | If shape is not a HUC, indicates at least the 4-digit 
-                  | HUC in which the shape exists.
-        intersect | If None, only filters for the bounding box of 
-                  | shape.  If intersect == 'intersects', then keeps all 
-                  | segments that intersects shape.  If intersect == 
-                  | 'contains', then only internal objects.
-
-        TODO: re-write this to find the HUC via REST API to USGS
-        instead of relying on user to supply a hint.
+        Note this requires a HUC hint of a level 4 HUC which contains bounds.
         """
-        if type(shape) is str:
-            # shape is a HUC: load the containing huc
-            if crs is None:
-                crs = workflow.conf.default_crs()
+        huc_hint = source_utils.huc_str(huc_hint)
+        hint_level = len(huc_hint)
 
-            containing_huc = source_utils.huc_str(shape)
-            shp_profile, shape = self.get_huc(containing_huc, crs=crs)
-            shply = workflow.utils.shply(shape['geometry'])
-            if type(shply) is not shapely.geometry.Polygon:
-                shply = shapely.ops.cascaded_union(shply)
-
-        else:
-            # shape is a shape, find the containig huc
-            if crs is None:
-                raise ValueError('{}: if providing get_hydro() with shape, must provide what CRS that shape is in.'.format(self.name))
-            if hint is None or len(hint) < self.file_level:
-                raise ValueError('{}: if providing get_hydro() with shape, must provide what hint of at least length {} to find the HUC.'.format(self.name, self.file_level))
-            if type(shape) is not shapely.geometry.Polygon:
-                shply = workflow.utils.shply(shape['geometry'])
-                if type(shply) is not shapely.geometry.Polygon:
-                    shply = shapely.ops.cascaded_union(shply)
-            else:
-                shply = shape
-            assert(type(shply) is shapely.geometry.Polygon)
-            containing_huc = source_utils.find_huc(shply, crs, hint, self)
-
+        # error checking on the levels, require file_level <= huc_level <= lowest_level
+        if hint_level < self.file_level:
+            raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
+        
+        # download the file
+        filename = self._download(huc_hint[0:self.file_level])
+        
         # find and open the hydrography layer        
-        filename = self.names.file_name(containing_huc[0:self.file_level])
+        filename = self.names.file_name(huc_hint[0:self.file_level])
         layer = 'NHDFlowline'
-        print('Opening "{}" file for streams'.format(filename))
+        logging.debug("{}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
-
-            # map the shape to the file's crs for filtering
-            shply = workflow.warp.warp_shapely(shply, crs, profile['crs'])
-
-            # filter
-            if not intersect:
-                rivers = [r for (i,r) in fid.items(bbox=shply.bounds)]
-            elif intersect == 'intersects':
-                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.intersects(workflow.utils.shply(r['geometry']))]
-            elif intersect == 'contains':
-                rivers = [r for (i,r) in fid.items(bbox=shply.bounds) if shply.contains(workflow.utils.shply(r['geometry']))]
-                
-            self._native_crs = profile['crs']
-
-        # round
-        workflow.utils.round(rivers, workflow.conf.rcParams['digits'])
-
-        # map to the target crs
-        for river in rivers:
-            workflow.warp.warp_shape(river, self._native_crs, crs)
-        profile['crs'] = crs
+            bounds = workflow.warp.warp_bounds(bounds, bounds_crs, profile['crs'])
+            rivers = [r for (i,r) in fid.items(bbox=bounds)]
         return profile, rivers
             
     def _url(self, hucstr):
