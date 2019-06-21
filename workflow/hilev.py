@@ -85,6 +85,9 @@ def get_hus(source, huc, level, crs=None, centering=None):
     if level is None:
         level = len(huc)
 
+    logging.info("")
+    logging.info("Preprocessing HUC")
+    logging.info("-"*30)
     logging.info("Loading level {} HUCs in {}.".format(level, huc))
     
     profile, hus = source.get_hucs(huc, level)
@@ -92,9 +95,9 @@ def get_hus(source, huc, level, crs=None, centering=None):
     # convert to destination crs
     if crs is None:
         crs = workflow.conf.default_crs()
-        if crs != profile['crs']:
-            for hu in hus:
-                workflow.warp.warp_shape(hu, profile['crs'], crs)
+    if crs != profile['crs']:
+        for hu in hus:
+            workflow.warp.warp_shape(hu, profile['crs'], crs)
 
     # round
     workflow.utils.round(hus, workflow.conf.rcParams['digits'])
@@ -107,6 +110,7 @@ def get_hus(source, huc, level, crs=None, centering=None):
         hu_shapes, centroid = workflow.utils.center(hu_shapes, centering)
     else:
         centroid = shapely.geometry.Point(0,0)
+
     return hu_shapes, centroid
 
 
@@ -162,7 +166,9 @@ def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, l
                 |  value of centering.
 
     """
-    # load stream network
+    logging.info("")
+    logging.info("Preprocessing Hydrography")
+    logging.info("-"*30)
     logging.info("loading streams in bounds {}".format(bounds))
     rprofile, rivers = source.get_hydro(bounds, bounds_crs, huc_hint)
 
@@ -175,7 +181,6 @@ def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, l
     workflow.utils.round(rivers, workflow.conf.rcParams['digits'])
 
     # convert to shapely
-    logging.info("merging reaches")
     rivers_s = shapely.geometry.MultiLineString([workflow.utils.shply(r['geometry']) for r in rivers])
     rivers_s = shapely.ops.linemerge(rivers_s).simplify(1.e-5)
 
@@ -204,7 +209,7 @@ def get_raster_on_huc(shape, source_dem):
     """
     logging.info("")
     logging.info("Preprocessing DEM")
-    logging.info("==========================")
+    logging.info("-"*30)
     # load shapefiles for the HUC of interest
     logging.info("loading HUC %s"%myhuc)
     profile, huc = sources['HUC'].load_huc(myhuc)
@@ -303,7 +308,7 @@ def get_dem_on_shape(source, shape, crs):
     """
     logging.info("")
     logging.info("Preprocessing DEM")
-    logging.info("==========================")
+    logging.info("-"*30)
     logging.info("downloading DEM")
     return source.get_dem(shape, crs)
 
@@ -326,7 +331,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
     """
     logging.info("")
     logging.info("Preprocessing Shapes")
-    logging.info("=====================")
+    logging.info("-"*30)
 
     # load shapefile
     logging.info("loading file: %s"%filename)
@@ -381,13 +386,13 @@ def simplify_and_prune(hucs, rivers, args):
     
     logging.info("")
     logging.info("Simplifying and pruning")
-    logging.info("========================")
-    logging.info("filtering rivers outside of the HUC space")
+    logging.info("-"*30)
+    logging.info("Filtering rivers outside of the HUC space")
     rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, tol)
     if len(rivers) is 0:
         return rivers
 
-    logging.info("removing rivers with only a few reaches")
+    logging.info("Removing rivers with fewer than {} reaches.".format(args.prune_reach_size))
     for i in reversed(range(len(rivers))):
         ltree = len(rivers[i])
         if ltree < args.prune_reach_size:
@@ -408,9 +413,9 @@ def simplify_and_prune(hucs, rivers, args):
     logging.info("snapping rivers and HUCs")
     rivers = workflow.hydrography.snap(hucs, rivers, tol, 3*tol, args.cut_intersections)
     
-    logging.info("...done")
-
-    logging.info("Resulting info")
+    logging.info("")
+    logging.info("Simplification Diagnostics")
+    logging.info("-"*30)
     if len(rivers) is not 0:
         mins = []
         for river in rivers:
@@ -435,7 +440,7 @@ def triangulate(hucs, rivers, args, diagnostics=True):
     
     logging.info("")
     logging.info("Meshing")
-    logging.info("===============")
+    logging.info("-"*30)
 
     refine_funcs = []
     if args.refine_max_area is not None:
@@ -454,7 +459,7 @@ def triangulate(hucs, rivers, args, diagnostics=True):
                                                               enforce_delaunay=args.delaunay)
 
     if diagnostics:
-        logging.info("triangulation diagnostics")
+        logging.info("Plotting triangulation diagnostics")
         river_multiline = workflow.tree.forest_to_list(rivers)
         distances = []
         areas = []
@@ -488,7 +493,9 @@ def triangulate(hucs, rivers, args, diagnostics=True):
 
 def elevate(mesh_points, dem, dem_profile):
     # -- must map back to lat/lon to take from dem
-    logging.info("elevating")
+    logging.info("")
+    logging.info("Elevating Triangulation to DEM")
+    logging.info("-"*30)
     triangles_3d = []
     mesh_points_ll = np.array(workflow.warp.warp_xy(mesh_points[:,0], mesh_points[:,1], workflow.conf.default_crs(), workflow.conf.latlon_crs())).transpose()
     elev = dem[workflow.rowcol.rowcol(dem_profile['transform'], mesh_points_ll[:,0], mesh_points_ll[:,1])]
@@ -502,9 +509,13 @@ def save(filename, points3, tris, metadata):
 
     This could be Exodus, but meshing_ats is in python2 (and uses exodus which is in python2)
     """
-    logging.info("saving mesh: %s"%filename)
-    cells = {'triangle':tris}
-    vtk_io.write(filename, points3, cells)
+    logging.info("")
+    logging.info("File I/O")
+    logging.info("-"*30)
+    logging.info("Saving mesh: %s"%filename)
+    vtk_io.write(filename, points3, {'triangle':tris})
+
+    logging.info("Saving README: %s"%filename+'.readme') 
     with open(filename+'.readme','w') as fid:
         fid.write(metadata)
 

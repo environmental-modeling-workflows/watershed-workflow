@@ -1,3 +1,13 @@
+"""Default Sources:
+
+Default HUCs and Hydrography data comes from the NHDPlus High Res
+datasets.
+See: "https://nhd.usgs.gov/"
+
+Default DEMs come from the National Elevation Dataset (NED).
+See: "https://lta.cr.usgs.gov/NED"
+"""
+
 from workflow.sources.manager_nhdplus import FileManagerNHDPlus
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_shape import FileManagerShape

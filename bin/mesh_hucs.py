@@ -1,24 +1,11 @@
 #!/usr/bin/env python3
-"""Downloads and meshes HUC and hydrography data.
-
-Default HUCs and Hydrography data comes from the NHDPlus High Res
-datasets.
-See: "https://nhd.usgs.gov/"
-
-Default DEMs come from the National Elevation Dataset (NED).
-See: "https://lta.cr.usgs.gov/NED"
-"""
-
-dead = """
-Default data for HUCs comes from The National Map's Watershed Boundary Dataset (WBD).
-Default data for hydrography comes from The National Map's National Hydrography Dataset (NHD).
-See: "https://nhd.usgs.gov/"
-"""
+"""Downloads and meshes HUC based on hydrography data."""
 
 import os,sys
 import numpy as np
 from matplotlib import pyplot as plt
 import shapely
+import logging
 
 import workflow
 import workflow.ui
@@ -26,15 +13,18 @@ import workflow.source_list
 
 def get_args():
     # set up parser
-    parser = workflow.ui.get_basic_argparse(__doc__)
-    workflow.ui.outmesh_options(parser)
+    parser = workflow.ui.get_basic_argparse(__doc__+'\n\n'+workflow.source_list.__doc__)
+    workflow.ui.huc_arg(parser)
+    workflow.ui.outmesh_args(parser)
+    workflow.ui.center_options(parser)
+
     workflow.ui.simplify_options(parser)
     workflow.ui.refine_options(parser)
-    workflow.ui.center_options(parser)
-    workflow.ui.huc_source_options(parser)
-    workflow.ui.hydro_source_options(parser)
-    workflow.ui.dem_source_options(parser)
-    workflow.ui.huc_arg(parser)
+
+    data_ui = parser.add_argument_group('Data Sources')
+    workflow.ui.huc_source_options(data_ui)
+    workflow.ui.hydro_source_options(data_ui)
+    workflow.ui.dem_source_options(data_ui)
 
     # parse args, log
     return parser.parse_args()
@@ -42,11 +32,15 @@ def get_args():
 def mesh_hucs(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
     sources = workflow.source_list.get_sources(args)
+
+    logging.info("")
+    logging.info("Meshing HUC: {}".format(args.HUC))
+    logging.info("="*30)
+    logging.info('Target projection: "{}"'.format(args.projection['init']))
     
     # collect data
-    huc, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, centering=args.center)
-    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], huc.polygon(0).bounds, workflow.conf.default_crs(), args.HUC, centering=centroid)
-
+    huc, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, crs=args.projection, centering=args.center)
+    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], huc.polygon(0).bounds, args.projection, args.HUC, centering=centroid)
     rivers = workflow.simplify_and_prune(huc, rivers, args)
     
     # make 2D mesh
@@ -103,21 +97,22 @@ def save(args, centroid, triangulation):
                            'with calling sequence:',
                            '  '+' '.join(sys.argv)])
 
-    if args.outfile is None:
-        outdir = "data/meshes"
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-        outfile = os.path.join(outdir, 'huc_%s.vtk'%args.HUC)
-    else:
-        outfile = args.outfile            
-    workflow.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
+    workflow.save(args.output_file, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
         
 
 if __name__ == '__main__':
-    args = get_args()
-    print(args.__dict__)
-    centroid, hucs, rivers, triangulation = mesh_hucs(args)
-    plot(args, hucs, rivers, triangulation)
-    save(args, centroid, triangulation)
-    plt.show()
-    sys.exit(0)
+    try:
+        args = get_args()
+        centroid, hucs, rivers, triangulation = mesh_hucs(args)
+        plot(args, hucs, rivers, triangulation)
+        save(args, centroid, triangulation)
+        logging.info("SUCESS")
+        plt.show()
+        sys.exit(0)
+    except KeyboardInterrupt:
+        logging.error("Keyboard Interupt, stopping.")
+        sys.exit(0)
+    except Exception as err:
+        logging.error('{}'.format(str(err)))
+        sys.exit(1)
+        

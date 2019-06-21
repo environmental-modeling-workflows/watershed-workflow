@@ -119,12 +119,11 @@ class FileManagerNED:
                     downloadfile = os.path.join(self.names.raw_folder_name(north,west), downloadfilename)
                     assert(downloadfile.endswith('.ZIP') or downloadfile.endswith('.zip'))
 
-                    logging.info("  Attempting to download source for target '%s'"%filename)
+                    logging.info("Attempting to download source for target '%s'"%filename)
                     work_dir = self.names.raw_folder_name(north, west)
 
                     if not os.path.exists(downloadfile) or force:
                         source_utils.download(url, downloadfile, force)
-                    logging.info("  Unzipping '{}' into '{}'".format(downloadfile, work_dir))
                     source_utils.unzip(downloadfile, work_dir)
                     unzip_filename = downloadfilename[0:-4]
 
@@ -134,23 +133,17 @@ class FileManagerNED:
                         img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.lower())]
                         if len(img_files) == 0:
                             img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.upper())]
-                        else:
-                            logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
                             
                     if len(img_files) == 0:
                         img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.lower())]
-                    else:
-                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
                     if len(img_files) == 0:
                         img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.upper())]
-                    else:
-                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+
                     if len(img_files) == 0:
                         raise RuntimeError("{}: Downloaded and unzipped '{}', but cannot find the img file.".format(self.name, downloadfile))
                     else:
-                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+                        logging.debug("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
 
-                    logging.info("  Moving '{}' to '{}'".format(os.path.join(work_dir, img_files[0]), filename))
                     source_utils.move(os.path.join(work_dir, img_files[0]), filename)
                     
 

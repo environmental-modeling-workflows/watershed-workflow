@@ -43,6 +43,8 @@ class FileManagerNHDPlus:
 
         # download the file
         filename = self._download(huc[0:self.file_level])
+        logging.info('Using HUC file "{}"'.format(filename))
+        
 
         # read the file
         layer = 'WBDHU{}'.format(level)
@@ -66,6 +68,8 @@ class FileManagerNHDPlus:
         
         # download the file
         filename = self._download(huc_hint[0:self.file_level])
+        logging.info('Using Hydrography file "{}"'.format(filename))
+        
         
         # find and open the hydrography layer        
         filename = self.names.file_name(huc_hint[0:self.file_level])
@@ -109,12 +113,13 @@ class FileManagerNHDPlus:
             if not os.path.exists(downloadfile) or force:
                 logging.debug("Attempting to download source for target '%s'"%filename)
                 source_utils.download(url, downloadfile, force)
-                source_utils.unzip(downloadfile, work_folder)
+                
+            source_utils.unzip(downloadfile, work_folder)
 
-                # hope we can find it?
-                gdb_files = [f for f in os.listdir(work_dir) if f.endswith('.gdb')]
-                assert(len(gdb_files) == 1)
-                source_utils.move(os.path.join(work_dir, gdb_files[0]), filename)
+            # hope we can find it?
+            gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
+            assert(len(gdb_files) == 1)
+            source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
 
         if not os.path.exists(filename):
             raise RuntimeError("Cannot find or download file for source target '%s'"%filename)
