@@ -62,7 +62,7 @@ def warp_shape(feature, old_crs, new_crs):
     elif dim == 1:
         # line-like or polygon with no holes
         coords = np.array(feature['geometry']['coordinates'],'d')
-        assert(len(coords.shape) is 2 and coords.shape[1] == 2)
+        assert(len(coords.shape) is 2 and coords.shape[1] in [2,3] )
         x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
         new_coords = [xy for xy in zip(x,y)]
         feature['geometry']['coordinates'] = new_coords
@@ -70,7 +70,7 @@ def warp_shape(feature, old_crs, new_crs):
         # multi-line or polygon with holes
         for i in range(len(feature['geometry']['coordinates'])):
             coords = np.array(feature['geometry']['coordinates'][i],'d')
-            assert(len(coords.shape) is 2 and coords.shape[1] == 2)
+            assert(len(coords.shape) is 2 and coords.shape[1] in [2,3])
             x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
             new_coords = [xy for xy in zip(x,y)]
             feature['geometry']['coordinates'][i] = new_coords
@@ -79,7 +79,7 @@ def warp_shape(feature, old_crs, new_crs):
         for i in range(len(feature['geometry']['coordinates'])):
             for j in range(len(feature['geometry']['coordinates'][i])):
                 coords = np.array(feature['geometry']['coordinates'][i][j],'d')
-                assert(len(coords.shape) is 2 and coords.shape[1] == 2)
+                assert(len(coords.shape) is 2 and coords.shape[1] in [2,3])
                 x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
                 new_coords = [xy for xy in zip(x,y)]
                 feature['geometry']['coordinates'][i][j] = new_coords

@@ -28,6 +28,8 @@ import workflow.hydrography
 import workflow.clip
 import workflow.rowcol
 import workflow.sources.utils 
+from workflow.sources.utils import huc_str
+
 
 import vtk_io # from ATS/tools/meshing_ats
 
@@ -51,7 +53,7 @@ def get_hu(source, huc, crs=None, centering=None):
       centroid  | shapely point for the centroid, based on the
                 |  value of centering.
     """
-    huc = workflow.sources.utils.hucstr(huc)
+    huc = huc_str(huc)
     hu_shapes, centroid = get_hus(source, huc, len(huc), crs, centering)
     assert(len(hu_shapes) == 1)
     return h_shapes[0], centroid
@@ -79,8 +81,12 @@ def get_hus(source, huc, level, crs=None, centering=None):
                 |  value of centering
     """
     # get the hu from source
+    huc = huc_str(huc)
+    if level is None:
+        level = len(huc)
+
     logging.info("Loading level {} HUCs in {}.".format(level, huc))
-    huc = workflow.sources.utils.hucstr(huc)
+    
     profile, hus = source.get_hucs(huc, level)
 
     # convert to destination crs
@@ -97,11 +103,13 @@ def get_hus(source, huc, level, crs=None, centering=None):
     hu_shapes = [workflow.utils.shply(hu['geometry']) for hu in hus]
 
     # center
-    if center:
-        hu_shapes, centroid = workflow.utils.center(hu_shapes)
+    if centering:
+        hu_shapes, centroid = workflow.utils.center(hu_shapes, centering)
     else:
         centroid = shapely.geometry.Point(0,0)
     return hu_shapes, centroid
+
+
 def get_split_form_hucs(source, myhuc, level=None, crs=None, centering=False):
     """Loads HUCs from a source.
 
@@ -125,7 +133,7 @@ def get_split_form_hucs(source, myhuc, level=None, crs=None, centering=False):
 
     """
     hu_shapes, centroid = get_hus(source, myhuc, level, crs, centering)
-    return workflow.split_form_hucs.SplitHUCs(hu_shapes), centroid
+    return workflow.split_hucs.SplitHUCs(hu_shapes), centroid
         
 def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, long=None):
     """Collects shapefiles for hydrography data within a given HUC.
@@ -278,7 +286,7 @@ def find_huc(source, shp, crs, hint, shrink=1.e-5):
     return result
 
 
-def get_dem_on_shape(profile, shape, sources):
+def get_dem_on_shape(source, shape, crs):
     """Collects a raster DEM that covers the requested shape.
 
     Arguments:
@@ -297,13 +305,7 @@ def get_dem_on_shape(profile, shape, sources):
     logging.info("Preprocessing DEM")
     logging.info("==========================")
     logging.info("downloading DEM")
-
-    dem_profile, dem = workflow.clip.clip_dem(shape, sources['DEM'])
-    if dem_profile['crs']['init'] != profile['crs']['init']:
-        workflow.warp.warp_shape(shape, profile['crs'], dem_profile['crs'])
-        profile['crs'] = dem_profile['crs']
-    
-    return dem_profile, dem
+    return source.get_dem(shape, crs)
 
 
 def get_shapes(filename, index, center=True, make_hucs=True):
@@ -355,7 +357,7 @@ def get_shapes(filename, index, center=True, make_hucs=True):
 
     # center the HUCs
     if center:
-        huc_shapes, centroid = workflow.utils.center(huc_shapes)
+        huc_shapes, centroid = workflow.utils.center(huc_shapes, center)
         logging.info("centering %d shapes to (%g,%g)"%(len(huc_shapes), centroid.xy[0][0], centroid.xy[1][0]))
     else:
         centroid = shapely.geometry.Point(0,0)
@@ -390,24 +392,22 @@ def simplify_and_prune(hucs, rivers, args):
         ltree = len(rivers[i])
         if ltree < args.prune_reach_size:
             rivers.pop(i)
-            logging.info("  removing river with %d reaches"%ltree)
+            logging.info("  ...removing river with %d reaches"%ltree)
         else:
-            logging.info("  keeping river with %d reaches"%ltree)
+            logging.info("  ...keeping river with %d reaches"%ltree)
     if len(rivers) is 0:
         return rivers
             
     logging.info("simplifying rivers")
     workflow.hydrography.cleanup(rivers, tol, tol, tol)
 
-    logging.info("simplify HUCs")
+    logging.info("simplifying HUCs")
     workflow.split_hucs.simplify(hucs, tol)
 
     # snap
     logging.info("snapping rivers and HUCs")
     rivers = workflow.hydrography.snap(hucs, rivers, tol, 3*tol, args.cut_intersections)
     
-    logging.info("filtering cut reaches outside the HUC space")
-    rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, -0.1*tol)
     logging.info("...done")
 
     logging.info("Resulting info")

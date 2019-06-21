@@ -154,7 +154,17 @@ def triangulate(hucs, rivers, **kwargs):
     # plt.show()
     
     logging.info(" triangle.build...")
-    mesh = meshpy.triangle.build(info, **kwargs)
+    try:
+        mesh = meshpy.triangle.build(info, **kwargs)
+    except TypeError as err:
+        try:
+            # Ethan's modification to meshpy.triangle is not present?
+            kwargs.pop('enforce_delaunay')
+        except KeyError:
+            raise err
+        else:
+            mesh = meshpy.triangle.build(info, **kwargs)
+            
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
     logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))

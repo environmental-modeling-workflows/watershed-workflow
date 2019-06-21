@@ -60,7 +60,7 @@ def get_basic_argparse(docstring):
 
 def valid_hucstr(hucstr):
     try:
-        huc_valid = workflow.conf.huc_str(hucstr)
+        huc_valid = workflow.huc_str(hucstr)
     except RuntimeError as err:
         raise argparse.ArgumentTypeError("In parsing HUC string: '%s'"%str(err))
     else:

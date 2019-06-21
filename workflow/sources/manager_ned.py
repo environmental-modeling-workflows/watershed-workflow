@@ -27,11 +27,11 @@ class FileManagerNED:
 
         self.resolution = resolution        
         self.names = workflow.sources.names.Names(self.name, 'dem', None,
-                                                  'USGS_NED_%s_n{}_w{}.%s'%(self.short_res,file_format.lower()),
+                                                  'USGS_NED_%s_n{:02}_w{:03}.%s'%(self.short_res,file_format.lower()),
                                                   self.short_res+"_raw")
 
 
-    def get_dem(self, profile, shape):
+    def get_dem(self, shape, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
         # get shape as a shapely, single Polygon
         if type(shape) is dict:
@@ -40,7 +40,7 @@ class FileManagerNED:
             shape = shapely.ops.cascaded_union(shape)
 
         # warp to lat-lon, which is what NED DEMs are indexed by
-        shply = workflow.warp.warp_shapely(shape, profile['crs'], workflow.conf.latlon_crs())
+        shply = workflow.warp.warp_shapely(shape, crs, workflow.conf.latlon_crs())
 
         # get the bounds and download
         bounds = shply.bounds
@@ -48,11 +48,11 @@ class FileManagerNED:
 
         # merge into a single raster
         datasets = [rasterio.open(f) for f in files]
+        profile = datasets[0].profile
         dest, output_transform = rasterio.merge.merge(datasets, bounds=bounds, nodata=np.nan,
                                                       precision=workflow.conf.rcParams['digits'])
 
         # set the profile
-        profile = datasets[0].profile
         profile['transform'] = output_transform
         profile['height'] = dest.shape[1]
         profile['width'] = dest.shape[2]
@@ -97,7 +97,7 @@ class FileManagerNED:
         north = int(np.ceil(bounds[3]))
 
         # generate the list of files needed
-        filenames = [self.names.file_name(j+1, i) for j in range(south, north) for i in range(west, east)]
+        filenames = [self.names.file_name(j+1, -i) for j in range(south, north) for i in range(west, east)]
         logging.debug("  Need:")
         for fname in filenames:
             logging.debug("    ",fname)
@@ -111,24 +111,48 @@ class FileManagerNED:
                 north = int(np.round(r['boundingBox']['maxY']))
                 west = int(np.round(r['boundingBox']['minX']))
 
-                filename = self.names.file_name(north, west)
+                filename = self.names.file_name(north, -west)
                 filenames.remove(filename)
 
                 if not os.path.exists(filename) or force:
-                    downloadfile = os.path.join(self.names.raw_folder_name(north,west), url.split("/")[-1])
+                    downloadfilename = url.split("/")[-1]
+                    downloadfile = os.path.join(self.names.raw_folder_name(north,west), downloadfilename)
                     assert(downloadfile.endswith('.ZIP') or downloadfile.endswith('.zip'))
 
-                    logging.debug("  Attempting to download source for target '%s'"%filename)
+                    logging.info("  Attempting to download source for target '%s'"%filename)
                     work_dir = self.names.raw_folder_name(north, west)
 
                     if not os.path.exists(downloadfile) or force:
                         source_utils.download(url, downloadfile, force)
+                    logging.info("  Unzipping '{}' into '{}'".format(downloadfile, work_dir))
                     source_utils.unzip(downloadfile, work_dir)
+                    unzip_filename = downloadfilename[0:-4]
 
                     # hope we can find it?
-                    img_files = [f for f in os.listdir(work_dir) if f.endswith(self.file_format.lower())]
-                    assert(len(img_files) == 1)
+                    img_files = []
+                    if os.path.isdir(os.path.join(work_dir, unzip_filename)):
+                        img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.lower())]
+                        if len(img_files) == 0:
+                            img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.upper())]
+                        else:
+                            logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+                            
+                    if len(img_files) == 0:
+                        img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.lower())]
+                    else:
+                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+                    if len(img_files) == 0:
+                        img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.upper())]
+                    else:
+                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+                    if len(img_files) == 0:
+                        raise RuntimeError("{}: Downloaded and unzipped '{}', but cannot find the img file.".format(self.name, downloadfile))
+                    else:
+                        logging.info("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+
+                    logging.info("  Moving '{}' to '{}'".format(os.path.join(work_dir, img_files[0]), filename))
                     source_utils.move(os.path.join(work_dir, img_files[0]), filename)
+                    
 
                 if not os.path.exists(filename):
                     raise RuntimeError('{}: Cannot find or download file for source target "{}"'.format(self.name, filename))

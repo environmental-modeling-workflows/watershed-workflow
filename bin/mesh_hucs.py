@@ -21,7 +21,8 @@ from matplotlib import pyplot as plt
 import shapely
 
 import workflow
-
+import workflow.ui
+import workflow.source_list
 
 def get_args():
     # set up parser
@@ -40,20 +41,16 @@ def get_args():
 
 def mesh_hucs(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
-    sources = workflow.sources.get_sources(args)
+    sources = workflow.source_list.get_sources(args)
     
     # collect data
-    huc, centroid = workflow.get_huc(sources['HUC'], args.HUC, center=args.center)
-    rivers = workflow.get_rivers(sources['hydrography'], args.HUC, center=centroid)
+    huc, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, centering=args.center)
+    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], huc.polygon(0).bounds, workflow.conf.default_crs(), args.HUC, centering=centroid)
 
-
-    dem_profile, dem = workflow.hilev.get_dem_on_huc(args.HUC, sources)
-
+    rivers = workflow.simplify_and_prune(huc, rivers, args)
+    
     # make 2D mesh
-    if args.center:
-        rivers = [shapely.affinity.translate(r, -centroid.coords[0][0], -centroid.coords[0][1]) for r in rivers]
-    rivers = workflow.hilev.simplify_and_prune(hucs, rivers, args)
-    mesh_points2, mesh_tris = workflow.hilev.triangulate(hucs, rivers, args)
+    mesh_points2, mesh_tris = workflow.triangulate(huc, rivers, args)
 
     # elevate to 3D
     if args.center:
@@ -61,7 +58,8 @@ def mesh_hucs(args):
     else:
         mesh_points2_uncentered = mesh_points2
 
-    mesh_points3_uncentered = workflow.hilev.elevate(mesh_points2_uncentered, dem, dem_profile)
+    dem_profile, dem = workflow.get_dem_on_shape(sources['DEM'], huc.polygon(0), workflow.conf.default_crs())
+    mesh_points3_uncentered = workflow.elevate(mesh_points2_uncentered, dem, dem_profile)
 
     if args.center:
         mesh_points3 = np.empty(mesh_points3_uncentered.shape,'d')
@@ -70,7 +68,7 @@ def mesh_hucs(args):
     else:
         mesh_points3 = mesh_points3_uncentered
 
-    return centroid, hucs, rivers, (mesh_points3, mesh_tris)
+    return centroid, huc, rivers, (mesh_points3, mesh_tris)
 
 def plot(args, hucs, rivers, triangulation):
     mesh_points3, mesh_tris = triangulation
@@ -112,7 +110,7 @@ def save(args, centroid, triangulation):
         outfile = os.path.join(outdir, 'huc_%s.vtk'%args.HUC)
     else:
         outfile = args.outfile            
-    workflow.hilev.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
+    workflow.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
         
 
 if __name__ == '__main__':
