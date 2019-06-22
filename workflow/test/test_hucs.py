@@ -80,9 +80,20 @@ def test_hucs(two_boxes):
     assert(list(i) == [0,])
 
     p0 = tb.polygon(0)
-    p1 = tb.polygon(1)
     assert(len(p0.boundary.coords) == 5)
+    assert(workflow.utils.close(two_boxes[0], p0))
+
+    p1 = tb.polygon(1)    
     assert(len(p1.boundary.coords) == 5)
+    assert(workflow.utils.close(two_boxes[1], p1))
+
+    # boundary gon
+    p3 = tb.exterior()
+    assert(len(p3.boundary.coords) == 7) # closed polygon
+    bndry_c = [(0,-5), (10,-5), (20, -5), (20, 5), (10,5), (0,5)]
+    poly = shapely.geometry.Polygon(bndry_c)
+    assert(workflow.utils.close(poly, p3))
+    
     # should check that these are close to those in two_boxes, but
     # they are shifted, so this check would be difficult.
     # for b1,b2 in zip(tb.polygons(), two_boxes):

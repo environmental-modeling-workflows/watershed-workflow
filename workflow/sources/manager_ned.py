@@ -5,6 +5,9 @@ import logging
 import numpy as np
 import shapely
 import rasterio.merge
+import requests
+import requests.exceptions
+
 
 import workflow.sources.utils as source_utils
 import workflow.conf
@@ -31,7 +34,7 @@ class FileManagerNED:
                                                   self.short_res+"_raw")
 
 
-    def get_dem(self, shape, crs):
+    def get_raster(self, shape, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
         # get shape as a shapely, single Polygon
         if type(shape) is dict:
@@ -62,7 +65,6 @@ class FileManagerNED:
 
     def request(self, bounds):
         """Forms the REST API get to find URLs."""
-        import requests
         rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
         rest_dataset = self.name + ' ' + self.resolution
 
@@ -72,9 +74,14 @@ class FileManagerNED:
         feather_bounds[2] = feather_bounds[2] + .01
         feather_bounds[3] = feather_bounds[3] + .01
         rest_bounds = ','.join(str(b) for b in feather_bounds)
-        r = requests.get(rest_url, params={'datasets':rest_dataset,
-                                           'bbox':rest_bounds,
-                                           'prodFormats':self.file_format})
+        try:
+            r = requests.get(rest_url, params={'datasets':rest_dataset,
+                                               'bbox':rest_bounds,
+                                               'prodFormats':self.file_format})
+        except requests.exceptions.ConnectionError as err:
+            logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))
+            raise err
+
         assert(r.json()['total'] > 0)
         return r.json()
 
@@ -98,9 +105,9 @@ class FileManagerNED:
 
         # generate the list of files needed
         filenames = [self.names.file_name(j+1, -i) for j in range(south, north) for i in range(west, east)]
-        logging.debug("  Need:")
+        logging.info('  Need:')
         for fname in filenames:
-            logging.debug("    ",fname)
+            logging.info('    {}'.format(fname))
 
         filenames_success = []
         if (any(not os.path.exists(f) for f in filenames) or force):

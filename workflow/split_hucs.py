@@ -156,6 +156,16 @@ class SplitHUCs:
         for i in self.intersections:
             yield i
 
+    def exterior(self):
+        """Construct boundary polygon and return a copy."""
+        segs = []
+        for b in self.boundaries:
+            for s in b:
+                segs.append(self.segments[s])
+        ml = shapely.ops.linemerge(segs)
+        assert(type(ml) is shapely.geometry.LineString)
+        return shapely.geometry.Polygon(ml)                
+
     def __len__(self):
         return len(self.gons)
 

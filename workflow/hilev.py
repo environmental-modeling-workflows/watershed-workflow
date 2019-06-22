@@ -29,18 +29,19 @@ import workflow.clip
 import workflow.rowcol
 import workflow.sources.utils 
 from workflow.sources.utils import huc_str
+import workflow.sources.manager_shape
 
 
 import vtk_io # from ATS/tools/meshing_ats
 
-def get_hu(source, huc, crs=None, centering=None):
+def get_huc(source, huc, crs=None, centering=None):
     """Download and read a HUC file.
 
     Arguments:
       source    | source object providing get_huc()
       huc       | hydrologic unit code
       crs       | provides the output coordinate system, 
-                | defaults to workflow.conf.default_crs()
+                | defaults to workflow.conf.default_scrs()
       centering | if False or None (default) does nothing.
                 |  if True or 'geometric', centers based on the 
                 |  geometric center.
@@ -54,11 +55,11 @@ def get_hu(source, huc, crs=None, centering=None):
                 |  value of centering.
     """
     huc = huc_str(huc)
-    hu_shapes, centroid = get_hus(source, huc, len(huc), crs, centering)
+    hu_shapes, centroid = get_hucs(source, huc, len(huc), crs, centering)
     assert(len(hu_shapes) == 1)
     return h_shapes[0], centroid
 
-def get_hus(source, huc, level, crs=None, centering=None):
+def get_hucs(source, huc, level, crs=None, centering=None):
     """Download and read a HUC file.
 
     Arguments:
@@ -136,7 +137,7 @@ def get_split_form_hucs(source, myhuc, level=None, crs=None, centering=False):
                       |  value of centering.
 
     """
-    hu_shapes, centroid = get_hus(source, myhuc, level, crs, centering)
+    hu_shapes, centroid = get_hucs(source, myhuc, level, crs, centering)
     return workflow.split_hucs.SplitHUCs(hu_shapes), centroid
         
 def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, long=None):
@@ -195,34 +196,6 @@ def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, l
         centroid = shapely.geometry.Point(0,0)
         
     return shapely.geometry.MultiLineString(rivers_s), centroid
-
-def get_raster_on_huc(shape, source_dem):
-    """Collects a raster DEM that covers the requested HUC.
-
-    Arguments:
-        huc     | The fiona shapefile of the HUC.  Output from 
-                | get_hucs().
-
-    Returns (dem_profile, dem):
-        dem_profile     | A rasterio profile file descriptor object.
-        dem             | A raster, in lat/lon, of elevations.
-    """
-    logging.info("")
-    logging.info("Preprocessing DEM")
-    logging.info("-"*30)
-    # load shapefiles for the HUC of interest
-    logging.info("loading HUC %s"%myhuc)
-    profile, huc = sources['HUC'].load_huc(myhuc)
-    assert(profile['crs']['init'] == 'epsg:4269') # latlong
-
-    dem = sources['DEM'].load_dem(huc)
-    dem_profile, dem = workflow.clip.clip_dem(dem, huc)
-    dem = dem[0,:,:] # only the first band
-    return dem_profile, dem
-
-
-
-
 
 
 def find_huc(source, shp, crs, hint, shrink=1.e-5):
@@ -291,7 +264,7 @@ def find_huc(source, shp, crs, hint, shrink=1.e-5):
     return result
 
 
-def get_dem_on_shape(source, shape, crs):
+def get_raster_on_shape(source, shape, crs):
     """Collects a raster DEM that covers the requested shape.
 
     Arguments:
@@ -307,75 +280,91 @@ def get_dem_on_shape(source, shape, crs):
     NOTE: this WILL warp shape to the DEM's CRS!
     """
     logging.info("")
-    logging.info("Preprocessing DEM")
+    logging.info("Preprocessing Raster")
     logging.info("-"*30)
-    logging.info("downloading DEM")
-    return source.get_dem(shape, crs)
+    logging.info("downloading raster")
+    return source.get_raster(shape, crs)
 
 
-def get_shapes(filename, index, center=True, make_hucs=True):
-    """Collects shapefiles.
+def get_shapes(filename, index, crs=None, centering=None):
+    """Read a shapefile.
 
     Arguments:
-        filename| File to parse, should end in .shp
-        index   | Index of the requested shape in filename, or -1 to get all.
-        center  | If true, subtract off the centroid.
+      filename  | File to parse, should end in .shp
+      index     | Index of the requested shape in filename, or -1 to get all.
+      crs       | provides the output coordinate system, 
+                | defaults to workflow.conf.default_scrs()
+      centering | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
 
-    Returns (profile, sheds, boundary, centroid)
-        profile | the fiona profile/projection/etc for the shapefile
-                | Note this includes original projection.
-        sheds   | a workflow.split_hucs.SplitHUCs object for all watershed shapes requested, 
-                | in the default coordinate system.
-        boundary| The boundary of the union of watersheds, in lat-lon
-        centroid| The centroid of the watersheds requested, for use in uncentering.
+    Returns (shapes, centroid)
+      shapes    | list of shapely polygons for the requested shapes
+      centroid  | shapely point for the centroid, based on the
+                |  value of centering.
     """
     logging.info("")
     logging.info("Preprocessing Shapes")
     logging.info("-"*30)
 
     # load shapefile
-    logging.info("loading file: %s"%filename)
-    with fiona.open(filename, 'r') as fid:
-        profile = fid.profile
-        if index < 0:
-            shps = [s for s in fid]
-        else:
-            shps = [fid[index],]
+    logging.info('loading file: "{}"'.format(filename))
+    source = workflow.sources.manager_shape.FileManagerShape(filename)
+    if index is None or index == -1:
+        filter = None
+    else:
+        filter = lambda i,a: i == index
+    profile, shps = source.get_shapes(filter=filter)
 
-    # convert the original coordinate system to lat-lon to get a lat-lon boundary
-    if profile['crs']['init'] != 'epsg:4269':
+    # convert to destination crs
+    if crs is None:
+        crs = workflow.conf.default_crs()
+    if crs != profile['crs']:
         for shp in shps:
-            workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.latlon_crs())
-        profile['crs']['init'] = 'epsg:4269'
-            
-    # convert original coordinate system to shapely
-    huc_shapes = [workflow.utils.shply(s['geometry']) for s in shps]
-    boundary = shapely.ops.cascaded_union(huc_shapes)
-            
-    # change coordinates to meters (in place)
-    logging.info("change coordinates to m")
-    for shp in shps:
-        workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.default_crs())
+            workflow.warp.warp_shape(shp, profile['crs'], crs)
+
+    # round
+    workflow.utils.round(shps, workflow.conf.rcParams['digits'])
 
     # convert to shapely
-    huc_shapes = [workflow.utils.shply(s['geometry']) for s in shps]
+    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
 
-    # center the HUCs
-    if center:
-        huc_shapes, centroid = workflow.utils.center(huc_shapes, center)
-        logging.info("centering %d shapes to (%g,%g)"%(len(huc_shapes), centroid.xy[0][0], centroid.xy[1][0]))
+    # center
+    if centering:
+        shplys, centroid = workflow.utils.center(shplys, centering)
     else:
         centroid = shapely.geometry.Point(0,0)
 
-    # split
-    logging.info("Split form subwatersheds")
-    if make_hucs:
-        hucs = workflow.split_hucs.SplitHUCs(huc_shapes)
-    else:
-        hucs = huc_shapes
-    logging.info("...done")
-    return profile, hucs, boundary, centroid
-    
+    return shplys, centroid
+
+
+def get_split_form_shapes(filename, index, crs=None, centering=False):
+    """Read a shapefile.
+
+    Arguments:
+      filename  | File to parse, should end in .shp
+      index     | Index of the requested shape in filename, or -1 to get all.
+      crs       | provides the output coordinate system, 
+                | defaults to workflow.conf.default_scrs()
+      centering | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
+
+    Returns: (split_form_shapes, centroid)
+      split_form_shapes | the shapes in tiled form for geometric manipulation
+      centroid          | shapely point for the centroid, based on the
+                        |  value of centering.
+
+    """
+    shapes, centroid = get_shapes(filename, index, crs, centering)
+    return workflow.split_hucs.SplitHUCs(shapes), centroid
+
 
 def simplify_and_prune(hucs, rivers, args):
     """Cleans up the HUC and river shapes, making sure intersections are

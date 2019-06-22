@@ -134,7 +134,7 @@ def inshape_args(parser):
             pass
         return x
     
-    parser.add_argument('infile', metavar='infile.shp',
+    parser.add_argument('input_file',
                         type=shapefile, help='filename including shape to be meshed')
     parser.add_argument('--shape-index', type=int, default=-1,
                         help='index of desired shape in shapefile, (default=all in file)')

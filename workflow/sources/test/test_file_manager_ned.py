@@ -16,7 +16,7 @@ def test_ned1():
 
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED()
-    dem_prof, dem = ned.get_dem(profile, huc)
+    dem_prof, dem = ned.get_raster(profile, huc)
     assert(dem.shape == (1396, 1390))
 
 def test_ned2():
@@ -26,7 +26,7 @@ def test_ned2():
 
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED()
-    dem_prof, dem = ned.get_dem(profile, huc)
+    dem_prof, dem = ned.get_raster(profile, huc)
 
     assert(dem.shape == (10527, 10953))
 
@@ -38,7 +38,7 @@ def test_ned3():
 
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED('1 arc-second')
-    dem_prof, dem = ned.get_dem(profile, huc)
+    dem_prof, dem = ned.get_raster(profile, huc)
     assert(dem.shape == (466,464))
 
 def test_ned4():
@@ -48,7 +48,7 @@ def test_ned4():
 
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED('1 arc-second')
-    dem_prof, dem = ned.get_dem(profile, huc)
+    dem_prof, dem = ned.get_raster(profile, huc)
     assert(dem.shape == (3509, 3651))
 
     
