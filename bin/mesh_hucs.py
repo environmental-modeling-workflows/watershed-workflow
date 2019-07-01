@@ -66,19 +66,19 @@ def mesh_hucs(args):
 
 
 if __name__ == '__main__':
-    try:
-        args = get_args()
-        workflow.ui.setup_logging(args.verbosity, args.logfile)
-        centroid, hucs, rivers, triangulation = mesh_hucs(args)
-        workflow.bin_utils.plot_with_triangulation(args, hucs, rivers, triangulation)
-        workflow.bin_utils.save(args, centroid, triangulation)
-        logging.info("SUCESS")
-        plt.show()
-        sys.exit(0)
-    except KeyboardInterrupt:
-        logging.error("Keyboard Interupt, stopping.")
-        sys.exit(0)
-    except Exception as err:
-        logging.error('{}'.format(str(err)))
-        sys.exit(1)
+#    try:
+    args = get_args()
+    workflow.ui.setup_logging(args.verbosity, args.logfile)
+    centroid, hucs, rivers, triangulation = mesh_hucs(args)
+    workflow.bin_utils.plot_with_triangulation(args, hucs, rivers, triangulation)
+    workflow.bin_utils.save(args, centroid, triangulation)
+    logging.info("SUCESS")
+    plt.show()
+    sys.exit(0)
+#    except KeyboardInterrupt:
+#        logging.error("Keyboard Interupt, stopping.")
+#        sys.exit(0)
+#    except Exception as err:
+#        logging.error('{}'.format(str(err)))
+#        sys.exit(1)
         

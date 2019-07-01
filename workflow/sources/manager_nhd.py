@@ -93,9 +93,14 @@ class _FileManagerNHD:
                                            'polyCode':hucstr})
         r.raise_for_status()
         json = r.json()
-        matches = [m for m in json['items'] if hucstr in m['title']]
+        matches = [m for m in json['items'] if hucstr in m['title'] and 'GDB' in m['format']]
         if len(matches) == 0:
             raise ValueError('{}: not able to find HUC {}'.format(self.name, hucstr))
+        if len(matches) > 1:
+            logging.error('{}: too many matches for HUC {}'.format(self.name, hucstr))
+            for m in matches:
+                logging.error('  {}'.format(m['downloadURL']))
+            raise ValueError('{}: too many matches for HUC {}'.format(self.name, hucstr))
         return matches[0]['downloadURL']
 
     def _download(self, hucstr, force=False):

@@ -20,7 +20,7 @@ huc_sources = {'NHD Plus': FileManagerNHDPlus(),
 
 default_huc_source = 'WBD'
 
-hydrography_sources = {'NHD Plus H': huc_sources['NHD Plus H'],
+hydrography_sources = {'NHD Plus': huc_sources['NHD Plus'],
                        'NHD': huc_sources['NHD'],
                        }
 default_hydrography_source = 'NHD'
@@ -28,7 +28,7 @@ default_hydrography_source = 'NHD'
 dem_sources = {'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
                'NED 1 arc-second': FileManagerNED('1 arc-second'),
                }
-default_dem_source = 'NED 1/3 arc-second'
+default_dem_source = 'NED 1 arc-second'
 
 
 def get_default_sources():
