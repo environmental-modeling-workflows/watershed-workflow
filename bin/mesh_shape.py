@@ -77,7 +77,7 @@ if __name__ == '__main__':
     try:
         args = get_args()
         centroid, shapes, rivers, triangulation = mesh_shapes(args)
-        workflow.bin_utils.plot(args, shapes, rivers, triangulation)
+        workflow.bin_utils.plot_with_triangulation(args, shapes, rivers, triangulation)
         workflow.bin_utils.save(args, centroid, triangulation)
         logging.info("SUCESS")
         plt.show()

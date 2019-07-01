@@ -31,7 +31,6 @@ def get_args():
     return parser.parse_args()
 
 def mesh_hucs(args):
-    workflow.ui.setup_logging(args.verbosity, args.logfile)
     sources = workflow.source_list.get_sources(args)
 
     logging.info("")
@@ -69,8 +68,9 @@ def mesh_hucs(args):
 if __name__ == '__main__':
     try:
         args = get_args()
+        workflow.ui.setup_logging(args.verbosity, args.logfile)
         centroid, hucs, rivers, triangulation = mesh_hucs(args)
-        workflow.bin_utils.plot(args, hucs, rivers, triangulation)
+        workflow.bin_utils.plot_with_triangulation(args, hucs, rivers, triangulation)
         workflow.bin_utils.save(args, centroid, triangulation)
         logging.info("SUCESS")
         plt.show()

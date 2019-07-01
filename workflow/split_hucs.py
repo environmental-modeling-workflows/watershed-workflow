@@ -189,7 +189,7 @@ def intersect_and_split(list_of_shapes):
                         |  boundary.
     """
     intersections = [[None for i in range(len(list_of_shapes))] for j in range(len(list_of_shapes))]
-    uniques = [shapely.geometry.LineString(list(sh.boundary.coords)) for sh in list_of_shapes]
+    uniques = [shapely.geometry.LineString(list(sh.exterior.coords)) for sh in list_of_shapes]
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
