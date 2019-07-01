@@ -14,6 +14,12 @@ class FileManagerShape:
     _crs = attr.ib(type=str, default=workflow.conf.default_crs())
     _native_crs = attr.ib(default=None)
     
+    def get_shape(self, *args, **kwargs):
+        profile, shps = self.get_shapes(*args, **kwargs)
+        if len(shps) is not 1:
+            raise RuntimeError("Filtered shapefile contains more than one match.")
+        return profile, shps[0]
+    
     def get_shapes(self, filter=None):
         """Gets all shapes in a file that meet a specific conditional.
 

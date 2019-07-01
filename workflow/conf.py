@@ -5,7 +5,8 @@ import fiona
 
 rcParams = {'packages data dir' : 'packages',
             'epsg' : 5070, # default Albers equal area conic
-            'digits' : 7 # roundoff precision
+            'digits' : 7, # roundoff precision
+            'national_map_api_url' : 'https://viewer.nationalmap.gov/tnmaccess/api/products',
             }
 try:
     rcParams['data dir'] = os.path.join(os.environ['ATS_MESHING_DIR'], 'data')

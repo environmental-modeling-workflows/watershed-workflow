@@ -1,26 +1,24 @@
-"""Manager for interacting with USGS NHD+ datasets.
+"""Manager for interacting with USGS National Hydrography Datasets.
 """
 import os, sys
 import logging
 import fiona
 import shapely
+import attr
 
 import workflow.sources.utils as source_utils
 import workflow.conf
 import workflow.sources.names
 import workflow.utils
 import workflow.warp
-import workflow.sources.manager_mixins
 
-class FileManagerNHDPlus:
-    def __init__(self):
-        self.name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
-        self.file_level = 4
-        self.lowest_level = 12
-        self.names = workflow.sources.names.Names(self.name,
-                                             'hydrography',
-                                             'NHDPlus_H_{}_GDB',
-                                             'NHDPlus_H_{}.gdb')
+
+@attr.s
+class _FileManagerNHD:
+    name = attr.ib(type=str)
+    file_level = attr.ib(type=int)
+    lowest_level = attr.ib(type=int)
+    name_manager = attr.ib()
 
     def get_huc(self, huc):
         huc = source_utils.huc_str(huc)
@@ -35,7 +33,7 @@ class FileManagerNHDPlus:
 
         # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
         if self.lowest_level < level:
-            raise ValueError("{}: files include HUs at max level {}.".format(self.name, self._lowest_level))
+            raise ValueError("{}: files include HUs at max level {}.".format(self.name, self.lowest_level))
         if level < huc_level:
             raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(self.name, level, huc_level))
         if huc_level < self.file_level:
@@ -59,6 +57,9 @@ class FileManagerNHDPlus:
 
         Note this requires a HUC hint of a level 4 HUC which contains bounds.
         """
+        if 'WBD' in self.name:
+            raise RuntimeError('{}: does not provide hydrographic data.'.format(self.name))
+        
         huc_hint = source_utils.huc_str(huc_hint)
         hint_level = len(huc_hint)
 
@@ -72,7 +73,7 @@ class FileManagerNHDPlus:
         
         
         # find and open the hydrography layer        
-        filename = self.names.file_name(huc_hint[0:self.file_level])
+        filename = self.name_manager.file_name(huc_hint[0:self.file_level])
         layer = 'NHDFlowline'
         logging.debug("{}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
         with fiona.open(filename, mode='r', layer=layer) as fid:
@@ -84,12 +85,13 @@ class FileManagerNHDPlus:
     def _url(self, hucstr):
         """Use the REST API to find the URL."""
         import requests
-        rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
+        rest_url = workflow.conf.rcParams['national_map_api_url']
 
         hucstr = hucstr[0:self.file_level]
         r = requests.get(rest_url, params={'datasets':self.name,
                                            'polyType':'huc{}'.format(self.file_level),
                                            'polyCode':hucstr})
+        r.raise_for_status()
         json = r.json()
         matches = [m for m in json['items'] if hucstr in m['title']]
         if len(matches) == 0:
@@ -99,13 +101,13 @@ class FileManagerNHDPlus:
     def _download(self, hucstr, force=False):
         """Download the data."""
         # check directory structure
-        os.makedirs(self.names.data_dir(), exist_ok=True)
-        os.makedirs(self.names.folder_name(hucstr), exist_ok=True)
+        os.makedirs(self.name_manager.data_dir(), exist_ok=True)
+        os.makedirs(self.name_manager.folder_name(hucstr), exist_ok=True)
 
-        work_folder = self.names.raw_folder_name(hucstr)
+        work_folder = self.name_manager.raw_folder_name(hucstr)
         os.makedirs(work_folder, exist_ok=True)
 
-        filename = self.names.file_name(hucstr)
+        filename = self.name_manager.file_name(hucstr)
         if not os.path.exists(filename) or force:
             url = self._url(hucstr)
 
@@ -125,4 +127,29 @@ class FileManagerNHDPlus:
             raise RuntimeError("Cannot find or download file for source target '%s'"%filename)
         return filename
     
+    
+class FileManagerNHDPlus(_FileManagerNHD):
+    def __init__(self):
+        name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
+        super().__init__(name, 4, 12,
+                         workflow.sources.names.Names(name, 'hydrography',
+                                                      'NHDPlus_H_{}_GDB',
+                                                      'NHDPlus_H_{}.gdb'))
+
+class FileManagerNHD(_FileManagerNHD):
+    def __init__(self):
+        name = 'National Hydrography Dataset (NHD)'
+        super().__init__(name, 8, 12,
+                         workflow.sources.names.Names(name, 'hydrography',
+                                                      'NHD_H_{}_GDB',
+                                                      'NHD_H_{}.gdb'))
+
+
+class FileManagerWBD(_FileManagerNHD):
+    def __init__(self):
+        name = 'National Watershed Boundary Dataset (WBD)'
+        super().__init__(name, 2, 12,
+                         workflow.sources.names.Names(name, 'hydrography',
+                                                      'WBD_{}_GDB',
+                                                      'WBD_{}.gdb'))    
     

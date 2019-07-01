@@ -8,18 +8,22 @@ Default DEMs come from the National Elevation Dataset (NED).
 See: "https://lta.cr.usgs.gov/NED"
 """
 
-from workflow.sources.manager_nhdplus import FileManagerNHDPlus
+from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_shape import FileManagerShape
 
 
-huc_sources = {'NHD Plus H': FileManagerNHDPlus(),
+huc_sources = {'NHD Plus': FileManagerNHDPlus(),
+               'NHD': FileManagerNHD(),
+               'WBD': FileManagerWBD(),
                }
-default_huc_source = 'NHD Plus H'
+
+default_huc_source = 'WBD'
 
 hydrography_sources = {'NHD Plus H': huc_sources['NHD Plus H'],
+                       'NHD': huc_sources['NHD'],
                        }
-default_hydrography_source = 'NHD Plus H'
+default_hydrography_source = 'NHD'
 
 dem_sources = {'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
                'NED 1 arc-second': FileManagerNED('1 arc-second'),

@@ -15,7 +15,7 @@ def test_shape1():
     bounds = workflow.utils.shply(shape['geometry']).bounds
     print(bounds)
     assert(np.allclose(
-        np.array([1129295.2795668286, 1404623.5896358239, 1134448.7938438908, 1410000.8473600561]),
+        np.array([273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344]),
         np.array(bounds), 1.e-4))
 
 def test_shape2():
@@ -25,6 +25,6 @@ def test_shape2():
     bounds = workflow.utils.shply(shape['geometry']).bounds
     print(bounds)
     assert(np.allclose(
-        np.array([1129887.28006847, 1404623.58964961, 1134344.01901746, 1409691.14880939]),
+        np.array([274433.5915278848, 3878839.6361189918, 279050.0001343766, 3883530.4727734774]),
         np.array(bounds), 1.e-4))
     
