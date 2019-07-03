@@ -16,7 +16,7 @@ your PYTHONPATH.
 import sys,os
 import numpy as np
 import collections
-from workflow_tpls import exodus
+import exodus
 
 class SideSet(object):
     """A collection of faces in elements."""
@@ -25,7 +25,7 @@ class SideSet(object):
         assert(type(elem_list) == list or type(elem_list) == np.ndarray)
         assert(type(side_list) == list or type(side_list) == np.ndarray)
 
-        self.name = name
+        self.name = name.encode('ASCII')
         self.setid = setid
         self.elem_list = elem_list
         self.side_list = side_list
@@ -41,7 +41,6 @@ class LabeledSet(object):
         self.setid = setid
         self.entity = entity
         self.ent_ids = np.array(ent_ids)
-
 
 class Mesh2D(object):
     """A surface mesh."""
@@ -62,6 +61,7 @@ class Mesh2D(object):
         assert len(coords.shape) == 2
 
         self.dim = coords.shape[1]
+        assert self.dim == 2 or self.dim == 3
 
         self.coords = coords
         self.conn = connectivity
@@ -465,6 +465,7 @@ class Mesh3D(object):
         # open the mesh file
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
         num_faces = sum(len(face_blk) for face_blk in face_blks)
+
         ep = exodus.ex_init_params(title=filename.encode('utf-8'),
                                    num_dim=3,
                                    num_nodes=self.num_nodes(),
@@ -476,7 +477,7 @@ class Mesh3D(object):
         e = exodus.exodus(filename, mode='w', array_type='numpy', init_params=ep)
 
         # put the coordinates
-        e.put_coord_names(['coordX', 'coordY', 'coordZ'])
+        e.put_coord_names([b'coordX', b'coordY', b'coordZ'])
         e.put_coords(self.coords[:,0], self.coords[:,1], self.coords[:,2])
 
         # put the face blocks
@@ -492,7 +493,7 @@ class Mesh3D(object):
             elems_raveled = [f for c in elem_blk for f in c]
 
             e.put_polyhedra_elem_blk(m_id, len(elem_blk), len(elems_raveled), 0)
-            e.put_elem_blk_name(m_id, "MATERIAL_ID_%d"%m_id)
+            e.put_elem_blk_name(m_id, b"MATERIAL_ID_%d"%m_id)
             e.put_face_count_per_polyhedra(m_id, np.array([len(c) for c in elem_blk]))
             e.put_elem_face_conn(m_id, np.array(elems_raveled)+1)
 
