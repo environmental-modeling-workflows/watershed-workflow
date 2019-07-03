@@ -1,15 +1,6 @@
 #This could be rewritten to use set-union operators. The solution to this can possibly be gleaned from here: https://stackoverflow.com/questions/2151517/pythonic-way-to-create-union-of-all-values-contained-in-multiple-lists
 
-import vtk_io
-import argparse    
-#import vtk
-import numpy as np
-import sortedcontainers
-import attr
-import time
 import collections
-
-
     
 def findNeighbors(npoints, simplex_dict):
     """Document me!"""
