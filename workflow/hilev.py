@@ -18,6 +18,8 @@ import fiona
 import shapely
 import meshpy.triangle
 
+from workflow_tpls import vtk_io  # from ATS/tools/meshing_ats
+
 import workflow.conf
 import workflow.triangulation
 import workflow.warp
@@ -30,9 +32,6 @@ import workflow.rowcol
 import workflow.sources.utils 
 from workflow.sources.utils import huc_str
 import workflow.sources.manager_shape
-
-
-import vtk_io # from ATS/tools/meshing_ats
 
 def get_huc(source, huc, crs=None, centering=None):
     """Download and read a HUC file.
