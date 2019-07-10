@@ -16,14 +16,19 @@ your PYTHONPATH.
 import sys,os
 import numpy as np
 import collections
+import logging
 import exodus
+
+def _list_or_array(obj):
+    return type(obj) == list or type(obj) == np.ndarray
+    
 
 class SideSet(object):
     """A collection of faces in elements."""
     def __init__(self, name, setid, elem_list, side_list):
         assert(type(setid) == int)
-        assert(type(elem_list) == list or type(elem_list) == np.ndarray)
-        assert(type(side_list) == list or type(side_list) == np.ndarray)
+        assert(_list_or_array(side_list))
+        assert(_list_or_array(elem_list))
 
         self.name = name.encode('ASCII')
         self.setid = setid
@@ -35,7 +40,7 @@ class LabeledSet(object):
     def __init__(self, name, setid, entity, ent_ids):
         assert entity in ['CELL', 'FACE', 'NODE']
         assert(type(setid) == int)
-        assert(type(ent_ids) == list or type(ent_ids) == np.ndarray)
+        assert(_list_or_array(ent_ids))
 
         self.name = name
         self.setid = setid
@@ -78,9 +83,9 @@ class Mesh2D(object):
     def validate(self):
         """Checks the validity of the mesh, or throws an AssertionError."""
         assert self.coords.shape[1] == 2 or self.coords.shape[1] == 3
-        assert type(self.conn) is list
+        assert(_list_or_array(self.conn))
         for f in self.conn:
-            assert type(f) is list
+            assert(_list_or_array(f))
             assert len(set(f)) == len(f)
             for i in f:
                 assert i < self.coords.shape[0]
@@ -508,7 +513,27 @@ class Mesh3D(object):
 
         # finish and close
         e.close()
-        
+
+    @staticmethod
+    def summarize_extrusion(layer_types, layer_data, ncells_per_layer, mat_ids):
+        """
+        Summarizes extruded data by printing info to log file.
+
+        This is useful in rapidly debugging and understanding the layering before
+        you do the extrusion process.
+        """
+        count = 0
+        logging.info("Cell summary:")
+        logging.info("-"*60)
+        logging.info("l_id\t| c_id\t|mat_id\t| dz\t\t| z_top")
+        logging.info("-"*60)
+        rep_z = 0.
+        for i,thick in enumerate(layer_data):
+            for j in range(ncells_per_layer[i]):
+                logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f"%(i,
+                            count,mat_ids[i][0],thick/ncells_per_layer[i], rep_z))
+                count += 1
+                rep_z += thick/ncells_per_layer[i]
 
     @classmethod
     def extruded_Mesh2D(cls, mesh2D, layer_types, layer_data, ncells_per_layer, mat_ids):
@@ -756,12 +781,10 @@ class Mesh3D(object):
         for e,s in zip(side_sets[0].elem_list, side_sets[0].side_list):
             face = cells[e][s]
             fz_coords = np.array([coords[n] for n in faces[face]])
-            #print "bottom centroid = ", np.mean(fz_coords, axis=0)
 
         for e,s in zip(side_sets[1].elem_list, side_sets[1].side_list):
             face = cells[e][s]
             fz_coords = np.array([coords[n] for n in faces[face]])
-            #print "surface centroid = ", np.mean(fz_coords, axis=0)
         
         # instantiate the mesh
         return cls(coords, faces, cells, side_sets=side_sets, material_ids=material_ids)

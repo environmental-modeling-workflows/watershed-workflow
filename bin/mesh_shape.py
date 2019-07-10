@@ -22,7 +22,7 @@ def get_args():
     workflow.ui.center_options(parser)
 
     workflow.ui.simplify_options(parser)
-    workflow.ui.refine_options(parser)
+    workflow.ui.triangulate_options(parser)
 
     data_ui = parser.add_argument_group('Data Sources')
     workflow.ui.huc_source_options(data_ui)

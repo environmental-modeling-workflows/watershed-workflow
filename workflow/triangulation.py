@@ -137,33 +137,29 @@ def triangulate(hucs, rivers, **kwargs):
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
-    #np.savetxt("points.txt", nodes)
-    #np.savetxt("facets.txt", np.array(list(nodes_edges.edges),dtype=np.int32))
     
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    # plt.figure()
-    # for e in fdata:
-    #     plt.plot([pdata[e[0]][0], pdata[e[1]][0]],
-    #              [pdata[e[0]][1], pdata[e[1]][1]], '-', color='gray')
-    # plt.scatter([p[0] for p in pdata], [p[1] for p in pdata],marker='+', color='lime')
-    # plt.gca().set_aspect('equal', 'datalim')
-    # plt.show()
-    
     logging.info(" triangle.build...")
+
+    # pop this option if false, which silences the warning if it does
+    # not exist but we didn't ask for it anyway.
+    if 'enforce_delaunay' in kwargs.keys() and not kwargs['enforce_delaunay']:
+        kwargs.pop('enforce_delaunay')
+
     try:
         mesh = meshpy.triangle.build(info, **kwargs)
     except TypeError as err:
         try:
-            # Ethan's modification to meshpy.triangle is not present?
+            # our modification to meshpy.triangle is not present, try without it
             kwargs.pop('enforce_delaunay')
         except KeyError:
             raise err
         else:
-            logging.warning("Triangulate: '--delaunay' option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.  See documentation at https://github.com/amanzi/meshing_workflow")
+            logging.warning("Triangulate: '--enforce-delaunay' option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.  See documentation at https://github.com/amanzi/meshing_workflow")
             mesh = meshpy.triangle.build(info, **kwargs)
             
     mesh_points = np.array(mesh.points)

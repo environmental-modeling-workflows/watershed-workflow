@@ -7,6 +7,7 @@ See: "https://nhd.usgs.gov/"
 Default DEMs come from the National Elevation Dataset (NED).
 See: "https://lta.cr.usgs.gov/NED"
 """
+import logging
 
 from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
 from workflow.sources.manager_ned import FileManagerNED
@@ -68,3 +69,15 @@ def get_sources(args):
         sources['DEM'] = dem_sources[source_dem]
 
     return sources
+
+def log_sources(sources):
+    """Pretty print source dictionary to log."""
+    logging.info('Using sources:')
+    logging.info('--------------')
+    for stype, s in sources.items():
+        if s is not None:
+            logging.info('{}: {}'.format(stype, s.name))
+        else:
+            logging.info('{}: None'.format(stype))
+
+            
