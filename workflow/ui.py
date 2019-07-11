@@ -5,6 +5,7 @@ import argparse
 import fiona
 
 import workflow.conf
+import workflow.source_list
 
 verb_to_level = {0:logging.WARNING,
                  1:logging.INFO,
@@ -39,7 +40,7 @@ def get_basic_argparse(docstring):
             epilog = '\n'.join(doclines[first_empty+1:])
         else:
             epilog = ''
-    
+
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
     parser.add_argument('-v', '--verbosity', action='count', default=1,
                         help='Increase output verbosity.  (default=1)')
@@ -52,14 +53,14 @@ def get_basic_argparse(docstring):
         except ValueError as err:
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'"%str(err))
         return x
-    parser.add_argument('--projection', '-p', type=valid_epsg,
-                        help='Set the output EPSG coordinate system.  (default = epsg:5070)')
+    parser.add_argument('--projection', type=valid_epsg, default=workflow.conf.default_crs(),
+                        help='Output coordinate system.  Default is "{}"'.format(workflow.conf.default_crs()['init']))
     return parser
 
 
 def valid_hucstr(hucstr):
     try:
-        huc_valid = workflow.conf.huc_str(hucstr)
+        huc_valid = workflow.huc_str(hucstr)
     except RuntimeError as err:
         raise argparse.ArgumentTypeError("In parsing HUC string: '%s'"%str(err))
     else:
@@ -77,18 +78,49 @@ def huc_args(parser):
     
 def simplify_options(parser):
     """Adds a simplify tolerance option to the parser."""
-    parser.add_argument('--simplify', type=float, default=10.0,
+    simp = parser.add_argument_group('Shape Simplification')
+    simp.add_argument('--simplify', type=float, default=10.0,
                         help='Tolerance for calls to GIS simplify [m] (default=10m)')
-    parser.add_argument('--prune-reach-size', type=int, default=0,
-                        help='Prune rivers with fewer than this number of reaches.')
-    parser.add_argument('--cut-intersections', action='store_true',
+    simp.add_argument('--prune-reach-size', type=int, default=2,
+                        help='Keep only rivers with at least this many reaches (default=2).')
+    simp.add_argument('--cut-intersections', action='store_true',
                         help='Cut boundaries at river intersections.')
 
-def refine_options(parser):
-    """Adds refinement options to the parser."""
-    group = parser.add_mutually_exclusive_group()
+def default_simplify_options():
+    """Returns a refine options struct for use in scripts."""
+    class Struct:
+        def __init__(self, **kwargs):
+            self.__dict__.update(**kwargs)
+
+    args = Struct(simplify=10.,
+                  prune_reach_size=2,
+                  cut_intersections=False,
+                  verbosity=1)
+    return args
+    
+    
+def triangulate_options(parser):
+    """Adds triangulation options to the parser."""
+    group = parser.add_argument_group('Triangle Refinement')
     refine_max_area_options(group)
     refine_distance_options(group)
+    refine_min_angle(group)
+    refine_max_edge_length(group)
+    enforce_delaunay(parser)
+
+def default_triangulate_options():
+    """Returns a refine options struct for use in scripts."""
+    class Struct:
+        def __init__(self, **kwargs):
+            self.__dict__.update(**kwargs)
+
+    args = Struct(refine_max_area=None,
+                  refine_distance=None,
+                  refine_min_angle=None,
+                  refine_max_edge_length=None,
+                  delaunay=False,
+                  verbosity=1)
+    return args
 
 def refine_max_area_options(parser):
     parser.add_argument('--refine-max-area', type=float, 
@@ -103,6 +135,17 @@ def refine_distance_options(parser):
                                         ' when its distance is less than CLOSE_DISTANCE, or',
                                         ' FAR_AREA if its distance is greater than FAR_DISTANCE,',
                                         ' or a linear interpolant between those two otherwise.']))
+def refine_min_angle(parser):
+    parser.add_argument('--refine-min-angle', type=float,
+                        help='Refine to set a minimum angle constraint in [degrees]')
+
+def refine_max_edge_length(parser):
+    parser.add_argument('--refine-max-edge-length', type=float,
+                        help='Refine based upon a max edge length [m]')
+    
+def enforce_delaunay(parser):
+    parser.add_argument('--enforce-delaunay', action='store_true',
+                        help='Enforce Delaunay, and not just constrained Delaunay')
     
 def inshape_args(parser):
     """Sets input filename shapefile options."""
@@ -118,16 +161,16 @@ def inshape_args(parser):
             pass
         return x
     
-    parser.add_argument('infile', metavar='infile.shp',
+    parser.add_argument('input_file',
                         type=shapefile, help='filename including shape to be meshed')
     parser.add_argument('--shape-index', type=int, default=-1,
-                        help='index of desired shape in shapefile, default=-1 to mesh all shapes as subwatersheds in the full watershed')
+                        help='index of desired shape in shapefile, (default=all in file)')
 
-def outmesh_options(parser):
+def outmesh_args(parser):
     """Sets output filename and format options."""
-    parser.add_argument('--outfile', '-o', type=str,
-                        help='Write to output file.')
-    parser.add_argument('--plot', action='store_true',
+    parser.add_argument('output_file', type=str,
+                        help='VTK Filename for mesh output.')
+    parser.add_argument('-p', '--plot', action='store_true',
                         help='Save mesh image to file.')
 
 def huc_hint_options(parser):
@@ -144,13 +187,21 @@ def center_options(parser):
 
 def huc_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-huc', type=str, default='NHD', choices=set(['NHD','NHDPlus']),
-                        help="Name of the source for NHD data.")
+    parser.add_argument('--source-huc', type=str, default=workflow.source_list.default_huc_source,
+                        choices=set(workflow.source_list.huc_sources.keys()),
+                        help='Hydrologic unit shapefile dataset.  (default = "{}")'.format(workflow.source_list.default_huc_source))
 
 def dem_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-dem', type=str, default='NED', choices=set(['NED',]),
-                        help="Name of the source for DEM data.")
+    parser.add_argument('--source-dem', type=str, default=workflow.source_list.default_dem_source,
+                        choices=set(workflow.source_list.dem_sources.keys()),
+                        help='Digital Elevation Model dataset.  (default = "{}")'.format(workflow.source_list.default_dem_source))
+
+def hydro_source_options(parser):
+    """Add options for sources."""
+    parser.add_argument('--source-hydro', type=str, default=workflow.source_list.default_hydrography_source,
+                        choices=set(workflow.source_list.hydrography_sources.keys()),
+                        help='Hydrography dataset.  (default = "{}"'.format(workflow.source_list.default_hydrography_source))
     
         
                         

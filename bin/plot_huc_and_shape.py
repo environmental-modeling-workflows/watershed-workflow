@@ -4,6 +4,8 @@
 import os,sys
 import logging
 import numpy as np
+import matplotlib
+matplotlib.use('MacOSX')
 from matplotlib import pyplot as plt
 import shapely
 
@@ -37,7 +39,7 @@ def get_data(args):
     rivers = [shapely.affinity.translate(r, -centroid.coords[0][0], -centroid.coords[0][1]) for r in rivers]
 
     # -- dem
-    dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
+    dem_profile, dem = workflow.hilev.get_dem_on_huc(args.HUC, sources)
 
     # simple triangulation for elevation data
     footprint = shapely.ops.cascaded_union(list(hucs.polygons())).simplify(10)
@@ -56,12 +58,12 @@ def get_data(args):
     # shape data
     profile, watersheds, watershed_boundary, centroid_shp = \
                 workflow.hilev.get_shapes(args.infile, args.shape_index, center=False, make_hucs=False)
-    watersheds = [shapely.affinity.translate(ws, -centroid.coords[0][0], -centroid.coords[0][1]) for ws in watersheds]        
+    watersheds = [shapely.affinity.translate(ws, -centroid.coords[0][0], -centroid.coords[0][1]) for ws in watersheds]
     return centroid, hucs, watersheds, rivers, (mesh_points3, mesh_tris)
     
 def plot(centroid, hucs, watersheds, rivers, triangulation):
     # plot
-    fig = plt.figure(figsize=(4,5), dpi=300)
+    fig = plt.figure()
     ax = fig.add_subplot(111)
     mappable = workflow.plot.triangulation(*triangulation, linewidth=0, color='elevation')
     #fig.colorbar(mappable, orientation="horizontal", pad=0.1)

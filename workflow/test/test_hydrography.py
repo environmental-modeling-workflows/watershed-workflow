@@ -4,7 +4,7 @@ import shapely.geometry
 from workflow.test.shapes import *
 
 import workflow.utils
-import workflow.hucs
+import workflow.split_hucs
 import workflow.hydrography
 import workflow.tree
 import workflow.plot
@@ -24,7 +24,7 @@ def test_close_cleanup(rivers):
     assert_close(rivers_clean, rivers, 0.1)
 
 def data(poly_hucs,river_segs):
-    hucs = workflow.hucs.HUCs(poly_hucs)
+    hucs = workflow.split_hucs.SplitHUCs(poly_hucs)
     rivers = workflow.hydrography.make_global_tree(river_segs)
     for tree in rivers:
         assert(workflow.tree.is_consistent(tree))
@@ -339,19 +339,17 @@ def test_snap1():
     check1(hucs,rivers)  # MAY NEED ATTENTION!
 
     
-def test_snap2():
+def test_snap2(two_boxes):
     # generic intersection with no movement only additions
-    tb = two_boxes()
     rs = [shapely.geometry.LineString([(5.,0.), (15,0)]),]
-    hucs, rivers = data(tb, rs)
+    hucs, rivers = data(two_boxes, rs)
     rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     check2(hucs,rivers)
         
-def test_snap3():
+def test_snap3(two_boxes):
     # move a river point onto the huc boundary
-    tb = two_boxes()
     rs = [shapely.geometry.LineString([(5.,0.), (10.001,0), (15,0)]),]
-    hucs, rivers = data(tb, rs)
+    hucs, rivers = data(two_boxes, rs)
     rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
     poly0 = hucs.polygon(0)
     check2(hucs,rivers)

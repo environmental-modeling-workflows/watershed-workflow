@@ -59,7 +59,7 @@ class HandledCollection:
         for it in self._store.items():
             yield it
             
-class HUCs:
+class SplitHUCs:
     """Class for dealing with the multiple interacting views of HUCs
 
     Includes the following views into data:
@@ -156,9 +156,18 @@ class HUCs:
         for i in self.intersections:
             yield i
 
+    def exterior(self):
+        """Construct boundary polygon and return a copy."""
+        segs = []
+        for b in self.boundaries:
+            for s in b:
+                segs.append(self.segments[s])
+        ml = shapely.ops.linemerge(segs)
+        assert(type(ml) is shapely.geometry.LineString)
+        return shapely.geometry.Polygon(ml)                
+
     def __len__(self):
         return len(self.gons)
-
 
 
 def simplify(hucs, tol=0.1):
@@ -180,7 +189,7 @@ def intersect_and_split(list_of_shapes):
                         |  boundary.
     """
     intersections = [[None for i in range(len(list_of_shapes))] for j in range(len(list_of_shapes))]
-    uniques = [shapely.geometry.LineString(sh.boundary.coords) for sh in list_of_shapes]
+    uniques = [shapely.geometry.LineString(list(sh.exterior.coords)) for sh in list_of_shapes]
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):

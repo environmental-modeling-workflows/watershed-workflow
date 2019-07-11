@@ -23,40 +23,90 @@ def warp_xy(x, y, old_crs, new_crs):
     new_crs_proj = pyproj.Proj(new_crs)
     return pyproj.transform(old_crs_proj, new_crs_proj, x,y)
 
+def warp_bounds(bounds, old_crs, new_crs):
+    """Uses proj to reproject bounds, NOT IN PLACE"""
+    return warp_shapely(shapely.geometry.box(*bounds), old_crs, new_crs).bounds
+    
+    # x = np.array([bounds[0], bounds[2]])
+    # y = np.array([bounds[1], bounds[3]])
+    # x2,y2 = warp_xy(x,y,old_crs, new_crs)
+    # return [x2[0],y2[0],x2[1],y2[1]]
+
 def warp_shapely(shp, old_crs, new_crs):
     """Uses proj to reproject shapes, NOT IN PLACE"""
-    x,y = warp_xy(shp.boundary.xy[0], shp.boundary.xy[1], old_crs, new_crs)
-    return shapely.geometry.Polygon(x,y)
+    if old_crs['init'] == new_crs['init']:
+        return shp
+
+    old_crs_proj = pyproj.Proj(old_crs)
+    new_crs_proj = pyproj.Proj(new_crs)
+    return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
+
+    
+    # if type(shp) is shapely.geometry.MultiPoint:
+    #     return shapely.geometry.MultiPoint([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.MultiLineString:
+    #     return shapely.geometry.MultiLineString([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.MultiPolygon:
+    #     return shapely.geometry.MultiPolygon([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.Point:
+    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
+    #     return shapely.geometry.Point(x,y)
+    # elif type(shp) is shapely.geometry.LineString:
+    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
+    #     return shapely.geometry.LineString(x,y)
+    # elif type(shp) is shapely.geometry.Polygon:
+    #     x,y = warp_xy(shp.exterior.xy[0], shp.exterior.xy[1])
+    # return shapely.geometry.Polygon(zip(x,y))
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""
+    if old_crs == new_crs:
+        return
     if len(feature['geometry']['coordinates']) is 0:
         return
-    
-    if type(feature['geometry']['coordinates']) is np.ndarray or type(feature['geometry']['coordinates'][0]) is tuple:
-        # single object
+
+    # find the dimension -- can't trust the shape
+    dim = -1
+    ptr = feature['geometry']['coordinates']
+    done = False
+    while not done:
+        if hasattr(ptr, '__len__'):        
+            assert(len(ptr) is not 0)
+            dim += 1
+            ptr = ptr[0]
+        else:
+            done = True
+
+    if dim == 0:
+        # point
+        x,y = warp_xy(np.array([feature['geometry']['coordinates'][0],]), np.array([feature['geometry']['coordinates'][1],]), old_crs, new_crs)
+        feature['geometry']['coordinates'][0] = x[0]
+        feature['geometry']['coordinates'][1] = x[1]
+    elif dim == 1:
+        # line-like or polygon with no holes
         coords = np.array(feature['geometry']['coordinates'],'d')
-        assert(len(coords.shape) is 2)
+        assert(len(coords.shape) is 2 and coords.shape[1] in [2,3] )
         x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
         new_coords = [xy for xy in zip(x,y)]
         feature['geometry']['coordinates'] = new_coords
-                
-    else:
-        # object collection
-        for i,c in enumerate(feature['geometry']['coordinates']):
-            coords = np.array(c,'d')
-            if len(coords.shape) is 2:
-                assert(coords.shape[-1] is 2)
+    elif dim == 2:
+        # multi-line or polygon with holes
+        for i in range(len(feature['geometry']['coordinates'])):
+            coords = np.array(feature['geometry']['coordinates'][i],'d')
+            assert(len(coords.shape) is 2 and coords.shape[1] in [2,3])
+            x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
+            new_coords = [xy for xy in zip(x,y)]
+            feature['geometry']['coordinates'][i] = new_coords
+    elif dim == 3:
+        # multi-polygon
+        for i in range(len(feature['geometry']['coordinates'])):
+            for j in range(len(feature['geometry']['coordinates'][i])):
+                coords = np.array(feature['geometry']['coordinates'][i][j],'d')
+                assert(len(coords.shape) is 2 and coords.shape[1] in [2,3])
                 x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
                 new_coords = [xy for xy in zip(x,y)]
-                feature['geometry']['coordinates'][i] = new_coords
-            elif len(coords.shape) is 3:
-                for j,c2 in enumerate(feature['geometry']['coordinates'][i]):
-                    coords = np.array(c2,'d')
-                    assert(coords.shape[-1] is 2)
-                    x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
-                    new_coords = [xy for xy in zip(x,y)]
-                    feature['geometry']['coordinates'][i][j] = new_coords
+                feature['geometry']['coordinates'][i][j] = new_coords
+            
                     
     
 def warp_shapefile(infile, outfile, epsg=None):

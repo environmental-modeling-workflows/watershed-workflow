@@ -1,62 +1,57 @@
 #!/usr/bin/env python3
-"""Downloads and meshes shapes based upon hydrography data.
+"""Downloads and meshes shapes based upon hydrography data."""
 
-Default data for HUCs comes from The National Map's Watershed Boundary Dataset (WBD).
-Default data for hydrography comes from The National Map's National Hydrography Dataset (NHD).
-See: "https://nhd.usgs.gov/"
-
-Default DEMs come from the National Elevation Dataset (NED).
-See: "https://lta.cr.usgs.gov/NED"
-"""
 import os,sys
-import logging
 import numpy as np
 from matplotlib import pyplot as plt
 import shapely
+import logging
 
-import workflow.hilev
+import workflow
 import workflow.ui
-import workflow.files
-import workflow.plot
-
+import workflow.source_list
+import workflow.bin_utils
 
 def get_args():
     # set up parser
-    parser = workflow.ui.get_basic_argparse(__doc__)
+    parser = workflow.ui.get_basic_argparse(__doc__+'\n\n'+workflow.source_list.__doc__)
     workflow.ui.inshape_args(parser)
     workflow.ui.huc_hint_options(parser)
-    workflow.ui.outmesh_options(parser)
-    workflow.ui.simplify_options(parser)
+    
+    workflow.ui.outmesh_args(parser)
     workflow.ui.center_options(parser)
-    workflow.ui.huc_source_options(parser)
-    workflow.ui.dem_source_options(parser)
-    workflow.ui.refine_options(parser)
+
+    workflow.ui.simplify_options(parser)
+    workflow.ui.triangulate_options(parser)
+
+    data_ui = parser.add_argument_group('Data Sources')
+    workflow.ui.huc_source_options(data_ui)
+    workflow.ui.hydro_source_options(data_ui)
+    workflow.ui.dem_source_options(data_ui)
     
     # parse args, log
     return parser.parse_args()
 
-def mesh_shape(args):
+def mesh_shapes(args):
     workflow.ui.setup_logging(args.verbosity, args.logfile)
+    sources = workflow.source_list.get_sources(args)
 
-    args.source_hydro = args.source_huc
-    args.source_huc = 'NHD WBD' # hard-coded, but need to use the full WBD dataset
-    sources = workflow.files.get_sources(args)
+    logging.info("")
+    logging.info("Meshing shapes from: {}".format(args.input_file))
+    logging.info("  with index: {}".format(args.shape_index))
+    logging.info("="*30)
+    logging.info('Target projection: "{}"'.format(args.projection['init']))
     
     # collect data
-    profile, watersheds, watershed_boundary, centroid = workflow.hilev.get_shapes(args.infile, args.shape_index, args.center)
-    hucstr = workflow.hilev.find_huc(profile, watershed_boundary, sources['HUC'], args.hint)
-    logging.info("found shapes in HUC %s"%hucstr)
-
-    dem_profile, dem = workflow.hilev.get_dem(hucstr, sources)
-    rivers = workflow.hilev.get_rivers(hucstr, sources['Hydro'])
-
+    shapes, centroid = workflow.get_split_form_shapes(args.input_file, args.shape_index, args.projection, args.center)
+    shapes_boundary = shapes.exterior()
+    hucstr = workflow.find_huc(sources['HUC'], shapes.exterior(), args.projection, args.hint)
+    logging.info("found shapes in HUC %s"%hucstr)    
+    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], shapes_boundary.bounds, args.projection, hucstr, centering=centroid)
+    rivers = workflow.simplify_and_prune(shapes, rivers, args)
+    
     # make 2D mesh
-    if len(rivers) is not 0:
-        if args.center:
-            rivers = [shapely.affinity.translate(r, -centroid.coords[0][0], -centroid.coords[0][1]) for r in rivers]
-        rivers = workflow.hilev.simplify_and_prune(watersheds, rivers, args)
-
-    mesh_points2, mesh_tris = workflow.hilev.triangulate(watersheds, rivers, args)
+    mesh_points2, mesh_tris = workflow.triangulate(shapes, rivers, args)
 
     # elevate to 3D
     if args.center:
@@ -64,7 +59,8 @@ def mesh_shape(args):
     else:
         mesh_points2_uncentered = mesh_points2
 
-    mesh_points3_uncentered = workflow.hilev.elevate(mesh_points2_uncentered, dem, dem_profile)
+    dem_profile, dem = workflow.get_raster_on_shape(sources['DEM'], shapes_boundary, args.projection)
+    mesh_points3_uncentered = workflow.elevate(mesh_points2_uncentered, dem, dem_profile)
 
     if args.center:
         mesh_points3 = np.empty(mesh_points3_uncentered.shape,'d')
@@ -73,65 +69,24 @@ def mesh_shape(args):
     else:
         mesh_points3 = mesh_points3_uncentered
 
-    return centroid, watersheds, rivers, (mesh_points3, mesh_tris)
+    return centroid, shapes, rivers, (mesh_points3, mesh_tris)
 
-def plot(args, watersheds, rivers, triangulation):
-    mesh_points3, mesh_tris = triangulation
-    if args.verbosity > 0:    
-        fig = plt.figure(figsize=(4,5), dpi=300)
-        ax = fig.add_subplot(111)
 
-        workflow.plot.triangulation(mesh_points3, mesh_tris, color='elevation', linewidth=0.5)
-        workflow.plot.hucs(watersheds, 'k')
-        workflow.plot.rivers(rivers, color='r')
-        ax.set_aspect('equal', 'datalim')
-        ax.set_xlabel('')
-        ax.set_xticklabels([int(round(0.001*tick)) for tick in ax.get_xticks()])
-        plt.ylabel('')
-        ax.set_yticklabels([int(round(0.001*tick)) for tick in ax.get_yticks()])
 
-        if args.plot:
-            assert(args.outfile[-4] == '.')
-            plt.savefig(args.outfile[:-4])
-        plt.show()
-
-def save(args, centroid, triangulation):
-    mesh_points, mesh_tris = triangulation
-    
-    # save mesh
-    metadata_lines = ['Mesh of shapefile: %s'%args.infile,
-                      ' including shapes index: %i (-1 indicates all shapes in the file)'%args.shape_index,
-                      '',
-                      '  coordinate system = epsg:%04i'%(workflow.conf.rcParams['epsg']),
-                      ]
-
-    if args.center:
-        metadata_lines.append('  centered to: %g, %g'%centroid.coords[0])
-    metadata_lines.extend(['',
-                           'Mesh generated by workflow mesh_shape.py script.',
-                           '',
-                           workflow.utils.get_git_revision_hash(),
-                           '',
-                           'with calling sequence:',
-                           '  '+' '.join(sys.argv)])
-
-    workflow.hilev.save(args.outfile, mesh_points, mesh_tris, '\n'.join(metadata_lines))
-        
 if __name__ == '__main__':
-    args = get_args()
-
-    if args.outfile is None:
-        if args.infile.endswith('.shp'):
-            outfile_prefix = args.infile[:-4]
-        else:
-            outfile_prefix = args.infile
-
-        if args.shape_index != -1:
-            outfile_prefix += "_%i"%args.shape_index
-        args.outfile = outfile_prefix + '.vtk'
-                        
-    print(args.__dict__)
-    centroid, watersheds, rivers, triangulation = mesh_shape(args)
-    plot(args, watersheds, rivers, triangulation)
-    save(args, centroid, triangulation)
-    sys.exit(0)
+    try:
+        args = get_args()
+        centroid, shapes, rivers, triangulation = mesh_shapes(args)
+        workflow.bin_utils.plot_with_triangulation(args, shapes, rivers, triangulation)
+        workflow.bin_utils.save(args, centroid, triangulation)
+        logging.info("SUCESS")
+        plt.show()
+        sys.exit(0)
+    except KeyboardInterrupt:
+        logging.error("Keyboard Interupt, stopping.")
+        sys.exit(0)
+    except Exception as err:
+        logging.error('{}'.format(str(err)))
+        #sys.exit(1)
+        raise err
+        

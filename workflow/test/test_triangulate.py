@@ -9,9 +9,9 @@ import pytest
 import shapely
 from matplotlib import pyplot as plt
 
-import workflow.triangulate
+import workflow.triangulation
 import workflow.hydrography
-import workflow.hucs
+import workflow.split_hucs
 import workflow.plot
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def hucs_rivers():
     tb.append(shapely.geometry.Polygon(b1))
     tb.append(shapely.geometry.Polygon(b2))
     tb.append(shapely.geometry.Polygon(b3))
-    hucs = workflow.hucs.HUCs(tb)
+    hucs = workflow.split_hucs.SplitHUCs(tb)
 
     rs = [shapely.geometry.LineString([(5.,0.), (10.,5),]),
           shapely.geometry.LineString([(15.,0.), (10.,5),]),
@@ -35,8 +35,7 @@ def hucs_rivers():
 
 def test_triangulate_nofunc(hucs_rivers):
     hucs,rivers = hucs_rivers
-
-    points, tris = workflow.triangulate.triangulate(hucs, rivers)
+    points, tris = workflow.triangulation.triangulate(hucs, rivers)
     # workflow.plot.triangulation(points,tris)
     # workflow.plot.hucs(hucs,'r')
     # workflow.plot.rivers(rivers,'b')
@@ -44,17 +43,17 @@ def test_triangulate_nofunc(hucs_rivers):
 
 def test_triangulate_max_area(hucs_rivers):
     hucs,rivers = hucs_rivers
-    func = workflow.triangulate.refine_from_max_area(1.)
-    points, tris = workflow.triangulate.triangulate(hucs, rivers, refinement_func=func)
+    func = workflow.triangulation.refine_from_max_area(1.)
+    points, tris = workflow.triangulation.triangulate(hucs, rivers, refinement_func=func)
     # workflow.plot.triangulation(points,tris)
     # workflow.plot.hucs(hucs,'r')
     # workflow.plot.rivers(rivers,'b')
     # plt.show()
 
-def test_triangulate_distnace(hucs_rivers):    
+def test_triangulate_distance(hucs_rivers):    
     hucs,rivers = hucs_rivers
-    func = workflow.triangulate.refine_from_river_distance(1., 0.5, 4, 2, rivers)
-    points, tris = workflow.triangulate.triangulate(hucs, rivers, refinement_func=func)
+    func = workflow.triangulation.refine_from_river_distance(1., 0.5, 4, 2, rivers)
+    points, tris = workflow.triangulation.triangulate(hucs, rivers, refinement_func=func)
     # workflow.plot.triangulation(points,tris)
     # workflow.plot.hucs(hucs,'r')
     # workflow.plot.rivers(rivers,'b')

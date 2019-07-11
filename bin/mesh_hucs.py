@@ -1,59 +1,50 @@
 #!/usr/bin/env python3
-"""Downloads and meshes HUC and hydrography data.
-
-Default data for HUCs comes from The National Map's Watershed Boundary Dataset (WBD).
-Default data for hydrography comes from The National Map's National Hydrography Dataset (NHD).
-See: "https://nhd.usgs.gov/"
-
-Default DEMs come from the National Elevation Dataset (NED).
-See: "https://lta.cr.usgs.gov/NED"
-"""
-
-import matplotlib
-#matplotlib.use("PDF")
+"""Downloads and meshes HUC based on hydrography data."""
 
 import os,sys
 import numpy as np
 from matplotlib import pyplot as plt
 import shapely
+import logging
 
-import workflow.hilev
+import workflow
 import workflow.ui
-import workflow.files
-
+import workflow.source_list
+import workflow.bin_utils
 
 def get_args():
     # set up parser
-    parser = workflow.ui.get_basic_argparse(__doc__)
-    workflow.ui.outmesh_options(parser)
-    workflow.ui.simplify_options(parser)
-    workflow.ui.refine_options(parser)
-    workflow.ui.center_options(parser)
-    workflow.ui.huc_source_options(parser)
-    workflow.ui.dem_source_options(parser)
+    parser = workflow.ui.get_basic_argparse(__doc__+'\n\n'+workflow.source_list.__doc__)
     workflow.ui.huc_arg(parser)
+    workflow.ui.outmesh_args(parser)
+    workflow.ui.center_options(parser)
+
+    workflow.ui.simplify_options(parser)
+    workflow.ui.triangulate_options(parser)
+
+    data_ui = parser.add_argument_group('Data Sources')
+    workflow.ui.huc_source_options(data_ui)
+    workflow.ui.hydro_source_options(data_ui)
+    workflow.ui.dem_source_options(data_ui)
 
     # parse args, log
     return parser.parse_args()
 
 def mesh_hucs(args):
-    workflow.ui.setup_logging(args.verbosity, args.logfile)
-    sources = workflow.files.get_sources(args)
+    sources = workflow.source_list.get_sources(args)
+
+    logging.info("")
+    logging.info("Meshing HUC: {}".format(args.HUC))
+    logging.info("="*30)
+    logging.info('Target projection: "{}"'.format(args.projection['init']))
     
     # collect data
-    hucs, centroid = workflow.hilev.get_hucs(args.HUC, sources['HUC'], center=args.center)
-    #workflow.plot.hucs(hucs, style='-x')
-
-    rivers = workflow.hilev.get_rivers(args.HUC, sources['HUC'])
-    #workflow.plot.rivers(rivers, style='-x', color='k')
-
-    dem_profile, dem = workflow.hilev.get_dem(args.HUC, sources)
-
+    huc, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, crs=args.projection, centering=args.center)
+    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], huc.polygon(0).bounds, args.projection, args.HUC, centering=centroid)
+    rivers = workflow.simplify_and_prune(huc, rivers, args)
+    
     # make 2D mesh
-    if args.center:
-        rivers = [shapely.affinity.translate(r, -centroid.coords[0][0], -centroid.coords[0][1]) for r in rivers]
-    rivers = workflow.hilev.simplify_and_prune(hucs, rivers, args)
-    mesh_points2, mesh_tris = workflow.hilev.triangulate(hucs, rivers, args)
+    mesh_points2, mesh_tris = workflow.triangulate(huc, rivers, args)
 
     # elevate to 3D
     if args.center:
@@ -61,7 +52,8 @@ def mesh_hucs(args):
     else:
         mesh_points2_uncentered = mesh_points2
 
-    mesh_points3_uncentered = workflow.hilev.elevate(mesh_points2_uncentered, dem, dem_profile)
+    dem_profile, dem = workflow.get_raster_on_shape(sources['DEM'], huc.polygon(0), args.projection)
+    mesh_points3_uncentered = workflow.elevate(mesh_points2_uncentered, dem, dem_profile)
 
     if args.center:
         mesh_points3 = np.empty(mesh_points3_uncentered.shape,'d')
@@ -70,56 +62,23 @@ def mesh_hucs(args):
     else:
         mesh_points3 = mesh_points3_uncentered
 
-    return centroid, hucs, rivers, (mesh_points3, mesh_tris)
+    return centroid, huc, rivers, (mesh_points3, mesh_tris)
 
-def plot(args, hucs, rivers, triangulation):
-    mesh_points3, mesh_tris = triangulation
-    if args.verbosity > 0:    
-        fig = plt.figure(figsize=(4,5))
-        ax = fig.add_subplot(111)
-        mp = workflow.plot.triangulation(mesh_points3, mesh_tris, linewidth=0, color='elevation')
-        #fig.colorbar(mp, orientation="horizontal", pad=0.1)
-        workflow.plot.hucs(hucs, 'k', linewidth=0.7)
-        workflow.plot.rivers(rivers, color='blue', linewidth=0.5)
-        ax.set_aspect('equal', 'datalim')
-        ax.set_xlabel('')
-        ax.set_xticklabels([round(0.001*tick) for tick in ax.get_xticks()])
-        plt.ylabel('')
-        ax.set_yticklabels([round(0.001*tick) for tick in ax.get_yticks()])
-        plt.savefig('my_mesh')
-
-def save(args, centroid, triangulation):
-    mesh_points3, mesh_tris = triangulation
-    metadata_lines = ['Mesh of HUC: %s including all HUC 12 boundaries and hydrography.'%args.HUC,
-                      '',
-                      '  coordinate system = epsg:%04i'%(workflow.conf.rcParams['epsg']),
-                      ]
-
-    if args.center:
-        metadata_lines.append('  centered to: %g, %g'%centroid.coords[0])
-    metadata_lines.extend(['',
-                           'Mesh generated by workflow mesh_hucs.py script.',
-                           '',
-                           workflow.utils.get_git_revision_hash(),
-                           '',
-                           'with calling sequence:',
-                           '  '+' '.join(sys.argv)])
-
-    if args.outfile is None:
-        outdir = "data/meshes"
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-        outfile = os.path.join(outdir, 'huc_%s.vtk'%args.HUC)
-    else:
-        outfile = args.outfile            
-    workflow.hilev.save(outfile, mesh_points3, mesh_tris, '\n'.join(metadata_lines))
-        
 
 if __name__ == '__main__':
+#    try:
     args = get_args()
-    print(args.__dict__)
+    workflow.ui.setup_logging(args.verbosity, args.logfile)
     centroid, hucs, rivers, triangulation = mesh_hucs(args)
-    plot(args, hucs, rivers, triangulation)
-    save(args, centroid, triangulation)
+    workflow.bin_utils.plot_with_triangulation(args, hucs, rivers, triangulation)
+    workflow.bin_utils.save(args, centroid, triangulation)
+    logging.info("SUCESS")
     plt.show()
     sys.exit(0)
+#    except KeyboardInterrupt:
+#        logging.error("Keyboard Interupt, stopping.")
+#        sys.exit(0)
+#    except Exception as err:
+#        logging.error('{}'.format(str(err)))
+#        sys.exit(1)
+        

@@ -11,13 +11,13 @@ import shapely.geometry
 import workflow.conf
 import workflow.utils
 import workflow.tree
-import workflow.hucs
+import workflow.split_hucs
 import workflow.plot
 
 
 def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
-    assert(type(hucs) is workflow.hucs.HUCs)
+    assert(type(hucs) is workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
     assert(all(workflow.tree.is_consistent(river) for river in rivers))
     list(hucs.polygons())
@@ -29,15 +29,15 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
         tol_triples = tol
 
     # snap boundary triple junctions to river endpoints
-    logging.info(" Snapping polygon segment boundaries to river endpoints")
+    logging.info("  snapping polygon segment boundaries to river endpoints")
     snap_polygon_endpoints(hucs, rivers, tol_triples)
     if not all(workflow.tree.is_consistent(river) for river in rivers):
-        logging.info("  ...resulted in inconsistent rivers!")
+        logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
         list(hucs.polygons())
     except AssertionError:
-        logging.info("  ...resulted in inconsistent HUCs")
+        logging.info("    ...resulted in inconsistent HUCs")
         return False
 
     logging.debug('snap part 1')
@@ -47,16 +47,16 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
-    logging.info(" Snapping river endpoints to the polygon")
+    logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
         snap_endpoints(tree, hucs, tol)
     if not all(workflow.tree.is_consistent(river) for river in rivers):
-        logging.info("  ...resulted in inconsistent rivers!")
+        logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
         list(hucs.polygons())
     except AssertionError:
-        logging.info("  ...resulted in inconsistent HUCs")
+        logging.info("    ...resulted in inconsistent HUCs")
         return False
 
     logging.debug('snap part 2')
@@ -65,7 +65,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
 
     # deal with intersections
     if cut_intersections:
-        logging.info(" Cutting at crossings")
+        logging.info("  cutting at crossings")
         snap_crossings(hucs, rivers, tol)
         consistent = all(workflow.tree.is_consistent(river) for river in rivers)
         if not consistent:
@@ -83,7 +83,8 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
 
     # dealing with crossings might have generated river segments
     # outside of my space.  remove these.  Note the use of negative tol
-    rivers = filter_rivers_to_huc(hucs, rivers, -tol)
+    logging.info("  filtering rivers to HUC")
+    rivers = filter_rivers_to_huc(hucs, rivers, -0.1*tol)
     return rivers
 
 def _snap_and_cut(point, line, tol=0.1):
@@ -204,7 +205,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                 new_coord = _snap_and_cut(river.coords[0], seg, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord is not None:
-                    logging.info("  - snapped river: %r to %r"%(river.coords[0], new_coord))
+                    logging.info("    snapped river: %r to %r"%(river.coords[0], new_coord))
 
                     # move new_coord onto an existing segment coord
                     dist = np.linalg.norm(np.array(seg.coords) - np.expand_dims(new_coord,0), 2, axis=1)
@@ -389,6 +390,8 @@ def filter_rivers_to_huc(hucs, rivers, tol):
         rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(union,r)]
     elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
         rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(union,r)]
+    else:
+        raise RuntimeError("Unrecognized river shape type?")
 
     logging.info("  ...making global tree")
     rivers_tree = workflow.hydrography.make_global_tree(rivers2, tol=0.1)
@@ -425,14 +428,14 @@ def prune(tree, prune_tol=10):
     """Removes any leaf segments that are shorter than prune_tol"""
     for leaf in tree.leaf_nodes():
         if leaf.segment.length < prune_tol:
-            logging.info("    cleaned leaf segment of length: %g at centroid %r"%(leaf.segment.length, leaf.segment.centroid.coords[0]))
+            logging.info("  ...cleaned leaf segment of length: %g at centroid %r"%(leaf.segment.length, leaf.segment.centroid.coords[0]))
             leaf.remove()
 
 def merge(tree, tol=0.1):
     """Remove inner branches that are short, combining branchpoints as needed."""
     for node in list(tree.preOrder()):
         if node.segment.length < tol:
-            logging.info("    cleaned inner segment of length %g at centroid %r"%(node.segment.length, node.segment.centroid.coords[0]))
+            logging.info("  ...cleaned inner segment of length %g at centroid %r"%(node.segment.length, node.segment.centroid.coords[0]))
             for child in node.children:
                 child.segment = shapely.geometry.LineString(child.segment.coords[:-1]+[node.parent.segment.coords[0],])
                 node.parent.addChild(child)

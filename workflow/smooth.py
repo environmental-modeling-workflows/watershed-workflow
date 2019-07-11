@@ -104,7 +104,7 @@ if __name__ == "__main__":
     # for i,c in zip(range(1,5),colors):
     #     hu = '060%i'%i
     #     pr,hucs = workflow.conf.load_hucs_in(hu, 8)
-    #     hucs = [shapely.geometry.shape(s['geometry']) for s in hucs]
+    #     hucs = [workflow.utils.shply(s['geometry']) for s in hucs]
     #     for huc in hucs:
     #         plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], color=c)
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     profile, hucs = workflow.conf.load_hucs_in('06010208', 12)
 
     # convert to shapely
-    hucs_s = [shapely.geometry.shape(s['geometry']) for s in hucs]
+    hucs_s = [workflow.utils.shply(s['geometry']) for s in hucs]
 
     # intersect
     uniques, intersections = intersect_and_split(hucs_s)

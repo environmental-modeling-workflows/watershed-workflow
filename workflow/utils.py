@@ -1,10 +1,60 @@
-"""Shapely-only utilities not provided by shapely"""
+"""Shape utilities not provided by shapely."""
 import logging
 import subprocess
 import numpy as np
 import shapely.geometry
 import shapely.ops
 import shapely.affinity
+
+import workflow.conf
+
+def shply(shape, flip=False):
+    """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
+
+    Note: shapely.geometry.shape() will not make, for instance,
+    Polygons out of MultiPolygons of length 1.  This gets really
+    difficult to work around at times.
+    """
+    try:
+        thing = shapely.geometry.shape(shape)
+        if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
+            thing = thing[0]
+        elif type(thing) is shapely.geometry.MultiLineString and len(thing) is 1:
+            thing = thing[0]
+        elif type(thing) is shapely.geometry.MultiPolygon and len(thing) is 1:
+            thing = thing[0]
+
+        # first check for latlon instead of lonlat
+        if flip:
+            thing = shapely.ops.transform(lambda x,y:(y,x), thing)
+        return thing
+    except ValueError:
+        raise ValueError('Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
+
+def round(list_of_things, digits):
+    """Rounds coordinates in things or shapes to a given digits."""
+    for shp in list_of_things:
+        assert(type(shp['geometry']['coordinates']) is list)
+        if len(shp['geometry']['coordinates']) is 0:
+            pass
+        elif type(shp['geometry']['coordinates'][0]) is tuple:
+            # single object
+            coords = np.array(shp['geometry']['coordinates'], 'd').round(digits)
+            if coords.shape[-1] is 3:
+                coords = coords[:,0:2]
+            assert(len(coords.shape) is 2)
+            shp['geometry']['coordinates'] = coords
+        else:
+            # object collection
+            for i,c in enumerate(shp['geometry']['coordinates']):
+                coords = np.array(c,'d').round(digits)
+                if len(coords.shape) is 2 and coords.shape[-1] is 3:
+                    coords = coords[:,0:2]
+                elif len(coords.shape) is 3 and coords.shape[-1] is 3:
+                    coords = coords[:,:,0:2]
+            shp['geometry']['coordinates'][i] = coords
+    return list_of_things
+
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
@@ -192,10 +242,19 @@ def triangle_area(vertices):
     return A
 
 
-def center(objects):
+def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
-    union = shapely.ops.cascaded_union(objects)
-    centroid = union.centroid
+    if type(centering) is shapely.geometry.Point:
+        centroid = centering
+    elif centering is True or centering == 'geometric':
+        union = shapely.ops.cascaded_union(objects)
+        centroid = shapely.geometry.Point([(union.bounds[0] + union.bounds[2])/2., (union.bounds[1] + union.bounds[3])/2.])
+    elif centering == 'mass':
+        union = shapely.ops.cascaded_union(objects)
+        centroid = union.centroid
+    else:
+        raise ValueError('Centering: option centering = "{}" unknown'.format(centering))
+
     new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
     return new_objs, centroid
     

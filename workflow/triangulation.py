@@ -10,6 +10,7 @@ import shapely
 import meshpy.triangle
 
 import workflow.tree
+import workflow.split_hucs
 
 
 class Nodes:
@@ -110,13 +111,13 @@ def triangulate(hucs, rivers, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
-      hucs              | a workflow.hucs.HUCs instance
+      hucs              | a workflow.split_hucs.SplitHUCs instance
       rivers            | a list of workflow.tree.Tree instances
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     logging.info("Triangulating...")
-    if type(hucs) is workflow.hucs.HUCs:
+    if type(hucs) is workflow.split_hucs.SplitHUCs:
         segments = list(hucs.segments)
     elif type(hucs) is list:
         segments = hucs
@@ -136,24 +137,31 @@ def triangulate(hucs, rivers, **kwargs):
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
-    #np.savetxt("points.txt", nodes)
-    #np.savetxt("facets.txt", np.array(list(nodes_edges.edges),dtype=np.int32))
     
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    # plt.figure()
-    # for e in fdata:
-    #     plt.plot([pdata[e[0]][0], pdata[e[1]][0]],
-    #              [pdata[e[0]][1], pdata[e[1]][1]], '-', color='gray')
-    # plt.scatter([p[0] for p in pdata], [p[1] for p in pdata],marker='+', color='lime')
-    # plt.gca().set_aspect('equal', 'datalim')
-    # plt.show()
-    
     logging.info(" triangle.build...")
-    mesh = meshpy.triangle.build(info, **kwargs)
+
+    # pop this option if false, which silences the warning if it does
+    # not exist but we didn't ask for it anyway.
+    if 'enforce_delaunay' in kwargs.keys() and not kwargs['enforce_delaunay']:
+        kwargs.pop('enforce_delaunay')
+
+    try:
+        mesh = meshpy.triangle.build(info, **kwargs)
+    except TypeError as err:
+        try:
+            # our modification to meshpy.triangle is not present, try without it
+            kwargs.pop('enforce_delaunay')
+        except KeyError:
+            raise err
+        else:
+            logging.warning("Triangulate: '--enforce-delaunay' option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.  See documentation at https://github.com/amanzi/meshing_workflow")
+            mesh = meshpy.triangle.build(info, **kwargs)
+            
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
     logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
@@ -161,17 +169,17 @@ def triangulate(hucs, rivers, **kwargs):
 
 
 def refine_from_max_area(max_area):
-    """Returns a refinement function used with triangulate's refinement_func argument."""
+    """Returns a refinement function based on max area, for use with Triangle."""
     def refine(vertices, area):
         """A function for use with workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
         res = bool(area > max_area)
-        if area < 1.e-5:
-            raise RuntimeError("bah")
+        # if area < 1.e-5:
+        #     raise RuntimeError("TinyTriangle Error")
         return res
     return refine
 
 def refine_from_river_distance(near_distance, near_area, away_distance, away_area, rivers):
-    """Returns a graded refinement function based upon a distance function from rivers.
+    """Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.
 
     Triangle area must be smaller than near_area when the triangle
     centroid is within near_distance from the river network.
@@ -207,3 +215,12 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
         return res
 
     return refine
+
+def refine_from_max_edge_length(edge_length):
+    """Returns a refinement function based on max edge length, for use with Triangle."""
+    def refine(vertices, area):
+        verts4 = np.array([vertices[0], vertices[1], vertices[2], vertices[0]])
+        edge_lengths = la.norm(verts4[1:] - verts4[:-1], 2, 1)
+        return bool(edge_lengths.max() > edge_length)
+    return refine
+

@@ -16,9 +16,19 @@ def hucs(hucs, color=None, style='-', linewidth=1):
     for huc in hucs.polygons():
         plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], style, color=color, linewidth=linewidth)
 
-def shapes(shps, color=None, style='-', linewidth=1):
+def shply(shps, color=None, style='-', linewidth=1):
     for shp in shps:
-        plt.plot(shp.exterior.xy[0], shp.exterior.xy[1], style, color=color, linewidth=linewidth)
+        try:
+            plt.plot(shp.exterior.xy[0], shp.exterior.xy[1], style, color=color, linewidth=linewidth)
+        except AttributeError:
+            # multipolygon
+            for poly in shp:
+                plt.plot(poly.exterior.xy[0], poly.exterior.xy[1], style, color=color, linewidth=linewidth)
+                
+
+def shapes(shps, *args, **kwargs):
+    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
+    shply(shplys, *args, **kwargs)
         
 
 def rivers(rivers, color=None, style='-', linewidth=1):
@@ -74,7 +84,12 @@ def triangulation(points, tris, color='gray', linewidth=1, edgecolor='gray', nor
         return plt.tripcolor(points[:,0], points[:,1], tris, color, linewidth=linewidth, edgecolor=edgecolor, norm=norm, vmin=vmin, vmax=vmax)
     else:        
         return plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
-        
+
+# def dem(profile, data, vmin=None, vmax=None):
+#     if vmin is None:
+#         vmin = data.min()
+#     if vmax is None:
+#         vmax = data.max()
 
 
     
