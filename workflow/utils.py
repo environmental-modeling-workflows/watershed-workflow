@@ -6,21 +6,30 @@ import shapely.geometry
 import shapely.ops
 import shapely.affinity
 
-def shply(shape):
+import workflow.conf
+
+def shply(shape, flip=False):
     """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
 
     Note: shapely.geometry.shape() will not make, for instance,
     Polygons out of MultiPolygons of length 1.  This gets really
     difficult to work around at times.
     """
-    thing = shapely.geometry.shape(shape)
-    if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
-        return thing[0]
-    elif type(thing) is shapely.geometry.MultiLineString and len(thing) is 1:
-        return thing[0]
-    elif type(thing) is shapely.geometry.MultiPolygon and len(thing) is 1:
-        return thing[0]
-    return thing    
+    try:
+        thing = shapely.geometry.shape(shape)
+        if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
+            thing = thing[0]
+        elif type(thing) is shapely.geometry.MultiLineString and len(thing) is 1:
+            thing = thing[0]
+        elif type(thing) is shapely.geometry.MultiPolygon and len(thing) is 1:
+            thing = thing[0]
+
+        # first check for latlon instead of lonlat
+        if flip:
+            thing = shapely.ops.transform(lambda x,y:(y,x), thing)
+        return thing
+    except ValueError:
+        raise ValueError('Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
 
 def round(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""

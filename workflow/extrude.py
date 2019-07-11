@@ -140,7 +140,14 @@ class Mesh2D(object):
                 cross = cross + p[1] * m[0] - p[0] * m[1]
             if cross < 0:
                 conn.reverse()
-                    
+
+    def centroids(self):
+        """Calculate surface mesh centroids."""
+        result = np.zeros((self.num_cells(),3),'d')
+        for c, conn in enumerate(self.conn):
+            points = np.array([self.coords[c] for c in conn])
+            result[c,:] = points.mean(axis=0)
+        return result
     
     def plot(self, color=None, ax=None):
         """Plot the flattened 2D mesh."""

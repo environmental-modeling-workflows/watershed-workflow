@@ -44,14 +44,16 @@ def test_nhdplus2(nhd):
     # download
     profile, hucs = nhd.get_hucs('0204',4)
     bounds = workflow.utils.shply(hucs[0]['geometry']).bounds
-    assert(np.allclose(bounds4_ll, np.array(bounds), 1))
+    assert(np.allclose(bounds4_ll, np.array(bounds), 1.e-6))
 
 
 def test_nhdplus3(nhd):
     # download
     profile, huc = nhd.get_huc('02040101')
     bounds = workflow.utils.shply(huc['geometry']).bounds
-    assert(np.allclose(bounds8_ll, np.array(bounds), 1))
+    print(bounds)
+    print(bounds8_ll)
+    assert(np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 
 def test_nhdplus4(nhd):

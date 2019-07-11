@@ -25,15 +25,38 @@ def warp_xy(x, y, old_crs, new_crs):
 
 def warp_bounds(bounds, old_crs, new_crs):
     """Uses proj to reproject bounds, NOT IN PLACE"""
-    x = np.array([bounds[0], bounds[2]])
-    y = np.array([bounds[1], bounds[3]])
-    x2,y2 = warp_xy(x,y,old_crs, new_crs)
-    return [x2[0],y2[0],x2[1],y2[1]]
+    return warp_shapely(shapely.geometry.box(*bounds), old_crs, new_crs).bounds
+    
+    # x = np.array([bounds[0], bounds[2]])
+    # y = np.array([bounds[1], bounds[3]])
+    # x2,y2 = warp_xy(x,y,old_crs, new_crs)
+    # return [x2[0],y2[0],x2[1],y2[1]]
 
 def warp_shapely(shp, old_crs, new_crs):
     """Uses proj to reproject shapes, NOT IN PLACE"""
-    x,y = warp_xy(shp.boundary.xy[0], shp.boundary.xy[1], old_crs, new_crs)
-    return shapely.geometry.Polygon(zip(x,y))
+    if old_crs['init'] == new_crs['init']:
+        return shp
+
+    old_crs_proj = pyproj.Proj(old_crs)
+    new_crs_proj = pyproj.Proj(new_crs)
+    return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
+
+    
+    # if type(shp) is shapely.geometry.MultiPoint:
+    #     return shapely.geometry.MultiPoint([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.MultiLineString:
+    #     return shapely.geometry.MultiLineString([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.MultiPolygon:
+    #     return shapely.geometry.MultiPolygon([warp_shapely(p, old_crs, new_crs) for p in shp])
+    # elif type(shp) is shapely.geometry.Point:
+    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
+    #     return shapely.geometry.Point(x,y)
+    # elif type(shp) is shapely.geometry.LineString:
+    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
+    #     return shapely.geometry.LineString(x,y)
+    # elif type(shp) is shapely.geometry.Polygon:
+    #     x,y = warp_xy(shp.exterior.xy[0], shp.exterior.xy[1])
+    # return shapely.geometry.Polygon(zip(x,y))
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""

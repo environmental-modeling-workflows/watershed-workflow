@@ -45,7 +45,7 @@ def test_nhd_get(nhd):
     # download
     profile, huc = nhd.get_huc('02040101')
     bounds = workflow.utils.shply(huc['geometry']).bounds
-    assert(np.allclose(bounds8_ll, np.array(bounds), 1))
+    assert(np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 # hydro tests
 def test_nhd_get_hydro(nhd):
