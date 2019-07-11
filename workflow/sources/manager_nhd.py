@@ -93,7 +93,11 @@ class _FileManagerNHD:
                                            'polyCode':hucstr})
         r.raise_for_status()
         json = r.json()
-        matches = [m for m in json['items'] if hucstr in m['title'] and 'GDB' in m['format']]
+
+        # this feels hacky, but it does not appear that USGS has their
+        # 'prodFormat' get option or 'format' return json value
+        # working correctly.
+        matches = [m for m in json['items'] if hucstr in m['title'] and 'GDB' in m['downloadURL']]
         if len(matches) == 0:
             raise ValueError('{}: not able to find HUC {}'.format(self.name, hucstr))
         if len(matches) > 1:

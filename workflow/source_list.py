@@ -7,28 +7,37 @@ See: "https://nhd.usgs.gov/"
 Default DEMs come from the National Elevation Dataset (NED).
 See: "https://lta.cr.usgs.gov/NED"
 """
+import logging
 
 from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_shape import FileManagerShape
+from workflow.sources.manager_nrcs import FileManagerNRCS
 
 
+# available and default water boundary datasets
 huc_sources = {'NHD Plus': FileManagerNHDPlus(),
                'NHD': FileManagerNHD(),
-               'WBD': FileManagerWBD(),
+               'WBD': FileManagerWBD()
                }
-
 default_huc_source = 'WBD'
 
+# available and default hydrography datasets
 hydrography_sources = {'NHD Plus': huc_sources['NHD Plus'],
                        'NHD': huc_sources['NHD'],
                        }
 default_hydrography_source = 'NHD'
 
+# available and default digital elevation maps
 dem_sources = {'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
                'NED 1 arc-second': FileManagerNED('1 arc-second'),
                }
 default_dem_source = 'NED 1 arc-second'
+
+# available and default soil survey datasets
+soil_sources = {'NRCS SSURGO':FileManagerNRCS(),
+                }
+default_soil_source = 'NRCS SSURGO'
 
 
 def get_default_sources():
@@ -37,9 +46,9 @@ def get_default_sources():
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
     sources['DEM'] = dem_sources[default_dem_source]
+    sources['soil type'] = soil_sources[default_soil_source]
     sources['land cover'] = None
     sources['soil thickness'] = None
-    sources['soil type'] = None
     return sources
 
 
@@ -67,4 +76,23 @@ def get_sources(args):
     else:
         sources['DEM'] = dem_sources[source_dem]
 
+    try:
+        source_soil = args.source_soil
+    except AttributeError:
+        pass
+    else:
+        sources['soil type'] = soil_sources[source_soil]
+        
     return sources
+
+def log_sources(sources):
+    """Pretty print source dictionary to log."""
+    logging.info('Using sources:')
+    logging.info('--------------')
+    for stype, s in sources.items():
+        if s is not None:
+            logging.info('{}: {}'.format(stype, s.name))
+        else:
+            logging.info('{}: None'.format(stype))
+
+            

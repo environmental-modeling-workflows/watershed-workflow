@@ -86,14 +86,41 @@ def simplify_options(parser):
     simp.add_argument('--cut-intersections', action='store_true',
                         help='Cut boundaries at river intersections.')
 
-def refine_options(parser):
-    """Adds refinement options to the parser."""
+def default_simplify_options():
+    """Returns a refine options struct for use in scripts."""
+    class Struct:
+        def __init__(self, **kwargs):
+            self.__dict__.update(**kwargs)
+
+    args = Struct(simplify=10.,
+                  prune_reach_size=2,
+                  cut_intersections=False,
+                  verbosity=1)
+    return args
+    
+    
+def triangulate_options(parser):
+    """Adds triangulation options to the parser."""
     group = parser.add_argument_group('Triangle Refinement')
     refine_max_area_options(group)
     refine_distance_options(group)
     refine_min_angle(group)
     refine_max_edge_length(group)
     enforce_delaunay(parser)
+
+def default_triangulate_options():
+    """Returns a refine options struct for use in scripts."""
+    class Struct:
+        def __init__(self, **kwargs):
+            self.__dict__.update(**kwargs)
+
+    args = Struct(refine_max_area=None,
+                  refine_distance=None,
+                  refine_min_angle=None,
+                  refine_max_edge_length=None,
+                  delaunay=False,
+                  verbosity=1)
+    return args
 
 def refine_max_area_options(parser):
     parser.add_argument('--refine-max-area', type=float, 
@@ -117,7 +144,7 @@ def refine_max_edge_length(parser):
                         help='Refine based upon a max edge length [m]')
     
 def enforce_delaunay(parser):
-    parser.add_argument('--delaunay', action='store_true',
+    parser.add_argument('--enforce-delaunay', action='store_true',
                         help='Enforce Delaunay, and not just constrained Delaunay')
     
 def inshape_args(parser):

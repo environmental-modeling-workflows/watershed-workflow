@@ -11,7 +11,7 @@ import workflow.find_neighbor
 import argparse
 import numpy as np
 
-import vtk_io
+from workflow_tpls import vtk_io
 
 
 if __name__ == '__main__':

@@ -18,6 +18,8 @@ import fiona
 import shapely
 import meshpy.triangle
 
+from workflow_tpls import vtk_io  # from ATS/tools/meshing_ats
+
 import workflow.conf
 import workflow.triangulation
 import workflow.warp
@@ -30,9 +32,6 @@ import workflow.rowcol
 import workflow.sources.utils 
 from workflow.sources.utils import huc_str
 import workflow.sources.manager_shape
-
-
-import vtk_io # from ATS/tools/meshing_ats
 
 def get_huc(source, huc, crs=None, centering=None):
     """Download and read a HUC file.
@@ -286,7 +285,7 @@ def get_raster_on_shape(source, shape, crs):
     return source.get_raster(shape, crs)
 
 
-def get_shapes(filename, index, crs=None, centering=None):
+def get_shapes(source_or_filename, index, crs=None, centering=None):
     """Read a shapefile.
 
     Arguments:
@@ -312,12 +311,14 @@ def get_shapes(filename, index, crs=None, centering=None):
 
     # load shapefile
     logging.info('loading file: "{}"'.format(filename))
-    source = workflow.sources.manager_shape.FileManagerShape(filename)
+    if type(source_or_filename) is str:
+        source_or_filename = workflow.sources.manager_shape.FileManagerShape(filename)
+        
     if index is None or index == -1:
         filter = None
     else:
         filter = lambda i,a: i == index
-    profile, shps = source.get_shapes(filter=filter)
+    profile, shps = source_or_filename.get_shapes(filter=filter)
 
     # convert to destination crs
     if crs is None:
@@ -339,6 +340,49 @@ def get_shapes(filename, index, crs=None, centering=None):
         centroid = shapely.geometry.Point(0,0)
 
     return shplys, centroid
+
+
+def get_shapes_in_bounds(source, bounds, crs, centering=None):
+    """Read a shapefile.
+
+    Arguments:
+      source    | Source object
+      bounds    | Collect shapes which intersect these bounds.
+      crs       | provides the coordinate system of the bounds and the 
+                |  output coordinate system of the shapes.
+      centering | if False or None (default) does nothing.
+                |  if True or 'geometric', centers based on the 
+                |  geometric center.
+                |  if 'mass', centers based on the center of mass.
+                |  if Point object or tuple of two floats, centers 
+                |  on this coordinate.
+
+    Returns (shapes, centroid)
+      shapes    | list of shapely polygons for the requested shapes
+      properties| list of properties associated with the shapes
+      centroid  | shapely point for the centroid, based on the
+                |  value of centering.
+    """
+    logging.info("")
+    logging.info("Preprocessing Shapes")
+    logging.info("-"*30)
+
+    profile, shps, properties = source.get_shapes_in_bounds(bounds, crs)
+
+    # convert to destination crs
+    if crs != profile['crs']:
+        shps = [workflow.warp.warp_shapely(shp, profile['crs'], crs) for shp in shps]
+
+    # round
+    # workflow.utils.round(shps, workflow.conf.rcParams['digits'])
+
+    # center
+    if centering:
+        shps, centroid = workflow.utils.center(shps, centering)
+    else:
+        centroid = shapely.geometry.Point(0,0)
+
+    return shps, properties, centroid
 
 
 def get_split_form_shapes(filename, index, crs=None, centering=False):
@@ -481,13 +525,16 @@ def triangulate(hucs, rivers, args, diagnostics=True):
     return mesh_points, mesh_tris
 
 def elevate(mesh_points, dem, dem_profile):
-    # -- must map back to lat/lon to take from dem
+    """Elevate mesh_points onto the dem."""
     logging.info("")
     logging.info("Elevating Triangulation to DEM")
     logging.info("-"*30)
-    triangles_3d = []
-    mesh_points_ll = np.array(workflow.warp.warp_xy(mesh_points[:,0], mesh_points[:,1], workflow.conf.default_crs(), workflow.conf.latlon_crs())).transpose()
-    elev = dem[workflow.rowcol.rowcol(dem_profile['transform'], mesh_points_ll[:,0], mesh_points_ll[:,1])]
+
+    # index the i,j of the points, pick the elevations
+    mesh_points_dem = np.array(workflow.warp.warp_xy(mesh_points[:,0], mesh_points[:,1], workflow.conf.default_crs(), dem_profile['crs'])).transpose()
+    elev = dem[workflow.rowcol.rowcol(dem_profile['transform'], mesh_points_dem[:,0], mesh_points_dem[:,1])]
+
+    # create the 3D points
     mesh_points_3 = np.zeros((len(mesh_points),3),'d')
     mesh_points_3[:,0:2] = mesh_points
     mesh_points_3[:,2] = elev
