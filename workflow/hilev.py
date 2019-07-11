@@ -15,6 +15,9 @@ import matplotlib.collections as pltc
 import logging
 
 import fiona
+import rasterio
+import rasterio.transform
+import rasterio.mask
 import shapely
 import meshpy.triangle
 
@@ -524,27 +527,65 @@ def triangulate(hucs, rivers, args, diagnostics=True):
             # plt.title("triangle area [m^2]")
     return mesh_points, mesh_tris
 
-def elevate(mesh_points, dem, dem_profile):
+def elevate(mesh_points, mesh_crs, dem, dem_profile):
     """Elevate mesh_points onto the dem."""
     logging.info("")
     logging.info("Elevating Triangulation to DEM")
     logging.info("-"*30)
 
     # index the i,j of the points, pick the elevations
-    mesh_points_dem = np.array(workflow.warp.warp_xy(mesh_points[:,0], mesh_points[:,1], workflow.conf.default_crs(), dem_profile['crs'])).transpose()
-    elev = dem[workflow.rowcol.rowcol(dem_profile['transform'], mesh_points_dem[:,0], mesh_points_dem[:,1])]
+    elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile)
 
     # create the 3D points
     mesh_points_3 = np.zeros((len(mesh_points),3),'d')
     mesh_points_3[:,0:2] = mesh_points
     mesh_points_3[:,2] = elev
     return mesh_points_3
-    
-def save(filename, points3, tris, metadata):
-    """Save as a VTK mesh. 
 
-    This could be Exodus, but meshing_ats is in python2 (and uses exodus which is in python2)
-    """
+def values_from_raster(points, points_crs, raster, raster_profile):
+    """Take the value of the nearest pixel to each point in points."""
+    points_raster_crs = np.array(workflow.warp.warp_xy(points[:,0], points[:,1], points_crs, raster_profile['crs'])).transpose()
+    values = raster[workflow.rowcol.rowcol(raster_profile['transform'], points_raster_crs[:,0], points_raster_crs[:,1])]
+    return values
+
+def color_raster_from_shapes(target_bounds, target_dx, target_filename, shapes, shape_colors, shapes_crs, nodata=-1):
+    assert(len(shapes) == len(shape_colors))
+    assert(len(shapes) > 0)
+    
+    dtype = np.dtype(type(shape_colors[0]))
+    
+    target_x0 = np.round(target_bounds[0] - target_dx/2)
+    target_y1 = np.round(target_bounds[3] + target_dx/2)
+    width = int(np.ceil((target_bounds[2] + target_dx/2 - target_x0)/target_dx))
+    height = int(np.ceil((target_y1 - target_bounds[1] - target_dx/2)/target_dx))
+
+    img_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
+
+    filename = target_filename.format(*img_bounds)
+
+    logging.info('Coloring shapes onto raster: "{}"'.format(target_filename))
+    logging.info('  target_bounds = {}'.format(target_bounds))
+    logging.info('  img_bounds = {}'.format(img_bounds))
+    logging.info('  pixel_size = {}'.format(target_dx))
+    logging.info('  width = {}, height = {}'.format(width, height))
+    logging.info('  and {} independent colors of dtype {}'.format(len(set(shape_colors)), dtype))
+
+    transform = rasterio.transform.from_origin(target_x0, target_y1, target_dx, target_dx)
+    with rasterio.open(target_filename, 'w', driver='GTiff', 
+                       height=height, width=width, count=1, dtype=dtype, 
+                       crs=shapes_crs, transform=transform, nodata=nodata) as fout:
+        z = nodata * np.ones(fout.shape, np.int32)
+        for p, p_id in zip(shapes, shape_colors):
+            mask, _, _ = rasterio.mask.raster_geometry_mask(fout, [p,], invert=True)
+            z[mask] = p_id
+    
+        fout.write(z, 1)
+        profile = fout.profile
+
+    return z, profile, img_bounds
+
+def save(filename, points3, tris, metadata):
+    """Save as a VTK mesh."""
     logging.info("")
     logging.info("File I/O")
     logging.info("-"*30)
