@@ -478,7 +478,7 @@ class Mesh3D(object):
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
         num_faces = sum(len(face_blk) for face_blk in face_blks)
 
-        ep = exodus.ex_init_params(title=filename,
+        ep = exodus.ex_init_params(title=filenames.encode('ascii'),
                                    num_dim=3,
                                    num_nodes=self.num_nodes(),
                                    num_face=num_faces,
