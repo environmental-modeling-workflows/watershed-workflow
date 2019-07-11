@@ -3,9 +3,9 @@ CC=`which clang`
 CXX=`which clang++`
 FC=`which gfortran`
 
-SEACAS_SRC_DIR = ??
-SEACAS_BUILD_DIR = ??
-SEACAS_DIR = ??
+SEACAS_SRC_DIR=??
+SEACAS_BUILD_DIR=??
+SEACAS_DIR=??
 
 
 mkdir -p $SEACAS_BUILD_DIR

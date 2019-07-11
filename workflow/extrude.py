@@ -30,7 +30,7 @@ class SideSet(object):
         assert(_list_or_array(side_list))
         assert(_list_or_array(elem_list))
 
-        self.name = name.encode('ASCII')
+        self.name = name
         self.setid = setid
         self.elem_list = elem_list
         self.side_list = side_list
@@ -478,7 +478,7 @@ class Mesh3D(object):
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
         num_faces = sum(len(face_blk) for face_blk in face_blks)
 
-        ep = exodus.ex_init_params(title=filename.encode('utf-8'),
+        ep = exodus.ex_init_params(title=filename,
                                    num_dim=3,
                                    num_nodes=self.num_nodes(),
                                    num_face=num_faces,
@@ -489,7 +489,7 @@ class Mesh3D(object):
         e = exodus.exodus(filename, mode='w', array_type='numpy', init_params=ep)
 
         # put the coordinates
-        e.put_coord_names([b'coordX', b'coordY', b'coordZ'])
+        e.put_coord_names(['coordX', 'coordY', 'coordZ'])
         e.put_coords(self.coords[:,0], self.coords[:,1], self.coords[:,2])
 
         # put the face blocks
@@ -505,7 +505,7 @@ class Mesh3D(object):
             elems_raveled = [f for c in elem_blk for f in c]
 
             e.put_polyhedra_elem_blk(m_id, len(elem_blk), len(elems_raveled), 0)
-            e.put_elem_blk_name(m_id, b"MATERIAL_ID_%d"%m_id)
+            e.put_elem_blk_name(m_id, 'MATERIAL_ID_%d'%m_id)
             e.put_face_count_per_polyhedra(m_id, np.array([len(c) for c in elem_blk]))
             e.put_elem_face_conn(m_id, np.array(elems_raveled)+1)
 
