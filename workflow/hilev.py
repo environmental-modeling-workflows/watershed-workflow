@@ -288,7 +288,7 @@ def get_raster_on_shape(source, shape, crs):
     return source.get_raster(shape, crs)
 
 
-def get_shapes(source_or_filename, index, crs=None, centering=None):
+def get_shapes(source, index, crs=None, centering=None):
     """Read a shapefile.
 
     Arguments:
@@ -313,15 +313,15 @@ def get_shapes(source_or_filename, index, crs=None, centering=None):
     logging.info("-"*30)
 
     # load shapefile
-    logging.info('loading file: "{}"'.format(filename))
-    if type(source_or_filename) is str:
-        source_or_filename = workflow.sources.manager_shape.FileManagerShape(filename)
+    if type(source) is str:
+        logging.info('loading file: "{}"'.format(source))
+        source = workflow.sources.manager_shape.FileManagerShape(source)
         
     if index is None or index == -1:
         filter = None
     else:
         filter = lambda i,a: i == index
-    profile, shps = source_or_filename.get_shapes(filter=filter)
+    profile, shps = source.get_shapes(filter=filter)
 
     # convert to destination crs
     if crs is None:
@@ -388,11 +388,11 @@ def get_shapes_in_bounds(source, bounds, crs, centering=None):
     return shps, properties, centroid
 
 
-def get_split_form_shapes(filename, index, crs=None, centering=False):
+def get_split_form_shapes(source, index, crs=None, centering=False):
     """Read a shapefile.
 
     Arguments:
-      filename  | File to parse, should end in .shp
+      source    | File to parse, should end in .shp, or source for get_shapes()
       index     | Index of the requested shape in filename, or -1 to get all.
       crs       | provides the output coordinate system, 
                 | defaults to workflow.conf.default_scrs()
@@ -409,7 +409,7 @@ def get_split_form_shapes(filename, index, crs=None, centering=False):
                         |  value of centering.
 
     """
-    shapes, centroid = get_shapes(filename, index, crs, centering)
+    shapes, centroid = get_shapes(source, index, crs, centering)
     return workflow.split_hucs.SplitHUCs(shapes), centroid
 
 
@@ -492,7 +492,7 @@ def triangulate(hucs, rivers, args, diagnostics=True):
                                                               verbose=verbose,
                                                               refinement_func=my_refine_func,
                                                               min_angle=args.refine_min_angle,
-                                                              enforce_delaunay=args.delaunay)
+                                                              enforce_delaunay=args.enforce_delaunay)
 
     if diagnostics:
         logging.info("Plotting triangulation diagnostics")

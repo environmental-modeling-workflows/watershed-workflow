@@ -118,7 +118,7 @@ def default_triangulate_options():
                   refine_distance=None,
                   refine_min_angle=None,
                   refine_max_edge_length=None,
-                  delaunay=False,
+                  enforce_delaunay=False,
                   verbosity=1)
     return args
 
