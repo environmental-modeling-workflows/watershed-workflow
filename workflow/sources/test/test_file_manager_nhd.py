@@ -28,6 +28,19 @@ def test_nhd_url(nhd):
     url = nhd._url('02040101')
     assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/GDB/NHD_H_02040101_HU8_GDB.zip' == url)
 
+def test_nhd_url2(nhd):
+    url = nhd._url('06010202')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/GDB/NHD_H_06010202_HU8_GDB.zip' == url)
+
+def test_nhd_url3(nhd):
+    url = nhd._url('14020001')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/GDB/NHD_H_14020001_HU8_GDB.zip' == url)
+
+def test_nhd_url4(nhd):
+    url = nhd._url('19060402')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/HighResolution/GDB/NHD_H_19060402_HU8_GDB.zip' == url)
+    
+    
 def test_nhd_url_fail(nhd):
     with pytest.raises(ValueError):
         url = nhd._url('02010000') # this huc is not a real huc

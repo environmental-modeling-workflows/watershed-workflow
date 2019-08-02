@@ -28,6 +28,18 @@ def test_wbd_url(wbd):
     url = wbd._url('02')
     assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_02_HU2_GDB.zip' == url)
 
+def test_wbd_url2(wbd):
+    url = wbd._url('06')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_06_HU2_GDB.zip' == url)
+
+def test_wbd_url3(wbd):
+    url = wbd._url('14')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_14_HU2_GDB.zip' == url)
+
+def test_wbd_url4(wbd):
+    url = wbd._url('19')
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_19_HU2_GDB.zip' == url)
+    
 def test_wbd_url_fail(wbd):
     with pytest.raises(ValueError):
         url = wbd._url('99') # this huc is not a real huc

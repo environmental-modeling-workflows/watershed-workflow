@@ -8,13 +8,18 @@ import shapely.affinity
 
 import workflow.conf
 
-def shply(shape, flip=False):
+def shply(shape, properties=None, flip=False):
     """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
 
     Note: shapely.geometry.shape() will not make, for instance,
     Polygons out of MultiPolygons of length 1.  This gets really
     difficult to work around at times.
     """
+    if 'geometry' in shape:
+        if properties is None and 'properties' in shape:
+            properties = shape['properties']
+        shape = shape['geometry']        
+    
     try:
         thing = shapely.geometry.shape(shape)
         if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
@@ -27,6 +32,8 @@ def shply(shape, flip=False):
         # first check for latlon instead of lonlat
         if flip:
             thing = shapely.ops.transform(lambda x,y:(y,x), thing)
+
+        thing.properties = properties
         return thing
     except ValueError:
         raise ValueError('Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
@@ -256,6 +263,11 @@ def center(objects, centering=True):
         raise ValueError('Centering: option centering = "{}" unknown'.format(centering))
 
     new_objs = [shapely.affinity.translate(obj, -centroid.coords[0][0], -centroid.coords[0][1]) for obj in objects]
+    
+    for new, old in zip(new_objs, objects):
+        if hasattr(old, 'properties'):
+            new.properties = old.properties
+        
     return new_objs, centroid
     
 def get_git_revision_hash():

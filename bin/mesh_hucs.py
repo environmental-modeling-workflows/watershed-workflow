@@ -41,7 +41,7 @@ def mesh_hucs(args):
     # collect data
     huc, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, crs=args.projection, centering=args.center)
     rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], huc.polygon(0).bounds, args.projection, args.HUC, centering=centroid)
-    rivers = workflow.simplify_and_prune(huc, rivers, args)
+    rivers = workflow.simplify_and_prune(huc, rivers, args.simplify, args.prune_reach_size, args.cut_intersections)
     
     # make 2D mesh
     mesh_points2, mesh_tris = workflow.triangulate(huc, rivers, args)
@@ -53,7 +53,7 @@ def mesh_hucs(args):
         mesh_points2_uncentered = mesh_points2
 
     dem_profile, dem = workflow.get_raster_on_shape(sources['DEM'], huc.polygon(0), args.projection)
-    mesh_points3_uncentered = workflow.elevate(mesh_points2_uncentered, dem, dem_profile)
+    mesh_points3_uncentered = workflow.elevate(mesh_points2_uncentered, args.projection, dem, dem_profile)
 
     if args.center:
         mesh_points3 = np.empty(mesh_points3_uncentered.shape,'d')

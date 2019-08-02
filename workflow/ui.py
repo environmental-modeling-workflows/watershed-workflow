@@ -49,10 +49,10 @@ def get_basic_argparse(docstring):
     def valid_epsg(x):
         """Note this validator does the work, no need for more"""
         try:
-            workflow.conf.set_default_crs(x)
+            epsg = fiona.crs.from_epsg(x)
         except ValueError as err:
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'"%str(err))
-        return x
+        return epsg
     parser.add_argument('--projection', type=valid_epsg, default=workflow.conf.default_crs(),
                         help='Output coordinate system.  Default is "{}"'.format(workflow.conf.default_crs()['init']))
     return parser
@@ -75,6 +75,17 @@ def huc_args(parser):
     """Adds a HUC argument to the parser."""
     parser.add_argument('HUCS', type=valid_hucstr, nargs='+',
                         help='A list of HUC codes, for example, "060102080101"')
+
+def huc_level_arg(parser):
+    """Adds a HUC level argument to the parser."""
+    def valid_level(x):
+        if x % 2 != 0:
+            raise argparse.ArgumentTypeError("In parsing huc_level: '{}' must be a multiple of 2 to be a valid HUC level.".format(x))
+        return x
+    parser.add_argument('--level', type=int, default=0,
+                        help='Level of HUCs to include.')
+    return parser
+    
     
 def simplify_options(parser):
     """Adds a simplify tolerance option to the parser."""
@@ -122,8 +133,25 @@ def default_triangulate_options():
                   verbosity=1)
     return args
 
+def plot_options(parser):
+    group = parser.add_argument_group('Plotting options')
+    group.add_argument('--basemap', action='store_true',
+                        help='Plot HUCs/shapes with political boundary context via basemap.')
+    group.add_argument('--basemap-resolution', type=str,
+                       help='Map resolution, either "100m" (default), "50m", or "10m"')
+    group.add_argument('--title', type=str, 
+                        help='Plot title')
+    group.add_argument('--figsize', type=float, nargs=2, 
+                        help='Figure size.')
+    group.add_argument('--extent', type=float, nargs=4,
+                        help='Extent (in specified projection) of the plotted area.')
+    group.add_argument('--pad-fraction', type=float, nargs='+',
+                       help='Pad bounds by a given fraction of domain size (x,y).')
+    group.add_argument('--output-filename', type=str,
+                       help='Save figure as image file.')
+    
 def refine_max_area_options(parser):
-    parser.add_argument('--refine-max-area', type=float, 
+    parser.add_argument('--refine-max-area', type=float,
                         help='Refine based upon max area of triangles [m^2]  (see note)')
 
 def refine_distance_options(parser):

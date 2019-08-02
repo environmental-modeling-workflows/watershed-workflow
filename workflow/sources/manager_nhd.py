@@ -88,22 +88,33 @@ class _FileManagerNHD:
         rest_url = workflow.conf.rcParams['national_map_api_url']
 
         hucstr = hucstr[0:self.file_level]
-        r = requests.get(rest_url, params={'datasets':self.name,
-                                           'polyType':'huc{}'.format(self.file_level),
-                                           'polyCode':hucstr})
+        
+        r = requests.get(rest_url, params={'datasets':self.name})#,
+                                           #'polyType':'huc{}'.format(self.file_level),
+                                           #'polyCode':hucstr})
         r.raise_for_status()
         json = r.json()
 
         # this feels hacky, but it does not appear that USGS has their
         # 'prodFormat' get option or 'format' return json value
         # working correctly.
-        matches = [m for m in json['items'] if hucstr in m['title'] and 'GDB' in m['downloadURL']]
+        matches = [m for m in json['items']]
+
+        # filter for GDBs
+        matches = [m for m in matches if 'GDB' in m['downloadURL']]
+
+        # filter for title contains HUC string
+        matches_f = [m for m in matches if hucstr in m['title'].split()]
+        if len(matches_f) > 0:
+            matches = matches_f
+        
+        
         if len(matches) == 0:
             raise ValueError('{}: not able to find HUC {}'.format(self.name, hucstr))
         if len(matches) > 1:
-            logging.error('{}: too many matches for HUC {}'.format(self.name, hucstr))
+            logging.error('{}: too many matches for HUC {} ({})'.format(self.name, hucstr, len(matches)))
             for m in matches:
-                logging.error('  {}'.format(m['downloadURL']))
+                logging.error(' {}\n   {}'.format(m['title'], m['downloadURL']))
             raise ValueError('{}: too many matches for HUC {}'.format(self.name, hucstr))
         return matches[0]['downloadURL']
 
@@ -140,6 +151,7 @@ class _FileManagerNHD:
 class FileManagerNHDPlus(_FileManagerNHD):
     def __init__(self):
         name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
+        #name = 'National Hydrography Dataset (NHD) Best Resolution'
         super().__init__(name, 4, 12,
                          workflow.sources.names.Names(name, 'hydrography',
                                                       'NHDPlus_H_{}_GDB',

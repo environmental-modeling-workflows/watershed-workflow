@@ -15,9 +15,15 @@ _tol = 1.e-7
 
 class Tree(workflow.tinytree.Tree):
     """A tree node data structure"""
-    def __init__(self, segment=None, children=None):
+    def __init__(self, segment=None, properties=None, children=None):
         super(Tree, self).__init__(children)
         self.segment = segment
+        if properties is not None:
+            self.properties = properties
+        elif hasattr(self.segment, 'properties'):
+            self.properties = self.segment.properties
+        else:
+            self.properties = dict()
 
     def addChild(self, segment):
         if type(segment) is Tree:
@@ -45,6 +51,9 @@ class Tree(workflow.tinytree.Tree):
     def __len__(self):
         # kinda hacky way of getting the count
         return sum(1 for i in self.dfs())
+
+    def __iter__(self):
+        return self.dfs()
 
     def check_child_consistency(self, tol=1.e-8):
         for child in self.children:

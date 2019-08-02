@@ -54,6 +54,7 @@ class FileManagerNED:
         profile = datasets[0].profile
         dest, output_transform = rasterio.merge.merge(datasets, bounds=bounds, nodata=np.nan,
                                                       precision=workflow.conf.rcParams['digits'])
+        dest = np.where(dest < -1.e-10, np.nan, dest)
 
         # set the profile
         profile['transform'] = output_transform
@@ -119,6 +120,10 @@ class FileManagerNED:
                 west = int(np.round(r['boundingBox']['minX']))
 
                 filename = self.names.file_name(north, -west)
+                if filename not in filenames:
+                    # randomly some extra matches are found?
+                    continue
+                
                 filenames.remove(filename)
 
                 if not os.path.exists(filename) or force:
@@ -160,7 +165,12 @@ class FileManagerNED:
                     filenames_success.append(filename)
                     
             if len(filenames) != 0:
-                raise RuntimeError("{}: failure in REST query, expected differing set of filenames than recieved.".format(self.name))
+                logging.warn('Potentially missing tiles in the DEM covering bounds: {}'.format(bounds))
+                logging.warn('This may be a REST API error, or it may be that some tiles are oceanic and not needed.')
+                logging.warn('Continuing, but consider this issue if some elevation data is missing.')
+                logging.warn('Missing Tiles:')
+                for fname in filenames:
+                    logging.warn('  {}'.format(fname))
         else:
             filenames_success = filenames
 

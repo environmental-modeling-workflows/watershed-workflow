@@ -330,6 +330,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
     return river
 
 def make_global_tree(rivers, tol=0.1):
+    """Sorts shapely river objects into a list of tree structures."""
     if len(rivers) is 0:
         return list()
 
@@ -374,30 +375,22 @@ def make_global_tree(rivers, tol=0.1):
     return trees
 
 
-def filter_rivers_to_huc(hucs, rivers, tol):
+def filter_rivers_to_shape(shape, rivers, tol):
     """Filters out rivers not inside the HUCs provided."""
     # removes any rivers that are not at least partial contained in the hucs
     if type(rivers) is list and len(rivers) is 0:
         return list()
 
-    logging.info("  ...forming union")
-    union = shapely.ops.cascaded_union(list(hucs.polygons()))
-    union = union.buffer(tol, 4)
-    
     logging.info("  ...filtering")
     if type(rivers) is shapely.geometry.MultiLineString or \
        (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
-        rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(union,r)]
+        rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(shape,r)]
     elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
-        rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(union,r)]
+        rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(shape,r)]
     else:
         raise RuntimeError("Unrecognized river shape type?")
-
-    logging.info("  ...making global tree")
-    rivers_tree = workflow.hydrography.make_global_tree(rivers2, tol=0.1)
-    logging.info("  ...done")
-    return rivers_tree
-
+    return rivers2
+    
 def quick_cleanup(rivers, tol=0.1):
     """First pass to clean up hydro data"""
     logging.info("  quick cleaning rivers")

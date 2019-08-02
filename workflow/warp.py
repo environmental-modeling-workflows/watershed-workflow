@@ -41,22 +41,8 @@ def warp_shapely(shp, old_crs, new_crs):
     new_crs_proj = pyproj.Proj(new_crs)
     return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
 
-    
-    # if type(shp) is shapely.geometry.MultiPoint:
-    #     return shapely.geometry.MultiPoint([warp_shapely(p, old_crs, new_crs) for p in shp])
-    # elif type(shp) is shapely.geometry.MultiLineString:
-    #     return shapely.geometry.MultiLineString([warp_shapely(p, old_crs, new_crs) for p in shp])
-    # elif type(shp) is shapely.geometry.MultiPolygon:
-    #     return shapely.geometry.MultiPolygon([warp_shapely(p, old_crs, new_crs) for p in shp])
-    # elif type(shp) is shapely.geometry.Point:
-    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
-    #     return shapely.geometry.Point(x,y)
-    # elif type(shp) is shapely.geometry.LineString:
-    #     x,y = warp_xy(shp.xy[0], shp.xy[1], old_crs, new_crs)
-    #     return shapely.geometry.LineString(x,y)
-    # elif type(shp) is shapely.geometry.Polygon:
-    #     x,y = warp_xy(shp.exterior.xy[0], shp.exterior.xy[1])
-    # return shapely.geometry.Polygon(zip(x,y))
+def warp_shapelys(shps, old_crs, new_crs):
+    return [warp_shapely(shp, old_crs, new_crs) for shp in shps]
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""
@@ -141,43 +127,35 @@ def warp_raster(src_profile, src_array, dst_crs=None, dst_profile=None):
     if dst_crs is None:
         dst_crs = dst_profile['crs']
 
-    logging.debug('Warping raster with bounds: %s to CRS: "%s"'%(workflow.conf.bounds_from_profile(src_profile), dst_crs['init']))
+    # return if no warp needed
+    if dst_crs == src_profile['crs']:
+        return src_profile, src_array
+
+        
+    src_bounds = rasterio.transform.array_bounds(src_profile['height'], src_profile['width'], src_profile['transform'])
+    logging.debug('Warping raster with bounds: {} to CRS: {}'.format(src_bounds, dst_crs['init']))
         
     if dst_profile is None:
         dst_profile = src_profile.copy()
 
         # Calculate the ideal dimensions and transformation in the new crs
-        dst_affine, dst_width, dst_height = rasterio.warp.calculate_default_transform(
-            src_profile['crs'], dst_crs, src_profile['width'], src_profile['height'], *workflow.conf.bounds_from_profile(src_profile))
+        dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
+            src_profile['crs'], dst_crs, src_profile['width'], src_profile['height'], *src_bounds)
 
         # update the relevant parts of the profile
         dst_profile.update({
             'crs': dst_crs,
-            'transform': dst_affine,
-            'affine': dst_affine,
+            'transform': dst_transform,
             'width': dst_width,
             'height': dst_height
         })
 
-        
-    # return if no warp needed
-    if dst_crs == src_profile['crs']:
-        return src_profile, src_array
-
     # Reproject and return
     dst_array = np.empty((dst_height, dst_width), dtype=src_array.dtype)
-    rasterio.warp.reproject(
-        source=src_array,
-        src_crs=src_profile['crs'],
-        src_transform=src_profile['affine'],
-        destination=dst_array,
-        dst_transform=dst_affine,
-        dst_crs=dst_crs,
-        resampling=rasterio.warp.Resampling.nearest,
-        num_threads=2)
+    rasterio.warp.reproject(src_array, dst_array, src_profile['transform'], src_crs=src_profile['crs'],
+                            dst_transform=dst_transform, dst_crs=dst_crs, resampling=rasterio.warp.Resampling.nearest)
 
-    logging.debug('  new bounds: %s'%workflow.conf.bounds_from_profile(dst_profile))
-
+    dst_bounds = rasterio.transform.array_bounds(dst_profile['height'], dst_profile['width'], dst_profile['transform'])
     return dst_profile, dst_array
 
 def warp_raster_file(infile, outfile, epsg=None):

@@ -1,100 +1,176 @@
+import logging
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import collections as pltc
 import shapely
-import workflow.colors
+import rasterio
+import descartes
+import cartopy.crs
 
+import workflow.utils
+import workflow.conf
 
-def huc(huc, color=None, style='-', linewidth=1):
-    if color is not None:
-        plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], style, color=color, linewidth=linewidth)
-    else:
-        plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], style, linewidth=linewidth)
+def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1):
+    """Returns an axis with a projection."""
+    # make a figure
+    if fig is None:
+        fig = plt.figure()
 
+    # no crs, just get an ax -- you deal with it.
+    if crs is None:
+        return fig.add_subplot(nrow, ncol, index)
+            
+    try:
+        # maybe the crs is itself a projected crs!
+        ax = fig.add_subplot(nrow, ncol, index, projection=cartopy.crs.epsg(crs['init'][5:]))
+        return ax
 
-def hucs(hucs, color=None, style='-', linewidth=1):
-    for huc in hucs.polygons():
-        plt.plot(huc.exterior.xy[0], huc.exterior.xy[1], style, color=color, linewidth=linewidth)
-
-def shply(shps, color=None, style='-', linewidth=1):
-    for shp in shps:
-        try:
-            plt.plot(shp.exterior.xy[0], shp.exterior.xy[1], style, color=color, linewidth=linewidth)
-        except AttributeError:
-            # multipolygon
-            for poly in shp:
-                plt.plot(poly.exterior.xy[0], poly.exterior.xy[1], style, color=color, linewidth=linewidth)
-                
-
-def shapes(shps, *args, **kwargs):
-    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
-    shply(shplys, *args, **kwargs)
-        
-
-def rivers(rivers, color=None, style='-', linewidth=1):
-    if style.endswith('-') or style.endswith('.'):
-        marker = None
-    else:
-        marker = style[-1]
-        if len(style) is 1:
-            style = None
+    except ValueError:
+        if crs == workflow.conf.latlon_crs():
+            # use PlateCaree projection for Lat-Long 
+            projection = cartopy.crs.PlateCarree()
+            ax = fig.add_subplot(nrow, ncol, index, projection=projection)
+            return ax
         else:
-            style = style[:-1]        
+            # not a projected crs, and don't have an easy guess for a valid projection, give up
+            raise ValueError('Cannot plot CRS, it is not a projection: {}'.format(crs['init']))
 
-    if len(rivers) is 0:
+
+def huc(huc, crs, color='k', ax=None, **kwargs):
+    """Plot HUC object, a wrapper for plot.shply()"""
+    return shply([huc,], crs, color, ax, **kwargs)
+
+def hucs(hucs, crs, color='k', ax=None, **kwargs):
+    """Plot SplitHUCs object, a wrapper for plot.shply()"""
+    ps = [p for p in hucs.polygons()]
+    return shply(ps, crs, color, ax, **kwargs)
+
+def shapes(shps, crs, color='k', ax=None, **kwargs):
+    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
+    shply(shplys, crs, color, ax, **kwargs)
+
+def river(river, crs, color='b', ax=None, **kwargs):
+    shply(river, crs, color, ax, **kwargs)
+
+def rivers(rivers, crs, color='b', ax=None,  **kwargs):
+    if type(rivers) is shapely.geometry.MultiLineString:
+        return river(rivers, crs, color, ax, **kwargs)
+    
+    if type(color) is not str and len(color) == len(rivers):
+        for r, c in zip(rivers, color):
+            river(r, crs, c, ax, **kwargs)
+    else:
+        for r in rivers:
+            river(r, crs, color, ax, **kwargs)
+            
+    
+def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
+    """Plot shapely objects.
+
+    Currently this assumes shps is an iterable collection of Points,
+    Lines, or Polygons.  So while a single MultiPolygon is allowed,
+    lists of MultiPolygons are not currently supported.  And
+    heterogeneous collections are not supported.
+    """
+    if len(shps) is 0:
         return
+    if 'facecolor' not in kwargs:
+        kwargs['facecolor'] = 'none'
 
-    # gather lines
-    if type(rivers[0]) is workflow.tree.Tree:
-        lines = []
-        for tree in rivers:
-            lines.extend([river.coords[:] for river in tree.dfs()])
-    elif type(rivers[0]) is shapely.geometry.LineString:
-        lines = [river.coords[:] for river in rivers]
+    if ax is None:
+        ax = get_ax(crs)
 
-    # plot lines
-    if style is not None:
-        lc = pltc.LineCollection(lines, colors=color, linewidths=linewidth, linestyle=style)
-        plt.gca().add_collection(lc)
-    if marker is not None:
-        marked_points = np.concatenate([np.array(l) for l in lines])
-        assert(marked_points.shape[-1] == 2)
-        plt.scatter(marked_points[:,0], marked_points[:,1], c=color, marker=marker)
+    if not hasattr(ax, 'projection') or crs is None:
+        transform = None
+    else:
+        transform = workflow.conf.get_transform(crs)
         
-    plt.gca().autoscale()
-    plt.gca().margins(0.1)
-
-
-def river(river, color='b', style='-', linewidth=1):
-    for r in river:
-        plt.plot(r.xy[0], r.xy[1], style, color=color, linewidth=linewidth)
+    if type(next(iter(shps))) is shapely.geometry.Point:
+        # plot points
+        if 'marker' not in kwargs:
+            kwargs['marker'] = 'o'
         
-def points(points, **kwargs):
-    x = [p.xy[0][0] for p in points]
-    y = [p.xy[1][0] for p in points]
-    plt.scatter(x,y,**kwargs)
+        points = np.array([p.coords for p in shps])[:,0,:]
+        if transform is None:
+            ax.scatter(points[:,0], points[:,1], c=color, **kwargs)
+        else:
+            ax.scatter(points[:,0], points[:,1], c=color, transform=transform, **kwargs)
+            
+            
+    elif type(next(iter(shps))) is shapely.geometry.LineString:
+        # plot lines
+        if 'linestyle' not in kwargs:
+            kwargs['linestyle'] = style
+        if 'colors' not in kwargs:
+            kwargs['colors'] = color
+        
+        lines = [np.array(l.coords) for l in shps]
+        lc = pltc.LineCollection(lines, **kwargs)
+        if transform is not None:
+            lc.set_transform(transform)
+        ax.add_collection(lc)
+        ax.autoscale()
+        
+    elif type(next(iter(shps))) is shapely.geometry.Polygon:
+        if 'linestyle' not in kwargs:
+            kwargs['linestyle'] = style
 
-def triangulation(points, tris, color='gray', linewidth=1, edgecolor='gray', norm=None, vmin=None, vmax=None):
+        try:
+            color_len = len(color)
+        except (AttributeError,TypeError):
+            color_len = -1
+
+        if type(color) is str or color_len != len(shps):
+            # assume this is ONE color, and therefore can add as a multipolygon/polygon collection
+            if 'edgecolor' not in kwargs:
+                kwargs['edgecolor'] = color
+            
+            multi_poly = shapely.geometry.MultiPolygon(shps)
+            patch = descartes.PolygonPatch(multi_poly, **kwargs)
+            if transform is not None:
+                patch.set_transform(transform)
+            ax.add_patch(patch)
+
+        else:
+            # add polygons independently
+            if color is None:
+                for shp in shps:
+                    patch = descartes.PolygonPatch(shp, **kwargs)
+                    # if transform is not None:
+                    #     patch.set_transform(transform)
+                    ax.add_patch(patch)
+            else:
+                for c, shp in zip(color, shps):
+                    patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
+                    # if transform is not None:
+                    #     patch.set_transform(transform)
+                    ax.add_patch(patch)
+        ax.autoscale()
+
+def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
+    if ax is None:
+        ax = get_ax(crs)
+    
     if color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
 
     if color == 'elevation':
-        return plt.tripcolor(points[:,0], points[:,1], tris, points[:,2], linewidth=linewidth, edgecolor=edgecolor, norm=norm, vmin=vmin, vmax=vmax)
+        return ax.tripcolor(points[:,0], points[:,1], tris, points[:,2], **kwargs)
     elif type(color) != str:
-        return plt.tripcolor(points[:,0], points[:,1], tris, color, linewidth=linewidth, edgecolor=edgecolor, norm=norm, vmin=vmin, vmax=vmax)
+        return ax.tripcolor(points[:,0], points[:,1], tris, color, **kwargs)
     else:        
-        return plt.triplot(points[:,0], points[:,1], tris, color=color, linewidth=linewidth)
+        return ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
 
-# def dem(profile, data, vmin=None, vmax=None):
-#     if vmin is None:
-#         vmin = data.min()
-#     if vmax is None:
-#         vmax = data.max()
+def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
+    if ax is None:
+        ax = get_ax(profile['crs'])
 
+    if vmin is None:
+        vmin = np.nanmin(data)
+    if vmax is None:
+        vmax = np.nanmax(data)
 
-    
-    
-        
-    
-
-    
+    bounds = rasterio.transform.array_bounds(profile['height'], profile['width'], profile['transform'])
+    extent = [bounds[0], bounds[2], bounds[1], bounds[3]]
+    logging.info('BOUNDS: {}'.format(bounds))
+    return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax)

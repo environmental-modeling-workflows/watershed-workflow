@@ -117,8 +117,7 @@ class SplitHUCs:
                     intersection_gon[i].add(ihandle)
                     intersection_gon[j].add(ihandle)
                 elif type(inter) is shapely.geometry.MultiLineString:
-                    assert(False)
-                    handles = self.segments.add_many(inter)
+                    handles = self.segments.add_many(list(inter))
                     ihandles = self.intersections.add_many([HandledCollection([h,]) for h in handles])
                     intersection_gon[i].add_many(ihandles)
                     intersection_gon[j].add_many(ihandles)
@@ -195,6 +194,11 @@ def intersect_and_split(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
             if i != j and s1.intersects(s2):
                 inter = s1.intersection(s2)
+                if type(inter) is shapely.geometry.collection.GeometryCollection:
+                    # likely some overlap, we got a polygon...
+                    s2 = s2.difference(s1)
+                    inter = s1.intersection(s2)
+                
                 if type(inter) is shapely.geometry.MultiLineString:
                     inter = shapely.ops.linemerge(inter)
                 elif type(inter) is shapely.geometry.LineString:
