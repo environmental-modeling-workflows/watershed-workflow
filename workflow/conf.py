@@ -40,6 +40,10 @@ def default_crs():
     """Returns the fiona coordinate system used by default for all output."""
     return get_crs(rcParams['epsg'])
 
+def default_crs_alaska():
+    """Returns a sane default fiona coordinate system for Alaska work."""
+    return get_crs(3338)
+
 def set_default_crs(epsg):
     """Set the default fiona coordinate system from an EPSG integer"""
     crs = get_crs(epsg) # make sure valid now

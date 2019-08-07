@@ -14,16 +14,10 @@ bounds4_ll = np.array([-76.3955534, 36.8008194, -73.9026218, 42.4624454])
 
 @pytest.fixture
 def nlcd():
-    return manager_nlcd.FileManagerNLCD(layer='Land_Cover')
+    return manager_nlcd.FileManagerNLCD()
 
 def test_nlcd_downloads_plots(nlcd):
-    f = nlcd.download(bounds4_ll, workflow.conf.latlon_crs())
-    with rasterio.open(f, 'r') as fid:
-        d = fid.read(1)
-
-    plt.imshow(d)
-    plt.show()
-
+    f = nlcd._download()
 
 def test_nlcd(nlcd):
     # requires tiles
@@ -35,4 +29,4 @@ def test_nlcd(nlcd):
     plt.imshow(dem)
     plt.show()
     
-    assert(dem.shape == (3449, 3580))
+    assert(dem.shape == (3827, 2479))

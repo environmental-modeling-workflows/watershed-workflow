@@ -13,6 +13,7 @@ from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, Fil
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_shape import FileManagerShape
 from workflow.sources.manager_nrcs import FileManagerNRCS
+from workflow.sources.manager_nlcd import FileManagerNLCD
 
 
 # available and default water boundary datasets
@@ -39,6 +40,12 @@ soil_sources = {'NRCS SSURGO':FileManagerNRCS(),
                 }
 default_soil_source = 'NRCS SSURGO'
 
+# available and default land cover
+land_cover_sources = {'NLCD (L48)' : FileManagerNLCD(layer='Land_Cover', location='L48'),
+                      'NLCD (AK)' : FileManagerNLCD(layer='Land_Cover', location='AK')
+                      }
+default_land_cover = 'NLCD (L48)'
+
 
 def get_default_sources():
     """Provides a default set of data sources."""
@@ -47,7 +54,7 @@ def get_default_sources():
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
     sources['DEM'] = dem_sources[default_dem_source]
     sources['soil type'] = soil_sources[default_soil_source]
-    sources['land cover'] = None
+    sources['land cover'] = land_cover_sources[default_land_cover]
     sources['soil thickness'] = None
     return sources
 
@@ -82,6 +89,14 @@ def get_sources(args):
         pass
     else:
         sources['soil type'] = soil_sources[source_soil]
+
+
+    try:
+        land_cover = args.land_cover
+    except AttributeError:
+        pass
+    else:
+        sources['land cover'] = soil_sources[land_cover]
         
     return sources
 

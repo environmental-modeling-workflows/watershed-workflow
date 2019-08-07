@@ -4,7 +4,9 @@ import os,sys
 import logging
 import numpy as np
 import shapely
-import rasterio.merge
+import rasterio
+import rasterio.windows
+import rasterio.transform
 import requests
 import requests.exceptions
 
@@ -15,16 +17,20 @@ import workflow.warp
 import workflow.sources.names
 
 
+# this is horrendous
+urls = {'NLCD_2016_Land_Cover_L48': 'https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip',
+        }
+
+
 
 class FileManagerNLCD:
     def __init__(self, layer='Land_Cover', year=None, location='L48'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
         
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
-        self.name = 'National Land Cover Database (NLCD) {}'.format(layer)
-        self.file_format = 'geotiff'
-        self.names = workflow.sources.names.Names(self.name, 'land_cover', None,
-                                                  'NLCD_Land_Cover_epsg{}_{:.4f}_{:.4f}_{:.4f}_{:.4f}.tif')
+        self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
+        self.names = workflow.sources.names.Names(self.name, 'land_cover', self.layer_name,
+                                                  self.layer_name+'.img')
 
     def validate_input(self, layer, year, location):
         valid_layers = ['Land_Cover', 'Imperviousness']
@@ -49,78 +55,77 @@ class FileManagerNLCD:
         return layer, year, location
         
 
-    def get_raster(self, shape, crs):
+    def get_raster(self, shply, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
         # get shape as a shapely, single Polygon
-        if type(shape) is dict:
-            shply = workflow.utils.shply(shape['geometry'])
-        if type(shape) is shapely.geometry.MultiPolygon:
-            shply = shapely.ops.cascaded_union(shape)
+        if type(shply) is dict:
+            shply = workflow.utils.shply(shply['geometry'])
+        if type(shply) is shapely.geometry.MultiPolygon:
+            shply = shapely.ops.cascaded_union(shply)
 
-        # warp to lat-lon
-        shply = workflow.warp.warp_shapely(shply, crs, workflow.conf.latlon_crs())
+        # download (or hopefully don't) the file
+        filename, nlcd_profile = self._download()
+        
+        
+        logging.info('CRS: {}'.format(nlcd_profile['crs']))
 
-        # get the bounds and download
+        # warp to crs
+        shply = workflow.warp.warp_shapely(shply, crs, nlcd_profile['crs'])
+
+        # calculate a window
         bounds = shply.bounds
-        fname = self.download(bounds, workflow.conf.latlon_crs())
-
-        with rasterio.open(fname, 'r') as fid:
+        offset_y, offset_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[0], bounds[3])
+        offset_x = max(0, offset_x - 10)
+        offset_y = max(0, offset_y - 10)
+        
+        lr_y, lr_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[2], bounds[1])
+        nx, ny = nlcd_profile['width'], nlcd_profile['height']
+        lr_x = min(lr_x + 10, nx)
+        lr_y = min(lr_y + 10, ny)
+        
+        window = rasterio.windows.Window(offset_x, offset_y, lr_x - offset_x, lr_y - offset_y)
+        with rasterio.open(filename, 'r') as fid:
             profile = fid.profile
-            band = fid.read(1)
+            band = fid.read(1, window=window)
+
+        # shift the profile by the offset
+        profile['transform'] = profile['transform'] * profile['transform'].translation(offset_x, offset_y)
+
         return profile,band
 
-    def request(self, bounds, crs):
-        """Forms the REST API get to find URLs."""
-        if crs == workflow.conf.latlon_crs():
-            res = 0.0003
-        else:
-            res = 30
-
-        feather_bounds = list(bounds[:])
-        feather_bounds[0] = feather_bounds[0] - 100*res
-        feather_bounds[1] = feather_bounds[1] - 100*res
-        feather_bounds[2] = feather_bounds[2] + 100*res
-        feather_bounds[3] = feather_bounds[3] + 100*res
-
-        # NLCD requires width and height
-        # Guess at this assuming 30m is ~.00003 degrees, at least in north america...
-        height = int(np.round((feather_bounds[3] - feather_bounds[1]) / res))
-        width = int(np.round((feather_bounds[2] - feather_bounds[0]) / res))
-        print('  image size: ({},{})'.format(width, height))
-        rest_bounds = ','.join(str(b) for b in feather_bounds)
-        print('  rest bounds: {}'.format(rest_bounds))
-        try:
-            rest_url = 'https://www.mrlc.gov/geoserver/mrlc_display/NLCD_{}_{}_{}/wms'.format(self.year, self.layer, self.location)
-            r = requests.get(rest_url, params={'service':'WMS',
-                                               'request':'GetMap',
-                                               'layers':self.layer_name,
-                                               'width':width,
-                                               'height':height,
-                                               'bbox':rest_bounds,
-                                               'format':'image/geotiff',
-                                               'crs':crs['init']})
-        except requests.exceptions.ConnectionError as err:
-            logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))
-            raise err
-
-        r.raise_for_status()
-        return r
-
-    def download(self, bounds, crs, force=False):
+    def _download(self, force=False):
         """Download the files, returning list of filenames."""
-        logging.info("Collecting images for bounds: {} in crs: {}".format(bounds, crs['init']))
-        
         # check directory structure
         os.makedirs(self.names.data_dir(), exist_ok=True)
-        os.makedirs(self.names.raw_folder_name(), exist_ok=True)
+        work_folder = self.names.raw_folder_name()
+        os.makedirs(work_folder, exist_ok=True)
 
-        filename = self.names.file_name(crs['init'][5:], *bounds)
+        filename = self.names.file_name()
         print('  filename: {}'.format(filename))
         if not os.path.exists(filename) or force:
-            r = self.request(bounds, crs)
-            with open(filename, 'wb') as fid:
-                fid.write(r.content)
-        return filename
+            try:
+                url = urls[self.layer_name]
+            except KeyError:
+                raise NotImplementedError('Not yet implemented (but trivial to add, just ask!): {}'.format(self.layer_name))
+
+            logging.warning('Downloading NLCD dataset: {} -- this will take a long time, depending upon internet connection.'.format(self.layer_name))
+
+            downloadfile = os.path.join(work_folder, url.split("/")[-1])
+            if not os.path.exists(downloadfile) or force:
+                logging.debug("Attempting to download source for target '%s'"%filename)
+                source_utils.download(url, downloadfile)
+            source_utils.unzip(downloadfile, work_folder)
+
+            # hope we can find it?
+            img_files = [f for f in os.listdir(work_folder) if f.endswith('.img')]
+            assert(len(img_files) == 1)
+            target = os.path.join(work_folder, img_files[0])
+            os.rename(target, filename)
+            os.rename(target[:-3]+'ige', filename[:-3]+'ige')
+
+        with rasterio.open(filename, 'r') as fid:
+            profile = fid.profile
+        return filename, profile
         
 
 

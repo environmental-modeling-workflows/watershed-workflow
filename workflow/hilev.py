@@ -248,7 +248,7 @@ def get_shapes_in_bounds(source, bounds, crs, centering=None):
     else:
         centroid = shapely.geometry.Point(0,0)
 
-    return shps, properties, centroid
+    return shps, crs, properties, centroid
 
 
 def get_split_form_shapes(source, index, crs=None, centering=False):
@@ -272,7 +272,7 @@ def get_split_form_shapes(source, index, crs=None, centering=False):
                         |  value of centering.
 
     """
-    shapes, centroid = get_shapes(source, index, crs, centering)
+    shapes, crs, centroid = get_shapes(source, index, crs, centering)
     return workflow.split_hucs.SplitHUCs(shapes), centroid
 
 
@@ -513,7 +513,7 @@ def simplify_and_prune(hucs, rivers, simplify=10, prune_reach_size=0, cut_inters
         return rivers
 
     logging.info("Generate the river tree")
-    rivers = workflow.hydrograph.make_global_tree(rivers)
+    rivers = workflow.hydrography.make_global_tree(rivers)
 
     logging.info("Removing rivers with fewer than {} reaches.".format(prune_reach_size))
     for i in reversed(range(len(rivers))):
@@ -665,7 +665,7 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors, sha
 
     img_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
 
-    logging.info('Coloring shapes onto raster: "{}"'.format(target_filename))
+    logging.info('Coloring shapes onto raster:')
     logging.info('  target_bounds = {}'.format(target_bounds))
     logging.info('  img_bounds = {}'.format(img_bounds))
     logging.info('  pixel_size = {}'.format(target_dx))
@@ -686,7 +686,7 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors, sha
     for p, p_id in zip(shapes, shape_colors):
         mask = rasterio.features.geometry_mask([p,], z.shape, transform, invert=True)
         z[mask] = p_id
-    return raster_profile, raster, img_bounds
+    return z, raster_profile, img_bounds
 
 
 

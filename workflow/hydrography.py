@@ -84,7 +84,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # dealing with crossings might have generated river segments
     # outside of my space.  remove these.  Note the use of negative tol
     logging.info("  filtering rivers to HUC")
-    rivers = filter_rivers_to_huc(hucs, rivers, -0.1*tol)
+    rivers = filter_rivers_to_shape(hucs.exterior(), rivers, -0.1*tol)
     return rivers
 
 def _snap_and_cut(point, line, tol=0.1):
@@ -387,6 +387,7 @@ def filter_rivers_to_shape(shape, rivers, tol):
         rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(shape,r)]
     elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
         rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(shape,r)]
+        rivers2 = make_global_tree(rivers2)
     else:
         raise RuntimeError("Unrecognized river shape type?")
     return rivers2

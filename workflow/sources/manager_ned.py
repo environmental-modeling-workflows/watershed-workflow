@@ -47,12 +47,17 @@ class FileManagerNED:
 
         # get the bounds and download
         bounds = shply.bounds
-        files = self.download(bounds)
+        feather_bounds = list(bounds[:])
+        feather_bounds[0] = feather_bounds[0] - .01
+        feather_bounds[1] = feather_bounds[1] - .01
+        feather_bounds[2] = feather_bounds[2] + .01
+        feather_bounds[3] = feather_bounds[3] + .01
+        files = self.download(feather_bounds)
 
         # merge into a single raster
         datasets = [rasterio.open(f) for f in files]
         profile = datasets[0].profile
-        dest, output_transform = rasterio.merge.merge(datasets, bounds=bounds, nodata=np.nan,
+        dest, output_transform = rasterio.merge.merge(datasets, bounds=feather_bounds, nodata=np.nan,
                                                       precision=workflow.conf.rcParams['digits'])
         dest = np.where(dest < -1.e-10, np.nan, dest)
 
@@ -69,12 +74,7 @@ class FileManagerNED:
         rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
         rest_dataset = self.name + ' ' + self.resolution
 
-        feather_bounds = list(bounds[:])
-        feather_bounds[0] = feather_bounds[0] - .01
-        feather_bounds[1] = feather_bounds[1] - .01
-        feather_bounds[2] = feather_bounds[2] + .01
-        feather_bounds[3] = feather_bounds[3] + .01
-        rest_bounds = ','.join(str(b) for b in feather_bounds)
+        rest_bounds = ','.join(str(b) for b in bounds)
         try:
             r = requests.get(rest_url, params={'datasets':rest_dataset,
                                                'bbox':rest_bounds,

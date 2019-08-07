@@ -34,11 +34,11 @@ def warp_bounds(bounds, old_crs, new_crs):
 
 def warp_shapely(shp, old_crs, new_crs):
     """Uses proj to reproject shapes, NOT IN PLACE"""
-    if old_crs['init'] == new_crs['init']:
-        return shp
-
     old_crs_proj = pyproj.Proj(old_crs)
     new_crs_proj = pyproj.Proj(new_crs)
+    if old_crs_proj == new_crs_proj:
+        return shp
+    
     return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
 
 def warp_shapelys(shps, old_crs, new_crs):

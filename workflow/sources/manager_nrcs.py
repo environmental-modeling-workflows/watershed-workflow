@@ -31,13 +31,14 @@ class FileManagerNRCS:
         filename = self._download(bounds)
 
         with fiona.open(filename, 'r') as fid:
-            shps = [workflow.utils.shply(shp['geometry'], True) for shp in fid]
+            shps = [workflow.utils.shply(shp['geometry'], shp['properties'], True) for shp in fid]
             ids = [shp['id'] for shp in fid]
             profile = fid.profile
 
         logging.info('  Found {} shapes.'.format(len(shps)))
         bnds = shapely.ops.cascaded_union(shps)
         logging.info('  With bounds: {}'.format(bnds.bounds))
+        logging.info('  and crs: {}'.format(profile['crs']))
         return profile, shps, ids
 
     def bounds(self, b, bounds_crs):

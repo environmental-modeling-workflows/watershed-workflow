@@ -151,15 +151,16 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
     if ax is None:
         ax = get_ax(crs)
     
-    if color == 'elevation' and points.shape[1] != 3:
+    if type(color) is str and color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
 
-    if color == 'elevation':
-        return ax.tripcolor(points[:,0], points[:,1], tris, points[:,2], **kwargs)
+    if type(color) is str and color == 'elevation':
+        col =  ax.tripcolor(points[:,0], points[:,1], tris, points[:,2], **kwargs)
     elif type(color) != str:
-        return ax.tripcolor(points[:,0], points[:,1], tris, color, **kwargs)
+        col =  ax.tripcolor(points[:,0], points[:,1], tris, color, **kwargs)
     else:        
-        return ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
+        col =  ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
+    return col
 
 def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     if ax is None:
