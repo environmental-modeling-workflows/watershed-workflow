@@ -10,11 +10,11 @@ import cartopy.crs
 import workflow.utils
 import workflow.conf
 
-def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1):
+def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, **kwargs):
     """Returns an axis with a projection."""
     # make a figure
     if fig is None:
-        fig = plt.figure()
+        fig = plt.figure(**kwargs)
 
     # no crs, just get an ax -- you deal with it.
     if crs is None:

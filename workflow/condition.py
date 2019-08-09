@@ -8,7 +8,17 @@ class Point:
     a list of IDs of neighboring points.
     """
     coords = attr.ib()
-    neighbors = attr.ib()
+    neighbors = attr.ib(factory=set)
+
+def points_from_mesh(m2):
+    """Generates a Point dictionary from a surface mesh, for use with condition"""
+    points = dict( (i, Point(c)) for (i,c) in enumerate(m2.coords) )
+    for conn in m2.conn:
+        for c in conn:
+            points[c].neighbors.update(conn)
+    for i,p in points.items():
+        p.neighbors.remove(i)
+    return points
 
 
 def condition1(points, outletID=None):
@@ -139,13 +149,29 @@ def condition3(points, outletID):
                     
         
 
-def condition(points, outletID, algorithm=3):
+def condition(mesh, outlet=None, algorithm=3):
+    """Condition a 2D mesh, in place.
+    
+    Starts at outlet, if not provided, this defaults to the lowpoint on the boundary.
+
+    Available algorithms:
+     1: original, 2-pass algorithm
+     2: refactored single-pass algorithm based on sorted lists
+     3: boundary marching method.  Should be fastest, and likely equivalent?
+    """
+    points_dict = points_from_mesh(mesh)
+    if outlet is None:
+        boundary_nodes = mesh.boundary_nodes()
+        outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes,2])]
+
     if algorithm == 1:
-        return condition1(points, outletID)
+        condition1(points_dict, outlet)
     elif algorithm == 2:
-        return condition2(points, outletID)
+        condition2(points_dict, outlet)
     elif algorithm == 3:
-        return condition3(points, outletID)
+        condition3(points_dict, outlet)
     else:
         raise RuntimeError('Unknown algorithm "%r"'%(algorithm))
 
+    mesh.points = np.array([p.coords for p in points_dict.values()])
+    

@@ -11,9 +11,11 @@ import logging
 
 from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
 from workflow.sources.manager_ned import FileManagerNED
-from workflow.sources.manager_shape import FileManagerShape
 from workflow.sources.manager_nrcs import FileManagerNRCS
 from workflow.sources.manager_nlcd import FileManagerNLCD
+
+from workflow.sources.manager_shape import FileManagerShape
+from workflow.sources.manager_raster import FileManagerRaster
 
 
 # available and default water boundary datasets

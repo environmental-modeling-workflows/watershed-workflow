@@ -13,7 +13,6 @@ In that case, simply ensure that ${AMANZI_TPLS_DIR}/SEACAS/lib is in
 your PYTHONPATH.
 """
 
-import sys,os
 import numpy as np
 import collections
 import logging
@@ -124,6 +123,32 @@ class Mesh2D(object):
             self._edges = collections.Counter(self.edge_hash(f[i], f[(i+1)%len(f)]) for f in self.conn for i in range(len(f)))
         return self._edges
 
+    def boundary_edges(self):
+        """Return edges in the boundary of the mesh, ordered around the boundary."""
+        be = sorted([k for (k,count) in self.edge_counts().items() if count == 1], key=lambda a : a[0])
+        seed = be.pop(0)
+        be_ordered = [seed,]
+
+        done = False
+        while not done:
+            try:
+                new_e = next( e for e in be if e[0] == be_ordered[-1][1])
+                be.remove(new_e)
+            except StopIteration:
+                new_e = next( e for e in be if e[1] == be_ordered[-1][1])
+                be.remove(new_e)
+                new_e = list(reversed(new_e))
+
+            be_ordered.append(new_e)
+            done = len(be) == 0
+        assert(be_ordered[-1][-1] == be_ordered[0][0])
+        return be_ordered
+
+    def boundary_nodes(self):
+        return [e[0] for e in self.boundary_edges()]
+        
+        
+    
     def check_handedness(self):
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
         for conn in self.conn:
@@ -537,10 +562,7 @@ class Mesh3D(object):
         rep_z = 0.
         for i,thick in enumerate(layer_data):
             for j in range(ncells_per_layer[i]):
-                try:
-                    mat_id = mat_ids[i][0]
-                except TypeError:
-                    mat_id = mat_ids[i]
+                mat_id = mat_ids[i][0]
                 logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f"%(i,
                             count,mat_id,thick/ncells_per_layer[i], rep_z))
                 count += 1

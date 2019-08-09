@@ -36,12 +36,6 @@ class FileManagerNED:
 
     def get_raster(self, shape, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
-        # get shape as a shapely, single Polygon
-        if type(shape) is dict:
-            shape = workflow.utils.shply(shape['geometry'])
-        if type(shape) is shapely.geometry.MultiPolygon:
-            shape = shapely.ops.cascaded_union(shape)
-
         # warp to lat-lon, which is what NED DEMs are indexed by
         shply = workflow.warp.warp_shapely(shape, crs, workflow.conf.latlon_crs())
 

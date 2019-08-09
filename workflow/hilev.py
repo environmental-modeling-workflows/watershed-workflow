@@ -335,7 +335,7 @@ def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, l
     return rivers_s, centroid
 
 
-def get_raster_on_shape(source, shape, crs):
+def get_raster_on_shape(source, shape, crs, buffer=0.):
     """Collects a raster DEM that covers the requested shape.
 
     Arguments:
@@ -350,6 +350,13 @@ def get_raster_on_shape(source, shape, crs):
     logging.info("")
     logging.info("Preprocessing Raster")
     logging.info("-"*30)
+
+    if type(shape) is dict:
+        shape = workflow.utils.shply(shape['geometry'], shape['properties'])
+    if type(shape) is shapely.geometry.MultiPolygon:
+        shape = shapely.ops.cascaded_union(shape)
+    shape = shape.buffer(buffer)
+
     logging.info("collecting raster")
     return source.get_raster(shape, crs)
 
