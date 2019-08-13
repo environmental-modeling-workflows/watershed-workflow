@@ -127,62 +127,56 @@ def lighten(color, fraction=0.6):
 
 import collections
 nlcd_color_map_values = collections.OrderedDict({
-    0  : '#00000000',
-    11 : '#526095FF',     # Open Water
-    12 : '#FFFFFFFF',     # Perennial Ice/Snow
-    21 : '#D28170FF',     # Low Intensity Residential
-    22 : '#EE0006FF',     # High Intensity Residential
-    23 : '#990009FF',     # Commercial/Industrial/Transportation
-    31 : '#BFB8B1FF',     # Bare Rock/Sand/Clay
-    32 : '#969798FF',     # Quarries/Strip Mines/Gravel Pits
-    33 : '#382959FF',     # Transitional
-    41 : '#579D57FF',     # Deciduous Forest
-    42 : '#2A6B3DFF',     # Evergreen Forest
-    43 : '#A6BF7BFF',     # Mixed Forest
-    51 : '#BAA65CFF',     # Dwarf Shrubland
-    52 : '#BAA65CFF',     # Shrubland
-    61 : '#45511FFF',     # Orchards/Vineyards/Other
-    71 : '#D0CFAAFF',     # Grasslands/Herbaceous
-    81 : '#CCC82FFF',     # Pasture/Hay
-    82 : '#9D5D1DFF',     # Row Crops
-    83 : '#CD9747FF',     # Small Grains
-    84 : '#A7AB9FFF',     # Fallow
-    85 : '#E68A2AFF',     # Urban/Recreational Grasses
-    91 : '#B6D8F5FF',     # Woody Wetlands
-    92 : '#B6D8F5FF'})    # Emergent Herbaceous Wetlands
+    0:     (0.00000000000,  0.00000000000,  0.00000000000),
+    11:    (0.27843137255,  0.41960784314,  0.62745098039),
+    12:    (0.81960784314,  0.86666666667,  0.97647058824),
+    21:    (0.86666666667,  0.78823529412,  0.78823529412),
+    22:    (0.84705882353,  0.57647058824,  0.50980392157),
+    23:    (0.92941176471,  0.00000000000,  0.00000000000),
+    24:    (0.66666666667,  0.00000000000,  0.00000000000),
+    31:    (0.69803921569,  0.67843137255,  0.63921568628),
+    41:    (0.40784313726,  0.66666666667,  0.38823529412),
+    42:    (0.10980392157,  0.38823529412,  0.18823529412),
+    43:    (0.70980392157,  0.78823529412,  0.55686274510),
+    51:    (0.64705882353,  0.54901960784,  0.18823529412),
+    52:    (0.80000000000,  0.72941176471,  0.48627450980),
+    71:    (0.88627450980,  0.88627450980,  0.75686274510),
+    72:    (0.78823529412,  0.78823529412,  0.46666666667),
+    73:    (0.60000000000,  0.75686274510,  0.27843137255),
+    74:    (0.46666666667,  0.67843137255,  0.57647058824),
+    81:    (0.85882352941,  0.84705882353,  0.23921568628),
+    82:    (0.66666666667,  0.43921568628,  0.15686274510),
+    90:    (0.72941176471,  0.84705882353,  0.91764705882),
+    95:    (0.43921568628,  0.63921568628,  0.72941176471),
+})
 
 _nlcd_labels = collections.OrderedDict({
-    0  : 'None',
-    11 : 'Open Water',
-    12 : 'Perennial Ice/Snow',
-    21 : 'Low Intensity Residential',
-    22 : 'High Intensity Residential',
-    23 : 'Commercial/Industrial/Transporation',
-    31 : 'Bare Rock/Sand/Clay',
-    32 : 'Quarries/Strip Mines/Gravel Pits',
-    33 : 'Transitional',
-    41 : 'Deciduous Forest',
-    42 : 'Evergreen Forest',
-    43 : 'Mixed Forest',
-    51 : 'Dwarf Shrubland',
-    52 : 'Shrubland',
-    61 : 'Orchards/Vineyards/Other',
-    71 : 'Grasslands/Herbaceous',
-    81 : 'Pasture/Hay',
-    82 : 'Row Crops',
-    83 : 'Small Grains',
-    84 : 'Fallow',
-    85 : 'Urban/Recreational Grasses',
-    91 : 'Woody Wetlands',
-    92 : 'Emergent Herbaceous Wetlands'})
-
+    0:  'None',
+    11: 'Open Water',
+    12: 'Perrenial Ice/Snow',
+    21: 'Developed, Open Space',
+    22: 'Developed, Low Intensity',
+    23: 'Developed, Medium Intensity',
+    24: 'Developed, High Intensity',
+    31: 'Barren Land',
+    41: 'Deciduous Forest',
+    42: 'Evergreen Forest',
+    43: 'Mixed Forest',
+    51: 'Dwarf Scrub',
+    52: 'Shrub/Scrub',
+    71: 'Grassland/Herbaceous',
+    72: 'Sedge/Herbaceous',
+    73: 'Lichens',
+    74: 'Moss',
+    81: 'Pasture/Hay',
+    82: 'Cultivated Crops',
+    90: 'Woody Wetlands',
+    95: 'Emergent Herbaceous Wetlands',
+})
+    
 nlcd_cmap = matplotlib.colors.ListedColormap(list(nlcd_color_map_values.values()))
 
 _nlcd_indices = np.array(list(_nlcd_labels.keys()),'d')
-#_nlcd_ind_bins = [_nlcd_indices[0] - .5 * (_nlcd_indices[1] - _nlcd_indices[0]),] + \
-#                 list((_nlcd_indices[1:] + _nlcd_indices[:-1])/2.) + \
-#                 [_nlcd_indices[-1] + .5 * (_nlcd_indices[-1] - _nlcd_indices[-2]),]
-#nlcd_norm = matplotlib.colors.BoundaryNorm(_nlcd_ind_bins, len(nlcd_color_map_values.keys()))
 nlcd_norm = matplotlib.colors.BoundaryNorm(list(_nlcd_labels.keys())+[93,], len(_nlcd_labels))
 nlcd_ticks = list(_nlcd_labels.keys()) + [93,]
 nlcd_labels = list(_nlcd_labels.values()) + ['',]
