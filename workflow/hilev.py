@@ -689,7 +689,7 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors, sha
                       'transform':transform,
                       'nodata':nodata}
     
-    z = nodata * np.ones((width, height), dtype)
+    z = nodata * np.ones((height, width), dtype)
     for p, p_id in zip(shapes, shape_colors):
         mask = rasterio.features.geometry_mask([p,], z.shape, transform, invert=True)
         z[mask] = p_id
