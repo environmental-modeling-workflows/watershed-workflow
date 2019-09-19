@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.collections as pltc
 import logging
+import math
 
 import fiona
 import rasterio
@@ -251,7 +252,7 @@ def get_shapes_in_bounds(source, bounds, crs, centering=None):
     return shps, crs, properties, centroid
 
 
-def get_split_form_shapes(source, index, crs=None, centering=False):
+def get_split_form_shapes(source, index=-1, crs=None, centering=False):
     """Read a shapefile.
 
     Arguments:
@@ -335,7 +336,7 @@ def get_rivers_by_bounds(source, bounds, bounds_crs, huc_hint, centering=None, l
     return rivers_s, centroid
 
 
-def get_raster_on_shape(source, shape, crs, buffer=0.):
+def get_raster_on_shape(source, shape, crs, buffer=20.):
     """Collects a raster DEM that covers the requested shape.
 
     Arguments:
@@ -435,7 +436,7 @@ def find_huc(source, shp, crs, hint, shrink_factor=1.e-5):
 
     def _find_huc(source, shply, crs, hint):
         """Searches in hint to find shp."""
-        print('searching: %s'%hint)
+        logging.debug('searching: %s'%hint)
         hint_level = len(hint)
         search_level = hint_level + 2
         if search_level > source.lowest_level:
@@ -451,16 +452,16 @@ def find_huc(source, shp, crs, hint, shrink_factor=1.e-5):
             if inhuc == 2:
                 # fully contained in try_huc, recurse
                 hname = subhu['properties']['HUC{:d}'.format(search_level)]
-                print('  subhuc: %s contains'%hname)
+                logging.debug('  subhuc: %s contains'%hname)
                 return _find_huc(source, shply, crs, hname)
             elif inhuc == 1:
                 hname = subhu['properties']['HUC{:d}'.format(search_level)]
-                print('  subhuc: %s partially contains'%hname)
+                logging.debug('  subhuc: %s partially contains'%hname)
                 # partially contained in try_huc, return this
                 return hint
             else:
                 hname = subhu['properties']['HUC{:d}'.format(search_level)]
-                print('  subhuc: %s does not contain'%hname)
+                logging.debug('  subhuc: %s does not contain'%hname)
         assert(False)
 
     if type(shp) is shapely.geometry.Polygon:
@@ -634,14 +635,14 @@ def triangulate(hucs, rivers, args, diagnostics=True):
             # plt.title("triangle area [m^2]")
     return mesh_points, mesh_tris
 
-def elevate(mesh_points, mesh_crs, dem, dem_profile):
+def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):
     """Elevate mesh_points onto the dem."""
     logging.info("")
     logging.info("Elevating Triangulation to DEM")
     logging.info("-"*30)
 
     # index the i,j of the points, pick the elevations
-    elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile)
+    elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile, algorithm)
 
     # create the 3D points
     mesh_points_3 = np.zeros((len(mesh_points),3),'d')
@@ -649,10 +650,39 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile):
     mesh_points_3[:,2] = elev
     return mesh_points_3
 
-def values_from_raster(points, points_crs, raster, raster_profile):
+def values_from_raster(points, points_crs, raster, raster_profile, algorithm='nearest'):
     """Take the value of the nearest pixel to each point in points."""
     points_raster_crs = np.array(workflow.warp.warp_xy(points[:,0], points[:,1], points_crs, raster_profile['crs'])).transpose()
-    values = raster[rasterio.transform.rowcol(raster_profile['transform'], points_raster_crs[:,0], points_raster_crs[:,1])]
+    if algorithm == 'nearest':
+        values = raster[rasterio.transform.rowcol(raster_profile['transform'], points_raster_crs[:,0], points_raster_crs[:,1])]
+    elif algorithm == 'piecewise bilinear':
+        eps = 1.e-10
+        
+        # get the index of the point
+        invtransform = ~raster_profile['transform']
+        mybox = np.zeros((2,2),'d')
+        values = np.zeros((len(points),),'d')
+        for k,xy in enumerate(points_raster_crs):
+            xy = tuple(xy)
+            j,i = invtransform * xy
+
+            # center on pixel
+            i -= 0.5
+            j -= 0.5
+            
+            i = max(eps, min(raster_profile['height']-1-eps, i))
+            j = max(eps, min(raster_profile['width']-1-eps, j))
+
+            mybox[0,0] = raster[math.floor(i), math.floor(j)]
+            mybox[0,1] = raster[math.floor(i), math.ceil(j)]
+            mybox[1,0] = raster[math.ceil(i), math.floor(j)]
+            mybox[1,1] = raster[math.ceil(i), math.ceil(j)]
+            ii = i%1
+            jj = j%1
+
+            up = mybox[0,0] + jj * (mybox[0,1] - mybox[0,0])
+            dn = mybox[1,0] + jj * (mybox[1,1] - mybox[1,0])
+            values[k] = up + (dn - up) * ii
     return values
 
 def raster_on_shapes(shapes, shapes_crs, raster, raster_profile):

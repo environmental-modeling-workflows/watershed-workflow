@@ -30,13 +30,10 @@ def plot_with_dem(args, centroid, hucs, rivers, dem, profile,
                   cb=True, cb_label='elevation [m]', vmin=None, vmax=None,
                   fig=None, ax=None, transform=None):
     # get a figure and axis
+    if fig is None:
+        fig = plt.figure(figsize=args.figsize)
     if ax is None:
-        if fig is None:
-            if args.figsize is None:
-                fig = plt.figure()
-            else:
-                fig = plt.figure(figsize=args.figsize)
-        ax = workflow.plot.get_ax(profile['crs'], fig)
+        ax = workflow.plot.get_ax(args.projection, fig=fig)
 
     # get a plot extent
     if args.extent is None:
@@ -83,7 +80,7 @@ def plot_with_dem(args, centroid, hucs, rivers, dem, profile,
     # plot the raster
     # -- pad the raster to have the same extent
     if dem is not None:
-        mappable = workflow.plot.dem(profile, dem, ax, vmin=vmin, vmax=vmax)
+        mappable = workflow.plot.dem(profile, dem, ax, vmin, vmax)
         if args.basemap:
             mappable.set_zorder(1)
         if cb:

@@ -9,6 +9,7 @@ import requests
 import requests.exceptions
 
 
+import workflow.utils
 import workflow.sources.utils as source_utils
 import workflow.conf
 import workflow.warp
@@ -36,6 +37,9 @@ class FileManagerNED:
 
     def get_raster(self, shape, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
+        if type(shape) is dict:
+            shape = workflow.utils.shply(shape)
+        
         # warp to lat-lon, which is what NED DEMs are indexed by
         shply = workflow.warp.warp_shapely(shape, crs, workflow.conf.latlon_crs())
 

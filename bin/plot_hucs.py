@@ -42,15 +42,16 @@ def plot_hucs(args):
     logging.info('Target projection: "{}"'.format(args.projection['init']))
     
     # collect data
-    hucs, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, args.level, crs=args.projection)
+    crs = args.projection
+    hucs, centroid = workflow.get_split_form_hucs(sources['HUC'], args.HUC, args.level, crs=crs)
     boundary = hucs.exterior()
     
     # hydrography
-    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], hucs.exterior().bounds, args.projection, args.HUC, centering=False)
-    rivers = workflow.hydrography.filter_rivers_to_huc(hucs, rivers, 10.)
+    rivers, centroid = workflow.get_rivers_by_bounds(sources['hydrography'], boundary.bounds, crs, args.HUC, centering=False)
+    #rivers = workflow.hydrography.filter_rivers_to_shape(boundary, rivers, 10.)
 
     # raster
-    dem_profile, dem = workflow.get_masked_raster_on_shape(sources['DEM'], boundary, args.projection, np.nan)
+    dem_profile, dem = workflow.get_masked_raster_on_shape(sources['DEM'], boundary, crs, np.nan)
     logging.info('dem crs: {}'.format(dem_profile['crs']))
 
     return centroid, hucs, rivers, dem, dem_profile
@@ -65,7 +66,7 @@ if __name__ == '__main__':
         if args.title is None:
             args.title = 'HUC: {}'.format(args.HUC)
             
-        fig, ax = workflow.bin_utils.plot_with_dem(args, centroid, hucs, rivers, None, profile, river_color='r')
+        fig, ax = workflow.bin_utils.plot_with_dem(args, centroid, hucs, None, dem, profile, river_color='r')
         
         logging.info("SUCESS")
         if args.output_filename is not None:

@@ -5,7 +5,7 @@ import fiona
 import shapely.geometry
 import numpy as np
 import workflow.hilev
-import workflow.sources
+import workflow.source_list
 
 @pytest.fixture
 def datadir(tmpdir, request):
@@ -37,13 +37,13 @@ def get_fiona(filename):
 def sources():
     sources = dict()
     #sources['HUC08'] = workflow.files.NHDFileManager()
-    sources['HUC'] = workflow.sources.FileManagerNHDPlus()
-    sources['DEM'] = workflow.sources.FileManagerNED()
+    sources['HUC'] = workflow.source_list.FileManagerNHDPlus()
+    sources['DEM'] = workflow.source_list.FileManagerNED()
     return sources
 
 
 def test_find_raises(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
     profile, shp = get_fiona(testshpfile)
@@ -54,7 +54,7 @@ def test_find_raises(datadir):
         workflow.hilev.find_huc(nhd, shp, profile['crs'], '06')
 
 def test_find12(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
     profile, shp = get_fiona(testshpfile)
@@ -64,7 +64,7 @@ def test_find12(datadir):
     assert('060102020103' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '0601'))
 
 def test_find12_exact(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
     profile, shp = get_fiona(testshpfile)
@@ -74,7 +74,7 @@ def test_find12_exact(datadir):
     assert('060102020103' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '060102020103'))
 
 def test_find12_raises(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
     profile, shp = get_fiona(testshpfile)
@@ -85,21 +85,21 @@ def test_find12_raises(datadir):
         workflow.hilev.find_huc(nhd, shp, profile['crs'], '060101080204')
 
 def test_find8(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
     profile, shp = get_fiona(testshpfile)
     assert('06010202' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '0601'))
 
 def test_find8_exact(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
     profile, shp = get_fiona(testshpfile)
     assert('06010202' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '06010202'))
 
 def test_find8_raises(datadir):
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
     profile, shp = get_fiona(testshpfile)

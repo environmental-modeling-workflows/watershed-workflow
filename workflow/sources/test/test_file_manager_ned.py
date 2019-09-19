@@ -17,7 +17,7 @@ def test_ned1():
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED()
     dem_prof, dem = ned.get_raster(huc, profile['crs'])
-    assert(dem.shape == (1396, 1390))
+    assert((1612, 1606) == dem.shape)
 
 def test_ned2():
     # requires tiles
@@ -28,7 +28,7 @@ def test_ned2():
     ned = workflow.sources.manager_ned.FileManagerNED()
     dem_prof, dem = ned.get_raster(huc, profile['crs'])
 
-    assert(dem.shape == (10527, 10953))
+    assert((10743, 11169) == dem.shape)
 
 
 def test_ned3():
@@ -39,7 +39,7 @@ def test_ned3():
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED('1 arc-second')
     dem_prof, dem = ned.get_raster(huc, profile['crs'])
-    assert(dem.shape == (466,464))
+    assert((538, 536) == dem.shape)
 
 def test_ned4():
     # requires tiles
@@ -49,6 +49,6 @@ def test_ned4():
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED('1 arc-second')
     dem_prof, dem = ned.get_raster(huc, profile['crs'])
-    assert(dem.shape == (3509, 3651))
+    assert((3581, 3723) == dem.shape)
 
     

@@ -107,6 +107,7 @@ def close(s1, s2, tol=_tol):
     else:
         raise NotImplementedError("Not implemented for type '%r'"%type(s1))
 
+
 def contains(s1, s2, tol=_tol):
     """A contains algorithm that deals with close/roundoff issues"""
     return s1.buffer(tol,2).contains(s2)
@@ -348,6 +349,7 @@ def merge(ml1, ml2):
         
         
 def non_point_intersection(shp1, shp2):
+    """Checks whether an intersection is larger than a point."""
     inter = shp1.intersection(shp2)
     int_type = type(inter)
     if int_type == shapely.geometry.Point:

@@ -25,19 +25,19 @@ def nhd():
 # having some robustness issues, lets just test a bunch
 def test_nhdplus_url1(nhd):
     url = nhd._url('0204')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlus/HU4/HighResolution/GDB/NHDPLUS_H_0204_HU4_GDB.zip' == url)
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlusHR/Beta/GDB/NHDPLUS_H_0204_HU4_GDB.zip' == url)
 
 def test_nhdplus_url2(nhd):
     url = nhd._url('0601')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlus/HU4/HighResolution/GDB/NHDPLUS_H_0601_HU4_GDB.zip' == url)
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlusHR/Beta/GDB/NHDPLUS_H_0601_HU4_GDB.zip' == url)
 
 def test_nhdplus_url3(nhd):
     url = nhd._url('1402')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlus/HU4/HighResolution/GDB/NHDPLUS_H_1402_HU4_GDB.zip' == url)
+    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlusHR/Beta/GDB/NHDPLUS_H_1402_HU4_GDB.zip' == url)
 
-def test_nhdplus_url4(nhd):
-    url = nhd._url('1906')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlus/HU4/HighResolution/GDB/NHDPLUS_H_1906_HU4_GDB.zip' == url)
+# def test_nhdplus_url4(nhd):
+#     url = nhd._url('1906')
+#     assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHDPlusHR/Beta/GDB/NHDPLUS_H_1906_HU4_GDB.zip' == url)
 
 def test_nhdplus_url_fail(nhd):
     with pytest.raises(ValueError):
