@@ -25,6 +25,8 @@ crss_ak = [(3338, 3338),
 
 show = False
 new_gold = False
+fig = plt.figure()
+
 
 import collections
 def default_dict():
@@ -83,7 +85,7 @@ def polygons():
     return _polygons    
 
 def run_test(start_p, obj_gen, epsg_data, epsg_ax):
-    ax = workflow.plot.get_ax(workflow.conf.get_crs(epsg_ax))
+    ax = workflow.plot.get_ax(workflow.conf.get_crs(epsg_ax), fig)
     if epsg_ax is not None:
         ax.stock_img()
 
@@ -112,6 +114,10 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
         else:
             npt.assert_equal(gold[str(start_p)][obj_gen.__name__][epsg_data], res.get_path().vertices)
 
+    if show:
+        plt.show()
+
+    fig.clear()
 
 
 def test_points(points):
@@ -119,25 +125,19 @@ def test_points(points):
         run_test(point(), points, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), points, epsg_data, epsg_ax)
-    if show:
-        plt.show()
     
 def test_lines(lines):
     for epsg_data, epsg_ax in crss:
         run_test(point(), lines, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), lines, epsg_data, epsg_ax)
-    if show:
-        plt.show()
-
 
 def test_polygons(polygons):
     for epsg_data, epsg_ax in crss:
         run_test(point(), polygons, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), polygons, epsg_data, epsg_ax)
-    if show:
-        plt.show()
+
 
     
 

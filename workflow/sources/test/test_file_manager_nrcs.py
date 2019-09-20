@@ -9,7 +9,7 @@ import workflow.sources.manager_nhd
 import workflow.sources.manager_nrcs
 
     
-def test_ned1():
+def test_nrcs1():
     # single file covers it
     nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
     hprofile, huc = nhd.get_huc('020401010101')

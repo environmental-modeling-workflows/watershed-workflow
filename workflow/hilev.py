@@ -63,7 +63,7 @@ def get_huc(source, huc, crs=None, digits=None):
 .   :obj:`Polygon`
         shapely polygon for the hydrologic unit.
     """
-    huc = huc_str(huc)
+    huc = workflow.sources.utils.huc_str(huc)
     crs, hu_shapes = get_hucs(source, huc, len(huc), crs)
     assert(len(hu_shapes) == 1)
     return crs, hu_shapes[0]
@@ -93,7 +93,7 @@ def get_hucs(source, huc, level, crs=None, digits=None):
         List of shapely polygons for the subbasins.
     """
     # get the hu from source
-    huc = huc_str(huc)
+    huc = workflow.sources.utils.huc_str(huc)
     if level is None:
         level = len(huc)
 
@@ -240,27 +240,34 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
 
 
 def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=True):
-    """Get a list of reaches from hydrography data within a given HUC.
+    """Get a list of reaches from hydrography data within a given HUC and/or bounding box.
 
-    Note: if bounds is provided, crs must not be None and is the crs of the 
-    bounding box.
+    Collects reach datasets within a HUC and/or a bounding box.  If bounds are provided,
+    a containing HUC must still be provided to give a hint for file downloads.  If bounds
+    are not provided, then all reaches that intersect the HUC are included.
+
+    If bounds is provided, crs must not be None and is the crs of the bounding box.
 
     Parameters
     ----------
+
     source : :obj:`source-type`
         Source object providing `get_hydro()`.
+
     huc : str
-        If bounds are provided, a hint to help the source find the file containing
-        the bounds.  For NHD, this is a HUC4 or smaller.  Eventually this might be 
-        optional, but for now this eliminates the need to download multiple files 
-        to search.  If bounds is NOT provided, returns all reachs in this HUC.
+        Search domain for reaches.  If bounds are provided, a hint to help the source
+        find the file containing the bounds.  For NHD, this is a HUC4 or smaller.
+
     bounds : :obj:`[xmin, ymin, xmax, ymax]`
         Bounding box to filter the river network.
+
     crs : :obj:`crs`
         Output coordinate system and coordinate system of bounds.  Defaults to the
         source's crs.
+
     digits : int
         Number of digits to round coordinates to.  Default set by config file.
+
     long : float
         If a reach is longer than this value it gets filtered.  Some NHD data
         has QC issues, or other wierd reaches that don't make sense...
@@ -277,11 +284,11 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     logging.info("")
     logging.info("Preprocessing Hydrography")
     logging.info("-"*30)
-    logging.info("loading streams in bounds {}".format(bounds))
-    logging.info("and HUC hint {}".format(huc))
+    logging.info("loading streams in HUC {}".format(huc))
+    logging.info("and/or bounds {}".format(bounds))
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc_hint, bounds, crs)
+    profile, reaches = source.get_hydro(huc, bounds, crs)
 
     # convert to destination crs
     if crs and crs != profile['crs']:
@@ -305,10 +312,10 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     if long is not None:
         reaches_s = [reach for reach in reaches_s if reach.length() < long]
 
-    return reaches_s
+    return crs, reaches_s
 
 
-def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=20.):
+def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.):
     """Collects a raster DEM that covers the requested shape.
 
     Parameters
@@ -352,36 +359,39 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=20.):
     return profile, raster
 
 
-def get_masked_raster_on_shape(source, shape, crs, buffer=20., nodata=-1):
+def get_masked_raster_on_shape(source, shape, crs, nodata=-1, buffer=0.):
     """Collects a raster DEM that covers the requested shape, masked with 
     nodata value outside of the shape.
 
     Parameters
     ----------
+
     source : :obj:`source-type`
         Source object providing `get_raster()`
+
     shape : :obj:`Polygon`
         shapely or fiona polygon
+
     crs : :obj:`crs`
         Output and shape coordinate system
-    buffer : double
-        Size of buffer added to shape to ensure pixels cover the 
-        entire shape.
+
     nodata : type of raster data
         Value placed outside of shape.
 
+    buffer : double
+        Size of buffer added to shape to ensure pixels cover the 
+        entire shape.
+
+
     Returns
     -------
+
     dem_profile : dict
         Rasterio profile of the image including crs and transform
+
     dem : :obj:`np.array`
         The raster array.
     """
-    logging.info("")
-    logging.info("Preprocessing Raster")
-    logging.info("-"*30)
-    logging.info("collecting raster")
-
     # get the raster
     profile, raster = get_raster_on_shape(source, shape, crs, crs, buffer)
 

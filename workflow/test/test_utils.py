@@ -272,12 +272,6 @@ def test_perp():
 
     
     
-def test_git():
-    hsh = workflow.utils.get_git_revision_hash()
-    assert(type(hsh) is str)
-    assert(len(hsh) == 40)
-
-
 def test_merge0():
     l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
     l2 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])

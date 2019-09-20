@@ -17,48 +17,39 @@ def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
     # make a figure
     if fig is None:
         fig = plt.figure(**kwargs)
+        newfig = True
+    else:
+        newfig = False
 
-    # no crs, just get an ax -- you deal with it.
     if window is None:
         if crs is None:
-            return fig.add_subplot(nrow, ncol, index)
+            # no crs, just get an ax -- you deal with it.
+            ax = fig.add_subplot(nrow, ncol, index)
         elif crs == '3d':
-            return fig.add_subplot(nrow, ncol, index, projection='3d')
+            # 3d plot
+            ax = fig.add_subplot(nrow, ncol, index, projection='3d')
+        else:
+            projection = workflow.conf.get_projection(crs)
+            ax = fig.add_subplot(nrow, ncol, index, projection=projection)
 
-        try:
-            # maybe the crs is itself a projected crs!
-            ax = fig.add_subplot(nrow, ncol, index, projection=cartopy.crs.epsg(crs['init'][5:]))
-            return ax
-        except ValueError:
-            if crs == workflow.conf.latlon_crs():
-                # use PlateCaree projection for Lat-Long 
-                projection = cartopy.crs.PlateCarree()
-                ax = fig.add_subplot(nrow, ncol, index, projection=projection)
-                return ax
-            else:
-            # not a projected crs, and don't have an easy guess for a valid projection, give up
-                raise ValueError('Cannot plot CRS, it is not a projection: {}'.format(crs['init']))
     else:
         if crs is None:
             fig.add_axes(window=window)
-            return fig.gca()
+            ax = fig.gca()
+
         elif crs == '3d':
-            return Axes3D(fig, rect=window)
+            ax = Axes3D(fig, rect=window)
 
-        try:
-            # maybe the crs is itself a projected crs!
-            fig.add_axes(window=window, projection=cartopy.crs.epsg(crs['init'][5:]))
-            return fig.gca()
-        except ValueError:
-            if crs == workflow.conf.latlon_crs():
-                # use PlateCaree projection for Lat-Long 
-                projection = cartopy.crs.PlateCarree()
-                fig.add_axes(window=window, projection=projection)
-                return fig.gca()
-            else:
-            # not a projected crs, and don't have an easy guess for a valid projection, give up
-                raise ValueError('Cannot plot CRS, it is not a projection: {}'.format(crs['init']))
+        else:
+            projection = workflow.conf.get_projection(crs)
+            fig.add_axes(window=window, projection=projection)
+            ax = fig.gca()
 
+    if newfig:
+        return fig, ax
+    else:
+        return ax
+        
 def huc(huc, crs, color='k', ax=None, **kwargs):
     """Plot HUC object, a wrapper for plot.shply()"""
     return shply([huc,], crs, color, ax, **kwargs)
@@ -104,9 +95,10 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
         ax = get_ax(crs)
 
     if not hasattr(ax, 'projection') or crs is None:
-        transform = None
+        projection = None
     else:
-        transform = workflow.conf.get_transform(crs)
+        projection = workflow.conf.get_projection(crs)
+        print('got projection:', projection)
         
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
@@ -114,12 +106,10 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
             kwargs['marker'] = 'o'
         
         points = np.array([p.coords for p in shps])[:,0,:]
-        if transform is None:
+        if projection is None:
             res = ax.scatter(points[:,0], points[:,1], c=color, **kwargs)
-            print('Point:', res)
         else:
-            res = ax.scatter(points[:,0], points[:,1], c=color, transform=transform, **kwargs)
-            print('Point:', res)
+            res = ax.scatter(points[:,0], points[:,1], c=color, transform=projection, **kwargs)
             
             
     elif type(next(iter(shps))) is shapely.geometry.LineString:
@@ -131,15 +121,13 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
         
         lines = [np.array(l.coords) for l in shps]
         lc = pltc.LineCollection(lines, **kwargs)
-        if transform is not None:
-            lc.set_transform(transform)
+        if projection is not None:
+            lc.set_transform(projection)
 
         if type(ax) is Axes3D:
             res = ax.add_collection3d(lc)
-            print('LineString:', res)
         else:
             res = ax.add_collection(lc)
-            print('LineString:', res)
             ax.autoscale()
         
     elif type(next(iter(shps))) is shapely.geometry.Polygon:
@@ -158,15 +146,13 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
             
             multi_poly = shapely.geometry.MultiPolygon(shps)
             patch = descartes.PolygonPatch(multi_poly, **kwargs)
-            if transform is not None:
-                patch.set_transform(transform)
+            if projection is not None:
+                patch.set_transform(projection)
 
             if type(ax) is Axes3D:
                 res = ax.add_collection3d(patch)
-                print('Polygon:', res)
             else:
                 res = ax.add_patch(patch)
-                print('Polygon:', res)
 
         else:
             # add polygons independently
@@ -174,18 +160,16 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                 res = []
                 for shp in shps:
                     patch = descartes.PolygonPatch(shp, **kwargs)
-                    # if transform is not None:
-                    #     patch.set_transform(transform)
+                    # if projection is not None:
+                    #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
-                print('Polygon:', res)
             else:
                 res = []
                 for c, shp in zip(color, shps):
                     patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
-                    # if transform is not None:
-                    #     patch.set_transform(transform)
+                    # if projection is not None:
+                    #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
-                print('Polygon:', res)
         ax.autoscale()
     assert res is not None
     return res

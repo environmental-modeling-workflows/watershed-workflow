@@ -26,7 +26,7 @@ def test_nlcd(nlcd):
 
     # get imgs
     dem_prof, dem = nlcd.get_raster(huc, profile['crs'])
-    plt.imshow(dem)
-    plt.show()
+    #plt.imshow(dem)
+    #plt.show()
     
     assert(dem.shape == (3827, 2479))

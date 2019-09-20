@@ -62,7 +62,5 @@ def test_nhd_get(nhd):
 
 # hydro tests
 def test_nhd_get_hydro(nhd):
-    profile, huc = nhd.get_huc('020401010101')
-    bounds = workflow.utils.shply(huc['geometry']).bounds
-    profile, rivers = nhd.get_hydro(bounds, profile['crs'], '020401010101')
+    profile, rivers = nhd.get_hydro('020401010101')
     assert(571 == len(rivers)) # note this is different from NHDPlus

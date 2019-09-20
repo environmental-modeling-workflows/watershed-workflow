@@ -8,6 +8,49 @@ import shapely.affinity
 
 import workflow.conf
 
+
+def generate_rings(obj):
+    """Generator for a fiona geometry's coordinates object and yield rings.
+
+    As long as the input is conforming, the type of the geometry doesn't matter.
+    """
+    def _generate_rings(coords):
+        print('gen rings:', coords)
+        for e in coords:
+            if isinstance(e[0], (float, int)):
+                yield coords
+                break
+            else:
+                for r in _generate_rings(e):
+                    yield r
+
+    if 'geometry' in obj:
+        obj = obj['geometry']
+    for r in _generate_rings(obj['coordinates']):
+        yield r
+
+
+def generate_coords(obj):
+    """Generator for a fiona geometry's coordinates.
+
+    As long as the input is conforming, the type of the geometry doesn't matter.
+    """
+    for ring in generate_rings(obj):
+        for c in ring:
+            yield c
+
+            
+def bounds(f):
+    """General bounding box for fiona and shapely types."""
+    # fiona type
+    x, y = zip(*list(generate_coords(f)))
+    # except TypeError:
+    #     # shapely type
+    #     return f.bounds
+    # else:
+    return min(x), min(y), max(x), max(y)
+
+
 def shply(shape, properties=None, flip=False):
     """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
 
@@ -38,50 +81,68 @@ def shply(shape, properties=None, flip=False):
     except ValueError:
         raise ValueError('Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
 
+
 def round(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
     for shp in list_of_things:
-        assert(type(shp['geometry']['coordinates']) is list)
-        if len(shp['geometry']['coordinates']) is 0:
-            pass
-        elif type(shp['geometry']['coordinates'][0]) is tuple:
-            # single object
-            coords = np.array(shp['geometry']['coordinates'], 'd').round(digits)
-            if coords.shape[-1] is 3:
-                coords = coords[:,0:2]
-            assert(len(coords.shape) is 2)
-            shp['geometry']['coordinates'] = coords
-        else:
-            # object collection
-            for i,c in enumerate(shp['geometry']['coordinates']):
-                coords = np.array(c,'d').round(digits)
-                if len(coords.shape) is 2 and coords.shape[-1] is 3:
-                    coords = coords[:,0:2]
-                elif len(coords.shape) is 3 and coords.shape[-1] is 3:
-                    coords = coords[:,:,0:2]
-            shp['geometry']['coordinates'][i] = coords
+        for ring in generate_rings(shp['geometry']['coordinates']):
+            ring[:] = list(np.array(ring).round(digits))
     return list_of_things
 
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
-    """Are two shapes topologically equivalent and gemoetrically close"""
-    if type(s1) is shapely.geometry.Point:
+    """Are two shapes topologically equivalent and geometrically close"""
+    # points get compared as tuples
+    if isinstance(s1, shapely.geometry.Point):
         return close(s1.coords[0], s2, tol)
-    if type(s2) is shapely.geometry.Point:
+    if isinstance(s2, shapely.geometry.Point):
         return close(s1, s2.coords[0], tol)
+
+    # length 1 multi-shapes get compared as individual shapes
+    if isinstance(s1, (shapely.geometry.MultiPoint,
+                       shapely.geometry.MultiLineString,
+                       shapely.geometry.MultiPolygon)) and \
+       len(s1) is 1:
+        return close(s1[0], s2, tol)
+    if isinstance(s2, (shapely.geometry.MultiPoint,
+                       shapely.geometry.MultiLineString,
+                       shapely.geometry.MultiPolygon)) and \
+       len(s2) is 1:
+        return close(s1, s2[0], tol)
+
+    # types should be the same now
     if type(s1) != type(s2):
         return False
-    if type(s1) is tuple:
+
+    # compare tuples
+    if isinstance(s1, tuple):    
         if len(s1) != len(s2):
             return False
         return sum((p1 - p2)**2 for p1,p2 in zip(s1,s2)) < tol**2
-    elif type(s1) is shapely.geometry.LineString:
+
+    # compare lines
+    elif isinstance(s1, shapely.geometry.LineString):
         if len(s1.coords) != len(s2.coords):
             return False
-        print("allclose?", tol, list(s1.coords), list(s2.coords), np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol))
         return np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol)
-    elif type(s1) is shapely.geometry.MultiLineString:
+
+    # compare polygons
+    elif type(s1) is shapely.geometry.Polygon:
+        # note, this does not correctly deal with nonequal holes...
+        if len(s1.boundary.coords) != len(s2.boundary.coords):
+            return False
+        ls1 = s1.boundary.coords[:-1]
+        ls2 = np.array(s2.boundary.coords[:-1])
+        ls2f = np.flipud(ls2)
+        return any(np.allclose(ls1, np.roll(ls2, i, 0), tol, tol) for i in range(len(ls2))) or \
+            any(np.allclose(ls1, np.roll(ls2f, i, 0), tol, tol) for i in range(len(ls2)))
+
+    # compare multi-shapes by checking if each one has a match in the
+    # other and lengths are the same
+    elif isinstance(s1, (shapely.geometry.MultiPoint,
+                         shapely.geometry.MultiLineString,
+                         shapely.geometry.MultiPolygon)):
         if len(s1) != len(s2):
             return False
         good2 = [False,]*len(s2)
@@ -96,16 +157,8 @@ def close(s1, s2, tol=_tol):
             if not found:
                 return False
         return True
-    elif type(s1) is shapely.geometry.Polygon:
-        if len(s1.boundary.coords) != len(s2.boundary.coords):
-            return False
-        ls1 = s1.boundary.coords[:-1]
-        ls2 = np.array(s2.boundary.coords[:-1])
-        ls2f = np.flipud(ls2)
-        return any(np.allclose(ls1, np.roll(ls2, i, 0), tol, tol) for i in range(len(ls2))) or \
-            any(np.allclose(ls1, np.roll(ls2f, i, 0), tol, tol) for i in range(len(ls2)))
     else:
-        raise NotImplementedError("Not implemented for type '%r'"%type(s1))
+        raise NotImplementedError("Not implemented for type '%r'"%type(s1))                
 
 
 def contains(s1, s2, tol=_tol):
@@ -180,9 +233,11 @@ def cut(line, cutline, tol=1.e-5):
         segs.append(shapely.geometry.LineString(segcoords))
     return segs
 
+
 def distance(p1, p2):
     """Distance between two points in tuple form"""
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
 
 def in_neighborhood(obj1, obj2, tol=0.1):
     """Determines if two objects can possibly intersect by performing a
@@ -222,7 +277,8 @@ def nearest_point(line, point):
 
     Note point is expected as coordinates."""
     return line.interpolate(line.project(shapely.geometry.Point(point))).coords[0]
-    
+
+
 def find_perp(line, point):
     # need another point, perpendicular to the line, to intersect
     k = line.project(shapely.geometry.Point(point))
@@ -234,7 +290,8 @@ def find_perp(line, point):
     dp = (p2[0] - point[0], p2[1] - point[1])
     p3 = (point[0] - dp[1], point[1] - dp[0])
     return p3
-    
+
+
 def triangle_area(vertices):
     """Area of a triangle in 2D"""
     xy1 = vertices[0]
@@ -271,10 +328,6 @@ def center(objects, centering=True):
         
     return new_objs, centroid
     
-def get_git_revision_hash():
-    """Returns the git revision hash."""
-    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
-
 
 def merge(ml1, ml2):
     """Merges two multilines that are assumed to overlap except at their endpoints."""
@@ -346,7 +399,6 @@ def merge(ml1, ml2):
         new_ml.append(c2)
     return new_ml
 
-        
         
 def non_point_intersection(shp1, shp2):
     """Checks whether an intersection is larger than a point."""

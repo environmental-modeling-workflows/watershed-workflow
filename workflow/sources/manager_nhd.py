@@ -52,28 +52,34 @@ class _FileManagerNHD:
             profile = fid.profile
         return profile, hus
         
-    def get_hydro(self, bounds, bounds_crs, huc_hint):
-        """Downloads and reads hydrography within these bounds.
+    def get_hydro(self, huc, bounds=None, bounds_crs=None):
+        """Downloads and reads hydrography within these bounds and/or huc.
 
-        Note this requires a HUC hint of a level 4 HUC which contains bounds.
+        Note this requires a HUC hint of at least a level 4 HUC which contains bounds.
         """
         if 'WBD' in self.name:
             raise RuntimeError('{}: does not provide hydrographic data.'.format(self.name))
         
-        huc_hint = source_utils.huc_str(huc_hint)
-        hint_level = len(huc_hint)
+        huc = source_utils.huc_str(huc)
+        hint_level = len(huc)
 
+        # try to get bounds if not provided
+        if bounds is None:
+            # can we infer a bounds by getting the HUC?
+            profile, hu = self.get_huc(huc)
+            bounds = workflow.utils.bounds(hu)
+            bounds_crs = profile['crs']
+        
         # error checking on the levels, require file_level <= huc_level <= lowest_level
         if hint_level < self.file_level:
             raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
         
         # download the file
-        filename = self._download(huc_hint[0:self.file_level])
+        filename = self._download(huc[0:self.file_level])
         logging.info('Using Hydrography file "{}"'.format(filename))
         
-        
         # find and open the hydrography layer        
-        filename = self.name_manager.file_name(huc_hint[0:self.file_level])
+        filename = self.name_manager.file_name(huc[0:self.file_level])
         layer = 'NHDFlowline'
         logging.debug("{}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
         with fiona.open(filename, mode='r', layer=layer) as fid:

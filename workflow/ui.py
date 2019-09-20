@@ -5,6 +5,7 @@ import argparse
 import fiona
 
 import workflow.conf
+import workflow.sources.utils
 import workflow.source_list
 
 verb_to_level = {0:logging.WARNING,
@@ -54,13 +55,13 @@ def get_basic_argparse(docstring):
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'"%str(err))
         return epsg
     parser.add_argument('--projection', type=valid_epsg, default=workflow.conf.default_crs(),
-                        help='Output coordinate system.  Default is "{}"'.format(workflow.conf.default_crs()['init']))
+                        help='Output coordinate system.  Default is from rcParams.')
     return parser
 
 
 def valid_hucstr(hucstr):
     try:
-        huc_valid = workflow.huc_str(hucstr)
+        huc_valid = workflow.sources.utils.huc_str(hucstr)
     except RuntimeError as err:
         raise argparse.ArgumentTypeError("In parsing HUC string: '%s'"%str(err))
     else:
@@ -137,8 +138,8 @@ def plot_options(parser):
     group = parser.add_argument_group('Plotting options')
     group.add_argument('--basemap', action='store_true',
                         help='Plot HUCs/shapes with political boundary context via basemap.')
-    group.add_argument('--basemap-resolution', type=str,
-                       help='Map resolution, either "100m" (default), "50m", or "10m"')
+    group.add_argument('--basemap-resolution', type=str, default='50m',
+                       help='Map resolution, either "110m", "50m" (default), or "10m"')
     group.add_argument('--title', type=str, 
                         help='Plot title')
     group.add_argument('--figsize', type=float, nargs=2, 

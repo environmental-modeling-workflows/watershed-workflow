@@ -25,10 +25,14 @@ def plot_with_triangulation(args, hucs, rivers, triangulation):
         ax.set_aspect('equal', 'datalim')
         plt.savefig('my_mesh')
 
-def plot_with_dem(args, centroid, hucs, rivers, dem, profile,
+def plot_with_dem(args, hucs, rivers, dem, profile,
                   shape_color='k', river_color='white',
                   cb=True, cb_label='elevation [m]', vmin=None, vmax=None,
                   fig=None, ax=None, transform=None):
+
+    logging.info('Plotting')
+    logging.info('--------')
+
     # get a figure and axis
     if fig is None:
         fig = plt.figure(figsize=args.figsize)
@@ -60,8 +64,9 @@ def plot_with_dem(args, centroid, hucs, rivers, dem, profile,
 
             args.extent = [args.extent[0] - dxm, args.extent[1] - dym,
                            args.extent[2] + dxp, args.extent[3] + dyp]
-        
-        
+
+    logging.info('plot extent: {}'.format(args.extent))
+            
     # continents
     if args.basemap:
         land = cartopy.feature.NaturalEarthFeature('physical', 'land',
