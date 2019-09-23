@@ -21,7 +21,7 @@ def test_shape1():
 def test_shape2():
     ms = workflow.sources.manager_shape.FileManagerShape(
         os.path.join(workflow.conf.rcParams['data dir'], 'hydrologic_units', 'others', 'Coweeta', 'coweeta_subwatersheds.shp'))
-    profile, shape = ms.get_shape(filter=lambda i,a: i == 3)
+    profile, shape = ms.get_shape(3)
     bounds = workflow.utils.shply(shape['geometry']).bounds
     print(bounds)
     assert(np.allclose(
