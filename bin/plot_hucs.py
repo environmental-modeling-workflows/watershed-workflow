@@ -12,6 +12,7 @@ import workflow.bin_utils
 def get_args():
     # set up parser
     parser = workflow.ui.get_basic_argparse(__doc__+'\n\n'+workflow.source_list.__doc__)
+    workflow.ui.projection(parser)
     workflow.ui.huc_arg(parser)
     workflow.ui.huc_level_arg(parser)
 

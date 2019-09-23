@@ -20,20 +20,41 @@ class FileManagerShape:
             raise RuntimeError("Filtered shapefile contains more than one match.")
         return profile, shps[0]
     
-    def get_shapes(self, filter=None):
-        """Gets all shapes in a file that meet a specific conditional.
+    def get_shapes(self, index_or_bounds=-1, crs=None):
+        """Read the file and filter to get shapes.
 
-        Note filter must be of the form:
-        def filter(index, obj):
-            return bool
+        This accepts either an index, which is the integer index of the desired
+        shape in the file, or a bounding box.  
+
+        Parameters
+        ----------
+        index_or_bounds : int or :obj:`[xmin, ymin, xmax, ymax]`
+            Index of the requested shape in filename, or bounding box to filter 
+            shapes, or defaults to -1 to get them all.
+
+        crs : :obj:`crs`
+            Coordinate system of the bounding box (or None if index).
+
+        Returns
+        -------
+        :obj:`profile`
+            Fiona profile of the shapefile.
+        :obj:`list(Polygon)`
+            List of fiona shapes that match the index or bounds.
+        
         """
-        
-        if filter is None:
-            filter = lambda i,a: True
-        
         with fiona.open(self._filename, 'r') as fid:
             profile = fid.profile
-            shps = [shp for (i,shp) in enumerate(fid) if filter(i,shp)]
+
+            if type(index_or_bounds) is int:
+                if index_or_bounds >= 0:
+                    shps = [fid[index_or_bounds],]
+                else:
+                    shps = fid[:]
+            else:
+                if crs['init'] != profile['crs']['init']:
+                    bounds = workflow.warp.warp_bounds(index_or_bounds, crs, profile['crs'])
+                shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps
     

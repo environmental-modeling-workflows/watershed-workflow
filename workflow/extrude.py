@@ -192,6 +192,12 @@ class Mesh2D(object):
         ax.add_collection(gons)
         ax.autoscale_view()
 
+    def write_VTK(self, filename):
+        """Writes to VTK."""
+        assert(all(len(c) == 3 for c in self.conn))
+        from workflow_tpls import vtk_io
+        vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
+        
 
     @classmethod
     def read_VTK(cls, filename):
@@ -562,9 +568,12 @@ class Mesh3D(object):
         rep_z = 0.
         for i,thick in enumerate(layer_data):
             for j in range(ncells_per_layer[i]):
-                mat_id = mat_ids[i][0]
+                try:
+                    mat_id = mat_ids[i][0]
+                except TypeError:
+                    mat_id = mat_ids[i]
                 logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f"%(i,
-                            count,mat_id,thick/ncells_per_layer[i], rep_z))
+                             count,mat_id,thick/ncells_per_layer[i], rep_z))
                 count += 1
                 rep_z += thick/ncells_per_layer[i]
 

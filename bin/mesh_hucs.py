@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """Downloads and meshes HUCs based on hydrography data."""
 
-import os,sys
-import numpy as np
 from matplotlib import pyplot as plt
-import shapely
 import logging
 
 import workflow
@@ -15,6 +12,7 @@ import workflow.bin_utils
 def get_args():
     # set up parser
     parser = workflow.ui.get_basic_argparse(__doc__+'\n\n'+workflow.source_list.__doc__)
+    workflow.ui.projection(parser)
     workflow.ui.huc_arg(parser)
     workflow.ui.outmesh_args(parser)
 

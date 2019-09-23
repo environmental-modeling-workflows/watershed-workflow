@@ -159,8 +159,9 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
 def get_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     """Read a shapefile.
 
-    Note: if index_or_bounds is a bounding box, crs must not be None
-    and is the crs of the bounding box.
+    .. note:
+        If index_or_bounds is a bounding box, crs must not be None and is the
+        crs of the bounding box.
 
     Parameters
     ----------
