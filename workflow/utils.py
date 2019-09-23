@@ -15,7 +15,6 @@ def generate_rings(obj):
     As long as the input is conforming, the type of the geometry doesn't matter.
     """
     def _generate_rings(coords):
-        print('gen rings:', coords)
         for e in coords:
             if isinstance(e[0], (float, int)):
                 yield coords
@@ -85,7 +84,7 @@ def shply(shape, properties=None, flip=False):
 def round(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
     for shp in list_of_things:
-        for ring in generate_rings(shp['geometry']['coordinates']):
+        for ring in generate_rings(shp):
             ring[:] = list(np.array(ring).round(digits))
     return list_of_things
 

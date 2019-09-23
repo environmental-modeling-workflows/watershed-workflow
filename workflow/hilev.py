@@ -652,27 +652,27 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
         array that make up that triangle.
 
     """
-    verbose = args.verbosity > 2
+    verbose = verbosity > 2
     
     logging.info("")
     logging.info("Meshing")
     logging.info("-"*30)
 
     refine_funcs = []
-    if args.refine_max_area is not None:
-        refine_funcs.append(workflow.triangulation.refine_from_max_area(args.refine_max_area))
-    if args.refine_distance is not None:
-        refine_funcs.append(workflow.triangulation.refine_from_river_distance(*args.refine_distance, rivers))
-    if args.refine_max_edge_length is not None:
-        refine_funcs.append(workflow.triangulation.refine_from_max_edge_length(args.refine_max_edge_length))
+    if refine_max_area is not None:
+        refine_funcs.append(workflow.triangulation.refine_from_max_area(refine_max_area))
+    if refine_distance is not None:
+        refine_funcs.append(workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
+    if refine_max_edge_length is not None:
+        refine_funcs.append(workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)        
 
     mesh_points, mesh_tris = workflow.triangulation.triangulate(hucs, rivers,
                                                               verbose=verbose,
                                                               refinement_func=my_refine_func,
-                                                              min_angle=args.refine_min_angle,
-                                                              enforce_delaunay=args.enforce_delaunay)
+                                                              min_angle=refine_min_angle,
+                                                              enforce_delaunay=enforce_delaunay)
 
     if diagnostics:
         logging.info("Plotting triangulation diagnostics")
@@ -688,7 +688,7 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
             areas.append(workflow.utils.triangle_area(vertices))
             needs_refine.append(my_refine_func(vertices, areas[-1]))
 
-        if args.verbosity > 0:
+        if verbosity > 0:
             plt.figure()
             plt.subplot(121)
             plt.hist(distances)
