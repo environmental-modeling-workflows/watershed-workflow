@@ -13,6 +13,7 @@ import shapely.geometry
 
 import warnings
 import workflow.conf
+import workflow.utils
 
 def warp_xy(x, y, old_crs, new_crs):
     """Warps a set of points from old_crs to new_crs."""
@@ -46,11 +47,6 @@ def warp_shapelys(shps, old_crs, new_crs):
 
 def warp_shape(feature, old_crs, new_crs):
     """Uses proj to reproject shapes, IN PLACE"""
-    if old_crs == new_crs:
-        return
-    if len(feature['geometry']['coordinates']) is 0:
-        return
-
     # find the dimension -- can't trust the shape
     dim = -1
     ptr = feature['geometry']['coordinates']
@@ -66,8 +62,8 @@ def warp_shape(feature, old_crs, new_crs):
     if dim == 0:
         # point
         x,y = warp_xy(np.array([feature['geometry']['coordinates'][0],]), np.array([feature['geometry']['coordinates'][1],]), old_crs, new_crs)
-        feature['geometry']['coordinates'][0] = x[0]
-        feature['geometry']['coordinates'][1] = x[1]
+        feature['geometry']['coordinates'] = (x[0], y[0])
+
     elif dim == 1:
         # line-like or polygon with no holes
         coords = np.array(feature['geometry']['coordinates'],'d')
@@ -75,14 +71,18 @@ def warp_shape(feature, old_crs, new_crs):
         x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
         new_coords = [xy for xy in zip(x,y)]
         feature['geometry']['coordinates'] = new_coords
+
     elif dim == 2:
         # multi-line or polygon with holes
+        new_rings = []
         for i in range(len(feature['geometry']['coordinates'])):
             coords = np.array(feature['geometry']['coordinates'][i],'d')
             assert(len(coords.shape) is 2 and coords.shape[1] in [2,3])
             x,y = warp_xy(coords[:,0], coords[:,1], old_crs, new_crs)
-            new_coords = [xy for xy in zip(x,y)]
-            feature['geometry']['coordinates'][i] = new_coords
+            new_coords = list(zip(x,y))
+            new_rings.append(new_coords)
+        feature['geometry']['coordinates'] = new_rings
+        
     elif dim == 3:
         # multi-polygon
         for i in range(len(feature['geometry']['coordinates'])):

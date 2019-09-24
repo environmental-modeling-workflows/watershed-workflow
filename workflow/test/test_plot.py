@@ -5,6 +5,8 @@ from matplotlib import pyplot as plt
 import cartopy.crs
 import numpy.testing as npt
 
+from crs_fixtures import point, point_ak, shift, points, lines, polygons
+
 import workflow.plot
 import workflow.warp
 import workflow.conf

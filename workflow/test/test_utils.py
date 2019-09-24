@@ -321,3 +321,70 @@ def test_merge1():
     assert(workflow.utils.close(new_ml[3], l5))
     
     
+
+def test_generate_points():
+    # with points
+    p = shapely.geometry.Point(978563., 1512322.)
+    with pytest.raises(TypeError):
+        for r in workflow.utils.generate_rings(shapely.geometry.mapping(p)):
+            pass
+    c1 = list(workflow.utils.generate_coords(shapely.geometry.mapping(p)))
+    assert(1 == len(c1))
+    assert(np.allclose(np.array([978563., 1512322.]), np.array(c1)))
+
+def test_generate_lines():
+    l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l1a = np.array([(0,0), (1,1), (2,2), (2.5,2.5)])
+    for r in workflow.utils.generate_rings(shapely.geometry.mapping(l1)):
+        assert(np.allclose(l1a, np.array(r)))
+
+    for c1,c2 in zip(l1a, workflow.utils.generate_coords(shapely.geometry.mapping(l1))):
+        assert(workflow.utils.close(tuple(c1), c2))
+
+def test_generate_multilines():
+    l1 = shapely.geometry.LineString([(0,0), (1,1), (2,2), (2.5,2.5)])
+    l1a = np.array([(0,0), (1,1), (2,2), (2.5,2.5)])
+
+    l2 = shapely.geometry.LineString([(2.5,2.5), (3,3), (4,4), (5,5)])
+    l2a = np.array([(2.5,2.5), (3,3), (4,4), (5,5)])
+
+    ml = shapely.geometry.MultiLineString([l1,l2])
+    ringlist = list(workflow.utils.generate_rings(shapely.geometry.mapping(ml)))
+    assert(np.allclose(l1a, np.array(ringlist[0])))
+    assert(np.allclose(l2a, np.array(ringlist[1])))
+
+    coordlist = np.array(list(workflow.utils.generate_coords(shapely.geometry.mapping(ml))))
+    assert(np.allclose(np.concatenate([l1a,l2a]), coordlist))
+
+def test_generate_polygons():
+    poly1 = shapely.geometry.Polygon([(0,0), (1,1), (2,2), (2.5,2.5)])
+    poly1a = np.array([(0,0), (1,1), (2,2), (2.5,2.5), (0,0)])
+
+    for r in workflow.utils.generate_rings(shapely.geometry.mapping(poly1)):
+        assert(np.allclose(poly1a, np.array(r)))
+
+    for c1,c2 in zip(poly1a, workflow.utils.generate_coords(shapely.geometry.mapping(poly1))):
+        assert(workflow.utils.close(tuple(c1), c2))
+
+def test_generate_multipolygons():
+    poly1 = shapely.geometry.Polygon([(0,0), (1,1), (2,2), (2.5,2.5)])
+    poly1a = np.array([(0,0), (1,1), (2,2), (2.5,2.5), (0,0)])
+    
+    poly2 = shapely.geometry.Polygon([(2.5,2.5), (3,3), (4,4), (5,5)])
+    poly2a = np.array([(2.5,2.5), (3,3), (4,4), (5,5), (2.5,2.5)])
+    
+    mpoly = shapely.geometry.MultiPolygon([poly1, poly2])
+
+    ringlist = list(workflow.utils.generate_rings(shapely.geometry.mapping(mpoly)))
+    assert(np.allclose(poly1a, np.array(ringlist[0])))
+    assert(np.allclose(poly2a, np.array(ringlist[1])))
+
+    coordlist = np.array(list(workflow.utils.generate_coords(shapely.geometry.mapping(mpoly))))
+    assert(np.allclose(np.concatenate([poly1a,poly2a]), coordlist))
+    
+                                           
+    
+    
+        
+    
+

@@ -34,11 +34,17 @@ def generate_coords(obj):
 
     As long as the input is conforming, the type of the geometry doesn't matter.
     """
-    for ring in generate_rings(obj):
-        for c in ring:
-            yield c
+    if 'geometry' in obj:
+        obj = obj['geometry']
 
-            
+    if obj['type'] == 'Point':
+        yield obj['coordinates']
+    else:
+        for ring in generate_rings(obj):
+            for c in ring:
+                yield c
+        
+
 def bounds(f):
     """General bounding box for fiona and shapely types."""
     # fiona type

@@ -25,21 +25,50 @@ class FileManagerNRCS:
                                                          'soil_survey_shape_%s.gml'%self.fstring)
         self.url = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
 
-    def get_shapes_in_bounds(self, bounds, bounds_crs):
-        """Downloads and reads soil shapefiles."""
+    def get_shapes(self, bounds, bounds_crs):
+        """Downloads and reads soil shapefiles.
+
+        This accepts only a bounding box.  
+
+        Parameters
+        ----------
+        bounds : :obj:`[xmin, ymin, xmax, ymax]`
+            Bounding box to filter shapes.
+
+        crs : :obj:`crs`
+            Coordinate system of the bounding box (or None if index).
+
+        Returns
+        -------
+        :obj:`profile`
+            Fiona profile of the shapefile.
+        :obj:`list(Polygon)`
+            List of fiona shapes that match the index or bounds.
+        
+        """
+        if type(bounds) is int:
+            raise TypeError('NRCS file manager only handles bounds, not indices.')
+            
         bounds = self.bounds(bounds, bounds_crs)
         filename = self._download(bounds)
 
+        def _flip(shp):
+            """Generate a new fiona shape in long-lat from one in lat-long"""
+            for ring in workflow.utils.generate_rings(shp):
+                for i,c in enumerate(ring):
+                    ring[i] = c[1],c[0]
+            return shp
+        
         with fiona.open(filename, 'r') as fid:
-            shps = [workflow.utils.shply(shp['geometry'], shp['properties'], True) for shp in fid]
-            ids = [shp['id'] for shp in fid]
             profile = fid.profile
+            shapes = [_flip(s) for s in fid]
 
-        logging.info('  Found {} shapes.'.format(len(shps)))
-        bnds = shapely.ops.cascaded_union(shps)
-        logging.info('  With bounds: {}'.format(bnds.bounds))
+        for s in shapes:
+            s['properties']['id'] = s['id']
+
+        logging.info('  Found {} shapes.'.format(len(shapes)))
         logging.info('  and crs: {}'.format(profile['crs']))
-        return profile, shps, ids
+        return profile, shapes
 
     def bounds(self, b, bounds_crs):
         b = workflow.warp.warp_bounds(b, bounds_crs, self.crs)

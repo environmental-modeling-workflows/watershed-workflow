@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Downloads and plots HUCs, hydrography, and DEM data."""
 
-from matplotlib import pyplot as plt
 import logging
+import numpy as np
+from matplotlib import pyplot as plt
 
 import workflow
 import workflow.ui
