@@ -127,6 +127,15 @@ class SplitHUCs:
         # the list of shapes, each entry in the list is a tuple
         self.gons = [(u,i) for u,i in zip(boundary_gon, intersection_gon)]
 
+        # save the property dictionaries to give back upon request
+        self.properties = []
+        for s in shapes:
+            try:
+                self.properties.append(s.properties)
+            except TypeError:
+                self.properties.append(None)
+        
+
     def polygon(self, i):
         """Construct polygon i and return a copy."""
         segs = []
@@ -141,7 +150,9 @@ class SplitHUCs:
 
         ml = shapely.ops.linemerge(segs)
         assert(type(ml) is shapely.geometry.LineString)
-        return shapely.geometry.Polygon(ml)
+        poly = shapely.geometry.Polygon(ml)
+        poly.properties = self.properties[i]
+        return poly
 
     def polygons(self):
         """Iterate over the polygons."""

@@ -51,22 +51,25 @@ def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
         return ax
         
 def huc(huc, crs, color='k', ax=None, **kwargs):
-    """Plot HUC object, a wrapper for plot.shply()"""
+    """Plot a HUC polygon (simply calls plot.shply())"""
     return shply([huc,], crs, color, ax, **kwargs)
 
 def hucs(hucs, crs, color='k', ax=None, **kwargs):
-    """Plot SplitHUCs object, a wrapper for plot.shply()"""
-    ps = [p for p in hucs.polygons()]
+    """Plot a SplitHUCs object, a wrapper for plot.shply()"""
+    ps = list(hucs.polygons())
     return shply(ps, crs, color, ax, **kwargs)
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
-    shplys = [workflow.utils.shply(shp['geometry']) for shp in shps]
+    """Plot an itereable collection of fiona shapes."""
+    shplys = [workflow.utils.shply(shp) for shp in shps]
     shply(shplys, crs, color, ax, **kwargs)
 
 def river(river, crs, color='b', ax=None, **kwargs):
+    """Plot an itereable collection of reaches (LineStrings)."""
     shply(river, crs, color, ax, **kwargs)
 
 def rivers(rivers, crs, color='b', ax=None,  **kwargs):
+    """Plot an itereable collection of river Tree objects."""
     if type(rivers) is shapely.geometry.MultiLineString:
         return river(rivers, crs, color, ax, **kwargs)
     
@@ -171,10 +174,13 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                     #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
         ax.autoscale()
-    assert res is not None
+    else:
+        raise TypeError('Unknown shply type: {}'.format(type(next(iter(shps)))))
+    #assert res is not None
     return res
 
 def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
+    """Plots a triangulation"""
     if ax is None:
         ax = get_ax(crs)
     
@@ -197,7 +203,9 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
             col =  ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
     return col
 
+
 def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
+    """Plots a raster"""
     if ax is None:
         ax = get_ax(profile['crs'])
 
@@ -210,3 +218,39 @@ def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     extent = [bounds[0], bounds[2], bounds[1], bounds[3]]
     logging.info('BOUNDS: {}'.format(bounds))
     return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax)
+
+
+def basemap(crs, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None, state_kwargs=None):
+    """Add a basemap to an axis."""
+    import cartopy.feature
+
+    if ax is None:
+        ax = get_ax(crs)
+
+    if land_kwargs is None:
+        land_kwargs = dict()
+    if 'edgecolor' not in land_kwargs:
+        land_kwargs['edgecolor'] = 'face'
+    if 'facecolor' not in land_kwargs:
+        land_kwargs['facecolor'] = cartopy.feature.COLORS['land']
+    land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
+    ax.add_feature(land)
+
+    if state_kwargs is not None:
+        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs.update(**state_kwargs)
+        states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines',
+                                                     resolution, **kwargs)
+        ax.add_feature(states)
+    
+    if ocean_kwargs is None:
+        ocean_kwargs = dict()
+    if 'edgecolor' not in ocean_kwargs:
+        ocean_kwargs['edgecolor'] = 'face'
+    if 'facecolor' not in ocean_kwargs:
+        ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+    ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
+    ax.add_feature(ocean)
+
+    return 
+        

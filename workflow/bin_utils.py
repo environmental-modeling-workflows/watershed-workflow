@@ -83,18 +83,8 @@ def plot_with_dem(args, hucs, rivers, dem, profile,
             
     # continents
     if args.basemap:
-        land = cartopy.feature.NaturalEarthFeature('physical', 'land',
-                                                   args.basemap_resolution,
-                                                   edgecolor='face',
-                                                   facecolor=cartopy.feature.COLORS['land'],
-                                                   zorder=0)
-        ax.add_feature(land)
-        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean',
-                                                    args.basemap_resolution,
-                                                    edgecolor='face',
-                                                    facecolor=cartopy.feature.COLORS['water'],
-                                                    zorder=2)
-        ax.add_feature(ocean)
+        workflow.plot.basemap(args.projection, ax=ax, resolution=args.basemap_resolution,
+                              land_kwargs={'zorder':0}, ocean_kwargs={'zorder':2})
         
     # plot the raster
     # -- pad the raster to have the same extent
