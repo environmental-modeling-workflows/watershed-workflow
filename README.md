@@ -1,5 +1,4 @@
-Watershed Workflow
-===================
+# Watershed Workflow
 
 ![sample image](https://github.com/ecoon/watershed-workflow/raw/master/data/images/watershed_workflow.png "Example output of the Coweeta Hydrologic Lab watersheds across scales.")
 
@@ -24,16 +23,16 @@ To do this, this package provides tools to automate downloading a wide range of 
 Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It has been tested on the first two, but not the third.
 
 
-Installation and Setup
-========================
+## Installation and Setup
+
 All code is in python3, though the dependencies (because of their need for GIS libraries) can be tricky to get right.  It is recommended to use Anaconda3 as a package manager, generating a unique environment for use with this package, as this makes it fairly easy to get all the required packages.
 
 Note that this package is not currently installed in a typical pythononic way (i.e. setuptools), but instead expects you to simply use it in place.  This will change shortly.  In the meantime, to install this package, simply place it in your python path:
 
     export PYTHONPATH=/path/to/watershed-workflow:${PYTHONPATH}
 
-Dependencies
-------------
+### Dependencies
+
 
 Standard packages needed include `argparse` and `subprocess`, and for testing, `pytest` and `dist_utils`. 
  Standard math packages include `numpy`, `matplotlib`, and `scipy`.
@@ -42,8 +41,7 @@ GIS work is typically done using expensive/closed source and GUI-based tools.  F
 
 Mesh generation of 2D, "map view" surface meshes uses the open source library Triangle, which can be wrapped for python using `meshpy`.  This in turn depends upon boost python.  Optionally, extrusion of this 2D mesh into a 3D mesh for use in integrated hydrologic models requires a 3D mesh library -- we tend to use ExodusII here (though it would be straightforward to extend this to other packages such as VTK).  ExodusII, part of the [SEACAS](https://github.com/gsjaardema/seacas) suite of tools, provides a python3 set of wrappers, but there is no current package, so this must be installed separately.  See below.
 
-Recommended process
---------------------
+### Recommended process
 
 Download and install [Anaconda3](https://www.anaconda.com/distribution/).  Then create a new environment that includes the required packages:
 
@@ -55,8 +53,8 @@ Check your python installation:
 
      python -c 'import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print("SUCCESS")'
 
-Installing ExodusII (optional)
-------------------------------
+### Installing ExodusII (optional)
+
 
 Clone the package from source at: https://github.com/gsjaardema/seacas
 
@@ -67,8 +65,7 @@ Hopefully you are then able to add your installed SEACAS to your PYTHONPATH and 
     export PYTHONPATH=${SEACAS_DIR}/lib
     python -c 'import exodus; print("SUCCESS")'
 
-Setting up your environment
----------------------------
+### Setting up your environment
 
 Once all of the above work and are installed, setting up the environment from scratch consists of the following:
 
@@ -76,8 +73,7 @@ Once all of the above work and are installed, setting up the environment from sc
     export PYTHONPATH=/path/to/watershed-workflow:/path/to/SEACAS/install/lib:${PYTHONPATH}
 
 
-A first example
-================
+## A first example
 
 A good way to get started is to open your jupyter notebook and check out the main workflow:
 
@@ -86,14 +82,12 @@ A good way to get started is to open your jupyter notebook and check out the mai
 And navigate to [examples/mesh_coweeta.ipynb](../master/examples/mesh_coweeta.ipynb)
 
 
-For more...
-============
+## For more...
 
 * See our documentation at: https://ecoon.github.io/watershed-workflow
 * See our gallery at: https://ecoon.github.io/watershed-workflow/gallery
 
-Funding, attribution, etc
-==========================
+## Funding, attribution, etc
 
 This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
 
