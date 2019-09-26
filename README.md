@@ -89,8 +89,8 @@ And navigate to [examples/mesh_coweeta.ipynb](../master/examples/mesh_coweeta.ip
 For more...
 ============
 
-* See our documentation at: [https://ecoon.github.io/watershed-workflow]
-* See our gallery at: [https://ecoon.github.io/watershed-workflow/gallery]
+* See our documentation at: https://ecoon.github.io/watershed-workflow
+* See our gallery at: https://ecoon.github.io/watershed-workflow/gallery
 
 Funding, attribution, etc
 ==========================
