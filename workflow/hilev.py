@@ -60,8 +60,9 @@ def get_huc(source, huc, crs=None, digits=None):
     -------
     :obj:`crs`
         Output coordinate system.
-.   :obj:`Polygon`
+    :obj:`Polygon`
         shapely polygon for the hydrologic unit.
+
     """
     huc = workflow.sources.utils.huc_str(huc)
     crs, hu_shapes = get_hucs(source, huc, len(huc), crs)
@@ -89,8 +90,9 @@ def get_hucs(source, huc, level, crs=None, digits=None):
     -------
     :obj:`crs`
         Output coordinate system.
-.   :obj:`list(Polygon)`
+    :obj:`list(Polygon)`
         List of shapely polygons for the subbasins.
+
     """
     # get the hu from source
     huc = workflow.sources.utils.huc_str(huc)
@@ -151,6 +153,7 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
         Output coordinate system.
     :obj:`SplitHUCs`
         Split-form HUCs object containing subbasins.
+
     """
     crs, hu_shapes = get_hucs(source, huc, level, crs)
     return crs, workflow.split_hucs.SplitHUCs(hu_shapes)
@@ -179,7 +182,7 @@ def get_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     -------
     :obj:`crs`
         Output coordinate system.
-.   :obj:`list(Polygon)`
+    :obj:`list(Polygon)`
         List of shapely polygons in the shapefile meeting the criteria.
 
     """
@@ -339,6 +342,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.):
         Rasterio profile of the image including crs and transform
     raster : :obj:`np.array`
         The raster array.
+
     """
     logging.info("")
     logging.info("Preprocessing Raster")
@@ -392,6 +396,7 @@ def get_masked_raster_on_shape(source, shape, crs, nodata=-1, buffer=0.):
 
     dem : :obj:`np.array`
         The raster array.
+
     """
     # get the raster
     profile, raster = get_raster_on_shape(source, shape, crs, crs, buffer)
@@ -434,6 +439,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
     Returns
     ------- 
     str : The smallest containing HUC.
+
     """
     def _in_huc(shply, huc_shply):
         """Checks whether shp is in HUC"""
@@ -523,7 +529,9 @@ def simplify_and_prune(hucs, reaches, simplify=10, prune_reach_size=0, cut_inter
     ------- 
     :obj:`list(Tree)` : A list of rivers, as Tree objects.
 
-    NOTE: This also may modify the hucs object in-place.
+    .. note: 
+        This also may modify the hucs object in-place.
+
     """
     tol = simplify
     
@@ -615,6 +623,7 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
         Defining d as the distance from triangle centroid to the 
         nearest point on the river network and area as the area 
         of the triangle in question, refinement occurs if:
+
         * d < near_distance and area > near_area
         * d > far_distance and area > far_area
         * otherwise, defining 
@@ -635,13 +644,14 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
         greater than this value.
 
     enforce_delaunay : bool, experimental
+        Attempt to ensure all triangles are proper Delaunay 
+        triangles.        
+
         .. note:
             This requires a hacked version of meshpy.triangle that
             supports this option.  See the patch available at
             workflow_tpls/meshpy_triangle.patch
 
-        Attempt to ensure all triangles are proper Delaunay 
-        triangles.        
 
     Returns
     -------
@@ -730,6 +740,7 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
     -------
     np.array((n_points, 3), 'd')
         Array of triangle vertices, including a z-dimension.
+
     """
     logging.info("")
     logging.info("Elevating Triangulation to DEM")

@@ -3,16 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-# Watershed Workflow
+Watershed Workflow
+*******************
 
-.. image:: _static/gallery/watershed_workflow.png
+.. image:: static/watershed_workflow.png
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
 
-# Indices and tables
+Indices and tables
+=====================
 
 * :ref:`genindex`
 * :ref:`modindex`
@@ -40,7 +42,8 @@ To do this, this package provides tools to automate downloading a wide range of 
 Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It has been tested on the first two, but not the third.
 
 
-## Installation and Setup
+Installation and Setup
+=========================
 
 All code is in python3, though the dependencies (because of their need for GIS libraries) can be tricky to get right.  It is recommended to use Anaconda3 as a package manager, generating a unique environment for use with this package, as this makes it fairly easy to get all the required packages.
 
@@ -50,7 +53,8 @@ Note that this package is not currently installed in a typical pythononic way (i
                 
     export PYTHONPATH=/path/to/watershed-workflow:${PYTHONPATH}
 
-### Dependencies
+Dependencies
+~~~~~~~~~~~~~~~~~~
 
 
 Standard packages needed include `argparse` and `subprocess`, and for testing, `pytest` and `dist_utils`. 
@@ -58,9 +62,10 @@ Standard packages needed include `argparse` and `subprocess`, and for testing, `
 
 GIS work is typically done using expensive/closed source and GUI-based tools.  For this work, we instead build on the extremely high-quality, open-source packages for GIS in python: `fiona`, `rasterio`, `shapely` and `cartopy`.
 
-Mesh generation of 2D, "map view" surface meshes uses the open source library Triangle, which can be wrapped for python using `meshpy`.  This in turn depends upon boost python.  Optionally, extrusion of this 2D mesh into a 3D mesh for use in integrated hydrologic models requires a 3D mesh library -- we tend to use ExodusII here (though it would be straightforward to extend this to other packages such as VTK).  ExodusII, part of the `SEACAS <https://github.com/gsjaardema/seacas>`_ suite of tools, provides a python3 set of wrappers, but there is no current package, so this must be installed separately.  See below.
+Mesh generation of 2D, "map view" surface meshes uses the open source library Triangle, which can be wrapped for python using `meshpy`.  This in turn depends upon boost python.  Optionally, extrusion of this 2D mesh into a 3D mesh for use in integrated hydrologic models requires a 3D mesh library ~~ we tend to use ExodusII here (though it would be straightforward to extend this to other packages such as VTK).  ExodusII, part of the `SEACAS <https://github.com/gsjaardema/seacas>`_ suite of tools, provides a python3 set of wrappers, but there is no current package, so this must be installed separately.  See below.
 
-### Recommended process
+Recommended process
+~~~~~~~~~~~~~~~~~~~
 
 Download and install `Anaconda3 <https://www.anaconda.com/distribution/>`_.  Then create a new environment that includes the required packages:
 
@@ -76,7 +81,8 @@ Check your python installation:
                 
      python -c 'import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print("SUCCESS")'
 
-### Installing ExodusII (optional)
+Installing ExodusII (optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Clone the package from `source <https://github.com/gsjaardema/seacas>`_
@@ -90,7 +96,8 @@ Hopefully you are then able to add your installed SEACAS to your PYTHONPATH and 
     export PYTHONPATH=${SEACAS_DIR}/lib
     python -c 'import exodus; print("SUCCESS")'
 
-### Setting up your environment
+Setting up your environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once all of the above work and are installed, setting up the environment from scratch consists of the following:
 
@@ -98,7 +105,8 @@ Once all of the above work and are installed, setting up the environment from sc
     export PYTHONPATH=/path/to/watershed-workflow:/path/to/SEACAS/install/lib:${PYTHONPATH}
 
 
-## A first example
+A first example
+==================
 
 A good way to get started is to open your jupyter notebook and check out the main workflow:
 
@@ -109,13 +117,63 @@ A good way to get started is to open your jupyter notebook and check out the mai
 And navigate to `examples/mesh_coweeta.ipynb <../master/examples/mesh_coweeta.ipynb>`_
 
 
-## For more...
-
-* See our `documentation <https://ecoon.github.io/watershed-workflow>`_
-* See our `gallery <https://ecoon.github.io/watershed-workflow/gallery>`_
-
-## Funding, attribution, etc
+Funding, attribution, etc
+=============================
 
 This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
 
 Collaborators and contributions are very welcome!
+
+
+
+Workflow library Concepts
+=================================
+
+CRS
+~~~
+
+TODO: CRS are everywhere, we use Fiona's EPSG versions.
+
+shapes vs shapely
+~~~~~~~~~~~~~~~~~~
+
+TODO: fiona shapes vs shapely shapes
+
+Working with data sources
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: using data sources
+
+
+Jupyter workflows and Examples
+==================================
+
+Example 1: Generate a mesh
+
+
+
+Watershed Workflow executables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Example 1: plot_huc.py
+* Example 2: plot_shape.py
+* Example 3: mesh_huc.py  
+* Example 4: mesh_shape.py
+
+workflow high level API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.hilev
+   :members:
+
+workflow utils API
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.utils
+
+                
+
+
+
+
+
