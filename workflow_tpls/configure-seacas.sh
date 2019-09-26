@@ -1,11 +1,12 @@
+# NOTE: this requires that you have defined CONDA_PREFIX to point to your Anaconda environment's installation.
 
-CC=`which clang`
-CXX=`which clang++`
+CC=`which clang`  # `which gcc` for Linux
+CXX=`which clang++`  # `which g++` for Linux
 FC=`which gfortran`
 
 SEACAS_SRC_DIR=??
-SEACAS_BUILD_DIR=??
-SEACAS_DIR=??
+SEACAS_BUILD_DIR=${SEACAS_SRC_DIR}/build  # these can be changed
+SEACAS_DIR=${SEACAS_SRC_DIR}/install  # these can be changed
 
 
 mkdir -p $SEACAS_BUILD_DIR
