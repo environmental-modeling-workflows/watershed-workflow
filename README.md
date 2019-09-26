@@ -60,7 +60,7 @@ Installing ExodusII (optional)
 
 Clone the package from source at: https://github.com/gsjaardema/seacas
 
-Unfortunately this package does not do regular releases except as part of the Trilinos project, and those releases are often somewhat old.  Then, edit the script at [workflow_tpls/configure-seacas.sh](../blob/master/workflow_tpls/configure-seacas.sh), defining your compilers (likely clang if Mac and gcc if Linux) and pointing to your SEACAS repo and Anaconda environment installation.
+Unfortunately this package does not do regular releases except as part of the Trilinos project, and those releases are often somewhat old.  Then, edit the script at [workflow_tpls/configure-seacas.sh](../master/workflow_tpls/configure-seacas.sh), defining your compilers (likely clang if Mac and gcc if Linux) and pointing to your SEACAS repo and Anaconda environment installation.
 
 Hopefully you are then able to add your installed SEACAS to your PYTHONPATH and import the python wrappers:
 
@@ -83,7 +83,7 @@ A good way to get started is to open your jupyter notebook and check out the mai
 
     jupyter notebook
 
-And navigate to [examples/mesh_coweeta.ipynb](../blob/master/examples/mesh_coweeta.ipynb)
+And navigate to [examples/mesh_coweeta.ipynb](../master/examples/mesh_coweeta.ipynb)
 
 
 For more...
