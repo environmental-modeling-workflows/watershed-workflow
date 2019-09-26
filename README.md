@@ -1,97 +1,89 @@
-Workflow for building HUC-based meshes in python.
+Watershed Workflow
+===================
+
+Watershed Workflow is a python-based, open source chain of tools for generating meshes and other data inputs for hyper-resolution hydrology, anywhere in the (conterminous + Alaska?) US.  
+
+Hyper-resolution hydrologic models have huge data requirements, thanks to their large extent (full river basins) and very high resolution (often ~10-100 meters).  Furthermore, most process-rich models of integrated, distributed hydrology at this scale require meshes that understand both surface land cover and subsurface structure.  Typical data needs for simulations such as these include:
+
+* Watershed delineation (what is your domain?)
+* Hydrography data (river network geometry, hydrographs for model evaluation)
+* A digital elevation model (DEM) for surface topography
+* Surface land use / land cover
+* Subsurface soil types and properties
+* Meterological data,
+
+and more.
+
+This package is a python library of tools and a set of jupyter notebooks for interacting with these types of data streams using free and open (both free as in freedom and free as in free beer) python and GIS libraries and data.  Critically, this package provides a way for **automatically and quickly** downloading, interpreting, and processing data needed to **generate a "first" hyper-resolution simulation on any watershed** in the conterminous United States (and most of Alaska/Hawaii/Puerto Rico).
+
+To do this, this package provides tools to automate downloading a wide range of **open data streams,** including data from United States governmental agencies, including USGS, USDA, DOE, and others.  These data streams are then colocated on a mesh which is generated based on a watershed delineation and a river network, and that mesh is written in one of a variety of mesh formats for use in hyper-resolution simulation tools.
+
+Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It has been tested on the first two, but not the third.
+
 
 Installation and Setup
 ========================
-All code is in python3.  Recommended is to download anaconda3, as this
-makes it fairly easy to get all the required packages.
+All code is in python3, though the dependencies (because of their need for GIS libraries) can be tricky to get right.  It is recommended to use Anaconda3 as a package manager, generating a unique environment for use with this package, as this makes it fairly easy to get all the required packages.
 
-Note that this package expects you to place the top-level directory in your PYTHONPATH:
+Note that this package is not currently installed in a typical pythononic way (i.e. setuptools), but instead expects you to simply use it in place.  This will change shortly.  In the meantime, to install this package, simply place it in your python path:
 
-    export PYTHONPATH=`pwd`:${PYTHONPATH}
+    export PYTHONPATH=/path/to/watershed-workflow:${PYTHONPATH}
 
-Required Packages
--------------------
+Dependencies
+------------
 
-Standard packages needed (should be included in all distributions?) include argparse and subprocess, and for testing, pytest and dist_utils.
-Standard math packages include numpy, matplotlib, and scipy.
+Standard packages needed include `argparse` and `subprocess`, and for testing, `pytest` and `dist_utils`. 
+ Standard math packages include `numpy`, `matplotlib`, and `scipy`.
 
-GIS work uses packages: fiona, rasterio, and shapely.
-The packages for fiona and rasterio from conda-forge seem to work better?
+GIS work is typically done using expensive/closed source and GUI-based tools.  For this work, we instead build on the extremely high-quality, open-source packages for GIS in python: `fiona`, `rasterio`, `shapely` and `cartopy`.
 
-    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy basemap basemap-data-hires fiona rasterio shapely ipykernel requests
+Mesh generation of 2D, "map view" surface meshes uses the open source library Triangle, which can be wrapped for python using `meshpy`.  This in turn depends upon boost python.  Optionally, extrusion of this 2D mesh into a 3D mesh for use in integrated hydrologic models requires a 3D mesh library -- we tend to use ExodusII here (though it would be straightforward to extend this to other packages such as VTK).  ExodusII, part of the [SEACAS](https://github.com/gsjaardema/seacas) suite of tools, provides a python3 set of wrappers, but there is no current package, so this must be installed separately.  See below.
 
-Mesh generation uses Triangle, which can be wrapped for python using
-meshpy.  This one is a little more difficult, as there seem to be no
-good distributions of it?
+Recommended process
+--------------------
 
+Download and install [Anaconda3](https://www.anaconda.com/distribution/).  Then create a new environment that includes the required packages:
 
-Note this depends upon boost python, which seems to come by default
-with anaconda?
+    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest
+    conda activate ats_meshing
 
-For now, build from source:
-
-     export ANACONDA_DIR=/path/to/your/anaconda
-     export BOOST_ROOT=${ANACONDA_DIR}
-     git clone https://github.com/ecoon/meshpy.git
-     cd meshpy
-     ./configure.py --python-exe=${ANACONDA_DIR}/bin/python --boost-inc-dir=${ANACONDA_DIR}/include  --boost-lib-dir=${ANACONDA_DIR}/lib --boost-python-libname=boost_python3  --disable-static --enable-shared --cxxflags=-stdlib=libc++ --ldflags=-stdlib=libc++
-     make
-     python setup.py install
-
-Note to look closely at the result of the configure command -- it
-errors frequently and has trouble finding Boost?
 
 Check your python installation:
 
-     $> ipython
-     import numpy as np
-     import matplotlib as plt
-     import scipy
-     import rasterio
-     import fiona
-     import shapely
-     import meshpy.triangle
+     python -c 'import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print("SUCCESS")'
 
+Installing ExodusII (optional)
+------------------------------
 
-Alternate Setup
-==================
-Alternative, use a docker container.
+Clone the package from source at: https://github.com/gsjaardema/seacas
 
-On a mac:
-     docker build -t ats-meshing -f ./Dockerfile ./
+Unfortunately this package does not do regular releases except as part of the Trilinos project, and those releases are often somewhat old.  Then, edit the script at [workflow_tpls/configure-seacas.sh](../blob/master/workflow_tpls/configure-seacas.sh), defining your compilers (likely clang if Mac and gcc if Linux) and pointing to your SEACAS repo and Anaconda environment installation.
 
-     brew install socat
-     nohup socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
-     IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
-     docker run -it --name container1 --net=host --env DISPLAY=${IP}:0  -v ~/codes/ats/ats-meshing/:/ats ats-meshing
-     cd ats-meshing
+Hopefully you are then able to add your installed SEACAS to your PYTHONPATH and import the python wrappers:
+
+    export PYTHONPATH=${SEACAS_DIR}/lib
+    python -c 'import exodus; print("SUCCESS")'
+
+Setting up your environment
+---------------------------
+
+Once all of the above work and are installed, setting up the environment from scratch consists of the following:
+
+    conda activate ats_meshing
+    export PYTHONPATH=/path/to/watershed-workflow:/path/to/SEACAS/install/lib:${PYTHONPATH}
 
 
 A first example
-----------------
+================
 
-A good way to get started is to simply run go:
+A good way to get started is to open your jupyter notebook and check out the main workflow:
 
-    python3 bin/mesh_hucs.py -c 060102080102
+    jupyter notebook
 
-This downloads a HUC file (not small, so takes a minute) then
-extracts, smooths, and triangulates some HUCs in it.
+And navigate to [examples/mesh_coweeta.ipynb](../blob/master/examples/mesh_coweeta.ipynb)
 
-A set of examples
--------------------
 
-Basic triangulation of an existing HUC 12:
+For more...
+============
 
-    python3 bin/mesh_hucs.py -c 060102080102
-
-Triangulate a HUC 10, ensuring that HUC12 edges are included:
-
-    python3 bin/mesh_hucs.py -c 0601020801
-
-Triangulate with refinement, grading the max area to higher res near the river:
-
-    python3 bin/mesh_hucs.py --refine-distance 0 1000 1000 10000 -c 060102080102
-
-Triangulate a given user-provided shapefile, for instance a subwatershed from the Coweeta basin:
-
-    python3 bin/mesh_shape.py --refine-distance 10 100 1000 1000 --hint=06 --center --shape-index=0 data/hydrologic_units/others/Coweeta/coweeta_subwatersheds.shp            
+See our documentation at: [https://ecoon.github.io/watershed-workflow]
