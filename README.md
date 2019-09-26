@@ -89,5 +89,12 @@ And navigate to [examples/mesh_coweeta.ipynb](../master/examples/mesh_coweeta.ip
 For more...
 ============
 
-See our documentation at: [https://ecoon.github.io/watershed-workflow]
-See our gallery at: [https://ecoon.github.io/watershed-workflow/gallery]
+* See our documentation at: [https://ecoon.github.io/watershed-workflow]
+* See our gallery at: [https://ecoon.github.io/watershed-workflow/gallery]
+
+Funding, attribution, etc
+==========================
+
+This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
+
+Collaborators and contributions are very welcome!
