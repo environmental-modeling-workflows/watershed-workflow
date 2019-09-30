@@ -6,14 +6,12 @@ Data Structures API and concepts
 
 CRS
 ---
-.. _crs-type:
-
-TODO: CRS are everywhere, we use Fiona's EPSG versions.
+.. automodule:: workflow.crs
+    :members:               
 
 
 shapes and shapely
 ------------------
-.. _polygon-type:
 
 TODO: fiona shapes vs shapely shapes
 

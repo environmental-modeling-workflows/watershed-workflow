@@ -89,7 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#data-structures-api-and-concepts">Data Structures API and concepts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#crs">CRS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-workflow.crs">CRS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#shapes-and-shapely">shapes and shapely</a></li>
 </ul>
 </li>
@@ -190,13 +190,369 @@
 <h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="data-structures-api-and-concepts">
 <h2>Data Structures API and concepts<a class="headerlink" href="#data-structures-api-and-concepts" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="crs">
-<h3>CRS<a class="headerlink" href="#crs" title="Permalink to this headline">¶</a></h3>
-<p id="crs-type">TODO: CRS are everywhere, we use Fiona’s EPSG versions.</p>
+<div class="section" id="module-workflow.crs">
+<span id="crs"></span><h3>CRS<a class="headerlink" href="#module-workflow.crs" title="Permalink to this headline">¶</a></h3>
+<p>Coordinate Reference System conversions.</p>
+<p>Coordinate Reference Systems (CRSs) differ across datasets, and
+standardizing and managing these across the workflow is a necessary
+technical detail.  That said, rarely does the user care what
+coordinate system is being used, as long as it is appropriate for the
+watershed in question.  Watershed Workflow aims to make using datasets
+in different CRSs as streamlined as possible.  Typically, a workflow
+will pick a CRS based upon either a default for the region or by
+simply using the CRS of the shapefile that specifies the watershed
+boundary.  This CRS is the passed into each function that acquires
+more data, and that data’s coordinates are changed to the CRS
+requested.</p>
+<p>This process is made more difficult by the fact that most python GIS
+packages provide their own class object to store the CRS.  This said,
+nearly all of them are based, to some degree, on the <cite>proj4</cite> library
+and its python wrapper, <cite>pyproj</cite> for coordinate transformations.
+Watershed Workflow uses the <cite>pyproj.Proj</cite> class as its own internal
+representation of coordinate system, and provides methods for mapping
+<cite>fiona</cite> (shapefiles), <cite>rasterio</cite> (rasters), and <cite>cartopy</cite> (plotting)
+CRS objects to and from this type.  While this is typically done by
+calling functions from those libraries, standardizing the API makes
+dealing with these packages in an integrated form much simpler.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">We intend to use the pyproj.Proj object as our standard.  But for
+now we are trying to avoid hard-coding that, so internal code
+should avoid using that knowledge, and instead map to and from
+<cite>pyproj.Proj</cite> objects using the provided interface.</p>
+</div>
+<dl class="function">
+<dt id="workflow.crs.default_alaska_crs">
+<code class="descclassname">workflow.crs.</code><code class="descname">default_alaska_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#default_alaska_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.default_alaska_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a default CRS that is functionally useful for Alaska.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:3338.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.default_crs">
+<code class="descclassname">workflow.crs.</code><code class="descname">default_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#default_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.default_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a default CRS that is functionally useful for North America.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:5070.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.equal">
+<code class="descclassname">workflow.crs.</code><code class="descname">equal</code><span class="sig-paren">(</span><em>crs1</em>, <em>crs2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#equal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.equal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to guess at the equality of two CRS objects.</p>
+<p>Note this is not trivial, just checking strings or dicts results
+in false-negatives.  Furthermore, this implementation may not be
+perfect, but it works for all those currently tested.  Please
+report bugs!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs1,crs2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Input workflow CRS objects.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Are equal?</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.from_cartopy">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_cartopy</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_cartopy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_cartopy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a cartopy CRS to a workflow CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>epsg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">An EPSG code. (see <a href="#id1"><span class="problematic" id="id2">`https://epsg.io`_</span></a>)</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Equivalent workflow CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.from_epsg">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_epsg</code><span class="sig-paren">(</span><em>epsg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_epsg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_epsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from an EPSG code to a workflow CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>epsg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">An EPSG code. (see <a href="#id3"><span class="problematic" id="id4">`https://epsg.io`_</span></a>)</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Equivalent workflow CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.from_fiona">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_fiona</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_fiona"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_fiona" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a fiona CRS to the workflow CRS standard.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
+<dd><p class="first last">Input fiona CRS, which is a dictionary containing an EPSG
+code.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Equivalent workflow CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.from_proj">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_proj</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_proj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_proj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a Proj4 CRS to the workflow CRS standard.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pyproj.Proj</span></dt>
+<dd><p class="first last">Input proj CRS object.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Equivalent workflow CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.from_rasterio">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_rasterio</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_rasterio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_rasterio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from rasterio CRS to the workflow CRS standard.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">rasterio-crs-object</span></dt>
+<dd><p class="first last">Input rasterio crs.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Equivalent workflow CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.latlon_crs">
+<code class="descclassname">workflow.crs.</code><code class="descname">latlon_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#latlon_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.latlon_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the default latitude-longitude CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:4269.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.to_cartopy">
+<code class="descclassname">workflow.crs.</code><code class="descname">to_cartopy</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_cartopy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_cartopy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a workflow CRS to a cartopy.crs.Projection.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">The CRS to convert.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt>A cartopy.crs.Projection object for plotting.</dt>
+<dd></dd>
+<dt>Adapted from: <a class="reference external" href="https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983">https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983</a></dt>
+<dd></dd>
+<dt>Better solution blocked by: <a class="reference external" href="https://github.com/SciTools/cartopy/issues/813">https://github.com/SciTools/cartopy/issues/813</a></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.to_fiona">
+<code class="descclassname">workflow.crs.</code><code class="descname">to_fiona</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_fiona"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_fiona" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a workflow CRS to a fiona CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">A workflow CRS object.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
+<dd><p class="first last">Equivalent fiona CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.to_proj">
+<code class="descclassname">workflow.crs.</code><code class="descname">to_proj</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_proj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_proj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a workflow CRS standard to a Proj4 CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Workflow standard CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pyproj.Proj</span></dt>
+<dd><p class="first last">Equivalent object.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.crs.to_rasterio">
+<code class="descclassname">workflow.crs.</code><code class="descname">to_rasterio</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_rasterio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_rasterio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a workflow CRS to a fiona CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">A workflow CRS object.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
+<dd><p class="first last">Equivalent fiona CRS.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="shapes-and-shapely">
 <h3>shapes and shapely<a class="headerlink" href="#shapes-and-shapely" title="Permalink to this headline">¶</a></h3>
-<p id="polygon-type">TODO: fiona shapes vs shapely shapes</p>
+<p>TODO: fiona shapes vs shapely shapes</p>
 </div>
 </div>
 <div class="section" id="module-workflow.hilev">

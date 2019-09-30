@@ -294,7 +294,9 @@ def equal(crs1, crs2):
     """Tries to guess at the equality of two CRS objects.
 
     Note this is not trivial, just checking strings or dicts results
-    in false-negatives.
+    in false-negatives.  Furthermore, this implementation may not be
+    perfect, but it works for all those currently tested.  Please
+    report bugs!
     
     Parameters
     ----------
@@ -305,6 +307,7 @@ def equal(crs1, crs2):
     -------
     out : bool
        Are equal?
+
     """
     def to_dict(crs):
         def to_item(a):

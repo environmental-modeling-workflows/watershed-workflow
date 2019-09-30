@@ -4,15 +4,36 @@ Data Sources
 TODO: A wide range of sources are used.
 
 
+Watershed boundaries and hydrography
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.sources.manager_nhd
+
 National Elevation Dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-USGS NED
+.. automodule:: workflow.sources.manager_ned
 
 
-National Hydrography Dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+National Land Cover Dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-NHD
+.. automodule:: workflow.sources.manager_nlcd
 
-TODO: etc etc
+
+Soils database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.sources.manager_nrcs
+
+
+Generic shapefiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.sources.manager_shape
+
+Generic rasters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: workflow.sources.manager_raster
+   

@@ -1,0 +1,544 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>workflow.crs &mdash; Watershed Workflow 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Watershed Workflow</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>workflow.crs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for workflow.crs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Coordinate Reference System conversions.</span>
+
+<span class="sd">Coordinate Reference Systems (CRSs) differ across datasets, and</span>
+<span class="sd">standardizing and managing these across the workflow is a necessary</span>
+<span class="sd">technical detail.  That said, rarely does the user care what</span>
+<span class="sd">coordinate system is being used, as long as it is appropriate for the</span>
+<span class="sd">watershed in question.  Watershed Workflow aims to make using datasets</span>
+<span class="sd">in different CRSs as streamlined as possible.  Typically, a workflow</span>
+<span class="sd">will pick a CRS based upon either a default for the region or by</span>
+<span class="sd">simply using the CRS of the shapefile that specifies the watershed</span>
+<span class="sd">boundary.  This CRS is the passed into each function that acquires</span>
+<span class="sd">more data, and that data&#39;s coordinates are changed to the CRS</span>
+<span class="sd">requested.</span>
+
+<span class="sd">This process is made more difficult by the fact that most python GIS</span>
+<span class="sd">packages provide their own class object to store the CRS.  This said,</span>
+<span class="sd">nearly all of them are based, to some degree, on the `proj4` library</span>
+<span class="sd">and its python wrapper, `pyproj` for coordinate transformations.</span>
+<span class="sd">Watershed Workflow uses the `pyproj.Proj` class as its own internal</span>
+<span class="sd">representation of coordinate system, and provides methods for mapping</span>
+<span class="sd">`fiona` (shapefiles), `rasterio` (rasters), and `cartopy` (plotting)</span>
+<span class="sd">CRS objects to and from this type.  While this is typically done by</span>
+<span class="sd">calling functions from those libraries, standardizing the API makes</span>
+<span class="sd">dealing with these packages in an integrated form much simpler.</span>
+
+
+<span class="sd">.. note::</span>
+<span class="sd">    We intend to use the pyproj.Proj object as our standard.  But for</span>
+<span class="sd">    now we are trying to avoid hard-coding that, so internal code</span>
+<span class="sd">    should avoid using that knowledge, and instead map to and from</span>
+<span class="sd">    `pyproj.Proj` objects using the provided interface.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pyproj</span>
+
+<div class="viewcode-block" id="from_proj"><a class="viewcode-back" href="../../api.html#workflow.crs.from_proj">[docs]</a><span class="k">def</span> <span class="nf">from_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Proj4 CRS to the workflow CRS standard.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : pyproj.Proj</span>
+<span class="sd">        Input proj CRS object.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        Equivalent workflow CRS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">crs</span> <span class="c1"># this is the standard!</span></div>
+
+
+<div class="viewcode-block" id="to_proj"><a class="viewcode-back" href="../../api.html#workflow.crs.to_proj">[docs]</a><span class="k">def</span> <span class="nf">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a workflow CRS standard to a Proj4 CRS.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : crs-type</span>
+<span class="sd">        Workflow standard CRS.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : pyproj.Proj</span>
+<span class="sd">        Equivalent object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">crs</span> <span class="c1"># this is the standard!</span></div>
+
+
+<div class="viewcode-block" id="from_fiona"><a class="viewcode-back" href="../../api.html#workflow.crs.from_fiona">[docs]</a><span class="k">def</span> <span class="nf">from_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a fiona CRS to the workflow CRS standard.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : fiona-crs-dict</span>
+<span class="sd">        Input fiona CRS, which is a dictionary containing an EPSG</span>
+<span class="sd">        code.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        Equivalent workflow CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="to_fiona"><a class="viewcode-back" href="../../api.html#workflow.crs.to_fiona">[docs]</a><span class="k">def</span> <span class="nf">to_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : crs-type</span>
+<span class="sd">        A workflow CRS object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : fiona-crs-dict</span>
+<span class="sd">        Equivalent fiona CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">fiona.crs</span>
+    <span class="k">return</span> <span class="n">fiona</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="from_rasterio"><a class="viewcode-back" href="../../api.html#workflow.crs.from_rasterio">[docs]</a><span class="k">def</span> <span class="nf">from_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts from rasterio CRS to the workflow CRS standard.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : rasterio-crs-object</span>
+<span class="sd">        Input rasterio crs.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        Equivalent workflow CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="to_rasterio"><a class="viewcode-back" href="../../api.html#workflow.crs.to_rasterio">[docs]</a><span class="k">def</span> <span class="nf">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : crs-type</span>
+<span class="sd">        A workflow CRS object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : fiona-crs-dict</span>
+<span class="sd">        Equivalent fiona CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">rasterio.crs</span>
+    <span class="k">return</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="from_epsg"><a class="viewcode-back" href="../../api.html#workflow.crs.from_epsg">[docs]</a><span class="k">def</span> <span class="nf">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts from an EPSG code to a workflow CRS.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    epsg : int</span>
+<span class="sd">        An EPSG code. (see `https://epsg.io`_)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        Equivalent workflow CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;EPSG:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="from_cartopy"><a class="viewcode-back" href="../../api.html#workflow.crs.from_cartopy">[docs]</a><span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a cartopy CRS to a workflow CRS.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    epsg : int</span>
+<span class="sd">        An EPSG code. (see `https://epsg.io`_)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        Equivalent workflow CRS.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">proj4_init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="to_cartopy"><a class="viewcode-back" href="../../api.html#workflow.crs.to_cartopy">[docs]</a><span class="k">def</span> <span class="nf">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a cartopy.crs.Projection.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs : crs-type</span>
+<span class="sd">        The CRS to convert.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A cartopy.crs.Projection object for plotting.</span>
+
+<span class="sd">    Adapted from: https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983</span>
+<span class="sd">    Better solution blocked by: https://github.com/SciTools/cartopy/issues/813</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">cartopy.crs</span> <span class="k">as</span> <span class="nn">ccrs</span>
+    <span class="kn">import</span> <span class="nn">osr</span>
+    <span class="k">if</span> <span class="n">crs</span><span class="o">.</span><span class="n">is_latlong</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">()</span>
+
+    <span class="n">srs</span> <span class="o">=</span> <span class="n">crs</span><span class="o">.</span><span class="n">srs</span>
+
+    <span class="c1"># this is more robust, as srs could be anything (espg, etc.)</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+    <span class="n">s1</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">srs</span><span class="p">)</span>
+    <span class="n">srs</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">()</span>
+
+    <span class="n">km_proj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lon_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_longitude&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;lat_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_latitude&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;x_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_easting&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;y_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_northing&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="s1">&#39;scale_factor&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;zone&#39;</span><span class="p">:</span> <span class="s1">&#39;zone&#39;</span><span class="p">,</span>
+               <span class="p">}</span>
+    <span class="n">km_globe</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;semimajor_axis&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;semiminor_axis&#39;</span><span class="p">,</span>
+                <span class="p">}</span>
+    <span class="n">km_std</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lat_1&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;lat_2&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">,</span>
+              <span class="p">}</span>
+    <span class="n">kw_proj</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">kw_globe</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">kw_std</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">srs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;proj&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;tmerc&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">TransverseMercator</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;lcc&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">LambertConformal</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;merc&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">Mercator</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;utm&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">UTM</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;aea&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">AlbersEqualArea</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;laea&#39;</span><span class="p">:</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">LambertAzimuthalEqualArea</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Proj4-to-Cartopy needs to be updated.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">km_proj</span><span class="p">:</span>
+            <span class="n">kw_proj</span><span class="p">[</span><span class="n">km_proj</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">km_globe</span><span class="p">:</span>
+            <span class="n">kw_globe</span><span class="p">[</span><span class="n">km_globe</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">km_std</span><span class="p">:</span>
+            <span class="n">kw_std</span><span class="p">[</span><span class="n">km_std</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="n">globe</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">kw_globe</span><span class="p">:</span>
+        <span class="n">globe</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">Globe</span><span class="p">(</span><span class="o">**</span><span class="n">kw_globe</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kw_std</span><span class="p">:</span>
+        <span class="n">kw_proj</span><span class="p">[</span><span class="s1">&#39;standard_parallels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">kw_std</span><span class="p">[</span><span class="s1">&#39;lat_1&#39;</span><span class="p">],</span> <span class="n">kw_std</span><span class="p">[</span><span class="s1">&#39;lat_2&#39;</span><span class="p">])</span>
+
+    <span class="c1"># mercatoooor</span>
+    <span class="k">if</span> <span class="n">cl</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;Mercator&#39;</span><span class="p">:</span>
+        <span class="n">kw_proj</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;false_easting&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">kw_proj</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;false_northing&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cl</span><span class="p">(</span><span class="n">globe</span><span class="o">=</span><span class="n">globe</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_proj</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.default_crs">[docs]</a><span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for North America.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        The default CRS.  The user should not care what this is (if</span>
+<span class="sd">        you do, don&#39;t use the default!) but it is EPSG:5070.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">5070</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_alaska_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.default_alaska_crs">[docs]</a><span class="k">def</span> <span class="nf">default_alaska_crs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for Alaska.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        The default CRS.  The user should not care what this is (if</span>
+<span class="sd">        you do, don&#39;t use the default!) but it is EPSG:3338.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">33</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="latlon_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.latlon_crs">[docs]</a><span class="k">def</span> <span class="nf">latlon_crs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the default latitude-longitude CRS.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        The default CRS.  The user should not care what this is (if</span>
+<span class="sd">        you do, don&#39;t use the default!) but it is EPSG:4269.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">4269</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="equal"><a class="viewcode-back" href="../../api.html#workflow.crs.equal">[docs]</a><span class="k">def</span> <span class="nf">equal</span><span class="p">(</span><span class="n">crs1</span><span class="p">,</span> <span class="n">crs2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Tries to guess at the equality of two CRS objects.</span>
+
+<span class="sd">    Note this is not trivial, just checking strings or dicts results</span>
+<span class="sd">    in false-negatives.  Furthermore, this implementation may not be</span>
+<span class="sd">    perfect, but it works for all those currently tested.  Please</span>
+<span class="sd">    report bugs!</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    crs1,crs2 : crs-type</span>
+<span class="sd">        Input workflow CRS objects.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : bool</span>
+<span class="sd">       Are equal?</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">to_item</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid proj string: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">to_item</span><span class="p">,</span> <span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+
+    <span class="n">d1</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="n">crs1</span><span class="p">)</span>
+    <span class="n">d2</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="n">crs2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">]):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;ellps:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="p">((</span><span class="s1">&#39;datum&#39;</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;datum&#39;</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">])):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;datum:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">]):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;proj:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;units:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;lat_0&#39;</span><span class="p">,</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_0&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_2&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">]):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+    
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Ethan Coon
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
