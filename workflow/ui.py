@@ -82,7 +82,7 @@ def projection(parser):
         except ValueError as err:
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'"%str(err))
         return epsg
-    parser.add_argument('--projection', type=valid_epsg, default=workflow.conf.default_crs(),
+    parser.add_argument('--projection', type=valid_epsg, default=workflow.crs.default_crs(),
                         help='Output coordinate system.  Default is from rcParams.')
     return parser
 

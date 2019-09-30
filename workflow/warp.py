@@ -12,16 +12,17 @@ import rasterio.warp
 import shapely.geometry
 
 import warnings
-import workflow.conf
+import workflow.crs
 import workflow.utils
 
 def warp_xy(x, y, old_crs, new_crs):
     """Warps a set of points from old_crs to new_crs."""
-    if old_crs == new_crs:
+    if workflow.crs.equal(old_crs, new_crs):
         return x,y
+    
+    old_crs_proj = workflow.crs.to_proj(old_crs)
+    new_crs_proj = workflow.crs.to_proj(new_crs)
 
-    old_crs_proj = pyproj.Proj(old_crs)
-    new_crs_proj = pyproj.Proj(new_crs)
     return pyproj.transform(old_crs_proj, new_crs_proj, x,y)
 
 def warp_bounds(bounds, old_crs, new_crs):
@@ -35,10 +36,11 @@ def warp_bounds(bounds, old_crs, new_crs):
 
 def warp_shapely(shp, old_crs, new_crs):
     """Uses proj to reproject shapes, NOT IN PLACE"""
-    old_crs_proj = pyproj.Proj(old_crs)
-    new_crs_proj = pyproj.Proj(new_crs)
-    if old_crs_proj == new_crs_proj:
+    if workflow.crs.equal(old_crs, new_crs):
         return shp
+
+    old_crs_proj = workflow.crs.to_proj(old_crs)
+    new_crs_proj = workflow.crs.to_proj(new_crs)
     
     return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
 
@@ -98,7 +100,7 @@ def warp_shape(feature, old_crs, new_crs):
 def warp_shapefile(infile, outfile, epsg=None):
     """Changes the projection of a shapefile."""
     if epsg is None:
-        new_crs = workflow.conf.default_crs()
+        new_crs = workflow.crs.default_crs()
     else:
         new_crs = fiona.crs.from_epsg(epsg)
 
@@ -118,7 +120,7 @@ def warp_shapefile(infile, outfile, epsg=None):
 def warp_raster(src_profile, src_array, dst_crs=None, dst_profile=None):
     """Changes the projection of a raster."""
     if dst_profile is None and dst_crs is None:
-        dst_crs = workflow.conf.default_crs()
+        dst_crs = workflow.crs.default_crs()
         
     if dst_profile is not None and dst_crs is not None:
         if dst_crs != dst_profile['crs']:
@@ -161,7 +163,7 @@ def warp_raster(src_profile, src_array, dst_crs=None, dst_profile=None):
 def warp_raster_file(infile, outfile, epsg=None):
     """Reads infile, writes outfile in destination epsg"""
     if epsg is None:
-        dst_crs = workflow.conf.default_crs()
+        dst_crs = workflow.crs.default_crs()
     else:
         dst_crs = fiona.crs.from_epsg(epsg)
 

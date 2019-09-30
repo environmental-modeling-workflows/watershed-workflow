@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Workflow library Concepts" href="concepts.html" />
-    <link rel="prev" title="Examples via Jupyter notebooks" href="examples.html" /> 
+    <link rel="prev" title="Example: mesh a delineated watershed" href="examples/mesh_coweeta.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,18 +83,17 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples and gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#recommended-process">Recommended process</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-exodusii-optional">Installing ExodusII (optional)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#setting-up-your-environment">Setting up your environment</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 </ul>
 
             
@@ -159,29 +158,88 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="installation-and-setup">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="installation-and-setup">
 <h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Permalink to this headline">¶</a></h1>
-<p>All code is in python3, though the dependencies (because of their need for GIS libraries) can be tricky to get right.  It is recommended to use Anaconda3 as a package manager, generating a unique environment for use with this package, as this makes it fairly easy to get all the required packages.</p>
-<p>Note that this package is not currently installed in a typical pythononic way (i.e. setuptools), but instead expects you to simply use it in place.  This will change shortly.  In the meantime, to install this package, simply place it in your python path:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export PYTHONPATH=/path/to/watershed-workflow:${PYTHONPATH}</span>
+<p>All code is in python3, though the dependencies (because of their need
+for GIS libraries) can be tricky to get right.  It is recommended to
+use Anaconda3 as a package manager, generating a unique environment
+for use with this package, as this makes it fairly easy to get all the
+required packages.</p>
+<p>Note that this package is not currently installed in a typical
+pythononic way (i.e. setuptools), but instead expects you to simply
+use it in place.  This will change shortly.  In the meantime, to
+install this package, simply place it and its third party libraries
+(TPLs) in your python path:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd /path/to/repository</span>
+<span class="go">export PYTHONPATH=`pwd`:`pwd`/workflow_tpls:${PYTHONPATH}</span>
 </pre></div>
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for testing, <cite>pytest</cite> and <cite>dist_utils</cite>.</dt><dd><p>Standard math packages include <cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.</p>
-</dd>
-</dl>
-<p>GIS work is typically done using expensive/closed source and GUI-based tools.  For this work, we instead build on the extremely high-quality, open-source packages for GIS in python: <cite>fiona</cite>, <cite>rasterio</cite>, <cite>shapely</cite> and <cite>cartopy</cite>.</p>
-<p>Mesh generation of 2D, “map view” surface meshes uses the open source library Triangle, which can be wrapped for python using <cite>meshpy</cite>.  This in turn depends upon boost python.  Optionally, extrusion of this 2D mesh into a 3D mesh for use in integrated hydrologic models requires a 3D mesh library ~~ we tend to use ExodusII here (though it would be straightforward to extend this to other packages such as VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a python3 set of wrappers, but there is no current package, so this must be installed separately.  See below.</p>
+<p>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for
+testing, <cite>pytest</cite> and <cite>dist_utils</cite>.  Standard math packages include
+<cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.</p>
+<p>GIS work is typically done using expensive/closed source and GUI-based
+tools.  For this work, we instead build on the extremely high-quality,
+open-source packages for GIS in python: <cite>fiona</cite>, <cite>rasterio</cite>, <cite>shapely</cite>
+and <cite>cartopy</cite>.</p>
+<p>Mesh generation of 2D, “map view” surface meshes uses the open source
+library Triangle, which can be wrapped for python using <cite>meshpy</cite>.
+This in turn depends upon boost python.  Optionally, extrusion of this
+2D mesh into a 3D mesh for use in integrated hydrologic models
+requires a 3D mesh library ~~ we tend to use ExodusII here (though it
+would be straightforward to extend this to other packages such as
+VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
+python3 set of wrappers, but there is no current package, so this must
+be installed separately.  See below.</p>
 </div>
 <div class="section" id="recommended-process">
 <h2>Recommended process<a class="headerlink" href="#recommended-process" title="Permalink to this headline">¶</a></h2>
-<p>Download and install <a class="reference external" href="https://www.anaconda.com/distribution/">Anaconda3</a>.  Then create a new environment that includes the required packages:</p>
+<p>Download and install <a class="reference external" href="https://www.anaconda.com/distribution/">Anaconda3</a>.  Then create a new
+environment that includes the required packages:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">Packages for general users</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest</span>
 <span class="go">conda activate ats_meshing</span>
 </pre></div>
 </div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Packages for developers and documentation</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx</span>
+<span class="go">conda activate ats_meshing_dev</span>
+</pre></div>
+</div>
+</div>
+<p>Note that, for OSX users, it is recommended you install <cite>python.app</cite>
+as well, which ensures a framework python and makes matplotlib
+plotting cleaner.  A current and complete conda environement for OSX
+is provided in <cite>workflow_tpls/environment.yml</cite> and
+<cite>workflow_tpls/environment_dev.yml</cite>.</p>
 <p>Check your python installation:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
@@ -190,20 +248,30 @@
 <div class="section" id="installing-exodusii-optional">
 <h2>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Permalink to this headline">¶</a></h2>
 <p>Clone the package from <a class="reference external" href="https://github.com/gsjaardema/seacas">source</a></p>
-<p>Unfortunately this package does not do regular releases except as part of the Trilinos project, and those releases are often somewhat old.  Then, edit the script at <cite>workflow_tpls/configure-seacas.sh</cite> &lt;../master/workflow_tpls/configure-seacas.sh&gt;`_, defining your compilers (likely clang if Mac and gcc if Linux) and pointing to your SEACAS repo and Anaconda environment installation.</p>
-<p>Hopefully you are then able to add your installed SEACAS to your PYTHONPATH and import the python wrappers:</p>
+<p>Unfortunately this package does not do regular releases except as part
+of the Trilinos project, and those releases are often somewhat old.
+So we must build from master; the python3 wrappers are fairly new.
+Edit the script at <a class="reference external" href="../master/workflow_tpls/configure-seacas.sh">workflow_tpls/configure-seacas.sh</a>, defining your
+compilers (likely clang if Mac and gcc if Linux) and pointing to your
+SEACAS repo and Anaconda environment installation.</p>
+<p>Hopefully you are then able to add your installed SEACAS to your
+PYTHONPATH and import the python wrappers:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export PYTHONPATH=${SEACAS_DIR}/lib</span>
 <span class="go">python -c &#39;import exodus; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="setting-up-your-environment">
-<h2>Setting up your environment<a class="headerlink" href="#setting-up-your-environment" title="Permalink to this headline">¶</a></h2>
-<p>Once all of the above work and are installed, setting up the environment from scratch consists of the following:</p>
-<blockquote>
-<div><p>conda activate ats_meshing
-export PYTHONPATH=/path/to/watershed-workflow:/path/to/SEACAS/install/lib:${PYTHONPATH}</p>
-</div></blockquote>
+<p>Sometimes this takes some fiddling with python versions – if you keep
+both python2 and python3 interpreters around, and both are available,
+sometimes SEACAS’s cmake seems to find the wrong ones.  A workaround
+is to configure, then manually search for <cite>python</cite> in the
+<cite>CMakeCache.txt</cite> file that results, and make sure it points to the
+correct python3 binary and version number.  I have seen instances
+where the binary is correct by the version number is still listed as
+python2.  Manually changing it to the correct version number and then
+calling <cite>make install</cite> again seems to fix the problem.</p>
+<p>Note that the path to your SEACAS installation must also go in your
+PYTHONPATH; <cite>exodus.py</cite> is located in the install directory’s <cite>lib</cite>
+subdirectory.</p>
 </div>
 </div>
 
@@ -218,7 +286,7 @@ export PYTHONPATH=/path/to/watershed-workflow:/path/to/SEACAS/install/lib:${PYTH
         <a href="concepts.html" class="btn btn-neutral float-right" title="Workflow library Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="examples.html" class="btn btn-neutral float-left" title="Examples via Jupyter notebooks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="examples/mesh_coweeta.html" class="btn btn-neutral float-left" title="Example: mesh a delineated watershed" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

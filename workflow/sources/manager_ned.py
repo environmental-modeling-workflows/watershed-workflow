@@ -1,4 +1,37 @@
 """Manager for interacting with NED datasets.
+
+For any distributed, integrated hydrologic model, elevation datasets
+are critical.  These set the local spatial gradients that drive flow
+in Richards and overload flow equations, and are necessary to form a
+mesh, whether structured or unstructured, for simulation.  Elevation
+datasets are typically stored as raster images.
+
+Watershed Workflow leverages the USGS's National Elevation Dataset
+(NED), a precursor to and currently part of the USGS's 3D Elevation
+Program (3DEP) [NED]_.  It is available seamlessly at a variety of
+resolutions ranging from 2 arc-seconds to 1/3 arc-seconds (~60m and
+10m, respectively) in the conterminous United States and comparable
+resolution through most of Alaska.  Like the NHD data, these datasets
+are available through The National Map's [TNM]_ REST API, and are
+provided in 1-degree tiles.  Watershed Workflow manages querying for
+URLs, downloading these tiles on demand, and forming the mosaic of
+images through underlying capability in rasterio to provide a single
+raster across the watershed requested.  Higher resolution products,
+including LiDAR products across the conterminous US and IfSAR products
+across Alaska are coming available, but these are not currently
+supported by Watershed Workflow.
+
+.. [NED] 
+
+Then workflows can query the raster for interpolated elevations at
+points on a mesh, river, or other locations of interest.  Internally,
+affine coordinate system transformations are hidden; the coordinate
+system of the requested points are mapped to that of the raster and
+interpolated.  By default, piecewise bilinear interpolation is used to
+ensure that extremely high-resolution queries do not look
+stairstepped; this improves mesh quality in meshes near the resolution
+of the underlying elevation dataset.
+
 """
 import os,sys
 import logging
@@ -33,15 +66,15 @@ class FileManagerNED:
         self.names = workflow.sources.names.Names(self.name, 'dem', None,
                                                   'USGS_NED_%s_n{:02}_w{:03}.%s'%(self.short_res,file_format.lower()),
                                                   self.short_res+"_raw")
-
+        self.crs = workflow.crs.from_epsg(4269)
 
     def get_raster(self, shape, crs):
         """Download and read a DEM for this shape, clipping to the shape."""
         if type(shape) is dict:
             shape = workflow.utils.shply(shape)
         
-        # warp to lat-lon, which is what NED DEMs are indexed by
-        shply = workflow.warp.warp_shapely(shape, crs, workflow.conf.latlon_crs())
+        # warp to my crs
+        shply = workflow.warp.warp_shapely(shape, crs, self.crs)
 
         # get the bounds and download
         bounds = shply.bounds

@@ -3,6 +3,7 @@ Workflow library Concepts
 
 CRS
 ~~~
+.. _crs:
 
 TODO: CRS are everywhere, we use Fiona's EPSG versions.
 

@@ -16,7 +16,7 @@ import workflow.utils
 class FileManagerNRCS:
     def __init__(self):
         self.name = 'National Resources Conservation Service Soil Survey (NRCS Soils)'
-        self.crs = fiona.crs.from_epsg('4326')
+        self.crs = workflow.crs.from_epsg('4326')
         self.fstring = '{:.4f}_{:.4f}_{:.4f}_{:.4f}'
         self.qstring = self.fstring.replace('_',',')
         self.name_manager = workflow.sources.names.Names(self.name,

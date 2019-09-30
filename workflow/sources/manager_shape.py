@@ -11,8 +11,6 @@ import workflow.conf
 @attr.s
 class FileManagerShape:
     _filename = attr.ib(type=str)
-    _crs = attr.ib(type=str, default=workflow.conf.default_crs())
-    _native_crs = attr.ib(default=None)
     
     def get_shape(self, *args, **kwargs):
         profile, shps = self.get_shapes(*args, **kwargs)

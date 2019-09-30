@@ -25,7 +25,7 @@ def test_nlcd(nlcd):
     profile, huc = nhd.get_huc('02040101')
 
     # get imgs
-    dem_prof, dem = nlcd.get_raster(huc, profile['crs'])
+    dem_prof, dem = nlcd.get_raster(huc, workflow.crs.from_fiona(profile['crs']))
     #plt.imshow(dem)
     #plt.show()
     

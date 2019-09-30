@@ -70,7 +70,7 @@ class FileManagerNLCD:
         logging.info('CRS: {}'.format(nlcd_profile['crs']))
 
         # warp to crs
-        shply = workflow.warp.warp_shapely(shply, crs, nlcd_profile['crs'])
+        shply = workflow.warp.warp_shapely(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
 
         # calculate a window
         bounds = shply.bounds
@@ -101,7 +101,7 @@ class FileManagerNLCD:
         os.makedirs(work_folder, exist_ok=True)
 
         filename = self.names.file_name()
-        print('  filename: {}'.format(filename))
+        logging.debug('  filename: {}'.format(filename))
         if not os.path.exists(filename) or force:
             try:
                 url = urls[self.layer_name]

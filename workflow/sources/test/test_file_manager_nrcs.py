@@ -18,7 +18,7 @@ def test_nrcs1():
     
     # get imgs
     nrcs = workflow.sources.manager_nrcs.FileManagerNRCS()
-    profile, shps = nrcs.get_shapes(hucly.bounds, hprofile['crs'])
+    profile, shps = nrcs.get_shapes(hucly.bounds, workflow.crs.from_fiona(hprofile['crs']))
     assert(type(shps[0]) is dict)
     assert('id' in shps[0])
 

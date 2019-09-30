@@ -5,12 +5,11 @@ from matplotlib import collections as pltc
 import shapely
 import rasterio
 import descartes
-import cartopy.crs
 from mpl_toolkits.mplot3d import Axes3D
 
 
 import workflow.utils
-import workflow.conf
+import workflow.crs
 
 def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
     """Returns an axis with a projection."""
@@ -29,7 +28,7 @@ def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
             # 3d plot
             ax = fig.add_subplot(nrow, ncol, index, projection='3d')
         else:
-            projection = workflow.conf.get_projection(crs)
+            projection = workflow.crs.to_cartopy(crs)
             ax = fig.add_subplot(nrow, ncol, index, projection=projection)
 
     else:
@@ -41,7 +40,7 @@ def get_ax(crs=None, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
             ax = Axes3D(fig, rect=window)
 
         else:
-            projection = workflow.conf.get_projection(crs)
+            projection = workflow.crs.to_cartopy(crs)
             fig.add_axes(window=window, projection=projection)
             ax = fig.gca()
 
@@ -100,7 +99,7 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
     if not hasattr(ax, 'projection') or crs is None:
         projection = None
     else:
-        projection = workflow.conf.get_projection(crs)
+        projection = workflow.crs.to_cartopy(crs)
         print('got projection:', projection)
         
     if type(next(iter(shps))) is shapely.geometry.Point:

@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples via Jupyter notebooks" href="examples.html" />
+    <link rel="next" title="Example: mesh a delineated watershed" href="examples/mesh_coweeta.html" />
     <link rel="prev" title="Watershed Workflow Documentation" href="index.html" /> 
 </head>
 
@@ -83,15 +83,16 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#funding-attribution-etc">Funding, attribution, etc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#workflows-via-jupyter-notebooks">Workflows via Jupyter notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#acknowledgements-citation-etc">Acknowledgements, citation, etc</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples and gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 </ul>
 
             
@@ -156,33 +157,95 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="watershed-workflow">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="watershed-workflow">
 <h1>Watershed Workflow<a class="headerlink" href="#watershed-workflow" title="Permalink to this headline">¶</a></h1>
 <img alt="_images/watershed_workflow.png" src="_images/watershed_workflow.png" />
-<dl class="field-list simple">
-<dt class="field-odd">Author</dt>
-<dd class="field-odd"><p>Ethan Coon, &lt;<a class="reference external" href="mailto:coonet&#37;&#52;&#48;ornl&#46;gov">coonet<span>&#64;</span>ornl<span>&#46;</span>gov</a>&gt;</p>
-</dd>
-<dt class="field-even">Copyright</dt>
-<dd class="field-even"><p>This work is licensed under the 3-clause BSD license.</p>
-</dd>
-</dl>
-<p>Watershed Workflow is a python-based, open source chain of tools for generating meshes and other data inputs for hyper-resolution hydrology, anywhere in the (conterminous + Alaska?) US.</p>
-<p>Hyper-resolution hydrologic models have huge data requirements, thanks to their large extent (full river basins) and very high resolution (often ~10-100 meters).  Furthermore, most process-rich models of integrated, distributed hydrology at this scale require meshes that understand both surface land cover and subsurface structure.  Typical data needs for simulations such as these include:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Ethan Coon, &lt;<a class="reference external" href="mailto:coonet&#37;&#52;&#48;ornl&#46;gov">coonet<span>&#64;</span>ornl<span>&#46;</span>gov</a>&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Copyright:</th><td class="field-body">This work is licensed under the 3-clause BSD license.</td>
+</tr>
+</tbody>
+</table>
+<p>Watershed Workflow is a python-based, open source chain of tools for
+generating meshes and other data inputs for hyper-resolution
+hydrology, anywhere in the (conterminous + Alaska?) US.</p>
+<p>Hyper-resolution hydrologic models have huge data requirements, thanks
+to their large extent (full river basins) and very high resolution
+(often ~10-100 meters).  Furthermore, most process-rich models of
+integrated, distributed hydrology at this scale require meshes that
+understand both surface land cover and subsurface structure.  Typical
+data needs for simulations such as these include:</p>
 <ul class="simple">
-<li><p>Watershed delineation (what is your domain?)</p></li>
-<li><p>Hydrography data (river network geometry, hydrographs for model evaluation)</p></li>
-<li><p>A digital elevation model (DEM) for surface topography</p></li>
-<li><p>Surface land use / land cover</p></li>
-<li><p>Subsurface soil types and properties</p></li>
-<li><p>Meterological data,</p></li>
+<li>Watershed delineation (what is your domain?)</li>
+<li>Hydrography data (river network geometry, hydrographs for model evaluation)</li>
+<li>A digital elevation model (DEM) for surface topography</li>
+<li>Surface land use / land cover</li>
+<li>Subsurface soil types and properties</li>
+<li>Meterological data,</li>
 </ul>
 <p>and more.</p>
-<p>This package is a python library of tools and a set of jupyter notebooks for interacting with these types of data streams using free and open (both free as in freedom and free as in free beer) python and GIS libraries and data.  Critically, this package provides a way for <strong>automatically and quickly</strong> downloading, interpreting, and processing data needed to <strong>generate a “first” hyper-resolution simulation on any watershed</strong> in the conterminous United States (and most of Alaska/Hawaii/Puerto Rico).</p>
-<p>To do this, this package provides tools to automate downloading a wide range of <strong>open data streams,</strong> including data from United States governmental agencies, including USGS, USDA, DOE, and others.  These data streams are then colocated on a mesh which is generated based on a watershed delineation and a river network, and that mesh is written in one of a variety of mesh formats for use in hyper-resolution simulation tools.</p>
-<p>Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It has been tested on the first two, but not the third.</p>
-<div class="section" id="funding-attribution-etc">
-<h2>Funding, attribution, etc<a class="headerlink" href="#funding-attribution-etc" title="Permalink to this headline">¶</a></h2>
+<p>This package is a python library of tools and a set of jupyter
+notebooks for interacting with these types of data streams using free
+and open (both free as in freedom and free as in free beer) python and
+GIS libraries and data.  Critically, this package provides a way for
+<strong>automatically and quickly</strong> downloading, interpreting, and
+processing data needed to <strong>generate a “first” hyper-resolution
+simulation on any watershed</strong> in the conterminous United States (and
+most of Alaska/Hawaii/Puerto Rico).</p>
+<p>To do this, this package provides tools to automate downloading a wide
+range of <strong>open data streams,</strong> including data from United States
+governmental agencies, including USGS, USDA, DOE, and others.  These
+data streams are then colocated on a mesh which is generated based on
+a watershed delineation and a river network, and that mesh is written
+in one of a variety of mesh formats for use in hyper-resolution
+simulation tools.</p>
+<p>Note: Hypothetically, this package works on all of Linux, Mac, and
+Windows.  It has been tested on the first two, but not the third.</p>
+<div class="section" id="workflows-via-jupyter-notebooks">
+<h2>Workflows via Jupyter notebooks<a class="headerlink" href="#workflows-via-jupyter-notebooks" title="Permalink to this headline">¶</a></h2>
+<p>Workflows are the composition of partially automated steps to
+accomplish a range of tasks.  Watershed Workflow provides tools for,
+given a watershed, finding, downloading, pre-processing, interpolating
+onto meshes, and writing data for use in hyper-resolution hydrologic
+simulations.  Combining these tools into a full product is reasonably
+supported by Jupyter notebooks.</p>
+<p>Note that the majority of code is NOT in notebooks.  Notebooks have
+<a class="reference external" href="https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/">all sorts of issues for software development, demonstration, and
+reproducibility</a>
+but they are great for providing a template for <strong>modifiable</strong>
+tutorials.</p>
+<p>Here I assume you know a little about Jupyter notebooks, and python.</p>
+</div>
+<div class="section" id="acknowledgements-citation-etc">
+<h2>Acknowledgements, citation, etc<a class="headerlink" href="#acknowledgements-citation-etc" title="Permalink to this headline">¶</a></h2>
 <p>This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).</p>
 <p>Collaborators and contributions are very welcome!</p>
 </div>
@@ -196,7 +259,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="examples.html" class="btn btn-neutral float-right" title="Examples via Jupyter notebooks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="examples/mesh_coweeta.html" class="btn btn-neutral float-right" title="Example: mesh a delineated watershed" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral float-left" title="Watershed Workflow Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

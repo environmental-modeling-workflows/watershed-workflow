@@ -9,12 +9,12 @@ Watershed Workflow Documentation
    :caption: Contents:
 
    Introduction <intro>
-   Examples and gallery <examples>
+   examples/mesh_coweeta.ipynb
    Installation <install>
    Concepts <concepts>
    Scripts <scripts>
-   API Documentation <api>
    Data Sources <sources>
+   API Documentation <api>
 
    
 Indices and tables

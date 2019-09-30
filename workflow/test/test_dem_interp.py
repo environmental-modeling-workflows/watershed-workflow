@@ -15,7 +15,7 @@ def dem_and_points():
 
     # with a profile
     dem_profile = dict()
-    dem_profile['crs'] = workflow.conf.default_crs()
+    dem_profile['crs'] = workflow.crs.default_crs()
     dem_profile['transform'] = rasterio.transform.Affine(1,0,0,0,1,0)
     dem_profile['height'] = 2
     dem_profile['width'] = 2

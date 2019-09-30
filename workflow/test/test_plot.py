@@ -87,13 +87,15 @@ def polygons():
     return _polygons    
 
 def run_test(start_p, obj_gen, epsg_data, epsg_ax):
-    ax = workflow.plot.get_ax(workflow.conf.get_crs(epsg_ax), fig)
+    if epsg_ax is not None:
+        epsg_ax = workflow.crs.from_epsg(epsg_ax)
+    ax = workflow.plot.get_ax(epsg_ax, fig)
     if epsg_ax is not None:
         ax.stock_img()
 
     if epsg_data is not None:
-        crs = workflow.conf.get_crs(epsg_data)
-        objs = workflow.warp.warp_shapelys(obj_gen(start_p), workflow.conf.latlon_crs(), crs)
+        crs = workflow.crs.from_epsg(epsg_data)
+        objs = workflow.warp.warp_shapelys(obj_gen(start_p), workflow.crs.latlon_crs(), crs)
     else:
         epsg_data = 'None'
         crs = None

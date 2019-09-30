@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Documentation" href="api.html" />
+    <link rel="next" title="Data Sources" href="sources.html" />
     <link rel="prev" title="Workflow library Concepts" href="concepts.html" /> 
 </head>
 
@@ -83,12 +83,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples and gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 </ul>
 
             
@@ -153,13 +153,37 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="watershed-workflow-scripts">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast,
+.nboutput.nblast {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast + .nbinput {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="watershed-workflow-scripts">
 <h1>Watershed Workflow scripts<a class="headerlink" href="#watershed-workflow-scripts" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><p>Example 1: plot_huc.py</p></li>
-<li><p>Example 2: plot_shape.py</p></li>
-<li><p>Example 3: mesh_huc.py</p></li>
-<li><p>Example 4: mesh_shape.py</p></li>
+<li>Example 1: plot_huc.py</li>
+<li>Example 2: plot_shape.py</li>
+<li>Example 3: mesh_huc.py</li>
+<li>Example 4: mesh_shape.py</li>
 </ul>
 </div>
 
@@ -171,7 +195,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sources.html" class="btn btn-neutral float-right" title="Data Sources" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="concepts.html" class="btn btn-neutral float-left" title="Workflow library Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

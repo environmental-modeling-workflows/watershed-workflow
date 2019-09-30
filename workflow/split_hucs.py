@@ -132,7 +132,7 @@ class SplitHUCs:
         for s in shapes:
             try:
                 self.properties.append(s.properties)
-            except TypeError:
+            except AttributeError:
                 self.properties.append(None)
         
 

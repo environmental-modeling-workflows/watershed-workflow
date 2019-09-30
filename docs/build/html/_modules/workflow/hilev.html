@@ -81,12 +81,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples and gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
 </ul>
 
             
@@ -159,6 +159,7 @@
 <span class="sd">.. note:</span>
 <span class="sd">    Everything from here gets directly imported into the top level </span>
 <span class="sd">    package.</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -199,20 +200,21 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    source : :obj:`source-type`</span>
+<span class="sd">    source : source-type</span>
 <span class="sd">        source object providing `get_hucs()`</span>
 <span class="sd">    huc : str</span>
 <span class="sd">        hydrologic unit code</span>
-<span class="sd">    crs : :obj:`crs`</span>
+<span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
 <span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.  Default set by</span>
+<span class="sd">        config file.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    :obj:`crs`</span>
-<span class="sd">        Output coordinate system.</span>
-<span class="sd">    :obj:`Polygon`</span>
+<span class="sd">    out_crs : crs-type</span>
+<span class="sd">        Coordinate system of `out`.</span>
+<span class="sd">    out : Polygon</span>
 <span class="sd">        shapely polygon for the hydrologic unit.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -223,26 +225,27 @@
 
 
 <div class="viewcode-block" id="get_hucs"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_hucs">[docs]</a><span class="k">def</span> <span class="nf">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get a list of shape objects for all HUCs at level contained in huc.</span>
+    <span class="sd">&quot;&quot;&quot;Get shape objects for all HUCs at a level contained in huc.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    source : :obj:`source-type`</span>
+<span class="sd">    source : source-type</span>
 <span class="sd">        source object providing `get_hucs()`</span>
 <span class="sd">    huc : str</span>
 <span class="sd">        hydrologic unit code</span>
 <span class="sd">    level : int</span>
 <span class="sd">        HUC level of the requested sub-basins</span>
-<span class="sd">    crs : :obj:`crs`</span>
+<span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
 <span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.  Default set by</span>
+<span class="sd">        config file.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    :obj:`crs`</span>
-<span class="sd">        Output coordinate system.</span>
-<span class="sd">    :obj:`list(Polygon)`</span>
+<span class="sd">    out_crs : crs-type</span>
+<span class="sd">        Coordinate system of all entries in `out`.</span>
+<span class="sd">    out : list(Polygon)</span>
 <span class="sd">        List of shapely polygons for the subbasins.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -281,29 +284,30 @@
 <div class="viewcode-block" id="get_split_form_hucs"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_split_form_hucs">[docs]</a><span class="k">def</span> <span class="nf">get_split_form_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get a SplitHUCs object for all HUCs at level contained in huc.</span>
 
-<span class="sd">    A :obj:`SplitHUCs` object is an object which stores a collection</span>
-<span class="sd">    of polygons which share boundaries in a format that makes changing</span>
+<span class="sd">    A SplitHUCs object is an object which stores a collection of</span>
+<span class="sd">    polygons which share boundaries in a format that makes changing</span>
 <span class="sd">    those shared boundaries possible without having to update all</span>
 <span class="sd">    shapes that share the boundary.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    source : :obj:`source-type`</span>
+<span class="sd">    source : source-type</span>
 <span class="sd">        source object providing `get_hucs()`</span>
 <span class="sd">    huc : str</span>
 <span class="sd">        hydrologic unit code</span>
 <span class="sd">    level : int</span>
 <span class="sd">        HUC level of the requested sub-basins</span>
-<span class="sd">    crs : :obj:`crs`</span>
+<span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
 <span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.  Default set by</span>
+<span class="sd">        config file.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    :obj:`crs`</span>
-<span class="sd">        Output coordinate system.</span>
-<span class="sd">    :obj:`SplitHUCs`</span>
+<span class="sd">    out_crs : crs-type</span>
+<span class="sd">        Coordinate system of `out`.</span>
+<span class="sd">    out : SplitHUCs</span>
 <span class="sd">        Split-form HUCs object containing subbasins.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -311,31 +315,34 @@
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">hu_shapes</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a shapefile.</span>
 
-<span class="sd">    .. note:</span>
-<span class="sd">        If index_or_bounds is a bounding box, crs must not be None and is the</span>
-<span class="sd">        crs of the bounding box.</span>
+<span class="sd">    If index_or_bounds is a bounding box, crs must not be None and is</span>
+<span class="sd">    the crs of the bounding box.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    source : str or :obj:`source-type`</span>
-<span class="sd">        Filename to parse, or a source object providing the get_shapes() method.</span>
-<span class="sd">    index_or_bounds : int or :obj:`[xmin, ymin, xmax, ymax]`</span>
-<span class="sd">        Index of the requested shape in filename, or bounding box to filter shapes, </span>
-<span class="sd">        or -1 to get them all.</span>
-<span class="sd">    crs : :obj:`crs`</span>
-<span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
-<span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">    source : str or source-type</span>
+<span class="sd">        Filename to parse, or a source object providing the</span>
+<span class="sd">        get_shapes() method.</span>
+<span class="sd">    index_or_bounds : int or bounds-type, optional</span>
+<span class="sd">        Filter the file, either by selecting a specific shape by index</span>
+<span class="sd">        of the requested shape in the file, or providing a bounds-type</span>
+<span class="sd">        tuple to select only shapes that intersect with the bounding box.</span>
+<span class="sd">    crs : crs-type, optional</span>
+<span class="sd">        Coordinate system of out and/or the bounding box provided in</span>
+<span class="sd">        `filter`.  The default is source&#39;s crs.</span>
+<span class="sd">    digits : int, optional</span>
+<span class="sd">        Number of digits to round coordinates to.  Default set by</span>
+<span class="sd">        config file.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    :obj:`crs`</span>
-<span class="sd">        Output coordinate system.</span>
-<span class="sd">    :obj:`list(Polygon)`</span>
-<span class="sd">        List of shapely polygons in the shapefile meeting the criteria.</span>
+<span class="sd">    out_crs : crs-type</span>
+<span class="sd">        Coordinate system of `out`.</span>
+<span class="sd">    out : list(shapely)</span>
+<span class="sd">        List of shapely objects in the shapefile meeting the criteria.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>

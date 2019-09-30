@@ -7,6 +7,7 @@ capability.
 .. note:
     Everything from here gets directly imported into the top level 
     package.
+
 """
 
 import numpy as np
@@ -47,20 +48,21 @@ def get_huc(source, huc, crs=None, digits=None):
 
     Parameters
     ----------
-    source : :obj:`source-type`
+    source : source-type
         source object providing `get_hucs()`
     huc : str
         hydrologic unit code
-    crs : :obj:`crs`
+    crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.  Default set by
+        config file.
 
     Returns
     -------
-    :obj:`crs`
-        Output coordinate system.
-    :obj:`Polygon`
+    out_crs : crs-type
+        Coordinate system of `out`.
+    out : Polygon
         shapely polygon for the hydrologic unit.
 
     """
@@ -71,26 +73,27 @@ def get_huc(source, huc, crs=None, digits=None):
 
 
 def get_hucs(source, huc, level, crs=None, digits=None):
-    """Get a list of shape objects for all HUCs at level contained in huc.
+    """Get shape objects for all HUCs at a level contained in huc.
 
     Parameters
     ----------
-    source : :obj:`source-type`
+    source : source-type
         source object providing `get_hucs()`
     huc : str
         hydrologic unit code
     level : int
         HUC level of the requested sub-basins
-    crs : :obj:`crs`
+    crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.  Default set by
+        config file.
 
     Returns
     -------
-    :obj:`crs`
-        Output coordinate system.
-    :obj:`list(Polygon)`
+    out_crs : crs-type
+        Coordinate system of all entries in `out`.
+    out : list(Polygon)
         List of shapely polygons for the subbasins.
 
     """
@@ -129,29 +132,30 @@ def get_hucs(source, huc, level, crs=None, digits=None):
 def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
     """Get a SplitHUCs object for all HUCs at level contained in huc.
 
-    A :obj:`SplitHUCs` object is an object which stores a collection
-    of polygons which share boundaries in a format that makes changing
+    A SplitHUCs object is an object which stores a collection of
+    polygons which share boundaries in a format that makes changing
     those shared boundaries possible without having to update all
     shapes that share the boundary.
 
     Parameters
     ----------
-    source : :obj:`source-type`
+    source : source-type
         source object providing `get_hucs()`
     huc : str
         hydrologic unit code
     level : int
         HUC level of the requested sub-basins
-    crs : :obj:`crs`
+    crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.  Default set by
+        config file.
 
     Returns
     -------
-    :obj:`crs`
-        Output coordinate system.
-    :obj:`SplitHUCs`
+    out_crs : crs-type
+        Coordinate system of `out`.
+    out : SplitHUCs
         Split-form HUCs object containing subbasins.
 
     """
@@ -159,31 +163,34 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
     return crs, workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
-def get_shapes(source, index_or_bounds=-1, crs=None, digits=None):
+def get_shapes(source, index_or_bounds=None, crs=None, digits=None):
     """Read a shapefile.
 
-    .. note:
-        If index_or_bounds is a bounding box, crs must not be None and is the
-        crs of the bounding box.
+    If index_or_bounds is a bounding box, crs must not be None and is
+    the crs of the bounding box.
 
     Parameters
     ----------
-    source : str or :obj:`source-type`
-        Filename to parse, or a source object providing the get_shapes() method.
-    index_or_bounds : int or :obj:`[xmin, ymin, xmax, ymax]`
-        Index of the requested shape in filename, or bounding box to filter shapes, 
-        or -1 to get them all.
-    crs : :obj:`crs`
-        Output coordinate system.  Default is source's crs.
-    digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+    source : str or source-type
+        Filename to parse, or a source object providing the
+        get_shapes() method.
+    index_or_bounds : int or bounds-type, optional
+        Filter the file, either by selecting a specific shape by index
+        of the requested shape in the file, or providing a bounds-type
+        tuple to select only shapes that intersect with the bounding box.
+    crs : crs-type, optional
+        Coordinate system of out and/or the bounding box provided in
+        `filter`.  The default is source's crs.
+    digits : int, optional
+        Number of digits to round coordinates to.  Default set by
+        config file.
 
     Returns
     -------
-    :obj:`crs`
-        Output coordinate system.
-    :obj:`list(Polygon)`
-        List of shapely polygons in the shapefile meeting the criteria.
+    out_crs : crs-type
+        Coordinate system of `out`.
+    out : list(shapely)
+        List of shapely objects in the shapefile meeting the criteria.
 
     """
     logging.info("")
@@ -295,11 +302,11 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     profile, reaches = source.get_hydro(huc, bounds, crs)
 
     # convert to destination crs
-    if crs and crs != profile['crs']:
+    if crs and not workflow.crs.equal(crs, workflow.crs.from_fiona(profile['crs'])):
         for reach in reaches:
             workflow.warp.warp_shape(reach, profile['crs'], crs)
     else:
-        crs = profile['crs']
+        crs = workflow.crs.from_fiona(profile['crs'])
 
     # round
     if digits is None:
@@ -461,7 +468,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
         profile, subhus = source.get_hucs(hint, search_level)
         
         for subhu in subhus:
-            workflow.warp.warp_shape(subhu, profile['crs'], crs)
+            workflow.warp.warp_shape(subhu, workflow.crs.from_fiona(profile['crs']), crs)
             subhu_shply = workflow.utils.shply(subhu['geometry'])        
             inhuc = _in_huc(shply, subhu_shply)
 
@@ -492,7 +499,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
     hint = workflow.sources.utils.huc_str(hint)
 
     profile, hint_hu = source.get_huc(hint)
-    workflow.warp.warp_shape(hint_hu, profile['crs'], crs)
+    workflow.warp.warp_shape(hint_hu, workflow.crs.from_fiona(profile['crs']), crs)
     
     inhuc = _in_huc(shply_s, workflow.utils.shply(hint_hu['geometry']))
     if inhuc is not 2:

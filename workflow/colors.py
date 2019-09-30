@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.colors
 import matplotlib.cm
 import numpy as np
+import collections
 
 # black-zero jet is jet, but with the 0-value set to black, with an immediate jump to blue
 def blackzerojet_cmap(data):
@@ -125,60 +126,84 @@ def lighten(color, fraction=0.6):
     return tuple(np.minimum(rgb + fraction*(1-rgb),1))
 
 
-import collections
-nlcd_color_map_values = collections.OrderedDict({
-    0:     (0.00000000000,  0.00000000000,  0.00000000000),
-    11:    (0.27843137255,  0.41960784314,  0.62745098039),
-    12:    (0.81960784314,  0.86666666667,  0.97647058824),
-    21:    (0.86666666667,  0.78823529412,  0.78823529412),
-    22:    (0.84705882353,  0.57647058824,  0.50980392157),
-    23:    (0.92941176471,  0.00000000000,  0.00000000000),
-    24:    (0.66666666667,  0.00000000000,  0.00000000000),
-    31:    (0.69803921569,  0.67843137255,  0.63921568628),
-    41:    (0.40784313726,  0.66666666667,  0.38823529412),
-    42:    (0.10980392157,  0.38823529412,  0.18823529412),
-    43:    (0.70980392157,  0.78823529412,  0.55686274510),
-    51:    (0.64705882353,  0.54901960784,  0.18823529412),
-    52:    (0.80000000000,  0.72941176471,  0.48627450980),
-    71:    (0.88627450980,  0.88627450980,  0.75686274510),
-    72:    (0.78823529412,  0.78823529412,  0.46666666667),
-    73:    (0.60000000000,  0.75686274510,  0.27843137255),
-    74:    (0.46666666667,  0.67843137255,  0.57647058824),
-    81:    (0.85882352941,  0.84705882353,  0.23921568628),
-    82:    (0.66666666667,  0.43921568628,  0.15686274510),
-    90:    (0.72941176471,  0.84705882353,  0.91764705882),
-    95:    (0.43921568628,  0.63921568628,  0.72941176471),
-})
 
-_nlcd_labels = collections.OrderedDict({
-    0:  'None',
-    11: 'Open Water',
-    12: 'Perrenial Ice/Snow',
-    21: 'Developed, Open Space',
-    22: 'Developed, Low Intensity',
-    23: 'Developed, Medium Intensity',
-    24: 'Developed, High Intensity',
-    31: 'Barren Land',
-    41: 'Deciduous Forest',
-    42: 'Evergreen Forest',
-    43: 'Mixed Forest',
-    51: 'Dwarf Scrub',
-    52: 'Shrub/Scrub',
-    71: 'Grassland/Herbaceous',
-    72: 'Sedge/Herbaceous',
-    73: 'Lichens',
-    74: 'Moss',
-    81: 'Pasture/Hay',
-    82: 'Cultivated Crops',
-    90: 'Woody Wetlands',
-    95: 'Emergent Herbaceous Wetlands',
-})
-    
-nlcd_cmap = matplotlib.colors.ListedColormap(list(nlcd_color_map_values.values()))
+def generate_nlcd_colormap(indices=None):
+    """Generates a colormap and labels for imaging with the NLCD colors.
 
-_nlcd_indices = np.array(list(_nlcd_labels.keys()),'d')
-nlcd_norm = matplotlib.colors.BoundaryNorm(list(_nlcd_labels.keys())+[93,], len(_nlcd_labels))
-nlcd_ticks = list(_nlcd_labels.keys()) + [93,]
-nlcd_labels = list(_nlcd_labels.values()) + ['',]
+    Parameters
+    ----------
+    indices : iterable(int), optional
+        Collection of NLCD indices that will be used in this colormap.
+        If None (default), uses all NLCD indices.
 
-                                                                
+    Returns
+    -------
+    indices_out : list(int)
+        The unique, sorted list of indices found.
+    cmap : cmap-type
+        A segmented map for use with plots.
+    norm : BoundaryNorm
+        A norm for use in `plot_trisurf()` or other plotting methods
+        to ensure correct NLCD colors.
+    ticks : list(int)
+        A list of tick locations for the requested indices.  For use
+        with `set_ticks()`.
+    labels : list(str)
+        A list of labels associated with the ticks.  For use with
+        `set_{x,y}ticklabels()`.
+
+    Example
+    -------
+
+    Plot a triangulation given a set of NLCD colors on those triangles.
+
+    Given a triangluation `mesh_points, mesh_tris` and NLCD color
+    indices for each triangle, `tri_nlcd`:
+
+    .. code-block:: 
+
+        indices, cmap, norm, ticks, labels = generate_nlcd_colormap(set(tri_nlcd))
+
+        mp = ax.plot_trisurf(mesh_points[:,0], mesh_points[:,1], mesh_points[:,2], 
+                triangles=mesh_tris, color=tri_nlcd, 
+                cmap=cmap, norm=norm)
+        cb = fig.colorbar(mp, orientation='horizontal')
+        cb.set_ticks(ticks)
+        cb.ax.set_xticklabels(labels, rotation=45)
+
+    """
+    all_colors = {
+        0:  ('None', (0.00000000000,  0.00000000000,  0.00000000000)),
+        11: ('Open Water', (0.27843137255,  0.41960784314,  0.62745098039)),
+        12: ('Perrenial Ice/Snow', (0.81960784314,  0.86666666667,  0.97647058824)),
+        21: ('Developed, Open Space', (0.86666666667,  0.78823529412,  0.78823529412)),
+        22: ('Developed, Low Intensity', (0.84705882353,  0.57647058824,  0.50980392157)),
+        23: ('Developed, Medium Intensity', (0.92941176471,  0.00000000000,  0.00000000000)),
+        24: ('Developed, High Intensity', (0.66666666667,  0.00000000000,  0.00000000000)),
+        31: ('Barren Land', (0.69803921569,  0.67843137255,  0.63921568628)),
+        41: ('Deciduous Forest', (0.40784313726,  0.66666666667,  0.38823529412)),
+        42: ('Evergreen Forest', (0.10980392157,  0.38823529412,  0.18823529412)),
+        43: ('Mixed Forest', (0.70980392157,  0.78823529412,  0.55686274510)),
+        51: ('Dwarf Scrub', (0.64705882353,  0.54901960784,  0.18823529412)),
+        52: ('Shrub/Scrub', (0.80000000000,  0.72941176471,  0.48627450980)),
+        71: ('Grassland/Herbaceous', (0.88627450980,  0.88627450980,  0.75686274510)),
+        72: ('Sedge/Herbaceous', (0.78823529412,  0.78823529412,  0.46666666667)),
+        73: ('Lichens', (0.60000000000,  0.75686274510,  0.27843137255)),
+        74: ('Moss', (0.46666666667,  0.67843137255,  0.57647058824)),
+        81: ('Pasture/Hay', (0.85882352941,  0.84705882353,  0.23921568628)),
+        82: ('Cultivated Crops', (0.66666666667,  0.43921568628,  0.15686274510)),
+        90: ('Woody Wetlands', (0.72941176471,  0.84705882353,  0.91764705882)),
+        95: ('Emergent Herbaceous Wetlands', (0.43921568628,  0.63921568628,  0.72941176471)),
+    }
+
+    if indices is None:
+        indices = list(all_colors.keys())
+
+    indices = sorted(set(indices))
+
+    values = [all_colors[k][1] for k in indices]
+    cmap = matplotlib.colors.ListedColormap(values)
+    ticks = indices+[indices[-1]+1,]
+    norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks)-1)
+    labels = [all_colors[k][0] for k in indices] + ['',]
+    return indices, cmap, norm, ticks, labels

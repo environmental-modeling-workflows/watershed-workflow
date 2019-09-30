@@ -4,6 +4,7 @@ import pytest
 import fiona
 import shapely.geometry
 import numpy as np
+import workflow.crs
 import workflow.hilev
 import workflow.source_list
 
@@ -26,11 +27,10 @@ def get_fiona(filename):
         profile = fid.profile
         shp = fid[0]
 
-    workflow.warp.warp_shape(shp, profile['crs'], workflow.conf.latlon_crs())
-    profile['crs'] = workflow.conf.latlon_crs()
+    workflow.warp.warp_shape(shp, workflow.crs.from_fiona(profile['crs']), workflow.crs.latlon_crs())
     shply = workflow.utils.shply(shp['geometry'])
     assert(type(shply) == shapely.geometry.Polygon)
-    return profile, shply
+    return workflow.crs.latlon_crs(), shply
 
 
 @pytest.fixture
@@ -46,64 +46,64 @@ def test_find_raises(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
-    profile, shp = get_fiona(testshpfile)
+    crs, shp = get_fiona(testshpfile)
 
     radius = np.sqrt(shp.area/np.pi)
     shp = shp.buffer(-.001*radius)
     with pytest.raises(ValueError):
-        workflow.hilev.find_huc(nhd, shp, profile['crs'], '06')
+        workflow.hilev.find_huc(nhd, shp, crs, '06')
 
 def test_find12(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
-    profile, shp = get_fiona(testshpfile)
+    crs, shp = get_fiona(testshpfile)
     radius = np.sqrt(shp.area/np.pi)
     shp = shp.buffer(-.001*radius)
     print(shp.area)
-    assert('060102020103' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '0601'))
+    assert('060102020103' == workflow.hilev.find_huc(nhd, shp, crs, '0601'))
 
 def test_find12_exact(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
-    profile, shp = get_fiona(testshpfile)
+    crs, shp = get_fiona(testshpfile)
     radius = np.sqrt(shp.area/np.pi)
     shp = shp.buffer(-.001*radius)
     print(shp.area)
-    assert('060102020103' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '060102020103'))
+    assert('060102020103' == workflow.hilev.find_huc(nhd, shp, crs, '060102020103'))
 
 def test_find12_raises(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_shapefile.shp')
-    profile, shp = get_fiona(testshpfile)
+    crs, shp = get_fiona(testshpfile)
     radius = np.sqrt(shp.area/np.pi)
     shp = shp.buffer(-.001*radius)
     print(shp.area)
     with pytest.raises(RuntimeError):
-        workflow.hilev.find_huc(nhd, shp, profile['crs'], '060101080204')
+        workflow.hilev.find_huc(nhd, shp, crs, '060101080204')
 
 def test_find8(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    assert('06010202' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '0601'))
+    crs, shp = get_fiona(testshpfile)
+    assert('06010202' == workflow.hilev.find_huc(nhd, shp, crs, '0601'))
 
 def test_find8_exact(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
-    assert('06010202' == workflow.hilev.find_huc(nhd, shp, profile['crs'], '06010202'))
+    crs, shp = get_fiona(testshpfile)
+    assert('06010202' == workflow.hilev.find_huc(nhd, shp, crs, '06010202'))
 
 def test_find8_raises(datadir):
     nhd = workflow.source_list.FileManagerNHDPlus()
 
     testshpfile = datadir.join('test_polygon.shp')
-    profile, shp = get_fiona(testshpfile)
+    crs, shp = get_fiona(testshpfile)
     with pytest.raises(RuntimeError):
-        workflow.hilev.find_huc(nhd, shp, profile['crs'], '0204')
+        workflow.hilev.find_huc(nhd, shp, crs, '0204')
 
 
