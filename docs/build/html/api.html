@@ -557,10 +557,24 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 </div>
 <div class="section" id="module-workflow.hilev">
 <span id="high-level-api"></span><h2>High Level API<a class="headerlink" href="#module-workflow.hilev" title="Permalink to this headline">¶</a></h2>
-<p>High-level routines for downloading/opening datasets and forming
-internal data structures.</p>
-<p>Most scripts use these functions instead of directly using lower-level
-capability.</p>
+<p>Watershed Workflow finds, downloads, and processes data for use in hydrologic models.</p>
+<p>This package is a python library of tools for interacting with a wide range of
+data streams using free and open (both free as in freedom and free as in free
+beer) python and GIS libraries and data.  Critically, this package provides a
+way for <strong>automatically and quickly</strong> downloading, interpreting, and processing
+data needed to <strong>generate a “first” hyper-resolution simulation on any
+watershed</strong> in the conterminous United States (and most of Alaska/Hawaii/Puerto
+Rico).</p>
+<p>To do this, this package provides tools to automate finding (via REST APIs and
+other approaches) data streams from <strong>open data streams,</strong> from United States
+governmental agencies, including USGS, USDA, DOE, and others.  These data
+streams are then colocated on a mesh which is generated based on a watershed
+delineation and a river network, and that mesh is written in one of a variety
+of mesh formats for use in hyper-resolution simulation tools.</p>
+<p>This top level module provides functionality for getting shapes and rasters
+representing watershed boundaries, river networks, digital elevation models,
+and other GIS datasets and then processing those data sets for use in
+simulations.</p>
 <dl class="function">
 <dt id="workflow.hilev.get_huc">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_huc</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_huc" title="Permalink to this definition">¶</a></dt>
@@ -580,8 +594,7 @@ capability.</p>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by
-config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
 </dl>
 </td>
@@ -622,8 +635,7 @@ config file.</p>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by
-config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
 </dl>
 </td>
@@ -646,10 +658,9 @@ config file.</p>
 <dt id="workflow.hilev.get_split_form_hucs">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_hucs</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>level=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_hucs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a SplitHUCs object for all HUCs at level contained in huc.</p>
-<p>A SplitHUCs object is an object which stores a collection of
-polygons which share boundaries in a format that makes changing
-those shared boundaries possible without having to update all
-shapes that share the boundary.</p>
+<p>A SplitHUCs object is an object which stores a collection of polygons which
+share boundaries in a format that makes changing those shared boundaries
+possible without having to update all shapes that share the boundary.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -668,8 +679,7 @@ shapes that share the boundary.</p>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by
-config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
 </dl>
 </td>
@@ -692,29 +702,28 @@ config file.</p>
 <dt id="workflow.hilev.get_shapes">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_shapes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a shapefile.</p>
-<p>If index_or_bounds is a bounding box, crs must not be None and is
-the crs of the bounding box.</p>
+<p>If index_or_bounds is a bounding box, crs must not be None and is the crs
+of the bounding box.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
 <dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or source-type</span></dt>
-<dd><p class="first last">Filename to parse, or a source object providing the
-get_shapes() method.</p>
+<dd><p class="first last">Filename to parse, or a source object providing the get_shapes()
+method.</p>
 </dd>
-<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or bounds-type, optional</span></dt>
-<dd><p class="first last">Filter the file, either by selecting a specific shape by index
-of the requested shape in the file, or providing a bounds-type
-tuple to select only shapes that intersect with the bounding box.</p>
+<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or [x_min, y_min, x_max, y_max] bounds, optional</span></dt>
+<dd><p class="first last">Filter the file, either by selecting a specific shape by index of the
+requested shape in the file, or providing a bounds-type tuple to select
+only shapes that intersect with the bounding box.</p>
 </dd>
 <dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
-<dd><p class="first last">Coordinate system of out and/or the bounding box provided in
-<cite>filter</cite>.  The default is source’s crs.</p>
+<dd><p class="first last">Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
+The default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by
-config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
 </dl>
 </td>
@@ -737,35 +746,37 @@ config file.</p>
 <dt id="workflow.hilev.get_split_form_shapes">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=-1</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_shapes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a shapefile.</p>
-<p>Note: if index_or_bounds is a bounding box, crs must not be None
-and is the crs of the bounding box.</p>
+<p>Note that if index_or_bounds is a bounding box, crs must not be None and is
+the crs of the bounding box.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or <code class="xref py py-obj docutils literal notranslate"><span class="pre">source-type</span></code></span></dt>
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or source-type</span></dt>
 <dd><p class="first last">Filename to parse, or a source object providing the get_shapes() method.</p>
 </dd>
-<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or <code class="xref py py-obj docutils literal notranslate"><span class="pre">[xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax]</span></code></span></dt>
-<dd><p class="first last">Index of the requested shape in filename, or bounding box to filter shapes, 
-or -1 to get them all.</p>
+<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or [x_min, y_min, x_max, y_max] bounds, optional</span></dt>
+<dd><p class="first last">Filter the shapes, either by selecting a specific shape by index of the
+requested shape in the file, or providing a bounds-type tuple to select
+only shapes that intersect with the bounding box.</p>
 </dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
-<dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
+<dd><p class="first last">Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
+The default is source’s crs.</p>
 </dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
 <dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></dt>
-<dd><p class="first last">Output coordinate system.</p>
+<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">SplitHUCs</span></code></dt>
-<dd><p class="first last">Split-form polygon objects from the shapefile meeting the criteria.</p>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
+<dd><p class="first last">Split-form polygons object containing subbasins.</p>
 </dd>
 </dl>
 </td>
@@ -777,47 +788,53 @@ or -1 to get them all.</p>
 <dl class="function">
 <dt id="workflow.hilev.get_reaches">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_reaches</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>bounds=None</em>, <em>crs=None</em>, <em>digits=None</em>, <em>long=None</em>, <em>merge=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_reaches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of reaches from hydrography data within a given HUC and/or bounding box.</p>
-<p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are provided,
-a containing HUC must still be provided to give a hint for file downloads.  If bounds
-are not provided, then all reaches that intersect the HUC are included.</p>
+<dd><p>Get reaches from hydrography source within a given HUC and/or bounding box.</p>
+<p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are
+provided, a containing HUC must still be provided to give a hint for file
+downloads.  If bounds are not provided, then all reaches that intersect the
+HUC are included.</p>
 <p>If bounds is provided, crs must not be None and is the crs of the bounding box.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source-type</span></code></span></dt>
-<dd><p class="first last">Source object providing <cite>get_hydro()</cite>.</p>
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
+<dd><p class="first last">Source object providing a get_hydro() method.</p>
 </dd>
 <dt><strong>huc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Search domain for reaches.  If bounds are provided, a hint to help the source
-find the file containing the bounds.  For NHD, this is a HUC4 or smaller.</p>
+<dd><p class="first last">HUC containing reaches.  If bounds are provided, a hint to help the
+source find the file containing the bounds.  For NHD, this is a HUC4 or
+smaller.</p>
 </dd>
-<dt><strong>bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">[xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax]</span></code></span></dt>
+<dt><strong>bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[xmin, ymin, xmax, ymax] bounds, optional</span></dt>
 <dd><p class="first last">Bounding box to filter the river network.</p>
 </dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
-<dd><p class="first last">Output coordinate system and coordinate system of bounds.  Defaults to the
-source’s crs.</p>
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
+<dd><p class="first last">Output coordinate system and coordinate system of bounds.  Defaults to
+the source’s crs.</p>
 </dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
 <dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
 </dd>
-<dt><strong>long</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dt><strong>long</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
 <dd><p class="first last">If a reach is longer than this value it gets filtered.  Some NHD data
-has QC issues, or other wierd reaches that don’t make sense…</p>
+has QC issues, or other wierd extra-long, single segment reaches that
+don’t make sense…</p>
+</dd>
+<dt><strong>merge</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If true, reaches are merged (via shapely.ops.linemerge), collapsing 
+connected, non-branching reaches into a single LineString.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></dt>
-<dd><p class="first last">Output coordinate system.</p>
+<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(LineString)</span></code></dt>
-<dd><p class="first last">A list of shapely LineString objects representing all reaches within 
-the shape.</p>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
+<dd><p class="first last">Reaches in the HUC and/or intersecting the bounds.</p>
 </dd>
 </dl>
 </td>
@@ -835,31 +852,31 @@ the shape.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source-type</span></code></span></dt>
-<dd><p class="first last">Source object providing <cite>get_raster()</cite></p>
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
+<dd><p class="first last">Source object providing a get_raster() method.</p>
 </dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Polygon</span></code></span></dt>
-<dd><p class="first last">shapely or fiona polygon</p>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
+<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
 </dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
-<dd><p class="first last">Shape coordinate system</p>
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">CRS of shape.</p>
 </dd>
-<dt><strong>raster_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
+<dt><strong>raster_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
 <dd><p class="first last">Output crs.  Defaults to the source’s crs.</p>
 </dd>
-<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double</span></dt>
-<dd><p class="first last">Size of buffer added to shape to ensure pixels cover the 
-entire shape.</p>
+<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
+<dd><p class="first last">Size of a buffer, in units of the shape’s CRS, added to shape to ensure
+pixels cover the entire shape.  Default is 0.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Rasterio profile of the image including crs and transform</p>
+<dd><p class="first last">Rasterio profile of the image including rasterio CRS and transform</p>
 </dd>
-<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">np.array</span></code></span></dt>
-<dd><p class="first last">The raster array.</p>
+<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">The raster data in a 2D-array.</p>
 </dd>
 </dl>
 </td>
@@ -871,38 +888,39 @@ entire shape.</p>
 <dl class="function">
 <dt id="workflow.hilev.get_masked_raster_on_shape">
 <code class="descclassname">workflow.hilev.</code><code class="descname">get_masked_raster_on_shape</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>nodata=-1</em>, <em>buffer=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_masked_raster_on_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_masked_raster_on_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects a raster DEM that covers the requested shape, masked with 
-nodata value outside of the shape.</p>
+<dd><p>Collects a raster that is masked to the requested shape.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source-type</span></code></span></dt>
-<dd><p class="first last">Source object providing <cite>get_raster()</cite></p>
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
+<dd><p class="first last">Source object providing a get_raster() method.</p>
 </dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Polygon</span></code></span></dt>
-<dd><p class="first last">shapely or fiona polygon</p>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
+<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
 </dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
-<dd><p class="first last">Output and shape coordinate system</p>
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">CRS of shape.</p>
 </dd>
-<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">type of raster data</span></dt>
-<dd><p class="first last">Value placed outside of shape.</p>
+<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dtype, optional</span></dt>
+<dd><p class="first last">Value to place in the array outside of shape.  Note that the type of
+this value should be the same as the data in the raster.  Default is
+-1.</p>
 </dd>
-<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double</span></dt>
-<dd><p class="first last">Size of buffer added to shape to ensure pixels cover the 
-entire shape.</p>
+<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
+<dd><p class="first last">Size of a buffer, in units of the shape’s CRS, added to shape to ensure
+pixels cover the entire shape.  Default is 0.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>dem_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Rasterio profile of the image including crs and transform</p>
+<dt><strong>profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Rasterio profile of the image including rasterio CRS and transform</p>
 </dd>
-<dt><strong>dem</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">np.array</span></code></span></dt>
-<dd><p class="first last">The raster array.</p>
+<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">The raster data in a 2D-array.</p>
 </dd>
 </dl>
 </td>
@@ -920,32 +938,32 @@ entire shape.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source-type</span></code></span></dt>
-<dd><p class="first last">Source object providing <cite>get_hucs()</cite></p>
+<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
+<dd><p class="first last">Source object providing a get_hucs() method.</p>
 </dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Polygon</span></code></span></dt>
-<dd><p class="first last">shapely or fiona polygon</p>
+<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
+<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
 </dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
-<dd><p class="first last">shape coordinate system</p>
+<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">CRS of shape.</p>
 </dd>
 <dt><strong>hint</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">A HUC hint for where to look, must be at least as small as 
-the source’s organizational file – 2 for source WBD, 4 
-for NHDPlus.</p>
+<dd><p class="first last">HUC in which to start searching.  This should be at least as long as
+the indexing file size – HUC 2 or longer for WBD, 4 or longer for NHD
+Plus, or 8 or longer for NHD.</p>
 </dd>
-<dt><strong>shrink_factor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">A fraction of the radius of shape to shrink prior for 
-checking containment within HUCs.  This fixes cases where 
-shape is on a HUC boundary with potentially some numerical 
-error.</p>
+<dt><strong>shrink_factor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">A fraction of the radius of shape to shrink prior for checking
+containment within HUCs.  This fixes cases where shape is on a HUC
+boundary with potentially some numerical error.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>str</strong> <span class="classifier-delimiter">:</span> <span class="classifier">The smallest containing HUC.</span></dt>
-<dd></dd>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">The smallest containing HUC.</p>
+</dd>
 </dl>
 </td>
 </tr>
@@ -957,38 +975,38 @@ error.</p>
 <dt id="workflow.hilev.simplify_and_prune">
 <code class="descclassname">workflow.hilev.</code><code class="descname">simplify_and_prune</code><span class="sig-paren">(</span><em>hucs</em>, <em>reaches</em>, <em>simplify=10</em>, <em>prune_reach_size=0</em>, <em>cut_intersections=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#simplify_and_prune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans up the HUC and river shapes.</p>
-<p>Ensures intersections are proper, snapped, simplified, etc.  Note,
-HUCs and rivers must be in the same crs.</p>
+<p>Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
+rivers must be in the same crs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SplitHUCs</span></code></span></dt>
-<dd><p class="first last">The split-form HUC object from get_split_form_hucs()</p>
+<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
+<dd><p class="first last">A split-form HUC object containing all reaches.</p>
 </dd>
-<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(LineString)</span></code></span></dt>
-<dd><p class="first last">The list of reaches from get_reaches()</p>
+<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
+<dd><p class="first last">A list of reaches.</p>
 </dd>
-<dt><strong>simplify</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">Argument to shapely’s simplify, a measure of how far to allow 
-shapes to move.  Default is 10 (units are in crs)</p>
+<dt><strong>simplify</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">Argument to shapely’s simplify, a measure of how far to allow shapes to
+move.  Default is 10 (units are in that of the CRS of hucs and
+reaches).</p>
 </dd>
-<dt><strong>prune_river_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Remove rivers with fewer than this number of reaches.  Default 
-is 0.</p>
+<dt><strong>prune_river_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Remove rivers with fewer than this number of reaches.  Default is 0.</p>
 </dd>
 <dt><strong>cut_intersections</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Cut HUC segments at the river input/output, potentially resulting
-in simpler geometries.  This is work in progress.  Default is 
-False.</p>
+<dd><p class="first last">Cut HUC segments at the river input/output, potentially resulting in
+simpler geometries.  This is work in progress.  Default is False.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>:obj:`list(Tree)`</strong> <span class="classifier-delimiter">:</span> <span class="classifier">A list of rivers, as Tree objects.</span></dt>
-<dd></dd>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(RiverTree)</span></dt>
+<dd><p class="first last">A list of rivers, as RiverTree objects.</p>
+</dd>
 </dl>
 </td>
 </tr>
@@ -1000,30 +1018,64 @@ False.</p>
 <dt id="workflow.hilev.triangulate">
 <code class="descclassname">workflow.hilev.</code><code class="descname">triangulate</code><span class="sig-paren">(</span><em>hucs</em>, <em>rivers</em>, <em>diagnostics=True</em>, <em>verbosity=1</em>, <em>refine_max_area=None</em>, <em>refine_distance=None</em>, <em>refine_max_edge_length=None</em>, <em>refine_min_angle=None</em>, <em>enforce_delaunay=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#triangulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.triangulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Triangulates HUCs and rivers.</p>
+<p>Note, refinement of a given triangle is done if any of the provided
+criteria is met.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SplitHUCs</span></code></span></dt>
-<dd><p class="first last">The split-form HUC object from get_split_form_hucs()</p>
+<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
+<dd><p class="first last">A split-form HUC object from, e.g., get_split_form_hucs()</p>
 </dd>
-<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(LineString)</span></code></span></dt>
-<dd><p class="first last">The list of reaches from get_reaches()</p>
+<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
+<dd><p class="first last">A list of reaches from, e.g., get_reaches()</p>
 </dd>
-<dt><strong>diagnostics</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dt><strong>diagnostics</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
 <dd><p class="first last">Plot diagnostics graphs of the triangle refinement.</p>
+</dd>
+<dt><strong>refine_max_area</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">Refine a triangle if its area is greater than this area.</p>
+</dd>
+<dt><strong>refine_distance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(float), optional</span></dt>
+<dd><p class="first">Refine a triangle if its area is greater than a function of its
+centroid’s distance from the nearest point on the river network.  The
+argument is given by:</p>
+<p>[near_distance, near_area, far_distance, far_area]</p>
+<p>Defining d as the distance from triangle centroid to the nearest point
+on the river network and area as the area of the triangle in question,
+refinement occurs if:</p>
+<ul class="simple">
+<li>d &lt; near_distance and area &gt; near_area</li>
+<li>d &gt; far_distance and area &gt; far_area</li>
+<li>otherwise, defining 
+d’ = (d - near_distance) / (far_distance - near_distance),
+refining occurs if
+area &gt; near_area + (far_area - near_area) * d’</li>
+</ul>
+<p class="last">Effectively this simply writes a piecewise linear function of triangle
+distance from centroid and uses that as a max area criteria.</p>
+</dd>
+<dt><strong>refine_max_edge_length</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">Refine a triangle if its max edge length is greater than this length.</p>
+</dd>
+<dt><strong>refine_min_angle</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">Try to ensure that all triangles have a minimum edge length greater
+than this value.</p>
+</dd>
+<dt><strong>enforce_delaunay</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool,optional, experimental</span></dt>
+<dd><p class="first last">Attempt to ensure all triangles are proper Delaunay triangles.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt>np.array((n_points, 2), ‘d’)</dt>
+<dt><strong>vertices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
 <dd><p class="first last">Array of triangle vertices.</p>
 </dd>
-<dt>np.array((n_tris, 3), ‘i’)</dt>
-<dd><p class="first last">For each triangle, a list of 3 indices into the vertex
-array that make up that triangle.</p>
+<dt><strong>triangles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_tris, 3), ‘i’)</span></dt>
+<dd><p class="first last">For each triangle, a list of 3 indices into the vertex array that make
+up that triangle.</p>
 </dd>
 </dl>
 </td>
@@ -1044,7 +1096,7 @@ array that make up that triangle.</p>
 <dt><strong>mesh_points</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
 <dd><p class="first last">Array of triangle vertices.</p>
 </dd>
-<dt><strong>mesh_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
+<dt><strong>mesh_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Mesh coordinate system.</p>
 </dd>
 <dt><strong>dem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
@@ -1053,16 +1105,16 @@ array that make up that triangle.</p>
 <dt><strong>dem_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
 <dd><p class="first last">rasterio profile for the elevation raster.</p>
 </dd>
-<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
 <dd><p class="first last">Algorithm used for interpolation.  One of:
-* “nearest”
-* “piecewise bilinear”</p>
+* “nearest” for nearest-neighbor pixels
+* “piecewise bilinear” for interpolation</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt>np.array((n_points, 3), ‘d’)</dt>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 3), ‘d’)</span></dt>
 <dd><p class="first last">Array of triangle vertices, including a z-dimension.</p>
 </dd>
 </dl>
@@ -1084,7 +1136,7 @@ array that make up that triangle.</p>
 <dt><strong>points</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
 <dd><p class="first last">Array of points to interpolate onto.</p>
 </dd>
-<dt><strong>points_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
+<dt><strong>points_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Coordinate system of the points.</p>
 </dd>
 <dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
@@ -1095,14 +1147,14 @@ array that make up that triangle.</p>
 </dd>
 <dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
 <dd><p class="first last">Algorithm used for interpolation.  One of:
-* “nearest”
-* “piecewise bilinear”</p>
+* “nearest” for nearest neighbor pixels
+* “piecewise bilinear” for interpolation</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt>np.array((n_points,))</dt>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points,))</span></dt>
 <dd><p class="first last">Array of raster values interpolated onto the points.</p>
 </dd>
 </dl>
@@ -1116,45 +1168,47 @@ array that make up that triangle.</p>
 <dt id="workflow.hilev.color_raster_from_shapes">
 <code class="descclassname">workflow.hilev.</code><code class="descname">color_raster_from_shapes</code><span class="sig-paren">(</span><em>target_bounds</em>, <em>target_dx</em>, <em>shapes</em>, <em>shape_colors</em>, <em>shapes_crs</em>, <em>nodata=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#color_raster_from_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.color_raster_from_shapes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Color in a raster by filling in a collection of shapes.</p>
-<p>Given a canvas specified by bounds and pixel size, color
-a raster by, for each shape, finding the intersection of 
-that shape with the canvas and coloring it by a provided
-value.  Paint by numbers.</p>
+<p>Given a canvas specified by bounds and pixel size, color a raster by, for
+each shape, finding the intersection of that shape with the canvas and
+coloring it by a provided value.  Paint by numbers.</p>
+<p>Note, if the shapes overlap, the last shape containing a pixel gives the
+color of that pixel.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>target_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">[xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax]</span></code></span></dt>
+<dt><strong>target_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[xmin, ymin, xmax, ymax]</span></dt>
 <dd><p class="first last">Bounding box for the output raster.</p>
 </dd>
 <dt><strong>target_dx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Pixel size (assumed the same in both x and y).</p>
 </dd>
-<dt><strong>shapes</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(Polygon)</span></code></span></dt>
+<dt><strong>shapes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(Polygon)</span></dt>
 <dd><p class="first last">Collection of shapes (likely) overlapping the canvas.</p>
 </dd>
 <dt><strong>shapes_colors</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_shapes,), dtype)</span></dt>
 <dd><p class="first last">Color to label the interior of each polygon with.</p>
 </dd>
-<dt><strong>shapes_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code></span></dt>
+<dt><strong>shapes_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Coordinate system of the shapes.</p>
 </dd>
-<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dtype</span></dt>
-<dd><p class="first last">Value to place in pixels which intersect no shape.</p>
+<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dtype, optional</span></dt>
+<dd><p class="first last">Value to place in pixels which intersect no shape.  Note the type of
+this should be the same as the type of shape_colors.  Default is -1.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt>np.array(target_bounds, dtype)</dt>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array(target_bounds, dtype)</span></dt>
 <dd><p class="first last">Raster of colors.</p>
 </dd>
-<dt>dict</dt>
+<dt><strong>out_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
 <dd><p class="first last">rasterio profile of the color raster.</p>
 </dd>
-<dt>bounds</dt>
-<dd><p class="first last">bounds of the resulting image.</p>
+<dt><strong>out_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[x_min, y_min, x_max, y_max]</span></dt>
+<dd><p class="first last">Physial bounds of the resulting image.</p>
 </dd>
 </dl>
 </td>
@@ -1170,7 +1224,7 @@ value.  Paint by numbers.</p>
 </div>
 <div class="section" id="module-workflow.utils">
 <span id="utils-api"></span><h2>utils API<a class="headerlink" href="#module-workflow.utils" title="Permalink to this headline">¶</a></h2>
-<p>Shape utilities not provided by shapely.</p>
+<p>Shape and geometry utilities for working with fiona and shapely objects.</p>
 </div>
 </div>
 
@@ -1192,7 +1246,7 @@ value.  Paint by numbers.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Ethan Coon
+        &copy; Copyright 2019, UT Battelle, Ethan Coon
 
     </p>
   </div>
