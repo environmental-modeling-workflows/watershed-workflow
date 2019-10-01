@@ -27,7 +27,7 @@ def get_fiona(filename):
         profile = fid.profile
         shp = fid[0]
 
-    workflow.warp.warp_shape(shp, workflow.crs.from_fiona(profile['crs']), workflow.crs.latlon_crs())
+    workflow.warp.shape(shp, workflow.crs.from_fiona(profile['crs']), workflow.crs.latlon_crs())
     shply = workflow.utils.shply(shp['geometry'])
     assert(type(shply) == shapely.geometry.Polygon)
     return workflow.crs.latlon_crs(), shply

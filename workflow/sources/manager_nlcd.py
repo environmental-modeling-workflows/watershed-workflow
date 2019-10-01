@@ -70,7 +70,7 @@ class FileManagerNLCD:
         logging.info('CRS: {}'.format(nlcd_profile['crs']))
 
         # warp to crs
-        shply = workflow.warp.warp_shapely(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
+        shply = workflow.warp.shply(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
 
         # calculate a window
         bounds = shply.bounds

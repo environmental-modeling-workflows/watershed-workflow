@@ -4,7 +4,7 @@ import itertools
 import shapely.geometry
 
 from workflow.test.shapes import *
-import workflow.tree
+import workflow.river_tree
 
 def assert_list_same(l1, l2):
     for a,b in zip(l1,l2):
@@ -15,7 +15,7 @@ def test_list_same():
     assert_list_same(a, a)
 
 def test_tree_gen():
-    t = workflow.tree.Tree()
+    t = workflow.river_tree.RiverTree()
     n0 = t.addChild(0)
     n0.addChild(1)
     n0.addChild(2)
@@ -26,25 +26,25 @@ def test_tree_gen():
 
 
 def test_y(y):
-    trees = workflow.tree.make_trees(y)
+    trees = workflow.river_tree.make_trees(y)
     assert(len(trees) == 1)
     assert_list_same(list(trees[0].dfs()), y)
 
 
 def test_y2(y_with_extension):
-    trees = workflow.tree.make_trees(y_with_extension)
+    trees = workflow.river_tree.make_trees(y_with_extension)
     assert(len(trees) == 1)
     dfs = list(trees[0].dfs())
     assert_list_same(dfs, y_with_extension)
 
 
 def test_ys(two_ys):
-    trees = workflow.tree.make_trees(two_ys)
+    trees = workflow.river_tree.make_trees(two_ys)
     assert(len(trees) == 2)
     assert_list_same(itertools.chain(trees[0].dfs(),trees[1].dfs()), two_ys)
 
 def test_ywj(y_with_junction):
-    trees = workflow.tree.make_trees(y_with_junction)
+    trees = workflow.river_tree.make_trees(y_with_junction)
     assert(len(trees) is 1)
     tree = trees[0]
     segs = list(tree.dfs())
@@ -61,15 +61,15 @@ def test_dfs():
     points = [[(0,0), (1,0)],
               [(1,0), (2,0)]]
     ml = shapely.geometry.MultiLineString(points)
-    trees = workflow.tree.make_trees(ml)
+    trees = workflow.river_tree.make_trees(ml)
     riverlist = list(trees[0].dfs())
     assert(riverlist[0] == ml[1])
     assert(riverlist[1] == ml[0])
 
 def test_to_list(y_with_junction):
-    forest = workflow.tree.make_trees(y_with_junction)
-    treelist = workflow.tree.tree_to_list(forest[0])
-    forestlist = workflow.tree.forest_to_list(forest)
+    forest = workflow.river_tree.make_trees(y_with_junction)
+    treelist = workflow.river_tree.tree_to_list(forest[0])
+    forestlist = workflow.river_tree.forest_to_list(forest)
     
     
     

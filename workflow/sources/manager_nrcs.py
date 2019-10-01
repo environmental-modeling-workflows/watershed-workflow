@@ -71,7 +71,7 @@ class FileManagerNRCS:
         return profile, shapes
 
     def bounds(self, b, bounds_crs):
-        b = workflow.warp.warp_bounds(b, bounds_crs, self.crs)
+        b = workflow.warp.bounds(b, bounds_crs, self.crs)
         b = [np.round(b[0],4)-.0001, np.round(b[1],4)-.0001,
                   np.round(b[2],4)+.0001, np.round(b[3],4)+.0001]
         return b

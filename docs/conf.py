@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Watershed Workflow'
-copyright = '2019, Ethan Coon'
+copyright = '2019, UT Battelle, Ethan Coon'
 author = 'Ethan Coon'
 
 # The short X.Y version

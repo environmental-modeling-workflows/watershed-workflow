@@ -10,7 +10,7 @@ import shapely.geometry
 
 import workflow.conf
 import workflow.utils
-import workflow.tree
+import workflow.river_tree
 import workflow.split_hucs
 import workflow.plot
 
@@ -19,7 +19,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
     assert(type(hucs) is workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
-    assert(all(workflow.tree.is_consistent(river) for river in rivers))
+    assert(all(workflow.river_tree.is_consistent(river) for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) is 0:
@@ -31,7 +31,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
     snap_polygon_endpoints(hucs, rivers, tol_triples)
-    if not all(workflow.tree.is_consistent(river) for river in rivers):
+    if not all(workflow.river_tree.is_consistent(river) for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -50,7 +50,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
         snap_endpoints(tree, hucs, tol)
-    if not all(workflow.tree.is_consistent(river) for river in rivers):
+    if not all(workflow.river_tree.is_consistent(river) for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -67,7 +67,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     if cut_intersections:
         logging.info("  cutting at crossings")
         snap_crossings(hucs, rivers, tol)
-        consistent = all(workflow.tree.is_consistent(river) for river in rivers)
+        consistent = all(workflow.river_tree.is_consistent(river) for river in rivers)
         if not consistent:
             logging.info("  ...resulted in inconsistent rivers!")
             return False
@@ -144,7 +144,7 @@ def _snap_crossing(hucs, river_node, tol=0.1):
                 river_node.segment = new_rivers[-1]
                 if len(new_rivers) > 1:
                     assert(len(new_rivers) == 2)
-                    river_node.inject(workflow.tree.Tree(new_rivers[0]))
+                    river_node.inject(workflow.river_tree.RiverTree(new_rivers[0]))
 
                 hucs.segments[seg_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -339,7 +339,7 @@ def make_global_tree(rivers, tol=0.1):
     kdtree = scipy.spatial.cKDTree(coords)
 
     # make a node for each segment
-    nodes = [workflow.tree.Tree(r) for r in rivers]
+    nodes = [workflow.river_tree.RiverTree(r) for r in rivers]
 
     # match nodes to their parent through the kdtree
     trees = []
@@ -385,7 +385,7 @@ def filter_rivers_to_shape(shape, rivers, tol):
     if type(rivers) is shapely.geometry.MultiLineString or \
        (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
         rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(shape,r)]
-    elif type(rivers) is list and type(rivers[0]) is workflow.tree.Tree:
+    elif type(rivers) is list and type(rivers[0]) is workflow.river_tree.RiverTree:
         rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(shape,r)]
         rivers2 = make_global_tree(rivers2)
     else:

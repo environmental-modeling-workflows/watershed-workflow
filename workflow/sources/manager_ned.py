@@ -74,7 +74,7 @@ class FileManagerNED:
             shape = workflow.utils.shply(shape)
         
         # warp to my crs
-        shply = workflow.warp.warp_shapely(shape, crs, self.crs)
+        shply = workflow.warp.shply(shape, crs, self.crs)
 
         # get the bounds and download
         bounds = shply.bounds

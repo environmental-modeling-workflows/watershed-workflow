@@ -100,7 +100,6 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
         projection = None
     else:
         projection = workflow.crs.to_cartopy(crs)
-        print('got projection:', projection)
         
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points

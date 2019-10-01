@@ -8,15 +8,15 @@ import shapely.geometry
 import shapely.ops
 
 import workflow.utils
-import workflow.tinytree
+import tinytree
 
 
 _tol = 1.e-7
 
-class Tree(workflow.tinytree.Tree):
+class RiverTree(tinytree.Tree):
     """A tree node data structure"""
     def __init__(self, segment=None, properties=None, children=None):
-        super(Tree, self).__init__(children)
+        super(RiverTree, self).__init__(children)
         self.segment = segment
         if properties is not None:
             self.properties = properties
@@ -26,10 +26,10 @@ class Tree(workflow.tinytree.Tree):
             self.properties = dict()
 
     def addChild(self, segment):
-        if type(segment) is Tree:
-            super(Tree,self).addChild(segment)
+        if type(segment) is RiverTree:
+            super(RiverTree,self).addChild(segment)
         else:
-            super(Tree,self).addChild(type(self)(segment))
+            super(RiverTree,self).addChild(type(self)(segment))
         return self.children[-1]
 
     def dfs(self):
@@ -131,7 +131,7 @@ def make_trees(segments):
     gcount = 0
     trees = []
     for endpoint_index in endpoint_indices:
-        tree = Tree()
+        tree = RiverTree()
         gcount += _go(endpoint_index, tree, segments, segment_found)
         trees.append(tree)
     assert(gcount == len(segments))

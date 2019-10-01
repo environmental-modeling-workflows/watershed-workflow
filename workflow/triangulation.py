@@ -9,7 +9,7 @@ import scipy.spatial
 import shapely
 import meshpy.triangle
 
-import workflow.tree
+import workflow.river_tree
 import workflow.split_hucs
 
 
@@ -112,7 +112,7 @@ def triangulate(hucs, rivers, **kwargs):
 
     Arguments:
       hucs              | a workflow.split_hucs.SplitHUCs instance
-      rivers            | a list of workflow.tree.Tree instances
+      rivers            | a list of workflow.river_tree.Tree instances
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
@@ -127,7 +127,7 @@ def triangulate(hucs, rivers, **kwargs):
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
         
     if rivers is not None:
-        segments = segments + list(workflow.tree.forest_to_list(rivers))
+        segments = segments + list(workflow.river_tree.forest_to_list(rivers))
 
     nodes_edges = NodesEdges(segments)
 
@@ -203,7 +203,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
             area = near_area + (distance - near_distance) / (away_distance - near_distance) * (away_area - near_area)
         return area
 
-    river_multiline = workflow.tree.forest_to_list(rivers)
+    river_multiline = workflow.river_tree.forest_to_list(rivers)
     def refine(vertices, area):
         """A function for use with workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
         bary = np.sum(np.array(vertices), axis=0)/3

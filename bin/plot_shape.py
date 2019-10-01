@@ -56,7 +56,7 @@ def plot_shape(args):
 
     # -- dem
     dem_profile, dem = workflow.get_masked_raster_on_shape(sources['DEM'], shapes.exterior(), crs, np.nan)
-    assert(dem_profile['crs'] == crs)
+    assert(workflow.crs.equal(workflow.crs.from_rasterio(dem_profile['crs']), crs))
     logging.info('dem crs: {}'.format(dem_profile['crs']))
 
     return shapes, huc, reaches, dem, dem_profile
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     shapes, huc, reaches, dem, dem_profile = plot_shape(args)
 
     # plot
-    fig, ax = workflow.bin_utils.plot_with_dem(args, shapes, None, dem, dem_profile, river_color='white')
+    fig, ax = workflow.bin_utils.plot_with_dem(args, shapes, reaches, dem, dem_profile, river_color='white')
     workflow.plot.shply([huc,], args.projection, color='k', ax=ax)
 
     logging.info("SUCESS")

@@ -1,13 +1,11 @@
-"""Shape utilities not provided by shapely."""
+"""Shape and geometry utilities for working with fiona and shapely objects."""
+
 import logging
 import subprocess
 import numpy as np
 import shapely.geometry
 import shapely.ops
 import shapely.affinity
-
-import workflow.conf
-
 
 def generate_rings(obj):
     """Generator for a fiona geometry's coordinates object and yield rings.
@@ -44,7 +42,6 @@ def generate_coords(obj):
             for c in ring:
                 yield c
         
-
 def bounds(f):
     """General bounding box for fiona and shapely types."""
     # fiona type

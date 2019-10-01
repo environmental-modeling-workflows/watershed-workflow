@@ -47,24 +47,24 @@ def plot_hucs(args):
     args.projection = crs
     
     # hydrography
-    _, rivers = workflow.get_reaches(sources['hydrography'], args.HUC, None, crs)
+    _, reaches = workflow.get_reaches(sources['hydrography'], args.HUC, None, crs)
 
     # raster
     dem_profile, dem = workflow.get_masked_raster_on_shape(sources['DEM'], hucs.exterior(), crs, np.nan)
-    assert(dem_profile['crs'] == crs)
+    assert(workflow.crs.equal(crs, workflow.crs.from_rasterio(dem_profile['crs'])))
     logging.info('dem crs: {}'.format(dem_profile['crs']))
 
-    return hucs, rivers, dem, dem_profile
+    return hucs, reaches, dem, dem_profile
 
 if __name__ == '__main__':
     args = get_args()
     workflow.ui.setup_logging(args.verbosity, args.logfile)
-    hucs, rivers, dem, profile = plot_hucs(args)
+    hucs, reaches, dem, profile = plot_hucs(args)
 
     if args.title is None:
         args.title = 'HUC: {}'.format(args.HUC)
             
-    fig, ax = workflow.bin_utils.plot_with_dem(args, hucs, None, dem, profile, river_color='r')
+    fig, ax = workflow.bin_utils.plot_with_dem(args, hucs, reaches, dem, profile)
         
     logging.info("SUCESS")
     if args.output_filename is not None:

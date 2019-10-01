@@ -51,7 +51,7 @@ class FileManagerShape:
                     shps = fid[:]
             else:
                 if crs['init'] != profile['crs']['init']:
-                    bounds = workflow.warp.warp_bounds(index_or_bounds, crs, profile['crs'])
+                    bounds = workflow.warp.bounds(index_or_bounds, crs, profile['crs'])
                 shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps

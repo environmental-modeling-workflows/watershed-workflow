@@ -130,7 +130,7 @@ class _FileManagerNHD:
         logging.debug("{}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
-            bounds = workflow.warp.warp_bounds(bounds, bounds_crs, workflow.crs.from_fiona(profile['crs']))
+            bounds = workflow.warp.bounds(bounds, bounds_crs, workflow.crs.from_fiona(profile['crs']))
             rivers = [r for (i,r) in fid.items(bbox=bounds)]
         return profile, rivers
             

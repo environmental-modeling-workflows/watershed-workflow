@@ -95,7 +95,7 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
 
     if epsg_data is not None:
         crs = workflow.crs.from_epsg(epsg_data)
-        objs = workflow.warp.warp_shapelys(obj_gen(start_p), workflow.crs.latlon_crs(), crs)
+        objs = workflow.warp.shplys(obj_gen(start_p), workflow.crs.latlon_crs(), crs)
     else:
         epsg_data = 'None'
         crs = None

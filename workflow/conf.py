@@ -1,8 +1,7 @@
 """Configuration and global defaults."""
 
-import sys,os
+import os
 import subprocess
-import fiona
 
 rcParams = {'packages data dir' : 'packages',
             'digits' : 7, # roundoff precision

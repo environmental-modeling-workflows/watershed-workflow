@@ -39,7 +39,7 @@ def plot_with_triangulation(args, hucs, rivers, triangulation,
     ax.set_aspect('equal', 'datalim')
     return fig, ax
     
-def plot_with_dem(args, hucs, rivers, dem, profile,
+def plot_with_dem(args, hucs, reaches, dem, profile,
                   shape_color='k', river_color='white',
                   cb=True, cb_label='elevation [m]', vmin=None, vmax=None,
                   fig=None, ax=None):
@@ -96,9 +96,9 @@ def plot_with_dem(args, hucs, rivers, dem, profile,
             cb = fig.colorbar(mappable, orientation="horizontal", pad=0)
             cb.set_label(cb_label)
 
-    # plot HUCs and rivers on top
-    if rivers is not None:
-        workflow.plot.rivers(rivers, args.projection, river_color, ax, linewidth=0.5, zorder=3)
+    # plot HUCs and reaches on top
+    if reaches is not None:
+        workflow.plot.river(reaches, args.projection, river_color, ax, linewidth=0.5, zorder=3)
 
     if hucs is not None:
         workflow.plot.hucs(hucs, args.projection, shape_color, ax, linewidth=.7, zorder=4)

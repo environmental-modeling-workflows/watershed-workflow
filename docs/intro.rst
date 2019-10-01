@@ -5,8 +5,9 @@ Watershed Workflow
 .. image:: static/watershed_workflow.png
 
 :Author: Ethan Coon, <coonet@ornl.gov>
-:Copyright:
-   This work is licensed under the 3-clause BSD license.
+:License: This work, including code, images, and documentation, unless
+   otherwise specified, is copywrite UT Battelle/Oak Ridge National
+   Laboratory, and is licensed under the 3-clause BSD license.
 
 Watershed Workflow is a python-based, open source chain of tools for
 generating meshes and other data inputs for hyper-resolution
@@ -72,7 +73,10 @@ Here I assume you know a little about Jupyter notebooks, and python.
 Acknowledgements, citation, etc
 -----------------------------------
 
-This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
+This work was supported by multiple US Department of Energy projects
+at the Oak Ridge National Laboratory.  Use of this codebase in the
+academic literature should cite this repository (paper in
+preparation).
 
 Collaborators and contributions are very welcome!
 

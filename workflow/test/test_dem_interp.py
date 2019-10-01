@@ -1,6 +1,7 @@
 import pytest
 
 import rasterio.transform
+import rasterio.crs
 import numpy as np
 
 import workflow
@@ -15,7 +16,7 @@ def dem_and_points():
 
     # with a profile
     dem_profile = dict()
-    dem_profile['crs'] = workflow.crs.default_crs()
+    dem_profile['crs'] = rasterio.crs.CRS.from_epsg(5070)
     dem_profile['transform'] = rasterio.transform.Affine(1,0,0,0,1,0)
     dem_profile['height'] = 2
     dem_profile['width'] = 2
@@ -38,12 +39,12 @@ def dem_and_points():
 
 def test_nearest(dem_and_points):
     dem, dem_profile, xy = dem_and_points
-    vals = workflow.values_from_raster(xy, dem_profile['crs'], dem, dem_profile,'nearest')
+    vals = workflow.values_from_raster(xy, workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'nearest')
     assert(np.allclose(np.array([1,1,1,10,10,10,10,2,1]), vals))
 
 
 def test_interp(dem_and_points):
     dem, dem_profile, xy = dem_and_points
-    vals = workflow.values_from_raster(xy, dem_profile['crs'], dem, dem_profile,'piecewise bilinear')
+    vals = workflow.values_from_raster(xy, workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'piecewise bilinear')
     assert(np.allclose(np.array([1,1,3.5,3.5,3.5,10,10,2,1]), vals, 1.e-4))
     

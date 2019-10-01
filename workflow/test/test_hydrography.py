@@ -6,7 +6,7 @@ from workflow.test.shapes import *
 import workflow.utils
 import workflow.split_hucs
 import workflow.hydrography
-import workflow.tree
+import workflow.river_tree
 import workflow.plot
 
 def test_null_cleanup(rivers):
@@ -27,7 +27,7 @@ def data(poly_hucs,river_segs):
     hucs = workflow.split_hucs.SplitHUCs(poly_hucs)
     rivers = workflow.hydrography.make_global_tree(river_segs)
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
     return hucs,rivers
 
 def check1(hucs,rivers):
@@ -60,7 +60,7 @@ def check1(hucs,rivers):
     assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
 
 def check1b(hucs,rivers):
     assert(len(hucs) is 1)
@@ -93,7 +93,7 @@ def check1b(hucs,rivers):
     assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
 
 
 def check1c(hucs,rivers):
@@ -127,7 +127,7 @@ def check1c(hucs,rivers):
     assert(workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0), (15,0.001)])))
 
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
         
         
 def check2(hucs,rivers):
@@ -147,7 +147,7 @@ def check2(hucs,rivers):
     assert(workflow.utils.close(riverlist[1], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
     
 
 def check2b(hucs,rivers):
@@ -169,7 +169,7 @@ def check2b(hucs,rivers):
     assert(workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10,0)])))
     
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
 
 def check2b_nullop(hucs,rivers):
     assert(len(hucs) is 2)
@@ -190,7 +190,7 @@ def check2b_nullop(hucs,rivers):
     assert(workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10.1001,0)])))
     
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
         
 def check3(hucs,rivers):
     assert(len(hucs) is 3)
@@ -213,7 +213,7 @@ def check3(hucs,rivers):
     assert(workflow.utils.close(riverlist[2], shapely.geometry.LineString([(15.,0.), (10.,5.)])))
 
     for tree in rivers:
-        assert(workflow.tree.is_consistent(tree))
+        assert(workflow.river_tree.is_consistent(tree))
     
 def test_snap0():
     # snap a river endpoint onto a huc, exact point in river, none on huc
