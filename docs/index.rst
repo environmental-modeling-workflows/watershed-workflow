@@ -10,6 +10,7 @@ Watershed Workflow Documentation
 
    Introduction <intro>
    examples/mesh_coweeta.ipynb
+   Gallery <gallery>
    Installation <install>
    Concepts <concepts>
    Scripts <scripts>

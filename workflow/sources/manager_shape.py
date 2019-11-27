@@ -44,14 +44,14 @@ class FileManagerShape:
         with fiona.open(self._filename, 'r') as fid:
             profile = fid.profile
 
-            if type(index_or_bounds) is int:
-                if index_or_bounds >= 0:
+            if index_or_bounds is None or type(index_or_bounds) is int:
+                if index_or_bounds is not None and index_or_bounds >= 0:
                     shps = [fid[index_or_bounds],]
                 else:
                     shps = fid[:]
             else:
-                if crs['init'] != profile['crs']['init']:
-                    bounds = workflow.warp.bounds(index_or_bounds, crs, profile['crs'])
+                if crs is not None and not workflow.crs.equal(crs, workflow.crs.from_fiona(profile['crs'])):
+                    bounds = workflow.warp.bounds(index_or_bounds, crs, workflow.crs.from_fiona(profile['crs']))
                 shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps

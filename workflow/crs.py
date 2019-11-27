@@ -253,6 +253,13 @@ def to_cartopy(crs):
 
     return cl(globe=globe, **kw_proj)
 
+def from_string(string):
+    """Returns a CRS from a Proj4 string specification."""
+    return pyproj.Proj(string)
+
+def to_string(crs):
+    """Returns the proj4 string of a CRS."""
+    return crs.definition_string()
 
 def default_crs():
     """Returns a default CRS that is functionally useful for North America.

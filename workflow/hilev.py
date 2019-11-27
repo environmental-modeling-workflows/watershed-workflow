@@ -817,7 +817,8 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
     return out
     
 
-def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors, shapes_crs, nodata=-1):
+def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
+                             shapes_crs, nodata=-1):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas specified by bounds and pixel size, color a raster by, for
@@ -878,13 +879,13 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors, sha
                       'width':width,
                       'count':1,
                       'dtype':dtype,
-                      'crs':shapes_crs,
+                      'crs':workflow.crs.to_rasterio(shapes_crs),
                       'transform':transform,
                       'nodata':nodata}
     
     out = nodata * np.ones((height, width), dtype)
     for p, p_id in zip(shapes, shape_colors):
-        mask = rasterio.features.geometry_mask([p,], z.shape, transform, invert=True)
+        mask = rasterio.features.geometry_mask([p,], out.shape, transform, invert=True)
         out[mask] = p_id
     return out, out_profile, out_bounds
 

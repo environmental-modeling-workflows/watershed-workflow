@@ -6,7 +6,7 @@ Watershed Workflow
 
 :Author: Ethan Coon, <coonet@ornl.gov>
 :License: This work, including code, images, and documentation, unless
-   otherwise specified, is copywrite UT Battelle/Oak Ridge National
+   otherwise specified, is copyright UT Battelle/Oak Ridge National
    Laboratory, and is licensed under the 3-clause BSD license.
 
 Watershed Workflow is a python-based, open source chain of tools for
@@ -32,19 +32,19 @@ and more.
 This package is a python library of tools and a set of jupyter
 notebooks for interacting with these types of data streams using free
 and open (both free as in freedom and free as in free beer) python and
-GIS libraries and data.  Critically, this package provides a way for
+GIS libraries and data.  Critically, this package aims to provide a way for
 **automatically and quickly** downloading, interpreting, and
 processing data needed to **generate a "first" hyper-resolution
 simulation on any watershed** in the conterminous United States (and
 most of Alaska/Hawaii/Puerto Rico).
 
-To do this, this package provides tools to automate downloading a wide
-range of **open data streams,** including data from United States
-governmental agencies, including USGS, USDA, DOE, and others.  These
-data streams are then colocated on a mesh which is generated based on
-a watershed delineation and a river network, and that mesh is written
-in one of a variety of mesh formats for use in hyper-resolution
-simulation tools.
+To do this, this package provides tools to automate finding and
+downloading a wide range of **open data streams,** including data from
+United States governmental agencies, including USGS, USDA, DOE, and
+others.  These data streams are then colocated on a mesh which is
+generated based on a watershed delineation and a river network, and
+that mesh is written in one of a variety of mesh formats for use in
+hyper-resolution simulation tools.
 
 Note: Hypothetically, this package works on all of Linux, Mac, and
 Windows.  It has been tested on the first two, but not the third.

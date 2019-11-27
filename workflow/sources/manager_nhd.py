@@ -1,49 +1,45 @@
 """Manager for interacting with USGS National Hydrography Datasets.
 
-Hydrography datasets provide surveys of river networks, which form the
-spine of watersheds and are where most of the fast-time scale dynamics
-occur.  Some hydrologic models (for instance river routing models, dam
-operations management models, and many flood models) directly use the
-river network as their simulation domain, while others (for instance
-the class of integrated, distributed models described here) can use
-the river network to refine meshes near the rivers and therefore
-improve resolution where fast dynamics are occuring.  Hydrography
-datasets are typically available as GIS shapefiles, where each reach
-is represented by a set of coordinates along the line.
+Watershed boundary datasets and hydrography datasets together form the
+geographic structure of a watershed.  Watershed boundary datasets are typically
+formed through analysis of elevation datasets, collecting within the same
+watershed all parts of the land surface which drain to a common river outlet.
+Watersheds are hierarchical, ranging in scale from small primary watersheds
+which drain into first order streams to full river basins which drain into an
+ocean.  In the United States, the USGS formally calculates hydrologic units and
+identifies them using Hydrologic Unit Codes, or HUCs, which respect this
+hierarchy.  HUC 2 regions (e.g. the Upper Colorado River or the Tennessee River
+Basin) are the largest in areal extent, while HUC 12s, or sub-watersheds, are
+the smallest, representing on the order of 100 square kilometers.  Watershed
+Workflow uses HUCs as an organizing unit for working with data, primarily
+because most datasets in the US are organized by the HUC, but also because they
+form physically useful domains for simulation.
 
-Watershed Workflow leverages the National Hydrography Dataset, a USGS
-and EPA dataset available at multiple resolutions to represent the
-river network in United States watersheds, including Alaska [NHD]_.
-Also used is the NHD Plus dataset, an augmented dataset built on
-watershed boundaries and elevation products.  By default, the
-1:100,000 High Resolution datasets are used.  Data is discovered
-through The National Map's [TNM]_ REST API, which allows querying for
-data files organized by HUC and resolution via HTTP POST requests,
-providing direct-download URLs.  Files are downloaded on first
-request, unzipped, and stored in the data library for future use.
-Currently, files are indexed by 4-digit (NHD Plus HR) and 8-digit
-(NHD) HUCs.
+Hydrography datasets provide surveys of river networks, which form the drainage
+network of watersheds and are where most of the fast-time scale dynamics occur.
+Some hydrologic models (for instance river routing models, dam operations
+management models, and many flood models) directly use the river network as
+their simulation domain, while others (for instance the class of integrated,
+distributed models described here) can use the river network to refine meshes
+near the rivers and therefore improve resolution where fast dynamics are
+occuring.  Watershed boundary and Hydrography datasets are typically available
+as GIS shapefiles, where each watershed boundary or reach is represented as a
+shape.
+
+Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
+National Hydrography Dataset (NHD), USGS and EPA datasets available at multiple
+resolutions to represent United States watersheds, including Alaska [NHD]_.
+Also used is the NHD Plus dataset, an augmented dataset built on watershed
+boundaries and elevation products.  By default, the 1:100,000 High Resolution
+datasets are used.  Data is discovered through The National Map's [TNM]_ REST
+API, which allows querying for data files organized by HUC and resolution via
+HTTP POST requests, providing direct-download URLs.  Files are downloaded on
+first request, unzipped, and stored in the data library for future use.
+Currently, files are indexed by 2-digit (WBD), 4-digit (NHD Plus HR) and
+8-digit (NHD) HUCs.
 
 .. [NHD] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
 .. [TNM] https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf
-
-Once these shapefiles are available on the local machine, they are
-loaded into a list of reaches, and then processed into a list of
-tree-based data structures, with one for each outlet which terminates
-on or within the watershed boundary.  While a tree assumes that rivers
-only merge as they move downstream, we have found this to be
-sufficient (despite implications for high resolution data in braided
-stream networks).  This merging of line segments to form a tree is
-done through kd-tree, nearest-neighbor algorithms which allow
-efficient scaling for all HUC levels.  Optionally, river networks are
-pruned if they include too few reaches or do not exit the watershed --
-this is possible in the case of man-made irrigation canals and other
-corner cases.
-
-From this tree network, it is straightforward to accumulate and
-analyze river network properties from reach properties provided by the
-dataset, such as accumulated drainage area or other values; these
-could be used in a workflow.
 
 """
 import os, sys

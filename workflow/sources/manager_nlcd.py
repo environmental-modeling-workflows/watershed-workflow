@@ -7,9 +7,6 @@ import shapely
 import rasterio
 import rasterio.windows
 import rasterio.transform
-import requests
-import requests.exceptions
-
 
 import workflow.sources.utils as source_utils
 import workflow.conf
