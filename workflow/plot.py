@@ -120,7 +120,7 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
         if 'colors' not in kwargs:
             kwargs['colors'] = color
         
-        lines = [np.array(l.coords) for l in shps]
+        lines = [np.array(l.coords)[:,0:2] for l in shps]
         lc = pltc.LineCollection(lines, **kwargs)
         if projection is not None:
             lc.set_transform(projection)
