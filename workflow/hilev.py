@@ -67,8 +67,8 @@ def get_huc(source, huc, crs=None, digits=None):
         hydrologic unit code
     crs : crs-type
         Output coordinate system.  Default is source's crs.
-    digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+    digits : int, optional
+        Number of digits to round coordinates to.
 
     Returns
     -------
@@ -79,7 +79,7 @@ def get_huc(source, huc, crs=None, digits=None):
 
     """
     huc = workflow.sources.utils.huc_str(huc)
-    crs, hu_shapes = get_hucs(source, huc, len(huc), crs)
+    crs, hu_shapes = get_hucs(source, huc, len(huc), crs, digits)
     assert(len(hu_shapes) == 1)
     return crs, hu_shapes[0]
 
@@ -97,8 +97,8 @@ def get_hucs(source, huc, level, crs=None, digits=None):
         HUC level of the requested sub-basins
     crs : crs-type
         Output coordinate system.  Default is source's crs.
-    digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+    digits : int, optional
+        Number of digits to round coordinates to.
 
     Returns
     -------
@@ -132,9 +132,8 @@ def get_hucs(source, huc, level, crs=None, digits=None):
         crs = native_crs
 
     # round
-    if digits is None:
-        digits = workflow.conf.rcParams['digits']
-    workflow.utils.round(hus, digits)
+    if digits is not None:
+        workflow.utils.round(hus, digits)
 
     # convert to shapely
     hu_shapes = [workflow.utils.shply(hu) for hu in hus]
@@ -158,8 +157,8 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
         HUC level of the requested sub-basins
     crs : crs-type
         Output coordinate system.  Default is source's crs.
-    digits : int
-        Number of digits to round coordinates to.  Default set by config file.
+    digits : int, optional
+        Number of digits to round coordinates to.
 
     Returns
     -------
@@ -169,7 +168,7 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
         Split-form HUCs object containing subbasins.
 
     """
-    crs, hu_shapes = get_hucs(source, huc, level, crs)
+    crs, hu_shapes = get_hucs(source, huc, level, crs, digits)
     return crs, workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
@@ -192,7 +191,7 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None):
         Coordinate system of out and/or the bounding box provided in `filter`.
         The default is source's crs.
     digits : int, optional
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.
 
     Returns
     -------
@@ -222,9 +221,8 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None):
         crs = native_crs
         
     # round
-    if digits is None:
-        digits = workflow.conf.rcParams['digits']
-    workflow.utils.round(shps, digits)
+    if digits is not None:
+        workflow.utils.round(shps, digits)
 
     # convert to shapely
     shplys = [workflow.utils.shply(shp) for shp in shps]
@@ -248,7 +246,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
         Coordinate system of out and/or the bounding box provided in `filter`.
         The default is source's crs.
     digits : int, optional
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.
 
     Returns
     -------
@@ -286,7 +284,7 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         Output coordinate system and coordinate system of bounds.  Defaults to
         the source's crs.
     digits : int, optional
-        Number of digits to round coordinates to.  Default set by config file.
+        Number of digits to round coordinates to.
     long : float, optional
         If a reach is longer than this value it gets filtered.  Some NHD data
         has QC issues, or other wierd extra-long, single segment reaches that

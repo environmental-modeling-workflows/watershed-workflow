@@ -14,7 +14,7 @@ class Names:
     raw_template = attr.ib(type=str, default=None)
 
     def data_dir(self):
-        return os.path.join(workflow.conf.rcParams['data dir'], self.base_folder)
+        return os.path.join(workflow.conf.rcParams['DEFAULT']['data_directory'], self.base_folder)
     
     def folder_name(self, *args, **kwargs):
         if self.folder_template is None:
