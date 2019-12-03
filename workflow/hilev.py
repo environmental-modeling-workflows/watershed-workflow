@@ -262,7 +262,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     return crs, workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=True):
+def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=True, presimplify=None):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -294,6 +294,9 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     merge : bool, optional
         If true, reaches are merged (via shapely.ops.linemerge), collapsing 
         connected, non-branching reaches into a single LineString.
+    presimplify : double, optional
+        If provided, reaches are simplified according to shapely.simplify as 
+        soon as possible for big extents.
 
     Returns
     -------
@@ -313,6 +316,13 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     profile, reaches = source.get_hydro(huc, bounds, crs)
     logging.info("  found {} reaches".format(len(reaches)))
 
+    if presimplify is not None:
+        # convert to shapely and simplify
+        reaches_s = [workflow.utils.shply(r).simplify(presimplify) for r in reaches] 
+
+        # convert back to fiona
+        reaches = [dict(geometry=shapely.geometry.mapping(r)) for r in reaches_s]
+        
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
     if crs and not workflow.crs.equal(crs, native_crs):
@@ -322,9 +332,8 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         crs = native_crs
 
     # round
-    if digits is None:
-        digits = workflow.conf.rcParams['digits']
-    workflow.utils.round(reaches, digits)
+    if digits is not None:
+        workflow.utils.round(reaches, digits)
 
     # convert to shapely
     reaches_s = [workflow.utils.shply(reach) for reach in reaches]
