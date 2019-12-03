@@ -126,6 +126,42 @@ def lighten(color, fraction=0.6):
     return tuple(np.minimum(rgb + fraction*(1-rgb),1))
 
 
+def generate_indexed_colormap(indices, cmap='hot'):
+    """Generates an indexed colormap and labels for imaging, e.g. soil indices.
+    Parameters
+    ----------
+    indices : iterable(int)
+        Collection of indices that will be used in this colormap.
+    cmap : optional, str
+        Name of matplotlib colormap to sample.
+
+    Returns
+    -------
+    indices_out : list(int)
+        The unique, sorted list of indices found.
+    cmap : cmap-type
+        A segmented map for use with plots.
+    norm : BoundaryNorm
+        A norm for use in `plot_trisurf()` or other plotting methods
+        to ensure correct NLCD colors.
+    ticks : list(int)
+        A list of tick locations for the requested indices.  For use
+        with `set_ticks()`.
+    labels : list(str)
+        A list of labels associated with the ticks.  For use with
+        `set_{x,y}ticklabels()`.
+    """
+    indices = sorted(set(indices))
+
+    cm = cm_mapper(0, len(indices)-1, cmap=matplotlib.cm.get_cmap(cmap))
+    values = [cm(i) for i in range(0, len(indices))]
+    cmap = matplotlib.colors.ListedColormap(values)
+    ticks = indices+[indices[-1]+1,]
+    norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks)-1)
+    labels = [str(i) for i in indices]
+    return indices, cmap, norm, ticks, labels
+
+
 
 def generate_nlcd_colormap(indices=None):
     """Generates a colormap and labels for imaging with the NLCD colors.
