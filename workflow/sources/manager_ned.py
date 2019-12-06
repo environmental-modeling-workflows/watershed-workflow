@@ -88,8 +88,7 @@ class FileManagerNED:
         # merge into a single raster
         datasets = [rasterio.open(f) for f in files]
         profile = datasets[0].profile
-        dest, output_transform = rasterio.merge.merge(datasets, bounds=feather_bounds, nodata=np.nan,
-                                                      precision=workflow.conf.rcParams['digits'])
+        dest, output_transform = rasterio.merge.merge(datasets, bounds=feather_bounds, nodata=np.nan)
         dest = np.where(dest < -1.e-10, np.nan, dest)
 
         # set the profile

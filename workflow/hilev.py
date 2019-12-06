@@ -525,7 +525,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
     return result
 
 
-def simplify_and_prune(hucs, reaches, simplify=10, prune_reach_size=0, cut_intersections=False):
+def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size=0, cut_intersections=False):
     """Cleans up the HUC and river shapes.
 
     Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
@@ -562,7 +562,8 @@ def simplify_and_prune(hucs, reaches, simplify=10, prune_reach_size=0, cut_inter
     logging.info("Simplifying and pruning")
     logging.info("-"*30)
     logging.info("Filtering rivers outside of the HUC space")
-    reaches = workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
+    if filter:
+        reaches = workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
     if len(reaches) is 0:
         return reaches
 
