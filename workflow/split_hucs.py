@@ -173,8 +173,11 @@ class SplitHUCs:
             for s in b:
                 segs.append(self.segments[s])
         ml = shapely.ops.linemerge(segs)
-        assert(type(ml) is shapely.geometry.LineString)
-        return shapely.geometry.Polygon(ml)                
+        #assert(type(ml) is shapely.geometry.LineString)
+        if type(ml) is shapely.geometry.LineString:
+            return shapely.geometry.Polygon(ml)
+        else:
+            return [shapely.geometry.Polygon(l) for l in ml]
 
     def __len__(self):
         return len(self.gons)
