@@ -147,7 +147,10 @@ def from_epsg(epsg):
         Equivalent workflow CRS.
 
     """
-    return pyproj.Proj(init='EPSG:{}'.format(epsg))
+    try:
+        return pyproj.Proj(init='EPSG:{}'.format(epsg))
+    except RuntimeError as err:
+        raise RuntimeError('Proj4 error: "{}", likely epsg is not recognized by pyproj.'.format(err))
 
 def from_cartopy(crs):
     """Converts a cartopy CRS to a workflow CRS.
@@ -284,7 +287,19 @@ def default_alaska_crs():
         you do, don't use the default!) but it is EPSG:3338.
 
     """
-    return from_epsg(33)
+    return from_epsg(3338)
+
+def daymet_crs():
+    """Returns teh CRS used by DayMet files.
+
+    Returns
+    -------
+    out : crs-type
+        The DayMet CRS.  The user should not care what this is.
+
+    """
+    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
+
 
 def latlon_crs():
     """Returns the default latitude-longitude CRS.
