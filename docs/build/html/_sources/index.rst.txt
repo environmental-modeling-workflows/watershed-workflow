@@ -8,7 +8,7 @@ Watershed Workflow is a python-based, open source chain of tools for
 generating meshes and other data inputs for hyper-resolution
 hydrology, anywhere in the (conterminous + Alaska?) US.
 
-Browse the code at: [https://github.com/ecoon/watershed_workflow/](https://github.com/ecoon/watershed_workflow/)
+Browse the code at: https://github.com/ecoon/watershed_workflow/
 
 .. toctree::
    :maxdepth: 2
