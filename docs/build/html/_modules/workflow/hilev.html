@@ -82,6 +82,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
@@ -219,8 +220,8 @@
 <span class="sd">        hydrologic unit code</span>
 <span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
-<span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">    digits : int, optional</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -231,7 +232,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">huc</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">huc_str</span><span class="p">(</span><span class="n">huc</span><span class="p">)</span>
-    <span class="n">crs</span><span class="p">,</span> <span class="n">hu_shapes</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">huc</span><span class="p">),</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="n">crs</span><span class="p">,</span> <span class="n">hu_shapes</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">huc</span><span class="p">),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
     <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hu_shapes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hu_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
@@ -249,8 +250,8 @@
 <span class="sd">        HUC level of the requested sub-basins</span>
 <span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
-<span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">    digits : int, optional</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -284,9 +285,8 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
 
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">digits</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;digits&#39;</span><span class="p">]</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">hus</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">hus</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
     <span class="n">hu_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">hu</span><span class="p">)</span> <span class="k">for</span> <span class="n">hu</span> <span class="ow">in</span> <span class="n">hus</span><span class="p">]</span>
@@ -310,8 +310,8 @@
 <span class="sd">        HUC level of the requested sub-basins</span>
 <span class="sd">    crs : crs-type</span>
 <span class="sd">        Output coordinate system.  Default is source&#39;s crs.</span>
-<span class="sd">    digits : int</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">    digits : int, optional</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -321,7 +321,7 @@
 <span class="sd">        Split-form HUCs object containing subbasins.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">crs</span><span class="p">,</span> <span class="n">hu_shapes</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="n">crs</span><span class="p">,</span> <span class="n">hu_shapes</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">hu_shapes</span><span class="p">)</span></div>
 
 
@@ -344,7 +344,7 @@
 <span class="sd">        Coordinate system of out and/or the bounding box provided in `filter`.</span>
 <span class="sd">        The default is source&#39;s crs.</span>
 <span class="sd">    digits : int, optional</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -374,9 +374,8 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
         
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">digits</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;digits&#39;</span><span class="p">]</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
     <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
@@ -400,7 +399,7 @@
 <span class="sd">        Coordinate system of out and/or the bounding box provided in `filter`.</span>
 <span class="sd">        The default is source&#39;s crs.</span>
 <span class="sd">    digits : int, optional</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -414,7 +413,7 @@
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_reaches"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_reaches">[docs]</a><span class="k">def</span> <span class="nf">get_reaches</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">long</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="get_reaches"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_reaches">[docs]</a><span class="k">def</span> <span class="nf">get_reaches</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">long</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">presimplify</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get reaches from hydrography source within a given HUC and/or bounding box.</span>
 
 <span class="sd">    Collects reach datasets within a HUC and/or a bounding box.  If bounds are</span>
@@ -438,7 +437,7 @@
 <span class="sd">        Output coordinate system and coordinate system of bounds.  Defaults to</span>
 <span class="sd">        the source&#39;s crs.</span>
 <span class="sd">    digits : int, optional</span>
-<span class="sd">        Number of digits to round coordinates to.  Default set by config file.</span>
+<span class="sd">        Number of digits to round coordinates to.</span>
 <span class="sd">    long : float, optional</span>
 <span class="sd">        If a reach is longer than this value it gets filtered.  Some NHD data</span>
 <span class="sd">        has QC issues, or other wierd extra-long, single segment reaches that</span>
@@ -446,6 +445,9 @@
 <span class="sd">    merge : bool, optional</span>
 <span class="sd">        If true, reaches are merged (via shapely.ops.linemerge), collapsing </span>
 <span class="sd">        connected, non-branching reaches into a single LineString.</span>
+<span class="sd">    presimplify : double, optional</span>
+<span class="sd">        If provided, reaches are simplified according to shapely.simplify as </span>
+<span class="sd">        soon as possible for big extents.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -465,6 +467,13 @@
     <span class="n">profile</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_hydro</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  found </span><span class="si">{}</span><span class="s2"> reaches&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)))</span>
 
+    <span class="k">if</span> <span class="n">presimplify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># convert to shapely and simplify</span>
+        <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">presimplify</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">]</span> 
+
+        <span class="c1"># convert back to fiona</span>
+        <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">mapping</span><span class="p">(</span><span class="n">r</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches_s</span><span class="p">]</span>
+        
     <span class="c1"># convert to destination crs</span>
     <span class="n">native_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_fiona</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">crs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">native_crs</span><span class="p">):</span>
@@ -474,9 +483,8 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
 
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">digits</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;digits&#39;</span><span class="p">]</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
     <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">reach</span><span class="p">)</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">]</span>
@@ -670,7 +678,7 @@
     <span class="k">return</span> <span class="n">result</span></div>
 
 
-<div class="viewcode-block" id="simplify_and_prune"><a class="viewcode-back" href="../../api.html#workflow.hilev.simplify_and_prune">[docs]</a><span class="k">def</span> <span class="nf">simplify_and_prune</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="n">simplify</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">prune_reach_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="simplify_and_prune"><a class="viewcode-back" href="../../api.html#workflow.hilev.simplify_and_prune">[docs]</a><span class="k">def</span> <span class="nf">simplify_and_prune</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simplify</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">prune_reach_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Cleans up the HUC and river shapes.</span>
 
 <span class="sd">    Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and</span>
@@ -707,7 +715,8 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Simplifying and pruning&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Filtering rivers outside of the HUC space&quot;</span><span class="p">)</span>
-    <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">filter_rivers_to_shape</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">reaches</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">filter_rivers_to_shape</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">reaches</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reaches</span>
 
@@ -969,7 +978,8 @@
     <span class="k">return</span> <span class="n">out</span></div>
     
 
-<div class="viewcode-block" id="color_raster_from_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.color_raster_from_shapes">[docs]</a><span class="k">def</span> <span class="nf">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="n">target_dx</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">shape_colors</span><span class="p">,</span> <span class="n">shapes_crs</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="color_raster_from_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.color_raster_from_shapes">[docs]</a><span class="k">def</span> <span class="nf">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="n">target_dx</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">shape_colors</span><span class="p">,</span>
+                             <span class="n">shapes_crs</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Color in a raster by filling in a collection of shapes.</span>
 
 <span class="sd">    Given a canvas specified by bounds and pixel size, color a raster by, for</span>
@@ -1030,13 +1040,13 @@
                       <span class="s1">&#39;width&#39;</span><span class="p">:</span><span class="n">width</span><span class="p">,</span>
                       <span class="s1">&#39;count&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
                       <span class="s1">&#39;dtype&#39;</span><span class="p">:</span><span class="n">dtype</span><span class="p">,</span>
-                      <span class="s1">&#39;crs&#39;</span><span class="p">:</span><span class="n">shapes_crs</span><span class="p">,</span>
+                      <span class="s1">&#39;crs&#39;</span><span class="p">:</span><span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_rasterio</span><span class="p">(</span><span class="n">shapes_crs</span><span class="p">),</span>
                       <span class="s1">&#39;transform&#39;</span><span class="p">:</span><span class="n">transform</span><span class="p">,</span>
                       <span class="s1">&#39;nodata&#39;</span><span class="p">:</span><span class="n">nodata</span><span class="p">}</span>
     
     <span class="n">out</span> <span class="o">=</span> <span class="n">nodata</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">shape_colors</span><span class="p">):</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">p</span><span class="p">,],</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">p</span><span class="p">,],</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">out</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_id</span>
     <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">out_profile</span><span class="p">,</span> <span class="n">out_bounds</span></div>
 

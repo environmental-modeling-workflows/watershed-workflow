@@ -82,6 +82,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
@@ -299,7 +300,10 @@
 <span class="sd">        Equivalent workflow CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;EPSG:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsg</span><span class="p">))</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;EPSG:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsg</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Proj4 error: &quot;</span><span class="si">{}</span><span class="s1">&quot;, likely epsg is not recognized by pyproj.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="from_cartopy"><a class="viewcode-back" href="../../api.html#workflow.crs.from_cartopy">[docs]</a><span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a cartopy CRS to a workflow CRS.</span>
@@ -405,6 +409,13 @@
 
     <span class="k">return</span> <span class="n">cl</span><span class="p">(</span><span class="n">globe</span><span class="o">=</span><span class="n">globe</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_proj</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="from_string"><a class="viewcode-back" href="../../api.html#workflow.crs.from_string">[docs]</a><span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a CRS from a Proj4 string specification.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="to_string"><a class="viewcode-back" href="../../api.html#workflow.crs.to_string">[docs]</a><span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the proj4 string of a CRS.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="default_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.default_crs">[docs]</a><span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for North America.</span>
@@ -429,7 +440,19 @@
 <span class="sd">        you do, don&#39;t use the default!) but it is EPSG:3338.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">33</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">3338</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="daymet_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.daymet_crs">[docs]</a><span class="k">def</span> <span class="nf">daymet_crs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns teh CRS used by DayMet files.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : crs-type</span>
+<span class="sd">        The DayMet CRS.  The user should not care what this is.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">from_string</span><span class="p">(</span><span class="s1">&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs &#39;</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="latlon_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.latlon_crs">[docs]</a><span class="k">def</span> <span class="nf">latlon_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns the default latitude-longitude CRS.</span>

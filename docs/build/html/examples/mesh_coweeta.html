@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Installation and Setup" href="../install.html" />
+    <link rel="next" title="Gallery" href="../gallery.html" />
     <link rel="prev" title="Watershed Workflow" href="../intro.html" /> 
 </head>
 
@@ -91,6 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#Mesh-extrusion">Mesh extrusion</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../gallery.html">Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a></li>
@@ -442,13 +443,13 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:43:48,566 - root - INFO:
-2019-09-27 13:43:48,568 - root - INFO: Meshing shape: ../data/hydrologic_units/others/Coweeta/coweeta_basin.shp
-2019-09-27 13:43:48,568 - root - INFO: ==============================
-2019-09-27 13:43:48,570 - root - INFO:
-2019-09-27 13:43:48,571 - root - INFO: Preprocessing Shapes
-2019-09-27 13:43:48,571 - root - INFO: ------------------------------
-2019-09-27 13:43:48,572 - root - INFO: loading file: &#34;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#34;
+2019-12-06 09:53:43,026 - root - INFO:
+2019-12-06 09:53:43,028 - root - INFO: Meshing shape: ../data/hydrologic_units/others/Coweeta/coweeta_basin.shp
+2019-12-06 09:53:43,029 - root - INFO: ==============================
+2019-12-06 09:53:43,030 - root - INFO:
+2019-12-06 09:53:43,032 - root - INFO: Preprocessing Shapes
+2019-12-06 09:53:43,032 - root - INFO: ------------------------------
+2019-12-06 09:53:43,033 - root - INFO: loading file: &#34;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#34;
 /Users/uec/codes/anaconda/3/envs/ats_meshing_20190719/lib/python3.7/site-packages/fiona/collection.py:336: FionaDeprecationWarning: Collection slicing is deprecated and will be disabled in a future version.
   return self.session.__getitem__(item)
 </pre></div></div>
@@ -472,14 +473,14 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:43:48,594 - root - INFO: Using sources:
-2019-09-27 13:43:48,595 - root - INFO: --------------
-2019-09-27 13:43:48,596 - root - INFO: HUC: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
-2019-09-27 13:43:48,597 - root - INFO: hydrography: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
-2019-09-27 13:43:48,598 - root - INFO: DEM: National Elevation Dataset (NED)
-2019-09-27 13:43:48,599 - root - INFO: soil type: National Resources Conservation Service Soil Survey (NRCS Soils)
-2019-09-27 13:43:48,599 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
-2019-09-27 13:43:48,600 - root - INFO: soil thickness: None
+2019-12-06 09:53:43,109 - root - INFO: Using sources:
+2019-12-06 09:53:43,111 - root - INFO: --------------
+2019-12-06 09:53:43,112 - root - INFO: HUC: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
+2019-12-06 09:53:43,113 - root - INFO: hydrography: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
+2019-12-06 09:53:43,115 - root - INFO: DEM: National Elevation Dataset (NED)
+2019-12-06 09:53:43,116 - root - INFO: soil type: National Resources Conservation Service Soil Survey (NRCS Soils)
+2019-12-06 09:53:43,118 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
+2019-12-06 09:53:43,120 - root - INFO: soil thickness: None
 </pre></div></div>
 </div>
 </div>
@@ -506,35 +507,36 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:43:48,609 - root - INFO:
-2019-09-27 13:43:48,611 - root - INFO: Preprocessing Hydrography
-2019-09-27 13:43:48,612 - root - INFO: ------------------------------
-2019-09-27 13:43:48,614 - root - INFO: loading streams in HUC 0601
-2019-09-27 13:43:48,615 - root - INFO: and/or bounds (273971.0911428, 3878839.6361173, 279140.9150949, 3883953.7853134)
-2019-09-27 13:43:48,617 - root - INFO: Using Hydrography file &#34;/Users/uec/research/water/data/meshing/data/hydrography/NHDPlus_H_0601_GDB/NHDPlus_H_0601.gdb&#34;
-2019-09-27 13:43:50,164 - root - INFO:
-2019-09-27 13:43:50,165 - root - INFO: Simplifying and pruning
-2019-09-27 13:43:50,166 - root - INFO: ------------------------------
-2019-09-27 13:43:50,167 - root - INFO: Filtering rivers outside of the HUC space
-2019-09-27 13:43:50,168 - root - INFO:   ...filtering
-2019-09-27 13:43:50,189 - root - INFO: Generate the river tree
-2019-09-27 13:43:50,194 - root - INFO: Removing rivers with fewer than 0 reaches.
-2019-09-27 13:43:50,195 - root - INFO:   ...keeping river with 21 reaches
-2019-09-27 13:43:50,195 - root - INFO: simplifying rivers
-2019-09-27 13:43:50,208 - root - INFO: simplifying HUCs
-2019-09-27 13:43:50,211 - root - INFO: snapping rivers and HUCs
-2019-09-27 13:43:50,214 - root - INFO:   snapping polygon segment boundaries to river endpoints
-2019-09-27 13:43:50,220 - root - INFO:   snapping river endpoints to the polygon
-2019-09-27 13:43:50,259 - root - INFO:   cutting at crossings
-2019-09-27 13:43:50,299 - root - INFO:   filtering rivers to HUC
-2019-09-27 13:43:50,301 - root - INFO:   ...filtering
-2019-09-27 13:43:50,313 - root - INFO:
-2019-09-27 13:43:50,314 - root - INFO: Simplification Diagnostics
-2019-09-27 13:43:50,316 - root - INFO: ------------------------------
-2019-09-27 13:43:50,321 - root - INFO:   river min seg length: 38.7145
-2019-09-27 13:43:50,323 - root - INFO:   river median seg length: 65.1981
-2019-09-27 13:43:50,324 - root - INFO:   HUC min seg length: 11.4828
-2019-09-27 13:43:50,330 - root - INFO:   HUC median seg length: 20.9713
+2019-12-06 09:53:43,136 - root - INFO:
+2019-12-06 09:53:43,137 - root - INFO: Preprocessing Hydrography
+2019-12-06 09:53:43,138 - root - INFO: ------------------------------
+2019-12-06 09:53:43,139 - root - INFO: Loading streams in HUC 0601
+2019-12-06 09:53:43,140 - root - INFO:          and/or bounds (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2019-12-06 09:53:43,147 - root - INFO: Using Hydrography file &#34;/Users/uec/research/water/data/watershed-workflow/data-master/hydrography/NHDPlus_H_0601_GDB/NHDPlus_H_0601.gdb&#34;
+2019-12-06 09:53:49,658 - root - INFO:   found 36 reaches
+2019-12-06 09:53:49,682 - root - INFO:
+2019-12-06 09:53:49,683 - root - INFO: Simplifying and pruning
+2019-12-06 09:53:49,685 - root - INFO: ------------------------------
+2019-12-06 09:53:49,688 - root - INFO: Filtering rivers outside of the HUC space
+2019-12-06 09:53:49,691 - root - INFO:   ...filtering
+2019-12-06 09:53:49,726 - root - INFO: Generate the river tree
+2019-12-06 09:53:49,733 - root - INFO: Removing rivers with fewer than 0 reaches.
+2019-12-06 09:53:49,734 - root - INFO:   ...keeping river with 21 reaches
+2019-12-06 09:53:49,737 - root - INFO: simplifying rivers
+2019-12-06 09:53:49,753 - root - INFO: simplifying HUCs
+2019-12-06 09:53:49,757 - root - INFO: snapping rivers and HUCs
+2019-12-06 09:53:49,759 - root - INFO:   snapping polygon segment boundaries to river endpoints
+2019-12-06 09:53:49,765 - root - INFO:   snapping river endpoints to the polygon
+2019-12-06 09:53:49,808 - root - INFO:   cutting at crossings
+2019-12-06 09:53:49,859 - root - INFO:   filtering rivers to HUC
+2019-12-06 09:53:49,860 - root - INFO:   ...filtering
+2019-12-06 09:53:49,873 - root - INFO:
+2019-12-06 09:53:49,874 - root - INFO: Simplification Diagnostics
+2019-12-06 09:53:49,875 - root - INFO: ------------------------------
+2019-12-06 09:53:49,880 - root - INFO:   river min seg length: 38.7145
+2019-12-06 09:53:49,882 - root - INFO:   river median seg length: 65.1981
+2019-12-06 09:53:49,886 - root - INFO:   HUC min seg length: 11.4828
+2019-12-06 09:53:49,888 - root - INFO:   HUC median seg length: 20.9713
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -550,7 +552,8 @@ div.rendered_html tbody tr:hover {
 <span class="c1"># A(d) is a piecewise linear function -- A = A0 if d &lt;= d0, A = A1 if d &gt;= d1, and</span>
 <span class="c1"># linearly interpolates between the two endpoints.</span>
 <span class="n">d0</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span> <span class="n">d1</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">A0</span> <span class="o">=</span> <span class="mi">500</span><span class="p">;</span> <span class="n">A1</span> <span class="o">=</span> <span class="mi">2500</span>
+<span class="n">A0</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span> <span class="n">A1</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="c1">#A0 = 500; A1 = 2500</span>
 <span class="c1">#A0 = 100; A1 = 500</span>
 
 <span class="c1"># Refine triangles if they get too acute</span>
@@ -569,16 +572,16 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:43:50,344 - root - INFO:
-2019-09-27 13:43:50,345 - root - INFO: Meshing
-2019-09-27 13:43:50,347 - root - INFO: ------------------------------
-2019-09-27 13:43:50,349 - root - INFO: Triangulating...
-2019-09-27 13:43:50,358 - root - INFO:    265 points and 265 facets
-2019-09-27 13:43:50,359 - root - INFO:  checking graph consistency
-2019-09-27 13:43:50,363 - root - INFO:  building graph data structures
-2019-09-27 13:43:50,368 - root - INFO:  triangle.build...
-2019-09-27 13:44:05,872 - root - INFO:   ...built: 16097 mesh points and 31875 triangles
-2019-09-27 13:44:05,873 - root - INFO: Plotting triangulation diagnostics
+2019-12-06 09:53:49,900 - root - INFO:
+2019-12-06 09:53:49,901 - root - INFO: Meshing
+2019-12-06 09:53:49,903 - root - INFO: ------------------------------
+2019-12-06 09:53:49,904 - root - INFO: Triangulating...
+2019-12-06 09:53:49,908 - root - INFO:    265 points and 265 facets
+2019-12-06 09:53:49,909 - root - INFO:  checking graph consistency
+2019-12-06 09:53:49,916 - root - INFO:  building graph data structures
+2019-12-06 09:53:49,921 - root - INFO:  triangle.build...
+2019-12-06 09:54:03,253 - root - INFO:   ...built: 8165 mesh points and 16103 triangles
+2019-12-06 09:54:03,255 - root - INFO: Plotting triangulation diagnostics
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -606,16 +609,16 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:44:09,411 - root - INFO:
-2019-09-27 13:44:09,411 - root - INFO: Preprocessing Raster
-2019-09-27 13:44:09,412 - root - INFO: ------------------------------
-2019-09-27 13:44:09,413 - root - INFO: collecting raster
-2019-09-27 13:44:09,416 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186398, 35.01734099944024, -83.41165773504356, 35.08381933600244]
-2019-09-27 13:44:09,417 - root - INFO:   Need:
-2019-09-27 13:44:09,418 - root - INFO:     /Users/uec/research/water/data/meshing/data/dem/USGS_NED_1as_n36_w084.img
-2019-09-27 13:44:09,431 - root - INFO:
-2019-09-27 13:44:09,432 - root - INFO: Elevating Triangulation to DEM
-2019-09-27 13:44:09,434 - root - INFO: ------------------------------
+2019-12-06 09:54:06,216 - root - INFO:
+2019-12-06 09:54:06,217 - root - INFO: Preprocessing Raster
+2019-12-06 09:54:06,219 - root - INFO: ------------------------------
+2019-12-06 09:54:06,220 - root - INFO: collecting raster
+2019-12-06 09:54:06,221 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186388, 35.01734099944037, -83.41165773504302, 35.08381933600275]
+2019-12-06 09:54:06,222 - root - INFO:   Need:
+2019-12-06 09:54:06,223 - root - INFO:     /Users/uec/research/water/data/watershed-workflow/data-master/dem/USGS_NED_1as_n36_w084.img
+2019-12-06 09:54:06,276 - root - INFO:
+2019-12-06 09:54:06,278 - root - INFO: Elevating Triangulation to DEM
+2019-12-06 09:54:06,279 - root - INFO: ------------------------------
 </pre></div></div>
 </div>
 <p>Plotting the resulting mesh can be done in a variety of ways, including both 3D plots and mapview. We show both here, but hereafter use mapview plots as they are a bit clearer (if not so flashy)…</p>
@@ -624,8 +627,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">figsize_3d</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">12</span><span class="p">)</span>
+<span></span><span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">figsize_3d</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -654,8 +657,10 @@ div.rendered_html tbody tr:hover {
 
 <span class="n">t</span> <span class="o">=</span> <span class="n">cax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">55</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_dem_3d&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -677,29 +682,13 @@ div.rendered_html tbody tr:hover {
 
 <span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
 <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;datalim&#39;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;2D mesh and digital elevation map&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-got projection: _EPSGProjection(26917)
-got projection: _EPSGProjection(26917)
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="output_area highlight-none notranslate"><div class="highlight"><pre>
-<span></span>Text(0.5, 1.0, &#39;2D mesh and digital elevation map&#39;)
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_dem&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -707,7 +696,7 @@ got projection: _EPSGProjection(26917)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_13_2.png" src="../_images/examples_mesh_coweeta_13_2.png" />
+<img alt="../_images/examples_mesh_coweeta_13_0.png" src="../_images/examples_mesh_coweeta_13_0.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -745,7 +734,7 @@ got projection: _EPSGProjection(26917)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-max diff =  3.8717899038992982
+max diff =  5.63878974546617
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -784,13 +773,13 @@ max diff =  3.8717899038992982
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:44:17,263 - root - INFO:
-2019-09-27 13:44:17,263 - root - INFO: Preprocessing Raster
-2019-09-27 13:44:17,264 - root - INFO: ------------------------------
-2019-09-27 13:44:17,265 - root - INFO: collecting raster
-2019-09-27 13:44:17,268 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],TOWGS84[0,0,0,-0,-0,-0,0],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1]]
-2019-09-27 13:44:17,851 - root - INFO: Found land cover dtypes: uint8
-2019-09-27 13:44:17,855 - root - INFO: Found land cover types: {41, 42, 43, 81, 52, 21, 22, 23}
+2019-12-06 09:54:14,707 - root - INFO:
+2019-12-06 09:54:14,708 - root - INFO: Preprocessing Raster
+2019-12-06 09:54:14,709 - root - INFO: ------------------------------
+2019-12-06 09:54:14,711 - root - INFO: collecting raster
+2019-12-06 09:54:14,725 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],TOWGS84[0,0,0,-0,-0,-0,0],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1]]
+2019-12-06 09:54:15,239 - root - INFO: Found land cover dtypes: uint8
+2019-12-06 09:54:15,246 - root - INFO: Found land cover types: {41, 42, 43, 81, 52, 21, 22, 23}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -804,6 +793,26 @@ max diff =  3.8717899038992982
 <span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">nlcd_ticks</span><span class="p">,</span> <span class="n">nlcd_labels</span> <span class="o">=</span> \
                 <span class="n">workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_nlcd_colormap</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
 
+<span class="n">nlcd_labels_fw</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">nlcd_labels</span><span class="p">:</span>
+    <span class="n">label_fw</span> <span class="o">=</span> <span class="n">label</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">label</span><span class="p">:</span>
+            <span class="n">lsplit</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lsplit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">label_fw</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lsplit</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lsplit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">label_fw</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]),</span>
+                                      <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[</span><span class="mi">2</span><span class="p">:])])</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lsplit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">label_fw</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">lsplit</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                          <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[</span><span class="mi">1</span><span class="p">:])])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">label_fw</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lsplit</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                                          <span class="n">lsplit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="n">nlcd_labels_fw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label_fw</span><span class="p">)</span>
+
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
@@ -812,8 +821,9 @@ max diff =  3.8717899038992982
                                  <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">cb</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">(</span><span class="n">nlcd_ticks</span><span class="p">)</span>
-<span class="n">cb</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">(</span><span class="n">nlcd_labels</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">cb</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">(</span><span class="n">nlcd_labels_fw</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;land cover index&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_nlcd&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -867,20 +877,20 @@ max diff =  3.8717899038992982
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:44:18,641 - root - INFO:
-2019-09-27 13:44:18,642 - root - INFO: Preprocessing Shapes
-2019-09-27 13:44:18,643 - root - INFO: ------------------------------
-2019-09-27 13:44:18,647 - root - INFO:   Using filename: /Users/uec/research/water/data/meshing/data/soil_survey/soil_survey_shape_-83.4790_35.0269_-83.4208_35.0743.gml
-2019-09-27 13:44:18,736 - root - INFO:   Found 460 shapes.
-2019-09-27 13:44:18,737 - root - INFO:   and crs: {&#39;init&#39;: &#39;epsg:4326&#39;}
-2019-09-27 13:44:18,886 - root - INFO: target bounds: (273971.0911428, 3878839.6361173, 279140.9150949, 3883953.7853134)
-2019-09-27 13:44:19,459 - root - INFO: shape union bounds: (272780.3245135, 3877673.1650815, 281292.5015333, 3887703.7251369)
-2019-09-27 13:44:19,460 - root - INFO: Coloring shapes onto raster:
-2019-09-27 13:44:19,461 - root - INFO:   target_bounds = (273971.0911428, 3878839.6361173, 279140.9150949, 3883953.7853134)
-2019-09-27 13:44:19,462 - root - INFO:   img_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
-2019-09-27 13:44:19,463 - root - INFO:   pixel_size = 10
-2019-09-27 13:44:19,464 - root - INFO:   width = 518, height = 512
-2019-09-27 13:44:19,465 - root - INFO:   and 43 independent colors of dtype int32
+2019-12-06 09:54:16,201 - root - INFO:
+2019-12-06 09:54:16,202 - root - INFO: Preprocessing Shapes
+2019-12-06 09:54:16,211 - root - INFO: ------------------------------
+2019-12-06 09:54:16,216 - root - INFO:   Using filename: /Users/uec/research/water/data/watershed-workflow/data-master/soil_survey/soil_survey_shape_-83.4790_35.0269_-83.4208_35.0743.gml
+2019-12-06 09:54:16,363 - root - INFO:   Found 460 shapes.
+2019-12-06 09:54:16,364 - root - INFO:   and crs: {&#39;init&#39;: &#39;epsg:4326&#39;}
+2019-12-06 09:54:16,571 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2019-12-06 09:54:17,672 - root - INFO: shape union bounds: (272780.3245135138, 3877673.165081467, 281292.5015333445, 3887703.7251368817)
+2019-12-06 09:54:17,674 - root - INFO: Coloring shapes onto raster:
+2019-12-06 09:54:17,675 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2019-12-06 09:54:17,676 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
+2019-12-06 09:54:17,676 - root - INFO:   pixel_size = 10
+2019-12-06 09:54:17,678 - root - INFO:   width = 518, height = 512
+2019-12-06 09:54:17,679 - root - INFO:   and 43 independent colors of dtype int32
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -889,13 +899,14 @@ max diff =  3.8717899038992982
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot the soil data</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
 <span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-                                 <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gist_rainbow&#39;</span><span class="p">)</span>
+                                 <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;copper&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_soils&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -984,38 +995,38 @@ max diff =  3.8717899038992982
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-09-27 13:44:21,155 - root - INFO: Got telescoping factor: 1.515910144611108
-2019-09-27 13:44:21,157 - root - INFO: Cell summary:
-2019-09-27 13:44:21,157 - root - INFO: ------------------------------------------------------------
-2019-09-27 13:44:21,158 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
-2019-09-27 13:44:21,159 - root - INFO: ------------------------------------------------------------
-2019-09-27 13:44:21,160 - root - INFO:  00      | 00    | 545854        |   0.050000    |   0.000000
-2019-09-27 13:44:21,160 - root - INFO:  01      | 01    | 545854        |   0.075796    |   0.050000
-2019-09-27 13:44:21,161 - root - INFO:  02      | 02    | 545854        |   0.114899    |   0.125796
-2019-09-27 13:44:21,161 - root - INFO:  03      | 03    | 545854        |   0.174177    |   0.240695
-2019-09-27 13:44:21,162 - root - INFO:  04      | 04    | 545854        |   0.264036    |   0.414872
-2019-09-27 13:44:21,163 - root - INFO:  05      | 05    | 545854        |   0.400255    |   0.678908
-2019-09-27 13:44:21,163 - root - INFO:  06      | 06    | 545854        |   0.606751    |   1.079163
-2019-09-27 13:44:21,164 - root - INFO:  07      | 07    | 545854        |   0.919781    |   1.685915
-2019-09-27 13:44:21,165 - root - INFO:  08      | 08    | 545854        |   1.394305    |   2.605695
-2019-09-27 13:44:21,165 - root - INFO:  09      | 09    | 545854        |   2.000000    |   4.000000
-2019-09-27 13:44:21,166 - root - INFO:  10      | 10    |  999  |   2.000000    |   6.000000
-2019-09-27 13:44:21,167 - root - INFO:  10      | 11    |  999  |   2.000000    |   8.000000
-2019-09-27 13:44:21,167 - root - INFO:  10      | 12    |  999  |   2.000000    |  10.000000
-2019-09-27 13:44:21,168 - root - INFO:  10      | 13    |  999  |   2.000000    |  12.000000
-2019-09-27 13:44:21,169 - root - INFO:  10      | 14    |  999  |   2.000000    |  14.000000
-2019-09-27 13:44:21,169 - root - INFO:  10      | 15    |  999  |   2.000000    |  16.000000
-2019-09-27 13:44:21,170 - root - INFO:  10      | 16    |  999  |   2.000000    |  18.000000
-2019-09-27 13:44:21,171 - root - INFO:  10      | 17    |  999  |   2.000000    |  20.000000
-2019-09-27 13:44:21,171 - root - INFO:  10      | 18    |  999  |   2.000000    |  22.000000
-2019-09-27 13:44:21,172 - root - INFO:  10      | 19    |  999  |   2.000000    |  24.000000
-2019-09-27 13:44:21,172 - root - INFO:  10      | 20    |  999  |   2.000000    |  26.000000
-2019-09-27 13:44:21,173 - root - INFO:  10      | 21    |  999  |   2.000000    |  28.000000
-2019-09-27 13:44:21,174 - root - INFO:  10      | 22    |  999  |   2.000000    |  30.000000
-2019-09-27 13:44:21,174 - root - INFO:  10      | 23    |  999  |   2.000000    |  32.000000
-2019-09-27 13:44:21,175 - root - INFO:  10      | 24    |  999  |   2.000000    |  34.000000
-2019-09-27 13:44:21,180 - root - INFO:  10      | 25    |  999  |   2.000000    |  36.000000
-2019-09-27 13:44:21,181 - root - INFO:  10      | 26    |  999  |   2.000000    |  38.000000
+2019-12-06 09:54:19,380 - root - INFO: Got telescoping factor: 1.515910144611108
+2019-12-06 09:54:19,381 - root - INFO: Cell summary:
+2019-12-06 09:54:19,382 - root - INFO: ------------------------------------------------------------
+2019-12-06 09:54:19,383 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
+2019-12-06 09:54:19,384 - root - INFO: ------------------------------------------------------------
+2019-12-06 09:54:19,385 - root - INFO:  00      | 00    | 545853        |   0.050000    |   0.000000
+2019-12-06 09:54:19,387 - root - INFO:  01      | 01    | 545853        |   0.075796    |   0.050000
+2019-12-06 09:54:19,387 - root - INFO:  02      | 02    | 545853        |   0.114899    |   0.125796
+2019-12-06 09:54:19,388 - root - INFO:  03      | 03    | 545853        |   0.174177    |   0.240695
+2019-12-06 09:54:19,390 - root - INFO:  04      | 04    | 545853        |   0.264036    |   0.414872
+2019-12-06 09:54:19,391 - root - INFO:  05      | 05    | 545853        |   0.400255    |   0.678908
+2019-12-06 09:54:19,392 - root - INFO:  06      | 06    | 545853        |   0.606751    |   1.079163
+2019-12-06 09:54:19,393 - root - INFO:  07      | 07    | 545853        |   0.919781    |   1.685915
+2019-12-06 09:54:19,395 - root - INFO:  08      | 08    | 545853        |   1.394305    |   2.605695
+2019-12-06 09:54:19,396 - root - INFO:  09      | 09    | 545853        |   2.000000    |   4.000000
+2019-12-06 09:54:19,397 - root - INFO:  10      | 10    |  999  |   2.000000    |   6.000000
+2019-12-06 09:54:19,398 - root - INFO:  10      | 11    |  999  |   2.000000    |   8.000000
+2019-12-06 09:54:19,399 - root - INFO:  10      | 12    |  999  |   2.000000    |  10.000000
+2019-12-06 09:54:19,400 - root - INFO:  10      | 13    |  999  |   2.000000    |  12.000000
+2019-12-06 09:54:19,401 - root - INFO:  10      | 14    |  999  |   2.000000    |  14.000000
+2019-12-06 09:54:19,401 - root - INFO:  10      | 15    |  999  |   2.000000    |  16.000000
+2019-12-06 09:54:19,402 - root - INFO:  10      | 16    |  999  |   2.000000    |  18.000000
+2019-12-06 09:54:19,404 - root - INFO:  10      | 17    |  999  |   2.000000    |  20.000000
+2019-12-06 09:54:19,405 - root - INFO:  10      | 18    |  999  |   2.000000    |  22.000000
+2019-12-06 09:54:19,405 - root - INFO:  10      | 19    |  999  |   2.000000    |  24.000000
+2019-12-06 09:54:19,407 - root - INFO:  10      | 20    |  999  |   2.000000    |  26.000000
+2019-12-06 09:54:19,407 - root - INFO:  10      | 21    |  999  |   2.000000    |  28.000000
+2019-12-06 09:54:19,408 - root - INFO:  10      | 22    |  999  |   2.000000    |  30.000000
+2019-12-06 09:54:19,410 - root - INFO:  10      | 23    |  999  |   2.000000    |  32.000000
+2019-12-06 09:54:19,411 - root - INFO:  10      | 24    |  999  |   2.000000    |  34.000000
+2019-12-06 09:54:19,412 - root - INFO:  10      | 25    |  999  |   2.000000    |  36.000000
+2019-12-06 09:54:19,413 - root - INFO:  10      | 26    |  999  |   2.000000    |  38.000000
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -1088,7 +1099,7 @@ Closing exodus file: coweeta_basin.exo
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../install.html" class="btn btn-neutral float-right" title="Installation and Setup" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../gallery.html" class="btn btn-neutral float-right" title="Gallery" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../intro.html" class="btn btn-neutral float-left" title="Watershed Workflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

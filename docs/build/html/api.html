@@ -83,6 +83,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
@@ -221,6 +222,25 @@ now we are trying to avoid hard-coding that, so internal code
 should avoid using that knowledge, and instead map to and from
 <cite>pyproj.Proj</cite> objects using the provided interface.</p>
 </div>
+<dl class="function">
+<dt id="workflow.crs.daymet_crs">
+<code class="descclassname">workflow.crs.</code><code class="descname">daymet_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#daymet_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.daymet_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns teh CRS used by DayMet files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
+<dd><p class="first last">The DayMet CRS.  The user should not care what this is.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="function">
 <dt id="workflow.crs.default_alaska_crs">
 <code class="descclassname">workflow.crs.</code><code class="descname">default_alaska_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#default_alaska_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.default_alaska_crs" title="Permalink to this definition">¶</a></dt>
@@ -423,6 +443,12 @@ code.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="workflow.crs.from_string">
+<code class="descclassname">workflow.crs.</code><code class="descname">from_string</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a CRS from a Proj4 string specification.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="workflow.crs.latlon_crs">
 <code class="descclassname">workflow.crs.</code><code class="descname">latlon_crs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#latlon_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.latlon_crs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the default latitude-longitude CRS.</p>
@@ -549,6 +575,12 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="workflow.crs.to_string">
+<code class="descclassname">workflow.crs.</code><code class="descname">to_string</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the proj4 string of a CRS.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="shapes-and-shapely">
 <h3>shapes and shapely<a class="headerlink" href="#shapes-and-shapely" title="Permalink to this headline">¶</a></h3>
@@ -593,8 +625,8 @@ simulations.</p>
 <dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 </dl>
 </td>
@@ -634,8 +666,8 @@ simulations.</p>
 <dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 </dl>
 </td>
@@ -678,8 +710,8 @@ possible without having to update all shapes that share the boundary.</p>
 <dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
 <dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
 </dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 </dl>
 </td>
@@ -723,7 +755,7 @@ only shapes that intersect with the bounding box.</p>
 The default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 </dl>
 </td>
@@ -766,7 +798,7 @@ only shapes that intersect with the bounding box.</p>
 The default is source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 </dl>
 </td>
@@ -787,7 +819,7 @@ The default is source’s crs.</p>
 
 <dl class="function">
 <dt id="workflow.hilev.get_reaches">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_reaches</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>bounds=None</em>, <em>crs=None</em>, <em>digits=None</em>, <em>long=None</em>, <em>merge=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_reaches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_reaches</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>bounds=None</em>, <em>crs=None</em>, <em>digits=None</em>, <em>long=None</em>, <em>merge=True</em>, <em>presimplify=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_reaches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reaches from hydrography source within a given HUC and/or bounding box.</p>
 <p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are
 provided, a containing HUC must still be provided to give a hint for file
@@ -815,7 +847,7 @@ smaller.</p>
 the source’s crs.</p>
 </dd>
 <dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.  Default set by config file.</p>
+<dd><p class="first last">Number of digits to round coordinates to.</p>
 </dd>
 <dt><strong>long</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
 <dd><p class="first last">If a reach is longer than this value it gets filtered.  Some NHD data
@@ -825,6 +857,10 @@ don’t make sense…</p>
 <dt><strong>merge</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
 <dd><p class="first last">If true, reaches are merged (via shapely.ops.linemerge), collapsing 
 connected, non-branching reaches into a single LineString.</p>
+</dd>
+<dt><strong>presimplify</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
+<dd><p class="first last">If provided, reaches are simplified according to shapely.simplify as 
+soon as possible for big extents.</p>
 </dd>
 </dl>
 </td>
@@ -973,7 +1009,7 @@ boundary with potentially some numerical error.</p>
 
 <dl class="function">
 <dt id="workflow.hilev.simplify_and_prune">
-<code class="descclassname">workflow.hilev.</code><code class="descname">simplify_and_prune</code><span class="sig-paren">(</span><em>hucs</em>, <em>reaches</em>, <em>simplify=10</em>, <em>prune_reach_size=0</em>, <em>cut_intersections=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#simplify_and_prune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">workflow.hilev.</code><code class="descname">simplify_and_prune</code><span class="sig-paren">(</span><em>hucs</em>, <em>reaches</em>, <em>filter=True</em>, <em>simplify=10</em>, <em>prune_reach_size=0</em>, <em>cut_intersections=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#simplify_and_prune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans up the HUC and river shapes.</p>
 <p>Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
 rivers must be in the same crs.</p>
