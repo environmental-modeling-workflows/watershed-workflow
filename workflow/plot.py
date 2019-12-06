@@ -225,30 +225,32 @@ def basemap(crs, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None,
     if ax is None:
         ax = get_ax(crs)
 
-    if land_kwargs is None:
-        land_kwargs = dict()
-    if 'edgecolor' not in land_kwargs:
-        land_kwargs['edgecolor'] = 'face'
-    if 'facecolor' not in land_kwargs:
-        land_kwargs['facecolor'] = cartopy.feature.COLORS['land']
-    land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
-    ax.add_feature(land)
+    if land_kwargs is not False:
+        if land_kwargs is None:
+            land_kwargs = dict()
+        if 'edgecolor' not in land_kwargs:
+            land_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in land_kwargs:
+            land_kwargs['facecolor'] = cartopy.feature.COLORS['land']
+        land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
+        ax.add_feature(land)
 
-    if state_kwargs is not None:
+    if state_kwargs is not None and state_kwargs is not False:
         kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
         kwargs.update(**state_kwargs)
         states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines',
                                                      resolution, **kwargs)
         ax.add_feature(states)
-    
-    if ocean_kwargs is None:
-        ocean_kwargs = dict()
-    if 'edgecolor' not in ocean_kwargs:
-        ocean_kwargs['edgecolor'] = 'face'
-    if 'facecolor' not in ocean_kwargs:
-        ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
-    ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
-    ax.add_feature(ocean)
+        
+    if ocean_kwargs is not False:
+        if ocean_kwargs is None:
+            ocean_kwargs = dict()
+        if 'edgecolor' not in ocean_kwargs:
+            ocean_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in ocean_kwargs:
+            ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
+        ax.add_feature(ocean)
 
     return 
         
