@@ -1,21 +1,6 @@
 API Documentation
 ====================
 
-Data Structures API and concepts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CRS
----
-.. automodule:: workflow.crs
-    :members:               
-
-
-shapes and shapely
-------------------
-
-TODO: fiona shapes vs shapely shapes
-
-
 High Level API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -24,10 +9,16 @@ High Level API
 
 Sources API
 ~~~~~~~~~~~~~~~~~~~~~
-
 .. _source-type:
 
 Source objects provide ways of downloading and using data.
+
+
+CRS
+~~~~
+.. automodule:: workflow.crs
+    :members:               
+
 
 
 utils API

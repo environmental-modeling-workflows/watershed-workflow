@@ -1,52 +1,9 @@
-"""Manager for interacting with USGS National Hydrography Datasets.
-
-Watershed boundary datasets and hydrography datasets together form the
-geographic structure of a watershed.  Watershed boundary datasets are typically
-formed through analysis of elevation datasets, collecting within the same
-watershed all parts of the land surface which drain to a common river outlet.
-Watersheds are hierarchical, ranging in scale from small primary watersheds
-which drain into first order streams to full river basins which drain into an
-ocean.  In the United States, the USGS formally calculates hydrologic units and
-identifies them using Hydrologic Unit Codes, or HUCs, which respect this
-hierarchy.  HUC 2 regions (e.g. the Upper Colorado River or the Tennessee River
-Basin) are the largest in areal extent, while HUC 12s, or sub-watersheds, are
-the smallest, representing on the order of 100 square kilometers.  Watershed
-Workflow uses HUCs as an organizing unit for working with data, primarily
-because most datasets in the US are organized by the HUC, but also because they
-form physically useful domains for simulation.
-
-Hydrography datasets provide surveys of river networks, which form the drainage
-network of watersheds and are where most of the fast-time scale dynamics occur.
-Some hydrologic models (for instance river routing models, dam operations
-management models, and many flood models) directly use the river network as
-their simulation domain, while others (for instance the class of integrated,
-distributed models described here) can use the river network to refine meshes
-near the rivers and therefore improve resolution where fast dynamics are
-occuring.  Watershed boundary and Hydrography datasets are typically available
-as GIS shapefiles, where each watershed boundary or reach is represented as a
-shape.
-
-Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
-National Hydrography Dataset (NHD), USGS and EPA datasets available at multiple
-resolutions to represent United States watersheds, including Alaska [NHD]_.
-Also used is the NHD Plus dataset, an augmented dataset built on watershed
-boundaries and elevation products.  By default, the 1:100,000 High Resolution
-datasets are used.  Data is discovered through The National Map's [TNM]_ REST
-API, which allows querying for data files organized by HUC and resolution via
-HTTP POST requests, providing direct-download URLs.  Files are downloaded on
-first request, unzipped, and stored in the data library for future use.
-Currently, files are indexed by 2-digit (WBD), 4-digit (NHD Plus HR) and
-8-digit (NHD) HUCs.
-
-.. [NHD] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
-.. [TNM] https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf
-
-"""
 import os, sys
 import logging
 import fiona
 import shapely
 import attr
+import requests
 
 import workflow.sources.utils as source_utils
 import workflow.conf
@@ -57,19 +14,78 @@ import workflow.warp
 
 @attr.s
 class _FileManagerNHD:
+    """Manager for interacting with USGS National Hydrography Datasets.
+
+    Note that this includes NHD, NHDPlus, and WBD -- this class should not
+    be used directly but instead use one of the derived classes:
+
+    * `manager_nhd.FileManagerNHD`
+    * `manager_nhd.FileManagerNHDPlus`
+    * `manager_nhd.FileManagerWBD`
+
+    Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
+    National Hydrography Dataset (NHD), USGS and EPA datasets available at
+    multiple resolutions to represent United States watersheds, including
+    Alaska [NHD]_.  Also used is the NHD Plus dataset, an augmented dataset
+    built on watershed boundaries and elevation products.  By default, the
+    1:100,000 High Resolution datasets are used.  Data is discovered through
+    The National Map's [TNM]_ REST API, which allows querying for data files
+    organized by HUC and resolution via HTTP POST requests, providing
+    direct-download URLs.  Files are downloaded on first request, unzipped, and
+    stored in the data library for future use.  Currently, files are indexed by
+    2-digit (WBD), 4-digit (NHD Plus HR) and 8-digit (NHD) HUCs.
+
+    .. [NHD] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
+    .. [TNM] https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf
+
+    """
     name = attr.ib(type=str)
     file_level = attr.ib(type=int)
     lowest_level = attr.ib(type=int)
     name_manager = attr.ib()
 
     def get_huc(self, huc):
+        """Get the specified HUC in its native CRS.
+
+        Parameters
+        ----------
+        huc : int or str
+          The USGS Hydrologic Unit Code
+
+        Returns
+        -------
+        profile : dict
+          The fiona shapefile profile (see Fiona documentation).
+        hu : dict
+          Fiona shape object representing the hydrologic unit.
+
+        Note this finds and downloads files as needed.
+        """        
         huc = source_utils.huc_str(huc)
         profile, hus = self.get_hucs(huc, len(huc))
         assert(len(hus) == 1)
         return profile, hus[0]
 
     def get_hucs(self, huc, level):
-        """Loads HUCs from file."""
+        """Get all sub-catchments of a given HUC level within a given HUC.
+
+        Parameters
+        ----------
+        huc : int or str
+          The USGS Hydrologic Unit Code
+        level : int
+          Level of requested sub-catchments.  Must be larger or equal to the
+          level of the input huc.
+
+        Returns
+        -------
+        profile : dict
+          The fiona shapefile profile (see Fiona documentation).
+        hus : list(dict)
+          List of fiona shape objects representing the hydrologic units.
+
+        Note this finds and downloads files as needed.
+        """        
         huc = source_utils.huc_str(huc)
         huc_level = len(huc)
 
@@ -95,10 +111,27 @@ class _FileManagerNHD:
         return profile, hus
         
     def get_hydro(self, huc, bounds=None, bounds_crs=None):
-        """Downloads and reads hydrography within these bounds and/or huc.
+        """Get all reaches within a given HUC and/or coordinate bounds.
 
-        Note this requires a HUC hint of at least a level 4 HUC which contains bounds.
-        """
+        Parameters
+        ----------
+        huc : int or str
+          The USGS Hydrologic Unit Code
+        bounds : [xmin, ymin, xmax, ymax], optional
+          Coordinate bounds to filter reaches returned.  If this is provided,
+          bounds_crs must also be provided.
+        bounds_crs : CRS, optional
+          CRS of the above bounds.
+
+        Returns
+        -------
+        profile : dict
+          The fiona shapefile profile (see Fiona documentation).
+        reaches : list(dict)
+          List of fiona shape objects representing the stream reaches.
+
+        Note this finds and downloads files as needed.
+        """        
         if 'WBD' in self.name:
             raise RuntimeError('{}: does not provide hydrographic data.'.format(self.name))
         
@@ -131,8 +164,18 @@ class _FileManagerNHD:
         return profile, rivers
             
     def _url(self, hucstr):
-        """Use the REST API to find the URL."""
-        import requests
+        """Use the USGS REST API to find the URL to download a file for a given huc.
+
+        Parameters
+        ----------
+        hucstr : str
+          The USGS Hydrologic Unit Code
+
+        Returns
+        -------
+        url : str
+          The URL to download a file containing shapes for the HUC.
+        """
         rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
         hucstr = hucstr[0:self.file_level]
 
@@ -184,7 +227,20 @@ class _FileManagerNHD:
         
 
     def _download(self, hucstr, force=False):
-        """Download the data."""
+        """Find and download data from a given HUC.
+
+        Parameters
+        ----------
+        hucstr : str
+          The USGS Hydrologic Unit Code
+        force : bool, optional
+          If true, re-download even if a file already exists.
+
+        Returns
+        -------
+        filename : str
+          The path to the resulting downloaded dataset.
+        """
         # check directory structure
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         os.makedirs(self.name_manager.folder_name(hucstr), exist_ok=True)

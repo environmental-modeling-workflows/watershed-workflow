@@ -1,5 +1,4 @@
-"""Manager for interacting with National Resources Conservation Service Soil Survey database.
-"""
+"""National Resources Conservation Service Soil Survey database."""
 import os, sys
 import logging
 import fiona
@@ -14,6 +13,17 @@ import workflow.warp
 import workflow.utils
 
 class FileManagerNRCS:
+    """The National Resources Conservation Service's SSURGO Database [NRCS]_
+    contains a huge amount of information about soil texture, parameters, and
+    structure, and are provided as shape files containing soil type
+    delineations with map-unit-keys (MUKEYs).  These are re-broadcast onto a
+    raster (much like gSSURGO, which is unfortunately not readable by open
+    tools) and used to index soil parameterizations for simulation.
+
+    TODO: Functionality for mapping from MUKEY to soil parameters.
+
+    .. [NRCS] https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_053627
+    """
     def __init__(self):
         self.name = 'National Resources Conservation Service Soil Survey (NRCS Soils)'
         self.crs = workflow.crs.from_epsg('4326')
@@ -32,19 +42,17 @@ class FileManagerNRCS:
 
         Parameters
         ----------
-        bounds : :obj:`[xmin, ymin, xmax, ymax]`
+        bounds : [xmin, ymin, xmax, ymax]
             Bounding box to filter shapes.
-
-        crs : :obj:`crs`
-            Coordinate system of the bounding box (or None if index).
+        crs : CRS
+            Coordinate system of the bounding box.
 
         Returns
         -------
-        :obj:`profile`
+        profile : dict
             Fiona profile of the shapefile.
-        :obj:`list(Polygon)`
+        shapes : list
             List of fiona shapes that match the index or bounds.
-        
         """
         if type(bounds) is int:
             raise TypeError('NRCS file manager only handles bounds, not indices.')
@@ -71,12 +79,11 @@ class FileManagerNRCS:
         return profile, shapes
 
     def bounds(self, b, bounds_crs):
+        """Create a bounds in the NRCS coordinate system for use in downloading."""
         b = workflow.warp.bounds(b, bounds_crs, self.crs)
         b = [np.round(b[0],4)-.0001, np.round(b[1],4)-.0001,
                   np.round(b[2],4)+.0001, np.round(b[3],4)+.0001]
         return b
-        
-        
 
     def _download(self, bounds, force=False):
         """Downloads the data and writes it to disk."""

@@ -89,13 +89,9 @@
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#data-structures-api-and-concepts">Data Structures API and concepts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-workflow.crs">CRS</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#shapes-and-shapely">shapes and shapely</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-workflow.hilev">High Level API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sources-api">Sources API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-workflow.crs">CRS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-workflow.utils">utils API</a></li>
 </ul>
 </li>
@@ -189,10 +185,497 @@
 </style>
 <div class="section" id="api-documentation">
 <h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="data-structures-api-and-concepts">
-<h2>Data Structures API and concepts<a class="headerlink" href="#data-structures-api-and-concepts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-workflow.hilev">
+<span id="high-level-api"></span><h2>High Level API<a class="headerlink" href="#module-workflow.hilev" title="Permalink to this headline">¶</a></h2>
+<p>Watershed Workflow finds, downloads, and processes data for use in hydrologic models.</p>
+<p>This package is a python library of tools for interacting with a wide range of
+data streams using free and open (both free as in freedom and free as in free
+beer) python and GIS libraries and data.  Critically, this package provides a
+way for <strong>automatically and quickly</strong> downloading, interpreting, and processing
+data needed to <strong>generate a “first” hyper-resolution simulation on any
+watershed</strong> in the conterminous United States (and most of Alaska/Hawaii/Puerto
+Rico).</p>
+<p>To do this, this package provides tools to automate finding (via REST APIs and
+other approaches) data streams from <strong>open data streams,</strong> from United States
+governmental agencies, including USGS, USDA, DOE, and others.  These data
+streams are then colocated on a mesh which is generated based on a watershed
+delineation and a river network, and that mesh is written in one of a variety
+of mesh formats for use in hyper-resolution simulation tools.</p>
+<p>This top level module provides functionality for getting shapes and rasters
+representing watershed boundaries, river networks, digital elevation models,
+and other GIS datasets and then processing those data sets for use in
+simulations.</p>
+<dl class="function">
+<dt id="workflow.hilev.get_huc">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_huc</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_huc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a HUC shape object from a given code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></li>
+<li><strong>huc</strong> (<em>str</em>) – hydrologic unit code</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>Polygon</em>) – shapely polygon for the hydrologic unit.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_hucs">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_hucs</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>level</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_hucs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get shape objects for all HUCs at a level contained in huc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></li>
+<li><strong>huc</strong> (<em>str</em>) – hydrologic unit code</li>
+<li><strong>level</strong> (<em>int</em>) – HUC level of the requested sub-basins</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of all entries in <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>list(Polygon)</em>) – List of shapely polygons for the subbasins.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_split_form_hucs">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_hucs</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>level=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_hucs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a SplitHUCs object for all HUCs at level contained in huc.</p>
+<p>A SplitHUCs object is an object which stores a collection of polygons which
+share boundaries in a format that makes changing those shared boundaries
+possible without having to update all shapes that share the boundary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></li>
+<li><strong>huc</strong> (<em>str</em>) – hydrologic unit code</li>
+<li><strong>level</strong> (<em>int</em>) – HUC level of the requested sub-basins</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>SplitHUCs</em>) – Split-form HUCs object containing subbasins.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_shapes">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a shapefile.</p>
+<p>If index_or_bounds is a bounding box, crs must not be None and is the crs
+of the bounding box.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>str</em><em> or </em><em>source-type</em>) – Filename to parse, or a source object providing the get_shapes()
+method.</li>
+<li><strong>index_or_bounds</strong> (<em>int</em><em> or </em><em>[</em><em>x_min</em><em>, </em><em>y_min</em><em>, </em><em>x_max</em><em>, </em><em>y_max</em><em>] </em><em>bounds</em><em>, </em><em>optional</em>) – Filter the file, either by selecting a specific shape by index of the
+requested shape in the file, or providing a bounds-type tuple to select
+only shapes that intersect with the bounding box.</li>
+<li><strong>crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
+The default is source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>list(shapely)</em>) – List of shapely objects in the shapefile meeting the criteria.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_split_form_shapes">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=-1</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a shapefile.</p>
+<p>Note that if index_or_bounds is a bounding box, crs must not be None and is
+the crs of the bounding box.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>str</em><em> or </em><em>source-type</em>) – Filename to parse, or a source object providing the get_shapes() method.</li>
+<li><strong>index_or_bounds</strong> (<em>int</em><em> or </em><em>[</em><em>x_min</em><em>, </em><em>y_min</em><em>, </em><em>x_max</em><em>, </em><em>y_max</em><em>] </em><em>bounds</em><em>, </em><em>optional</em>) – Filter the shapes, either by selecting a specific shape by index of the
+requested shape in the file, or providing a bounds-type tuple to select
+only shapes that intersect with the bounding box.</li>
+<li><strong>crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
+The default is source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>SplitHUCs</em>) – Split-form polygons object containing subbasins.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_reaches">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_reaches</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>bounds=None</em>, <em>crs=None</em>, <em>digits=None</em>, <em>long=None</em>, <em>merge=True</em>, <em>presimplify=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_reaches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get reaches from hydrography source within a given HUC and/or bounding box.</p>
+<p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are
+provided, a containing HUC must still be provided to give a hint for file
+downloads.  If bounds are not provided, then all reaches that intersect the
+HUC are included.</p>
+<p>If bounds is provided, crs must not be None and is the crs of the bounding box.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – Source object providing a get_hydro() method.</li>
+<li><strong>huc</strong> (<em>str</em>) – HUC containing reaches.  If bounds are provided, a hint to help the
+source find the file containing the bounds.  For NHD, this is a HUC4 or
+smaller.</li>
+<li><strong>bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>] </em><em>bounds</em><em>, </em><em>optional</em>) – Bounding box to filter the river network.</li>
+<li><strong>crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Output coordinate system and coordinate system of bounds.  Defaults to
+the source’s crs.</li>
+<li><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</li>
+<li><strong>long</strong> (<em>float</em><em>, </em><em>optional</em>) – If a reach is longer than this value it gets filtered.  Some NHD data
+has QC issues, or other wierd extra-long, single segment reaches that
+don’t make sense…</li>
+<li><strong>merge</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, reaches are merged (via shapely.ops.linemerge), collapsing
+connected, non-branching reaches into a single LineString.</li>
+<li><strong>presimplify</strong> (<em>double</em><em>, </em><em>optional</em>) – If provided, reaches are simplified according to shapely.simplify as
+soon as possible for big extents.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</li>
+<li><strong>out</strong> (<em>list(LineString)</em>) – Reaches in the HUC and/or intersecting the bounds.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_raster_on_shape">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_raster_on_shape</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>raster_crs=None</em>, <em>buffer=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_raster_on_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_raster_on_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collects a raster DEM that covers the requested shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – Source object providing a get_raster() method.</li>
+<li><strong>shape</strong> (<em>Polygon</em>) – Shapely or fiona polygon on which to get the raster.</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – CRS of shape.</li>
+<li><strong>raster_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Output crs.  Defaults to the source’s crs.</li>
+<li><strong>buffer</strong> (<em>double</em><em>, </em><em>optional</em>) – Size of a buffer, in units of the shape’s CRS, added to shape to ensure
+pixels cover the entire shape.  Default is 0.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – Rasterio profile of the image including rasterio CRS and transform</li>
+<li><strong>raster</strong> (<em>ndarray</em>) – The raster data in a 2D-array.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.get_masked_raster_on_shape">
+<code class="descclassname">workflow.hilev.</code><code class="descname">get_masked_raster_on_shape</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>nodata=-1</em>, <em>buffer=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_masked_raster_on_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_masked_raster_on_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collects a raster that is masked to the requested shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – Source object providing a get_raster() method.</li>
+<li><strong>shape</strong> (<em>Polygon</em>) – Shapely or fiona polygon on which to get the raster.</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – CRS of shape.</li>
+<li><strong>nodata</strong> (<em>dtype</em><em>, </em><em>optional</em>) – Value to place in the array outside of shape.  Note that the type of
+this value should be the same as the data in the raster.  Default is
+-1.</li>
+<li><strong>buffer</strong> (<em>double</em><em>, </em><em>optional</em>) – Size of a buffer, in units of the shape’s CRS, added to shape to ensure
+pixels cover the entire shape.  Default is 0.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – Rasterio profile of the image including rasterio CRS and transform</li>
+<li><strong>raster</strong> (<em>ndarray</em>) – The raster data in a 2D-array.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.find_huc">
+<code class="descclassname">workflow.hilev.</code><code class="descname">find_huc</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>hint</em>, <em>shrink_factor=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#find_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.find_huc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the smallest HUC containing shp.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<em>source-type</em>) – Source object providing a get_hucs() method.</li>
+<li><strong>shape</strong> (<em>Polygon</em>) – Shapely or fiona polygon on which to get the raster.</li>
+<li><strong>crs</strong> (<em>crs-type</em>) – CRS of shape.</li>
+<li><strong>hint</strong> (<em>str</em>) – HUC in which to start searching.  This should be at least as long as
+the indexing file size – HUC 2 or longer for WBD, 4 or longer for NHD
+Plus, or 8 or longer for NHD.</li>
+<li><strong>shrink_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – A fraction of the radius of shape to shrink prior for checking
+containment within HUCs.  This fixes cases where shape is on a HUC
+boundary with potentially some numerical error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – The smallest containing HUC.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.simplify_and_prune">
+<code class="descclassname">workflow.hilev.</code><code class="descname">simplify_and_prune</code><span class="sig-paren">(</span><em>hucs</em>, <em>reaches</em>, <em>filter=True</em>, <em>simplify=10</em>, <em>prune_reach_size=0</em>, <em>cut_intersections=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#simplify_and_prune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleans up the HUC and river shapes.</p>
+<p>Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
+rivers must be in the same crs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>hucs</strong> (<em>SplitHUCs</em>) – A split-form HUC object containing all reaches.</li>
+<li><strong>reaches</strong> (<em>list</em><em>(</em><em>LineString</em><em>)</em>) – A list of reaches.</li>
+<li><strong>simplify</strong> (<em>float</em><em>, </em><em>optional</em>) – Argument to shapely’s simplify, a measure of how far to allow shapes to
+move.  Default is 10 (units are in that of the CRS of hucs and
+reaches).</li>
+<li><strong>prune_river_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Remove rivers with fewer than this number of reaches.  Default is 0.</li>
+<li><strong>cut_intersections</strong> (<em>bool</em>) – Cut HUC segments at the river input/output, potentially resulting in
+simpler geometries.  This is work in progress.  Default is False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – A list of rivers, as RiverTree objects.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list(RiverTree)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.triangulate">
+<code class="descclassname">workflow.hilev.</code><code class="descname">triangulate</code><span class="sig-paren">(</span><em>hucs</em>, <em>rivers</em>, <em>diagnostics=True</em>, <em>verbosity=1</em>, <em>refine_max_area=None</em>, <em>refine_distance=None</em>, <em>refine_max_edge_length=None</em>, <em>refine_min_angle=None</em>, <em>enforce_delaunay=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#triangulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.triangulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Triangulates HUCs and rivers.</p>
+<p>Note, refinement of a given triangle is done if any of the provided
+criteria is met.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>hucs</strong> (<em>SplitHUCs</em>) – A split-form HUC object from, e.g., get_split_form_hucs()</li>
+<li><strong>reaches</strong> (<em>list</em><em>(</em><em>LineString</em><em>)</em>) – A list of reaches from, e.g., get_reaches()</li>
+<li><strong>diagnostics</strong> (<em>bool</em><em>, </em><em>optional</em>) – Plot diagnostics graphs of the triangle refinement.</li>
+<li><strong>refine_max_area</strong> (<em>float</em><em>, </em><em>optional</em>) – Refine a triangle if its area is greater than this area.</li>
+<li><strong>refine_distance</strong> (<em>list</em><em>(</em><em>float</em><em>)</em><em>, </em><em>optional</em>) – <p>Refine a triangle if its area is greater than a function of its
+centroid’s distance from the nearest point on the river network.  The
+argument is given by:</p>
+<p>[near_distance, near_area, far_distance, far_area]</p>
+<p>Defining d as the distance from triangle centroid to the nearest point
+on the river network and area as the area of the triangle in question,
+refinement occurs if:</p>
+<ul>
+<li>d &lt; near_distance and area &gt; near_area</li>
+<li>d &gt; far_distance and area &gt; far_area</li>
+<li>otherwise, defining
+d’ = (d - near_distance) / (far_distance - near_distance),
+refining occurs if
+area &gt; near_area + (far_area - near_area) * d’</li>
+</ul>
+<p>Effectively this simply writes a piecewise linear function of triangle
+distance from centroid and uses that as a max area criteria.</p>
+</li>
+<li><strong>refine_max_edge_length</strong> (<em>float</em><em>, </em><em>optional</em>) – Refine a triangle if its max edge length is greater than this length.</li>
+<li><strong>refine_min_angle</strong> (<em>float</em><em>, </em><em>optional</em>) – Try to ensure that all triangles have a minimum edge length greater
+than this value.</li>
+<li><strong>enforce_delaunay</strong> (<em>bool</em><em>,</em><em>optional</em><em>, </em><em>experimental</em>) – <p>Attempt to ensure all triangles are proper Delaunay triangles.</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>vertices</strong> (<em>np.array((n_points, 2), ‘d’)</em>) – Array of triangle vertices.</li>
+<li><strong>triangles</strong> (<em>np.array((n_tris, 3), ‘i’)</em>) – For each triangle, a list of 3 indices into the vertex array that make
+up that triangle.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.elevate">
+<code class="descclassname">workflow.hilev.</code><code class="descname">elevate</code><span class="sig-paren">(</span><em>mesh_points</em>, <em>mesh_crs</em>, <em>dem</em>, <em>dem_profile</em>, <em>algorithm='piecewise bilinear'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#elevate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.elevate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Elevate mesh_points onto the provided dem.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mesh_points</strong> (<em>np.array</em><em>(</em><em>(</em><em>n_points</em><em>, </em><em>2</em><em>)</em><em>, </em><em>'d'</em><em>)</em>) – Array of triangle vertices.</li>
+<li><strong>mesh_crs</strong> (<em>crs-type</em>) – Mesh coordinate system.</li>
+<li><strong>dem</strong> (<em>np.array</em>) – 2D array forming an elevation raster.</li>
+<li><strong>dem_profile</strong> (<em>dict</em>) – rasterio profile for the elevation raster.</li>
+<li><strong>algorithm</strong> (<em>str</em><em>, </em><em>optional</em>) – Algorithm used for interpolation.  One of:
+* “nearest” for nearest-neighbor pixels
+* “piecewise bilinear” for interpolation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – Array of triangle vertices, including a z-dimension.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">np.array((n_points, 3), ‘d’)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.values_from_raster">
+<code class="descclassname">workflow.hilev.</code><code class="descname">values_from_raster</code><span class="sig-paren">(</span><em>points</em>, <em>points_crs</em>, <em>raster</em>, <em>raster_profile</em>, <em>algorithm='nearest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#values_from_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.values_from_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a raster onto a collection of unstructured points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>points</strong> (<em>np.array</em><em>(</em><em>(</em><em>n_points</em><em>, </em><em>2</em><em>)</em><em>, </em><em>'d'</em><em>)</em>) – Array of points to interpolate onto.</li>
+<li><strong>points_crs</strong> (<em>crs-type</em>) – Coordinate system of the points.</li>
+<li><strong>raster</strong> (<em>np.array</em>) – 2D array forming the raster.</li>
+<li><strong>raster_profile</strong> (<em>dict</em>) – rasterio profile for the raster.</li>
+<li><strong>algorithm</strong> (<em>str</em>) – Algorithm used for interpolation.  One of:
+* “nearest” for nearest neighbor pixels
+* “piecewise bilinear” for interpolation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – Array of raster values interpolated onto the points.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">np.array((n_points,))</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.hilev.color_raster_from_shapes">
+<code class="descclassname">workflow.hilev.</code><code class="descname">color_raster_from_shapes</code><span class="sig-paren">(</span><em>target_bounds</em>, <em>target_dx</em>, <em>shapes</em>, <em>shape_colors</em>, <em>shapes_crs</em>, <em>nodata=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#color_raster_from_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.color_raster_from_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Color in a raster by filling in a collection of shapes.</p>
+<p>Given a canvas specified by bounds and pixel size, color a raster by, for
+each shape, finding the intersection of that shape with the canvas and
+coloring it by a provided value.  Paint by numbers.</p>
+<p>Note, if the shapes overlap, the last shape containing a pixel gives the
+color of that pixel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target_bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em>) – Bounding box for the output raster.</li>
+<li><strong>target_dx</strong> (<em>float</em>) – Pixel size (assumed the same in both x and y).</li>
+<li><strong>shapes</strong> (<em>list</em><em>(</em><em>Polygon</em><em>)</em>) – Collection of shapes (likely) overlapping the canvas.</li>
+<li><strong>shapes_colors</strong> (<em>np.array</em><em>(</em><em>(</em><em>n_shapes</em><em>,</em><em>)</em><em>, </em><em>dtype</em><em>)</em>) – Color to label the interior of each polygon with.</li>
+<li><strong>shapes_crs</strong> (<em>crs-type</em>) – Coordinate system of the shapes.</li>
+<li><strong>nodata</strong> (<em>dtype</em><em>, </em><em>optional</em>) – Value to place in pixels which intersect no shape.  Note the type of
+this should be the same as the type of shape_colors.  Default is -1.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>out</strong> (<em>np.array(target_bounds, dtype)</em>) – Raster of colors.</li>
+<li><strong>out_profile</strong> (<em>dict</em>) – rasterio profile of the color raster.</li>
+<li><strong>out_bounds</strong> (<em>[x_min, y_min, x_max, y_max]</em>) – Physial bounds of the resulting image.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="sources-api">
+<h2>Sources API<a class="headerlink" href="#sources-api" title="Permalink to this headline">¶</a></h2>
+<p id="source-type">Source objects provide ways of downloading and using data.</p>
+</div>
 <div class="section" id="module-workflow.crs">
-<span id="crs"></span><h3>CRS<a class="headerlink" href="#module-workflow.crs" title="Permalink to this headline">¶</a></h3>
+<span id="crs"></span><h2>CRS<a class="headerlink" href="#module-workflow.crs" title="Permalink to this headline">¶</a></h2>
 <p>Coordinate Reference System conversions.</p>
 <p>Coordinate Reference Systems (CRSs) differ across datasets, and
 standardizing and managing these across the workflow is a necessary
@@ -230,12 +713,9 @@ should avoid using that knowledge, and instead map to and from
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">The DayMet CRS.  The user should not care what this is.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – The DayMet CRS.  The user should not care what this is.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -249,13 +729,10 @@ should avoid using that knowledge, and instead map to and from
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:3338.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:3338.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -269,13 +746,10 @@ you do, don’t use the default!) but it is EPSG:3338.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:5070.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:5070.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -293,19 +767,11 @@ report bugs!</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs1,crs2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Input workflow CRS objects.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs1</strong><strong>,</strong><strong>crs2</strong> (<em>crs-type</em>) – Input workflow CRS objects.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Are equal?</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Are equal?</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
 </tr>
 </tbody>
 </table>
@@ -319,19 +785,11 @@ report bugs!</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>epsg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">An EPSG code. (see <a href="#id1"><span class="problematic" id="id2">`https://epsg.io`_</span></a>)</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>epsg</strong> (<em>int</em>) – An EPSG code. (see <a href="#id1"><span class="problematic" id="id2">`https://epsg.io`_</span></a>)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Equivalent workflow CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -345,19 +803,11 @@ report bugs!</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>epsg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">An EPSG code. (see <a href="#id3"><span class="problematic" id="id4">`https://epsg.io`_</span></a>)</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>epsg</strong> (<em>int</em>) – An EPSG code. (see <a href="#id3"><span class="problematic" id="id4">`https://epsg.io`_</span></a>)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Equivalent workflow CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -371,20 +821,12 @@ report bugs!</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
-<dd><p class="first last">Input fiona CRS, which is a dictionary containing an EPSG
-code.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>fiona-crs-dict</em>) – Input fiona CRS, which is a dictionary containing an EPSG
+code.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Equivalent workflow CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -398,19 +840,11 @@ code.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pyproj.Proj</span></dt>
-<dd><p class="first last">Input proj CRS object.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>pyproj.Proj</em>) – Input proj CRS object.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Equivalent workflow CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -424,19 +858,11 @@ code.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">rasterio-crs-object</span></dt>
-<dd><p class="first last">Input rasterio crs.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>rasterio-crs-object</em>) – Input rasterio crs.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Equivalent workflow CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -456,13 +882,10 @@ code.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:4269.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – The default CRS.  The user should not care what this is (if
+you do, don’t use the default!) but it is EPSG:4269.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">crs-type</td>
 </tr>
 </tbody>
 </table>
@@ -476,21 +899,13 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">The CRS to convert.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>crs-type</em>) – The CRS to convert.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt>A cartopy.crs.Projection object for plotting.</dt>
-<dd></dd>
-<dt>Adapted from: <a class="reference external" href="https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983">https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983</a></dt>
-<dd></dd>
-<dt>Better solution blocked by: <a class="reference external" href="https://github.com/SciTools/cartopy/issues/813">https://github.com/SciTools/cartopy/issues/813</a></dt>
-<dd></dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><em>A cartopy.crs.Projection object for plotting.</em></li>
+<li><strong>Adapted from</strong> (<em>https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983</em>)</li>
+<li><strong>Better solution blocked by</strong> (<em>https://github.com/SciTools/cartopy/issues/813</em>)</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -505,19 +920,11 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">A workflow CRS object.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>crs-type</em>) – A workflow CRS object.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
-<dd><p class="first last">Equivalent fiona CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent fiona CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">fiona-crs-dict</td>
 </tr>
 </tbody>
 </table>
@@ -531,19 +938,11 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Workflow standard CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>crs-type</em>) – Workflow standard CRS.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pyproj.Proj</span></dt>
-<dd><p class="first last">Equivalent object.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent object.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pyproj.Proj</td>
 </tr>
 </tbody>
 </table>
@@ -557,19 +956,11 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">A workflow CRS object.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>crs-type</em>) – A workflow CRS object.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">fiona-crs-dict</span></dt>
-<dd><p class="first last">Equivalent fiona CRS.</p>
-</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent fiona CRS.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">fiona-crs-dict</td>
 </tr>
 </tbody>
 </table>
@@ -581,682 +972,6 @@ you do, don’t use the default!) but it is EPSG:4269.</p>
 <dd><p>Returns the proj4 string of a CRS.</p>
 </dd></dl>
 
-</div>
-<div class="section" id="shapes-and-shapely">
-<h3>shapes and shapely<a class="headerlink" href="#shapes-and-shapely" title="Permalink to this headline">¶</a></h3>
-<p>TODO: fiona shapes vs shapely shapes</p>
-</div>
-</div>
-<div class="section" id="module-workflow.hilev">
-<span id="high-level-api"></span><h2>High Level API<a class="headerlink" href="#module-workflow.hilev" title="Permalink to this headline">¶</a></h2>
-<p>Watershed Workflow finds, downloads, and processes data for use in hydrologic models.</p>
-<p>This package is a python library of tools for interacting with a wide range of
-data streams using free and open (both free as in freedom and free as in free
-beer) python and GIS libraries and data.  Critically, this package provides a
-way for <strong>automatically and quickly</strong> downloading, interpreting, and processing
-data needed to <strong>generate a “first” hyper-resolution simulation on any
-watershed</strong> in the conterminous United States (and most of Alaska/Hawaii/Puerto
-Rico).</p>
-<p>To do this, this package provides tools to automate finding (via REST APIs and
-other approaches) data streams from <strong>open data streams,</strong> from United States
-governmental agencies, including USGS, USDA, DOE, and others.  These data
-streams are then colocated on a mesh which is generated based on a watershed
-delineation and a river network, and that mesh is written in one of a variety
-of mesh formats for use in hyper-resolution simulation tools.</p>
-<p>This top level module provides functionality for getting shapes and rasters
-representing watershed boundaries, river networks, digital elevation models,
-and other GIS datasets and then processing those data sets for use in
-simulations.</p>
-<dl class="function">
-<dt id="workflow.hilev.get_huc">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_huc</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_huc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a HUC shape object from a given code.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">source object providing <cite>get_hucs()</cite></p>
-</dd>
-<dt><strong>huc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">hydrologic unit code</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
-<dd><p class="first last">shapely polygon for the hydrologic unit.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_hucs">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_hucs</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>level</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_hucs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get shape objects for all HUCs at a level contained in huc.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">source object providing <cite>get_hucs()</cite></p>
-</dd>
-<dt><strong>huc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">hydrologic unit code</p>
-</dd>
-<dt><strong>level</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">HUC level of the requested sub-basins</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of all entries in <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(Polygon)</span></dt>
-<dd><p class="first last">List of shapely polygons for the subbasins.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_split_form_hucs">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_hucs</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>level=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_hucs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a SplitHUCs object for all HUCs at level contained in huc.</p>
-<p>A SplitHUCs object is an object which stores a collection of polygons which
-share boundaries in a format that makes changing those shared boundaries
-possible without having to update all shapes that share the boundary.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">source object providing <cite>get_hucs()</cite></p>
-</dd>
-<dt><strong>huc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">hydrologic unit code</p>
-</dd>
-<dt><strong>level</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">HUC level of the requested sub-basins</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Output coordinate system.  Default is source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
-<dd><p class="first last">Split-form HUCs object containing subbasins.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_shapes">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=None</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a shapefile.</p>
-<p>If index_or_bounds is a bounding box, crs must not be None and is the crs
-of the bounding box.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or source-type</span></dt>
-<dd><p class="first last">Filename to parse, or a source object providing the get_shapes()
-method.</p>
-</dd>
-<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or [x_min, y_min, x_max, y_max] bounds, optional</span></dt>
-<dd><p class="first last">Filter the file, either by selecting a specific shape by index of the
-requested shape in the file, or providing a bounds-type tuple to select
-only shapes that intersect with the bounding box.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
-<dd><p class="first last">Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
-The default is source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(shapely)</span></dt>
-<dd><p class="first last">List of shapely objects in the shapefile meeting the criteria.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_split_form_shapes">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_split_form_shapes</code><span class="sig-paren">(</span><em>source</em>, <em>index_or_bounds=-1</em>, <em>crs=None</em>, <em>digits=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_split_form_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_split_form_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a shapefile.</p>
-<p>Note that if index_or_bounds is a bounding box, crs must not be None and is
-the crs of the bounding box.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or source-type</span></dt>
-<dd><p class="first last">Filename to parse, or a source object providing the get_shapes() method.</p>
-</dd>
-<dt><strong>index_or_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or [x_min, y_min, x_max, y_max] bounds, optional</span></dt>
-<dd><p class="first last">Filter the shapes, either by selecting a specific shape by index of the
-requested shape in the file, or providing a bounds-type tuple to select
-only shapes that intersect with the bounding box.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
-<dd><p class="first last">Coordinate system of out and/or the bounding box provided in <cite>filter</cite>.
-The default is source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
-<dd><p class="first last">Split-form polygons object containing subbasins.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_reaches">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_reaches</code><span class="sig-paren">(</span><em>source</em>, <em>huc</em>, <em>bounds=None</em>, <em>crs=None</em>, <em>digits=None</em>, <em>long=None</em>, <em>merge=True</em>, <em>presimplify=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_reaches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get reaches from hydrography source within a given HUC and/or bounding box.</p>
-<p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are
-provided, a containing HUC must still be provided to give a hint for file
-downloads.  If bounds are not provided, then all reaches that intersect the
-HUC are included.</p>
-<p>If bounds is provided, crs must not be None and is the crs of the bounding box.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">Source object providing a get_hydro() method.</p>
-</dd>
-<dt><strong>huc</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">HUC containing reaches.  If bounds are provided, a hint to help the
-source find the file containing the bounds.  For NHD, this is a HUC4 or
-smaller.</p>
-</dd>
-<dt><strong>bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[xmin, ymin, xmax, ymax] bounds, optional</span></dt>
-<dd><p class="first last">Bounding box to filter the river network.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
-<dd><p class="first last">Output coordinate system and coordinate system of bounds.  Defaults to
-the source’s crs.</p>
-</dd>
-<dt><strong>digits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Number of digits to round coordinates to.</p>
-</dd>
-<dt><strong>long</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">If a reach is longer than this value it gets filtered.  Some NHD data
-has QC issues, or other wierd extra-long, single segment reaches that
-don’t make sense…</p>
-</dd>
-<dt><strong>merge</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">If true, reaches are merged (via shapely.ops.linemerge), collapsing 
-connected, non-branching reaches into a single LineString.</p>
-</dd>
-<dt><strong>presimplify</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
-<dd><p class="first last">If provided, reaches are simplified according to shapely.simplify as 
-soon as possible for big extents.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of <cite>out</cite>.</p>
-</dd>
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
-<dd><p class="first last">Reaches in the HUC and/or intersecting the bounds.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_raster_on_shape">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_raster_on_shape</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>raster_crs=None</em>, <em>buffer=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_raster_on_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_raster_on_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects a raster DEM that covers the requested shape.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">Source object providing a get_raster() method.</p>
-</dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
-<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">CRS of shape.</p>
-</dd>
-<dt><strong>raster_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type, optional</span></dt>
-<dd><p class="first last">Output crs.  Defaults to the source’s crs.</p>
-</dd>
-<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
-<dd><p class="first last">Size of a buffer, in units of the shape’s CRS, added to shape to ensure
-pixels cover the entire shape.  Default is 0.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Rasterio profile of the image including rasterio CRS and transform</p>
-</dd>
-<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
-<dd><p class="first last">The raster data in a 2D-array.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.get_masked_raster_on_shape">
-<code class="descclassname">workflow.hilev.</code><code class="descname">get_masked_raster_on_shape</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>nodata=-1</em>, <em>buffer=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#get_masked_raster_on_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.get_masked_raster_on_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects a raster that is masked to the requested shape.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">Source object providing a get_raster() method.</p>
-</dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
-<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">CRS of shape.</p>
-</dd>
-<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dtype, optional</span></dt>
-<dd><p class="first last">Value to place in the array outside of shape.  Note that the type of
-this value should be the same as the data in the raster.  Default is
--1.</p>
-</dd>
-<dt><strong>buffer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">double, optional</span></dt>
-<dd><p class="first last">Size of a buffer, in units of the shape’s CRS, added to shape to ensure
-pixels cover the entire shape.  Default is 0.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Rasterio profile of the image including rasterio CRS and transform</p>
-</dd>
-<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
-<dd><p class="first last">The raster data in a 2D-array.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.find_huc">
-<code class="descclassname">workflow.hilev.</code><code class="descname">find_huc</code><span class="sig-paren">(</span><em>source</em>, <em>shape</em>, <em>crs</em>, <em>hint</em>, <em>shrink_factor=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#find_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.find_huc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the smallest HUC containing shp.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>source</strong> <span class="classifier-delimiter">:</span> <span class="classifier">source-type</span></dt>
-<dd><p class="first last">Source object providing a get_hucs() method.</p>
-</dd>
-<dt><strong>shape</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Polygon</span></dt>
-<dd><p class="first last">Shapely or fiona polygon on which to get the raster.</p>
-</dd>
-<dt><strong>crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">CRS of shape.</p>
-</dd>
-<dt><strong>hint</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">HUC in which to start searching.  This should be at least as long as
-the indexing file size – HUC 2 or longer for WBD, 4 or longer for NHD
-Plus, or 8 or longer for NHD.</p>
-</dd>
-<dt><strong>shrink_factor</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">A fraction of the radius of shape to shrink prior for checking
-containment within HUCs.  This fixes cases where shape is on a HUC
-boundary with potentially some numerical error.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">The smallest containing HUC.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.simplify_and_prune">
-<code class="descclassname">workflow.hilev.</code><code class="descname">simplify_and_prune</code><span class="sig-paren">(</span><em>hucs</em>, <em>reaches</em>, <em>filter=True</em>, <em>simplify=10</em>, <em>prune_reach_size=0</em>, <em>cut_intersections=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#simplify_and_prune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cleans up the HUC and river shapes.</p>
-<p>Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
-rivers must be in the same crs.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
-<dd><p class="first last">A split-form HUC object containing all reaches.</p>
-</dd>
-<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
-<dd><p class="first last">A list of reaches.</p>
-</dd>
-<dt><strong>simplify</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">Argument to shapely’s simplify, a measure of how far to allow shapes to
-move.  Default is 10 (units are in that of the CRS of hucs and
-reaches).</p>
-</dd>
-<dt><strong>prune_river_size</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Remove rivers with fewer than this number of reaches.  Default is 0.</p>
-</dd>
-<dt><strong>cut_intersections</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Cut HUC segments at the river input/output, potentially resulting in
-simpler geometries.  This is work in progress.  Default is False.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(RiverTree)</span></dt>
-<dd><p class="first last">A list of rivers, as RiverTree objects.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.triangulate">
-<code class="descclassname">workflow.hilev.</code><code class="descname">triangulate</code><span class="sig-paren">(</span><em>hucs</em>, <em>rivers</em>, <em>diagnostics=True</em>, <em>verbosity=1</em>, <em>refine_max_area=None</em>, <em>refine_distance=None</em>, <em>refine_max_edge_length=None</em>, <em>refine_min_angle=None</em>, <em>enforce_delaunay=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#triangulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.triangulate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Triangulates HUCs and rivers.</p>
-<p>Note, refinement of a given triangle is done if any of the provided
-criteria is met.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>hucs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">SplitHUCs</span></dt>
-<dd><p class="first last">A split-form HUC object from, e.g., get_split_form_hucs()</p>
-</dd>
-<dt><strong>reaches</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(LineString)</span></dt>
-<dd><p class="first last">A list of reaches from, e.g., get_reaches()</p>
-</dd>
-<dt><strong>diagnostics</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Plot diagnostics graphs of the triangle refinement.</p>
-</dd>
-<dt><strong>refine_max_area</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">Refine a triangle if its area is greater than this area.</p>
-</dd>
-<dt><strong>refine_distance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(float), optional</span></dt>
-<dd><p class="first">Refine a triangle if its area is greater than a function of its
-centroid’s distance from the nearest point on the river network.  The
-argument is given by:</p>
-<p>[near_distance, near_area, far_distance, far_area]</p>
-<p>Defining d as the distance from triangle centroid to the nearest point
-on the river network and area as the area of the triangle in question,
-refinement occurs if:</p>
-<ul class="simple">
-<li>d &lt; near_distance and area &gt; near_area</li>
-<li>d &gt; far_distance and area &gt; far_area</li>
-<li>otherwise, defining 
-d’ = (d - near_distance) / (far_distance - near_distance),
-refining occurs if
-area &gt; near_area + (far_area - near_area) * d’</li>
-</ul>
-<p class="last">Effectively this simply writes a piecewise linear function of triangle
-distance from centroid and uses that as a max area criteria.</p>
-</dd>
-<dt><strong>refine_max_edge_length</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">Refine a triangle if its max edge length is greater than this length.</p>
-</dd>
-<dt><strong>refine_min_angle</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd><p class="first last">Try to ensure that all triangles have a minimum edge length greater
-than this value.</p>
-</dd>
-<dt><strong>enforce_delaunay</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool,optional, experimental</span></dt>
-<dd><p class="first last">Attempt to ensure all triangles are proper Delaunay triangles.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>vertices</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
-<dd><p class="first last">Array of triangle vertices.</p>
-</dd>
-<dt><strong>triangles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_tris, 3), ‘i’)</span></dt>
-<dd><p class="first last">For each triangle, a list of 3 indices into the vertex array that make
-up that triangle.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.elevate">
-<code class="descclassname">workflow.hilev.</code><code class="descname">elevate</code><span class="sig-paren">(</span><em>mesh_points</em>, <em>mesh_crs</em>, <em>dem</em>, <em>dem_profile</em>, <em>algorithm='piecewise bilinear'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#elevate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.elevate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Elevate mesh_points onto the provided dem.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>mesh_points</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
-<dd><p class="first last">Array of triangle vertices.</p>
-</dd>
-<dt><strong>mesh_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Mesh coordinate system.</p>
-</dd>
-<dt><strong>dem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
-<dd><p class="first last">2D array forming an elevation raster.</p>
-</dd>
-<dt><strong>dem_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">rasterio profile for the elevation raster.</p>
-</dd>
-<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd><p class="first last">Algorithm used for interpolation.  One of:
-* “nearest” for nearest-neighbor pixels
-* “piecewise bilinear” for interpolation</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 3), ‘d’)</span></dt>
-<dd><p class="first last">Array of triangle vertices, including a z-dimension.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.values_from_raster">
-<code class="descclassname">workflow.hilev.</code><code class="descname">values_from_raster</code><span class="sig-paren">(</span><em>points</em>, <em>points_crs</em>, <em>raster</em>, <em>raster_profile</em>, <em>algorithm='nearest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#values_from_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.values_from_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolate a raster onto a collection of unstructured points.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>points</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points, 2), ‘d’)</span></dt>
-<dd><p class="first last">Array of points to interpolate onto.</p>
-</dd>
-<dt><strong>points_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of the points.</p>
-</dd>
-<dt><strong>raster</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
-<dd><p class="first last">2D array forming the raster.</p>
-</dd>
-<dt><strong>raster_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">rasterio profile for the raster.</p>
-</dd>
-<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Algorithm used for interpolation.  One of:
-* “nearest” for nearest neighbor pixels
-* “piecewise bilinear” for interpolation</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_points,))</span></dt>
-<dd><p class="first last">Array of raster values interpolated onto the points.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.hilev.color_raster_from_shapes">
-<code class="descclassname">workflow.hilev.</code><code class="descname">color_raster_from_shapes</code><span class="sig-paren">(</span><em>target_bounds</em>, <em>target_dx</em>, <em>shapes</em>, <em>shape_colors</em>, <em>shapes_crs</em>, <em>nodata=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/hilev.html#color_raster_from_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.hilev.color_raster_from_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Color in a raster by filling in a collection of shapes.</p>
-<p>Given a canvas specified by bounds and pixel size, color a raster by, for
-each shape, finding the intersection of that shape with the canvas and
-coloring it by a provided value.  Paint by numbers.</p>
-<p>Note, if the shapes overlap, the last shape containing a pixel gives the
-color of that pixel.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>target_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[xmin, ymin, xmax, ymax]</span></dt>
-<dd><p class="first last">Bounding box for the output raster.</p>
-</dd>
-<dt><strong>target_dx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">Pixel size (assumed the same in both x and y).</p>
-</dd>
-<dt><strong>shapes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(Polygon)</span></dt>
-<dd><p class="first last">Collection of shapes (likely) overlapping the canvas.</p>
-</dd>
-<dt><strong>shapes_colors</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array((n_shapes,), dtype)</span></dt>
-<dd><p class="first last">Color to label the interior of each polygon with.</p>
-</dd>
-<dt><strong>shapes_crs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">crs-type</span></dt>
-<dd><p class="first last">Coordinate system of the shapes.</p>
-</dd>
-<dt><strong>nodata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dtype, optional</span></dt>
-<dd><p class="first last">Value to place in pixels which intersect no shape.  Note the type of
-this should be the same as the type of shape_colors.  Default is -1.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.array(target_bounds, dtype)</span></dt>
-<dd><p class="first last">Raster of colors.</p>
-</dd>
-<dt><strong>out_profile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">rasterio profile of the color raster.</p>
-</dd>
-<dt><strong>out_bounds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">[x_min, y_min, x_max, y_max]</span></dt>
-<dd><p class="first last">Physial bounds of the resulting image.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
-<div class="section" id="sources-api">
-<h2>Sources API<a class="headerlink" href="#sources-api" title="Permalink to this headline">¶</a></h2>
-<p id="source-type">Source objects provide ways of downloading and using data.</p>
 </div>
 <div class="section" id="module-workflow.utils">
 <span id="utils-api"></span><h2>utils API<a class="headerlink" href="#module-workflow.utils" title="Permalink to this headline">¶</a></h2>

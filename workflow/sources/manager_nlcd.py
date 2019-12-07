@@ -1,5 +1,4 @@
-"""Manager for interacting with NED datasets.
-"""
+"""Manager for interacting with NLCD datasets."""
 import os,sys
 import logging
 import numpy as np
@@ -13,14 +12,36 @@ import workflow.conf
 import workflow.warp
 import workflow.sources.names
 
-
-# this is horrendous
+# No API for getting NLCD locally -- must download the whole thing.
 urls = {'NLCD_2016_Land_Cover_L48': 'https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip',
         }
 
-
-
 class FileManagerNLCD:
+    """National Land Cover Database provides a raster for indexed land cover types
+    [NLCD]_.
+
+    .. note:: NLCD does not provide an API for subsetting the data, so the
+       first time this is used, it WILL result in a long download time as it
+       grabs the big file.  After that it will be much faster as the file is
+       already local.
+
+    TODO: Labels and colors for these indices should get moved here, but
+    currently reside in workflow.colors.
+
+    Parameter
+    ---------
+    layer : str, optional
+      Layer of interest.  Default is `"Land_Cover`", should also be one for at
+      least imperviousness, maybe others?
+    year : int, optional
+      Year of dataset.  Defaults to the most current available at the location.
+    location : str, optional
+      Location code.  Default is `"L48`" (lower 48), valid include `"AK`"
+      (Alaska), `"HI`" (Hawaii, and `"PR`" (Puerto Rico).
+
+    .. [NLCD] https://www.mrlc.gov/
+
+    """
     def __init__(self, layer='Land_Cover', year=None, location='L48'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
         
@@ -30,6 +51,7 @@ class FileManagerNLCD:
                                                   self.layer_name+'.img')
 
     def validate_input(self, layer, year, location):
+        """Validates input to the __init__ method."""
         valid_layers = ['Land_Cover', 'Imperviousness']
         if layer not in valid_layers:
             raise ValueError('NLCD invalid layer "{}" requested, valid are: {}'.format(layer, valid_layers))
@@ -53,7 +75,25 @@ class FileManagerNLCD:
         
 
     def get_raster(self, shply, crs):
-        """Download and read a DEM for this shape, clipping to the shape."""
+        """Download and read a DEM for this shape, clipping to the shape.
+
+        Parameters
+        ----------
+        shply : fiona or shapely shape
+          Shape to provide bounds of the raster.
+        crs : CRS
+          CRS of the shape.
+
+        Returns
+        -------
+        profile : rasterio profile
+          Profile of the raster.
+        raster : np.ndarray
+          Array containing the elevation data.
+
+        Note that the raster provided is in NLCD native CRS (which is in the
+        rasterio profile), not the shape's CRS.
+        """
         # get shape as a shapely, single Polygon
         if type(shply) is dict:
             shply = workflow.utils.shply(shply['geometry'])

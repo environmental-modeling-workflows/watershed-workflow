@@ -51,14 +51,14 @@ environment that includes the required packages:
 .. code-block:: console
     :caption: Packages for general users
                 
-    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest
-    conda activate ats_meshing
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest
+    conda activate watershed_workflow
 
 .. code-block:: console
     :caption: Packages for developers and documentation
 
-    conda create -n ats_meshing -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx
-    conda activate ats_meshing_dev
+    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx
+    conda activate watershed_watershed_dev
 
 Note that, for OSX users, it is recommended you install `python.app`
 as well, which ensures a framework python and makes matplotlib

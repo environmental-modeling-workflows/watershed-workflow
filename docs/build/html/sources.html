@@ -89,12 +89,27 @@
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data Sources</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_nhd">Watershed boundaries and hydrography</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_ned">National Elevation Dataset</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_nlcd">National Land Cover Dataset</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_nrcs">Soils database</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_shape">Generic shapefiles</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.sources.manager_raster">Generic rasters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">USGS National Hydrography and Water Boundary Datasets (NHD / WBD)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#digital-elevation-models">Digital Elevation Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#national-elevation-dataset">National Elevation Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#land-cover">Land Cover</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#national-land-cover-dataset">National Land Cover Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#soil-structure-and-properties">Soil structure and properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-workflow.sources.manager_nrcs">National Resources Conservation Service Soils</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#generic-files">Generic Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-workflow.sources.manager_raster">Generic rasters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-workflow.sources.manager_shape">Generic shapefiles</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
@@ -188,86 +203,172 @@
 </style>
 <div class="section" id="data-sources">
 <h1>Data Sources<a class="headerlink" href="#data-sources" title="Permalink to this headline">¶</a></h1>
-<p>TODO: A wide range of sources are used.</p>
-<div class="section" id="module-workflow.sources.manager_nhd">
-<span id="watershed-boundaries-and-hydrography"></span><h2>Watershed boundaries and hydrography<a class="headerlink" href="#module-workflow.sources.manager_nhd" title="Permalink to this headline">¶</a></h2>
-<p>Manager for interacting with USGS National Hydrography Datasets.</p>
+<p>Watershed Workflow stores a library of managers, which provide
+functionality to access data as if it was local.  Given appropriate
+bounds (spatial and/or temporal), the managers typically use REST-APIs
+or other web-based services to locate, download, unzip, and file
+datasets, which are then stored indefinitely for future use.  These
+datasets are stored in a local data store whose location is specified
+in the <span class="xref std std-ref">Package configuration</span> file.</p>
+<p>The following types of data are frequently used in workflows, and
+default values for these types of data are provide by existing
+managers.</p>
+<div class="section" id="watershed-boundaries-and-hydrography">
+<h2>Watershed boundaries and hydrography<a class="headerlink" href="#watershed-boundaries-and-hydrography" title="Permalink to this headline">¶</a></h2>
 <p>Watershed boundary datasets and hydrography datasets together form the
-geographic structure of a watershed.  Watershed boundary datasets are typically
-formed through analysis of elevation datasets, collecting within the same
-watershed all parts of the land surface which drain to a common river outlet.
-Watersheds are hierarchical, ranging in scale from small primary watersheds
-which drain into first order streams to full river basins which drain into an
-ocean.  In the United States, the USGS formally calculates hydrologic units and
-identifies them using Hydrologic Unit Codes, or HUCs, which respect this
-hierarchy.  HUC 2 regions (e.g. the Upper Colorado River or the Tennessee River
-Basin) are the largest in areal extent, while HUC 12s, or sub-watersheds, are
-the smallest, representing on the order of 100 square kilometers.  Watershed
-Workflow uses HUCs as an organizing unit for working with data, primarily
-because most datasets in the US are organized by the HUC, but also because they
-form physically useful domains for simulation.</p>
-<p>Hydrography datasets provide surveys of river networks, which form the drainage
-network of watersheds and are where most of the fast-time scale dynamics occur.
-Some hydrologic models (for instance river routing models, dam operations
-management models, and many flood models) directly use the river network as
-their simulation domain, while others (for instance the class of integrated,
-distributed models described here) can use the river network to refine meshes
-near the rivers and therefore improve resolution where fast dynamics are
-occuring.  Watershed boundary and Hydrography datasets are typically available
-as GIS shapefiles, where each watershed boundary or reach is represented as a
-shape.</p>
+geographic structure of a watershed.  Watershed boundary datasets are
+typically formed through analysis of elevation datasets, collecting
+within the same watershed all parts of the land surface which drain to
+a common river outlet.  Watersheds are hierarchical, ranging in scale
+from small primary watersheds which drain into first order streams to
+full river basins which drain into an ocean.  In the United States,
+the USGS formally calculates hydrologic units and identifies them
+using Hydrologic Unit Codes, or HUCs, which respect this hierarchy.
+HUC 2 regions (e.g. the Upper Colorado River or the Tennessee River
+Basin) are the largest in areal extent, while HUC 12s, or
+sub-watersheds, are the smallest, representing on the order of 100
+square kilometers.  Watershed Workflow uses HUCs as an organizing unit
+for working with data, primarily because most datasets in the US are
+organized by the HUC, but also because they form physically useful
+domains for simulation.</p>
+<p>Hydrography datasets provide surveys of river networks, which form the
+drainage network of watersheds and are where most of the fast-time
+scale dynamics occur.  Some hydrologic models (for instance river
+routing models, dam operations management models, and many flood
+models) directly use the river network as their simulation domain,
+while others (for instance the class of integrated, distributed models
+described here) can use the river network to refine meshes near the
+rivers and therefore improve resolution where fast dynamics are
+occuring.  Watershed boundary and Hydrography datasets are typically
+available as GIS shapefiles, where each watershed boundary or reach is
+represented as a shape.</p>
+<p>Currently two ways of getting watershed boundaries are supported –
+USGS HUC delineations and user-provided shape files.  Watershed
+boundaries read from shapefiles can use the <span class="xref std std-ref">Generic shapefiles</span>
+manager.</p>
+<div class="section" id="usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">
+<h3>USGS National Hydrography and Water Boundary Datasets (NHD / WBD)<a class="headerlink" href="#usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_nhd.</code><code class="descname">_FileManagerNHD</code><span class="sig-paren">(</span><em>name: str</em>, <em>file_level: int</em>, <em>lowest_level: int</em>, <em>name_manager</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manager for interacting with USGS National Hydrography Datasets.</p>
+<p>Note that this includes NHD, NHDPlus, and WBD – this class should not
+be used directly but instead use one of the derived classes:</p>
+<ul class="simple">
+<li><cite>manager_nhd.FileManagerNHD</cite></li>
+<li><cite>manager_nhd.FileManagerNHDPlus</cite></li>
+<li><cite>manager_nhd.FileManagerWBD</cite></li>
+</ul>
 <p>Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
-National Hydrography Dataset (NHD), USGS and EPA datasets available at multiple
-resolutions to represent United States watersheds, including Alaska <a class="reference internal" href="#rd8e85bc00c57-nhd" id="id1">[NHD]</a>.
-Also used is the NHD Plus dataset, an augmented dataset built on watershed
-boundaries and elevation products.  By default, the 1:100,000 High Resolution
-datasets are used.  Data is discovered through The National Map’s <a class="reference internal" href="#rd8e85bc00c57-tnm" id="id2">[TNM]</a> REST
-API, which allows querying for data files organized by HUC and resolution via
-HTTP POST requests, providing direct-download URLs.  Files are downloaded on
-first request, unzipped, and stored in the data library for future use.
-Currently, files are indexed by 2-digit (WBD), 4-digit (NHD Plus HR) and
-8-digit (NHD) HUCs.</p>
-<table class="docutils citation" frame="void" id="rd8e85bc00c57-nhd" rules="none">
+National Hydrography Dataset (NHD), USGS and EPA datasets available at
+multiple resolutions to represent United States watersheds, including
+Alaska <a class="reference internal" href="#nhd" id="id1">[NHD]</a>.  Also used is the NHD Plus dataset, an augmented dataset
+built on watershed boundaries and elevation products.  By default, the
+1:100,000 High Resolution datasets are used.  Data is discovered through
+The National Map’s <a class="reference internal" href="#tnm" id="id2">[TNM]</a> REST API, which allows querying for data files
+organized by HUC and resolution via HTTP POST requests, providing
+direct-download URLs.  Files are downloaded on first request, unzipped, and
+stored in the data library for future use.  Currently, files are indexed by
+2-digit (WBD), 4-digit (NHD Plus HR) and 8-digit (NHD) HUCs.</p>
+<table class="docutils citation" frame="void" id="nhd" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id1">[NHD]</a></td><td><a class="reference external" href="https://www.usgs.gov/core-science-systems/ngp/national-hydrography">https://www.usgs.gov/core-science-systems/ngp/national-hydrography</a></td></tr>
 </tbody>
 </table>
-<table class="docutils citation" frame="void" id="rd8e85bc00c57-tnm" rules="none">
+<table class="docutils citation" frame="void" id="tnm" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id2">[TNM]</a></td><td><a class="reference external" href="https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf">https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf</a></td></tr>
+<tr><td class="label">[TNM]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> <a class="reference external" href="https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf">https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf</a></td></tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_huc">
+<code class="descname">get_huc</code><span class="sig-paren">(</span><em>huc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_huc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the specified HUC in its native CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>hu</strong> (<em>dict</em>) – Fiona shape object representing the hydrologic unit.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_hucs">
+<code class="descname">get_hucs</code><span class="sig-paren">(</span><em>huc</em>, <em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_hucs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all sub-catchments of a given HUC level within a given HUC.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</li>
+<li><strong>level</strong> (<em>int</em>) – Level of requested sub-catchments.  Must be larger or equal to the
+level of the input huc.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>hus</strong> (<em>list(dict)</em>) – List of fiona shape objects representing the hydrologic units.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_hydro">
+<code class="descname">get_hydro</code><span class="sig-paren">(</span><em>huc</em>, <em>bounds=None</em>, <em>bounds_crs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_hydro"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_hydro" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all reaches within a given HUC and/or coordinate bounds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</li>
+<li><strong>bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em><em>, </em><em>optional</em>) – Coordinate bounds to filter reaches returned.  If this is provided,
+bounds_crs must also be provided.</li>
+<li><strong>bounds_crs</strong> (<em>CRS</em><em>, </em><em>optional</em>) – CRS of the above bounds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>reaches</strong> (<em>list(dict)</em>) – List of fiona shape objects representing the stream reaches.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-workflow.sources.manager_ned">
-<span id="national-elevation-dataset"></span><h2>National Elevation Dataset<a class="headerlink" href="#module-workflow.sources.manager_ned" title="Permalink to this headline">¶</a></h2>
-<p>Manager for interacting with NED datasets.</p>
+</div>
+<div class="section" id="digital-elevation-models">
+<h2>Digital Elevation Models<a class="headerlink" href="#digital-elevation-models" title="Permalink to this headline">¶</a></h2>
 <p>For any distributed, integrated hydrologic model, elevation datasets
 are critical.  These set the local spatial gradients that drive flow
 in Richards and overload flow equations, and are necessary to form a
 mesh, whether structured or unstructured, for simulation.  Elevation
 datasets are typically stored as raster images.</p>
-<p>Watershed Workflow leverages the USGS’s National Elevation Dataset
-(NED), a precursor to and currently part of the USGS’s 3D Elevation
-Program (3DEP) <a class="reference internal" href="#r948339ccdcc8-ned" id="id3">[NED]</a>.  It is available seamlessly at a variety of
-resolutions ranging from 2 arc-seconds to 1/3 arc-seconds (~60m and
-10m, respectively) in the conterminous United States and comparable
-resolution through most of Alaska.  Like the NHD data, these datasets
-are available through The National Map’s [TNM] REST API, and are
-provided in 1-degree tiles.  Watershed Workflow manages querying for
-URLs, downloading these tiles on demand, and forming the mosaic of
-images through underlying capability in rasterio to provide a single
-raster across the watershed requested.  Higher resolution products,
-including LiDAR products across the conterminous US and IfSAR products
-across Alaska are coming available, but these are not currently
-supported by Watershed Workflow.</p>
-<table class="docutils citation" frame="void" id="r948339ccdcc8-ned" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[NED]</a></td><td></td></tr>
-</tbody>
-</table>
 <p>Then workflows can query the raster for interpolated elevations at
 points on a mesh, river, or other locations of interest.  Internally,
 affine coordinate system transformations are hidden; the coordinate
@@ -276,22 +377,163 @@ interpolated.  By default, piecewise bilinear interpolation is used to
 ensure that extremely high-resolution queries do not look
 stairstepped; this improves mesh quality in meshes near the resolution
 of the underlying elevation dataset.</p>
+<div class="section" id="national-elevation-dataset">
+<h3>National Elevation Dataset<a class="headerlink" href="#national-elevation-dataset" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_ned.FileManagerNED">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_ned.</code><code class="descname">FileManagerNED</code><span class="sig-paren">(</span><em>resolution='1/3 arc-second'</em>, <em>file_format='IMG'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_ned.html#FileManagerNED"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_ned.FileManagerNED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Watershed Workflow leverages the USGS’s National Elevation Dataset (NED), a
+precursor to and currently part of the USGS’s 3D Elevation Program (3DEP)
+<a class="reference internal" href="#ned" id="id3">[NED]</a>.  It is available seamlessly at a variety of resolutions ranging
+from 2 arc-seconds to 1/3 arc-seconds (~60m and 10m, respectively) in the
+conterminous United States and comparable resolution through most of
+Alaska.  Like the NHD data, these datasets are available through The
+National Map’s <a class="reference internal" href="#tnm" id="id4">[TNM]</a> REST API, and are provided in 1-degree tiles.
+Watershed Workflow manages querying for URLs, downloading these tiles on
+demand, and forming the mosaic of images through underlying capability in
+rasterio to provide a single raster across the watershed requested.  Higher
+resolution products, including LiDAR products across the conterminous US
+and IfSAR products across Alaska are coming available, but these are not
+currently supported by Watershed Workflow.</p>
+<table class="docutils citation" frame="void" id="ned" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[NED]</a></td><td></td></tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>resolution</strong> (<em>str</em><em>, </em><em>optional</em>) – Resolution of the desired product.  One of:
+* <cite>“1/3 arc-second</cite>” (default)
+* <cite>“1 arc-second</cite>”</li>
+<li><strong>file_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Desired output format.  Default and universally available is <cite>“IMG</cite>”.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_ned.FileManagerNED.get_raster">
+<code class="descname">get_raster</code><span class="sig-paren">(</span><em>shape</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_ned.html#FileManagerNED.get_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_ned.FileManagerNED.get_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download and read a DEM for this shape, clipping to the shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shape</strong> (<em>fiona</em><em> or </em><em>shapely shape</em>) – Shape to provide bounds of the raster.</li>
+<li><strong>crs</strong> (<em>CRS</em>) – CRS of the shape.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>rasterio profile</em>) – Profile of the raster.</li>
+<li><strong>raster</strong> (<em>np.ndarray</em>) – Array containing the elevation data.</li>
+<li><em>Note that the raster provided is in its native CRS (which is in the</em></li>
+<li><em>rasterio profile), not the shape’s CRS.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-workflow.sources.manager_nlcd">
-<span id="national-land-cover-dataset"></span><h2>National Land Cover Dataset<a class="headerlink" href="#module-workflow.sources.manager_nlcd" title="Permalink to this headline">¶</a></h2>
-<p>Manager for interacting with NED datasets.</p>
 </div>
+<div class="section" id="land-cover">
+<h2>Land Cover<a class="headerlink" href="#land-cover" title="Permalink to this headline">¶</a></h2>
+<p>Land cover datasets set everything from impervious surfaces to plant
+function and therefore evaportranspiration, and are used in some
+integrated hydrologic models for a wide range of processes.  Land
+cover is used to define a collection of indices on which mesh sets are
+generated and then used to generate and affect processes and process
+parameters.</p>
+<div class="section" id="national-land-cover-dataset">
+<h3>National Land Cover Dataset<a class="headerlink" href="#national-land-cover-dataset" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_nlcd.FileManagerNLCD">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_nlcd.</code><code class="descname">FileManagerNLCD</code><span class="sig-paren">(</span><em>layer='Land_Cover'</em>, <em>year=None</em>, <em>location='L48'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nlcd.html#FileManagerNLCD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nlcd.FileManagerNLCD" title="Permalink to this definition">¶</a></dt>
+<dd><p>National Land Cover Database provides a raster for indexed land cover types
+<a class="reference internal" href="#nlcd" id="id5">[NLCD]</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">NLCD does not provide an API for subsetting the data, so the
+first time this is used, it WILL result in a long download time as it
+grabs the big file.  After that it will be much faster as the file is
+already local.</p>
+</div>
+<p>TODO: Labels and colors for these indices should get moved here, but
+currently reside in workflow.colors.</p>
+<dl class="docutils">
+<dt>layer <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd>Layer of interest.  Default is <cite>“Land_Cover</cite>”, should also be one for at
+least imperviousness, maybe others?</dd>
+<dt>year <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Year of dataset.  Defaults to the most current available at the location.</dd>
+<dt>location <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd>Location code.  Default is <cite>“L48</cite>” (lower 48), valid include <cite>“AK</cite>”
+(Alaska), <cite>“HI</cite>” (Hawaii, and <cite>“PR</cite>” (Puerto Rico).</dd>
+</dl>
+<table class="docutils citation" frame="void" id="nlcd" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[NLCD]</a></td><td><a class="reference external" href="https://www.mrlc.gov/">https://www.mrlc.gov/</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_nlcd.FileManagerNLCD.get_raster">
+<code class="descname">get_raster</code><span class="sig-paren">(</span><em>shply</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nlcd.html#FileManagerNLCD.get_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nlcd.FileManagerNLCD.get_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download and read a DEM for this shape, clipping to the shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shply</strong> (<em>fiona</em><em> or </em><em>shapely shape</em>) – Shape to provide bounds of the raster.</li>
+<li><strong>crs</strong> (<em>CRS</em>) – CRS of the shape.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>rasterio profile</em>) – Profile of the raster.</li>
+<li><strong>raster</strong> (<em>np.ndarray</em>) – Array containing the elevation data.</li>
+<li><em>Note that the raster provided is in NLCD native CRS (which is in the</em></li>
+<li><em>rasterio profile), not the shape’s CRS.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="soil-structure-and-properties">
+<h2>Soil structure and properties<a class="headerlink" href="#soil-structure-and-properties" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-workflow.sources.manager_nrcs">
-<span id="soils-database"></span><h2>Soils database<a class="headerlink" href="#module-workflow.sources.manager_nrcs" title="Permalink to this headline">¶</a></h2>
-<p>Manager for interacting with National Resources Conservation Service Soil Survey database.</p>
+<span id="national-resources-conservation-service-soils"></span><h3>National Resources Conservation Service Soils<a class="headerlink" href="#module-workflow.sources.manager_nrcs" title="Permalink to this headline">¶</a></h3>
+<p>National Resources Conservation Service Soil Survey database.</p>
+</div>
+</div>
+<div class="section" id="generic-files">
+<h2>Generic Files<a class="headerlink" href="#generic-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-workflow.sources.manager_raster">
+<span id="generic-rasters"></span><h3>Generic rasters<a class="headerlink" href="#module-workflow.sources.manager_raster" title="Permalink to this headline">¶</a></h3>
+<p>Basic manager for interacting with raster files.</p>
 </div>
 <div class="section" id="module-workflow.sources.manager_shape">
-<span id="generic-shapefiles"></span><h2>Generic shapefiles<a class="headerlink" href="#module-workflow.sources.manager_shape" title="Permalink to this headline">¶</a></h2>
+<span id="generic-shapefiles"></span><h3>Generic shapefiles<a class="headerlink" href="#module-workflow.sources.manager_shape" title="Permalink to this headline">¶</a></h3>
 <p>Basic manager for interacting with shapefiles.</p>
 </div>
-<div class="section" id="module-workflow.sources.manager_raster">
-<span id="generic-rasters"></span><h2>Generic rasters<a class="headerlink" href="#module-workflow.sources.manager_raster" title="Permalink to this headline">¶</a></h2>
-<p>Basic manager for interacting with raster files.</p>
 </div>
 </div>
 

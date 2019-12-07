@@ -1,38 +1,4 @@
-"""Manager for interacting with NED datasets.
-
-For any distributed, integrated hydrologic model, elevation datasets
-are critical.  These set the local spatial gradients that drive flow
-in Richards and overload flow equations, and are necessary to form a
-mesh, whether structured or unstructured, for simulation.  Elevation
-datasets are typically stored as raster images.
-
-Watershed Workflow leverages the USGS's National Elevation Dataset
-(NED), a precursor to and currently part of the USGS's 3D Elevation
-Program (3DEP) [NED]_.  It is available seamlessly at a variety of
-resolutions ranging from 2 arc-seconds to 1/3 arc-seconds (~60m and
-10m, respectively) in the conterminous United States and comparable
-resolution through most of Alaska.  Like the NHD data, these datasets
-are available through The National Map's [TNM]_ REST API, and are
-provided in 1-degree tiles.  Watershed Workflow manages querying for
-URLs, downloading these tiles on demand, and forming the mosaic of
-images through underlying capability in rasterio to provide a single
-raster across the watershed requested.  Higher resolution products,
-including LiDAR products across the conterminous US and IfSAR products
-across Alaska are coming available, but these are not currently
-supported by Watershed Workflow.
-
-.. [NED] 
-
-Then workflows can query the raster for interpolated elevations at
-points on a mesh, river, or other locations of interest.  Internally,
-affine coordinate system transformations are hidden; the coordinate
-system of the requested points are mapped to that of the raster and
-interpolated.  By default, piecewise bilinear interpolation is used to
-ensure that extremely high-resolution queries do not look
-stairstepped; this improves mesh quality in meshes near the resolution
-of the underlying elevation dataset.
-
-"""
+"""Manager for interacting with NED datasets."""
 import os,sys
 import logging
 import numpy as np
@@ -51,7 +17,33 @@ import workflow.sources.names
 
 
 class FileManagerNED:
+    """Watershed Workflow leverages the USGS's National Elevation Dataset (NED), a
+    precursor to and currently part of the USGS's 3D Elevation Program (3DEP)
+    [NED]_.  It is available seamlessly at a variety of resolutions ranging
+    from 2 arc-seconds to 1/3 arc-seconds (~60m and 10m, respectively) in the
+    conterminous United States and comparable resolution through most of
+    Alaska.  Like the NHD data, these datasets are available through The
+    National Map's [TNM]_ REST API, and are provided in 1-degree tiles.
+    Watershed Workflow manages querying for URLs, downloading these tiles on
+    demand, and forming the mosaic of images through underlying capability in
+    rasterio to provide a single raster across the watershed requested.  Higher
+    resolution products, including LiDAR products across the conterminous US
+    and IfSAR products across Alaska are coming available, but these are not
+    currently supported by Watershed Workflow.
+
+    .. [NED]
+
+    Parameters
+    ----------
+    resolution : str, optional
+      Resolution of the desired product.  One of:
+      * `"1/3 arc-second`" (default)
+      * `"1 arc-second`" 
+    file_format : str, optional
+      Desired output format.  Default and universally available is `"IMG`".
+    """
     def __init__(self, resolution='1/3 arc-second', file_format='IMG'):
+        """Create the manager."""
         self.name = 'National Elevation Dataset (NED)'
         self.file_format = file_format
 
@@ -69,7 +61,25 @@ class FileManagerNED:
         self.crs = workflow.crs.from_epsg(4269)
 
     def get_raster(self, shape, crs):
-        """Download and read a DEM for this shape, clipping to the shape."""
+        """Download and read a DEM for this shape, clipping to the shape.
+        
+        Parameters
+        ----------
+        shape : fiona or shapely shape
+          Shape to provide bounds of the raster.
+        crs : CRS
+          CRS of the shape.
+
+        Returns
+        -------
+        profile : rasterio profile
+          Profile of the raster.
+        raster : np.ndarray
+          Array containing the elevation data.
+
+        Note that the raster provided is in its native CRS (which is in the
+        rasterio profile), not the shape's CRS.
+        """
         if type(shape) is dict:
             shape = workflow.utils.shply(shape)
         
@@ -100,7 +110,18 @@ class FileManagerNED:
         return profile, dest[0]
 
     def request(self, bounds):
-        """Forms the REST API get to find URLs."""
+        """Forms the REST API get to find URLs.
+
+        Parameters
+        ----------
+        bounds : [xmin, ymin, xmax, ymax]
+          Desired bounds, in the raster's native CRS.
+
+        Returns
+        -------
+        js : json dict
+          JSON response of the formed request.
+        """
         rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
         rest_dataset = self.name + ' ' + self.resolution
 
@@ -117,7 +138,20 @@ class FileManagerNED:
         return r.json()
 
     def download(self, bounds, force=False):
-        """Download the files, returning list of filenames."""
+        """Download the files covering the bounds.
+
+        Parameters
+        ----------
+        bounds : [xmin, ymin, xmax, ymax]
+          Desired bounds, in the raster's native CRS.
+        force : bool, optional
+          If true, re-download even if a file already exists.
+
+        Returns
+        -------
+        filenames : list(str)
+          List of raster files tiling the bounds.
+        """
         logging.info("Collecting DEMs to tile bounds: {}".format(bounds))
         
         # check directory structure
