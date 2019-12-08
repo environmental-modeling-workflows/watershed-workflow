@@ -10,9 +10,31 @@ import workflow.conf
 
 @attr.s
 class FileManagerShape:
+    """A simple class for reading shapefiles.
+
+    Parameter
+    ---------
+    filename : str
+      Path to the shapefile.
+    """
     _filename = attr.ib(type=str)
     
     def get_shape(self, *args, **kwargs):
+        """Read the file and filter to get shapes, then ensures there is only one
+        match.
+
+        Parameters
+        ----------
+        See that of get_shapes().
+
+        Returns
+        -------
+        :obj:`profile`
+            Fiona profile of the shapefile.
+        :obj:`list(Polygon)`
+            List of fiona shapes that match the index or bounds.
+
+        """
         profile, shps = self.get_shapes(*args, **kwargs)
         if len(shps) is not 1:
             raise RuntimeError("Filtered shapefile contains more than one match.")

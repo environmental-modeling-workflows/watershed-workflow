@@ -10,22 +10,6 @@ working directory or the user's home directory.  An example including
 all defaults is shown in the top level directory as
 `"watershed_workflowrc`".
 
-Working with data sources
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Watershed Workflow stores a library of managers, which provide
-functionality to access data as if it was local.  Given appropriate
-bounds (spatial and/or temporal), the managers typically use REST-APIs
-or other web-based services to locate, download, unzip, and file
-datasets, which are then stored indefinitely for future use.  These
-datasets are stored in a local data store whose location is specified
-in the `Package configuration`_ file.
-
-Implementing a new data source for an existing type of data should
-follow the API for existing implementations.  This makes it easy to
-use it with the existing high level API.  See the
-:ref:`Sources API` for how managers are used within the API.
-
 shapes vs shapely
 ~~~~~~~~~~~~~~~~~
 

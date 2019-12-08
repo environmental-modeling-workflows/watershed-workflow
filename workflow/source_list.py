@@ -1,11 +1,14 @@
-"""Default Sources:
+"""This module provides a dictionary of sources, broken out by data type, and a
+dictionary of default sources.
 
-Default HUCs and Hydrography data comes from the NHDPlus High Res
-datasets.
-See: "https://nhd.usgs.gov/"
+These dictionaries are provided as module-local (singleton) variables.
 
-Default DEMs come from the National Elevation Dataset (NED).
-See: "https://lta.cr.usgs.gov/NED"
+* huc_sources : A dictionary of sources that provide USGS HUC boundaries.
+* hydrography_sources : A dictionary of sources that provide river reaches by HUC.
+* dem_sources : A dictionary of available digital elevation models.
+* soil_sources : A dictionary of available sources for soil properties.
+* land_cover_sources : A dictionary of available land cover datasets.
+
 """
 import logging
 
@@ -50,7 +53,10 @@ default_land_cover = 'NLCD (L48)'
 
 
 def get_default_sources():
-    """Provides a default set of data sources."""
+    """Provides a default set of data sources.
+    
+    Returns a dictionary with default sources for each type.
+    """
     sources = dict()
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
@@ -62,7 +68,21 @@ def get_default_sources():
 
 
 def get_sources(args):
-    """Parsers the arg dict and provides an updated set of data sources."""
+    """Parsers the command line argument struct from argparse and provides an
+    updated set of data sources.
+
+    Parameter
+    ---------
+    args : struct
+      A python struct generated from an argparse.ArgumentParser object with
+      source options set by workflow.ui.*_source_options
+
+    Returns
+    -------
+    sources : dict
+      Diectionary of defaults for each of "HUC", "hydrography", "DEM", "soil
+      type", and "land cover".
+    """
     sources = get_default_sources()
     try:
         source_huc = args.source_huc

@@ -88,7 +88,6 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Concepts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#package-configuration">Package configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#working-with-data-sources">Working with data sources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#shapes-vs-shapely">shapes vs shapely</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#coordinate-reference-systems-crs">Coordinate Reference Systems (CRS)</a></li>
 </ul>
@@ -193,20 +192,6 @@ specified in a file <cite>“.watershed_workflowrc</cite>”, located in the cur
 working directory or the user’s home directory.  An example including
 all defaults is shown in the top level directory as
 <cite>“watershed_workflowrc</cite>”.</p>
-</div>
-<div class="section" id="working-with-data-sources">
-<h2>Working with data sources<a class="headerlink" href="#working-with-data-sources" title="Permalink to this headline">¶</a></h2>
-<p>Watershed Workflow stores a library of managers, which provide
-functionality to access data as if it was local.  Given appropriate
-bounds (spatial and/or temporal), the managers typically use REST-APIs
-or other web-based services to locate, download, unzip, and file
-datasets, which are then stored indefinitely for future use.  These
-datasets are stored in a local data store whose location is specified
-in the <a class="reference internal" href="#package-configuration">Package configuration</a> file.</p>
-<p>Implementing a new data source for an existing type of data should
-follow the API for existing implementations.  This makes it easy to
-use it with the existing high level API.  See the
-<span class="xref std std-ref">Sources API</span> for how managers are used within the API.</p>
 </div>
 <div class="section" id="shapes-vs-shapely">
 <h2>shapes vs shapely<a class="headerlink" href="#shapes-vs-shapely" title="Permalink to this headline">¶</a></h2>

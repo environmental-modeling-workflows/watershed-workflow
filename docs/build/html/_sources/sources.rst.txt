@@ -1,5 +1,5 @@
 Data Sources
-==============
+============
 
 Watershed Workflow stores a library of managers, which provide
 functionality to access data as if it was local.  Given appropriate
@@ -9,12 +9,25 @@ datasets, which are then stored indefinitely for future use.  These
 datasets are stored in a local data store whose location is specified
 in the :ref:`Package configuration` file.
 
-The following types of data are frequently used in workflows, and
-default values for these types of data are provide by existing
-managers.
+The following sections lay out the source list, which is simply a way
+of getting and working with default sources, and the broad classes of
+sources frequently used in workflows, and default values for these
+types of data are provide by existing managers.
+
+Source List
+~~~~~~~~~~~
+
+.. automodule:: workflow.source_list
+        :members:
+
+Implementing a new data source for an existing type of data should
+follow the API for existing implementations.  This makes it easy to
+use it with the existing high level API.  See the
+:ref:`Sources API` for how managers are used within the API.
+
 
 Watershed boundaries and hydrography
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Watershed boundary datasets and hydrography datasets together form the
 geographic structure of a watershed.  Watershed boundary datasets are
@@ -99,19 +112,31 @@ National Land Cover Dataset
 Soil structure and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Soil structure and hydrologic properties (i.e. porosity, permeability,
+water retention curves) are often derived from texture
+parameterizations.  Similarly, depth to bedrock and other subsurface
+data can be essential in these types of simulations.  Often these are
+mapped into the simulation mesh.
+
 National Resources Conservation Service Soils
 ---------------------------------------------
 
-.. automodule:: workflow.sources.manager_nrcs
-
+.. autoclass:: workflow.sources.manager_nrcs.FileManagerNRCS
+        :members: get_shapes
 
 Generic Files
 ~~~~~~~~~~~~~
 
+We also provide readers for user-provided rasters and shapefiles for
+generic use.
+
 Generic rasters
 ---------------
-.. automodule:: workflow.sources.manager_raster
+.. autoclass:: workflow.sources.manager_raster.FileManagerRaster
+        :members: get_raster               
    
 Generic shapefiles
 ------------------
-.. automodule:: workflow.sources.manager_shape
+.. autoclass:: workflow.sources.manager_shape.FileManagerShape
+        :members: get_shape, get_shapes
+
