@@ -1,6 +1,6 @@
-********************************
-Watershed Workflow Documentation
-********************************
+******************
+Watershed Workflow
+******************
 
 .. image:: static/watershed_workflow.png
 

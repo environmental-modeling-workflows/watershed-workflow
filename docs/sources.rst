@@ -124,6 +124,26 @@ National Resources Conservation Service Soils
 .. autoclass:: workflow.sources.manager_nrcs.FileManagerNRCS
         :members: get_shapes
 
+Meteorology
+-----------
+
+Meteorology datasets are a work in progress.  Different codes likely
+need to write met data in very different formats, and may need
+different variables, so met data is necessarily less standardized.
+
+Currently we provide some preliminary capability here, but more is
+both on the way and needs more input to develop community consensus.
+
+Daymet
+~~~~~~
+
+.. note:: **This is in progress and not complete.** Not all
+          documentation may be correct, and it is definitely a moving
+          target.  Buyer beware!
+
+.. autoclass:: workflow.sources.manager_daymet.FileManagerDaymet
+        :members: get_meteorology               
+                  
 Generic Files
 ~~~~~~~~~~~~~
 

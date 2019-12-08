@@ -25,6 +25,8 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -104,8 +106,10 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#soil-structure-and-properties">Soil structure and properties</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#national-resources-conservation-service-soils">National Resources Conservation Service Soils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#meteorology">Meteorology</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#daymet">Daymet</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generic-files">Generic Files</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generic-rasters">Generic rasters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generic-shapefiles">Generic shapefiles</a></li>
@@ -626,6 +630,105 @@ tools) and used to index soil parameterizations for simulation.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="meteorology">
+<h3>Meteorology<a class="headerlink" href="#meteorology" title="Permalink to this headline">¶</a></h3>
+<p>Meteorology datasets are a work in progress.  Different codes likely
+need to write met data in very different formats, and may need
+different variables, so met data is necessarily less standardized.</p>
+<p>Currently we provide some preliminary capability here, but more is
+both on the way and needs more input to develop community consensus.</p>
+</div>
+</div>
+<div class="section" id="daymet">
+<h2>Daymet<a class="headerlink" href="#daymet" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><strong>This is in progress and not complete.</strong> Not all
+documentation may be correct, and it is definitely a moving
+target.  Buyer beware!</p>
+</div>
+<dl class="class">
+<dt id="workflow.sources.manager_daymet.FileManagerDaymet">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_daymet.</code><code class="descname">FileManagerDaymet</code><a class="reference internal" href="_modules/workflow/sources/manager_daymet.html#FileManagerDaymet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_daymet.FileManagerDaymet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Daymet meterological datasets.</p>
+<p>Daymet is a historic, spatially interpolated product which ingests large
+number of point-sources of meterological data, aggregates them to daily
+time series, and spatially interpolates them onto a 1km gridded product that
+covers all of North America from 1980 to 2018 <a class="reference internal" href="#id8" id="id7">[Daymet]</a>.</p>
+<p>Variable names and descriptions</p>
+<table border="1" class="colwidths-given docutils">
+<colgroup>
+<col width="20%" />
+<col width="20%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">name</th>
+<th class="head">units</th>
+<th class="head">description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>prcp</td>
+<td><span class="math notranslate nohighlight">\(mm / day\)</span></td>
+<td>Total daily precipitation</td>
+</tr>
+<tr class="row-odd"><td>tmin, tmax</td>
+<td><span class="math notranslate nohighlight">\(^\circ C\)</span></td>
+<td>Min/max daily air temperature</td>
+</tr>
+<tr class="row-even"><td>srad</td>
+<td><span class="math notranslate nohighlight">\(W / m^2\)</span></td>
+<td>Incoming solar radiation</td>
+</tr>
+<tr class="row-odd"><td>vp</td>
+<td><span class="math notranslate nohighlight">\(Pa\)</span></td>
+<td>Vapor pressure</td>
+</tr>
+<tr class="row-even"><td>swe</td>
+<td><span class="math notranslate nohighlight">\(Kg / m^2\)</span></td>
+<td>Snow water equivalent</td>
+</tr>
+<tr class="row-odd"><td>dayl</td>
+<td><span class="math notranslate nohighlight">\(s / day\)</span></td>
+<td>Duration of sunlight</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[Daymet]</a></td><td><a class="reference external" href="https://daymet.ornl.gov">https://daymet.ornl.gov</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_daymet.FileManagerDaymet.get_meteorology">
+<code class="descname">get_meteorology</code><span class="sig-paren">(</span><em>varname</em>, <em>year</em>, <em>polygon_or_bounds</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_daymet.html#FileManagerDaymet.get_meteorology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_daymet.FileManagerDaymet.get_meteorology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets file for a single year and single variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>varname</strong> (<em>str</em>) – Name the variable, see table in the class documentation.</li>
+<li><strong>year</strong> (<em>int</em>) – A year in the valid range (currently 1980-2018)</li>
+<li><strong>polygon_or_bounds</strong> (<em>fiona</em><em> or </em><em>shapely shape</em><em>, or </em><em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em>) – Collect a file that covers this shape or bounds.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – Coordinate system of the above polygon_or_bounds</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>filename</strong> – Path to the data file.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="generic-files">
 <h2>Generic Files<a class="headerlink" href="#generic-files" title="Permalink to this headline">¶</a></h2>
