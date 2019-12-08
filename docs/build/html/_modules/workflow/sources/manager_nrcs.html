@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>workflow.sources.manager_nrcs &mdash; Watershed Workflow 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Watershed Workflow</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>workflow.sources.manager_nrcs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for workflow.sources.manager_nrcs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;National Resources Conservation Service Soil Survey database.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">fiona</span>
+<span class="kn">import</span> <span class="nn">shapely</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">workflow.sources.utils</span> <span class="k">as</span> <span class="nn">source_utils</span>
+<span class="kn">import</span> <span class="nn">workflow.conf</span>
+<span class="kn">import</span> <span class="nn">workflow.sources.names</span>
+<span class="kn">import</span> <span class="nn">workflow.warp</span>
+<span class="kn">import</span> <span class="nn">workflow.utils</span>
+
+<div class="viewcode-block" id="FileManagerNRCS"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nrcs.FileManagerNRCS">[docs]</a><span class="k">class</span> <span class="nc">FileManagerNRCS</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The National Resources Conservation Service&#39;s SSURGO Database [NRCS]_</span>
+<span class="sd">    contains a huge amount of information about soil texture, parameters, and</span>
+<span class="sd">    structure, and are provided as shape files containing soil type</span>
+<span class="sd">    delineations with map-unit-keys (MUKEYs).  These are re-broadcast onto a</span>
+<span class="sd">    raster (much like gSSURGO, which is unfortunately not readable by open</span>
+<span class="sd">    tools) and used to index soil parameterizations for simulation.</span>
+
+<span class="sd">    TODO: Functionality for mapping from MUKEY to soil parameters.</span>
+
+<span class="sd">    .. [NRCS] https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_053627</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;National Resources Conservation Service Soil Survey (NRCS Soils)&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="s1">&#39;4326&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fstring</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.4f}</span><span class="s1">_</span><span class="si">{:.4f}</span><span class="s1">_</span><span class="si">{:.4f}</span><span class="s1">_</span><span class="si">{:.4f}</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qstring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fstring</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_manager</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                         <span class="s1">&#39;soil_survey&#39;</span><span class="p">,</span>
+                                                         <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                                                         <span class="s1">&#39;soil_survey_shape_</span><span class="si">%s</span><span class="s1">.gml&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">fstring</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs&#39;</span>
+
+<div class="viewcode-block" id="FileManagerNRCS.get_shapes"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nrcs.FileManagerNRCS.get_shapes">[docs]</a>    <span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Downloads and reads soil shapefiles.</span>
+
+<span class="sd">        This accepts only a bounding box.  </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bounds : [xmin, ymin, xmax, ymax]</span>
+<span class="sd">            Bounding box to filter shapes.</span>
+<span class="sd">        crs : CRS</span>
+<span class="sd">            Coordinate system of the bounding box.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Fiona profile of the shapefile.</span>
+<span class="sd">        shapes : list</span>
+<span class="sd">            List of fiona shapes that match the index or bounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;NRCS file manager only handles bounds, not indices.&#39;</span><span class="p">)</span>
+            
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_flip</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Generate a new fiona shape in long-lat from one in lat-long&quot;&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">generate_rings</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">):</span>
+                    <span class="n">ring</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">shp</span>
+        
+        <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
+            <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">_flip</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">fid</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  Found </span><span class="si">{}</span><span class="s1"> shapes.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  and crs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">shapes</span></div>
+
+    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a bounds in the NRCS coordinate system for use in downloading.&quot;&quot;&quot;</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-.</span><span class="mi">0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-.</span><span class="mi">0001</span><span class="p">,</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+.</span><span class="mi">0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+.</span><span class="mi">0001</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">b</span>
+
+    <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Downloads the data and writes it to disk.&quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name_manager</span><span class="o">.</span><span class="n">data_dir</span><span class="p">(),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_manager</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  Using filename: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  Downloading via request.&#39;</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;REQUEST&#39;</span><span class="p">:</span><span class="s1">&#39;GetFeature&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;TYPENAME&#39;</span><span class="p">:</span><span class="s1">&#39;MapunitPoly&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;BBOX&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">qstring</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)}</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filename</span></div>
+
+    
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, UT Battelle, Ethan Coon
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

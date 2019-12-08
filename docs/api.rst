@@ -2,27 +2,21 @@ API Documentation
 ====================
 
 High Level API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~~~
 .. automodule:: workflow.hilev
-   :members:
+    :members:
 
-Sources API
-~~~~~~~~~~~~~~~~~~~~~
-.. _source-type:
-
-Source objects provide ways of downloading and using data.
-
-
-CRS
-~~~~
+CRS module API
+~~~~~~~~~~~~~~
 .. automodule:: workflow.crs
     :members:               
 
-
-
-utils API
-~~~~~~~~~~~~~~~~~~~
-
+plot module API
+~~~~~~~~~~~~~~~
+.. automodule:: workflow.plot
+    :members:
+                
+utils module API
+~~~~~~~~~~~~~~~~
 .. automodule:: workflow.utils
-
+    :members: shply, bounds, close

@@ -90,9 +90,9 @@
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-workflow.hilev">High Level API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#sources-api">Sources API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.crs">CRS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-workflow.utils">utils API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-workflow.crs">CRS module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-workflow.plot">plot module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-workflow.utils">utils module API</a></li>
 </ul>
 </li>
 </ul>
@@ -187,20 +187,7 @@
 <h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-workflow.hilev">
 <span id="high-level-api"></span><h2>High Level API<a class="headerlink" href="#module-workflow.hilev" title="Permalink to this headline">¶</a></h2>
-<p>Watershed Workflow finds, downloads, and processes data for use in hydrologic models.</p>
-<p>This package is a python library of tools for interacting with a wide range of
-data streams using free and open (both free as in freedom and free as in free
-beer) python and GIS libraries and data.  Critically, this package provides a
-way for <strong>automatically and quickly</strong> downloading, interpreting, and processing
-data needed to <strong>generate a “first” hyper-resolution simulation on any
-watershed</strong> in the conterminous United States (and most of Alaska/Hawaii/Puerto
-Rico).</p>
-<p>To do this, this package provides tools to automate finding (via REST APIs and
-other approaches) data streams from <strong>open data streams,</strong> from United States
-governmental agencies, including USGS, USDA, DOE, and others.  These data
-streams are then colocated on a mesh which is generated based on a watershed
-delineation and a river network, and that mesh is written in one of a variety
-of mesh formats for use in hyper-resolution simulation tools.</p>
+<p>High-level routines – these are imported into the top level <cite>“workflow</cite>” namespace.</p>
 <p>This top level module provides functionality for getting shapes and rasters
 representing watershed boundaries, river networks, digital elevation models,
 and other GIS datasets and then processing those data sets for use in
@@ -670,12 +657,8 @@ this should be the same as the type of shape_colors.  Default is -1.</li>
 </dd></dl>
 
 </div>
-<div class="section" id="sources-api">
-<h2>Sources API<a class="headerlink" href="#sources-api" title="Permalink to this headline">¶</a></h2>
-<p id="source-type">Source objects provide ways of downloading and using data.</p>
-</div>
 <div class="section" id="module-workflow.crs">
-<span id="crs"></span><h2>CRS<a class="headerlink" href="#module-workflow.crs" title="Permalink to this headline">¶</a></h2>
+<span id="crs-module-api"></span><h2>CRS module API<a class="headerlink" href="#module-workflow.crs" title="Permalink to this headline">¶</a></h2>
 <p>Coordinate Reference System conversions.</p>
 <p>Coordinate Reference Systems (CRSs) differ across datasets, and
 standardizing and managing these across the workflow is a necessary
@@ -973,9 +956,396 @@ you do, don’t use the default!) but it is EPSG:4269.</td>
 </dd></dl>
 
 </div>
+<div class="section" id="module-workflow.plot">
+<span id="plot-module-api"></span><h2>plot module API<a class="headerlink" href="#module-workflow.plot" title="Permalink to this headline">¶</a></h2>
+<p>Plotting relies on cartopy to ensure that coordinate projections are dealt
+with reasonably within matplotlib.  The preferred usage for plotting is similar
+to the non-pylab interface to matplotlib – first get a figure and axis object,
+then call plotting functions passing in that ax object.</p>
+<p>Note that we use the descartes package to plot shapely objects, which is a
+simple wrapper to write a shapely polygon as a matplotlib patch.</p>
+<p>Note that, for complex plots, it can be useful to manage the ordering of the
+layers of objects.  In this case, all plotting functions accept matplotlib’s
+zorder argument, an int which controls the order of drawing, with larger being
+later (on top) of smaller values.</p>
+<dl class="function">
+<dt id="workflow.plot.basemap">
+<code class="descclassname">workflow.plot.</code><code class="descname">basemap</code><span class="sig-paren">(</span><em>crs=None</em>, <em>ax=None</em>, <em>resolution='50m'</em>, <em>land_kwargs=None</em>, <em>ocean_kwargs=None</em>, <em>state_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#basemap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.basemap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a basemap to the axis.</p>
+<p>Uses cartopy to add political and natural boundaries and shapes to the axes
+image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>crs</strong> (<em>CRS object</em><em>, </em><em>optional</em>) – Coordinate system to plot.  May be ignored if ax is provided.</li>
+<li><strong>ax</strong> (<em>matplotlib ax object</em><em>, </em><em>optional</em>) – Matplotlib axes to plot on.  If not provided, get_ax() is called using
+crs.</li>
+<li><strong>resolution</strong> (<em>str</em>) – Resolution of cartopy basemap.  One of ‘10m’, ‘50m’, or ‘110m’.</li>
+<li><strong>land_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+land polygons.</li>
+<li><strong>ocean_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+ocean polygons.</li>
+<li><strong>state_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+political state boundary polygons.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.dem">
+<code class="descclassname">workflow.plot.</code><code class="descname">dem</code><span class="sig-paren">(</span><em>profile</em>, <em>data</em>, <em>ax=None</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#dem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.dem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a raster.</p>
+<p>A wrapper for matplotlib imshow()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>profile</strong> (<em>rasterio profile</em>) – Rasterio profile of the input raster.</li>
+<li><strong>data</strong> (<em>np.ndarray</em>) – 2D array of data.</li>
+<li><strong>vmin</strong><strong>,</strong><strong>vmax</strong> (<em>float</em>) – Min and max value to limit extent of color values.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Dictionary of extra arguments passed to imshow().</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>im</strong> – Return value of imshow()</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotlib image object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.get_ax">
+<code class="descclassname">workflow.plot.</code><code class="descname">get_ax</code><span class="sig-paren">(</span><em>crs</em>, <em>fig=None</em>, <em>nrow=1</em>, <em>ncol=1</em>, <em>index=1</em>, <em>window=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#get_ax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.get_ax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an axis with a given projection.</p>
+<p>Note this forwards extra kwargs for plt.figure().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>crs</strong> (<em>CRS object</em><em>, </em><em>optional</em>) – A <strong>projected</strong> CRS for the plot.  None can be given for a normal
+matplotlib axis (useful for plotting lat/lon or other non-projected
+coordinate systems.  Note that if you call plotting on an object with an
+unprojected CRS, it will project for you, or change coordinates if
+needed.  This can get a bit dicey, so prefer to plot objects all in the
+same CRS.  Defaults to None.</li>
+<li><strong>fig</strong> (<em>matplotlib figure</em><em>, </em><em>optional</em>) – If you already have a figure, will create the axis on this figure.
+Defaults to None, at which point a figure will be created.</li>
+<li><strong>ncol</strong><strong>, </strong><strong>index</strong> (<em>nrow</em><em>,</em>) – Create a grid of axes of this shape.  Calls
+plt.add_subplot(nrow,ncol,index).  Default is 1.</li>
+<li><strong>window</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>width</em><em>, </em><em>height</em><em>]</em><em>, </em><em>optional</em>) – Matplotlib patch arguments for call to fig.add_axes()</li>
+<li><strong>figsize</strong> (<em>(</em><em>width</em><em>, </em><em>height</em><em>)</em><em>, </em><em>optional</em>) – Figure size in inches.</li>
+<li><strong>dpi</strong> (<em>int</em><em>, </em><em>optional</em>) – Dots per inch for figures.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Additional arguments to plt.figure()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><em>*If fig is provided*</em></li>
+<li><strong>ax</strong> (<em>matplotlib axes object</em>)</li>
+<li><em>*If fig is not provided*</em></li>
+<li><strong>fig</strong> (<em>matplotlib figure object</em>)</li>
+<li><strong>ax</strong> (<em>matplotlib ax object</em>)</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.huc">
+<code class="descclassname">workflow.plot.</code><code class="descname">huc</code><span class="sig-paren">(</span><em>huc</em>, <em>crs</em>, <em>color='k'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.huc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a HUC polygon.</p>
+<p>A wrapper for plot.shply()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>huc</strong> (<em>shapely polygon</em>) – An object to plot.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
+descartes.PolygonPatch.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patches</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotlib PatchCollection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.hucs">
+<code class="descclassname">workflow.plot.</code><code class="descname">hucs</code><span class="sig-paren">(</span><em>hucs</em>, <em>crs</em>, <em>color='k'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.hucs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a SplitHUCs object.</p>
+<p>A wrapper for plot.shply()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>hucs</strong> (<em>workflow.split_hucs.SplitHucs object</em>) – The collection of hucs to plot.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
+descartes.PolygonPatch.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patches</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotib PatchCollection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.river">
+<code class="descclassname">workflow.plot.</code><code class="descname">river</code><span class="sig-paren">(</span><em>river</em>, <em>crs</em>, <em>color='b'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#river"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.river" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot an itereable collection of reaches.</p>
+<p>A wrapper for plot.shply()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>river</strong> (<em>list</em><em>(</em><em>shapely.LineString</em><em>)</em>) – An iterable of shapely LineString reaches.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
+matplotlib.collections.LineCollection.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lines</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotib LineCollection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.rivers">
+<code class="descclassname">workflow.plot.</code><code class="descname">rivers</code><span class="sig-paren">(</span><em>rivers</em>, <em>crs</em>, <em>color='b'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#rivers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.rivers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot an itereable collection of river Tree objects.</p>
+<p>A wrapper for plot.shply()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rivers</strong> (<em>list</em><em>(</em><em>river_tree.RiverTree</em><em>)</em>) – An iterable of river_tree.RiverTree objects.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
+matplotlib.collections.LineCollection.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lines</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotib LineCollection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.shapes">
+<code class="descclassname">workflow.plot.</code><code class="descname">shapes</code><span class="sig-paren">(</span><em>shps</em>, <em>crs</em>, <em>color='k'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot an itereable collection of fiona shapes.</p>
+<p>A wrapper for plot.shply()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shapes</strong> (<em>list</em><em>(</em><em>fiona shape objects</em><em>)</em>) – The collection of fiona shape objects to plot.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
+descartes.PolygonPatch.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patches</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotib PatchCollection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.shply">
+<code class="descclassname">workflow.plot.</code><code class="descname">shply</code><span class="sig-paren">(</span><em>shps</em>, <em>crs</em>, <em>color=None</em>, <em>ax=None</em>, <em>style='-'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#shply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.shply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot shapely objects.</p>
+<p>Currently this assumes shps is an iterable collection of Points, Lines, or
+Polygons.  So while a single MultiPolygon is allowed, lists of
+MultiPolygons are not currently supported.  These can easily be unraveled.</p>
+<p>Heterogeneous collections are not supported.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shps</strong> (<em>list</em><em>(</em><em>shapely shape objects</em><em>)</em>) – An iterable of shapely objects to plot.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</li>
+<li><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></li>
+<li><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which can be:
+* pyplot.scatter() (if shps are Point objects)
+* matplotlib.collections.LineCollection() (if shps are LineStrings)
+* descartes.PolygonPatch() (if shps are Polygons)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>col</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">collection of matplotlib points or lines or patches</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.triangulation">
+<code class="descclassname">workflow.plot.</code><code class="descname">triangulation</code><span class="sig-paren">(</span><em>points</em>, <em>tris</em>, <em>crs</em>, <em>color='gray'</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#triangulation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.triangulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a triangulation.</p>
+<p>A wrapper for matplotlib’s plot_trisurf() or tripcolor()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>points</strong> (<em>np.ndarray</em><em>(</em><em>npoints</em><em>, </em><em>3</em><em>)</em>) – Array of point coordinates, x,y,z.</li>
+<li><strong>tris</strong> (<em>list</em><em>, </em><em>np.ndarray</em><em>(</em><em>ntris</em><em>, </em><em>3</em><em>)</em>) – List of lists or ndarray of indices into the points array for defining
+the triangle topology.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – Coordinate system of the points.</li>
+<li><strong>color</strong> (<em>matplotlib color object</em><em> or </em><em>iterable</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – Either a matplotlib color object (for uniform colors), or a list of color
+objects (length equal to the length of tris), or ‘elevation’ to color by
+z coordinate.</li>
+<li><strong>ax</strong> (<em>matplotlib ax object</em>) – Axes to plot on.  Calls get_ax() if not provided.</li>
+<li><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to plot_trisurf() (for 3D axes) or tripcolor()
+(for 2D).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>col</strong> – Collection of patches representing the triangles.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotlib collection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
 <div class="section" id="module-workflow.utils">
-<span id="utils-api"></span><h2>utils API<a class="headerlink" href="#module-workflow.utils" title="Permalink to this headline">¶</a></h2>
+<span id="utils-module-api"></span><h2>utils module API<a class="headerlink" href="#module-workflow.utils" title="Permalink to this headline">¶</a></h2>
 <p>Shape and geometry utilities for working with fiona and shapely objects.</p>
+<p>Note this module contains a lot of other simple functions that are commonly
+used by other functions, but are not included in documentation because they are
+likely not useful to users.</p>
+<dl class="function">
+<dt id="workflow.utils.shply">
+<code class="descclassname">workflow.utils.</code><code class="descname">shply</code><span class="sig-paren">(</span><em>shape</em>, <em>properties=None</em>, <em>flip=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/utils.html#shply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.utils.shply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a fiona style shape to a shapely shape with as much collapsing as possible.</p>
+<p>Note this collapses objects – for instance, fiona MultiPolygons of length
+1 are turned into shapely Polygons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shape</strong> (<em>fiona shape</em>) – Fiona shape to convert to shapely.</li>
+<li><strong>properties</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of parameters to associate with the object.  Defaults to
+shape[‘properties’] if it exists, None otherwise.</li>
+<li><strong>flip</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flip x,y coordinates while making the translation.  This helps if files
+provide lat-long ordered coordinates (note that is y,x) as opposed to
+long-lat (x,y).  Default is False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>thing</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">shapely shape</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.utils.bounds">
+<code class="descclassname">workflow.utils.</code><code class="descname">bounds</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/utils.html#bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.utils.bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>General bounding box for fiona and shapely types.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.utils.close">
+<code class="descclassname">workflow.utils.</code><code class="descname">close</code><span class="sig-paren">(</span><em>s1</em>, <em>s2</em>, <em>tol=1e-07</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/utils.html#close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.utils.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Are two shapely shapes topologically equivalent and geometrically close?</p>
+<p>Note this deals with things like rotations of polygons (clock-rotating the
+coordinates of the same shape are still close) and other gotchas that keep
+you from just comparing coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>s2</strong> (<em>s1</em><em>,</em>) – Objects to compare.</li>
+<li><strong>tol</strong> (<em>double</em>) – Distance to compare geometric closeness.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>close</strong> – Is close?</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 

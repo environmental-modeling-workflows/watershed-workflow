@@ -1,4 +1,10 @@
-"""Shape and geometry utilities for working with fiona and shapely objects."""
+"""Shape and geometry utilities for working with fiona and shapely objects.
+
+Note this module contains a lot of other simple functions that are commonly
+used by other functions, but are not included in documentation because they are
+likely not useful to users.
+
+"""
 
 import logging
 import subprocess
@@ -8,9 +14,18 @@ import shapely.ops
 import shapely.affinity
 
 def generate_rings(obj):
-    """Generator for a fiona geometry's coordinates object and yield rings.
+    """Generator for a fiona shape's coordinates object and yield rings.
 
     As long as the input is conforming, the type of the geometry doesn't matter.
+
+    Parameter
+    ---------
+    obj : fiona shape
+
+    Returns
+    -------
+    rings : iterator
+      Iterates over rings, each of which is a list of coordinate tuples.    
     """
     def _generate_rings(coords):
         for e in coords:
@@ -30,7 +45,17 @@ def generate_rings(obj):
 def generate_coords(obj):
     """Generator for a fiona geometry's coordinates.
 
-    As long as the input is conforming, the type of the geometry doesn't matter.
+    As long as the input is conforming, the type of the geometry doesn't
+    matter.
+
+    Parameter
+    ---------
+    obj : fiona shape
+
+    Returns
+    -------
+    coord : iterator
+      Iterates over coordinate tuples.
     """
     if 'geometry' in obj:
         obj = obj['geometry']
@@ -56,9 +81,24 @@ def bounds(f):
 def shply(shape, properties=None, flip=False):
     """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
 
-    Note: shapely.geometry.shape() will not make, for instance,
-    Polygons out of MultiPolygons of length 1.  This gets really
-    difficult to work around at times.
+    Note this collapses objects -- for instance, fiona MultiPolygons of length
+    1 are turned into shapely Polygons.
+
+    Parameters
+    ----------
+    shape : fiona shape
+      Fiona shape to convert to shapely.
+    properties : dict, optional
+      A dictionary of parameters to associate with the object.  Defaults to
+      shape['properties'] if it exists, None otherwise.
+    flip : bool, optional
+      Flip x,y coordinates while making the translation.  This helps if files
+      provide lat-long ordered coordinates (note that is y,x) as opposed to
+      long-lat (x,y).  Default is False.
+
+    Returns
+    -------
+    thing : shapely shape
     """
     if 'geometry' in shape:
         if properties is None and 'properties' in shape:
@@ -94,7 +134,24 @@ def round(list_of_things, digits):
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
-    """Are two shapes topologically equivalent and geometrically close"""
+    """Are two shapely shapes topologically equivalent and geometrically close?
+
+    Note this deals with things like rotations of polygons (clock-rotating the
+    coordinates of the same shape are still close) and other gotchas that keep
+    you from just comparing coordinates.
+
+    Parameters
+    ----------
+    s1, s2 : shapely shapes
+      Objects to compare.
+    tol : double
+      Distance to compare geometric closeness.
+
+    Returns
+    -------
+    close : bool
+      Is close?
+    """
     # points get compared as tuples
     if isinstance(s1, shapely.geometry.Point):
         return close(s1.coords[0], s2, tol)

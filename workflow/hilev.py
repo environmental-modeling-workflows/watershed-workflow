@@ -1,25 +1,9 @@
-"""Watershed Workflow finds, downloads, and processes data for use in hydrologic models.
-
-This package is a python library of tools for interacting with a wide range of
-data streams using free and open (both free as in freedom and free as in free
-beer) python and GIS libraries and data.  Critically, this package provides a
-way for **automatically and quickly** downloading, interpreting, and processing
-data needed to **generate a "first" hyper-resolution simulation on any
-watershed** in the conterminous United States (and most of Alaska/Hawaii/Puerto
-Rico).
-
-To do this, this package provides tools to automate finding (via REST APIs and
-other approaches) data streams from **open data streams,** from United States
-governmental agencies, including USGS, USDA, DOE, and others.  These data
-streams are then colocated on a mesh which is generated based on a watershed
-delineation and a river network, and that mesh is written in one of a variety
-of mesh formats for use in hyper-resolution simulation tools.
+"""High-level routines -- these are imported into the top level `"workflow`" namespace.
 
 This top level module provides functionality for getting shapes and rasters
 representing watershed boundaries, river networks, digital elevation models,
 and other GIS datasets and then processing those data sets for use in
 simulations.
-
 """
 
 import numpy as np

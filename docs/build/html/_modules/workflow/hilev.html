@@ -151,28 +151,12 @@
            <div itemprop="articleBody">
             
   <h1>Source code for workflow.hilev</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Watershed Workflow finds, downloads, and processes data for use in hydrologic models.</span>
-
-<span class="sd">This package is a python library of tools for interacting with a wide range of</span>
-<span class="sd">data streams using free and open (both free as in freedom and free as in free</span>
-<span class="sd">beer) python and GIS libraries and data.  Critically, this package provides a</span>
-<span class="sd">way for **automatically and quickly** downloading, interpreting, and processing</span>
-<span class="sd">data needed to **generate a &quot;first&quot; hyper-resolution simulation on any</span>
-<span class="sd">watershed** in the conterminous United States (and most of Alaska/Hawaii/Puerto</span>
-<span class="sd">Rico).</span>
-
-<span class="sd">To do this, this package provides tools to automate finding (via REST APIs and</span>
-<span class="sd">other approaches) data streams from **open data streams,** from United States</span>
-<span class="sd">governmental agencies, including USGS, USDA, DOE, and others.  These data</span>
-<span class="sd">streams are then colocated on a mesh which is generated based on a watershed</span>
-<span class="sd">delineation and a river network, and that mesh is written in one of a variety</span>
-<span class="sd">of mesh formats for use in hyper-resolution simulation tools.</span>
+<span></span><span class="sd">&quot;&quot;&quot;High-level routines -- these are imported into the top level `&quot;workflow`&quot; namespace.</span>
 
 <span class="sd">This top level module provides functionality for getting shapes and rasters</span>
 <span class="sd">representing watershed boundaries, river networks, digital elevation models,</span>
 <span class="sd">and other GIS datasets and then processing those data sets for use in</span>
 <span class="sd">simulations.</span>
-
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
