@@ -2,7 +2,7 @@
 
 ![sample image](https://ecoon.github.io/watershed-workflow/build/html/_images/watershed_workflow.png "Example output of the Coweeta Hydrologic Lab watersheds across scales.")
 
-![Please prefer to see our documentation.](https://ecoon.github.io/watershed-workflow/build/html/index.html)
+[Please prefer to see our documentation.](https://ecoon.github.io/watershed-workflow/build/html/index.html)
 
 Watershed Workflow is a python-based, open source chain of tools for generating meshes and other data inputs for hyper-resolution hydrology, anywhere in the (conterminous + Alaska?) US.  
 
@@ -25,7 +25,7 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 ## Installation
 
-![Visit our Installation documentation.](https://ecoon.github.io/watershed-workflow/build/html/install.html)
+[Visit our Installation documentation.](https://ecoon.github.io/watershed-workflow/build/html/install.html)
 
 
 ## A first example
@@ -39,8 +39,8 @@ And navigate to [examples/mesh_coweeta.ipynb](https://github.com/ecoon/watershed
 
 ## For more...
 
-* See the documentation at: https://ecoon.github.io/watershed-workflow
-* See the gallery (work in progress) at: https://ecoon.github.io/watershed-workflow/build/html/gallery.html
+* [See the documentation](https://ecoon.github.io/watershed-workflow)
+* [See a gallery of data product images (work in progress)](https://ecoon.github.io/watershed-workflow/build/html/gallery.html)
 
 ## Funding, attribution, etc
 
