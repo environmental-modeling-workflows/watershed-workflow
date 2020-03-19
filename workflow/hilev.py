@@ -589,6 +589,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
         logging.info("  river median seg length: %g"%np.median(np.array(mins)))
 
     mins = []
+
     for line in hucs.segments:
         coords = np.array(line.coords[:])
         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
@@ -655,6 +656,8 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
     triangles : np.array((n_tris, 3), 'i')
         For each triangle, a list of 3 indices into the vertex array that make
         up that triangle.
+    areas : _only if diagnostics=True_, np.array((n_tris), 'd')
+        Array of triangle areas.
 
     """
     verbose = verbosity > 2
@@ -693,6 +696,8 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
             areas.append(workflow.utils.triangle_area(verts))
             needs_refine.append(my_refine_func(verts, areas[-1]))
 
+        logging.info("  min area = {}".format(np.min(np.array(areas))))
+
         if verbosity > 0:
             plt.figure()
             plt.subplot(121)
@@ -710,6 +715,9 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
             # workflow.plot.rivers(rivers)
             # workflow.plot.triangulation(vertices, triangles, areas)
             # plt.title("triangle area [m^2]")
+
+        return vertices, triangles, np.array(areas)
+            
     return vertices, triangles
 
 def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):
