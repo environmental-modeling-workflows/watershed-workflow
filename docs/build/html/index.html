@@ -24,9 +24,7 @@
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -160,13 +158,13 @@
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
-.nbinput.nblast,
-.nboutput.nblast {
+.nbinput.nblast.container,
+.nboutput.nblast.container {
     margin-bottom: 19px;  /* padding has already 5px */
 }
 
 /* ... except between code cells! */
-.nblast + .nbinput {
+.nblast.container + .nbinput.container {
     margin-top: -19px;
 }
 
@@ -220,7 +218,7 @@ hydrology, anywhere in the (conterminous + Alaska?) US.</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sources.html#module-workflow.source_list">Source List</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#source-list">Source List</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sources.html#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sources.html#digital-elevation-models">Digital Elevation Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sources.html#land-cover">Land Cover</a></li>
@@ -230,10 +228,10 @@ hydrology, anywhere in the (conterminous + Alaska?) US.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-workflow.hilev">High Level API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-workflow.crs">CRS module API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-workflow.plot">plot module API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-workflow.utils">utils module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#high-level-api">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#crs-module-api">CRS module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#plot-module-api">plot module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#utils-module-api">utils module API</a></li>
 </ul>
 </li>
 </ul>
