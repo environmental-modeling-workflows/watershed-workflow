@@ -61,9 +61,9 @@ class FileManagerDaymet:
 
     
     def __init__(self):
-        self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
+        #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
-        self.names = workflow.sources.names.Names(self.name, 'meterology', 'daymet', 'daymet_{year}_{north}x{west}_{south}x{east}.nc')
+        self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
     def get_meteorology(self, varname, year, polygon_or_bounds, crs):
@@ -94,19 +94,61 @@ class FileManagerDaymet:
             # fiona shape object, convert to shapely to get a copy
             polygon_or_bounds = workflow.utils.shply(polygon_or_bounds)
 
+        # convert and get a bounds
         if type(polygon_or_bounds) is list:
             # bounds
-            polygon_or_bounds = workflow.warp.warp_bounds(polygon_or_bounds, crs, workflow.crs.latlon_crs())
+            bounds = workflow.warp.bounds(polygon_or_bounds, crs, workflow.crs.latlon_crs())
         else:
             # polygon
-            polygon_or_bounds = workflow.warp.warp_shply(polygon_or_bounds, crs, workflow.crs.latlon_crs()).bounds
+            bounds = workflow.warp.shply(polygon_or_bounds, crs, workflow.crs.latlon_crs()).bounds
 
+        # feather the bounds
+        # get the bounds and download
+        feather_bounds = list(bounds[:])
+        feather_bounds[0] = feather_bounds[0] - .01
+        feather_bounds[1] = feather_bounds[1] - .01
+        feather_bounds[2] = feather_bounds[2] + .01
+        feather_bounds[3] = feather_bounds[3] + .01
+        fname = self.download(varname, year, feather_bounds)
+        return fname
 
-    def _download(self, varname, year, bounds):
-        url_dict = {'year':str(year),
-                    'variable':varname}
-            
-        request_params = [('var', 'lat'),
+    def download(self, varname, year, bounds, force=False):
+        """Download a NetCDF file covering the bounds.
+        
+        Note: prefer to use get_meteorology() 
+
+        Parameters
+        ----------
+        varname : str
+          Name the variable, see table in the class documentation.
+        year : int
+          A year in the valid range (currently 1980-2018)
+        bounds : [xmin, ymin, xmax, ymax]
+          Desired bounds, in the LatLon CRS.
+        force : bool, optional
+          If true, re-download even if a file already exists.
+
+        Returns
+        -------
+        filename : str
+          Resulting NetCDF file.        
+        """
+        logging.info("Collecting DayMet file to tile bounds: {}".format(bounds))
+
+        # check directory structure
+        os.makedirs(self.names.folder_name(), exist_ok=True)
+
+        # get the target filename
+        filename = self.names.file_name(year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1])
+
+        if (not os.path.exists(filename)):
+            url_dict = {'year':str(year),
+                        'variable':varname}
+            url = self.URL.format(**url_dict)
+            logging.info("  Downloading: {}".format(url))
+            logging.info("      to file: {}".format(filename))
+
+            request_params = [('var', 'lat'),
                           ('var', 'lon'),
                           ('var', varname),
                           ('west', str(bounds[0])),
@@ -115,13 +157,16 @@ class FileManagerDaymet:
                           ('north', str(bounds[3])),
                           ('horizStride', '1'),
                           ('time_start', '{}-01-01T12:00:00Z'.format(year)),
-                          ('time_end', '{}-12-30T12:00:00Z'.format(year)),
+                          ('time_end', '{}-12-31T12:00:00Z'.format(year)),
                           ('timeStride', '1'),
                           ('accept', 'netcdf')
                           ]
-        r = requests.get(url.format(**url_dict),params=request_params)
-        r.raise_for_status()
 
-        with open(self.names.file_name(year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1]), 'wb') as fid:
-            fid.write(r.content)
+            r = requests.get(url,params=request_params)
+            r.raise_for_status()
+
+            with open(filename, 'wb') as fid:
+                fid.write(r.content)
+
+        return filename
         

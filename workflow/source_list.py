@@ -16,6 +16,7 @@ from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, Fil
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_nrcs import FileManagerNRCS
 from workflow.sources.manager_nlcd import FileManagerNLCD
+from workflow.sources.manager_daymet import FileManagerDaymet
 
 from workflow.sources.manager_shape import FileManagerShape
 from workflow.sources.manager_raster import FileManagerRaster
@@ -52,6 +53,10 @@ land_cover_sources = {'NLCD (L48)' : FileManagerNLCD(layer='Land_Cover', locatio
 default_land_cover = 'NLCD (L48)'
 
 
+# available and default meteorology
+met_sources = {'DayMet' : FileManagerDaymet()}
+default_met = 'DayMet'
+
 def get_default_sources():
     """Provides a default set of data sources.
     
@@ -64,6 +69,7 @@ def get_default_sources():
     sources['soil type'] = soil_sources[default_soil_source]
     sources['land cover'] = land_cover_sources[default_land_cover]
     sources['soil thickness'] = None
+    sources['meteorology'] = met_sources[default_met]
     return sources
 
 
@@ -118,7 +124,14 @@ def get_sources(args):
     except AttributeError:
         pass
     else:
-        sources['land cover'] = soil_sources[land_cover]
+        sources['land cover'] = land_cover_sources[land_cover]
+
+    try:
+        met = args.meteorology
+    except AttributeError:
+        pass
+    else:
+        sources['meteorology'] = met_sources[met]
         
     return sources
 

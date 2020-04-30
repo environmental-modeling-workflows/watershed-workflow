@@ -264,6 +264,14 @@ def to_string(crs):
     """Returns the proj4 string of a CRS."""
     return crs.definition_string()
 
+def from_wkt(string):
+    """Returns a CRS from a WKT string specification"""
+    return from_rasterio(rasterio.crs.from_string(string))
+
+def to_wkt(crs):
+    """Returns the WKT string of a CRS."""
+    return to_rasterio(crs).wkt
+
 def default_crs():
     """Returns a default CRS that is functionally useful for North America.
 
