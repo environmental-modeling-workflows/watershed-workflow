@@ -24,7 +24,9 @@
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -89,7 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data Sources</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#source-list">Source List</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-workflow.source_list">Source List</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">USGS National Hydrography and Water Boundary Datasets (NHD / WBD)</a></li>
 </ul>
@@ -185,13 +187,13 @@
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
+.nbinput.nblast,
+.nboutput.nblast {
     margin-bottom: 19px;  /* padding has already 5px */
 }
 
 /* ... except between code cells! */
-.nblast.container + .nbinput.container {
+.nblast + .nbinput {
     margin-top: -19px;
 }
 
@@ -217,8 +219,54 @@ in the <span class="xref std std-ref">Package configuration</span> file.</p>
 of getting and working with default sources, and the broad classes of
 sources frequently used in workflows, and default values for these
 types of data are provide by existing managers.</p>
-<div class="section" id="source-list">
-<h2>Source List<a class="headerlink" href="#source-list" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-workflow.source_list">
+<span id="source-list"></span><h2>Source List<a class="headerlink" href="#module-workflow.source_list" title="Permalink to this headline">¶</a></h2>
+<p>This module provides a dictionary of sources, broken out by data type, and a
+dictionary of default sources.</p>
+<p>These dictionaries are provided as module-local (singleton) variables.</p>
+<ul class="simple">
+<li>huc_sources : A dictionary of sources that provide USGS HUC boundaries.</li>
+<li>hydrography_sources : A dictionary of sources that provide river reaches by HUC.</li>
+<li>dem_sources : A dictionary of available digital elevation models.</li>
+<li>soil_sources : A dictionary of available sources for soil properties.</li>
+<li>land_cover_sources : A dictionary of available land cover datasets.</li>
+</ul>
+<dl class="function">
+<dt id="workflow.source_list.get_default_sources">
+<code class="descclassname">workflow.source_list.</code><code class="descname">get_default_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/source_list.html#get_default_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.source_list.get_default_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a default set of data sources.</p>
+<p>Returns a dictionary with default sources for each type.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.source_list.get_sources">
+<code class="descclassname">workflow.source_list.</code><code class="descname">get_sources</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/source_list.html#get_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.source_list.get_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parsers the command line argument struct from argparse and provides an
+updated set of data sources.</p>
+<dl class="docutils">
+<dt>args <span class="classifier-delimiter">:</span> <span class="classifier">struct</span></dt>
+<dd>A python struct generated from an argparse.ArgumentParser object with
+source options set by workflow.ui.*_source_options</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>sources</strong> – Diectionary of defaults for each of “HUC”, “hydrography”, “DEM”, “soil
+type”, and “land cover”.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.source_list.log_sources">
+<code class="descclassname">workflow.source_list.</code><code class="descname">log_sources</code><span class="sig-paren">(</span><em>sources</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/source_list.html#log_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.source_list.log_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pretty print source dictionary to log.</p>
+</dd></dl>
+
 <p>Implementing a new data source for an existing type of data should
 follow the API for existing implementations.  This makes it easy to
 use it with the existing high level API.  See the
@@ -259,6 +307,118 @@ boundaries read from shapefiles can use the <span class="xref std std-ref">Gener
 manager.</p>
 <div class="section" id="usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">
 <h3>USGS National Hydrography and Water Boundary Datasets (NHD / WBD)<a class="headerlink" href="#usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_nhd.</code><code class="descname">_FileManagerNHD</code><span class="sig-paren">(</span><em>name: str</em>, <em>file_level: int</em>, <em>lowest_level: int</em>, <em>name_manager</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manager for interacting with USGS National Hydrography Datasets.</p>
+<p>Note that this includes NHD, NHDPlus, and WBD – this class should not
+be used directly but instead use one of the derived classes:</p>
+<ul class="simple">
+<li><cite>manager_nhd.FileManagerNHD</cite></li>
+<li><cite>manager_nhd.FileManagerNHDPlus</cite></li>
+<li><cite>manager_nhd.FileManagerWBD</cite></li>
+</ul>
+<p>Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
+National Hydrography Dataset (NHD), USGS and EPA datasets available at
+multiple resolutions to represent United States watersheds, including
+Alaska <a class="reference internal" href="#nhd" id="id1">[NHD]</a>.  Also used is the NHD Plus dataset, an augmented dataset
+built on watershed boundaries and elevation products.  By default, the
+1:100,000 High Resolution datasets are used.  Data is discovered through
+The National Map’s <a class="reference internal" href="#tnm" id="id2">[TNM]</a> REST API, which allows querying for data files
+organized by HUC and resolution via HTTP POST requests, providing
+direct-download URLs.  Files are downloaded on first request, unzipped, and
+stored in the data library for future use.  Currently, files are indexed by
+2-digit (WBD), 4-digit (NHD Plus HR) and 8-digit (NHD) HUCs.</p>
+<table class="docutils citation" frame="void" id="nhd" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[NHD]</a></td><td><a class="reference external" href="https://www.usgs.gov/core-science-systems/ngp/national-hydrography">https://www.usgs.gov/core-science-systems/ngp/national-hydrography</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="tnm" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[TNM]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> <a class="reference external" href="https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf">https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_huc">
+<code class="descname">get_huc</code><span class="sig-paren">(</span><em>huc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_huc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_huc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the specified HUC in its native CRS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>hu</strong> (<em>dict</em>) – Fiona shape object representing the hydrologic unit.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_hucs">
+<code class="descname">get_hucs</code><span class="sig-paren">(</span><em>huc</em>, <em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_hucs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_hucs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all sub-catchments of a given HUC level within a given HUC.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</li>
+<li><strong>level</strong> (<em>int</em>) – Level of requested sub-catchments.  Must be larger or equal to the
+level of the input huc.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>hus</strong> (<em>list(dict)</em>) – List of fiona shape objects representing the hydrologic units.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="workflow.sources.manager_nhd._FileManagerNHD.get_hydro">
+<code class="descname">get_hydro</code><span class="sig-paren">(</span><em>huc</em>, <em>bounds=None</em>, <em>bounds_crs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nhd.html#_FileManagerNHD.get_hydro"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nhd._FileManagerNHD.get_hydro" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all reaches within a given HUC and/or coordinate bounds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>huc</strong> (<em>int</em><em> or </em><em>str</em>) – The USGS Hydrologic Unit Code</li>
+<li><strong>bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em><em>, </em><em>optional</em>) – Coordinate bounds to filter reaches returned.  If this is provided,
+bounds_crs must also be provided.</li>
+<li><strong>bounds_crs</strong> (<em>CRS</em><em>, </em><em>optional</em>) – CRS of the above bounds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – The fiona shapefile profile (see Fiona documentation).</li>
+<li><strong>reaches</strong> (<em>list(dict)</em>) – List of fiona shape objects representing the stream reaches.</li>
+<li><em>Note this finds and downloads files as needed.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="digital-elevation-models">
@@ -278,6 +438,71 @@ stairstepped; this improves mesh quality in meshes near the resolution
 of the underlying elevation dataset.</p>
 <div class="section" id="national-elevation-dataset">
 <h3>National Elevation Dataset<a class="headerlink" href="#national-elevation-dataset" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_ned.FileManagerNED">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_ned.</code><code class="descname">FileManagerNED</code><span class="sig-paren">(</span><em>resolution='1/3 arc-second'</em>, <em>file_format='IMG'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_ned.html#FileManagerNED"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_ned.FileManagerNED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Watershed Workflow leverages the USGS’s National Elevation Dataset (NED), a
+precursor to and currently part of the USGS’s 3D Elevation Program (3DEP)
+<a class="reference internal" href="#ned" id="id3">[NED]</a>.  It is available seamlessly at a variety of resolutions ranging
+from 2 arc-seconds to 1/3 arc-seconds (~60m and 10m, respectively) in the
+conterminous United States and comparable resolution through most of
+Alaska.  Like the NHD data, these datasets are available through The
+National Map’s <a class="reference internal" href="#tnm" id="id4">[TNM]</a> REST API, and are provided in 1-degree tiles.
+Watershed Workflow manages querying for URLs, downloading these tiles on
+demand, and forming the mosaic of images through underlying capability in
+rasterio to provide a single raster across the watershed requested.  Higher
+resolution products, including LiDAR products across the conterminous US
+and IfSAR products across Alaska are coming available, but these are not
+currently supported by Watershed Workflow.</p>
+<table class="docutils citation" frame="void" id="ned" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[NED]</a></td><td></td></tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>resolution</strong> (<em>str</em><em>, </em><em>optional</em>) – Resolution of the desired product.  One of:
+* <cite>“1/3 arc-second</cite>” (default)
+* <cite>“1 arc-second</cite>”</li>
+<li><strong>file_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Desired output format.  Default and universally available is <cite>“IMG</cite>”.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_ned.FileManagerNED.get_raster">
+<code class="descname">get_raster</code><span class="sig-paren">(</span><em>shape</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_ned.html#FileManagerNED.get_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_ned.FileManagerNED.get_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download and read a DEM for this shape, clipping to the shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shape</strong> (<em>fiona</em><em> or </em><em>shapely shape</em>) – Shape to provide bounds of the raster.</li>
+<li><strong>crs</strong> (<em>CRS</em>) – CRS of the shape.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>rasterio profile</em>) – Profile of the raster.</li>
+<li><strong>raster</strong> (<em>np.ndarray</em>) – Array containing the elevation data.</li>
+<li><em>Note that the raster provided is in its native CRS (which is in the</em></li>
+<li><em>rasterio profile), not the shape’s CRS.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="land-cover">
@@ -290,6 +515,65 @@ generated and then used to generate and affect processes and process
 parameters.</p>
 <div class="section" id="national-land-cover-dataset">
 <h3>National Land Cover Dataset<a class="headerlink" href="#national-land-cover-dataset" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_nlcd.FileManagerNLCD">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_nlcd.</code><code class="descname">FileManagerNLCD</code><span class="sig-paren">(</span><em>layer='Land_Cover'</em>, <em>year=None</em>, <em>location='L48'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nlcd.html#FileManagerNLCD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nlcd.FileManagerNLCD" title="Permalink to this definition">¶</a></dt>
+<dd><p>National Land Cover Database provides a raster for indexed land cover types
+<a class="reference internal" href="#nlcd" id="id5">[NLCD]</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">NLCD does not provide an API for subsetting the data, so the
+first time this is used, it WILL result in a long download time as it
+grabs the big file.  After that it will be much faster as the file is
+already local.</p>
+</div>
+<p>TODO: Labels and colors for these indices should get moved here, but
+currently reside in workflow.colors.</p>
+<dl class="docutils">
+<dt>layer <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd>Layer of interest.  Default is <cite>“Land_Cover</cite>”, should also be one for at
+least imperviousness, maybe others?</dd>
+<dt>year <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd>Year of dataset.  Defaults to the most current available at the location.</dd>
+<dt>location <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd>Location code.  Default is <cite>“L48</cite>” (lower 48), valid include <cite>“AK</cite>”
+(Alaska), <cite>“HI</cite>” (Hawaii, and <cite>“PR</cite>” (Puerto Rico).</dd>
+</dl>
+<table class="docutils citation" frame="void" id="nlcd" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[NLCD]</a></td><td><a class="reference external" href="https://www.mrlc.gov/">https://www.mrlc.gov/</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_nlcd.FileManagerNLCD.get_raster">
+<code class="descname">get_raster</code><span class="sig-paren">(</span><em>shply</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nlcd.html#FileManagerNLCD.get_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nlcd.FileManagerNLCD.get_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download and read a DEM for this shape, clipping to the shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shply</strong> (<em>fiona</em><em> or </em><em>shapely shape</em>) – Shape to provide bounds of the raster.</li>
+<li><strong>crs</strong> (<em>CRS</em>) – CRS of the shape.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>rasterio profile</em>) – Profile of the raster.</li>
+<li><strong>raster</strong> (<em>np.ndarray</em>) – Array containing the elevation data.</li>
+<li><em>Note that the raster provided is in NLCD native CRS (which is in the</em></li>
+<li><em>rasterio profile), not the shape’s CRS.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="soil-structure-and-properties">
@@ -301,6 +585,50 @@ data can be essential in these types of simulations.  Often these are
 mapped into the simulation mesh.</p>
 <div class="section" id="national-resources-conservation-service-soils">
 <h3>National Resources Conservation Service Soils<a class="headerlink" href="#national-resources-conservation-service-soils" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_nrcs.FileManagerNRCS">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_nrcs.</code><code class="descname">FileManagerNRCS</code><a class="reference internal" href="_modules/workflow/sources/manager_nrcs.html#FileManagerNRCS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nrcs.FileManagerNRCS" title="Permalink to this definition">¶</a></dt>
+<dd><p>The National Resources Conservation Service’s SSURGO Database <a class="reference internal" href="#nrcs" id="id6">[NRCS]</a>
+contains a huge amount of information about soil texture, parameters, and
+structure, and are provided as shape files containing soil type
+delineations with map-unit-keys (MUKEYs).  These are re-broadcast onto a
+raster (much like gSSURGO, which is unfortunately not readable by open
+tools) and used to index soil parameterizations for simulation.</p>
+<p>TODO: Functionality for mapping from MUKEY to soil parameters.</p>
+<table class="docutils citation" frame="void" id="nrcs" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[NRCS]</a></td><td><a class="reference external" href="https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_053627">https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/?cid=nrcs142p2_053627</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_nrcs.FileManagerNRCS.get_shapes">
+<code class="descname">get_shapes</code><span class="sig-paren">(</span><em>bounds</em>, <em>bounds_crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_nrcs.html#FileManagerNRCS.get_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_nrcs.FileManagerNRCS.get_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downloads and reads soil shapefiles.</p>
+<p>This accepts only a bounding box.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em>) – Bounding box to filter shapes.</li>
+<li><strong>crs</strong> (<em>CRS</em>) – Coordinate system of the bounding box.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>profile</strong> (<em>dict</em>) – Fiona profile of the shapefile.</li>
+<li><strong>shapes</strong> (<em>list</em>) – List of fiona shapes that match the index or bounds.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="meteorology">
 <h3>Meteorology<a class="headerlink" href="#meteorology" title="Permalink to this headline">¶</a></h3>
@@ -319,6 +647,88 @@ both on the way and needs more input to develop community consensus.</p>
 documentation may be correct, and it is definitely a moving
 target.  Buyer beware!</p>
 </div>
+<dl class="class">
+<dt id="workflow.sources.manager_daymet.FileManagerDaymet">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_daymet.</code><code class="descname">FileManagerDaymet</code><a class="reference internal" href="_modules/workflow/sources/manager_daymet.html#FileManagerDaymet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_daymet.FileManagerDaymet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Daymet meterological datasets.</p>
+<p>Daymet is a historic, spatially interpolated product which ingests large
+number of point-sources of meterological data, aggregates them to daily
+time series, and spatially interpolates them onto a 1km gridded product that
+covers all of North America from 1980 to 2018 <a class="reference internal" href="#id8" id="id7">[Daymet]</a>.</p>
+<p>Variable names and descriptions</p>
+<table border="1" class="colwidths-given docutils">
+<colgroup>
+<col width="20%" />
+<col width="20%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">name</th>
+<th class="head">units</th>
+<th class="head">description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>prcp</td>
+<td><span class="math notranslate nohighlight">\(mm / day\)</span></td>
+<td>Total daily precipitation</td>
+</tr>
+<tr class="row-odd"><td>tmin, tmax</td>
+<td><span class="math notranslate nohighlight">\(^\circ C\)</span></td>
+<td>Min/max daily air temperature</td>
+</tr>
+<tr class="row-even"><td>srad</td>
+<td><span class="math notranslate nohighlight">\(W / m^2\)</span></td>
+<td>Incoming solar radiation</td>
+</tr>
+<tr class="row-odd"><td>vp</td>
+<td><span class="math notranslate nohighlight">\(Pa\)</span></td>
+<td>Vapor pressure</td>
+</tr>
+<tr class="row-even"><td>swe</td>
+<td><span class="math notranslate nohighlight">\(Kg / m^2\)</span></td>
+<td>Snow water equivalent</td>
+</tr>
+<tr class="row-odd"><td>dayl</td>
+<td><span class="math notranslate nohighlight">\(s / day\)</span></td>
+<td>Duration of sunlight</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[Daymet]</a></td><td><a class="reference external" href="https://daymet.ornl.gov">https://daymet.ornl.gov</a></td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="workflow.sources.manager_daymet.FileManagerDaymet.get_meteorology">
+<code class="descname">get_meteorology</code><span class="sig-paren">(</span><em>varname</em>, <em>year</em>, <em>polygon_or_bounds</em>, <em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_daymet.html#FileManagerDaymet.get_meteorology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_daymet.FileManagerDaymet.get_meteorology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets file for a single year and single variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>varname</strong> (<em>str</em>) – Name the variable, see table in the class documentation.</li>
+<li><strong>year</strong> (<em>int</em>) – A year in the valid range (currently 1980-2018)</li>
+<li><strong>polygon_or_bounds</strong> (<em>fiona</em><em> or </em><em>shapely shape</em><em>, or </em><em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em>) – Collect a file that covers this shape or bounds.</li>
+<li><strong>crs</strong> (<em>CRS object</em>) – Coordinate system of the above polygon_or_bounds</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>filename</strong> – Path to the data file.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="generic-files">
 <h2>Generic Files<a class="headerlink" href="#generic-files" title="Permalink to this headline">¶</a></h2>
@@ -326,9 +736,88 @@ target.  Buyer beware!</p>
 generic use.</p>
 <div class="section" id="generic-rasters">
 <h3>Generic rasters<a class="headerlink" href="#generic-rasters" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_raster.FileManagerRaster">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_raster.</code><code class="descname">FileManagerRaster</code><span class="sig-paren">(</span><em>filename: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_raster.html#FileManagerRaster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_raster.FileManagerRaster" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple class for reading rasters.</p>
+<dl class="docutils">
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Path to the raster file.</dd>
+</dl>
+<dl class="method">
+<dt id="workflow.sources.manager_raster.FileManagerRaster.get_raster">
+<code class="descname">get_raster</code><span class="sig-paren">(</span><em>band=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_raster.html#FileManagerRaster.get_raster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_raster.FileManagerRaster.get_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a raster from the file.</p>
+<dl class="docutils">
+<dt>band <span class="classifier-delimiter">:</span> <span class="classifier">int,optional</span></dt>
+<dd>Default is 1, the first band (1-indexed).</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="generic-shapefiles">
 <h3>Generic shapefiles<a class="headerlink" href="#generic-shapefiles" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="workflow.sources.manager_shape.FileManagerShape">
+<em class="property">class </em><code class="descclassname">workflow.sources.manager_shape.</code><code class="descname">FileManagerShape</code><span class="sig-paren">(</span><em>filename: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_shape.html#FileManagerShape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_shape.FileManagerShape" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple class for reading shapefiles.</p>
+<dl class="docutils">
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Path to the shapefile.</dd>
+</dl>
+<dl class="method">
+<dt id="workflow.sources.manager_shape.FileManagerShape.get_shape">
+<code class="descname">get_shape</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_shape.html#FileManagerShape.get_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_shape.FileManagerShape.get_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the file and filter to get shapes, then ensures there is only one
+match.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>that of get_shapes</strong><strong>(</strong><strong>)</strong><strong></strong> (<em>See</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><code class="xref py py-obj docutils literal notranslate"><span class="pre">profile</span></code> – Fiona profile of the shapefile.</li>
+<li><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(Polygon)</span></code> – List of fiona shapes that match the index or bounds.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="workflow.sources.manager_shape.FileManagerShape.get_shapes">
+<code class="descname">get_shapes</code><span class="sig-paren">(</span><em>index_or_bounds=-1</em>, <em>crs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/sources/manager_shape.html#FileManagerShape.get_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.sources.manager_shape.FileManagerShape.get_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the file and filter to get shapes.</p>
+<p>This accepts either an index, which is the integer index of the desired
+shape in the file, or a bounding box.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>index_or_bounds</strong> (int or <code class="xref py py-obj docutils literal notranslate"><span class="pre">[xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax]</span></code>) – Index of the requested shape in filename, or bounding box to filter
+shapes, or defaults to -1 to get them all.</li>
+<li><strong>crs</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">crs</span></code>) – Coordinate system of the bounding box (or None if index).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><code class="xref py py-obj docutils literal notranslate"><span class="pre">profile</span></code> – Fiona profile of the shapefile.</li>
+<li><code class="xref py py-obj docutils literal notranslate"><span class="pre">list(Polygon)</span></code> – List of fiona shapes that match the index or bounds.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 </div>

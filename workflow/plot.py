@@ -23,6 +23,7 @@ import logging
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import collections as pltc
+from matplotlib import cm as pcm
 import shapely
 import rasterio
 import descartes
@@ -31,6 +32,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import workflow.utils
 import workflow.crs
+import workflow.colors
 
 def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
     """Returns an axis with a given projection.
@@ -349,11 +351,38 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                     res.append(ax.add_patch(patch))
             else:
                 res = []
+
+                if type(color[0]) is not tuple and type(color[0]) is not np.ndarray:
+                    # likely just an array -- map using cmap
+                    try:
+                        cmap = kwargs.pop('cmap')
+                    except KeyError:
+                        cmap = pcm.viridis
+
+                    try:
+                        cmap_norm = kwargs.pop('norm')
+                    except KeyError:
+                        cmap_norm = None
+                        
+                    cm = workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
+                    color = np.array([cm(c) for c in color])
+
+                if kwargs['facecolor'] == 'color':
+                    kwargs.pop('facecolor')
+                    face_is_edge = True
+                else:
+                    face_is_edge = False
+                
                 for c, shp in zip(color, shps):
-                    patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
+                    if face_is_edge:
+                        patch = descartes.PolygonPatch(shp, facecolor=c, **kwargs)
+                    else:
+                        patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
+                        
                     # if projection is not None:
                     #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
+                    
         ax.autoscale()
     else:
         raise TypeError('Unknown shply type: {}'.format(type(next(iter(shps)))))
@@ -411,6 +440,36 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
         else:        
             col =  ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
     return col
+
+
+def mesh(m2, crs, color='gray', ax=None, **kwargs):
+    """Plots a workflow.mesh.Mesh2D object.
+
+    Parameters
+    ----------
+    m2 : Mesh2D
+      The 2D mesh to plot.
+    crs : CRS object
+      Coordinate system of the points.
+    color : matplotlib color object or iterable or str, optional
+      Either a matplotlib color object (for uniform colors), or a list of color
+      objects (length equal to the length of tris), or 'elevation' to color by
+      z coordinate.
+    ax : matplotlib ax object
+      Axes to plot on.  Calls get_ax() if not provided.
+    kwargs : dict
+      Extra arguments passed to plot_trisurf() (for 3D axes) or tripcolor()
+      (for 2D).
+
+    Returns
+    -------
+    col : matplotlib collection
+      Collection of patches representing the triangles.
+
+    """
+    shplys = [ shapely.geometry.Polygon(m2.coords[c,:]) for c in m2.conn ]
+    return shply(shplys, crs, color, ax, **kwargs)
+
 
 
 def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):

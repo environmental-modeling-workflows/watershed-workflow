@@ -77,7 +77,7 @@ def gas_cmap():
 
 
 # jet-by-index
-def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet):
+def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
     """Factory for a Scalar Mappable, which gives a color based upon a scalar value.
 
     Typical Usage:
@@ -89,8 +89,8 @@ def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet):
       ...
       >>> plt.show()
     """
-
-    norm = matplotlib.colors.Normalize(vmin, vmax)
+    if norm is None:
+        norm = matplotlib.colors.Normalize(vmin, vmax)
     sm = matplotlib.cm.ScalarMappable(norm, cmap)
     def mapper(value):
         return sm.to_rgba(value)

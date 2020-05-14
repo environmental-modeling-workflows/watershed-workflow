@@ -31,10 +31,9 @@ import workflow.sources.manager_shape
 
 __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
            'get_shapes', 'get_split_form_shapes', 'get_reaches',
-           'get_raster_on_shape', 'get_masked_raster_on_shape',
-           'find_huc', 'simplify_and_prune',
-           'triangulate',
-           'elevate', 'values_from_raster', 'color_raster_from_shapes']
+           'find_huc', 'simplify_and_prune', 'triangulate',
+           'get_raster_on_shape', 'values_from_raster',
+           'elevate', 'color_raster_from_shapes']
 
 #
 # functions for getting objects
@@ -325,12 +324,16 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
     # not too long
     if long is not None:
-        reaches_s = [reach for reach in reaches_s if reach.length() < long]
+        n_r = len(reaches_s)
+        reaches_s = [reach for reach in reaches_s if reach.length < long]
+        logging.info("  filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
+        
 
     return crs, reaches_s
 
 
-def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.):
+def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
+                        mask=False, nodata=-1):
     """Collects a raster DEM that covers the requested shape.
 
     Parameters
@@ -346,6 +349,10 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.):
     buffer : double, optional
         Size of a buffer, in units of the shape's CRS, added to shape to ensure
         pixels cover the entire shape.  Default is 0.
+    mask : bool, optional=False
+        If True, mask the raster outside of shape.
+    nodata : dtype, optional=-1
+        Value to place outside of shape.
 
     Returns
     -------
@@ -372,48 +379,19 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.):
     if raster_crs is not None:
         profile, raster = workflow.warp.raster(profile, raster, raster_crs)
 
-    return profile, raster
+    if mask:
+        # mask the raster
+        mask = rasterio.features.geometry_mask([shape,], raster.shape,
+                                               profile['transform'], invert=True)
+        masked_raster = np.where(mask, raster, nodata)
 
-
-def get_masked_raster_on_shape(source, shape, crs, nodata=-1, buffer=0.):
-    """Collects a raster that is masked to the requested shape.
-
-    Parameters
-    ----------
-    source : source-type
-        Source object providing a get_raster() method.
-    shape : Polygon
-        Shapely or fiona polygon on which to get the raster.
-    crs : crs-type
-        CRS of shape.
-    nodata : dtype, optional
-        Value to place in the array outside of shape.  Note that the type of
-        this value should be the same as the data in the raster.  Default is
-        -1.
-    buffer : double, optional
-        Size of a buffer, in units of the shape's CRS, added to shape to ensure
-        pixels cover the entire shape.  Default is 0.
-
-    Returns
-    -------
-    profile : dict
-        Rasterio profile of the image including rasterio CRS and transform
-    raster : ndarray
-        The raster data in a 2D-array.
-
-    """
-    # get the raster
-    profile, raster = get_raster_on_shape(source, shape, crs, crs, buffer)
-
-    # mask the raster
-    mask = rasterio.features.geometry_mask([shape,], raster.shape, profile['transform'], invert=True)
-    masked_raster = np.where(mask, raster, nodata)
-
-    transform = profile['transform']
-    x0 = transform * (0,0)
-    x1 = transform * (profile['width'], profile['height'])
-    logging.info(" raster bounds = {}".format((x0[0], x0[1], x1[0], x1[1])))
-    return profile, masked_raster
+        transform = profile['transform']
+        x0 = transform * (0,0)
+        x1 = transform * (profile['width'], profile['height'])
+        logging.info(" raster bounds = {}".format((x0[0], x0[1], x1[0], x1[1])))
+        return profile, masked_raster
+    else:
+        return profile, raster
 
 
 #
@@ -524,6 +502,8 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
         A split-form HUC object containing all reaches.
     reaches : list(LineString)
         A list of reaches.
+    filter : bool, optional=True
+        If true, filter reaches to the boundary of hucs.
     simplify : float, optional
         Argument to shapely's simplify, a measure of how far to allow shapes to
         move.  Default is 10 (units are in that of the CRS of hucs and

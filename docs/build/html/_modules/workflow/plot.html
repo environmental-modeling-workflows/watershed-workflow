@@ -178,6 +178,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">collections</span> <span class="k">as</span> <span class="n">pltc</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">cm</span> <span class="k">as</span> <span class="n">pcm</span>
 <span class="kn">import</span> <span class="nn">shapely</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
 <span class="kn">import</span> <span class="nn">descartes</span>
@@ -186,6 +187,7 @@
 
 <span class="kn">import</span> <span class="nn">workflow.utils</span>
 <span class="kn">import</span> <span class="nn">workflow.crs</span>
+<span class="kn">import</span> <span class="nn">workflow.colors</span>
 
 <div class="viewcode-block" id="get_ax"><a class="viewcode-back" href="../../api.html#workflow.plot.get_ax">[docs]</a><span class="k">def</span> <span class="nf">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns an axis with a given projection.</span>
@@ -504,11 +506,38 @@
                     <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                    <span class="c1"># likely just an array -- map using cmap</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">cmap</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;cmap&#39;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">cmap</span> <span class="o">=</span> <span class="n">pcm</span><span class="o">.</span><span class="n">viridis</span>
+
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">cmap_norm</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;norm&#39;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">cmap_norm</span> <span class="o">=</span> <span class="kc">None</span>
+                        
+                    <span class="n">cm</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">cm_mapper</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">color</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">color</span><span class="p">),</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">cmap_norm</span><span class="p">)</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cm</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">color</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span>
+                    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;facecolor&#39;</span><span class="p">)</span>
+                    <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">False</span>
+                
                 <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">shp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">shps</span><span class="p">):</span>
-                    <span class="n">patch</span> <span class="o">=</span> <span class="n">descartes</span><span class="o">.</span><span class="n">PolygonPatch</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">face_is_edge</span><span class="p">:</span>
+                        <span class="n">patch</span> <span class="o">=</span> <span class="n">descartes</span><span class="o">.</span><span class="n">PolygonPatch</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">patch</span> <span class="o">=</span> <span class="n">descartes</span><span class="o">.</span><span class="n">PolygonPatch</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                        
                     <span class="c1"># if projection is not None:</span>
                     <span class="c1">#     patch.set_transform(projection)</span>
                     <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">))</span>
+                    
         <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Unknown shply type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))))</span>
@@ -566,6 +595,36 @@
         <span class="k">else</span><span class="p">:</span>        
             <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">triplot</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">col</span></div>
+
+
+<div class="viewcode-block" id="mesh"><a class="viewcode-back" href="../../api.html#workflow.plot.mesh">[docs]</a><span class="k">def</span> <span class="nf">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plots a workflow.mesh.Mesh2D object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m2 : Mesh2D</span>
+<span class="sd">      The 2D mesh to plot.</span>
+<span class="sd">    crs : CRS object</span>
+<span class="sd">      Coordinate system of the points.</span>
+<span class="sd">    color : matplotlib color object or iterable or str, optional</span>
+<span class="sd">      Either a matplotlib color object (for uniform colors), or a list of color</span>
+<span class="sd">      objects (length equal to the length of tris), or &#39;elevation&#39; to color by</span>
+<span class="sd">      z coordinate.</span>
+<span class="sd">    ax : matplotlib ax object</span>
+<span class="sd">      Axes to plot on.  Calls get_ax() if not provided.</span>
+<span class="sd">    kwargs : dict</span>
+<span class="sd">      Extra arguments passed to plot_trisurf() (for 3D axes) or tripcolor()</span>
+<span class="sd">      (for 2D).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    col : matplotlib collection</span>
+<span class="sd">      Collection of patches representing the triangles.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="n">shply</span><span class="p">(</span><span class="n">shplys</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="dem"><a class="viewcode-back" href="../../api.html#workflow.plot.dem">[docs]</a><span class="k">def</span> <span class="nf">dem</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

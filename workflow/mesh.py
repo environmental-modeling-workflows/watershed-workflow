@@ -1,9 +1,9 @@
-"""Extrudes a 2D mesh to generate an ExodusII 3D mesh.
+"""Tools for turning data into meshes, then writing them to file.
 
 Works with and assumes all polyhedra cells (and polygon faces).
 
 Requires building a reasonably recent version of Exodus to get 
-the associated exodus.py wrappers.
+the associated exodus.py wrappers in python3.
 
 Note that this is typically done in your standard ATS installation,
 assuming you have built your Amanzi TPLs with shared libraries (the
@@ -17,87 +17,125 @@ import numpy as np
 import collections
 import logging
 import exodus
+import attr
+import scipy.optimize
 
-def _list_or_array(obj):
-    return type(obj) == list or type(obj) == np.ndarray
+def _is_list_or_array(val):
+    assert type(val) is list or type(val) is np.ndarray
+
+def _is_valid_index(val):
+    assert(type(val) is int)
+    assert(val >= 0)
     
+def _iter_is_nonnegative(val):
+    _is_list_or_array(val)
+    mval = min(val)
+    assert(type(mval) is int)
+    assert(mval >= 0)
 
+def _valid_coords_array(coords, dim=None):
+    if dim is None:
+        dim = [2,3]
+    if type(dim) is int:
+        dim = [dim,]
+    assert type(coords) == np.ndarray
+    assert len(coords.shape) == 2
+    vdim = coords.shape[1]
+    assert vdim in dim
+
+def _valid_conn(conn, size=1e12):
+    assert type(conn) is list or type(conn) is np.ndarray
+
+    for c in conn:
+        assert(type(c) is list or type(c) is np.ndarray)
+        assert(len(set(c)) is len(c))
+        assert min(c) >= 0
+        assert max(c) < size
+    
+def _v(func):
+    def validator(instance, attribute, val):
+        func(val)
+    return validator
+
+_is_str = attr.validators.instance_of(str)
+_is_entity = attr.validators.in_(['CELL', 'FACE', 'NODE'])
+
+@attr.s
 class SideSet(object):
     """A collection of faces in elements."""
-    def __init__(self, name, setid, elem_list, side_list):
-        assert(type(setid) == int)
-        assert(_list_or_array(side_list))
-        assert(_list_or_array(elem_list))
-
-        self.name = name
-        self.setid = setid
-        self.elem_list = elem_list
-        self.side_list = side_list
-
+    name = attr.ib(validator=_is_str)
+    setid = attr.ib(validator=_v(_is_valid_index))
+    elem_list = attr.ib(validator=_v(_iter_is_nonnegative))
+    side_list = attr.ib(validator=_v(_iter_is_nonnegative))
+    
+@attr.s
 class LabeledSet(object):
     """A generic collection of entities."""
-    def __init__(self, name, setid, entity, ent_ids):
-        assert entity in ['CELL', 'FACE', 'NODE']
-        assert(type(setid) == int)
-        assert(_list_or_array(ent_ids))
+    name = attr.ib(validator=_is_str)
+    setid = attr.ib(validator=_v(_is_valid_index))
+    entity = attr.ib(validator=_v(_is_entity))
+    ent_ids = attr.ib(validator=_v(_iter_is_nonnegative))
 
-        self.name = name
-        self.setid = setid
-        self.entity = entity
-        self.ent_ids = np.array(ent_ids)
+    def validate(self, size):
+        for i in self.ent_ids:
+            assert(-1 < i < size)
+        
 
 class Mesh2D(object):
     """A surface mesh."""
+    def __init__(self, coords, conn,
+                 labeled_sets=None, check_handedness=True, eps=0.01):
+        """Creates a 2D mesh.
 
-    def __init__(self, coords, connectivity, labeled_sets=None, check_handedness=True):
-        """Creates a 2D mesh from coordinates and a list cell-to-node connectivity lists.
+        Parameters
+        ----------
+        coords : np.ndarray(NCOORDS,NDIMS)
+            Array of coordinates of the 2D mesh.
+        conn : list(lists)
+            List of lists of indices into coords that form the cells.
+        labeled_sets : list(LabeledSet), optional
+            List of labeled sets to add to the mesh.
+        check_handedness : bool, optional=True
+            If true, makes sure all cells are oriented with positive (upward)
+            normal.  Default is true.
+        eps : float, optional=0.01
+            A small measure of length between coords.
 
-        coords          | numpy array of shape (NCOORDS, NDIMS)
-        connectivity    | list of lists of integer indices into coords specifying a
-                        | (clockwise OR counterclockwise) ordering of the nodes around
-                        | the 2D cell
-        labeled_sets    | list of LabeledSet objects
-
-        Note: coords, connectivity is the output provided by a
+        Note: (coords, conn) may be output provided by a
         workflow.triangulation.triangulate() call.
         """
-        assert type(coords) == np.ndarray
-        assert len(coords.shape) == 2
-
-        self.dim = coords.shape[1]
-        assert self.dim == 2 or self.dim == 3
-
+        self.eps = eps
         self.coords = coords
-        self.conn = connectivity
-        if labeled_sets is not None:
-            self.labeled_sets = labeled_sets
-        else:
-            self.labeled_sets = []
+        self.conn = conn
+
+        if labeled_sets is None:
+            labeled_sets = []
+        self.labeled_sets = labeled_sets
 
         self.validate()
+
+        self.dim = self.coords.shape[1]
         self.edge_counts()
         if check_handedness:
             self.check_handedness()
 
     def validate(self):
         """Checks the validity of the mesh, or throws an AssertionError."""
-        assert self.coords.shape[1] == 2 or self.coords.shape[1] == 3
-        assert(_list_or_array(self.conn))
-        for f in self.conn:
-            assert(_list_or_array(f))
-            assert len(set(f)) == len(f)
-            for i in f:
-                assert i < self.coords.shape[0]
+        _valid_coords_array(self.coords)
+        _valid_conn(self.conn, len(self.coords))
 
+        for c in self.conn:
+            for i in range(len(c)): # checks degeneracy of edges
+                j = (i+1)%len(c)
+                assert np.linalg.norm(self.coords[c[i]] - self.coords[c[j]]) > self.eps
+
+        assert(type(self.labeled_sets) is list)
         for ls in self.labeled_sets:
-            if ls.entity == "NODE":
+            if ls.entity == 'NODE':
                 size = len(self.coords)
-            elif ls.entity == "CELL":
+            elif ls.entity == 'CELL':
                 size = len(self.conn)
-
-            for i in ls.ent_ids:
-                assert i < size
-        return True
+            ls.validate(size)
 
     def num_cells(self):
         return len(self.conn)
@@ -147,8 +185,6 @@ class Mesh2D(object):
     def boundary_nodes(self):
         return [e[0] for e in self.boundary_edges()]
         
-        
-    
     def check_handedness(self):
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
         for conn in self.conn:
@@ -334,85 +370,367 @@ class Mesh2D(object):
         points = np.array([Xc, Yc, Zc])
         return cls(points.transpose(), conn)
 
+    def to_dual(self):
+        """Creates a 2D surface mesh from a primal 2D triangular surface mesh.
+        
+        Returns
+        -------
+        dual_nodes : np.ndarray
+        dual_conn : list(lists)
+            The nodes and elem_to_node_conn of a 2D, polygonal, nearly Voronoi
+            mesh that is the truncated dual of self.  Here we say nearly because
+            the boundary triangles (see note below) are not Voronoi.
+        dual_from_primal_mapping : np.array( (len(dual_conn),), 'i')
+            Mapping from a dual cell to the primal node it is based on.
+            Without the boundary, this would be simply
+            arange(0,len(dual_conn)), but beacuse we added triangles on the
+            boundary, this mapping is useful.
+
+        Note
+        ----
+        - Nodes of the dual are on circumcenters of the primal triangles.
+        - Centers of the dual are numbered by nodes of the primal mesh, modulo
+          the boundary.
+        - At the boundary, the truncated dual polygon may be non-convex.  To
+          avoid this issue, we triangulate boundary polygons.
+
+        We do not simply construct a mesh because likely the user needs to
+        elevate, generate material IDs, labeled sets, etc, prior to mesh
+        construction.
+
+        """
+        logging.info("Constructing Mesh2D as dual of a triangulation.")
+        logging.info("-- confirming triangulation (note, not checking delaunay, buyer beware)")
+        for c in self.conn:
+            assert(len(c) is 3) # check all triangles
+
+        def circumcenter(p1,p2,p3):
+            d = 2 * (p1[0] * (p2[1] - p3[1]) + p2[0] *
+                     (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1]))
+
+            xv = ((p1[0]**2 + p1[1]**2) * (p2[1] - p3[1]) + (p2[0]**2 + p2[1]**2)
+                  * (p3[1] - p1[1]) + (p3[0]**2 + p3[1]**2) * (p1[1] - p2[1])) / d
+            yv = ((p1[0]**2 + p1[1]**2) * (p3[0] - p2[0]) + (p2[0]**2 + p2[1]**2)
+                  * (p1[0] - p3[0]) + (p3[0]**2 + p3[1]**2) * (p2[0] - p1[0])) / d
+            return (xv, yv)
+
+        # dual nodes are given by:
+        # - primal cell circumcenters
+        # - primal nodes on the boundary
+        # - primal edge midpoints on the boundary (note this length is the same as primal nodes on the boundary)
+
+        # dual cells are given by:
+        # - primal cell nodes (modulo the boundary)
+        
+        coords = self.coords[:,0:2]
+        logging.info("-- computing primary boundary edges")
+        boundary_edges = self.boundary_edges()
+        n_dual_nodes = len(self.conn) + 2*len(boundary_edges)
+        logging.info("     n_primal_cell = {}, n_boundary_edges = {}, n_dual_nodes = "
+                    "{}".format(len(self.conn), len(boundary_edges), n_dual_nodes))
+
+        # create space to populate dual coordinates
+        dual_nodes = np.zeros((n_dual_nodes, 2), 'd')
+        dual_from_primal_mapping = list(range(len(coords)))
+
+        # Create a list of lists for dual cells -- at this point the truncated
+        # dual (e.g. allow non-convex boundary polygons), so one per primal
+        # node.  Also create a flag array for whether a given dual cell is on the
+        # boundary and so might be non-convex.
+        #
+        # Note that both of these will be indexed by the index of the
+        # corresponding primal node.
+        dual_cells = [list() for i in range(len(coords))]
+        is_boundary = np.zeros(len(dual_cells), 'i')            
+
+        # Loop over all primal cells (triangles), adding the circumcenter 
+        # as a dual node and sticking that node in three dual cells rooted
+        # at the three primal nodes.
+        logging.info("-- computing dual nodes")
+        i_dual_node = 0
+        for j, c in enumerate(self.conn):
+            dual_nodes[i_dual_node][:] = circumcenter(coords[c[0]], coords[c[1]], coords[c[2]])
+            dual_cells[c[0]].append(i_dual_node)
+            dual_cells[c[1]].append(i_dual_node)
+            dual_cells[c[2]].append(i_dual_node)
+            i_dual_node += 1
+
+        logging.info("    added {} tri centroid nodes".format(i_dual_node)) 
+
+        # Loop over the boundary, adding both the primal nodes and the edge
+        # midpoints as dual nodes.
+        #
+        # Add the primal node and two midpoints on either side to the list 
+        # of dual nodes in the cell "rooted at" the primal node.
+        for i, e in enumerate(boundary_edges):
+            # add the primal node always
+            my_primal_node_dual_node = i_dual_node
+            dual_nodes[i_dual_node][:] = coords[e[0]]
+            i_dual_node += 1
+
+            my_cell = list()
+
+            # stick in the previous midpoint node, add to my_cell
+            if i is 0:
+                # reserve a spot for the last midpoint
+                first_cell_added = e[0]
+                my_cell.append(-1)
+            else:
+                my_cell.append(prev_midp_n)
+
+            # stick in the next midpoint node, add to my_cell
+            next_midp_n = i_dual_node
+            next_midp = (coords[e[0]][:] + coords[e[1]][:])/2.
+            dual_nodes[i_dual_node][:] = next_midp
+            i_dual_node += 1
+            my_cell.append(next_midp_n)
+
+            # add the primal node to my_cell
+            my_cell.append(my_primal_node_dual_node)
+            dual_cells[e[0]].extend(my_cell)
+
+            is_boundary[e[0]] = 1
+            prev_midp_n = next_midp_n
+
+        # patch up the first cell added
+        assert(dual_cells[first_cell_added][-3] == -1)
+        dual_cells[first_cell_added][-3] = prev_midp_n
+
+        logging.info("    added {} boundary nodes".format(len(boundary_edges)))
+
+        #
+        # Now every dual cell has a list of nodes (in no particular order).
+        # But some of these nodes may be duplicated -- either the circumcenter
+        # of two adjacent triangles may both be on the boundary, allowing for
+        # coincident points at the midpoint of the coincident faces, or (more
+        # likely) there was a circumcenter on the boundary, meaning it is
+        # coincident with the boundary edge's midpoint.
+        #
+        # Order those nodes, and collect a list of coincident nodes for removal.
+        logging.info("-- Finding duplicates and ordering conn_cell_to_node")
+        nodes_to_kill = dict() # coincident nodes (key = node to remove, val = coincident node)
+        for i in range(len(dual_cells)):
+            c = dual_cells[i]
+    
+            if is_boundary[i]:
+                # check for duplicate nodes
+                to_pop = []
+                for k in range(len(c)):
+                    for j in range(k+1, len(c)):
+                        if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
+                            logging.info("    found dup on boundary cell {} = {}".format(i, c))
+                            logging.info("        indices = {}, {}".format(k,j))
+                            logging.info("        nodes = {}, {}".format(c[k],c[j]))
+                            logging.info("        coords = {}, {}".format(dual_nodes[c[k]], dual_nodes[c[j]]))
+
+                            if c[k] in nodes_to_kill:
+                                assert c[j] == nodes_to_kill[c[k]]
+                                assert k < len(c) - 3
+                                to_pop.append(k)
+                            elif c[j] in nodes_to_kill:
+                                assert c[k] == nodes_to_kill[c[j]]
+                                assert j < len(c) - 3
+                                to_pop.append(j)
+                            else:
+                                assert k < len(c)-3
+                                nodes_to_kill[c[k]] = c[j]
+                                to_pop.append(k)
+
+                # remove the duplicated nodes from the cell_to_node_conn
+                for j in reversed(sorted(to_pop)):
+                    c.pop(j)
+        
+                # may not be convex -- triangulate
+                c_orig = c[:]
+                c0 = c[-1] # the primal node
+                cup = c[-2] # boundary midpoint, one direction
+                cdn = c[-3] # boundary midpoint, the other direction
+
+                # order the nodes (minus the primal node) clockwise around the primal node
+                cell_coords = np.array([dual_nodes[cj] for cj in c[:-1]]) - dual_nodes[c0]
+                angle = np.array([np.arctan2(cell_coords[j,1], cell_coords[j,0]) for j in range(len(cell_coords))])
+                order = np.argsort(angle)
+                c = [c[j] for j in order]
+
+                # now find what is "inside" and what is "outside" the domain by
+                # finding up and dn, making one the 0th point and the other the
+                # last point
+                up_i = c.index(cup)
+                dn_i = c.index(cdn)
+
+                if dn_i == (up_i + 1)%len(c):
+                    cn = c[dn_i:] + c[0:dn_i]
+                elif up_i == (dn_i + 1)%len(c):
+                    cn = c[up_i:] + c[0:up_i]
+                else:
+                    # I screwed up... debug me!
+                    print("Uh oh borked geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111)
+
+                    cc_sorted = np.array([cell_coords[k] for k in order]) + dual_nodes[c0]
+                    cb_sorted = np.array([dual_nodes[cdn], dual_nodes[c], dual_nodes[cup]])
+                    ax.plot(cc_sorted[:,0], cc_sorted[:,1], 'k-x')            
+                    ax.scatter(dual_nodes[c0,0], dual_nodes[c0,1], color='r')
+                    ax.scatter(dual_nodes[cup,0], dual_nodes[cup,1], color='m')
+                    ax.scatter(dual_nodes[cdn,0], dual_nodes[cdn,1], color='b')
+                    plt.show()
+
+                    fig = plt.figure(figsize=figsize)
+                    ax = workflow.plot.get_ax(crs, fig)
+
+                    mp = workflow.plot.triangulation(mesh_points3, mesh_tris, crs, ax=ax, 
+                                         color='elevation', edgecolor='white', linewidth=0.4)
+                    cbar = fig.colorbar(mp, orientation="horizontal", pad=0.05)
+                    #workflow.plot.hucs(shapes, crs, ax=ax, color='k', linewidth=1)
+                    workflow.plot.shply([shapely.geometry.LineString(cc_sorted),], crs, ax=ax, color='red', linewidth=1)
+                    workflow.plot.shply([shapely.geometry.LineString(cb_sorted),], crs, ax=ax, color='blue', linewidth=1)
+                    ax.set_aspect('equal', 'datalim')
+
+                    raise RuntimeError('uh oh borked geom')
+
+                # triangulate the truncated dual polygon, always including the
+                # primal node to guarantee all triangles exist and partition
+                # the polygon.
+                for k in range(len(cn)-1):
+                    if k == 0:
+                        dual_cells[i] = [c0, cn[k+1], cn[k]]
+                    else:
+                        dual_cells.append([c0, cn[k+1], cn[k]])
+                        dual_from_primal_mapping.append(i)
+
+            else:
+                # NOT a boundary polygon.  Simply order and check for duplicate nodes.
+                to_pop = []
+                for k in range(len(c)):
+                    for j in range(k+1, len(c)):
+                        if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
+                            logging.info("    found dup on interior cell {} = {}".format(i, c))
+                            logging.info("        indices = {}, {}".format(k,j))
+                            logging.info("        nodes = {}, {}".format(c[k],c[j]))
+                            logging.info("        coords = {}, {}".format(dual_nodes[c[k]], dual_nodes[c[j]]))
+
+                            if c[k] in nodes_to_kill:
+                                assert c[j] == nodes_to_kill[c[k]]
+                                to_pop.append(k)
+                            elif c[j] in nodes_to_kill:
+                                assert c[k] == nodes_to_kill[c[j]]
+                                to_pop.append(j)
+                            else:
+                                nodes_to_kill[c[k]] = c[j]
+                                to_pop.append(k)
+
+                # remove the duplicated nodes from the cell_to_node_conn
+                for j in reversed(sorted(to_pop)):
+                    c.pop(j)
+
+                # order around the primal node (now dual cell centroid)
+                cell_coords = np.array([dual_nodes[j] for j in c]) - coords[i]
+                angle = np.array([np.arctan2(cell_coords[j,1], cell_coords[j,0]) for j in range(len(cell_coords))])
+                order = np.argsort(angle)
+                dual_cells[i] = [c[j] for j in order]
+
+        logging.info("-- removing duplicate nodes")
+        # note this requires both removing the duplicates from the coordinate
+        # list, but also remapping to new numbers that range in [0,
+        # num_not_removed_nodes).  To do the latter, we create a map from old
+        # indices to new indices, where removed indices are mapped to their
+        # coincident, new index.  These old nodes may have appeared in cells
+        # that did not actually include its duplicate, so must get remapped to
+        # the coincident node.
+        i = 0
+        compression_map = -np.ones(len(dual_nodes), 'i')
+        for j in range(len(dual_nodes)):
+            if j not in nodes_to_kill:
+                compression_map[j] = i
+                i += 1
+        for j in nodes_to_kill.keys():
+            compression_map[j] = compression_map[nodes_to_kill[j]]
+        assert(compression_map.min() >= 0)
+
+        # -- delete the nodes        
+        to_kill = sorted(list(nodes_to_kill.keys()))
+        dual_nodes = np.delete(dual_nodes, to_kill, axis=0)
+        # -- remap the conn
+        for c in dual_cells:
+            for j in range(len(c)):
+                c[j] = compression_map[c[j]]
+            assert(min(c) >= 0)
+
+        return dual_nodes, dual_cells, np.array(dual_from_primal_mapping)
+        
+
 
 class Mesh3D(object):
     """A 3D mesh object."""
     
     def __init__(self, coords, face_to_node_conn, elem_to_face_conn,
-                 side_sets=None, labeled_sets=None, material_ids=None):
-        """Creates a 3D mesh from coordinates and connectivity lists.
+                 side_sets=None, labeled_sets=None, material_ids=None, eps=0.001):
+        """Creates a 3D mesh.
 
-        coords            | numpy array of shape (NCOORDS, 3)
-        face_to_node_conn | list of lists of integer indices into coords specifying an
-                          | (clockwise OR counterclockwise) ordering of the nodes around
-                          | the face
-        elem_to_face_conn | list of lists of integer indices into face_to_node_conn
-                          | specifying a list of faces that make up the elem
+        Parameters
+        ----------
+        coords : np.ndarray(NCOORDS,3)
+            Array of coordinates of the 3D mesh.
+        face_to_node_conn : list(lists)
+            List of lists of indices into coords that form the faces.
+        elem_to_face_conn : list(lists)
+            List of lists of indices into face_to_node_conn that form the
+            elements.
+        side_sets : list(SideSet), optional
+            List of side sets to add to the mesh.
+        labeled_sets : list(LabeledSet), optional
+            List of labeled sets to add to the mesh.
+        material_ids : np.array((len(elem_to_face_conn),),'i'), optional
+            Array of length num elements that specifies material IDs
+        eps : float, optional=0.01
+            A small measure of length between coords.
+
+        Note: (coords, conn) may be output provided by a
+        workflow.triangulation.triangulate() call.
         """
-        assert type(coords) == np.ndarray
-        assert len(coords.shape) == 2
-        assert coords.shape[1] == 3
-            
-        self.dim = coords.shape[1]
-
+        self.eps = eps
         self.coords = coords
         self.face_to_node_conn = face_to_node_conn
         self.elem_to_face_conn = elem_to_face_conn
 
-        if labeled_sets is not None:
-            self.labeled_sets = labeled_sets
-        else:
-            self.labeled_sets = []
+        if labeled_sets is None:
+            labeled_sets = []
+        self.labeled_sets = labeled_sets
 
-        if side_sets is not None:
-            self.side_sets = side_sets
-        else:
-            self.side_sets = []
-            
-        if material_ids is not None:
-            self.material_id_list = collections.Counter(material_ids).keys()
-            self.material_ids = material_ids
-        else:
-            self.material_id_list = [10000,]
-            self.material_ids = [10000,]*len(self.elem_to_face_conn)
+        if side_sets is None:
+            side_sets = []
+        self.side_sets = side_sets
+
+        if material_ids is None:
+            material_ids = [10000,]
+        self.material_ids = material_ids
+        self.material_ids_list = list(set(self.material_ids))
 
         self.validate()
-
+        self.dim = self.coords.shape[1]
+        
         
     def validate(self):
         """Checks the validity of the mesh, or throws an AssertionError."""
-        assert self.coords.shape[1] == 3
-        assert type(self.face_to_node_conn) is list
-        for f in self.face_to_node_conn:
-            assert type(f) is list
-            assert len(set(f)) == len(f)
-            for i in f:
-                assert i < self.coords.shape[0]
+        _valid_coords_array(self.coords, 3)
+        _valid_conn(self.face_to_node_conn, len(self.coords))
+        _valid_conn(self.elem_to_face_conn, len(self.face_to_node_conn))
 
-        assert type(self.elem_to_face_conn) is list
-        for e in self.elem_to_face_conn:
-            assert type(e) is list
-            assert len(set(e)) == len(e)
-            for i in e:
-                assert i < len(self.face_to_node_conn)
-
+        assert(type(self.labeled_sets) is list)
         for ls in self.labeled_sets:
-            if ls.entity == "NODE":
+            if ls.entity == 'NODE':
                 size = self.num_nodes()
-            if ls.entity == "FACE":
+            elif ls.entity == 'FACE':
                 size = self.num_faces()
-            elif ls.entity == "CELL":
+            elif ls.entity == 'CELL':
                 size = self.num_cells()
-
-            for i in ls.ent_ids:
-                assert i < size
+            ls.validate(size)
 
         for ss in self.side_sets:
             for j,i in zip(ss.elem_list, ss.side_list):
-                assert j < self.num_cells()
-                assert i < len(self.elem_to_face_conn[j])
-
-
+                assert -1 < j < self.num_cells()
+                assert -1 < i < len(self.elem_to_face_conn[j])
 
     def num_cells(self):
         return len(self.elem_to_face_conn)
@@ -437,7 +755,7 @@ class Mesh3D(object):
         # -- first pass, form all elem blocks and make the map from old-to-new
         new_to_old_elems = []
         elem_blks = []
-        for i_m,m_id in enumerate(self.material_id_list):
+        for i_m,m_id in enumerate(self.material_ids_list):
             # split out elems of this material, save new_to_old map
             elems_tuple = [(i,c) for (i,c) in enumerate(self.elem_to_face_conn) if self.material_ids[i] == m_id]
             new_to_old_elems.extend([i for (i,c) in elems_tuple])
@@ -455,7 +773,7 @@ class Mesh3D(object):
         elif face_block_mode == "n blocks, not duplicated":
             used_faces = np.zeros((len(self.face_to_node_conn),),'bool')
             new_to_old_faces = []
-            for i_m,m_id in enumerate(self.material_id_list):
+            for i_m,m_id in enumerate(self.material_ids_list):
                 # split out faces of this material, save new_to_old map
                 def used(f):
                     result = used_faces[f]
@@ -475,7 +793,7 @@ class Mesh3D(object):
         elif face_block_mode == "n blocks, duplicated":
             elem_blks_new = []
             offset = 0
-            for i_m, m_id in enumerate(self.material_id_list):
+            for i_m, m_id in enumerate(self.material_ids_list):
                 used_faces = np.zeros((len(self.face_to_node_conn),),'bool')
                 def used(f):
                     result = used_faces[f]
@@ -531,8 +849,8 @@ class Mesh3D(object):
             e.put_face_node_conn(i_blk+1, np.array(face_raveled)+1)
 
         # put the elem blocks
-        assert len(elem_blks) == len(self.material_id_list)
-        for i_blk, (m_id, elem_blk) in enumerate(zip(self.material_id_list, elem_blks)):
+        assert len(elem_blks) == len(self.material_ids_list)
+        for i_blk, (m_id, elem_blk) in enumerate(zip(self.material_ids_list, elem_blks)):
             elems_raveled = [f for c in elem_blk for f in c]
 
             e.put_polyhedra_elem_blk(m_id, len(elem_blk), len(elems_raveled), 0)
@@ -833,3 +1151,36 @@ class Mesh3D(object):
 
 
 
+def telescope_factor(ncells, dz, layer_dz):
+    """Calculates a telescoping factor to fill a given layer.
+
+    Calculates a constant geometric factor, such that a layer of thickness
+    layer_dz is perfectly filled by ncells in the vertical, where the top cell
+    is dz in thickness and each successive cell grows by a factor of that
+    factor.
+
+    Parameters
+    ----------
+    ncells : int
+       Number of cells (in the vertical) needed.
+    dz : float
+       Top cell's thickness in the vertical.
+    layer_dz : float
+       Thickness of the total layer.
+
+    Returns
+    -------
+    float
+       The telescoping factor.
+    """
+    if ncells * dz > layer_dz:
+        raise ValueError(("Cannot telescope {} cells of thickness at least {} "+
+                          "and reach a layer of thickness {}"
+                         ).format(ncells, dz, layer_dz))
+
+    def seq(r):
+        calc_layer_dz = dz * (1 - r**ncells)/(1-r)
+        #print('tried: {} got: {}'.format(r, calc_layer_dz))
+        return layer_dz - calc_layer_dz
+    res = scipy.optimize.root_scalar(seq, x0=1.0001, x1=2)
+    return res.root

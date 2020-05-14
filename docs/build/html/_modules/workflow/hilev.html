@@ -186,10 +186,9 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_huc&#39;</span><span class="p">,</span> <span class="s1">&#39;get_hucs&#39;</span><span class="p">,</span> <span class="s1">&#39;get_split_form_hucs&#39;</span><span class="p">,</span>
            <span class="s1">&#39;get_shapes&#39;</span><span class="p">,</span> <span class="s1">&#39;get_split_form_shapes&#39;</span><span class="p">,</span> <span class="s1">&#39;get_reaches&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;get_raster_on_shape&#39;</span><span class="p">,</span> <span class="s1">&#39;get_masked_raster_on_shape&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;find_huc&#39;</span><span class="p">,</span> <span class="s1">&#39;simplify_and_prune&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;triangulate&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;elevate&#39;</span><span class="p">,</span> <span class="s1">&#39;values_from_raster&#39;</span><span class="p">,</span> <span class="s1">&#39;color_raster_from_shapes&#39;</span><span class="p">]</span>
+           <span class="s1">&#39;find_huc&#39;</span><span class="p">,</span> <span class="s1">&#39;simplify_and_prune&#39;</span><span class="p">,</span> <span class="s1">&#39;triangulate&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;get_raster_on_shape&#39;</span><span class="p">,</span> <span class="s1">&#39;values_from_raster&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;elevate&#39;</span><span class="p">,</span> <span class="s1">&#39;color_raster_from_shapes&#39;</span><span class="p">]</span>
 
 <span class="c1">#</span>
 <span class="c1"># functions for getting objects</span>
@@ -480,12 +479,16 @@
 
     <span class="c1"># not too long</span>
     <span class="k">if</span> <span class="n">long</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">reaches_s</span> <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">length</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">long</span><span class="p">]</span>
+        <span class="n">n_r</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches_s</span><span class="p">)</span>
+        <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">reaches_s</span> <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="n">long</span><span class="p">]</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  filtered </span><span class="si">{}</span><span class="s2"> of </span><span class="si">{}</span><span class="s2"> due to length criteria </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_r</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches_s</span><span class="p">),</span> <span class="n">n_r</span><span class="p">,</span> <span class="n">long</span><span class="p">))</span>
+        
 
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">reaches_s</span></div>
 
 
-<div class="viewcode-block" id="get_raster_on_shape"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_raster_on_shape">[docs]</a><span class="k">def</span> <span class="nf">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">raster_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
+<div class="viewcode-block" id="get_raster_on_shape"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_raster_on_shape">[docs]</a><span class="k">def</span> <span class="nf">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">raster_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
+                        <span class="n">mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Collects a raster DEM that covers the requested shape.</span>
 
 <span class="sd">    Parameters</span>
@@ -501,6 +504,10 @@
 <span class="sd">    buffer : double, optional</span>
 <span class="sd">        Size of a buffer, in units of the shape&#39;s CRS, added to shape to ensure</span>
 <span class="sd">        pixels cover the entire shape.  Default is 0.</span>
+<span class="sd">    mask : bool, optional=False</span>
+<span class="sd">        If True, mask the raster outside of shape.</span>
+<span class="sd">    nodata : dtype, optional=-1</span>
+<span class="sd">        Value to place outside of shape.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -527,48 +534,19 @@
     <span class="k">if</span> <span class="n">raster_crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_crs</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span></div>
+    <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
+        <span class="c1"># mask the raster</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">shape</span><span class="p">,],</span> <span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                               <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">masked_raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="get_masked_raster_on_shape"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_masked_raster_on_shape">[docs]</a><span class="k">def</span> <span class="nf">get_masked_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Collects a raster that is masked to the requested shape.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    source : source-type</span>
-<span class="sd">        Source object providing a get_raster() method.</span>
-<span class="sd">    shape : Polygon</span>
-<span class="sd">        Shapely or fiona polygon on which to get the raster.</span>
-<span class="sd">    crs : crs-type</span>
-<span class="sd">        CRS of shape.</span>
-<span class="sd">    nodata : dtype, optional</span>
-<span class="sd">        Value to place in the array outside of shape.  Note that the type of</span>
-<span class="sd">        this value should be the same as the data in the raster.  Default is</span>
-<span class="sd">        -1.</span>
-<span class="sd">    buffer : double, optional</span>
-<span class="sd">        Size of a buffer, in units of the shape&#39;s CRS, added to shape to ensure</span>
-<span class="sd">        pixels cover the entire shape.  Default is 0.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    profile : dict</span>
-<span class="sd">        Rasterio profile of the image including rasterio CRS and transform</span>
-<span class="sd">    raster : ndarray</span>
-<span class="sd">        The raster data in a 2D-array.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># get the raster</span>
-    <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
-
-    <span class="c1"># mask the raster</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">shape</span><span class="p">,],</span> <span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">masked_raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
-
-    <span class="n">transform</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
-    <span class="n">x0</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">x1</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; raster bounds = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
-    <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">masked_raster</span></div>
+        <span class="n">transform</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; raster bounds = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">masked_raster</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span></div>
 
 
 <span class="c1">#</span>
@@ -679,6 +657,8 @@
 <span class="sd">        A split-form HUC object containing all reaches.</span>
 <span class="sd">    reaches : list(LineString)</span>
 <span class="sd">        A list of reaches.</span>
+<span class="sd">    filter : bool, optional=True</span>
+<span class="sd">        If true, filter reaches to the boundary of hucs.</span>
 <span class="sd">    simplify : float, optional</span>
 <span class="sd">        Argument to shapely&#39;s simplify, a measure of how far to allow shapes to</span>
 <span class="sd">        move.  Default is 10 (units are in that of the CRS of hucs and</span>
@@ -744,6 +724,7 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  river median seg length: </span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mins</span><span class="p">)))</span>
 
     <span class="n">mins</span> <span class="o">=</span> <span class="p">[]</span>
+
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">coords</span><span class="p">[:])</span>
         <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -810,6 +791,8 @@
 <span class="sd">    triangles : np.array((n_tris, 3), &#39;i&#39;)</span>
 <span class="sd">        For each triangle, a list of 3 indices into the vertex array that make</span>
 <span class="sd">        up that triangle.</span>
+<span class="sd">    areas : _only if diagnostics=True_, np.array((n_tris), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle areas.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">2</span>
@@ -848,6 +831,8 @@
             <span class="n">areas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">triangle_area</span><span class="p">(</span><span class="n">verts</span><span class="p">))</span>
             <span class="n">needs_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">my_refine_func</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">areas</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  min area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">areas</span><span class="p">))))</span>
+
         <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
@@ -865,6 +850,9 @@
             <span class="c1"># workflow.plot.rivers(rivers)</span>
             <span class="c1"># workflow.plot.triangulation(vertices, triangles, areas)</span>
             <span class="c1"># plt.title(&quot;triangle area [m^2]&quot;)</span>
+
+        <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">areas</span><span class="p">)</span>
+            
     <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span></div>
 
 <div class="viewcode-block" id="elevate"><a class="viewcode-back" href="../../api.html#workflow.hilev.elevate">[docs]</a><span class="k">def</span> <span class="nf">elevate</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">mesh_crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;piecewise bilinear&#39;</span><span class="p">):</span>
