@@ -246,7 +246,9 @@ def cut(line, cutline, tol=1.e-5):
         seg = shapely.geometry.LineString(coords[i:i + 2])
         #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
-        if type(point) is shapely.geometry.GeometryCollection and len(point) is 0:
+        print("section: type = {}".format(type(point)))
+        print(" point = {}".format(point))
+        if type(point) is shapely.geometry.LineString and len(point.coords) is 0:
             #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])
             i += 1
@@ -286,8 +288,11 @@ def cut(line, cutline, tol=1.e-5):
                 segcoords = [point,seg.coords[-1]]
                 i += 1
         else:
-            raise RuntimeError("Dual/multiple intersection in a single seg... ugh!")
-
+            print("Dual/multiple section: type = {}".format(type(point)))
+            print(" point = {}".format(point))
+            raise RuntimeError("Dual/multiple intersection in a single seg... ugh!  "+
+                               "Intersection is of type '{}'".format(type(point)))
+        
     if len(segcoords) > 1:
         segs.append(shapely.geometry.LineString(segcoords))
     return segs

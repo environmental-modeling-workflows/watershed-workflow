@@ -32,14 +32,18 @@ dealing with these packages in an integrated form much simpler.
 
 """
 import logging
-import pyproj
+import pyproj.crs
+from rasterio.crs import CRS
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def from_proj(crs):
-    """Converts a Proj4 CRS to the workflow CRS standard.
+    """Converts a Proj CRS to the workflow CRS standard.
 
     Parameters
     ----------
-    crs : pyproj.Proj
+    crs : pyproj.crs.CRS
         Input proj CRS object.
     
     Returns
@@ -47,8 +51,14 @@ def from_proj(crs):
     out : crs-type
         Equivalent workflow CRS.
     """
-    return crs # this is the standard!
+    try:
+        # if a proj.6 CRS object or a proj.4 Proj object
+        wkt_str = crs.to_wkt()
+    except AttributeError:
+        # if a proj.6 Proj object
+        wkt_str = crs.crs.to_wkt()
 
+    return CRS.from_wkt(wkt_str)
 
 def to_proj(crs):
     """Converts a workflow CRS standard to a Proj4 CRS.
@@ -60,10 +70,10 @@ def to_proj(crs):
     
     Returns
     -------
-    out : pyproj.Proj
+    out : pyproj.crs.CRS
         Equivalent object.
     """
-    return crs # this is the standard!
+    return pyproj.crs.CRS.from_wkt(crs.to_wkt())
 
 
 def from_fiona(crs):
@@ -81,7 +91,7 @@ def from_fiona(crs):
         Equivalent workflow CRS.
 
     """
-    return pyproj.Proj(crs)
+    return CRS.from_dict(crs)
 
 def to_fiona(crs):
     """Converts a workflow CRS to a fiona CRS.
@@ -97,8 +107,7 @@ def to_fiona(crs):
         Equivalent fiona CRS.
 
     """
-    import fiona.crs
-    return fiona.crs.from_string(crs.definition_string())
+    return crs.to_dict()
 
 def from_rasterio(crs):
     """Converts from rasterio CRS to the workflow CRS standard.
@@ -114,7 +123,7 @@ def from_rasterio(crs):
         Equivalent workflow CRS.
 
     """
-    return pyproj.Proj(crs)
+    return crs
 
 def to_rasterio(crs):
     """Converts a workflow CRS to a fiona CRS.
@@ -130,8 +139,7 @@ def to_rasterio(crs):
         Equivalent fiona CRS.
 
     """
-    import rasterio.crs
-    return rasterio.crs.CRS.from_string(crs.definition_string())
+    return crs
 
 def from_epsg(epsg):
     """Converts from an EPSG code to a workflow CRS.
@@ -147,11 +155,9 @@ def from_epsg(epsg):
         Equivalent workflow CRS.
 
     """
-    try:
-        return pyproj.Proj(init='EPSG:{}'.format(epsg))
-    except RuntimeError as err:
-        raise RuntimeError('Proj4 error: "{}", likely epsg is not recognized by pyproj.'.format(err))
-
+    return CRS.from_epsg(epsg)
+        
+        
 def from_cartopy(crs):
     """Converts a cartopy CRS to a workflow CRS.
 
@@ -166,7 +172,7 @@ def from_cartopy(crs):
         Equivalent workflow CRS.
 
     """
-    return pyproj.Proj(crs.proj4_init)
+    return pyproj.crs.CRS.from_dict(crs.proj4_params)
 
 def to_cartopy(crs):
     """Converts a workflow CRS to a cartopy.crs.Projection.
@@ -185,14 +191,12 @@ def to_cartopy(crs):
     """
     import cartopy.crs as ccrs
     import osr
-    if crs.is_latlong():
+    if equal(crs, latlon_crs()):
         return ccrs.PlateCarree()
-
-    srs = crs.srs
 
     # this is more robust, as srs could be anything (espg, etc.)
     s1 = osr.SpatialReference()
-    s1.ImportFromProj4(crs.srs)
+    s1.ImportFromProj4(crs.to_proj4())
     srs = s1.ExportToProj4()
 
     km_proj = {'lon_0': 'central_longitude',
@@ -256,21 +260,13 @@ def to_cartopy(crs):
 
     return cl(globe=globe, **kw_proj)
 
-def from_string(string):
-    """Returns a CRS from a Proj4 string specification."""
-    return pyproj.Proj(string)
-
-def to_string(crs):
-    """Returns the proj4 string of a CRS."""
-    return crs.definition_string()
-
 def from_wkt(string):
     """Returns a CRS from a WKT string specification"""
-    return from_rasterio(rasterio.crs.from_string(string))
+    return CRS.from_wkt(string)
 
 def to_wkt(crs):
     """Returns the WKT string of a CRS."""
-    return to_rasterio(crs).wkt
+    return crs.to_wkt()
 
 def default_crs():
     """Returns a default CRS that is functionally useful for North America.
@@ -339,42 +335,6 @@ def equal(crs1, crs2):
        Are equal?
 
     """
-    def to_dict(crs):
-        def to_item(a):
-            item = a.strip('+').split('=')
-            if len(item) == 1:
-                return item[0], True
-            elif len(item) == 2:
-                return tuple(item)
-            else:
-                raise ValueError('Invalid proj string: "{}"'.format(a))
-
-        return dict(map(to_item, crs.definition_string().split()))
-
-    d1 = to_dict(crs1)
-    d2 = to_dict(crs2)
-
-    if (d1['ellps'] != d2['ellps']):
-        logging.debug('CRS not equal: ', 'ellps:', d1['ellps'], d2['ellps'])
-        return False
-    if (('datum' in d1) and ('datum' in d2) and (d1['datum'] != d2['datum'])):
-        print('datum:', d1['datum'], d2['datum'])
-        return False
-    if (d1['proj'] != d2['proj']):
-        logging.debug('CRS not equal: ', 'proj:', d1['proj'], d2['proj'])
-        return False
-    if (d1['units'] != d2['units']):
-        logging.debug('CRS not equal: ', 'units:', d1['units'], d2['units'])
-        return False
-
-    for k in ['lat_0', 'lat_1', 'lat_2', 'lon_0', 'lon_1', 'lon_2']:
-        if (k in d1) != (k in d2):
-            logging.debug('CRS not equal: ', k, k in d1, k in d2)
-            return False
-        if k in d1:
-            if (d1[k] != d2[k]):
-                logging.debug('CRS not equal: ', k, d1[k], d2[k])
-                return False
-    return True
-
+    # rasterio supplies a __eq__ method, use that?
+    return crs1 == crs2
     

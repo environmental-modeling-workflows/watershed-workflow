@@ -108,6 +108,7 @@ class _FileManagerNHD:
         with fiona.open(filename, mode='r', layer=layer) as fid:
             hus = [hu for hu in fid if hu['properties']['HUC{:d}'.format(level)].startswith(huc)]
             profile = fid.profile
+        profile['always_xy'] = True
         return profile, hus
         
     def get_hydro(self, huc, bounds=None, bounds_crs=None):

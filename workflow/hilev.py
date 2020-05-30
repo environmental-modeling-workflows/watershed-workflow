@@ -374,6 +374,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
 
     logging.info("collecting raster")
     profile, raster = source.get_raster(shape, crs)
+    logging.info("Got raster of shape: {}".format(raster.shape))
 
     # warp the raster to the requested output
     if raster_crs is not None:
@@ -381,17 +382,16 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
 
     if mask:
         # mask the raster
+        logging.info("Masking to shape")
         mask = rasterio.features.geometry_mask([shape,], raster.shape,
                                                profile['transform'], invert=True)
-        masked_raster = np.where(mask, raster, nodata)
+        raster = np.where(mask, raster, nodata)
 
-        transform = profile['transform']
-        x0 = transform * (0,0)
-        x1 = transform * (profile['width'], profile['height'])
-        logging.info(" raster bounds = {}".format((x0[0], x0[1], x1[0], x1[1])))
-        return profile, masked_raster
-    else:
-        return profile, raster
+    transform = profile['transform']
+    x0 = transform * (0,0)
+    x1 = transform * (profile['width'], profile['height'])
+    logging.info("Raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
+    return profile, raster
 
 
 #
@@ -441,26 +441,23 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
         if search_level > source.lowest_level:
             return hint
 
-        profile, subhus = source.get_hucs(hint, search_level)
-        native_crs = workflow.crs.from_fiona(profile['crs'])
+        _, subhus = get_hucs(source, hint, search_level, crs)
         
         for subhu in subhus:
-            workflow.warp.shape(subhu, native_crs, crs)
-            subhu_shply = workflow.utils.shply(subhu['geometry'])        
-            inhuc = _in_huc(shply, subhu_shply)
+            inhuc = _in_huc(shply, subhu)
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['HUC{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s contains'%hname)
                 return _find_huc(source, shply, crs, hname)
             elif inhuc == 1:
-                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['HUC{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s partially contains'%hname)
                 # partially contained in try_huc, return this
                 return hint
             else:
-                hname = subhu['properties']['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['HUC{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s does not contain'%hname)
         assert(False)
 
@@ -475,11 +472,11 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
 
     hint = workflow.sources.utils.huc_str(hint)
 
-    profile, hint_hu = source.get_huc(hint)
-    native_crs = workflow.crs.from_fiona(profile['crs'])
-    workflow.warp.shape(hint_hu, native_crs, crs)
+    _, hint_hu = get_huc(source, hint, crs)
+    print(hint_hu.centroid)
+    print(shply.centroid)
     
-    inhuc = _in_huc(shply_s, workflow.utils.shply(hint_hu['geometry']))
+    inhuc = _in_huc(shply_s, hint_hu)
     if inhuc is not 2:
         raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
 

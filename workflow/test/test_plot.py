@@ -27,7 +27,10 @@ crss_ak = [(3338, 3338),
 
 show = False
 new_gold = False
-fig = plt.figure()
+check_gold = True
+fig = None
+if not show:
+    fig = plt.figure()
 
 
 import collections
@@ -87,6 +90,12 @@ def polygons():
     return _polygons    
 
 def run_test(start_p, obj_gen, epsg_data, epsg_ax):
+    print("Running test from {} to {}".format(epsg_data, epsg_ax))
+    if show:
+        fig = plt.figure()
+    else:
+        fig = globals()['fig']
+
     if epsg_ax is not None:
         epsg_ax = workflow.crs.from_epsg(epsg_ax)
     ax = workflow.plot.get_ax(epsg_ax, fig)
@@ -111,17 +120,17 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
             
         with open(pickle_file_name, 'wb') as fid:
             pickle.dump(gold, fid)
-    else:
+    elif check_gold:
         if hasattr(res, 'get_paths'):
             for i,p in enumerate(res.get_paths()):
                 npt.assert_equal(gold[str(start_p)][obj_gen.__name__][epsg_data][i], p.vertices)
         else:
             npt.assert_equal(gold[str(start_p)][obj_gen.__name__][epsg_data], res.get_path().vertices)
 
-    if show:
+    if not show:
+        fig.clear()
+    else:
         plt.show()
-
-    fig.clear()
 
 
 def test_points(points):

@@ -504,10 +504,10 @@ def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     bounds = rasterio.transform.array_bounds(profile['height'], profile['width'], profile['transform'])
     extent = [bounds[0], bounds[2], bounds[1], bounds[3]]
     logging.info('BOUNDS: {}'.format(bounds))
-    return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax)
+    return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax, **kwargs)
 
 
-def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None, state_kwargs=None):
+def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None, state_kwargs=None, country_kwargs=None, coastline_kwargs=None):
     """Add a basemap to the axis.
 
     Uses cartopy to add political and natural boundaries and shapes to the axes
@@ -531,6 +531,12 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
     state_kwargs : dict
       Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
       political state boundary polygons.
+    country_kwargs : dict
+      Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+      political country boundary polygons.
+    coastline_kwargs : dict
+      Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+      natural coastline boundary polygons.
     """
     import cartopy.feature
 
@@ -547,10 +553,18 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
         ax.add_feature(land)
 
+
     if state_kwargs is not None and state_kwargs is not False:
         kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
         kwargs.update(**state_kwargs)
         states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines',
+                                                     resolution, **kwargs)
+        ax.add_feature(states)
+
+    if country_kwargs is not None and country_kwargs is not False:
+        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs.update(**country_kwargs)
+        states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land',
                                                      resolution, **kwargs)
         ax.add_feature(states)
         
@@ -564,5 +578,38 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
         ax.add_feature(ocean)
 
-    return 
+    # if coastline_kwargs is not None and coastline_kwargs is not False:
+    #     kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+    #     kwargs.update(**coastline_kwargs)
+    #     states = cartopy.feature.NaturalEarthFeature('physical', 'coastline',
+    #                                                  resolution, **kwargs)
+    #     ax.add_feature(states)
+
         
+    return 
+
+def feather_axis_limits(ax, delta=0.02):
+    """Adds a small delta to the axis limits to provide a bit of buffer.
+
+    Parameters
+    ----------
+    ax : matplotlib Axis object
+      The axis to feather.
+    delta : 2-tuple or double, default=0.02
+      If a double, equivalent to (delta,delta).  Provides the fraction of 
+      the current plot width,height to increase by.
+    """
+    try:
+        assert(len(delta) is 2)
+    except AssertionError:
+        raise RuntimeError("feather_axis_limits expects delta argument of length 2 (dx,dy)")
+    except ValueError:
+        delta = (delta, delta)
+    
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    dx = delta[0] * (xlim[1] - xlim[0])
+    dy = delta[1] * (ylim[1] - ylim[0])
+    ax.set_xlim((xlim[0] - dx, xlim[1] + dx))
+    ax.set_ylim((ylim[0] - dy, ylim[1] + dy))
+

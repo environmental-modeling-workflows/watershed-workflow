@@ -14,15 +14,19 @@ import shapely.geometry
 import warnings
 import workflow.crs
 
+pyproj_version = int(pyproj.__version__[0])
+
 def xy(x, y, old_crs, new_crs):
     """Warp a set of points from old_crs to new_crs."""
     if workflow.crs.equal(old_crs, new_crs):
         return x,y
-    
+
     old_crs_proj = workflow.crs.to_proj(old_crs)
     new_crs_proj = workflow.crs.to_proj(new_crs)
-
-    return pyproj.transform(old_crs_proj, new_crs_proj, x,y)
+    
+    transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
+    x1,y1 = transformer.transform(x,y)
+    return x1,y1
 
 def bounds(bounds, old_crs, new_crs):
     """Warp a bounding box from old_crs to new_crs."""
@@ -32,11 +36,11 @@ def shply(shp, old_crs, new_crs):
     """Warp a shapely object from old_crs to new_crs."""
     if workflow.crs.equal(old_crs, new_crs):
         return shp
-
+    
     old_crs_proj = workflow.crs.to_proj(old_crs)
     new_crs_proj = workflow.crs.to_proj(new_crs)
-    
-    return shapely.ops.transform(lambda x,y:pyproj.transform(old_crs_proj, new_crs_proj, x,y), shp)
+    transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
+    return shapely.ops.transform(lambda x,y:transformer.transform(x,y), shp)
 
 def shplys(shps, old_crs, new_crs):
     """Warp a collection of shapely objects from old_crs to new_crs."""
