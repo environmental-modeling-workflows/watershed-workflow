@@ -10,12 +10,6 @@ Note that, for complex plots, it can be useful to manage the ordering of the
 layers of objects.  In this case, all plotting functions accept matplotlib's
 zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.
-
-.. code:: python
-    import workflow.plot as wfp
-    fig, ax = wfp.get_ax(crs, figsize=(6,6))
-    wfp.hucs(my_hucs, crs, 'r', ax=ax)
-
 """
 
 

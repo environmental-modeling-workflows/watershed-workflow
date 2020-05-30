@@ -25,6 +25,7 @@
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
@@ -172,7 +173,7 @@
 
 <span class="kn">import</span> <span class="nn">shapely</span>
 
-<span class="kn">from</span> <span class="nn">workflow_tpls</span> <span class="k">import</span> <span class="n">vtk_io</span>
+<span class="kn">from</span> <span class="nn">workflow_tpls</span> <span class="kn">import</span> <span class="n">vtk_io</span>
 
 <span class="kn">import</span> <span class="nn">workflow.conf</span>
 <span class="kn">import</span> <span class="nn">workflow.triangulation</span>
@@ -529,6 +530,7 @@
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;collecting raster&quot;</span><span class="p">)</span>
     <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_raster</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got raster of shape: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
     <span class="c1"># warp the raster to the requested output</span>
     <span class="k">if</span> <span class="n">raster_crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -536,17 +538,16 @@
 
     <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
         <span class="c1"># mask the raster</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Masking to shape&quot;</span><span class="p">)</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">shape</span><span class="p">,],</span> <span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
                                                <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">masked_raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
+        <span class="n">raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
 
-        <span class="n">transform</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
-        <span class="n">x0</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">x1</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; raster bounds = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
-        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">masked_raster</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span></div>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Raster bounds: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+    <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span></div>
 
 
 <span class="c1">#</span>
@@ -596,26 +597,23 @@
         <span class="k">if</span> <span class="n">search_level</span> <span class="o">&gt;</span> <span class="n">source</span><span class="o">.</span><span class="n">lowest_level</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">hint</span>
 
-        <span class="n">profile</span><span class="p">,</span> <span class="n">subhus</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_hucs</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="n">search_level</span><span class="p">)</span>
-        <span class="n">native_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_fiona</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">subhus</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">search_level</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
         
         <span class="k">for</span> <span class="n">subhu</span> <span class="ow">in</span> <span class="n">subhus</span><span class="p">:</span>
-            <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">subhu</span><span class="p">,</span> <span class="n">native_crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
-            <span class="n">subhu_shply</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">subhu</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">])</span>        
-            <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">subhu_shply</span><span class="p">)</span>
+            <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">subhu</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="c1"># fully contained in try_huc, recurse</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> contains&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">_find_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hname</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> partially contains&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
                 <span class="c1"># partially contained in try_huc, return this</span>
                 <span class="k">return</span> <span class="n">hint</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> does not contain&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
         <span class="k">assert</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
@@ -630,11 +628,11 @@
 
     <span class="n">hint</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">huc_str</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
 
-    <span class="n">profile</span><span class="p">,</span> <span class="n">hint_hu</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_huc</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
-    <span class="n">native_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_fiona</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">hint_hu</span><span class="p">,</span> <span class="n">native_crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">hint_hu</span> <span class="o">=</span> <span class="n">get_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hint_hu</span><span class="o">.</span><span class="n">centroid</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">shply</span><span class="o">.</span><span class="n">centroid</span><span class="p">)</span>
     
-    <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply_s</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">hint_hu</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]))</span>
+    <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply_s</span><span class="p">,</span> <span class="n">hint_hu</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">inhuc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: shape not found in hinted HUC &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hint</span><span class="p">))</span>
 

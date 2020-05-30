@@ -25,6 +25,7 @@
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
@@ -165,24 +166,18 @@
 <span class="sd">layers of objects.  In this case, all plotting functions accept matplotlib&#39;s</span>
 <span class="sd">zorder argument, an int which controls the order of drawing, with larger being</span>
 <span class="sd">later (on top) of smaller values.</span>
-
-<span class="sd">.. code:: python</span>
-<span class="sd">    import workflow.plot as wfp</span>
-<span class="sd">    fig, ax = wfp.get_ax(crs, figsize=(6,6))</span>
-<span class="sd">    wfp.hucs(my_hucs, crs, &#39;r&#39;, ax=ax)</span>
-
 <span class="sd">&quot;&quot;&quot;</span>
 
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">collections</span> <span class="k">as</span> <span class="n">pltc</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">cm</span> <span class="k">as</span> <span class="n">pcm</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">collections</span> <span class="k">as</span> <span class="n">pltc</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span> <span class="k">as</span> <span class="n">pcm</span>
 <span class="kn">import</span> <span class="nn">shapely</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
 <span class="kn">import</span> <span class="nn">descartes</span>
-<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="k">import</span> <span class="n">Axes3D</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
 
 
 <span class="kn">import</span> <span class="nn">workflow.utils</span>
@@ -659,10 +654,10 @@
     <span class="n">bounds</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">array_bounds</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">])</span>
     <span class="n">extent</span> <span class="o">=</span> <span class="p">[</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;BOUNDS: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="basemap"><a class="viewcode-back" href="../../api.html#workflow.plot.basemap">[docs]</a><span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;50m&#39;</span><span class="p">,</span> <span class="n">land_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ocean_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="basemap"><a class="viewcode-back" href="../../api.html#workflow.plot.basemap">[docs]</a><span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;50m&#39;</span><span class="p">,</span> <span class="n">land_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ocean_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">country_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coastline_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Add a basemap to the axis.</span>
 
 <span class="sd">    Uses cartopy to add political and natural boundaries and shapes to the axes</span>
@@ -686,6 +681,12 @@
 <span class="sd">    state_kwargs : dict</span>
 <span class="sd">      Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get</span>
 <span class="sd">      political state boundary polygons.</span>
+<span class="sd">    country_kwargs : dict</span>
+<span class="sd">      Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get</span>
+<span class="sd">      political country boundary polygons.</span>
+<span class="sd">    coastline_kwargs : dict</span>
+<span class="sd">      Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get</span>
+<span class="sd">      natural coastline boundary polygons.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">cartopy.feature</span>
 
@@ -702,10 +703,18 @@
         <span class="n">land</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;physical&#39;</span><span class="p">,</span> <span class="s1">&#39;land&#39;</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">land_kwargs</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">land</span><span class="p">)</span>
 
+
     <span class="k">if</span> <span class="n">state_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;facecolor&#39;</span><span class="p">:</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">state_kwargs</span><span class="p">)</span>
         <span class="n">states</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;cultural&#39;</span><span class="p">,</span> <span class="s1">&#39;admin_1_states_provinces_lines&#39;</span><span class="p">,</span>
+                                                     <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">country_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">country_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;facecolor&#39;</span><span class="p">:</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">country_kwargs</span><span class="p">)</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;cultural&#39;</span><span class="p">,</span> <span class="s1">&#39;admin_0_boundary_lines_land&#39;</span><span class="p">,</span>
                                                      <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
         
@@ -719,8 +728,41 @@
         <span class="n">ocean</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;physical&#39;</span><span class="p">,</span> <span class="s1">&#39;ocean&#39;</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">ocean_kwargs</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">ocean</span><span class="p">)</span>
 
-    <span class="k">return</span> </div>
+    <span class="c1"># if coastline_kwargs is not None and coastline_kwargs is not False:</span>
+    <span class="c1">#     kwargs = {&#39;facecolor&#39;:&#39;none&#39;, &#39;edgecolor&#39;:&#39;k&#39;, &#39;linewidth&#39;:0.5}</span>
+    <span class="c1">#     kwargs.update(**coastline_kwargs)</span>
+    <span class="c1">#     states = cartopy.feature.NaturalEarthFeature(&#39;physical&#39;, &#39;coastline&#39;,</span>
+    <span class="c1">#                                                  resolution, **kwargs)</span>
+    <span class="c1">#     ax.add_feature(states)</span>
+
         
+    <span class="k">return</span> </div>
+
+<div class="viewcode-block" id="feather_axis_limits"><a class="viewcode-back" href="../../api.html#workflow.plot.feather_axis_limits">[docs]</a><span class="k">def</span> <span class="nf">feather_axis_limits</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds a small delta to the axis limits to provide a bit of buffer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ax : matplotlib Axis object</span>
+<span class="sd">      The axis to feather.</span>
+<span class="sd">    delta : 2-tuple or double, default=0.02</span>
+<span class="sd">      If a double, equivalent to (delta,delta).  Provides the fraction of </span>
+<span class="sd">      the current plot width,height to increase by.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;feather_axis_limits expects delta argument of length 2 (dx,dy)&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+    
+    <span class="n">xlim</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+    <span class="n">ylim</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx</span><span class="p">,</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dy</span><span class="p">,</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dy</span><span class="p">))</span></div>
+
 </pre></div>
 
            </div>

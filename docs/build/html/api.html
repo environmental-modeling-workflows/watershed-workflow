@@ -25,6 +25,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
@@ -166,13 +167,13 @@
 /* CSS overrides for sphinx_rtd_theme */
 
 /* 24px margin */
-.nbinput.nblast,
-.nboutput.nblast {
+.nbinput.nblast.container,
+.nboutput.nblast.container {
     margin-bottom: 19px;  /* padding has already 5px */
 }
 
 /* ... except between code cells! */
-.nblast + .nbinput {
+.nblast.container + .nbinput.container {
     margin-top: -19px;
 }
 
@@ -793,12 +794,12 @@ code.</td>
 <dl class="function">
 <dt id="workflow.crs.from_proj">
 <code class="descclassname">workflow.crs.</code><code class="descname">from_proj</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_proj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_proj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a Proj4 CRS to the workflow CRS standard.</p>
+<dd><p>Converts a Proj CRS to the workflow CRS standard.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>pyproj.Proj</em>) – Input proj CRS object.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crs</strong> (<em>pyproj.crs.CRS</em>) – Input proj CRS object.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent workflow CRS.</td>
 </tr>
@@ -824,12 +825,6 @@ code.</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="workflow.crs.from_string">
-<code class="descclassname">workflow.crs.</code><code class="descname">from_string</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#from_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.from_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a CRS from a Proj4 string specification.</p>
 </dd></dl>
 
 <dl class="function">
@@ -906,7 +901,7 @@ you do, don’t use the default!) but it is EPSG:4269.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Equivalent object.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pyproj.Proj</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pyproj.crs.CRS</td>
 </tr>
 </tbody>
 </table>
@@ -931,12 +926,6 @@ you do, don’t use the default!) but it is EPSG:4269.</td>
 </dd></dl>
 
 <dl class="function">
-<dt id="workflow.crs.to_string">
-<code class="descclassname">workflow.crs.</code><code class="descname">to_string</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the proj4 string of a CRS.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="workflow.crs.to_wkt">
 <code class="descclassname">workflow.crs.</code><code class="descname">to_wkt</code><span class="sig-paren">(</span><em>crs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/crs.html#to_wkt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.crs.to_wkt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the WKT string of a CRS.</p>
@@ -957,7 +946,7 @@ zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.</p>
 <dl class="function">
 <dt id="workflow.plot.basemap">
-<code class="descclassname">workflow.plot.</code><code class="descname">basemap</code><span class="sig-paren">(</span><em>crs=None</em>, <em>ax=None</em>, <em>resolution='50m'</em>, <em>land_kwargs=None</em>, <em>ocean_kwargs=None</em>, <em>state_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#basemap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.basemap" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">workflow.plot.</code><code class="descname">basemap</code><span class="sig-paren">(</span><em>crs=None</em>, <em>ax=None</em>, <em>resolution='50m'</em>, <em>land_kwargs=None</em>, <em>ocean_kwargs=None</em>, <em>state_kwargs=None</em>, <em>country_kwargs=None</em>, <em>coastline_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#basemap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.basemap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a basemap to the axis.</p>
 <p>Uses cartopy to add political and natural boundaries and shapes to the axes
 image.</p>
@@ -976,6 +965,10 @@ land polygons.</li>
 ocean polygons.</li>
 <li><strong>state_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
 political state boundary polygons.</li>
+<li><strong>country_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+political country boundary polygons.</li>
+<li><strong>coastline_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
+natural coastline boundary polygons.</li>
 </ul>
 </td>
 </tr>
@@ -1004,6 +997,25 @@ political state boundary polygons.</li>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matplotlib image object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="workflow.plot.feather_axis_limits">
+<code class="descclassname">workflow.plot.</code><code class="descname">feather_axis_limits</code><span class="sig-paren">(</span><em>ax</em>, <em>delta=0.02</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/workflow/plot.html#feather_axis_limits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#workflow.plot.feather_axis_limits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a small delta to the axis limits to provide a bit of buffer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ax</strong> (<em>matplotlib Axis object</em>) – The axis to feather.</li>
+<li><strong>delta</strong> (<em>2-tuple</em><em> or </em><em>double</em><em>, </em><em>default=0.02</em>) – If a double, equivalent to (delta,delta).  Provides the fraction of
+the current plot width,height to increase by.</li>
+</ul>
 </td>
 </tr>
 </tbody>

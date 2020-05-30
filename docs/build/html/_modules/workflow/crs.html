@@ -25,6 +25,7 @@
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
@@ -187,14 +188,18 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">pyproj</span>
+<span class="kn">import</span> <span class="nn">pyproj.crs</span>
+<span class="kn">from</span> <span class="nn">rasterio.crs</span> <span class="kn">import</span> <span class="n">CRS</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
 <div class="viewcode-block" id="from_proj"><a class="viewcode-back" href="../../api.html#workflow.crs.from_proj">[docs]</a><span class="k">def</span> <span class="nf">from_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Converts a Proj4 CRS to the workflow CRS standard.</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Proj CRS to the workflow CRS standard.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    crs : pyproj.Proj</span>
+<span class="sd">    crs : pyproj.crs.CRS</span>
 <span class="sd">        Input proj CRS object.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns</span>
@@ -202,8 +207,14 @@
 <span class="sd">    out : crs-type</span>
 <span class="sd">        Equivalent workflow CRS.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">crs</span> <span class="c1"># this is the standard!</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># if a proj.6 CRS object or a proj.4 Proj object</span>
+        <span class="n">wkt_str</span> <span class="o">=</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="c1"># if a proj.6 Proj object</span>
+        <span class="n">wkt_str</span> <span class="o">=</span> <span class="n">crs</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">()</span>
 
+    <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">wkt_str</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="to_proj"><a class="viewcode-back" href="../../api.html#workflow.crs.to_proj">[docs]</a><span class="k">def</span> <span class="nf">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS standard to a Proj4 CRS.</span>
@@ -215,10 +226,10 @@
 <span class="sd">    </span>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    out : pyproj.Proj</span>
+<span class="sd">    out : pyproj.crs.CRS</span>
 <span class="sd">        Equivalent object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">crs</span> <span class="c1"># this is the standard!</span></div>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="from_fiona"><a class="viewcode-back" href="../../api.html#workflow.crs.from_fiona">[docs]</a><span class="k">def</span> <span class="nf">from_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
@@ -236,7 +247,7 @@
 <span class="sd">        Equivalent workflow CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="to_fiona"><a class="viewcode-back" href="../../api.html#workflow.crs.to_fiona">[docs]</a><span class="k">def</span> <span class="nf">to_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
@@ -252,8 +263,7 @@
 <span class="sd">        Equivalent fiona CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">fiona.crs</span>
-    <span class="k">return</span> <span class="n">fiona</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="from_rasterio"><a class="viewcode-back" href="../../api.html#workflow.crs.from_rasterio">[docs]</a><span class="k">def</span> <span class="nf">from_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts from rasterio CRS to the workflow CRS standard.</span>
@@ -269,7 +279,7 @@
 <span class="sd">        Equivalent workflow CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">crs</span></div>
 
 <div class="viewcode-block" id="to_rasterio"><a class="viewcode-back" href="../../api.html#workflow.crs.to_rasterio">[docs]</a><span class="k">def</span> <span class="nf">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
@@ -285,8 +295,7 @@
 <span class="sd">        Equivalent fiona CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">rasterio.crs</span>
-    <span class="k">return</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">crs</span></div>
 
 <div class="viewcode-block" id="from_epsg"><a class="viewcode-back" href="../../api.html#workflow.crs.from_epsg">[docs]</a><span class="k">def</span> <span class="nf">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts from an EPSG code to a workflow CRS.</span>
@@ -302,11 +311,9 @@
 <span class="sd">        Equivalent workflow CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;EPSG:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsg</span><span class="p">))</span>
-    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Proj4 error: &quot;</span><span class="si">{}</span><span class="s1">&quot;, likely epsg is not recognized by pyproj.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span></div>
-
+    <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span></div>
+        
+        
 <div class="viewcode-block" id="from_cartopy"><a class="viewcode-back" href="../../api.html#workflow.crs.from_cartopy">[docs]</a><span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a cartopy CRS to a workflow CRS.</span>
 
@@ -321,7 +328,7 @@
 <span class="sd">        Equivalent workflow CRS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">proj4_init</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">proj4_params</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="to_cartopy"><a class="viewcode-back" href="../../api.html#workflow.crs.to_cartopy">[docs]</a><span class="k">def</span> <span class="nf">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a cartopy.crs.Projection.</span>
@@ -340,14 +347,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">cartopy.crs</span> <span class="k">as</span> <span class="nn">ccrs</span>
     <span class="kn">import</span> <span class="nn">osr</span>
-    <span class="k">if</span> <span class="n">crs</span><span class="o">.</span><span class="n">is_latlong</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">equal</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">latlon_crs</span><span class="p">()):</span>
         <span class="k">return</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">()</span>
-
-    <span class="n">srs</span> <span class="o">=</span> <span class="n">crs</span><span class="o">.</span><span class="n">srs</span>
 
     <span class="c1"># this is more robust, as srs could be anything (espg, etc.)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
-    <span class="n">s1</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">srs</span><span class="p">)</span>
+    <span class="n">s1</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">to_proj4</span><span class="p">())</span>
     <span class="n">srs</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">()</span>
 
     <span class="n">km_proj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lon_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_longitude&#39;</span><span class="p">,</span>
@@ -411,21 +416,13 @@
 
     <span class="k">return</span> <span class="n">cl</span><span class="p">(</span><span class="n">globe</span><span class="o">=</span><span class="n">globe</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_proj</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="from_string"><a class="viewcode-back" href="../../api.html#workflow.crs.from_string">[docs]</a><span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns a CRS from a Proj4 string specification.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="to_string"><a class="viewcode-back" href="../../api.html#workflow.crs.to_string">[docs]</a><span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the proj4 string of a CRS.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">()</span></div>
-
 <div class="viewcode-block" id="from_wkt"><a class="viewcode-back" href="../../api.html#workflow.crs.from_wkt">[docs]</a><span class="k">def</span> <span class="nf">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a CRS from a WKT string specification&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">from_rasterio</span><span class="p">(</span><span class="n">rasterio</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="to_wkt"><a class="viewcode-back" href="../../api.html#workflow.crs.to_wkt">[docs]</a><span class="k">def</span> <span class="nf">to_wkt</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the WKT string of a CRS.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">wkt</span></div>
+    <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="default_crs"><a class="viewcode-back" href="../../api.html#workflow.crs.default_crs">[docs]</a><span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for North America.</span>
@@ -494,44 +491,8 @@
 <span class="sd">       Are equal?</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">to_item</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-            <span class="n">item</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid proj string: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">to_item</span><span class="p">,</span> <span class="n">crs</span><span class="o">.</span><span class="n">definition_string</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
-
-    <span class="n">d1</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="n">crs1</span><span class="p">)</span>
-    <span class="n">d2</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="n">crs2</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">]):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;ellps:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;ellps&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="p">((</span><span class="s1">&#39;datum&#39;</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;datum&#39;</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">])):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;datum:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;datum&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">]):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;proj:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;proj&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="s1">&#39;units:&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;lat_0&#39;</span><span class="p">,</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_0&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon_2&#39;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">):</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">]):</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;CRS not equal: &#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
-                <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="kc">True</span></div>
-
+    <span class="c1"># rasterio supplies a __eq__ method, use that?</span>
+    <span class="k">return</span> <span class="n">crs1</span> <span class="o">==</span> <span class="n">crs2</span></div>
     
 </pre></div>
 

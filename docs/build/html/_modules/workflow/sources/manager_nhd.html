@@ -25,6 +25,7 @@
         <script type="text/javascript" src="../../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
@@ -263,6 +264,7 @@
         <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">layer</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
             <span class="n">hus</span> <span class="o">=</span> <span class="p">[</span><span class="n">hu</span> <span class="k">for</span> <span class="n">hu</span> <span class="ow">in</span> <span class="n">fid</span> <span class="k">if</span> <span class="n">hu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">level</span><span class="p">)]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">huc</span><span class="p">)]</span>
             <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;always_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">hus</span></div>
         
 <div class="viewcode-block" id="_FileManagerNHD.get_hydro"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nhd._FileManagerNHD.get_hydro">[docs]</a>    <span class="k">def</span> <span class="nf">get_hydro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -425,7 +427,7 @@
     
     
 <span class="k">class</span> <span class="nc">FileManagerNHDPlus</span><span class="p">(</span><span class="n">_FileManagerNHD</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;National Hydrography Dataset Plus High Resolution (NHDPlus HR)&#39;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>
                          <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;hydrography&#39;</span><span class="p">,</span>
@@ -433,7 +435,7 @@
                                                       <span class="s1">&#39;NHDPlus_H_</span><span class="si">{}</span><span class="s1">.gdb&#39;</span><span class="p">))</span>
 
 <span class="k">class</span> <span class="nc">FileManagerNHD</span><span class="p">(</span><span class="n">_FileManagerNHD</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;National Hydrography Dataset (NHD)&#39;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>
                          <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;hydrography&#39;</span><span class="p">,</span>
@@ -442,7 +444,7 @@
 
 
 <span class="k">class</span> <span class="nc">FileManagerWBD</span><span class="p">(</span><span class="n">_FileManagerNHD</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;National Watershed Boundary Dataset (WBD)&#39;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span>
                          <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;hydrography&#39;</span><span class="p">,</span>
