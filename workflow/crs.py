@@ -260,6 +260,10 @@ def to_cartopy(crs):
 
     return cl(globe=globe, **kw_proj)
 
+def from_string(string):
+    """Returns a CRS from a proj string"""
+    return CRS.from_string(string)
+
 def from_wkt(string):
     """Returns a CRS from a WKT string specification"""
     return CRS.from_wkt(string)
