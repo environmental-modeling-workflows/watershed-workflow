@@ -246,8 +246,6 @@ def cut(line, cutline, tol=1.e-5):
         seg = shapely.geometry.LineString(coords[i:i + 2])
         #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
-        print("section: type = {}".format(type(point)))
-        print(" point = {}".format(point))
         if type(point) is shapely.geometry.LineString and len(point.coords) is 0:
             #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])
@@ -471,5 +469,7 @@ def non_point_intersection(shp1, shp2):
     if int_type == shapely.geometry.Point:
         return False
     elif int_type == shapely.geometry.GeometryCollection and len(inter) is 0:
+        return False
+    elif int_type == shapely.geometry.LineString and len(inter.coords) is 0:
         return False
     return True

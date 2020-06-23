@@ -473,9 +473,6 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
     hint = workflow.sources.utils.huc_str(hint)
 
     _, hint_hu = get_huc(source, hint, crs)
-    print(hint_hu.centroid)
-    print(shply.centroid)
-    
     inhuc = _in_huc(shply_s, hint_hu)
     if inhuc is not 2:
         raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
@@ -524,7 +521,9 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
     logging.info("-"*30)
     logging.info("Filtering rivers outside of the HUC space")
     if filter:
+        count = len(reaches)
         reaches = workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
+        logging.info("  filtered from {} to {} reaches.".format(count, len(reaches)))
     if len(reaches) is 0:
         return reaches
 

@@ -163,10 +163,10 @@ class FileManagerNED:
         # already exists.
 
         # tile the bounds in lat/long 1-degree increments
-        west = int(np.floor(bounds[1]))
-        south = int(np.floor(bounds[0]))
-        east = int(np.ceil(bounds[3]))
-        north = int(np.ceil(bounds[2]))
+        west = int(np.floor(bounds[0]))
+        south = int(np.floor(bounds[1]))
+        east = int(np.ceil(bounds[2]))
+        north = int(np.ceil(bounds[3]))
 
         # generate the list of files needed
         filenames = [self.names.file_name(j+1, -i) for j in range(south, north) for i in range(west, east)]

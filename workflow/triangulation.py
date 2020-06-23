@@ -159,7 +159,7 @@ def triangulate(hucs, rivers, **kwargs):
         except KeyError:
             raise err
         else:
-            logging.warning("Triangulate: '--enforce-delaunay' option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.  See documentation at https://github.com/amanzi/meshing_workflow")
+            logging.warning("Triangulate: '--enforce-delaunay' option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.")
             mesh = meshpy.triangle.build(info, **kwargs)
             
     mesh_points = np.array(mesh.points)
