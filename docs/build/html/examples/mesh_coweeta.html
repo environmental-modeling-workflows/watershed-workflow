@@ -435,18 +435,29 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span> <span class="k">as</span> <span class="n">pcm</span>
 <span class="kn">import</span> <span class="nn">shapely</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">workflow</span>
 <span class="kn">import</span> <span class="nn">workflow.source_list</span>
 <span class="kn">import</span> <span class="nn">workflow.ui</span>
-<span class="kn">import</span> <span class="nn">workflow.extrude</span>
 <span class="kn">import</span> <span class="nn">workflow.colors</span>
 <span class="kn">import</span> <span class="nn">workflow.condition</span>
+<span class="kn">import</span> <span class="nn">workflow.mesh</span>
+<span class="kn">import</span> <span class="nn">workflow.split_hucs</span>
 
 <span class="n">workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
@@ -456,7 +467,7 @@ div.rendered_html tbody tr:hover {
 <h2>Sources and setup<a class="headerlink" href="#Sources-and-setup" title="Permalink to this headline">¶</a></h2>
 <p>Next we set up the source watershed and coordinate system and all data sources for our mesh. We will use the CRS that is included in the shapefile.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -464,6 +475,7 @@ div.rendered_html tbody tr:hover {
 <span class="n">coweeta_shapefile</span> <span class="o">=</span> <span class="s1">&#39;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#39;</span>
 <span class="n">hint</span> <span class="o">=</span> <span class="s1">&#39;0601&#39;</span>  <span class="c1"># hint: HUC 4 containing this shape.</span>
                <span class="c1"># This is necessary to avoid downloading all HUCs to search for this shape</span>
+<span class="n">simplify</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># length scale to target average edge</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Meshing shape: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coweeta_shapefile</span><span class="p">))</span>
@@ -479,20 +491,20 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:53:43,026 - root - INFO:
-2019-12-06 09:53:43,028 - root - INFO: Meshing shape: ../data/hydrologic_units/others/Coweeta/coweeta_basin.shp
-2019-12-06 09:53:43,029 - root - INFO: ==============================
-2019-12-06 09:53:43,030 - root - INFO:
-2019-12-06 09:53:43,032 - root - INFO: Preprocessing Shapes
-2019-12-06 09:53:43,032 - root - INFO: ------------------------------
-2019-12-06 09:53:43,033 - root - INFO: loading file: &#34;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#34;
-/Users/uec/codes/anaconda/3/envs/ats_meshing_20190719/lib/python3.7/site-packages/fiona/collection.py:336: FionaDeprecationWarning: Collection slicing is deprecated and will be disabled in a future version.
+2020-06-24 07:59:50,251 - root - INFO:
+2020-06-24 07:59:50,254 - root - INFO: Meshing shape: ../data/hydrologic_units/others/Coweeta/coweeta_basin.shp
+2020-06-24 07:59:50,258 - root - INFO: ==============================
+2020-06-24 07:59:50,259 - root - INFO:
+2020-06-24 07:59:50,260 - root - INFO: Preprocessing Shapes
+2020-06-24 07:59:50,261 - root - INFO: ------------------------------
+2020-06-24 07:59:50,262 - root - INFO: loading file: &#34;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#34;
+/Users/uec/codes/anaconda/3/envs/ats_meshing_20200525/lib/python3.7/site-packages/fiona/collection.py:331: FionaDeprecationWarning: Collection slicing is deprecated and will be disabled in a future version.
   return self.session.__getitem__(item)
 </pre></div></div>
 </div>
 <p>A wide range of data sources are available; here we use the defaults except for using NHD Plus for watershed boundaries and hydrography (the default is NHD, which is lower resolution and therefore smaller download sizes).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -509,14 +521,15 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:53:43,109 - root - INFO: Using sources:
-2019-12-06 09:53:43,111 - root - INFO: --------------
-2019-12-06 09:53:43,112 - root - INFO: HUC: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
-2019-12-06 09:53:43,113 - root - INFO: hydrography: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
-2019-12-06 09:53:43,115 - root - INFO: DEM: National Elevation Dataset (NED)
-2019-12-06 09:53:43,116 - root - INFO: soil type: National Resources Conservation Service Soil Survey (NRCS Soils)
-2019-12-06 09:53:43,118 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
-2019-12-06 09:53:43,120 - root - INFO: soil thickness: None
+2020-06-24 07:59:50,325 - root - INFO: Using sources:
+2020-06-24 07:59:50,327 - root - INFO: --------------
+2020-06-24 07:59:50,328 - root - INFO: HUC: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
+2020-06-24 07:59:50,329 - root - INFO: hydrography: National Hydrography Dataset Plus High Resolution (NHDPlus HR)
+2020-06-24 07:59:50,330 - root - INFO: DEM: National Elevation Dataset (NED)
+2020-06-24 07:59:50,330 - root - INFO: soil type: National Resources Conservation Service Soil Survey (NRCS Soils)
+2020-06-24 07:59:50,332 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
+2020-06-24 07:59:50,333 - root - INFO: soil thickness: None
+2020-06-24 07:59:50,334 - root - INFO: meteorology: DayMet 1km
 </pre></div></div>
 </div>
 </div>
@@ -524,17 +537,24 @@ div.rendered_html tbody tr:hover {
 <h2>Generate the surface mesh<a class="headerlink" href="#Generate-the-surface-mesh" title="Permalink to this headline">¶</a></h2>
 <p>First we’ll generate the flattened, 2D triangulation, which builds on hydrography data. Then we download a digital elevation map from the National Elevation Dataset, and extrude that 2D triangulation to a 3D surface mesh based on interpolation between pixels of the DEM.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># download/collect the river network within that shape&#39;s bounds</span>
-<span class="n">_</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_reaches</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;hydrography&#39;</span><span class="p">],</span> <span class="n">hint</span><span class="p">,</span>
-                                  <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+<span></span><span class="n">rivers</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">if</span> <span class="n">rivers</span><span class="p">:</span>
+    <span class="c1"># download/collect the river network within that shape&#39;s bounds</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_reaches</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;hydrography&#39;</span><span class="p">],</span> <span class="n">hint</span><span class="p">,</span>
+                                      <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="c1"># simplify and prune rivers not IN the shape, constructing a tree-like data structure</span>
+    <span class="c1"># for the river network</span>
+    <span class="n">rivers</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">simplify_and_prune</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simplify</span><span class="o">=</span><span class="n">simplify</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="c1"># simplify and prune rivers not IN the shape, constructing a tree-like data structure</span>
-<span class="c1"># for the river network</span>
-<span class="n">rivers</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">simplify_and_prune</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">rivers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">simplify</span><span class="p">)</span>
+
+
 </pre></div>
 </div>
 </div>
@@ -543,40 +563,41 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:53:43,136 - root - INFO:
-2019-12-06 09:53:43,137 - root - INFO: Preprocessing Hydrography
-2019-12-06 09:53:43,138 - root - INFO: ------------------------------
-2019-12-06 09:53:43,139 - root - INFO: Loading streams in HUC 0601
-2019-12-06 09:53:43,140 - root - INFO:          and/or bounds (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2019-12-06 09:53:43,147 - root - INFO: Using Hydrography file &#34;/Users/uec/research/water/data/watershed-workflow/data-master/hydrography/NHDPlus_H_0601_GDB/NHDPlus_H_0601.gdb&#34;
-2019-12-06 09:53:49,658 - root - INFO:   found 36 reaches
-2019-12-06 09:53:49,682 - root - INFO:
-2019-12-06 09:53:49,683 - root - INFO: Simplifying and pruning
-2019-12-06 09:53:49,685 - root - INFO: ------------------------------
-2019-12-06 09:53:49,688 - root - INFO: Filtering rivers outside of the HUC space
-2019-12-06 09:53:49,691 - root - INFO:   ...filtering
-2019-12-06 09:53:49,726 - root - INFO: Generate the river tree
-2019-12-06 09:53:49,733 - root - INFO: Removing rivers with fewer than 0 reaches.
-2019-12-06 09:53:49,734 - root - INFO:   ...keeping river with 21 reaches
-2019-12-06 09:53:49,737 - root - INFO: simplifying rivers
-2019-12-06 09:53:49,753 - root - INFO: simplifying HUCs
-2019-12-06 09:53:49,757 - root - INFO: snapping rivers and HUCs
-2019-12-06 09:53:49,759 - root - INFO:   snapping polygon segment boundaries to river endpoints
-2019-12-06 09:53:49,765 - root - INFO:   snapping river endpoints to the polygon
-2019-12-06 09:53:49,808 - root - INFO:   cutting at crossings
-2019-12-06 09:53:49,859 - root - INFO:   filtering rivers to HUC
-2019-12-06 09:53:49,860 - root - INFO:   ...filtering
-2019-12-06 09:53:49,873 - root - INFO:
-2019-12-06 09:53:49,874 - root - INFO: Simplification Diagnostics
-2019-12-06 09:53:49,875 - root - INFO: ------------------------------
-2019-12-06 09:53:49,880 - root - INFO:   river min seg length: 38.7145
-2019-12-06 09:53:49,882 - root - INFO:   river median seg length: 65.1981
-2019-12-06 09:53:49,886 - root - INFO:   HUC min seg length: 11.4828
-2019-12-06 09:53:49,888 - root - INFO:   HUC median seg length: 20.9713
+2020-06-24 07:59:50,352 - root - INFO:
+2020-06-24 07:59:50,353 - root - INFO: Preprocessing Hydrography
+2020-06-24 07:59:50,354 - root - INFO: ------------------------------
+2020-06-24 07:59:50,355 - root - INFO: Loading streams in HUC 0601
+2020-06-24 07:59:50,359 - root - INFO:          and/or bounds (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2020-06-24 07:59:50,362 - root - INFO: Using Hydrography file &#34;/Users/uec/research/water/data/watershed-workflow/data-master/hydrography/NHDPlus_H_0601_GDB/NHDPlus_H_0601.gdb&#34;
+2020-06-24 07:59:54,149 - root - INFO:   found 36 reaches
+2020-06-24 07:59:58,510 - root - INFO:
+2020-06-24 07:59:58,511 - root - INFO: Simplifying and pruning
+2020-06-24 07:59:58,512 - root - INFO: ------------------------------
+2020-06-24 07:59:58,513 - root - INFO: Filtering rivers outside of the HUC space
+2020-06-24 07:59:58,515 - root - INFO:   ...filtering
+2020-06-24 07:59:58,558 - root - INFO:   filtered from 34 to 21 reaches.
+2020-06-24 07:59:58,560 - root - INFO: Generate the river tree
+2020-06-24 07:59:58,603 - root - INFO: Removing rivers with fewer than 0 reaches.
+2020-06-24 07:59:58,605 - root - INFO:   ...keeping river with 21 reaches
+2020-06-24 07:59:58,607 - root - INFO: simplifying rivers
+2020-06-24 07:59:58,623 - root - INFO: simplifying HUCs
+2020-06-24 07:59:58,626 - root - INFO: snapping rivers and HUCs
+2020-06-24 07:59:58,629 - root - INFO:   snapping polygon segment boundaries to river endpoints
+2020-06-24 07:59:58,634 - root - INFO:   snapping river endpoints to the polygon
+2020-06-24 07:59:58,662 - root - INFO:   cutting at crossings
+2020-06-24 07:59:58,678 - root - INFO:   filtering rivers to HUC
+2020-06-24 07:59:58,680 - root - INFO:   ...filtering
+2020-06-24 07:59:58,689 - root - INFO:
+2020-06-24 07:59:58,690 - root - INFO: Simplification Diagnostics
+2020-06-24 07:59:58,692 - root - INFO: ------------------------------
+2020-06-24 07:59:58,701 - root - INFO:   river min seg length: 160.859
+2020-06-24 07:59:58,716 - root - INFO:   river median seg length: 584.414
+2020-06-24 07:59:58,718 - root - INFO:   HUC min seg length: 190.265
+2020-06-24 07:59:58,720 - root - INFO:   HUC median seg length: 292.035
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -596,10 +617,15 @@ div.rendered_html tbody tr:hover {
 <span class="n">min_angle</span> <span class="o">=</span> <span class="mi">32</span> <span class="c1"># degrees</span>
 
 <span class="c1"># make 2D mesh</span>
-<span class="n">mesh_points2</span><span class="p">,</span> <span class="n">mesh_tris</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span>
+<span class="n">mesh_points2</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span>
                                                <span class="n">refine_distance</span><span class="o">=</span><span class="p">[</span><span class="n">d0</span><span class="p">,</span><span class="n">A0</span><span class="p">,</span><span class="n">d1</span><span class="p">,</span><span class="n">A1</span><span class="p">],</span>
                                                <span class="n">refine_min_angle</span><span class="o">=</span><span class="n">min_angle</span><span class="p">,</span>
+                                               <span class="n">enforce_delaunay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                                <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#mesh_points2, mesh_tris, d = workflow.triangulate(coweeta, rivers,</span>
+<span class="c1">#                                                 refine_max_area=100000,</span>
+<span class="c1">#                                                 enforce_delaunay=True,</span>
+<span class="c1">#                                                 diagnostics=True)</span>
 </pre></div>
 </div>
 </div>
@@ -608,27 +634,29 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:53:49,900 - root - INFO:
-2019-12-06 09:53:49,901 - root - INFO: Meshing
-2019-12-06 09:53:49,903 - root - INFO: ------------------------------
-2019-12-06 09:53:49,904 - root - INFO: Triangulating...
-2019-12-06 09:53:49,908 - root - INFO:    265 points and 265 facets
-2019-12-06 09:53:49,909 - root - INFO:  checking graph consistency
-2019-12-06 09:53:49,916 - root - INFO:  building graph data structures
-2019-12-06 09:53:49,921 - root - INFO:  triangle.build...
-2019-12-06 09:54:03,253 - root - INFO:   ...built: 8165 mesh points and 16103 triangles
-2019-12-06 09:54:03,255 - root - INFO: Plotting triangulation diagnostics
+2020-06-24 07:59:58,729 - root - INFO:
+2020-06-24 07:59:58,730 - root - INFO: Meshing
+2020-06-24 07:59:58,732 - root - INFO: ------------------------------
+2020-06-24 07:59:58,733 - root - INFO: Triangulating...
+2020-06-24 07:59:58,737 - root - INFO:    58 points and 58 facets
+2020-06-24 07:59:58,739 - root - INFO:  checking graph consistency
+2020-06-24 07:59:58,746 - root - INFO:  building graph data structures
+2020-06-24 07:59:58,750 - root - INFO:  triangle.build...
+2020-06-24 07:59:58,751 - root - WARNING: Triangulate: &#39;--enforce-delaunay&#39; option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.
+2020-06-24 08:00:08,045 - root - INFO:   ...built: 8086 mesh points and 15955 triangles
+2020-06-24 08:00:08,046 - root - INFO: Plotting triangulation diagnostics
+2020-06-24 08:00:09,279 - root - INFO:   min area = 248.1697998046875
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_8_1.png" src="../_images/examples_mesh_coweeta_8_1.png" />
+<img alt="../_images/examples_mesh_coweeta_9_1.png" src="../_images/examples_mesh_coweeta_9_1.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -645,21 +673,23 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:54:06,216 - root - INFO:
-2019-12-06 09:54:06,217 - root - INFO: Preprocessing Raster
-2019-12-06 09:54:06,219 - root - INFO: ------------------------------
-2019-12-06 09:54:06,220 - root - INFO: collecting raster
-2019-12-06 09:54:06,221 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186388, 35.01734099944037, -83.41165773504302, 35.08381933600275]
-2019-12-06 09:54:06,222 - root - INFO:   Need:
-2019-12-06 09:54:06,223 - root - INFO:     /Users/uec/research/water/data/watershed-workflow/data-master/dem/USGS_NED_1as_n36_w084.img
-2019-12-06 09:54:06,276 - root - INFO:
-2019-12-06 09:54:06,278 - root - INFO: Elevating Triangulation to DEM
-2019-12-06 09:54:06,279 - root - INFO: ------------------------------
+2020-06-24 08:00:09,858 - root - INFO:
+2020-06-24 08:00:09,859 - root - INFO: Preprocessing Raster
+2020-06-24 08:00:09,861 - root - INFO: ------------------------------
+2020-06-24 08:00:09,863 - root - INFO: collecting raster
+2020-06-24 08:00:09,996 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186388, 35.01734099944037, -83.41165773504302, 35.08381933600275]
+2020-06-24 08:00:10,000 - root - INFO:   Need:
+2020-06-24 08:00:10,001 - root - INFO:     /Users/uec/research/water/data/watershed-workflow/data-master/dem/USGS_NED_1as_n36_w084.img
+2020-06-24 08:00:10,055 - root - INFO: Got raster of shape: (240, 277)
+2020-06-24 08:00:10,056 - root - INFO: Raster bounds: (-83.48845037186388, 35.08381933600275, -83.41150592741688, 35.01715266933386)
+2020-06-24 08:00:10,057 - root - INFO:
+2020-06-24 08:00:10,058 - root - INFO: Elevating Triangulation to DEM
+2020-06-24 08:00:10,059 - root - INFO: ------------------------------
 </pre></div></div>
 </div>
 <p>Plotting the resulting mesh can be done in a variety of ways, including both 3D plots and mapview. We show both here, but hereafter use mapview plots as they are a bit clearer (if not so flashy)…</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -669,7 +699,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -683,32 +713,33 @@ div.rendered_html tbody tr:hover {
                      <span class="n">edgecolor</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">.</span><span class="mi">2</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">cb</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cax</span><span class="p">)</span>
 
-<span class="n">rivers_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">xy</span><span class="p">)</span> <span class="k">for</span> <span class="n">riv</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">riv</span><span class="p">]</span>
-<span class="n">rivers_e</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">)</span>
-               <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers_2</span><span class="p">]</span>
-<span class="n">rivers_l3</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">j</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
-               <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rivers_2</span><span class="p">,</span> <span class="n">rivers_e</span><span class="p">)]</span>
-<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers_l3</span><span class="p">:</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">r</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="mi">10</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-
 <span class="n">t</span> <span class="o">=</span> <span class="n">cax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">55</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_dem_3d&#39;</span><span class="p">)</span>
+<span class="c1">#fig.savefig(&#39;coweeta_dem_3d&#39;)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[]
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_12_0.png" src="../_images/examples_mesh_coweeta_12_0.png" />
+<img alt="../_images/examples_mesh_coweeta_13_1.png" src="../_images/examples_mesh_coweeta_13_1.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -724,29 +755,38 @@ div.rendered_html tbody tr:hover {
 <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;datalim&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
 <span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_dem&#39;</span><span class="p">)</span>
+<span class="c1">#fig.savefig(&#39;coweeta_dem&#39;)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;elevation [m]&#39;)
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_13_0.png" src="../_images/examples_mesh_coweeta_13_0.png" />
+<img alt="../_images/examples_mesh_coweeta_14_1.png" src="../_images/examples_mesh_coweeta_14_1.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># construct the 2D mesh</span>
-<span class="n">m2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">extrude</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">mesh_points3</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">))</span>
+<span class="n">m2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">mesh_points3</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -770,14 +810,14 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-max diff =  5.63878974546617
+max diff =  35.106056771571275
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_15_1.png" src="../_images/examples_mesh_coweeta_15_1.png" />
+<img alt="../_images/examples_mesh_coweeta_16_1.png" src="../_images/examples_mesh_coweeta_16_1.png" />
 </div>
 </div>
 </div>
@@ -786,7 +826,7 @@ max diff =  5.63878974546617
 <p>Meshes interact with data to provide forcing, parameters, and more in the actual simulation. Specifically, we need vegetation type on the surface to provide information about transpiration and subsurface structure to provide information about water retention curves, etc.</p>
 <p>We’ll start by downloading and collecting land cover from the NLCD dataset, and generate sets for each land cover type that cover the surface. Likely these will be some combination of grass, deciduous forest, coniferous forest, and mixed.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -809,17 +849,19 @@ max diff =  5.63878974546617
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:54:14,707 - root - INFO:
-2019-12-06 09:54:14,708 - root - INFO: Preprocessing Raster
-2019-12-06 09:54:14,709 - root - INFO: ------------------------------
-2019-12-06 09:54:14,711 - root - INFO: collecting raster
-2019-12-06 09:54:14,725 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],TOWGS84[0,0,0,-0,-0,-0,0],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1]]
-2019-12-06 09:54:15,239 - root - INFO: Found land cover dtypes: uint8
-2019-12-06 09:54:15,246 - root - INFO: Found land cover types: {41, 42, 43, 81, 52, 21, 22, 23}
+2020-06-24 08:00:14,170 - root - INFO:
+2020-06-24 08:00:14,172 - root - INFO: Preprocessing Raster
+2020-06-24 08:00:14,173 - root - INFO: ------------------------------
+2020-06-24 08:00:14,174 - root - INFO: collecting raster
+2020-06-24 08:00:14,191 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1],AXIS[&#34;Easting&#34;,EAST],AXIS[&#34;Northing&#34;,NORTH]]
+2020-06-24 08:00:14,474 - root - INFO: Got raster of shape: (199, 192)
+2020-06-24 08:00:14,476 - root - INFO: Raster bounds: (1128975.0, 1410315.0, 5964675.0, -1722405.0)
+2020-06-24 08:00:14,983 - root - INFO: Found land cover dtypes: uint8
+2020-06-24 08:00:14,985 - root - INFO: Found land cover types: {41, 42, 43, 81, 52, 21, 22, 23}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -852,9 +894,9 @@ max diff =  5.63878974546617
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">lc</span><span class="p">,</span>
-                                 <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
-                                 <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">polys</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">lc</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
+                                     <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">pcm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">)</span>
 <span class="n">cb</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">(</span><span class="n">nlcd_ticks</span><span class="p">)</span>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">(</span><span class="n">nlcd_labels_fw</span><span class="p">)</span>
@@ -867,7 +909,7 @@ max diff =  5.63878974546617
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_18_0.png" src="../_images/examples_mesh_coweeta_18_0.png" />
+<img alt="../_images/examples_mesh_coweeta_19_0.png" src="../_images/examples_mesh_coweeta_19_0.png" />
 </div>
 </div>
 </div>
@@ -875,7 +917,7 @@ max diff =  5.63878974546617
 <h2>Subsurface properties<a class="headerlink" href="#Subsurface-properties" title="Permalink to this headline">¶</a></h2>
 <p>Get soil structure from SSURGO</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -913,24 +955,24 @@ max diff =  5.63878974546617
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:54:16,201 - root - INFO:
-2019-12-06 09:54:16,202 - root - INFO: Preprocessing Shapes
-2019-12-06 09:54:16,211 - root - INFO: ------------------------------
-2019-12-06 09:54:16,216 - root - INFO:   Using filename: /Users/uec/research/water/data/watershed-workflow/data-master/soil_survey/soil_survey_shape_-83.4790_35.0269_-83.4208_35.0743.gml
-2019-12-06 09:54:16,363 - root - INFO:   Found 460 shapes.
-2019-12-06 09:54:16,364 - root - INFO:   and crs: {&#39;init&#39;: &#39;epsg:4326&#39;}
-2019-12-06 09:54:16,571 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2019-12-06 09:54:17,672 - root - INFO: shape union bounds: (272780.3245135138, 3877673.165081467, 281292.5015333445, 3887703.7251368817)
-2019-12-06 09:54:17,674 - root - INFO: Coloring shapes onto raster:
-2019-12-06 09:54:17,675 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2019-12-06 09:54:17,676 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
-2019-12-06 09:54:17,676 - root - INFO:   pixel_size = 10
-2019-12-06 09:54:17,678 - root - INFO:   width = 518, height = 512
-2019-12-06 09:54:17,679 - root - INFO:   and 43 independent colors of dtype int32
+2020-06-24 08:00:33,241 - root - INFO:
+2020-06-24 08:00:33,242 - root - INFO: Preprocessing Shapes
+2020-06-24 08:00:33,243 - root - INFO: ------------------------------
+2020-06-24 08:00:33,509 - root - INFO:   Using filename: /Users/uec/research/water/data/watershed-workflow/data-master/soil_survey/soil_survey_shape_-83.4790_35.0269_-83.4208_35.0743.gml
+2020-06-24 08:00:33,598 - root - INFO:   Found 460 shapes.
+2020-06-24 08:00:33,598 - root - INFO:   and crs: {&#39;init&#39;: &#39;epsg:4326&#39;}
+2020-06-24 08:02:01,963 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2020-06-24 08:02:02,498 - root - INFO: shape union bounds: (272780.24915777455, 3877673.460647937, 281292.4084609144, 3887703.9534725407)
+2020-06-24 08:02:02,501 - root - INFO: Coloring shapes onto raster:
+2020-06-24 08:02:02,502 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2020-06-24 08:02:02,503 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
+2020-06-24 08:02:02,505 - root - INFO:   pixel_size = 10
+2020-06-24 08:02:02,507 - root - INFO:   width = 518, height = 512
+2020-06-24 08:02:02,510 - root - INFO:   and 43 independent colors of dtype int32
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -938,7 +980,7 @@ max diff =  5.63878974546617
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span>
                                  <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;copper&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
 
@@ -950,7 +992,7 @@ max diff =  5.63878974546617
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_21_0.png" src="../_images/examples_mesh_coweeta_21_0.png" />
+<img alt="../_images/examples_mesh_coweeta_22_0.png" src="../_images/examples_mesh_coweeta_22_0.png" />
 </div>
 </div>
 </div>
@@ -958,7 +1000,7 @@ max diff =  5.63878974546617
 <h2>Mesh extrusion<a class="headerlink" href="#Mesh-extrusion" title="Permalink to this headline">¶</a></h2>
 <p>Given the surface mesh and material IDs on both the surface and subsurface, we can extrude the surface mesh in the vertical to make a 3D mesh.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -979,23 +1021,8 @@ max diff =  5.63878974546617
 <span class="n">dz</span> <span class="o">=</span> <span class="mf">0.05</span>
 <span class="n">layer_dz</span> <span class="o">=</span> <span class="mi">4</span>
 
-<span class="k">def</span> <span class="nf">telescope_factor</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calculates a telescoping factor&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">ncells</span> <span class="o">*</span> <span class="n">dz</span> <span class="o">&gt;</span> <span class="n">layer_dz</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;Cannot telescope </span><span class="si">{}</span><span class="s2"> cells of thickness at least </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">+</span>
-                          <span class="s2">&quot;and reach a layer of thickness </span><span class="si">{}</span><span class="s2">&quot;</span>
-                         <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">))</span>
-
-    <span class="kn">import</span> <span class="nn">scipy.optimize</span>
-    <span class="k">def</span> <span class="nf">seq</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
-        <span class="n">calc_layer_dz</span> <span class="o">=</span> <span class="n">dz</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">r</span><span class="o">**</span><span class="n">ncells</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">r</span><span class="p">)</span>
-        <span class="c1">#print(&#39;tried: {} got: {}&#39;.format(r, calc_layer_dz))</span>
-        <span class="k">return</span> <span class="n">layer_dz</span> <span class="o">-</span> <span class="n">calc_layer_dz</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">root_scalar</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mf">1.0001</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">root</span>
-
-<span class="n">tele</span> <span class="o">=</span> <span class="n">telescope_factor</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">)</span>
-<span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got telescoping factor: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tele</span><span class="p">))</span>
+<span class="n">tele</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">telescope_factor</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Got telescoping factor: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tele</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncells</span><span class="p">):</span>
     <span class="n">layer_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;constant&#39;</span><span class="p">)</span>
     <span class="n">layer_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
@@ -1021,63 +1048,70 @@ max diff =  5.63878974546617
 <span class="n">layer_mat_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">999</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">soil_color</span><span class="p">))</span>
 
 <span class="c1"># print the summary</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">extrude</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarize_extrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarize_extrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
                                             <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2019-12-06 09:54:19,380 - root - INFO: Got telescoping factor: 1.515910144611108
-2019-12-06 09:54:19,381 - root - INFO: Cell summary:
-2019-12-06 09:54:19,382 - root - INFO: ------------------------------------------------------------
-2019-12-06 09:54:19,383 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
-2019-12-06 09:54:19,384 - root - INFO: ------------------------------------------------------------
-2019-12-06 09:54:19,385 - root - INFO:  00      | 00    | 545853        |   0.050000    |   0.000000
-2019-12-06 09:54:19,387 - root - INFO:  01      | 01    | 545853        |   0.075796    |   0.050000
-2019-12-06 09:54:19,387 - root - INFO:  02      | 02    | 545853        |   0.114899    |   0.125796
-2019-12-06 09:54:19,388 - root - INFO:  03      | 03    | 545853        |   0.174177    |   0.240695
-2019-12-06 09:54:19,390 - root - INFO:  04      | 04    | 545853        |   0.264036    |   0.414872
-2019-12-06 09:54:19,391 - root - INFO:  05      | 05    | 545853        |   0.400255    |   0.678908
-2019-12-06 09:54:19,392 - root - INFO:  06      | 06    | 545853        |   0.606751    |   1.079163
-2019-12-06 09:54:19,393 - root - INFO:  07      | 07    | 545853        |   0.919781    |   1.685915
-2019-12-06 09:54:19,395 - root - INFO:  08      | 08    | 545853        |   1.394305    |   2.605695
-2019-12-06 09:54:19,396 - root - INFO:  09      | 09    | 545853        |   2.000000    |   4.000000
-2019-12-06 09:54:19,397 - root - INFO:  10      | 10    |  999  |   2.000000    |   6.000000
-2019-12-06 09:54:19,398 - root - INFO:  10      | 11    |  999  |   2.000000    |   8.000000
-2019-12-06 09:54:19,399 - root - INFO:  10      | 12    |  999  |   2.000000    |  10.000000
-2019-12-06 09:54:19,400 - root - INFO:  10      | 13    |  999  |   2.000000    |  12.000000
-2019-12-06 09:54:19,401 - root - INFO:  10      | 14    |  999  |   2.000000    |  14.000000
-2019-12-06 09:54:19,401 - root - INFO:  10      | 15    |  999  |   2.000000    |  16.000000
-2019-12-06 09:54:19,402 - root - INFO:  10      | 16    |  999  |   2.000000    |  18.000000
-2019-12-06 09:54:19,404 - root - INFO:  10      | 17    |  999  |   2.000000    |  20.000000
-2019-12-06 09:54:19,405 - root - INFO:  10      | 18    |  999  |   2.000000    |  22.000000
-2019-12-06 09:54:19,405 - root - INFO:  10      | 19    |  999  |   2.000000    |  24.000000
-2019-12-06 09:54:19,407 - root - INFO:  10      | 20    |  999  |   2.000000    |  26.000000
-2019-12-06 09:54:19,407 - root - INFO:  10      | 21    |  999  |   2.000000    |  28.000000
-2019-12-06 09:54:19,408 - root - INFO:  10      | 22    |  999  |   2.000000    |  30.000000
-2019-12-06 09:54:19,410 - root - INFO:  10      | 23    |  999  |   2.000000    |  32.000000
-2019-12-06 09:54:19,411 - root - INFO:  10      | 24    |  999  |   2.000000    |  34.000000
-2019-12-06 09:54:19,412 - root - INFO:  10      | 25    |  999  |   2.000000    |  36.000000
-2019-12-06 09:54:19,413 - root - INFO:  10      | 26    |  999  |   2.000000    |  38.000000
+2020-06-24 08:02:24,018 - root - INFO: Cell summary:
+2020-06-24 08:02:24,019 - root - INFO: ------------------------------------------------------------
+2020-06-24 08:02:24,023 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
+2020-06-24 08:02:24,024 - root - INFO: ------------------------------------------------------------
+2020-06-24 08:02:24,025 - root - INFO:  00      | 00    | 545837        |   0.050000    |   0.000000
+2020-06-24 08:02:24,026 - root - INFO:  01      | 01    | 545837        |   0.075796    |   0.050000
+2020-06-24 08:02:24,027 - root - INFO:  02      | 02    | 545837        |   0.114899    |   0.125796
+2020-06-24 08:02:24,029 - root - INFO:  03      | 03    | 545837        |   0.174177    |   0.240695
+2020-06-24 08:02:24,030 - root - INFO:  04      | 04    | 545837        |   0.264036    |   0.414872
+2020-06-24 08:02:24,031 - root - INFO:  05      | 05    | 545837        |   0.400255    |   0.678908
+2020-06-24 08:02:24,033 - root - INFO:  06      | 06    | 545837        |   0.606751    |   1.079163
+2020-06-24 08:02:24,034 - root - INFO:  07      | 07    | 545837        |   0.919781    |   1.685915
+2020-06-24 08:02:24,035 - root - INFO:  08      | 08    | 545837        |   1.394305    |   2.605695
+2020-06-24 08:02:24,036 - root - INFO:  09      | 09    | 545837        |   2.000000    |   4.000000
+2020-06-24 08:02:24,037 - root - INFO:  10      | 10    |  999  |   2.000000    |   6.000000
+2020-06-24 08:02:24,038 - root - INFO:  10      | 11    |  999  |   2.000000    |   8.000000
+2020-06-24 08:02:24,039 - root - INFO:  10      | 12    |  999  |   2.000000    |  10.000000
+2020-06-24 08:02:24,040 - root - INFO:  10      | 13    |  999  |   2.000000    |  12.000000
+2020-06-24 08:02:24,041 - root - INFO:  10      | 14    |  999  |   2.000000    |  14.000000
+2020-06-24 08:02:24,044 - root - INFO:  10      | 15    |  999  |   2.000000    |  16.000000
+2020-06-24 08:02:24,046 - root - INFO:  10      | 16    |  999  |   2.000000    |  18.000000
+2020-06-24 08:02:24,047 - root - INFO:  10      | 17    |  999  |   2.000000    |  20.000000
+2020-06-24 08:02:24,049 - root - INFO:  10      | 18    |  999  |   2.000000    |  22.000000
+2020-06-24 08:02:24,055 - root - INFO:  10      | 19    |  999  |   2.000000    |  24.000000
+2020-06-24 08:02:24,059 - root - INFO:  10      | 20    |  999  |   2.000000    |  26.000000
+2020-06-24 08:02:24,061 - root - INFO:  10      | 21    |  999  |   2.000000    |  28.000000
+2020-06-24 08:02:24,063 - root - INFO:  10      | 22    |  999  |   2.000000    |  30.000000
+2020-06-24 08:02:24,064 - root - INFO:  10      | 23    |  999  |   2.000000    |  32.000000
+2020-06-24 08:02:24,066 - root - INFO:  10      | 24    |  999  |   2.000000    |  34.000000
+2020-06-24 08:02:24,074 - root - INFO:  10      | 25    |  999  |   2.000000    |  36.000000
+2020-06-24 08:02:24,076 - root - INFO:  10      | 26    |  999  |   2.000000    |  38.000000
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Got telescoping factor: 1.515910144611108
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># extrude</span>
-<span class="n">m3</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">extrude</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
+<span class="n">m3</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
                                              <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1086,15 +1120,15 @@ max diff =  5.63878974546617
 
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_labels</span><span class="p">):</span>
     <span class="n">where</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lc</span> <span class="o">==</span> <span class="n">index</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ss</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">extrude</span><span class="o">.</span><span class="n">SideSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">),</span>
-                                  <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">elem_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">],</span>
-                                  <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">side_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">])</span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">SideSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">),</span>
+                            <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">elem_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">],</span>
+                            <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">side_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">])</span>
     <span class="n">m3</span><span class="o">.</span><span class="n">side_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1123,6 +1157,15 @@ rights in this software.
 Opening exodus file: coweeta_basin.exo
 Closing exodus file: coweeta_basin.exo
 </pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
