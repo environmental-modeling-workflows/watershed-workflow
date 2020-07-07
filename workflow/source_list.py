@@ -13,6 +13,7 @@ These dictionaries are provided as module-local (singleton) variables.
 import logging
 
 from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
+from workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_nrcs import FileManagerNRCS
 from workflow.sources.manager_nlcd import FileManagerNLCD
@@ -23,7 +24,7 @@ from workflow.sources.manager_raster import FileManagerRaster
 
 
 # available and default water boundary datasets
-huc_sources = {'NHD Plus': FileManagerNHDPlus(),
+huc_sources = {'NHD Plus': FileManagerNHDPlusAccumulator(),
                'NHD': FileManagerNHD(),
                'WBD': FileManagerWBD()
                }

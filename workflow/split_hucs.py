@@ -1,5 +1,7 @@
 """A module for working with multi-polys, a MultiLine that together forms a Polygon"""
 
+import logging
+
 import shapely.geometry
 import shapely.ops
 
@@ -76,7 +78,7 @@ class SplitHUCs:
                         | intersections -- which together form the polygon.
 
     """
-    def __init__(self, shapes):
+    def __init__(self, shapes, abs_tol=0., rel_tol=1.e-5):
         # all shapes are stored as a collection of collections of segments
         self.segments = HandledCollection() # stores segments
 
@@ -87,11 +89,12 @@ class SplitHUCs:
         self.intersections = HandledCollection() # stores handles into segments
 
         # initialize
+        shapes = partition(shapes, abs_tol, rel_tol)
         uniques, intersections = intersect_and_split(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
         for i,u in enumerate(uniques):
-            if u is None:
+            if workflow.utils.empty_shapely(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
                 handle = self.segments.add(u)
@@ -108,7 +111,7 @@ class SplitHUCs:
         for i in range(len(shapes)):
             for j in range(len(shapes)):
                 inter = intersections[i][j]
-                if inter is None:
+                if workflow.utils.empty_shapely(inter):
                     pass
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
@@ -173,9 +176,8 @@ class SplitHUCs:
             for s in b:
                 segs.append(self.segments[s])
         ml = shapely.ops.linemerge(segs)
-        #assert(type(ml) is shapely.geometry.LineString)
         if type(ml) is shapely.geometry.LineString:
-            return shapely.geometry.Polygon(ml)
+            return [shapely.geometry.Polygon(ml),]
         else:
             return [shapely.geometry.Polygon(l) for l in ml]
 
@@ -188,6 +190,48 @@ def simplify(hucs, tol=0.1):
     for i,seg in hucs.segments.items():
         hucs.segments[i] = seg.simplify(tol)
 
+
+def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
+    """Given a list of shapes which mostly share boundaries, make sure they
+    partition the space.  Often HUC boundaries have minor overlaps and
+    underlaps -- here we try to account for wiggles."""
+    # deal with overlaps
+    for i in range(len(list_of_shapes)):
+        for j in range(i+1,len(list_of_shapes)):
+            s1 = list_of_shapes[i]
+            s2 = list_of_shapes[j]
+
+            s2 = s2.buffer(abs_tol)
+            if workflow.utils.intersects(s1, s2):
+                s2 = s2.difference(s1)
+                list_of_shapes[j] = s2.difference(s1)
+
+    # remove holes
+    union = shapely.ops.cascaded_union(list_of_shapes)
+    assert(type(union) is shapely.geometry.Polygon)
+
+    # -- deal with disjoint sections separately
+    if type(union) is shapely.geometry.Polygon:
+        union = [union,]
+
+    for part in union:
+        # find all holes
+        for hole in part.interiors:
+            hole = shapely.geometry.Polygon(hole)
+            if hole.area < abs_tol or hole.area < rel_tol * part.area:
+                # give it to someone, anyone, doesn't matter who
+                logging.info("Found a little hole: area = {}".format(hole.area))
+                for i,poly in enumerate(list_of_shapes):
+                    if workflow.utils.non_point_intersection(poly, hole):
+                        logging.info('touches {}'.format(i))
+                        poly = poly.union(hole)
+                        list_of_shapes[i] = poly
+                        break
+            else:
+                logging.info("Found a big hole: area = {}".format(hole.area))
+                
+    return list_of_shapes
+        
 def intersect_and_split(list_of_shapes):
     """Given a list of shapes which share boundaries (i.e. they partition
     some space), return a compilation of their segments.
@@ -206,23 +250,24 @@ def intersect_and_split(list_of_shapes):
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
-            if i != j and s1.intersects(s2):
+            if i != j and workflow.utils.non_point_intersection(s1,s2):
                 inter = s1.intersection(s2)
-                if type(inter) is shapely.geometry.collection.GeometryCollection:
-                    # likely some overlap, we got a polygon...
-                    s2 = s2.difference(s1)
-                    inter = s1.intersection(s2)
-                
+
                 if type(inter) is shapely.geometry.MultiLineString:
                     inter = shapely.ops.linemerge(inter)
-                elif type(inter) is shapely.geometry.LineString:
-                    pass
-                elif type(inter) is shapely.geometry.Point:
-                    continue
-                else:
-                    raise RuntimeError("Invalid type of intersection: %r"%type(inter))
-                
-                uniques[i] = uniques[i].difference(inter)
+
+                if type(inter) is not shapely.geometry.LineString:
+                    logging.info('Hopefully hole in HUC intersection: ({},{}) = {}'.format(i,j,type(inter)))
+
+                if type(inter) is not shapely.geometry.LineString and \
+                   type(inter) is not shapely.geometry.MultiLineString:
+                    raise RuntimeError('things are breaking...')
+
+                diff = uniques[i].difference(s2)
+                if type(diff) is shapely.geometry.MultiLineString:
+                    diff = shapely.ops.linemerge(diff)
+                uniques[i] = diff
+
 
                 # only save once!
                 if i > j:
@@ -235,6 +280,6 @@ def intersect_and_split(list_of_shapes):
 
     uniques_r = [None,]*len(uniques)
     for i,u in enumerate(uniques):
-        if type(u) is not shapely.geometry.GeometryCollection:
+        if not workflow.utils.empty_shapely(u):
             uniques_r[i] = u
     return uniques_r, intersections

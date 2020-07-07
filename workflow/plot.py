@@ -86,7 +86,7 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
 
     else:
         if crs is None:
-            fig.add_axes(window=window)
+            fig.add_axes(window)
             ax = fig.gca()
 
         elif crs == '3d':
@@ -94,7 +94,7 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
 
         else:
             projection = workflow.crs.to_cartopy(crs)
-            fig.add_axes(window=window, projection=projection)
+            fig.add_axes(window, projection=projection)
             ax = fig.gca()
 
     if newfig:
@@ -558,9 +558,9 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
     if country_kwargs is not None and country_kwargs is not False:
         kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
         kwargs.update(**country_kwargs)
-        states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land',
+        country = cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land',
                                                      resolution, **kwargs)
-        ax.add_feature(states)
+        ax.add_feature(country)
         
     if ocean_kwargs is not False:
         if ocean_kwargs is None:
