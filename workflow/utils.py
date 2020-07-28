@@ -184,7 +184,11 @@ def close(s1, s2, tol=_tol):
     elif isinstance(s1, shapely.geometry.LineString):
         if len(s1.coords) != len(s2.coords):
             return False
-        return np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol)
+        if np.allclose(np.array(s1.coords), np.array(s2.coords), tol, tol):
+            return True
+        if np.allclose(np.array(s1.coords), np.array(list(reversed(s2.coords))), tol, tol):
+            return True
+        return False
 
     # compare polygons
     elif type(s1) is shapely.geometry.Polygon:
