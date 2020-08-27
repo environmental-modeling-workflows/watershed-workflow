@@ -106,7 +106,7 @@ class _FileManagerNHD:
         layer = 'WBDHU{}'.format(level)
         logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, huc))
         with fiona.open(filename, mode='r', layer=layer) as fid:
-            hus = [hu for hu in fid if hu['properties']['HUC{:d}'.format(level)].startswith(huc)]
+            hus = [hu for hu in fid if hu['properties']['huc{:d}'.format(level)].startswith(huc)]
             profile = fid.profile
         profile['always_xy'] = True
         return profile, hus
