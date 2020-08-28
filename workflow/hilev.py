@@ -104,7 +104,7 @@ def get_hucs(source, huc, level, crs=None, digits=None):
     profile, hus = source.get_hucs(huc, level)
     logging.info('  found {} HUCs.'.format(len(hus)))
     for hu in hus:
-        logging.info('  -- {}'.format(hu['properties']['HUC{:d}'.format(level)]))
+        logging.info('  -- {}'.format(hu['properties']['huc{:d}'.format(level)]))
     
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
@@ -448,16 +448,16 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['huc{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s contains'%hname)
                 return _find_huc(source, shply, crs, hname)
             elif inhuc == 1:
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['huc{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s partially contains'%hname)
                 # partially contained in try_huc, return this
                 return hint
             else:
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = subhu.properties['huc{:d}'.format(search_level)]
                 logging.debug('  subhuc: %s does not contain'%hname)
         assert(False)
 
@@ -574,7 +574,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
     logging.info("  HUC median seg length: %g"%np.median(np.array(mins)))
     return rivers
     
-def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
+def triangulate(hucs, rivers, diagnostics=True, verbosity=1, tol = 1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False):
     """Triangulates HUCs and rivers.
@@ -590,6 +590,9 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
         A list of reaches from, e.g., get_reaches()
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.    
+    tol : float, optional
+        Set tolerance for minimum distance between two nodes. The unit is the same as 
+        the watershed crs (e.g., the unit is meter in UTM coordinates). The default is 1.
     refine_max_area : float, optional
         Refine a triangle if its area is greater than this area.
     refine_distance : list(float), optional
@@ -653,6 +656,7 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
         return any(rf(*args) for rf in refine_funcs)        
 
     vertices, triangles = workflow.triangulation.triangulate(hucs, rivers,
+                                                             tol = tol,
                                                              verbose=verbose,
                                                              refinement_func=my_refine_func,
                                                              min_angle=refine_min_angle,
@@ -673,6 +677,7 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1,
             needs_refine.append(my_refine_func(verts, areas[-1]))
 
         logging.info("  min area = {}".format(np.min(np.array(areas))))
+        logging.info("  max area = {}".format(np.max(np.array(areas))))
 
         if verbosity > 0:
             plt.figure()

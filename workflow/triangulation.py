@@ -87,14 +87,16 @@ class NodesEdges:
         else:
             raise TypeError("Invalid type for add, %r"%type(obj))
 
-    def check(self, tol=0.1):
+    def check(self, tol):
         """Checks consistency of the interal representation."""
         logging.info(" checking graph consistency")
+        logging.info(" tolerance is set to {}".format(tol))
         min_dist = 1.e10
         coords = np.array(list(self.nodes))
         kdtree = scipy.spatial.cKDTree(coords)
         bad_pairs = kdtree.query_pairs(tol)
-        assert(len(bad_pairs) is 0)
+        if len(bad_pairs) is not 0:
+            raise ValueError('tol= {} is too large, try decrease tolerance!'.format(tol))
         
         min_node = min(self.nodes[n] for n in self.nodes)
         max_node = max(self.nodes[n] for n in self.nodes)
@@ -107,7 +109,7 @@ class NodesEdges:
         assert(max_edge_node == len(self.nodes)-1)
 
         
-def triangulate(hucs, rivers, **kwargs):
+def triangulate(hucs, rivers, tol = 1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
@@ -132,7 +134,7 @@ def triangulate(hucs, rivers, **kwargs):
     nodes_edges = NodesEdges(segments)
 
     logging.info("   %i points and %i facets"%(len(nodes_edges.nodes), len(nodes_edges.edges)))
-    nodes_edges.check(tol=1)
+    nodes_edges.check(tol=tol)
     
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
