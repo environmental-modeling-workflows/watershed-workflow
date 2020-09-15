@@ -104,7 +104,7 @@ def get_hucs(source, huc, level, crs=None, digits=None):
     profile, hus = source.get_hucs(huc, level)
     logging.info('  found {} HUCs.'.format(len(hus)))
     for hu in hus:
-        logging.info('  -- {}'.format(hu['properties']['HUC{:d}'.format(level)]))
+        logging.info('  -- {}'.format(workflow.sources.utils.get_code(hu,level)))
     
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
@@ -379,10 +379,15 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     # warp the raster to the requested output
     if raster_crs is not None:
         profile, raster = workflow.warp.raster(profile, raster, raster_crs)
+    else:
+        raster_crs = workflow.crs.from_rasterio(profile['crs'])
 
     if mask:
         # mask the raster
         logging.info("Masking to shape")
+        if raster_crs != crs:
+            shape = workflow.warp.shply(shape, crs, raster_crs)
+        logging.info("shape bounds: {}".format(shape.bounds))
         mask = rasterio.features.geometry_mask([shape,], raster.shape,
                                                profile['transform'], invert=True)
         raster = np.where(mask, raster, nodata)
@@ -448,16 +453,16 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = workflow.sources.utils.get_code(subhu, search_level)
                 logging.debug('  subhuc: %s contains'%hname)
                 return _find_huc(source, shply, crs, hname)
             elif inhuc == 1:
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = workflow.sources.utils.get_code(subhu, search_level)
                 logging.debug('  subhuc: %s partially contains'%hname)
                 # partially contained in try_huc, return this
                 return hint
             else:
-                hname = subhu.properties['HUC{:d}'.format(search_level)]
+                hname = workflow.sources.utils.get_code(subhu, search_level)
                 logging.debug('  subhuc: %s does not contain'%hname)
         assert(False)
 
@@ -474,7 +479,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
 
     _, hint_hu = get_huc(source, hint, crs)
     inhuc = _in_huc(shply_s, hint_hu)
-    if inhuc is not 2:
+    if inhuc != 2:
         raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
 
     result = _find_huc(source, shply_s, crs, hint)
@@ -524,7 +529,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
         count = len(reaches)
         reaches = workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
         logging.info("  filtered from {} to {} reaches.".format(count, len(reaches)))
-    if len(reaches) is 0:
+    if len(reaches) == 0:
         return reaches
 
     logging.info("Generate the river tree")
@@ -538,7 +543,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
             logging.info("  ...removing river with %d reaches"%ltree)
         else:
             logging.info("  ...keeping river with %d reaches"%ltree)
-    if len(rivers) is 0:
+    if len(rivers) == 0:
         return rivers
             
     logging.info("simplifying rivers")
@@ -554,7 +559,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
     logging.info("")
     logging.info("Simplification Diagnostics")
     logging.info("-"*30)
-    if len(rivers) is not 0:
+    if len(rivers) != 0:
         mins = []
         for river in rivers:
             for line in river.dfs():

@@ -16,9 +16,14 @@ your PYTHONPATH.
 import numpy as np
 import collections
 import logging
-import exodus
 import attr
 import scipy.optimize
+
+try:
+    import exodus
+except Exception:
+    import exodus3 as exodus
+    
 
 def _is_list_or_array(val):
     assert type(val) is list or type(val) is np.ndarray
@@ -233,7 +238,26 @@ class Mesh2D(object):
         assert(all(len(c) == 3 for c in self.conn))
         from workflow_tpls import vtk_io
         vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
-        
+
+    def transform(self, mat=None, shift=None):
+        """Transform a 2D mesh"""
+        if mat is None:
+            mat = np.array([[1,0,0],
+                            [0,1,0],
+                            [0,0,1]])
+        if shift is None:
+            shift = np.array([0,0,0])
+
+        new_coords = []
+        for c in self.coords:
+            assert(c.shape == (3,))
+            tc = mat @ c + shift
+            assert(tc.shape == (3,))
+            new_coords.append(tc)
+        new_coords = np.array(new_coords)
+        assert(new_coords.shape == self.coords.shape)
+        self.coords = new_coords
+        #self.coords = np.array([mat @ c + shift for c in self.coords])
 
     @classmethod
     def read_VTK(cls, filename):
@@ -354,7 +378,7 @@ class Mesh2D(object):
     def from_Transect(cls, x, z, width=1):
         """Creates a 2D surface strip mesh from transect data"""
         # coordinates
-        y = np.array([0,width])
+        y = np.array([-width/2,width/2])
         Xc, Yc = np.meshgrid(x, y)
         Xc = Xc.flatten()
         Yc = Yc.flatten()
@@ -402,7 +426,7 @@ class Mesh2D(object):
         logging.info("Constructing Mesh2D as dual of a triangulation.")
         logging.info("-- confirming triangulation (note, not checking delaunay, buyer beware)")
         for c in self.conn:
-            assert(len(c) is 3) # check all triangles
+            assert(len(c) == 3) # check all triangles
 
         def circumcenter(p1,p2,p3):
             d = 2 * (p1[0] * (p2[1] - p3[1]) + p2[0] *
@@ -471,7 +495,7 @@ class Mesh2D(object):
             my_cell = list()
 
             # stick in the previous midpoint node, add to my_cell
-            if i is 0:
+            if i == 0:
                 # reserve a spot for the last midpoint
                 first_cell_added = e[0]
                 my_cell.append(-1)
@@ -1179,8 +1203,20 @@ def telescope_factor(ncells, dz, layer_dz):
                          ).format(ncells, dz, layer_dz))
 
     def seq(r):
-        calc_layer_dz = dz * (1 - r**ncells)/(1-r)
+        calc_layer_dz = 0
+        dz_new = dz
+        for i in range(ncells):
+            calc_layer_dz += dz_new
+            dz_new *= r
+
         #print('tried: {} got: {}'.format(r, calc_layer_dz))
         return layer_dz - calc_layer_dz
-    res = scipy.optimize.root_scalar(seq, x0=1.0001, x1=2)
+    res = scipy.optimize.root_scalar(seq, method='bisect', bracket=[1.0001,2], maxiter=1000)
+    logging.info("Converged?: ratio = {}, layer z (target = {}) = {}".format(res.root, layer_dz, seq(res.root)))
     return res.root
+
+
+def transform_rotation(radians):
+    return np.array([[ np.cos(radians), np.sin(radians), 0],
+                     [-np.sin(radians), np.cos(radians), 0],
+                     [               0,               0, 1]])

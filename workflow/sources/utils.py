@@ -11,6 +11,17 @@ import math
 
 import workflow.utils
 
+
+def get_code(fiona_obj, level):
+    """Gets the huc string from a fiona HUC shape."""
+    key = 'HUC{:d}'.format(level)
+    prop = fiona_obj['properties']
+    try:
+        return prop[key]
+    except KeyError:
+        return prop[key.lower()]
+    
+
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
     if type(huc) is str:

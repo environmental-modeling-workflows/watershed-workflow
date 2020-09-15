@@ -7,16 +7,7 @@ import configparser
 def home():
     return os.path.expanduser('~')
 
-def defaults():
-    rcParams = { 'packages data dir' : 'packages' }
-    try:
-        rcParams['data_directory'] = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'data')
-    except KeyError:
-        rcParams['data_directory'] = os.path.join(os.getcwd(), 'data')
-    return rcParams
-    
-
-def parse():
+def config():
     """Parse config files and set defaults.
 
     Returns
@@ -24,7 +15,13 @@ def parse():
     rcParams : configparser.ConfigParser
       A dict-like object containing parameters.
     """
-    rcParams = configparser.ConfigParser(defaults=defaults())
+    rcParams = configparser.ConfigParser()
+    try:
+        data_directory = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'data')
+    except KeyError:
+        data_directory = os.path.join(os.getcwd(), 'data')
+    rcParams['DEFAULT']['data_directory'] = data_directory
+    
     rcParams.read([os.path.join(os.getcwd(), 'watershed_workflowrc'),
                    os.path.join(os.getcwd(), '.watershed_workflowrc'),
                    os.path.join(home(), '.watershed_workflowrc')])
@@ -34,8 +31,15 @@ def get_git_revision_hash():
     """Returns the git revision hash."""
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
 
+
+def set_data_directory(path):
+    """Sets the directory in which all data is stored."""
+    rcParams['DEFAULT']['data_directory'] = path
+
 # global config
-rcParams = parse()
+rcParams = config()
+
+
 
 
 
