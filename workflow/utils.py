@@ -498,3 +498,13 @@ def non_point_intersection(shp1, shp2):
     elif empty_shapely(inter):
         return False
     return True
+
+def flatten(list_of_shps):
+    """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""
+    new_list = []
+    for shp in list_of_shps:
+        if type(shp) == shapely.geometry.MultiLineString or type(shp) == shapely.geometry.MultiPolygon:
+            new_list.extend([s for s in shp])
+        else:
+            new_list.append(shp)
+    return new_list

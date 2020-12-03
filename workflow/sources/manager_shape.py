@@ -70,7 +70,7 @@ class FileManagerShape:
                 if index_or_bounds is not None and index_or_bounds >= 0:
                     shps = [fid[index_or_bounds],]
                 else:
-                    shps = fid[:]
+                    shps = [s for s in fid]
             else:
                 if crs is not None and not workflow.crs.equal(crs, workflow.crs.from_fiona(profile['crs'])):
                     bounds = workflow.warp.bounds(index_or_bounds, crs, workflow.crs.from_fiona(profile['crs']))

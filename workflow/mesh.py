@@ -13,6 +13,7 @@ In that case, simply ensure that ${AMANZI_TPLS_DIR}/SEACAS/lib is in
 your PYTHONPATH.
 """
 
+import os
 import numpy as np
 import collections
 import logging
@@ -34,9 +35,10 @@ def _is_valid_index(val):
     
 def _iter_is_nonnegative(val):
     _is_list_or_array(val)
-    mval = min(val)
-    assert(type(mval) is int)
-    assert(mval >= 0)
+    if len(val) > 0:
+        mval = min(val)
+        assert(type(mval) is int)
+        assert(mval >= 0)
 
 def _valid_coords_array(coords, dim=None):
     if dim is None:
@@ -78,7 +80,7 @@ class LabeledSet(object):
     """A generic collection of entities."""
     name = attr.ib(validator=_is_str)
     setid = attr.ib(validator=_v(_is_valid_index))
-    entity = attr.ib(validator=_v(_is_entity))
+    entity = attr.ib(validator=_is_entity)
     ent_ids = attr.ib(validator=_v(_iter_is_nonnegative))
 
     def validate(self, size):
@@ -375,14 +377,26 @@ class Mesh2D(object):
         return cls(points, gons)
             
     @classmethod
-    def from_Transect(cls, x, z, width=1):
+    def from_Transect(cls, x, z, width=1, **kwargs):
         """Creates a 2D surface strip mesh from transect data"""
         # coordinates
-        y = np.array([-width/2,width/2])
+        if (type(width) is list or type(width) is np.ndarray):
+            variable_width = True
+            y = np.array([0,1])
+        else:
+            variable_width = False
+            y = np.array([-width/2,width/2])
+            
         Xc, Yc = np.meshgrid(x, y)
+        if variable_width:
+            assert(Yc.shape[0] == 2)
+            assert(len(width) == Yc.shape[1])
+            assert(min(width) > 0.)
+            Yc[0,:] = -width/2.
+            Yc[1,:] = width/2.
+
         Xc = Xc.flatten()
         Yc = Yc.flatten()
-
         Zc = np.concatenate([z,z])
 
         # connectivity
@@ -392,7 +406,7 @@ class Mesh2D(object):
             conn.append([i, i+1, nsurf_cells + i + 2, nsurf_cells + i + 1])
 
         points = np.array([Xc, Yc, Zc])
-        return cls(points.transpose(), conn)
+        return cls(points.transpose(), conn, **kwargs)
 
     def to_dual(self):
         """Creates a 2D surface mesh from a primal 2D triangular surface mesh.
@@ -851,7 +865,8 @@ class Mesh3D(object):
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
         num_faces = sum(len(face_blk) for face_blk in face_blks)
 
-        ep = exodus.ex_init_params(title=filename.encode('ascii'),
+        filename_base = os.path.split(filename)[-1]
+        ep = exodus.ex_init_params(title=filename_base.encode('ascii'),
                                    num_dim=3,
                                    num_nodes=self.num_nodes(),
                                    num_face=num_faces,
@@ -1214,6 +1229,42 @@ def telescope_factor(ncells, dz, layer_dz):
     res = scipy.optimize.root_scalar(seq, method='bisect', bracket=[1.0001,2], maxiter=1000)
     logging.info("Converged?: ratio = {}, layer z (target = {}) = {}".format(res.root, layer_dz, seq(res.root)))
     return res.root
+
+
+def optimize_dzs(dz_begin, dz_end, thickness, num_cells, p_thickness=1000, p_dz=10000, p_increasing=1000, p_smooth=10, tol=1):
+    """Tries to optimize dzs"""
+    pad_thickness = thickness + dz_begin + dz_end
+
+    def penalty_thickness(dzs):
+        return abs(pad_thickness - dzs.sum())
+    def penalty_dz(dzs):
+        return dz_end / dz_begin * abs(dzs[0] - dz_begin) + abs(dzs[-1] - dz_end)
+    def penalty_increasing(dzs):
+        return np.maximum(0., dzs[0:-1] - dzs[1:]).sum()
+    def penalty_smooth(dzs):
+        growth_factor = dzs[1:] / dzs[0:-1]
+        return np.abs(2*growth_factor[1:-1] - growth_factor[0:-2] - growth_factor[2:]).sum()
+
+    def penalty(dzs):
+        return p_thickness * penalty_thickness(dzs) \
+            + p_dz * penalty_dz(dzs) \
+            + p_increasing * penalty_increasing(dzs) \
+            + p_smooth * penalty_smooth(dzs)
+
+    x0 = (dz_begin + dz_end) / 2. * np.ones((num_cells,),'d')
+    bounds = [(dz_begin, dz_end),]*num_cells
+    res = scipy.optimize.minimize(penalty, x0, bounds=bounds)
+
+    dzs = res.x.copy()[1:-1]
+
+    # MUST have increasing
+    dzs.sort()
+
+    # MUST have sum
+    dzs = dzs / dzs.sum() * thickness
+
+    return dzs, res
+        
 
 
 def transform_rotation(radians):

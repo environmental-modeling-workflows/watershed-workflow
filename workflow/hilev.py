@@ -333,13 +333,14 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
 
 def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
-                        mask=False, nodata=-1):
+                        mask=False, nodata=None):
     """Collects a raster DEM that covers the requested shape.
 
     Parameters
     ----------
-    source : source-type
-        Source object providing a get_raster() method.
+    source : str or source-type
+        Filename to parse, or a source object providing the get_raster()
+        method.
     shape : Polygon
         Shapely or fiona polygon on which to get the raster.
     crs : crs-type
@@ -351,7 +352,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         pixels cover the entire shape.  Default is 0.
     mask : bool, optional=False
         If True, mask the raster outside of shape.
-    nodata : dtype, optional=-1
+    nodata : dtype, optional=raster nodata
         Value to place outside of shape.
 
     Returns
@@ -365,6 +366,11 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     logging.info("")
     logging.info("Preprocessing Raster")
     logging.info("-"*30)
+
+    # load file
+    if type(source) is str:
+        logging.info('loading file: "{}"'.format(source))
+        source = workflow.sources.manager_raster.FileManagerRaster(source)
 
     if type(shape) is dict:
         shape = workflow.utils.shply(shape)
@@ -390,7 +396,22 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         logging.info("shape bounds: {}".format(shape.bounds))
         mask = rasterio.features.geometry_mask([shape,], raster.shape,
                                                profile['transform'], invert=True)
-        raster = np.where(mask, raster, nodata)
+        if nodata is None:
+            if profile['nodata'] is None:
+                try:
+                    # surely there is a better way to see if dtype can handle nan?
+                    nodata = np.array([np.nan,], dtype=np.dtype(profile['dtype']))[0]
+                except:
+                    # surely there is a better way to get -1 as dtype?
+                    nodata = np.array([-1,], dtype=np.dtype(profile['dtype']))[0]
+                    profile['nodata'] = nodata
+                else:
+                    profile['nodata'] = nodata
+            else:
+                nodata = profile['nodata']
+            
+        logging.info(f"Casting mask of dtype: {profile['dtype']} to: {nodata}")
+        raster[~mask] = nodata
 
     transform = profile['transform']
     x0 = transform * (0,0)

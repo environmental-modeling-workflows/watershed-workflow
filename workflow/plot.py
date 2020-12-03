@@ -28,7 +28,7 @@ import workflow.utils
 import workflow.crs
 import workflow.colors
 
-def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
+def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **kwargs):
     """Returns an axis with a given projection.
     
     Note this forwards extra kwargs for plt.figure().
@@ -74,15 +74,20 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, **kwargs):
         newfig = False
 
     if window is None:
+        if axgrid is None:
+            axargs = [nrow, ncol, index]
+        else:
+            axargs = [axgrid,]
+            
         if crs is None:
             # no crs, just get an ax -- you deal with it.
-            ax = fig.add_subplot(nrow, ncol, index)
+            ax = fig.add_subplot(*axargs)
         elif crs == '3d':
             # 3d plot
-            ax = fig.add_subplot(nrow, ncol, index, projection='3d')
+            ax = fig.add_subplot(*axargs, projection='3d')
         else:
             projection = workflow.crs.to_cartopy(crs)
-            ax = fig.add_subplot(nrow, ncol, index, projection=projection)
+            ax = fig.add_subplot(*axargs, projection=projection)
 
     else:
         if crs is None:
@@ -249,7 +254,7 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
 
     Parameters
     ----------
-    shps : list(shapely shape objects)
+    shps : shapely shape, list(shapely shape objects), or MultiShape object
       An iterable of shapely objects to plot.
     crs : CRS object
       The coordinate system to plot in.
@@ -267,8 +272,12 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
     -------
     col : collection of matplotlib points or lines or patches
     """
-    if len(shps) is 0:
-        return
+    try:
+        if len(shps) is 0:
+            return
+    except TypeError:
+        shps = [shps,]
+        
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
 
@@ -466,7 +475,7 @@ def mesh(m2, crs, color='gray', ax=None, **kwargs):
 
 
 
-def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
+def raster(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     """Plots a raster.
 
     A wrapper for matplotlib imshow()
@@ -500,6 +509,10 @@ def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     logging.info('BOUNDS: {}'.format(bounds))
     return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax, **kwargs)
 
+
+def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
+    """See raster documentation"""
+    return raster(profile, data, ax, vmin, vmax, **kwargs)
 
 def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None, state_kwargs=None, country_kwargs=None, coastline_kwargs=None):
     """Add a basemap to the axis.
