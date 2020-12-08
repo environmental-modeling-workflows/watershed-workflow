@@ -1,11 +1,13 @@
 """Basic manager for interacting with raster files.
 """
 
-import numpy as np
 import attr
 import rasterio
 import rasterio.windows
+import workflow
 import workflow.crs
+import numpy as np
+import logging
 
 @attr.s
 class FileManagerRaster:
@@ -17,7 +19,7 @@ class FileManagerRaster:
       Path to the raster file.
     """
     _filename = attr.ib(type=str)
-    
+
     def get_raster(self, shape, crs, band=1):
         """Download and read a DEM for this shape, clipping to the shape.
         
@@ -29,14 +31,12 @@ class FileManagerRaster:
           CRS of the shape.
         band : int,optional
           Default is 1, the first band (1-indexed).
-
         Returns
         -------
         profile : rasterio profile
           Profile of the raster.
         raster : np.ndarray
           Array containing the elevation data.
-
         Note that the raster provided is in its native CRS (which is in the
         rasterio profile), not the shape's CRS.
         """

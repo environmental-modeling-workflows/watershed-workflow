@@ -73,7 +73,7 @@ class NodesEdges:
         self.nodes = Nodes()
         self.edges = set()
 
-        if objlist is not None:
+        if objlist != None:
             [self.add(obj) for obj in objlist]
 
     def add(self, obj):
@@ -95,7 +95,7 @@ class NodesEdges:
         coords = np.array(list(self.nodes))
         kdtree = scipy.spatial.cKDTree(coords)
         bad_pairs = kdtree.query_pairs(tol)
-        if len(bad_pairs) is not 0:
+        if len(bad_pairs) != 0:
             raise ValueError('tol= {} is too large, try decrease tolerance!'.format(tol))
         
         min_node = min(self.nodes[n] for n in self.nodes)
@@ -109,7 +109,7 @@ class NodesEdges:
         assert(max_edge_node == len(self.nodes)-1)
 
         
-def triangulate(hucs, rivers, tol = 1, **kwargs):
+def triangulate(hucs, rivers, ignore_rivers = False, tol = 1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
@@ -127,9 +127,11 @@ def triangulate(hucs, rivers, tol = 1, **kwargs):
         segments = [hucs,]
     else:
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
-        
-    if rivers is not None:
-        segments = segments + list(workflow.river_tree.forest_to_list(rivers))
+    
+    if ignore_rivers:
+        rivers = None
+    if rivers != None:
+       segments = segments + list(workflow.river_tree.forest_to_list(rivers))
 
     nodes_edges = NodesEdges(segments)
 

@@ -67,7 +67,7 @@ def get_huc(source, huc, crs=None, digits=None):
     return crs, hu_shapes[0]
 
 
-def get_hucs(source, huc, level, crs=None, digits=None):
+def get_hucs(source, huc, level=None, crs=None, digits=None):
     """Get shape objects for all HUCs at a level contained in huc.
 
     Parameters
@@ -103,25 +103,38 @@ def get_hucs(source, huc, level, crs=None, digits=None):
     
     profile, hus = source.get_hucs(huc, level)
     logging.info('  found {} HUCs.'.format(len(hus)))
-    for hu in hus:
-        logging.info('  -- {}'.format(workflow.sources.utils.get_code(hu,level)))
+    logging.info('  geometry type {} '.format(type(hus)))
+
+    try:
+        for hu in hus:
+            logging.info('  -- {}'.format(workflow.sources.utils.get_code(hu,level)))
+    except:
+        logging.warning("only 1 fiona obj is found!")
+        logging.info('  -- {}'.format(workflow.sources.utils.get_code(hus,level)))
     
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
     if crs and not workflow.crs.equal(crs, native_crs):
-        for hu in hus:
-            workflow.warp.shape(hu, native_crs, crs)
+        try:
+            for hu in hus:
+                workflow.warp.shape(hu, native_crs, crs)
+        except:
+            workflow.warp.shape(hus, native_crs, crs)
     else:
         crs = native_crs
 
     # round
-    if digits is not None:
+    if digits != None:
         workflow.utils.round(hus, digits)
 
     # convert to shapely
-    hu_shapes = [workflow.utils.shply(hu) for hu in hus]
-    return crs, hu_shapes
+    logging.info('convert fiona obj to shapely...')
 
+    try:
+        hu_shapes = [workflow.utils.shply(hu) for hu in hus]
+    except:
+        hu_shapes = workflow.utils.shply(hus)
+    return crs, hu_shapes
 
 def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
     """Get a SplitHUCs object for all HUCs at level contained in huc.
@@ -194,7 +207,7 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None):
         source = workflow.sources.manager_shape.FileManagerShape(source)
 
     profile, shps = source.get_shapes(index_or_bounds, crs)
-
+    logging.info(f"src CRS: {profile['crs']}")
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
     if crs and not workflow.crs.equal(crs, native_crs):
@@ -204,7 +217,7 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None):
         crs = native_crs
         
     # round
-    if digits is not None:
+    if digits != None:
         workflow.utils.round(shps, digits)
 
     # convert to shapely
@@ -243,7 +256,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     return crs, workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=True, presimplify=None):
+def get_reaches(source, huc, bounds=None, crs=None, cvrt = False, digits=None, long=None, merge=True, presimplify=None):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -266,6 +279,8 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     crs : crs-type, optional
         Output coordinate system and coordinate system of bounds.  Defaults to
         the source's crs.
+    cvrt : bool, optional
+        If true, convert river network CRS based on watershed crs
     digits : int, optional
         Number of digits to round coordinates to.
     long : float, optional
@@ -297,7 +312,7 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     profile, reaches = source.get_hydro(huc, bounds, crs)
     logging.info("  found {} reaches".format(len(reaches)))
 
-    if presimplify is not None:
+    if presimplify != None:
         # convert to shapely and simplify
         reaches_s = [workflow.utils.shply(r).simplify(presimplify) for r in reaches] 
 
@@ -306,24 +321,29 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
-    if crs and not workflow.crs.equal(crs, native_crs):
+
+    if crs and not workflow.crs.equal(crs, native_crs) and cvrt:
+        logging.info("convert to destination crs : {}".format(crs))
         for reach in reaches:
             workflow.warp.shape(reach, native_crs, crs)
     else:
         crs = native_crs
 
+    logging.info("out crs: {}".format(crs))
     # round
-    if digits is not None:
+    if digits != None:
         workflow.utils.round(reaches, digits)
 
     # convert to shapely
+    logging.info("convert to {} shapely files".format(len(reaches)))
     reaches_s = [workflow.utils.shply(reach) for reach in reaches]
 
     if merge:
+        logging.info("merge all shapely branched lines into a single line")
         reaches_s = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches_s)))
 
     # not too long
-    if long is not None:
+    if long != None:
         n_r = len(reaches_s)
         reaches_s = [reach for reach in reaches_s if reach.length < long]
         logging.info("  filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
@@ -332,9 +352,9 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     return crs, reaches_s
 
 
-def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
+def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0., force = False,
                         mask=False, nodata=None):
-    """Collects a raster DEM that covers the requested shape.
+    """Collects a raster (e.g., DEM) that covers the requested shape.
 
     Parameters
     ----------
@@ -350,6 +370,8 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     buffer : double, optional
         Size of a buffer, in units of the shape's CRS, added to shape to ensure
         pixels cover the entire shape.  Default is 0.
+    force : bool, optional=False
+        If True, redownloading the raster regardless whether it exists.
     mask : bool, optional=False
         If True, mask the raster outside of shape.
     nodata : dtype, optional=raster nodata
@@ -367,11 +389,6 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     logging.info("Preprocessing Raster")
     logging.info("-"*30)
 
-    # load file
-    if type(source) is str:
-        logging.info('loading file: "{}"'.format(source))
-        source = workflow.sources.manager_raster.FileManagerRaster(source)
-
     if type(shape) is dict:
         shape = workflow.utils.shply(shape)
     if type(shape) is shapely.geometry.MultiPolygon:
@@ -379,11 +396,16 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     shape = shape.buffer(buffer)
 
     logging.info("collecting raster")
-    profile, raster = source.get_raster(shape, crs)
+    if type(source) is str:
+        logging.info('loading file: "{}"'.format(source))
+        source = workflow.sources.manager_raster.FileManagerRaster(source)
+        profile, raster = source.get_raster(shape, crs)
+    else:
+        profile, raster = source.get_raster(shape, crs, force = force)
     logging.info("Got raster of shape: {}".format(raster.shape))
 
     # warp the raster to the requested output
-    if raster_crs is not None:
+    if raster_crs != None:
         profile, raster = workflow.warp.raster(profile, raster, raster_crs)
     else:
         raster_crs = workflow.crs.from_rasterio(profile['crs'])
@@ -409,7 +431,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
                     profile['nodata'] = nodata
             else:
                 nodata = profile['nodata']
-            
+
         logging.info(f"Casting mask of dtype: {profile['dtype']} to: {nodata}")
         raster[~mask] = nodata
 
@@ -600,7 +622,7 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
     logging.info("  HUC median seg length: %g"%np.median(np.array(mins)))
     return rivers
     
-def triangulate(hucs, rivers, diagnostics=True, verbosity=1, tol = 1,
+def triangulate(hucs, rivers, diagnostics=True, verbosity=1, ignore_rivers = False, tol = 1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False):
     """Triangulates HUCs and rivers.
@@ -615,7 +637,10 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1, tol = 1,
     reaches : list(LineString)
         A list of reaches from, e.g., get_reaches()
     diagnostics : bool, optional
-        Plot diagnostics graphs of the triangle refinement.    
+        Plot diagnostics graphs of the triangle refinement.   
+    ignore_rivers: bool, optional
+        ignore river networks and let meshes refine close to rivers. This is useful
+        if using existing rivers produces problemic meshes. 
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit is the same as 
         the watershed crs (e.g., the unit is meter in UTM coordinates). The default is 1.
@@ -672,16 +697,17 @@ def triangulate(hucs, rivers, diagnostics=True, verbosity=1, tol = 1,
     logging.info("-"*30)
 
     refine_funcs = []
-    if refine_max_area is not None:
+    if refine_max_area != None:
         refine_funcs.append(workflow.triangulation.refine_from_max_area(refine_max_area))
-    if refine_distance is not None:
+    if refine_distance != None:
         refine_funcs.append(workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
-    if refine_max_edge_length is not None:
+    if refine_max_edge_length != None:
         refine_funcs.append(workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)        
 
     vertices, triangles = workflow.triangulation.triangulate(hucs, rivers,
+                                                             ignore_rivers = ignore_rivers,
                                                              tol = tol,
                                                              verbose=verbose,
                                                              refinement_func=my_refine_func,
@@ -789,6 +815,11 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
         Array of raster values interpolated onto the points.
 
     """
+
+    # get the first band if 3D array
+    if raster.ndim == 3:
+        raster = raster[0, :, :]
+
     raster_crs = workflow.crs.from_rasterio(raster_profile['crs'])
     points_raster_crs = np.array(workflow.warp.xy(points[:,0], points[:,1], points_crs, raster_crs)).transpose()
     if algorithm == 'nearest':

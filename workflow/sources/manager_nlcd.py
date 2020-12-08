@@ -6,6 +6,7 @@ import shapely
 import rasterio
 import rasterio.windows
 import rasterio.transform
+from rasterio import mask
 
 import workflow.sources.utils as source_utils
 import workflow.conf
@@ -74,7 +75,7 @@ class FileManagerNLCD:
         return layer, year, location
         
 
-    def get_raster(self, shply, crs):
+    def get_raster(self, shply, crs, force = False):
         """Download and read a DEM for this shape, clipping to the shape.
 
         Parameters
@@ -109,26 +110,36 @@ class FileManagerNLCD:
         # warp to crs
         shply = workflow.warp.shply(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
 
-        # calculate a window
-        bounds = shply.bounds
-        offset_y, offset_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[0], bounds[3])
-        offset_x = max(0, offset_x - 10)
-        offset_y = max(0, offset_y - 10)
+        # # calculate a window
+        # bounds = shply.bounds
+        # offset_y, offset_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[0], bounds[3])
+        # offset_x = max(0, offset_x - 10)
+        # offset_y = max(0, offset_y - 10)
         
-        lr_y, lr_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[2], bounds[1])
-        nx, ny = nlcd_profile['width'], nlcd_profile['height']
-        lr_x = min(lr_x + 10, nx)
-        lr_y = min(lr_y + 10, ny)
+        # lr_y, lr_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[2], bounds[1])
+        # nx, ny = nlcd_profile['width'], nlcd_profile['height']
+        # lr_x = min(lr_x + 10, nx)
+        # lr_y = min(lr_y + 10, ny)
         
-        window = rasterio.windows.Window(offset_x, offset_y, lr_x - offset_x, lr_y - offset_y)
+        # window = rasterio.windows.Window(offset_x, offset_y, lr_x - offset_x, lr_y - offset_y)
+        
         with rasterio.open(filename, 'r') as fid:
-            profile = fid.profile
-            band = fid.read(1, window=window)
+            # profile = fid.profile
+            # band = fid.read(1, window=window)
+            out_image, out_transform = mask.mask(fid, [shply,], crop=True)
+            out_meta = fid.meta    
+        
+        out_meta.update({"driver": "GTiff",
+                 "height": out_image.shape[1],
+                 "width": out_image.shape[2],
+                 "transform": out_transform})
 
-        # shift the profile by the offset
-        profile['transform'] = profile['transform'] * profile['transform'].translation(offset_x, offset_y)
 
-        return profile,band
+        # # shift the profile by the offset
+        # profile['transform'] = profile['transform'] * profile['transform'].translation(offset_x, offset_y)
+
+        # return profile, band
+        return out_meta, out_image
 
     def _download(self, force=False):
         """Download the files, returning list of filenames."""

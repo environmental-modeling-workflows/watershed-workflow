@@ -44,7 +44,7 @@ class FileManagerNED:
     """
     def __init__(self, resolution='1/3 arc-second', file_format='IMG'):
         """Create the manager."""
-        self.name = 'National Elevation Dataset (NED)'
+        self.name = 'National Elevation Dataset (NED); resolution: {}'.format(resolution)
         self.file_format = file_format
 
         if resolution == '1/3 arc-second':
@@ -60,7 +60,7 @@ class FileManagerNED:
                                                   self.short_res+"_raw")
         self.crs = workflow.crs.from_epsg(4269)
 
-    def get_raster(self, shape, crs):
+    def get_raster(self, shape, crs, force = False):
         """Download and read a DEM for this shape, clipping to the shape.
         
         Parameters
@@ -93,7 +93,7 @@ class FileManagerNED:
         feather_bounds[1] = feather_bounds[1] - .01
         feather_bounds[2] = feather_bounds[2] + .01
         feather_bounds[3] = feather_bounds[3] + .01
-        files = self.download(feather_bounds)
+        files = self.download(feather_bounds, force = force)
 
         # merge into a single raster
         datasets = [rasterio.open(f) for f in files]
@@ -130,6 +130,7 @@ class FileManagerNED:
             r = requests.get(rest_url, params={'datasets':rest_dataset,
                                                'bbox':rest_bounds,
                                                'prodFormats':self.file_format})
+
         except requests.exceptions.ConnectionError as err:
             logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))
             raise err
@@ -236,6 +237,7 @@ class FileManagerNED:
                 for fname in filenames:
                     logging.warn('  {}'.format(fname))
         else:
+            logging.info('source files already exist!')
             filenames_success = filenames
 
         return filenames_success

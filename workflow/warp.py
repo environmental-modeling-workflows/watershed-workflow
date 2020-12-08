@@ -96,7 +96,7 @@ def shape(feature, old_crs, new_crs):
     return feature
                     
     
-def raster(src_profile, src_array, dst_crs=None, dst_profile=None):
+def raster(src_profile, src_array, dst_crs=None, dst_profile=None, dst_nodata = None, resolution = None, resampling_method = rasterio.warp.Resampling.nearest):
     """Warp a raster from src_profile to dst_crs or dst_profile."""
     if (dst_crs is None and dst_profile is None):
         return src_profile, src_array
@@ -118,26 +118,44 @@ def raster(src_profile, src_array, dst_crs=None, dst_profile=None):
 
     src_bounds = rasterio.transform.array_bounds(src_profile['height'], src_profile['width'], src_profile['transform'])
     logging.debug('Warping raster with bounds: {} to CRS: {}'.format(src_bounds, dst_crs))
-        
+    
+    if dst_nodata is None:
+        dst_nodata = src_profile['nodata']        
+
     if dst_profile is None:
         dst_profile = src_profile.copy()
 
         # Calculate the ideal dimensions and transformation in the new crs
         dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
-            src_profile['crs'], dst_crs_rasterio, src_profile['width'], src_profile['height'], *src_bounds)
+            src_profile['crs'], dst_crs_rasterio, src_profile['width'], src_profile['height'], 
+            *src_bounds, resolution = resolution)
 
         # update the relevant parts of the profile
         dst_profile.update({
             'crs': dst_crs_rasterio,
             'transform': dst_transform,
             'width': dst_width,
-            'height': dst_height
+            'height': dst_height,
+            'nodata': dst_nodata
         })
 
+    # logging.info(f"src array shape: {src_array.shape}")
     # Reproject and return
-    dst_array = np.empty((dst_height, dst_width), dtype=src_array.dtype)
-    rasterio.warp.reproject(src_array, dst_array, src_profile['transform'], src_crs=src_profile['crs'],
-                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio, resampling=rasterio.warp.Resampling.nearest)
+    if src_array.ndim == 3:
+        nband = src_array.shape[0]
+        # src_array must have dim (nband, nrow, cols) or (nband, height, width)
+        assert(src_array.shape == (nband, src_profile['height'], src_profile['width']))      
+        dst_array = np.empty((nband, dst_height, dst_width), dtype=src_array.dtype)       
+    else:
+        nband = 1
+        assert(src_array.shape == (src_profile['height'], src_profile['width']))
+        dst_array = np.empty((dst_height, dst_width), dtype=src_array.dtype)
+
+    # logging.info(f"dst array shape: {dst_array.shape}")
+    dst_profile.update({'count': nband})
+
+    rasterio.warp.reproject(src_array, dst_array, src_transform = src_profile['transform'], src_crs=src_profile['crs'],
+                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio, dst_nodata = dst_nodata, resampling=resampling_method)
 
     dst_bounds = rasterio.transform.array_bounds(dst_profile['height'], dst_profile['width'], dst_profile['transform'])
     return dst_profile, dst_array

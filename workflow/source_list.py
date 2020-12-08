@@ -31,8 +31,8 @@ huc_sources = {'NHD Plus': FileManagerNHDPlusAccumulator(),
 default_huc_source = 'WBD'
 
 # available and default hydrography datasets
-hydrography_sources = {'NHD Plus': huc_sources['NHD Plus'],
-                       'NHD': huc_sources['NHD'],
+hydrography_sources = {'NHD Plus': FileManagerNHDPlus(),
+                       'NHD': FileManagerNHD(),
                        }
 default_hydrography_source = 'NHD'
 
