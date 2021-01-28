@@ -23,7 +23,7 @@ def test_close_cleanup(rivers):
     rivers_clean = workflow.hydrography.quick_cleanup(rivers_wextra)
     assert_close(rivers_clean, rivers, 0.1)
 
-def data(poly_hucs,river_segs):
+def data(poly_hucs, river_segs):
     hucs = workflow.split_hucs.SplitHUCs(poly_hucs)
     rivers = workflow.hydrography.make_global_tree(river_segs)
     for tree in rivers:
@@ -221,8 +221,10 @@ def test_snap0():
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5.,0.), (10.,0)]),]
-    hucs, rivers = data(tb, rs)
-    rivers = workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
+    hucs, rivers1 = data(tb, rs)
+    assert(len(rivers1) == 1)
+    assert(len(rivers1[0]) == 1)
+    rivers = workflow.hydrography.snap(hucs, rivers1, 0.1, cut_intersections=True)
     check1(hucs,rivers)
 
 def test_snap0a():

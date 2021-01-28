@@ -10,17 +10,21 @@ import shapely
 import math
 
 import workflow.utils
+import workflow.conf
 
 
-def get_code(fiona_obj, level):
-    """Gets the huc string from a fiona HUC shape."""
+def get_code(fiona_or_shply_obj, level):
+    """Gets the huc string from a HUC shape."""
+    try:
+        prop = fiona_or_shply_obj.properties
+    except AttributeError:
+        prop = fiona_or_shply_obj['properties']
+
     key = 'HUC{:d}'.format(level)
-    prop = fiona_obj['properties']
     try:
         return prop[key]
     except KeyError:
         return prop[key.lower()]
-    
 
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
@@ -44,7 +48,20 @@ def download(url, location, force=False):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"'%url)
         logging.info('         to: "%s"'%location)
-        with requests.get(url, stream=True) as r:
+        verify = workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        logging.info('       cert: "%s"'%verify)
+        if verify == "True":
+            verify = True
+        elif verify == "False":
+            verify = False
+            
+        # with requests.get(url, stream=True, verify=verify) as r:
+        #     r.raise_for_status()
+        #     with open(location, 'wb') as f:
+        #         for chunk in r.iter_content(chunk_size=128):
+        #             f.write(chunk)
+
+        with requests.get(url, stream=True, verify=verify) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)

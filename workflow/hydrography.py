@@ -22,8 +22,11 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     assert(all(workflow.river_tree.is_consistent(river) for river in rivers))
     list(hucs.polygons())
 
-    if len(rivers) is 0:
+    if len(rivers) == 0:
         return True
+    assert(len(rivers) > 0)
+    for r in rivers:
+        assert(len(r) > 0)
 
     if tol_triples is None:
         tol_triples = tol
@@ -204,7 +207,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                 logging.debug("  - seg coords: {0}".format(list(seg.coords)))
                 new_coord = _snap_and_cut(river.coords[0], seg, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
-                if new_coord is not None:
+                if new_coord != None:
                     logging.info("    snapped river: %r to %r"%(river.coords[0], new_coord))
 
                     # move new_coord onto an existing segment coord
@@ -238,7 +241,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                 logging.debug("  - seg coords: {0}".format(list(seg.coords)))
                 new_coord = _snap_and_cut(river.coords[-1], seg, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
-                if new_coord is not None:
+                if new_coord != None:
                     logging.info("  - snapped river: %r to %r"%(river.coords[-1], new_coord))
 
                     # move new_coord onto an existing segment coord
@@ -297,25 +300,25 @@ def snap_endpoints(tree, hucs, tol=0.1):
                                     key = lambda a:seg.project(shapely.geometry.Point(a)))
 
             # determine the new coordinate indices
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f == 1]
 
         else:
             new_coords = [[p[2].segment.coords[p[1]],1] for p in insert_list]
             old_coords = [[c,0] for c in seg.coords[:-1] if not any(workflow.utils.close(c, nc, tol) for nc in new_coords)]
             new_seg_coords = sorted(new_coords+old_coords,
                                     key = lambda a:seg.project(shapely.geometry.Point(a)))
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f == 1]
             assert(len(breakpoint_inds) > 0)
             new_seg_coords = new_seg_coords[breakpoint_inds[0]:] + new_seg_coords[0:breakpoint_inds[0]+1]
             new_seg_coords[0][1] = 0
             new_seg_coords[-1][1] = 0
-            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f is 1]
+            breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f == 1]
 
         # now break into new segments
         new_segs = []
         ind_start = 0
         for ind_end in breakpoint_inds:
-            assert(ind_end is not 0)
+            assert(ind_end != 0)
             new_segs.append(shapely.geometry.LineString([c for (c,f) in new_seg_coords[ind_start:ind_end+1]]))
             ind_start = ind_end
 
@@ -331,7 +334,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
 
 def make_global_tree(rivers, tol=0.1):
     """Sorts shapely river objects into a list of tree structures."""
-    if len(rivers) is 0:
+    if len(rivers) == 0:
         return list()
 
     # make a kdtree of beginpoints
@@ -368,7 +371,7 @@ def make_global_tree(rivers, tol=0.1):
             doublesegs_winner.append(c)
             nodes[c].addChild(n)
 
-        elif len(closest) is 0:
+        elif len(closest) == 0:
             trees.append(n)
         else:
             nodes[closest[0]].addChild(n)
@@ -378,7 +381,7 @@ def make_global_tree(rivers, tol=0.1):
 def filter_rivers_to_shape(shape, rivers, tol):
     """Filters out rivers not inside the HUCs provided."""
     # removes any rivers that are not at least partial contained in the hucs
-    if type(rivers) is list and len(rivers) is 0:
+    if type(rivers) is list and len(rivers) == 0:
         return list()
 
     logging.info("  ...filtering")

@@ -40,7 +40,7 @@ class RiverTree(tinytree.Tree):
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
         for it in self.preOrder():
-            if len(it.children) is 0 and it.segment is not None:
+            if len(it.children) == 0 and it.segment is not None:
                 yield it
 
     def leaves(self):
@@ -103,7 +103,7 @@ def make_trees(segments):
         try:
             inter = next(i for i,seg in enumerate(segments)
                          if endpoint_seg.intersects(seg)
-                         and i is not endpoint_index
+                         and i != endpoint_index
                          and workflow.utils.close(endpoint_seg.intersection(seg).coords[0], endpoint_seg.coords[-1], 1.e-5))
         except StopIteration:
             logging.debug("   outlet %i is not faux"%endpoint_index)
@@ -115,7 +115,7 @@ def make_trees(segments):
             print("   at: %r"%list(segments[endpoint_index].coords[-1]))
             segs_to_add.extend(workflow.utils.cut(segments[inter], endpoint_seg))
             
-    if len(segs_to_remove) is not 0:
+    if len(segs_to_remove) != 0:
         segments = list(segments)
         for i in sorted(segs_to_remove, reverse=True):
             segments.pop(i)

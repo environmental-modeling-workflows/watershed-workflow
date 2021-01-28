@@ -273,7 +273,7 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
     col : collection of matplotlib points or lines or patches
     """
     try:
-        if len(shps) is 0:
+        if len(shps) == 0:
             return
     except TypeError:
         shps = [shps,]
@@ -607,7 +607,7 @@ def feather_axis_limits(ax, delta=0.02):
       the current plot width,height to increase by.
     """
     try:
-        assert(len(delta) is 2)
+        assert(len(delta) == 2)
     except AssertionError:
         raise RuntimeError("feather_axis_limits expects delta argument of length 2 (dx,dy)")
     except ValueError:

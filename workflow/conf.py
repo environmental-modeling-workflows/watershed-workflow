@@ -17,11 +17,33 @@ def config():
     """
     rcParams = configparser.ConfigParser()
     try:
-        data_directory = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'data')
+        data_directory = os.path.join(os.environ['WATERSHED_WORKFLOW_DATA_DIR'])
     except KeyError:
-        data_directory = os.path.join(os.getcwd(), 'data')
+        try:
+            data_directory = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'data')
+        except KeyError:
+            data_directory = os.path.join(os.getcwd(), 'data')
+
+    # defaults
     rcParams['DEFAULT']['data_directory'] = data_directory
-    
+    rcParams['DEFAULT']['ssl_cert'] = "True"  # note this can be True,
+                                            # False (bad
+                                            # idea/permissive) or a
+                                            # path to ssl certs,
+                                            # e.g. /etc/ssl/cert.perm
+                                            # or similar
+
+    # rosetta
+    try:
+        rosetta_db_path = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'workflow_tpls',
+                                       'rosetta', 'sqlite', 'rosetta.sqlite')
+    except KeyError:
+        workflow_dir = os.path.split(os.path.split(__file__)[0])[0]
+        rosetta_db_path = os.path.join(workflow_dir, 'workflow_tpls',
+                                       'rosetta', 'sqlite', 'rosetta.sqlite')
+    rcParams['DEFAULT']['rosetta db path'] = rosetta_db_path
+
+                                            
     rcParams.read([os.path.join(os.getcwd(), 'watershed_workflowrc'),
                    os.path.join(os.getcwd(), '.watershed_workflowrc'),
                    os.path.join(home(), '.watershed_workflowrc')])

@@ -1,10 +1,15 @@
-# NOTE: this requires that you have defined CONDA_PREFIX to point to your Anaconda environment's installation.
+# NOTE: this requires that you have defined CONDA_PREFIX to point to
+# your Anaconda environment's installation, but this is set by default
+# on conda activate.
 
 CC=`which clang`  # `which gcc` for Linux
 CXX=`which clang++`  # `which g++` for Linux
 FC=`which gfortran`
 
-SEACAS_SRC_DIR=??
+# EDIT THIS LINE!
+SEACAS_SRC_DIR=<<<INSERT_YOUR_PATH>>>/workflow_tpls/seacas
+# END EDITS
+
 SEACAS_BUILD_DIR=${SEACAS_SRC_DIR}/build  # these can be changed
 SEACAS_DIR=${SEACAS_SRC_DIR}/install  # these can be changed
 

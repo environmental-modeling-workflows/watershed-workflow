@@ -29,14 +29,14 @@ class FileManagerShape:
 
         Returns
         -------
-        :obj:`profile`
+        profile : dict
             Fiona profile of the shapefile.
-        :obj:`list(Polygon)`
+        shapes : list(dict)
             List of fiona shapes that match the index or bounds.
 
         """
         profile, shps = self.get_shapes(*args, **kwargs)
-        if len(shps) is not 1:
+        if len(shps) != 1:
             raise RuntimeError("Filtered shapefile contains more than one match.")
         return profile, shps[0]
     
@@ -48,18 +48,18 @@ class FileManagerShape:
 
         Parameters
         ----------
-        index_or_bounds : int or :obj:`[xmin, ymin, xmax, ymax]`
+        index_or_bounds : int or [xmin, ymin, xmax, ymax]
             Index of the requested shape in filename, or bounding box to filter 
             shapes, or defaults to -1 to get them all.
 
-        crs : :obj:`crs`
+        crs : crs-type
             Coordinate system of the bounding box (or None if index).
 
         Returns
         -------
-        :obj:`profile`
+        profile : dict
             Fiona profile of the shapefile.
-        :obj:`list(Polygon)`
+        shapes : list(dict)
             List of fiona shapes that match the index or bounds.
         
         """
@@ -67,13 +67,12 @@ class FileManagerShape:
             profile = fid.profile
 
             if index_or_bounds is None or type(index_or_bounds) is int:
-                if index_or_bounds is not None and index_or_bounds >= 0:
+                if index_or_bounds != None and index_or_bounds >= 0:
                     shps = [fid[index_or_bounds],]
                 else:
                     shps = [s for s in fid]
             else:
-                if crs is not None and not workflow.crs.equal(crs, workflow.crs.from_fiona(profile['crs'])):
-                    bounds = workflow.warp.bounds(index_or_bounds, crs, workflow.crs.from_fiona(profile['crs']))
+                bounds = workflow.warp.bounds(index_or_bounds, crs, workflow.crs.from_fiona(profile['crs']))
                 shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps

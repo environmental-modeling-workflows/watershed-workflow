@@ -123,9 +123,9 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
     elif check_gold:
         if hasattr(res, 'get_paths'):
             for i,p in enumerate(res.get_paths()):
-                npt.assert_equal(gold[str(start_p)][obj_gen.__name__][epsg_data][i], p.vertices)
+                npt.assert_allclose(gold[str(start_p)][obj_gen.__name__][epsg_data][i], p.vertices)
         else:
-            npt.assert_equal(gold[str(start_p)][obj_gen.__name__][epsg_data], res.get_path().vertices)
+            npt.assert_allclose(gold[str(start_p)][obj_gen.__name__][epsg_data], res.get_path().vertices)
 
     if not show:
         fig.clear()

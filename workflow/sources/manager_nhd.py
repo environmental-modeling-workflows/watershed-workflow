@@ -66,7 +66,7 @@ class _FileManagerNHD:
         assert(len(hus) == 1)
         return profile, hus[0]
 
-    def get_hucs(self, huc, level):
+    def get_hucs(self, huc, level, force_download=False):
         """Get all sub-catchments of a given HUC level within a given HUC.
 
         Parameters
@@ -76,6 +76,8 @@ class _FileManagerNHD:
         level : int
           Level of requested sub-catchments.  Must be larger or equal to the
           level of the input huc.
+        force_download : bool
+          Download or re-download the file if true.
 
         Returns
         -------
@@ -98,7 +100,7 @@ class _FileManagerNHD:
             raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
 
         # download the file
-        filename = self._download(huc[0:self.file_level])
+        filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('Using HUC file "{}"'.format(filename))
         
 
@@ -112,7 +114,7 @@ class _FileManagerNHD:
         profile['always_xy'] = True
         return profile, hus
         
-    def get_hydro(self, huc, bounds=None, bounds_crs=None):
+    def get_hydro(self, huc, bounds=None, bounds_crs=None, force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -124,6 +126,8 @@ class _FileManagerNHD:
           bounds_crs must also be provided.
         bounds_crs : CRS, optional
           CRS of the above bounds.
+        force_download : bool
+          Download or re-download the file if true.
 
         Returns
         -------
@@ -152,7 +156,7 @@ class _FileManagerNHD:
             raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
         
         # download the file
-        filename = self._download(huc[0:self.file_level])
+        filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('Using Hydrography file "{}"'.format(filename))
         
         # find and open the hydrography layer        

@@ -107,11 +107,11 @@ def shply(shape, properties=None, flip=False):
     
     try:
         thing = shapely.geometry.shape(shape)
-        if type(thing) is shapely.geometry.MultiPoint and len(thing) is 1:
+        if type(thing) is shapely.geometry.MultiPoint and len(thing) == 1:
             thing = thing[0]
-        elif type(thing) is shapely.geometry.MultiLineString and len(thing) is 1:
+        elif type(thing) is shapely.geometry.MultiLineString and len(thing) == 1:
             thing = thing[0]
-        elif type(thing) is shapely.geometry.MultiPolygon and len(thing) is 1:
+        elif type(thing) is shapely.geometry.MultiPolygon and len(thing) == 1:
             thing = thing[0]
 
         # first check for latlon instead of lonlat
@@ -162,12 +162,12 @@ def close(s1, s2, tol=_tol):
     if isinstance(s1, (shapely.geometry.MultiPoint,
                        shapely.geometry.MultiLineString,
                        shapely.geometry.MultiPolygon)) and \
-       len(s1) is 1:
+       len(s1) == 1:
         return close(s1[0], s2, tol)
     if isinstance(s2, (shapely.geometry.MultiPoint,
                        shapely.geometry.MultiLineString,
                        shapely.geometry.MultiPolygon)) and \
-       len(s2) is 1:
+       len(s2) == 1:
         return close(s1, s2[0], tol)
 
     # types should be the same now
@@ -250,7 +250,7 @@ def cut(line, cutline, tol=1.e-5):
         seg = shapely.geometry.LineString(coords[i:i + 2])
         #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
-        if type(point) is shapely.geometry.LineString and len(point.coords) is 0:
+        if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
             #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])
             i += 1
@@ -274,12 +274,12 @@ def cut(line, cutline, tol=1.e-5):
                        # intersect at that seg's start point
             elif close(point, seg.coords[0], tol):
                 # intersects at the near point
-                if i is not 0:
+                if i != 0:
                     assert(len(segcoords) > 1)
                     segs.append(shapely.geometry.LineString(segcoords[:-1]+[point,]))
                     segcoords = [point,]
                 else:
-                    assert(len(segcoords) is 1)
+                    assert(len(segcoords) == 1)
                     segcoords[0] = point
                 segcoords.append(seg.coords[-1])
                 i += 1
@@ -469,11 +469,11 @@ def merge(ml1, ml2):
 def empty_shapely(shp):
     if shp is None:
         return True
-    if type(shp) is shapely.geometry.GeometryCollection and len(shp) is 0:
+    if type(shp) is shapely.geometry.GeometryCollection and len(shp) == 0:
         return True
-    if type(shp) is shapely.geometry.LineString and len(shp.coords) is 0:
+    if type(shp) is shapely.geometry.LineString and len(shp.coords) == 0:
         return True
-    if type(shp) is shapely.geometry.Polygon and len(shp.exterior.coords) is 0:
+    if type(shp) is shapely.geometry.Polygon and len(shp.exterior.coords) == 0:
         return True
     return False
         

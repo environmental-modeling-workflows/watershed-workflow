@@ -18,7 +18,7 @@ class FileManagerNHDPlusAccumulator:
     def get_hucs(self, huc, level):
         huc = source_utils.huc_str(huc)
         if len(huc) > 2:
-            return self.nhd_plus.get_huc(huc, level)
+            return self.nhd_plus.get_hucs(huc, level)
         else:
             prof, wbd_hucs = self.wbd.get_hucs(huc, 4)
             contained = []
