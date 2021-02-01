@@ -1,41 +1,44 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Installation and Setup &mdash; Watershed Workflow 0.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Workflow library Concepts" href="concepts.html" />
@@ -76,6 +79,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -92,6 +96,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#recommended-process">Recommended process</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-exodusii-optional">Installing ExodusII (optional)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-rosetta-optional">Installing Rosetta (optional)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-test-suite-optional">Run the test suite (optional)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
@@ -103,6 +110,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -137,18 +145,20 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Installation and Setup</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/install.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -195,7 +205,7 @@ for use with this package, as this makes it fairly easy to get all the
 required packages.</p>
 <p>Note that this package is not currently installed in a typical
 pythononic way (i.e. setuptools), but instead expects you to simply
-use it in place.  This will change shortly.  In the meantime, to
+use it in place.  This will change at some point.  In the meantime, to
 install this package, simply place it and its third party libraries
 (TPLs) in your python path:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd /path/to/repository</span>
@@ -206,20 +216,34 @@ install this package, simply place it and its third party libraries
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
 <p>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for
 testing, <cite>pytest</cite> and <cite>dist_utils</cite>.  Standard math packages include
-<cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.</p>
+<cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.  Soil properties often come in
+geodatabase files, which are best read with <cite>pandas</cite> and <cite>geopandas</cite>.</p>
 <p>GIS work is typically done using expensive/closed source and GUI-based
 tools.  For this work, we instead build on the extremely high-quality,
 open-source packages for GIS in python: <cite>fiona</cite>, <cite>rasterio</cite>, <cite>shapely</cite>
 and <cite>cartopy</cite>.</p>
-<p>Mesh generation of 2D, “map view” surface meshes uses the open source
-library Triangle, which can be wrapped for python using <cite>meshpy</cite>.
-This in turn depends upon boost python.  Optionally, extrusion of this
-2D mesh into a 3D mesh for use in integrated hydrologic models
-requires a 3D mesh library ~~ we tend to use ExodusII here (though it
-would be straightforward to extend this to other packages such as
-VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
+<p><strong>Optional:</strong> Mesh generation of 2D, “map view” surface meshes uses
+the open source library Triangle, which can be wrapped for python
+using <cite>meshpy</cite>.  This in turn depends upon boost python.  Optionally,
+extrusion of this 2D mesh into a 3D mesh for use in integrated
+hydrologic models requires a 3D mesh library ~~ we tend to use
+ExodusII here (though it would be straightforward to extend this to
+other packages such as VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
 python3 set of wrappers, but there is no current package, so this must
-be installed separately.  See below.</p>
+be installed separately.  See below.  Exodus, in turn, needs
+<cite>netCDF4</cite>, which can be from conda.</p>
+<p><strong>Optional:</strong> Finally, soil properties often come in percent
+silt/clay/sand, yet hydrologic properties such as porosity,
+permeability, and van Genuchten curves are the most frequently used in
+models.  <a class="reference external" href="http://www.u.arizona.edu/~ygzhang/download.html">Rosetta3</a>
+is a tool providing pedotransfer functions to convert these properties
+into the needed model parameters.  There is no current package
+available for this either, so it must be installed separately.  See
+below.</p>
+<p><strong>Optional:</strong> Here we use <cite>jupyter</cite> notebooks to provide examples and
+illustrate usage of the package.  If you do not intend to use jupyter,
+it is not necessary, adds a lot of extra packages, and can safely be
+removed from the installation below.</p>
 </div>
 <div class="section" id="recommended-process">
 <h2>Recommended process<a class="headerlink" href="#recommended-process" title="Permalink to this headline">¶</a></h2>
@@ -227,22 +251,23 @@ be installed separately.  See below.</p>
 environment that includes the required packages:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">Packages for general users</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest</span>
 <span class="go">conda activate watershed_workflow</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Packages for developers and documentation</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython numpy matplotlib scipy meshpy fiona rasterio shapely cartopy descartes ipykernel requests sortedcontainers attrs pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx</span>
+<div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx</span>
 <span class="go">conda activate watershed_watershed_dev</span>
 </pre></div>
 </div>
 </div>
 <p>Note that, for OSX users, it is recommended you install <cite>python.app</cite>
 as well, which ensures a framework python and makes matplotlib
-plotting cleaner.  A current and complete conda environement for OSX
-is provided in <cite>workflow_tpls/environment.yml</cite> and
+plotting cleaner.  Solving this environment can take a few minutes.  A
+current, complete, and tested conda environement for OSX is provided
+in <cite>workflow_tpls/environment.yml</cite> and
 <cite>workflow_tpls/environment_dev.yml</cite>.</p>
 <p>Check your python installation:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print(&quot;SUCCESS&quot;)&#39;</span>
@@ -255,27 +280,64 @@ is provided in <cite>workflow_tpls/environment.yml</cite> and
 <p>Unfortunately this package does not do regular releases except as part
 of the Trilinos project, and those releases are often somewhat old.
 So we must build from master; the python3 wrappers are fairly new.
-Edit the script at <a class="reference external" href="../master/workflow_tpls/configure-seacas.sh">workflow_tpls/configure-seacas.sh</a>, defining your
-compilers (likely clang if Mac and gcc if Linux) and pointing to your
-SEACAS repo and Anaconda environment installation.</p>
+Edit the script at:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">workflow_tpls/configure-seacas.sh</span>
+</pre></div>
+</div>
+<p>defining your compilers (likely clang if Mac and gcc if Linux) and
+pointing to your SEACAS repo and Anaconda environment installation.</p>
 <p>Hopefully you are then able to add your installed SEACAS to your
 PYTHONPATH and import the python wrappers:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export PYTHONPATH=${SEACAS_DIR}/lib</span>
-<span class="go">python -c &#39;import exodus; print(&quot;SUCCESS&quot;)&#39;</span>
+<span class="go">python -c &#39;import exodus3; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
 </div>
-<p>Sometimes this takes some fiddling with python versions – if you keep
-both python2 and python3 interpreters around, and both are available,
-sometimes SEACAS’s cmake seems to find the wrong ones.  A workaround
-is to configure, then manually search for <cite>python</cite> in the
-<cite>CMakeCache.txt</cite> file that results, and make sure it points to the
-correct python3 binary and version number.  I have seen instances
-where the binary is correct by the version number is still listed as
-python2.  Manually changing it to the correct version number and then
-calling <cite>make install</cite> again seems to fix the problem.</p>
-<p>Note that the path to your SEACAS installation must also go in your
-PYTHONPATH; <cite>exodus.py</cite> is located in the install directory’s <cite>lib</cite>
-subdirectory.</p>
+</div>
+<div class="section" id="installing-rosetta-optional">
+<h2>Installing Rosetta (optional)<a class="headerlink" href="#installing-rosetta-optional" title="Permalink to this headline">¶</a></h2>
+<p>Download the Rosetta-3.0beta-py3 package:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd workflow_tpls</span>
+<span class="go">mkdir rosetta</span>
+<span class="go">cd rosetta</span>
+<span class="go">wget http://www.u.arizona.edu/~ygzhang/rosettav3/Rosetta-3.0beta-py3.tar.gz</span>
+<span class="go">tar xzf Rosetta-3.0beta-py3.tar.gz</span>
+</pre></div>
+</div>
+<p>This should be sufficient, check the installation:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import rosetta.ANN_Module; print(&quot;SUCCESS&quot;)&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>Little is needed to set up the package, but likely you want to set a
+data directory for storing all downloaded files.  Usually this is done
+via exporting the WATERSHED_WORKFLOW_DIR environment variable to your
+downloaded package directory, but it can also be placed arbitrarily in
+your filesystem.</p>
+<p>Then, each time you use Watershed Workflow, you must do the following
+things (they may go in a bashrc or similar):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda activate watershed_workflow</span>
+<span class="go">export SEACAS_DIR=/path/to/your/seacas  # optional!</span>
+<span class="go">export WATERSHED_WORKFLOW_DIRECTORY=/path/to/your/watershed_workflow</span>
+<span class="go">export PYTHONPATH=${WATERSHED_WORKFLOW_DIR}:${WATERSHED_WORKFLOW_DIR}/workflow_tpls:${SEACAS_DIR}/lib:${PYTHONPATH}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="run-the-test-suite-optional">
+<h2>Run the test suite (optional)<a class="headerlink" href="#run-the-test-suite-optional" title="Permalink to this headline">¶</a></h2>
+<p>Given that you have activated your environment, set your PYTHONPATH,
+and successfully install the above, the following tests should all
+pass.  They are not all fast – some download files and may be
+internet-connection-speed dependent.  You may be happy enough just
+running the high-level tests:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest workflow/test/test_hilev.py</span>
+</pre></div>
+</div>
+<p>but you can also run the entire suite:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest workflow</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -284,29 +346,29 @@ subdirectory.</p>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="concepts.html" class="btn btn-neutral float-right" title="Workflow library Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="gallery.html" class="btn btn-neutral float-left" title="Gallery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="concepts.html" class="btn btn-neutral float-right" title="Workflow library Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="gallery.html" class="btn btn-neutral float-left" title="Gallery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, UT Battelle, Ethan Coon
+        &#169; Copyright 2019, UT Battelle, Ethan Coon.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -314,7 +376,6 @@ subdirectory.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

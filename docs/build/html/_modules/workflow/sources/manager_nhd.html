@@ -1,41 +1,44 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>workflow.sources.manager_nhd &mdash; Watershed Workflow 0.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
@@ -74,6 +77,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +100,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -130,11 +135,13 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
@@ -222,7 +229,7 @@
         <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hus</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">hus</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="_FileManagerNHD.get_hucs"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nhd._FileManagerNHD.get_hucs">[docs]</a>    <span class="k">def</span> <span class="nf">get_hucs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+<div class="viewcode-block" id="_FileManagerNHD.get_hucs"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nhd._FileManagerNHD.get_hucs">[docs]</a>    <span class="k">def</span> <span class="nf">get_hucs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get all sub-catchments of a given HUC level within a given HUC.</span>
 
 <span class="sd">        Parameters</span>
@@ -232,6 +239,8 @@
 <span class="sd">        level : int</span>
 <span class="sd">          Level of requested sub-catchments.  Must be larger or equal to the</span>
 <span class="sd">          level of the input huc.</span>
+<span class="sd">        force_download : bool</span>
+<span class="sd">          Download or re-download the file if true.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -254,20 +263,21 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: files are organized at HUC level </span><span class="si">{}</span><span class="s2">, so cannot ask for a larger HUC than that level.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">))</span>
 
         <span class="c1"># download the file</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">huc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">])</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">huc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">],</span> <span class="n">force</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using HUC file &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
         
 
         <span class="c1"># read the file</span>
         <span class="n">layer</span> <span class="o">=</span> <span class="s1">&#39;WBDHU</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: opening &#39;</span><span class="si">{}</span><span class="s2">&#39; layer &#39;</span><span class="si">{}</span><span class="s2">&#39; for HUCs in &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">huc</span><span class="p">))</span>
+
         <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">layer</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
-            <span class="n">hus</span> <span class="o">=</span> <span class="p">[</span><span class="n">hu</span> <span class="k">for</span> <span class="n">hu</span> <span class="ow">in</span> <span class="n">fid</span> <span class="k">if</span> <span class="n">hu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">level</span><span class="p">)]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">huc</span><span class="p">)]</span>
+            <span class="n">hus</span> <span class="o">=</span> <span class="p">[</span><span class="n">hu</span> <span class="k">for</span> <span class="n">hu</span> <span class="ow">in</span> <span class="n">fid</span> <span class="k">if</span> <span class="n">source_utils</span><span class="o">.</span><span class="n">get_code</span><span class="p">(</span><span class="n">hu</span><span class="p">,</span><span class="n">level</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">huc</span><span class="p">)]</span>
             <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
         <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;always_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">hus</span></div>
         
-<div class="viewcode-block" id="_FileManagerNHD.get_hydro"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nhd._FileManagerNHD.get_hydro">[docs]</a>    <span class="k">def</span> <span class="nf">get_hydro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="_FileManagerNHD.get_hydro"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nhd._FileManagerNHD.get_hydro">[docs]</a>    <span class="k">def</span> <span class="nf">get_hydro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get all reaches within a given HUC and/or coordinate bounds.</span>
 
 <span class="sd">        Parameters</span>
@@ -279,6 +289,8 @@
 <span class="sd">          bounds_crs must also be provided.</span>
 <span class="sd">        bounds_crs : CRS, optional</span>
 <span class="sd">          CRS of the above bounds.</span>
+<span class="sd">        force_download : bool</span>
+<span class="sd">          Download or re-download the file if true.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -307,7 +319,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: files are organized at HUC level </span><span class="si">{}</span><span class="s2">, so cannot ask for a larger HUC than that level.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">))</span>
         
         <span class="c1"># download the file</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">huc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">])</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">huc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">],</span> <span class="n">force</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using Hydrography file &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
         
         <span class="c1"># find and open the hydrography layer        </span>
@@ -457,20 +469,25 @@
            
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, UT Battelle, Ethan Coon
+        &#169; Copyright 2019, UT Battelle, Ethan Coon.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -478,7 +495,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

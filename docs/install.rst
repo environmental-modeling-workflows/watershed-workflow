@@ -117,7 +117,7 @@ PYTHONPATH and import the python wrappers:
     python -c 'import exodus3; print("SUCCESS")'
 
 Installing Rosetta (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Download the Rosetta-3.0beta-py3 package:
 

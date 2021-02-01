@@ -1,0 +1,27 @@
+# Currently only a few parameters are possible
+
+[DEFAULT]
+
+# Watershed workflow stores all data in a common library for shared
+# use across the machine.  This directory defaults to:
+#
+# data_directory : ${WATERSHED_WORKFLOW_DIR}/data
+
+# We rely extensively on downloaded files, which are certified via the
+# SSL library.  Sometimes certificates are tricky, and if your
+# certificates aren't working, it can be useful to try other
+# certificate files, such as your system ones (likely installed
+# somewhere like /etc/ssl/cert.pem ).  If you're really desparate and
+# not worried about getting hacked, you can set this to False to not
+# verify certificates, but that is not recommended.  Likely if you
+# have trouble, the first thing to try is to update your certifi
+# package in anaconda (conda update certifi)
+#
+# ssl_cert : True
+
+
+# The Rosetta package relies on a database file that is distributed
+# with the code.  Provide a link to your Rosetta database here if it
+# isn't in the default location:
+#
+# rosetta_db_path : ${WATERSHED_WORKFLOW_DIR}/workflow_tpls/rosetta/sqlite/rosetta.sqlite

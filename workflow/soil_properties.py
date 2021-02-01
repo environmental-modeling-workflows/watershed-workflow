@@ -39,7 +39,7 @@ def vgm_Rosetta(data, model_type):
     import rosetta.DB_Module
     import rosetta.ANN_Module
 
-    db_path = workflow.conf.rcParams['DEFAULT']['rosetta db path'] 
+    db_path = workflow.conf.rcParams['DEFAULT']['rosetta_db_path'] 
     
     logging.info(f'Running Rosetta for van Genutchen parameters')
     logging.info(f'  database: {db_path}')
