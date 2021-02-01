@@ -36,17 +36,13 @@ def test_nrcs2():
 
     # get imgs
     nrcs = workflow.sources.manager_nrcs.FileManagerNRCS()
-    profile, shps, df = nrcs.get_shapes_and_properties(target_bounds,crs)
+    profile, shps, df = nrcs.get_shapes_and_properties(target_bounds,crs, force_download=True)
 
     # check df
     mukeys = set([int(s['properties']['id']) for s in shps])
-    mukeys_df = df.index
-    assert(len(mukeys_df) == len(mukeys)) # one per unique key
-    assert(set(mukeys_df) == mukeys) # same mukeys
+    assert(len(df) == len(mukeys)) # one per unique key
+    assert(set(df['mukey'].values) == mukeys) # same mukeys
 
-    print(df)
-    for m in mukeys:
-        df.loc[m] # this throws if it doesn't work
 
 
 

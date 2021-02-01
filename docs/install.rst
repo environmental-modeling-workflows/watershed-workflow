@@ -68,13 +68,13 @@ environment that includes the required packages:
 .. code-block:: console
     :caption: Packages for general users
                 
-    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy descartes requests sortedcontainers attrs h5py netCDF4 pytest 
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest 
     conda activate watershed_workflow
 
 .. code-block:: console
     :caption: Packages for developers and building documentation
 
-    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy descartes requests sortedcontainers attrs h5py netCDF4 pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx
     conda activate watershed_watershed_dev
 
 Note that, for OSX users, it is recommended you install `python.app`

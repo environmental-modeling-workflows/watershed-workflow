@@ -30,6 +30,4 @@ def test_vgm2():
     assert(all(ats['Rosetta permeability [m^2]'] > 0))
     assert(all(ats['Rosetta permeability [m^2]'] < 1.e-10))
     
-    print(ats)
-    raise RuntimeError
     

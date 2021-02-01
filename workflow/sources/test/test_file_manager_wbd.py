@@ -46,7 +46,7 @@ def test_wbd_url_fail(wbd):
 
 def test_wbd_download(wbd):
     # download
-    hfile = wbd._download('02')
+    hfile = wbd._download('02', force=True)
     assert(hfile == wbd.name_manager.file_name('02'))
     
 def test_wbd_get(wbd):

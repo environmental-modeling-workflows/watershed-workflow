@@ -22,11 +22,8 @@ def test_glhymps():
 
     # check df
     ids = set([int(s['properties']['id']) for s in shps])
-    ids_df = df.index
-    assert(len(ids_df) == len(ids)) # one per unique key
-    assert(set(ids_df) == ids) # same mukeys
-    for id in ids:
-        df.loc[id] # this throws if it doesn't work
+    assert(len(df) == len(ids)) # one per unique key
+    assert(set(df['id'].values) == ids) # same ids
     
 
 

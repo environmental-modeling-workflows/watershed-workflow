@@ -16,7 +16,9 @@ def test_ned1():
 
     # get imgs
     ned = workflow.sources.manager_ned.FileManagerNED()
-    dem_prof, dem = ned.get_raster(huc, workflow.crs.from_fiona(profile['crs']))
+
+    # force the download here to test the API hasn't changed
+    dem_prof, dem = ned.get_raster(huc, workflow.crs.from_fiona(profile['crs']), force_download=True)
     assert((1612, 1606) == dem.shape)
 
 def test_ned2():
