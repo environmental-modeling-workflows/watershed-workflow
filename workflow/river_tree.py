@@ -18,6 +18,9 @@ class RiverTree(tinytree.Tree):
     def __init__(self, segment=None, properties=None, children=None):
         super(RiverTree, self).__init__(children)
         self.segment = segment
+
+        assert(properties is None)
+        assert(hasattr(self.segment, 'properties'))
         if properties is not None:
             self.properties = properties
         elif hasattr(self.segment, 'properties'):

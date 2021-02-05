@@ -389,8 +389,10 @@ def filter_rivers_to_shape(shape, rivers, tol):
        (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
         rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(shape,r)]
     elif type(rivers) is list and type(rivers[0]) is workflow.river_tree.RiverTree:
-        rivers2 = [r for river in rivers for r in river.dfs() if workflow.utils.non_point_intersection(shape,r)]
-        rivers2 = make_global_tree(rivers2)
+        rivers2 = [r for river in rivers for r in river.preOrder() if workflow.utils.non_point_intersection(shape,r.segment)]
+        for r in rivers2:
+            r.segment.properties = r.properties
+        rivers2 = make_global_tree([r.segment for r in rivers2])
     else:
         raise RuntimeError("Unrecognized river shape type?")
     return rivers2
@@ -419,22 +421,65 @@ def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
         if merge_tol is not None:
             merge(tree, merge_tol)
         if merge_tol != prune_tol and prune_tol is not None:
-            prune(tree, prune_tol)
+            prune_by_segment_length(tree, prune_tol)
 
-def prune(tree, prune_tol=10):
+def prune_by_segment_length(tree, prune_tol=10):
     """Removes any leaf segments that are shorter than prune_tol"""
     for leaf in tree.leaf_nodes():
         if leaf.segment.length < prune_tol:
             logging.info("  ...cleaned leaf segment of length: %g at centroid %r"%(leaf.segment.length, leaf.segment.centroid.coords[0]))
+            if 'area' in leaf.properties and 'area' in leaf.parent.properties:
+                leaf.parent.properties['area'] += leaf.properties['area']
             leaf.remove()
 
+def accumulate(tree):
+    """Accumulates areas up the tree."""
+    try:
+        for node in tree.postOrder():
+            total_area = sum(c.properties['total contributing area'] for c in node.children)
+            node.properties['total contributing area'] = total_area + node.properties['area']
+    except KeyError:
+        raise ValueError("accumulate() cannot be called on rivers whose reaches do not include the 'area' property.")
+
+def prune_by_area(tree, tol):
+    """Removes segments whose contributing area is less than tolerance.  
+
+    Units of tol are that of the CRS, squared"""
+    if 'total contributing area' not in tree.properties:
+        accumulate(tree)
+
+    count = 0
+    for node in list(tree.preOrder()):
+        if node.properties['total contributing area'] < tol:
+            count += 1
+            node.remove()
+    return count
+
+def prune_by_area_fraction(tree, tol, total_area=None):
+    """Removes segements whose contributing area, divided by the total area, is < tol."""
+    if 'total contributing area' not in tree.properties:
+        accumulate(tree)
+    if total_area is None:
+        total_area = tree.properties['total contributing area']
+
+    count = 0
+    for node in list(tree.preOrder()):
+        if node.properties['total contributing area'] / total_area < tol:
+            logging.debug(f'removing: {node.properties["total contributing area"]} of {total_area}')
+            count += 1
+            node.remove()
+    return count
+    
 def merge(tree, tol=0.1):
     """Remove inner branches that are short, combining branchpoints as needed."""
     for node in list(tree.preOrder()):
         if node.segment.length < tol:
             logging.info("  ...cleaned inner segment of length %g at centroid %r"%(node.segment.length, node.segment.centroid.coords[0]))
+            num_children = len(node.children)
             for child in node.children:
                 child.segment = shapely.geometry.LineString(child.segment.coords[:-1]+[node.parent.segment.coords[0],])
+                if 'area' in child.properties and 'area' in node.properties:
+                    child.properties['area'] += node.properties['area']/num_children
                 node.parent.addChild(child)
             node.remove()
             

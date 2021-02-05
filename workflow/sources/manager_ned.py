@@ -124,7 +124,7 @@ class FileManagerNED:
         js : json dict
           JSON response of the formed request.
         """
-        rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
+        rest_url = 'https://tnmaccess.nationalmap.gov/api/v1/products'
         rest_dataset = self.name + ' ' + self.resolution
 
         rest_bounds = ','.join(str(b) for b in bounds)

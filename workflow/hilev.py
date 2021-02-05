@@ -252,7 +252,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     return crs, workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=True, presimplify=None):
+def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=False, presimplify=None):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -308,16 +308,24 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
     if presimplify != None:
         # convert to shapely and simplify
-        reaches_s = [workflow.utils.shply(r).simplify(presimplify) for r in reaches] 
+        reaches_s = [workflow.utils.shply(r).simplify(presimplify) for r in reaches]
 
-        # convert back to fiona
-        reaches = [dict(geometry=shapely.geometry.mapping(r)) for r in reaches_s]
+        # convert back to fiona, keeping properties
+        reaches2 = [dict(geometry=shapely.geometry.mapping(r)) for r in reaches_s]
+        for r1, r2 in zip(reaches, reaches2):
+            r2['properties'] = r1['properties']
+        reaches = reaches2
         
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
     if crs and not workflow.crs.equal(crs, native_crs):
         for reach in reaches:
             workflow.warp.shape(reach, native_crs, crs)
+
+            if 'catchment' in reach['properties']:
+                workflow.warp.shape(reach['properties']['catchment'], native_crs, crs)
+                reach['properties']['area'] = workflow.utils.shply(reach['properties']['catchment']).area
+            
     else:
         crs = native_crs
 
@@ -327,7 +335,6 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
     # convert to shapely
     reaches_s = [workflow.utils.shply(reach) for reach in reaches]
-
     if merge:
         reaches_s = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches_s)))
 
@@ -337,7 +344,6 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         reaches_s = [reach for reach in reaches_s if reach.length < long]
         logging.info("  filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
         
-
     return crs, reaches_s
 
 
@@ -516,7 +522,13 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
     return result
 
 
-def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size=0, cut_intersections=False):
+def simplify_and_prune(hucs, reaches,
+                       filter=True,
+                       simplify=10,
+                       ignore_small_rivers=0,
+                       prune_by_area=0,
+                       prune_by_area_fraction=0,
+                       cut_intersections=False):
     """Cleans up the HUC and river shapes.
 
     Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
@@ -537,11 +549,21 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
         Argument to shapely's simplify, a measure of how far to allow shapes to
         move.  Default is 10 (units are in that of the CRS of hucs and
         reaches).
-    prune_river_size : int, optional
-        Remove rivers with fewer than this number of reaches.  Default is 0.
+    ignore_small_rivers : int, optional
+        If provided, remove rivers with fewer than this number of reaches.
+    prune_by_area : float, optional
+        If provided, remove reaches whose total contributing area is
+        less than this tol.  NOTE: only for NHDPlus.
+    prune_by_area_fraction : float, optional
+        If provided, remove reaches whose total contributing area, as
+        a fraction of the area of hucs, is less than this tol.  NOTE:
+        only for NHDPlus.
     cut_intersections : bool
         Cut HUC segments at the river input/output, potentially resulting in
         simpler geometries.  This is work in progress.  Default is False.
+
+    Note, pruning is only possible for reaches which include an 'area'
+    property.  Currently this only includes NHDPlus hydrography.
 
     Returns
     ------- 
@@ -565,22 +587,38 @@ def simplify_and_prune(hucs, reaches, filter=True, simplify=10, prune_reach_size
     logging.info("Generate the river tree")
     rivers = workflow.hydrography.make_global_tree(reaches)
 
-    logging.info("Removing rivers with fewer than {} reaches.".format(prune_reach_size))
-    for i in reversed(range(len(rivers))):
-        ltree = len(rivers[i])
-        if ltree < prune_reach_size:
-            rivers.pop(i)
-            logging.info("  ...removing river with %d reaches"%ltree)
-        else:
-            logging.info("  ...keeping river with %d reaches"%ltree)
-    if len(rivers) == 0:
-        return rivers
+    if ignore_small_rivers > 0:
+        logging.info("Removing rivers with fewer than {} reaches.".format(ignore_small_rivers))
+        for i in reversed(range(len(rivers))):
+            ltree = len(rivers[i])
+            if ltree < ignore_small_rivers:
+                rivers.pop(i)
+                logging.info("  ...removing river with %d reaches"%ltree)
+            else:
+                logging.info("  ...keeping river with %d reaches"%ltree)
+        if len(rivers) == 0:
+            return rivers
             
-    logging.info("simplifying rivers")
-    workflow.hydrography.cleanup(rivers, tol, tol, tol)
+    if tol > 0:
+        logging.info("Simplifying rivers")
+        workflow.hydrography.cleanup(rivers, tol, tol, tol)
 
-    logging.info("simplifying HUCs")
-    workflow.split_hucs.simplify(hucs, tol)
+        logging.info("Simplifying HUCs")
+        workflow.split_hucs.simplify(hucs, tol)
+
+    if prune_by_area > 0:
+        logging.info(f"Pruning by total contributing area < {prune_by_area}")
+        count = 0
+        for river in rivers:
+            count += workflow.hydrography.prune_by_area(river, prune_by_area)
+        logging.info(f"  pruned {count}")
+    if prune_by_area_fraction > 0:
+        logging.info(f"Pruning by fractional contributing area < {prune_by_area_fraction}")
+        count = 0
+        total_area = hucs.exterior().area
+        for river in rivers:
+            count += workflow.hydrography.prune_by_area_fraction(river, prune_by_area_fraction, total_area)
+        logging.info(f"  pruned {count}")
 
     # snap
     logging.info("snapping rivers and HUCs")

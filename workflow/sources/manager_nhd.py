@@ -44,7 +44,7 @@ class _FileManagerNHD:
     lowest_level = attr.ib(type=int)
     name_manager = attr.ib()
 
-    def get_huc(self, huc):
+    def get_huc(self, huc, force_download=False):
         """Get the specified HUC in its native CRS.
 
         Parameters
@@ -62,7 +62,7 @@ class _FileManagerNHD:
         Note this finds and downloads files as needed.
         """        
         huc = source_utils.huc_str(huc)
-        profile, hus = self.get_hucs(huc, len(huc))
+        profile, hus = self.get_hucs(huc, len(huc), force_download)
         assert(len(hus) == 1)
         return profile, hus[0]
 
@@ -114,7 +114,7 @@ class _FileManagerNHD:
         profile['always_xy'] = True
         return profile, hus
         
-    def get_hydro(self, huc, bounds=None, bounds_crs=None, force_download=False):
+    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True, force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -126,6 +126,8 @@ class _FileManagerNHD:
           bounds_crs must also be provided.
         bounds_crs : CRS, optional
           CRS of the above bounds.
+        in_network : bool, optional
+          If True (default), remove reaches that are not "in" the NHD network
         force_download : bool
           Download or re-download the file if true.
 
@@ -166,8 +168,28 @@ class _FileManagerNHD:
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
             bounds = workflow.warp.bounds(bounds, bounds_crs, workflow.crs.from_fiona(profile['crs']))
-            rivers = [r for (i,r) in fid.items(bbox=bounds)]
-        return profile, rivers
+            reaches = [r for (i,r) in fid.items(bbox=bounds)]
+
+        # filter not in network
+        if in_network:
+            reaches = [r for r in reaches if 'InNetwork' not in r['properties'] or r['properties']['InNetwork'] == 1]
+            
+        # associate catchment areas with the reaches if NHDPlus
+        if 'Plus' in self.name:
+            layer = 'NHDPlusCatchment'
+            logging.debug("{}: opening '{}' layer '{}' for catchment areas in '{}'".format(self.name, filename, layer, bounds))
+            with fiona.open(filename, mode='r', layer=layer) as fid:
+                bounded_catchments = list(fid.items(bbox=bounds))
+
+            for reach in reaches:
+                try:
+                    catch = next(c for (i,c) in bounded_catchments if c['properties']['NHDPlusID'] == reach['properties']['NHDPlusID'])
+                except StopIteration:
+                    pass
+                else:
+                    reach['properties']['catchment'] = catch
+        
+        return profile, reaches
             
     def _url(self, hucstr):
         """Use the USGS REST API to find the URL to download a file for a given huc.
@@ -182,11 +204,12 @@ class _FileManagerNHD:
         url : str
           The URL to download a file containing shapes for the HUC.
         """
-        rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
+        rest_url = 'https://tnmaccess.nationalmap.gov/api/v1/products'
         hucstr = hucstr[0:self.file_level]
 
         def attempt(params):        
             r = requests.get(rest_url, params=params)
+            logging.debug(f'  REST URL: {r.url}')
             try:
                 r.raise_for_status()
             except Exception as e:
@@ -195,42 +218,76 @@ class _FileManagerNHD:
                 
             json = r.json()
 
-            # this feels hacky, but it does not appear that USGS has their
-            # 'prodFormat' get option or 'format' return json value
-            # working correctly.
-            matches = [m for m in json['items']]
+            logging.debug(json)
 
-            # filter for GDBs
-            matches = [m for m in matches if 'downloadURL' in m and 'GDB' in m['downloadURL']]
-
-            # filter for title contains HUC string
-            matches_f = [m for m in matches if hucstr in m['title'].split()]
-            if len(matches_f) > 0:
-                matches = matches_f
-        
-            if len(matches) == 0:
+            matches = [(m,self._valid_url(m, hucstr)) for m in json['items']]
+            matches_f = list(filter( lambda tup : tup[1], matches ))
+            logging.debug(f'     found {len(matches_f)} matches')
+            if len(matches_f) == 0:
                 return 1, '{}: not able to find HUC {}'.format(self.name, hucstr)
-            if len(matches) > 1:
+            if len(matches_f) > 1:
                 logging.error('{}: too many matches for HUC {} ({})'.format(self.name, hucstr, len(matches)))
-                for m in matches:
-                    logging.error(' {}\n   {}'.format(m['title'], m['downloadURL']))
+                for (m,url) in matches_f:
+                    logging.error(' {}\n   {}'.format(m['title'], url))
                 return 1, '{}: too many matches for HUC {}'.format(self.name, hucstr)
-            return 0, matches[0]['downloadURL']
+            return 0, matches_f[0][1]
 
         # cheaper if it works, may not work in alaska?
         a1 = attempt({'datasets':self.name,
                       'polyType':'huc{}'.format(self.file_level),
                       'polyCode':hucstr})
         if not a1[0]:
+            logging.info('  REST query with polyCode... SUCCESS')
+            logging.info(f'  REST query: {a1[1]}')
             return a1[1]
+        else:
+            logging.info('  REST query with polyCode... FAIL')
 
-        # works more univerasally but is a BIG lookup, then filter locally
-        a2 = attempt({'datasets':self.name})
-        if not a2[0]:
-            return a2[1]
+        # # works more univerasally but is a BIG lookup, then filter locally
+        # a2 = attempt({'datasets':self.name})
+        # if not a2[0]:
+        #     logging.info('  REST query without polyCODE... SUCCESS')
+        #     logging.info(f'  REST query: {a2[1]}')
+        #     return a2[1]
 
+        # logging.info('  REST query without polyCODE... FAIL')
         raise ValueError('{}: cannot find HUC {}'.format(self.name, hucstr))
-        
+
+    def _valid_url(self, match, huc):
+        logging.debug('checking:')
+        logging.debug(match)
+        logging.debug("")
+        ok = True
+        # if ok:
+        #     ok = "title" in match
+        #     logging.debug(f'title in match? {ok}')
+        # if ok:
+        #     ok = self.name in match["title"]
+        #     logging.debug(f'name in title? {ok}')
+        if ok:
+            ok = "format" in match
+            logging.debug(f'format in match? {ok}')
+        if ok:
+            ok = "urls" in match
+            logging.debug(f'urls in match? {ok}')
+        if ok:
+            ok = "FileGDB" in match["urls"]
+            logging.debug(f'FileGDB in urls? {ok}')
+        if ok:
+            url = match['urls']['FileGDB']
+            logging.debug(f'YAY: {url}')
+        else:
+            return False
+
+        # we have a url, is it actually this huc?
+        url_split = url.split('/')
+        if huc not in url_split[-1]:
+            # not the right HUC
+            return False
+        if 'GDB' != url_split[-2]:
+            # not a GDB
+            return False
+        return url
 
     def _download(self, hucstr, force=False):
         """Find and download data from a given HUC.
@@ -283,6 +340,7 @@ class FileManagerNHDPlus(_FileManagerNHD):
                                                       'NHDPlus_H_{}_GDB',
                                                       'NHDPlus_H_{}.gdb'))
 
+        
 class FileManagerNHD(_FileManagerNHD):
     def __init__(self):
         name = 'National Hydrography Dataset (NHD)'
