@@ -220,7 +220,7 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None, properties=F
     else:
         return crs, shplys
 
-def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
+def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None, simplify = None):
     """Read a shapefile.
 
     Note that if index_or_bounds is a bounding box, crs must not be None and is
@@ -252,7 +252,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None):
     return crs, workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=False, presimplify=None):
+def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=False, presimplify=None, cvrt = True):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -318,7 +318,7 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
-    if crs and not workflow.crs.equal(crs, native_crs):
+    if crs and not workflow.crs.equal(crs, native_crs) and cvrt:
         for reach in reaches:
             workflow.warp.shape(reach, native_crs, crs)
 
@@ -347,8 +347,9 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
     return crs, reaches_s
 
 
-def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
-                        mask=False, nodata=None):
+def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0., 
+                        resampling_res = None, resampling_method = None, 
+                        mask=False, nodata=None, plot_dem = False, plot_nodata = True):
     """Collects a raster that covers the requested shape.
 
     Parameters
@@ -400,9 +401,24 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     # warp the raster to the requested output
     if raster_crs != None:
         profile, raster = workflow.warp.raster(profile, raster, raster_crs)
-    else:
-        raster_crs = workflow.crs.from_rasterio(profile['crs'])
+    # else:
+        # raster_crs = workflow.crs.from_rasterio(profile['crs'])
 
+    if resampling_res != None:
+        if resampling_method == None:
+            resampling_method = "bilinear"
+        logging.info(f"resamping raster using {resampling_method} method...")
+        resampling_algorithms = {'nearest':rasterio.warp.Resampling.nearest,
+                                'bilinear':rasterio.warp.Resampling.bilinear,
+                                'gauss':rasterio.warp.Resampling.gauss,
+                                'cubic':rasterio.warp.Resampling.cubic}
+        resampling_method = resampling_algorithms[resampling_method]
+        # raster_crs = workflow.crs.from_rasterio(profile['crs'])
+        
+        profile, raster = workflow.warp.raster(profile, raster, dst_crs = crs, resolution=resampling_res, resampling_method=resampling_method)
+    
+    raster_crs = workflow.crs.from_rasterio(profile['crs'])
+    
     if mask:
         # mask the raster
         logging.info("Masking to shape")
@@ -432,8 +448,27 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     x0 = transform * (0,0)
     x1 = transform * (profile['width'], profile['height'])
     logging.info("Raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
-    return profile, raster
 
+    if plot_dem:
+
+        def nodata_minmax(array, nodata):
+            masked_array = np.ma.masked_equal(array, nodata, copy=False)
+            vmin,vmax = masked_array.min(), masked_array.max()
+            return vmin, vmax
+        vmin,vmax = nodata_minmax(raster, 0)
+        extent = rasterio.transform.array_bounds(profile['height'], profile['width'], profile['transform']) # (x0, y0, x1, y1)
+        plot_extent = extent[0], extent[2], extent[1], extent[3] # (x0, x1, y0, y1)
+        plt.figure()
+        if plot_nodata:
+            cax = plt.matshow(raster, extent=plot_extent)
+        else:
+            cax = plt.matshow(raster, extent=plot_extent, vmin = vmin, vmax = vmax)
+        if crs != raster_crs:
+            shape = workflow.warp.shply(shape, crs, raster_crs)
+        plt.plot(*shape.exterior.xy, 'r')
+        plt.colorbar(cax,fraction=0.046, pad=0.04)
+
+    return profile, raster
 
 #
 # functions for relating objects
@@ -775,7 +810,7 @@ def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, 
             # workflow.plot.triangulation(vertices, triangles, areas)
             # plt.title("triangle area [m^2]")
 
-        return vertices, triangles, np.array(areas)
+        return vertices, triangles, np.array(areas), np.array(distances)
             
     return vertices, triangles
 
