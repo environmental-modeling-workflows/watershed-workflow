@@ -229,7 +229,9 @@ class FileManagerNRCS:
                                                          '',
                                                          'SSURGO_%s.gml'%self.fstring)
 
-        self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
+
+        self.url_spatial = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
+        #self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
         

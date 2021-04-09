@@ -96,14 +96,21 @@ def shape(feature, old_crs, new_crs):
     return feature
                     
     
-def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_method=rasterio.warp.Resampling.nearest):
+def raster(src_profile, src_array,
+           dst_crs=None, resolution=None, dst_height=None, dst_width=None,
+           resampling_method=rasterio.warp.Resampling.nearest):
     """Warp a raster from src_profile to dst_crs, or resample resolution."""
 
     src_crs = workflow.crs.from_rasterio(src_profile['crs'])
-    if resolution is None and \
+    if resolution is None and dst_height is None and dst_width is None\
        (dst_crs is None or workflow.crs.equal(dst_crs, src_crs)):
         # nothing to do
         return src_profile, src_array
+
+    if resolution is None and dst_height is None:
+        dst_height = src_profile['height']
+    if resolution is None and dst_width is None:
+        dst_width = src_profile['width']
 
     if dst_crs is None:
         dst_crs = workflow.crs.from_rasterio(src_profile['crs'])
@@ -117,7 +124,7 @@ def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_met
     dst_profile = src_profile.copy()
     dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
         src_profile['crs'], dst_crs_rasterio, src_profile['width'], src_profile['height'], 
-        *src_bounds, resolution=resolution)
+        *src_bounds, resolution=resolution, dst_height=dst_height, dst_width=dst_width)
         
     # update the relevant parts of the profile
     dst_profile.update({
@@ -140,8 +147,10 @@ def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_met
     logging.debug(f'  dst_array shape: {dst_array.shape}')
 
     dst_profile.update({'count': nband})
-    rasterio.warp.reproject(src_array, dst_array, src_transform=src_profile['transform'], src_crs=src_profile['crs'],
-                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio, dst_nodata=dst_profile['nodata'],
+    rasterio.warp.reproject(src_array, dst_array,
+                            src_transform=src_profile['transform'], src_crs=src_profile['crs'],
+                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio,
+                            dst_nodata=dst_profile['nodata'],
                             resampling=resampling_method)
 
     return dst_profile, dst_array
