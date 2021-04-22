@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 import math
+import scipy
 
 import rasterio
 import rasterio.transform
@@ -348,8 +349,9 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
 
 def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0., 
-                        resampling_res = None, resampling_method = None, 
-                        mask=False, nodata=None, plot_dem = False, plot_nodata = True):
+                        mask=False, nodata=None, resampling_res = None, 
+                        resampling_method = None, smooth_sigma = None,
+                        plot = False, plot_nodata = True):
     """Collects a raster that covers the requested shape.
 
     Parameters
@@ -370,6 +372,13 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         If True, mask the raster outside of shape.
     nodata : dtype, optional=raster nodata
         Value to place outside of shape.
+    resampling_res : int, optional
+        Resampling raster to a given resolution using rasterio.
+    resampling_method: str, optional
+        Resampling method provided by rasterio. 
+    smooth_sigma : int, optional 
+        Used for scipy.ndimage.gaussian_filter(). Higher value will make raster smoother.
+
 
     Returns
     -------
@@ -392,6 +401,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         shape = workflow.utils.shply(shape)
     if type(shape) is shapely.geometry.MultiPolygon:
         shape = shapely.ops.cascaded_union(shape)
+    shape_original = shape
     shape = shape.buffer(buffer)
 
     logging.info("collecting raster")
@@ -405,18 +415,42 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         # raster_crs = workflow.crs.from_rasterio(profile['crs'])
 
     if resampling_res != None:
+        raster_raw = raster
         if resampling_method == None:
             resampling_method = "bilinear"
         logging.info(f"resamping raster using {resampling_method} method...")
         resampling_algorithms = {'nearest':rasterio.warp.Resampling.nearest,
                                 'bilinear':rasterio.warp.Resampling.bilinear,
-                                'gauss':rasterio.warp.Resampling.gauss,
                                 'cubic':rasterio.warp.Resampling.cubic}
         resampling_method = resampling_algorithms[resampling_method]
-        # raster_crs = workflow.crs.from_rasterio(profile['crs'])
-        
+        # raster_crs = workflow.crs.from_rasterio(profile['crs'])          
         profile, raster = workflow.warp.raster(profile, raster, dst_crs = crs, resolution=resampling_res, resampling_method=resampling_method)
-    
+        if plot:
+            plt.figure()
+            plt.subplot(121)
+            plt.imshow(raster_raw)
+            plt.title('raw')
+            plt.subplot(122)
+            plt.imshow(raster)
+            plt.title(f'resampled ({resampling_res} m)')
+
+    if smooth_sigma is not None:
+        logging.info(f"smoothing using Gaussian filter with sigma = {smooth_sigma}...")
+        raster_smooth = scipy.ndimage.gaussian_filter(raster, sigma = smooth_sigma, mode='nearest')
+        logging.info(f'raw minmax: {np.nanmin(raster)}, {np.nanmax(raster)}')
+        logging.info(f'smoothed minmax: {np.nanmin(raster_smooth)}, {np.nanmax(raster_smooth)}')
+        if plot:
+            plt.figure()
+            plt.subplot(121)
+            plt.imshow(raster)
+            plt.title('non-smoothed')
+            
+            plt.subplot(122)
+            plt.imshow(raster_smooth)
+            plt.title('gaussian_smoothed')
+
+        raster = raster_smooth
+
     raster_crs = workflow.crs.from_rasterio(profile['crs'])
     
     if mask:
@@ -449,7 +483,7 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     x1 = transform * (profile['width'], profile['height'])
     logging.info("Raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
 
-    if plot_dem:
+    if plot:
 
         def nodata_minmax(array, nodata):
             masked_array = np.ma.masked_equal(array, nodata, copy=False)
@@ -464,9 +498,10 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         else:
             cax = plt.matshow(raster, extent=plot_extent, vmin = vmin, vmax = vmax)
         if crs != raster_crs:
-            shape = workflow.warp.shply(shape, crs, raster_crs)
-        plt.plot(*shape.exterior.xy, 'r')
+            shape_original = workflow.warp.shply(shape_original, crs, raster_crs)
+        plt.plot(*shape_original.exterior.xy, 'r')
         plt.colorbar(cax,fraction=0.046, pad=0.04)
+        plt.title("Final raster within watershed")
 
     return profile, raster
 
@@ -684,7 +719,7 @@ def simplify_and_prune(hucs, reaches,
     
 def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
-                refine_min_angle=None, enforce_delaunay=False):
+                refine_min_angle=None, enforce_delaunay=False, river_region_dist = None):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -737,6 +772,9 @@ def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, 
             This requires a hacked version of meshpy.triangle that
             supports this option.  See the patch available at
             workflow_tpls/meshpy_triangle.patch
+    river_region_dist: float, optional
+        Create river region based on the distance from river networks. This is useful if explicit 
+        representation of riverbed is desired. Default is None.
 
     Returns
     -------
@@ -775,7 +813,7 @@ def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, 
                                                              min_angle=refine_min_angle,
                                                              enforce_delaunay=enforce_delaunay)
 
-    if diagnostics:
+    if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
         river_multiline = workflow.river_tree.forest_to_list(rivers)
         distances = []
@@ -788,9 +826,10 @@ def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, 
             distances.append(bary_p.distance(river_multiline))
             areas.append(workflow.utils.triangle_area(verts))
             needs_refine.append(my_refine_func(verts, areas[-1]))
-
-        logging.info("  min area = {}".format(np.min(np.array(areas))))
-        logging.info("  max area = {}".format(np.max(np.array(areas))))
+        areas = np.array(areas)
+        distances = np.array(distances)
+        logging.info("  min area = {}".format(areas.min()))
+        logging.info("  max area = {}".format(areas.max()))
 
         if verbosity > 0:
             plt.figure()
@@ -803,14 +842,21 @@ def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, 
             plt.xlabel("distance [m]")
             plt.ylabel("triangle area [m^2]")
 
-            # plt.figure()
-            # plt.subplot(111)
-            # workflow.plot.hucs(hucs)
-            # workflow.plot.rivers(rivers)
-            # workflow.plot.triangulation(vertices, triangles, areas)
-            # plt.title("triangle area [m^2]")
+        if river_region_dist is not None:
+            river_idx = distances < river_region_dist
+            river_tris = triangles[river_idx]
 
-        return vertices, triangles, np.array(areas), np.array(distances)
+            plt.figure()
+            plt.tripcolor(vertices[:,0], vertices[:,1], triangles, 
+                            facecolors= np.array([0]*len(triangles)), 
+                            cmap = None, edgecolors = 'w', linewidth=0.01)
+            plt.tripcolor(vertices[:,0], vertices[:,1], river_tris, 
+                            facecolors= np.array([1]*len(river_tris)), 
+                            cmap = 'jet', edgecolors = 'w', linewidth=0.1)
+            plt.title("river region")
+      
+            return vertices, triangles, areas, distances, river_idx
+        return vertices, triangles, areas, distances
             
     return vertices, triangles
 

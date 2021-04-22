@@ -21,7 +21,7 @@ class FileManagerDaymet:
     Daymet is a historic, spatially interpolated product which ingests large
     number of point-sources of meterological data, aggregates them to daily
     time series, and spatially interpolates them onto a 1km gridded product that
-    covers all of North America from 1980 to 2018 [Daymet]_.
+    covers all of North America from 1980 to present [Daymet]_.
 
     Variable names and descriptions
 
@@ -54,15 +54,16 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
     
-    VALID_YEARS = (1980,2018)
+    VALID_YEARS = (1980,2020)
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
-    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
+    # URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
+    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_{variable}_{year}.nc"
 
     
     def __init__(self):
         #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
-        self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{year}_{north}x{west}_{south}x{east}.nc')
+        self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
     def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False):
@@ -140,9 +141,9 @@ class FileManagerDaymet:
         os.makedirs(self.names.folder_name(), exist_ok=True)
 
         # get the target filename
-        filename = self.names.file_name(year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1])
+        filename = self.names.file_name(var = varname, year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1])
 
-        if (not os.path.exists(filename)):
+        if (not os.path.exists(filename)) or force:
             url_dict = {'year':str(year),
                         'variable':varname}
             url = self.URL.format(**url_dict)
@@ -168,6 +169,9 @@ class FileManagerDaymet:
 
             with open(filename, 'wb') as fid:
                 fid.write(r.content)
+
+        else:
+            logging.info("  Using existing: {}".format(filename))
 
         return filename
         
