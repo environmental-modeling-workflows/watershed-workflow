@@ -243,6 +243,20 @@ class _FileManagerNHD:
         else:
             logging.info('  REST query with polyCode... FAIL')
 
+
+        # may find via huc4?
+        if (self.file_level >= 4):
+            a2 = attempt({'datasets':self.name,
+                          'polyType':'huc4',
+                          'polyCode':hucstr[0:4]})
+            if not a2[0]:
+                logging.info('  REST query with polyCode... SUCCESS')
+                logging.info(f'  REST query: {a2[1]}')
+                return a2[1]
+            else:
+                logging.info('  REST query with polyCode... FAIL')
+
+
         # # works more univerasally but is a BIG lookup, then filter locally
         # a2 = attempt({'datasets':self.name})
         # if not a2[0]:
