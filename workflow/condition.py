@@ -41,7 +41,7 @@ def condition1(points, outletID=None):
     waterway = set([outletID,])
 
     # loop over elevation list from small to large
-    while len(elev) is not 0:
+    while len(elev) != 0:
         current, current_p = elev.pop()
         if current in visited:
             # still in the waterway
@@ -56,7 +56,7 @@ def condition1(points, outletID=None):
 
     # loop over waterway and raise up pits as they touch the waterway
     waterway = sorted([ (ID,points[ID]) for ID in waterway], key=lambda id_p:-id_p[1].coords[2])
-    while len(waterway) is not 0:
+    while len(waterway) != 0:
         current, current_p = waterway.pop()
         for n in current_p.neighbors:
             if n in pits:
@@ -84,7 +84,7 @@ def condition2(points, outletID):
     waterway = set([outletID,])
 
     # loop over elevation list from small to large
-    while len(elev) is not 0:
+    while len(elev) != 0:
         current, current_p = elev.pop(0)
         if current in waterway:
             # still in the waterway

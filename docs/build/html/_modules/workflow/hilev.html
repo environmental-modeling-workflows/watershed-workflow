@@ -1,41 +1,44 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>workflow.hilev &mdash; Watershed Workflow 0.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -74,6 +77,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +100,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -130,11 +135,13 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
@@ -260,7 +267,7 @@
     <span class="n">profile</span><span class="p">,</span> <span class="n">hus</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_hucs</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  found </span><span class="si">{}</span><span class="s1"> HUCs.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hus</span><span class="p">)))</span>
     <span class="k">for</span> <span class="n">hu</span> <span class="ow">in</span> <span class="n">hus</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  -- </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hu</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">level</span><span class="p">)]))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  -- </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_code</span><span class="p">(</span><span class="n">hu</span><span class="p">,</span><span class="n">level</span><span class="p">)))</span>
     
     <span class="c1"># convert to destination crs</span>
     <span class="n">native_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_fiona</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
@@ -271,7 +278,7 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
 
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">hus</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
@@ -311,7 +318,7 @@
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">hu_shapes</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a shapefile.</span>
 
 <span class="sd">    If index_or_bounds is a bounding box, crs must not be None and is the crs</span>
@@ -331,6 +338,8 @@
 <span class="sd">        The default is source&#39;s crs.</span>
 <span class="sd">    digits : int, optional</span>
 <span class="sd">        Number of digits to round coordinates to.</span>
+<span class="sd">    properties : bool, optional</span>
+<span class="sd">        If true, also get properties from the source.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -338,7 +347,8 @@
 <span class="sd">        Coordinate system of `out`.</span>
 <span class="sd">    out : list(shapely)</span>
 <span class="sd">        List of shapely objects in the shapefile meeting the criteria.</span>
-
+<span class="sd">    out_properties : pandas dataframe</span>
+<span class="sd">        Only if properties == True, a dataframe of corresponding properties</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Preprocessing Shapes&quot;</span><span class="p">)</span>
@@ -349,7 +359,10 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;loading file: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">manager_shape</span><span class="o">.</span><span class="n">FileManagerShape</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 
-    <span class="n">profile</span><span class="p">,</span> <span class="n">shps</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">index_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">shps</span><span class="p">,</span> <span class="n">out_props</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_shapes_and_properties</span><span class="p">(</span><span class="n">index_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">shps</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">index_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
 
     <span class="c1"># convert to destination crs</span>
     <span class="n">native_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_fiona</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
@@ -360,12 +373,15 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
         
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
     <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">shplys</span></div>
+    <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">shplys</span><span class="p">,</span> <span class="n">out_props</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">shplys</span></div>
 
 <div class="viewcode-block" id="get_split_form_shapes"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_split_form_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_split_form_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a shapefile.</span>
@@ -453,7 +469,7 @@
     <span class="n">profile</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">get_hydro</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  found </span><span class="si">{}</span><span class="s2"> reaches&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)))</span>
 
-    <span class="k">if</span> <span class="n">presimplify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">presimplify</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># convert to shapely and simplify</span>
         <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">presimplify</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">]</span> 
 
@@ -469,7 +485,7 @@
         <span class="n">crs</span> <span class="o">=</span> <span class="n">native_crs</span>
 
     <span class="c1"># round</span>
-    <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">digits</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">digits</span><span class="p">)</span>
 
     <span class="c1"># convert to shapely</span>
@@ -479,7 +495,7 @@
         <span class="n">reaches_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span><span class="n">reaches_s</span><span class="p">)))</span>
 
     <span class="c1"># not too long</span>
-    <span class="k">if</span> <span class="n">long</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">long</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_r</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches_s</span><span class="p">)</span>
         <span class="n">reaches_s</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">reaches_s</span> <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="n">long</span><span class="p">]</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  filtered </span><span class="si">{}</span><span class="s2"> of </span><span class="si">{}</span><span class="s2"> due to length criteria </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_r</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches_s</span><span class="p">),</span> <span class="n">n_r</span><span class="p">,</span> <span class="n">long</span><span class="p">))</span>
@@ -489,13 +505,14 @@
 
 
 <div class="viewcode-block" id="get_raster_on_shape"><a class="viewcode-back" href="../../api.html#workflow.hilev.get_raster_on_shape">[docs]</a><span class="k">def</span> <span class="nf">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">raster_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>
-                        <span class="n">mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Collects a raster DEM that covers the requested shape.</span>
+                        <span class="n">mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Collects a raster that covers the requested shape.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    source : source-type</span>
-<span class="sd">        Source object providing a get_raster() method.</span>
+<span class="sd">    source : str or source-type</span>
+<span class="sd">        Filename to parse, or a source object providing the get_raster()</span>
+<span class="sd">        method.</span>
 <span class="sd">    shape : Polygon</span>
 <span class="sd">        Shapely or fiona polygon on which to get the raster.</span>
 <span class="sd">    crs : crs-type</span>
@@ -507,7 +524,7 @@
 <span class="sd">        pixels cover the entire shape.  Default is 0.</span>
 <span class="sd">    mask : bool, optional=False</span>
 <span class="sd">        If True, mask the raster outside of shape.</span>
-<span class="sd">    nodata : dtype, optional=-1</span>
+<span class="sd">    nodata : dtype, optional=raster nodata</span>
 <span class="sd">        Value to place outside of shape.</span>
 
 <span class="sd">    Returns</span>
@@ -522,6 +539,11 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Preprocessing Raster&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
 
+    <span class="c1"># load file</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;loading file: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">manager_raster</span><span class="o">.</span><span class="n">FileManagerRaster</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">:</span>
@@ -533,15 +555,35 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Got raster of shape: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
     <span class="c1"># warp the raster to the requested output</span>
-    <span class="k">if</span> <span class="n">raster_crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">raster_crs</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_crs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">raster_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_rasterio</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
         <span class="c1"># mask the raster</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Masking to shape&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raster_crs</span> <span class="o">!=</span> <span class="n">crs</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">raster_crs</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;shape bounds: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">([</span><span class="n">shape</span><span class="p">,],</span> <span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
                                                <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">raster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">nodata</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nodata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># surely there is a better way to see if dtype can handle nan?</span>
+                    <span class="n">nodata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="c1"># surely there is a better way to get -1 as dtype?</span>
+                    <span class="n">nodata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodata</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodata</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nodata</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span>
+            
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Casting mask of dtype: </span><span class="si">{</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> to: </span><span class="si">{</span><span class="n">nodata</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">raster</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodata</span>
 
     <span class="n">transform</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
     <span class="n">x0</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
@@ -604,16 +646,16 @@
 
             <span class="k">if</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="c1"># fully contained in try_huc, recurse</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_code</span><span class="p">(</span><span class="n">subhu</span><span class="p">,</span> <span class="n">search_level</span><span class="p">)</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> contains&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">_find_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hname</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_code</span><span class="p">(</span><span class="n">subhu</span><span class="p">,</span> <span class="n">search_level</span><span class="p">)</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> partially contains&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
                 <span class="c1"># partially contained in try_huc, return this</span>
                 <span class="k">return</span> <span class="n">hint</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">hname</span> <span class="o">=</span> <span class="n">subhu</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HUC</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_level</span><span class="p">)]</span>
+                <span class="n">hname</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_code</span><span class="p">(</span><span class="n">subhu</span><span class="p">,</span> <span class="n">search_level</span><span class="p">)</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  subhuc: </span><span class="si">%s</span><span class="s1"> does not contain&#39;</span><span class="o">%</span><span class="n">hname</span><span class="p">)</span>
         <span class="k">assert</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
@@ -630,7 +672,7 @@
 
     <span class="n">_</span><span class="p">,</span> <span class="n">hint_hu</span> <span class="o">=</span> <span class="n">get_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
     <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply_s</span><span class="p">,</span> <span class="n">hint_hu</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">inhuc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">inhuc</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: shape not found in hinted HUC &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hint</span><span class="p">))</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="n">_find_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shply_s</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">)</span>
@@ -680,7 +722,7 @@
         <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span>
         <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">filter_rivers_to_shape</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">reaches</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  filtered from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2"> reaches.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)))</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reaches</span>
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generate the river tree&quot;</span><span class="p">)</span>
@@ -694,7 +736,7 @@
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...removing river with </span><span class="si">%d</span><span class="s2"> reaches&quot;</span><span class="o">%</span><span class="n">ltree</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...keeping river with </span><span class="si">%d</span><span class="s2"> reaches&quot;</span><span class="o">%</span><span class="n">ltree</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="ow">is</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">rivers</span>
             
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;simplifying rivers&quot;</span><span class="p">)</span>
@@ -710,7 +752,7 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Simplification Diagnostics&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">mins</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">dfs</span><span class="p">():</span>
@@ -730,7 +772,7 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  HUC median seg length: </span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mins</span><span class="p">)))</span>
     <span class="k">return</span> <span class="n">rivers</span></div>
     
-<div class="viewcode-block" id="triangulate"><a class="viewcode-back" href="../../api.html#workflow.hilev.triangulate">[docs]</a><span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<div class="viewcode-block" id="triangulate"><a class="viewcode-back" href="../../api.html#workflow.hilev.triangulate">[docs]</a><span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">mesh_rivers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">refine_max_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refine_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refine_max_edge_length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">refine_min_angle</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enforce_delaunay</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Triangulates HUCs and rivers.</span>
@@ -744,8 +786,13 @@
 <span class="sd">        A split-form HUC object from, e.g., get_split_form_hucs()</span>
 <span class="sd">    reaches : list(LineString)</span>
 <span class="sd">        A list of reaches from, e.g., get_reaches()</span>
+<span class="sd">    mesh_rivers : bool, optional</span>
+<span class="sd">        Include stream network in the mesh discretely.</span>
 <span class="sd">    diagnostics : bool, optional</span>
-<span class="sd">        Plot diagnostics graphs of the triangle refinement.    </span>
+<span class="sd">        Plot diagnostics graphs of the triangle refinement.</span>
+<span class="sd">    tol : float, optional</span>
+<span class="sd">        Set tolerance for minimum distance between two nodes. The unit is the same as </span>
+<span class="sd">        that of the watershed&#39;s CRS. The default is 1.</span>
 <span class="sd">    refine_max_area : float, optional</span>
 <span class="sd">        Refine a triangle if its area is greater than this area.</span>
 <span class="sd">    refine_distance : list(float), optional</span>
@@ -799,17 +846,21 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
 
     <span class="n">refine_funcs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="n">refine_max_area</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">refine_max_area</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_from_max_area</span><span class="p">(</span><span class="n">refine_max_area</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">refine_distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">refine_distance</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_from_river_distance</span><span class="p">(</span><span class="o">*</span><span class="n">refine_distance</span><span class="p">,</span> <span class="n">rivers</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">refine_max_edge_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">refine_max_edge_length</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_from_max_edge_length</span><span class="p">(</span><span class="n">refine_max_edge_length</span><span class="p">))</span>
     <span class="k">def</span> <span class="nf">my_refine_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">rf</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">rf</span> <span class="ow">in</span> <span class="n">refine_funcs</span><span class="p">)</span>        
 
-    <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span>
-                                                             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+    <span class="k">if</span> <span class="n">mesh_rivers</span><span class="p">:</span>
+        <span class="n">rivers_tri</span> <span class="o">=</span> <span class="n">rivers</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rivers_tri</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers_tri</span><span class="p">,</span>
+                                                             <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
                                                              <span class="n">refinement_func</span><span class="o">=</span><span class="n">my_refine_func</span><span class="p">,</span>
                                                              <span class="n">min_angle</span><span class="o">=</span><span class="n">refine_min_angle</span><span class="p">,</span>
                                                              <span class="n">enforce_delaunay</span><span class="o">=</span><span class="n">enforce_delaunay</span><span class="p">)</span>
@@ -829,6 +880,7 @@
             <span class="n">needs_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">my_refine_func</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">areas</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  min area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">areas</span><span class="p">))))</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  max area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">areas</span><span class="p">))))</span>
 
         <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
@@ -868,7 +920,7 @@
 <span class="sd">    algorithm : str, optional</span>
 <span class="sd">        Algorithm used for interpolation.  One of:</span>
 <span class="sd">        * &quot;nearest&quot; for nearest-neighbor pixels</span>
-<span class="sd">        * &quot;piecewise bilinear&quot; for interpolation</span>
+<span class="sd">        * &quot;piecewise bilinear&quot; for interpolation (default)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -903,9 +955,9 @@
 <span class="sd">        2D array forming the raster.</span>
 <span class="sd">    raster_profile : dict</span>
 <span class="sd">        rasterio profile for the raster.</span>
-<span class="sd">    algorithm : str</span>
+<span class="sd">    algorithm : str, optional</span>
 <span class="sd">        Algorithm used for interpolation.  One of:</span>
-<span class="sd">        * &quot;nearest&quot; for nearest neighbor pixels</span>
+<span class="sd">        * &quot;nearest&quot; for nearest neighbor pixels (default)</span>
 <span class="sd">        * &quot;piecewise bilinear&quot; for interpolation</span>
 
 <span class="sd">    Returns</span>
@@ -1030,20 +1082,25 @@
            
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, UT Battelle, Ethan Coon
+        &#169; Copyright 2019, UT Battelle, Ethan Coon.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -1051,7 +1108,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

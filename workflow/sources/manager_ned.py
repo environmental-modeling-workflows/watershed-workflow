@@ -60,7 +60,7 @@ class FileManagerNED:
                                                   self.short_res+"_raw")
         self.crs = workflow.crs.from_epsg(4269)
 
-    def get_raster(self, shape, crs):
+    def get_raster(self, shape, crs, force_download=False):
         """Download and read a DEM for this shape, clipping to the shape.
         
         Parameters
@@ -69,6 +69,8 @@ class FileManagerNED:
           Shape to provide bounds of the raster.
         crs : CRS
           CRS of the shape.
+        force_download : bool
+          Download or re-download the file if true.
 
         Returns
         -------
@@ -93,7 +95,7 @@ class FileManagerNED:
         feather_bounds[1] = feather_bounds[1] - .01
         feather_bounds[2] = feather_bounds[2] + .01
         feather_bounds[3] = feather_bounds[3] + .01
-        files = self.download(feather_bounds)
+        files = self.download(feather_bounds, force=force_download)
 
         # merge into a single raster
         datasets = [rasterio.open(f) for f in files]
@@ -122,7 +124,7 @@ class FileManagerNED:
         js : json dict
           JSON response of the formed request.
         """
-        rest_url = 'https://viewer.nationalmap.gov/tnmaccess/api/products'
+        rest_url = 'https://tnmaccess.nationalmap.gov/api/v1/products'
         rest_dataset = self.name + ' ' + self.resolution
 
         rest_bounds = ','.join(str(b) for b in bounds)
@@ -130,6 +132,7 @@ class FileManagerNED:
             r = requests.get(rest_url, params={'datasets':rest_dataset,
                                                'bbox':rest_bounds,
                                                'prodFormats':self.file_format})
+
         except requests.exceptions.ConnectionError as err:
             logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))
             raise err
@@ -236,6 +239,7 @@ class FileManagerNED:
                 for fname in filenames:
                     logging.warn('  {}'.format(fname))
         else:
+            logging.info('source files already exist!')
             filenames_success = filenames
 
         return filenames_success

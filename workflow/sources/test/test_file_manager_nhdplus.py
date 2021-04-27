@@ -49,7 +49,7 @@ def test_nhdplus_url_invalid(nhd):
 
 def test_nhdplus_download(nhd):
     # download
-    hfile = nhd._download('0204')
+    hfile = nhd._download('0204', force=True)
     assert(hfile == nhd.name_manager.file_name('0204'))
 
 def test_nhdplus2(nhd):

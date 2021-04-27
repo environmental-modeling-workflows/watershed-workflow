@@ -16,6 +16,7 @@ from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, Fil
 from workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_nrcs import FileManagerNRCS
+from workflow.sources.manager_glhymps import FileManagerGLHYMPS
 from workflow.sources.manager_nlcd import FileManagerNLCD
 from workflow.sources.manager_daymet import FileManagerDaymet
 
@@ -24,28 +25,29 @@ from workflow.sources.manager_raster import FileManagerRaster
 
 
 # available and default water boundary datasets
-huc_sources = {'NHD Plus': FileManagerNHDPlusAccumulator(),
-               'NHD': FileManagerNHD(),
-               'WBD': FileManagerWBD()
+huc_sources = {'NHD Plus' : FileManagerNHDPlusAccumulator(),
+               'NHD' : FileManagerNHD(),
+               'WBD' : FileManagerWBD()
                }
 default_huc_source = 'WBD'
 
 # available and default hydrography datasets
-hydrography_sources = {'NHD Plus': huc_sources['NHD Plus'],
-                       'NHD': huc_sources['NHD'],
+hydrography_sources = {'NHD Plus' : FileManagerNHDPlus(),
+                       'NHD' : FileManagerNHD(),
                        }
 default_hydrography_source = 'NHD'
 
 # available and default digital elevation maps
-dem_sources = {'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
-               'NED 1 arc-second': FileManagerNED('1 arc-second'),
+dem_sources = {'NED 1/3 arc-second' : FileManagerNED('1/3 arc-second'),
+               'NED 1 arc-second' : FileManagerNED('1 arc-second'),
                }
 default_dem_source = 'NED 1 arc-second'
 
 # available and default soil survey datasets
-soil_sources = {'NRCS SSURGO':FileManagerNRCS(),
+structure_sources = {'NRCS SSURGO' : FileManagerNRCS(),
+                'GLHYMPS' : FileManagerGLHYMPS(),
                 }
-default_soil_source = 'NRCS SSURGO'
+default_structure_source = 'NRCS SSURGO'
 
 # available and default land cover
 land_cover_sources = {'NLCD (L48)' : FileManagerNLCD(layer='Land_Cover', location='L48'),
@@ -67,7 +69,8 @@ def get_default_sources():
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
     sources['DEM'] = dem_sources[default_dem_source]
-    sources['soil type'] = soil_sources[default_soil_source]
+    sources['soil structure'] = structure_sources['NRCS SSURGO']
+    sources['geologic structure'] = structure_sources['GLHYMPS']
     sources['land cover'] = land_cover_sources[default_land_cover]
     sources['soil thickness'] = None
     sources['meteorology'] = met_sources[default_met]

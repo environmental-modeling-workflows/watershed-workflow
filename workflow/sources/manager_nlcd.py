@@ -4,8 +4,7 @@ import logging
 import numpy as np
 import shapely
 import rasterio
-import rasterio.windows
-import rasterio.transform
+import rasterio.mask
 
 import workflow.sources.utils as source_utils
 import workflow.conf
@@ -13,8 +12,7 @@ import workflow.warp
 import workflow.sources.names
 
 # No API for getting NLCD locally -- must download the whole thing.
-urls = {'NLCD_2016_Land_Cover_L48': 'https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip',
-        }
+urls = {'NLCD_2016_Land_Cover_L48' : 'https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip' }
 
 class FileManagerNLCD:
     """National Land Cover Database provides a raster for indexed land cover types
@@ -74,7 +72,7 @@ class FileManagerNLCD:
         return layer, year, location
         
 
-    def get_raster(self, shply, crs):
+    def get_raster(self, shply, crs, force_download=False):
         """Download and read a DEM for this shape, clipping to the shape.
 
         Parameters
@@ -83,6 +81,8 @@ class FileManagerNLCD:
           Shape to provide bounds of the raster.
         crs : CRS
           CRS of the shape.
+        force_download : bool, optional
+          Download or re-download the file if true.
 
         Returns
         -------
@@ -109,26 +109,18 @@ class FileManagerNLCD:
         # warp to crs
         shply = workflow.warp.shply(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
 
-        # calculate a window
-        bounds = shply.bounds
-        offset_y, offset_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[0], bounds[3])
-        offset_x = max(0, offset_x - 10)
-        offset_y = max(0, offset_y - 10)
-        
-        lr_y, lr_x = rasterio.transform.rowcol(nlcd_profile['transform'], bounds[2], bounds[1])
-        nx, ny = nlcd_profile['width'], nlcd_profile['height']
-        lr_x = min(lr_x + 10, nx)
-        lr_y = min(lr_y + 10, ny)
-        
-        window = rasterio.windows.Window(offset_x, offset_y, lr_x - offset_x, lr_y - offset_y)
+        # load raster
         with rasterio.open(filename, 'r') as fid:
             profile = fid.profile
-            band = fid.read(1, window=window)
+            out_image, out_transform = rasterio.mask.mask(fid, [shply,], crop=True)
 
-        # shift the profile by the offset
-        profile['transform'] = profile['transform'] * profile['transform'].translation(offset_x, offset_y)
+        profile.update({ "height" : out_image.shape[1],
+                         "width" : out_image.shape[2],
+                         "transform" : out_transform})
 
-        return profile,band
+        assert(len(out_image.shape) == 3)
+        return profile, out_image[0,:,:]
+
 
     def _download(self, force=False):
         """Download the files, returning list of filenames."""
@@ -145,12 +137,8 @@ class FileManagerNLCD:
             except KeyError:
                 raise NotImplementedError('Not yet implemented (but trivial to add, just ask!): {}'.format(self.layer_name))
 
-            logging.warning('Downloading NLCD dataset: {} -- this will take a long time, depending upon internet connection.'.format(self.layer_name))
-
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            if not os.path.exists(downloadfile) or force:
-                logging.debug("Attempting to download source for target '%s'"%filename)
-                source_utils.download(url, downloadfile)
+            source_utils.download_progress_bar(url, downloadfile, force)
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?

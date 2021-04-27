@@ -1,5 +1,5 @@
-"""Manager for interacting with DayMet datasets.
-"""
+"""Manager for interacting with DayMet datasets."""
+
 import os,sys
 import logging
 import numpy as np
@@ -15,7 +15,6 @@ import workflow.warp
 import workflow.sources.names
 
 
-#
 class FileManagerDaymet:
     """Daymet meterological datasets.
 
@@ -66,7 +65,7 @@ class FileManagerDaymet:
         self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
-    def get_meteorology(self, varname, year, polygon_or_bounds, crs):
+    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -79,6 +78,8 @@ class FileManagerDaymet:
           Collect a file that covers this shape or bounds.
         crs : CRS object
           Coordinate system of the above polygon_or_bounds
+        force_download : bool
+          Download or re-download the file if true.
 
         Returns
         -------
@@ -109,7 +110,7 @@ class FileManagerDaymet:
         feather_bounds[1] = feather_bounds[1] - .01
         feather_bounds[2] = feather_bounds[2] + .01
         feather_bounds[3] = feather_bounds[3] + .01
-        fname = self.download(varname, year, feather_bounds)
+        fname = self.download(varname, year, feather_bounds, force=force_download)
         return fname
 
     def download(self, varname, year, bounds, force=False):

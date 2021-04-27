@@ -8,6 +8,7 @@ import workflow.crs
 import workflow.hilev
 import workflow.source_list
 
+
 @pytest.fixture
 def datadir(tmpdir, request):
     """Fixture responsible for searching a folder with the same name of test
@@ -106,5 +107,20 @@ def test_find8_raises(datadir):
     crs, shp = get_fiona(testshpfile)
     with pytest.raises(RuntimeError):
         workflow.hilev.find_huc(nhd, shp, crs, '0204')
+
+
+def test_river_tree_properties():
+    crs = workflow.crs.default_crs()
+    nhdp = workflow.source_list.FileManagerNHDPlus()
+    _, cc = workflow.get_split_form_hucs(nhdp, '140200010204', 12, crs)
+    _, reaches = workflow.get_reaches(nhdp, '140200010204',None,crs, merge=False)
+
+    rivers1 = workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2)
+    rivers2 = workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2,
+                                          prune_by_area_fraction=0.03)
+
+
+
+    
 
 

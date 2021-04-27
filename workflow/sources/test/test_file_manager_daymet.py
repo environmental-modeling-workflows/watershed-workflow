@@ -21,6 +21,6 @@ def test_daymet1():
     # get imgs
     daymet = workflow.sources.manager_daymet.FileManagerDaymet()
 
-    filename = daymet.get_meteorology('prcp', 1999, hucly, native_crs)
+    filename = daymet.get_meteorology('prcp', 1999, hucly, native_crs, force_download=True)
     
     

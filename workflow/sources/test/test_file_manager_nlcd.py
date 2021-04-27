@@ -29,4 +29,4 @@ def test_nlcd(nlcd):
     #plt.imshow(dem)
     #plt.show()
     
-    assert(dem.shape == (3827, 2479))
+    assert(dem.shape == (3808,2460))

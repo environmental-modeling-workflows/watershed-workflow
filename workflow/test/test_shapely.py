@@ -40,7 +40,7 @@ def test_simplify():
         newc = wiggle(coords)
         ls = shapely.geometry.LineString(newc)
         ls_s = ls.simplify(.01)
-        mygood = ((len(ls_s.coords) is 2) and 
+        mygood = ((len(ls_s.coords) == 2) and 
                   workflow.utils.close(ls_s.coords[0], ls.coords[0], 1.e-10) and
                   workflow.utils.close(ls_s.coords[-1], ls.coords[-1], 1.e-10))
         good.append(mygood)

@@ -1,41 +1,44 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>workflow.sources.manager_nlcd &mdash; Watershed Workflow 0.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
@@ -74,6 +77,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -96,6 +100,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -130,11 +135,13 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
@@ -162,6 +169,7 @@
 <span class="kn">import</span> <span class="nn">rasterio</span>
 <span class="kn">import</span> <span class="nn">rasterio.windows</span>
 <span class="kn">import</span> <span class="nn">rasterio.transform</span>
+<span class="kn">import</span> <span class="nn">rasterio.mask</span>
 
 <span class="kn">import</span> <span class="nn">workflow.sources.utils</span> <span class="k">as</span> <span class="nn">source_utils</span>
 <span class="kn">import</span> <span class="nn">workflow.conf</span>
@@ -169,8 +177,7 @@
 <span class="kn">import</span> <span class="nn">workflow.sources.names</span>
 
 <span class="c1"># No API for getting NLCD locally -- must download the whole thing.</span>
-<span class="n">urls</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NLCD_2016_Land_Cover_L48&#39;</span><span class="p">:</span> <span class="s1">&#39;https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip&#39;</span><span class="p">,</span>
-        <span class="p">}</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NLCD_2016_Land_Cover_L48&#39;</span> <span class="p">:</span> <span class="s1">&#39;https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip&#39;</span> <span class="p">}</span>
 
 <div class="viewcode-block" id="FileManagerNLCD"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nlcd.FileManagerNLCD">[docs]</a><span class="k">class</span> <span class="nc">FileManagerNLCD</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;National Land Cover Database provides a raster for indexed land cover types</span>
@@ -230,7 +237,7 @@
         <span class="k">return</span> <span class="n">layer</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">location</span>
         
 
-<div class="viewcode-block" id="FileManagerNLCD.get_raster"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nlcd.FileManagerNLCD.get_raster">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+<div class="viewcode-block" id="FileManagerNLCD.get_raster"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nlcd.FileManagerNLCD.get_raster">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Download and read a DEM for this shape, clipping to the shape.</span>
 
 <span class="sd">        Parameters</span>
@@ -239,6 +246,8 @@
 <span class="sd">          Shape to provide bounds of the raster.</span>
 <span class="sd">        crs : CRS</span>
 <span class="sd">          CRS of the shape.</span>
+<span class="sd">        force_download : bool, optional</span>
+<span class="sd">          Download or re-download the file if true.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -265,26 +274,18 @@
         <span class="c1"># warp to crs</span>
         <span class="n">shply</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_rasterio</span><span class="p">(</span><span class="n">nlcd_profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]))</span>
 
-        <span class="c1"># calculate a window</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">shply</span><span class="o">.</span><span class="n">bounds</span>
-        <span class="n">offset_y</span><span class="p">,</span> <span class="n">offset_x</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">rowcol</span><span class="p">(</span><span class="n">nlcd_profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-        <span class="n">offset_x</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset_x</span> <span class="o">-</span> <span class="mi">10</span><span class="p">)</span>
-        <span class="n">offset_y</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset_y</span> <span class="o">-</span> <span class="mi">10</span><span class="p">)</span>
-        
-        <span class="n">lr_y</span><span class="p">,</span> <span class="n">lr_x</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">rowcol</span><span class="p">(</span><span class="n">nlcd_profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span> <span class="o">=</span> <span class="n">nlcd_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">nlcd_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
-        <span class="n">lr_x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lr_x</span> <span class="o">+</span> <span class="mi">10</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
-        <span class="n">lr_y</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lr_y</span> <span class="o">+</span> <span class="mi">10</span><span class="p">,</span> <span class="n">ny</span><span class="p">)</span>
-        
-        <span class="n">window</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">offset_x</span><span class="p">,</span> <span class="n">offset_y</span><span class="p">,</span> <span class="n">lr_x</span> <span class="o">-</span> <span class="n">offset_x</span><span class="p">,</span> <span class="n">lr_y</span> <span class="o">-</span> <span class="n">offset_y</span><span class="p">)</span>
+        <span class="c1"># load raster</span>
         <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
             <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
-            <span class="n">band</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+            <span class="n">out_image</span><span class="p">,</span> <span class="n">out_transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="p">[</span><span class="n">shply</span><span class="p">,],</span> <span class="n">crop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="c1"># shift the profile by the offset</span>
-        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">translation</span><span class="p">(</span><span class="n">offset_x</span><span class="p">,</span> <span class="n">offset_y</span><span class="p">)</span>
+        <span class="n">profile</span><span class="o">.</span><span class="n">update</span><span class="p">({</span> <span class="s2">&quot;height&quot;</span> <span class="p">:</span> <span class="n">out_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                         <span class="s2">&quot;width&quot;</span> <span class="p">:</span> <span class="n">out_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                         <span class="s2">&quot;transform&quot;</span> <span class="p">:</span> <span class="n">out_transform</span><span class="p">})</span>
 
-        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span><span class="n">band</span></div>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">out_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">out_image</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:]</span></div>
+
 
     <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Download the files, returning list of filenames.&quot;&quot;&quot;</span>
@@ -328,20 +329,25 @@
            
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, UT Battelle, Ethan Coon
+        &#169; Copyright 2019, UT Battelle, Ethan Coon.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -349,7 +355,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
