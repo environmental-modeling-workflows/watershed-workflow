@@ -4,8 +4,6 @@ import logging
 import numpy as np
 import shapely
 import rasterio
-import rasterio.windows
-import rasterio.transform
 import rasterio.mask
 
 import workflow.sources.utils as source_utils
@@ -139,12 +137,8 @@ class FileManagerNLCD:
             except KeyError:
                 raise NotImplementedError('Not yet implemented (but trivial to add, just ask!): {}'.format(self.layer_name))
 
-            logging.warning('Downloading NLCD dataset: {} -- this will take a long time, depending upon internet connection.'.format(self.layer_name))
-
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            if not os.path.exists(downloadfile) or force:
-                logging.debug("Attempting to download source for target '%s'"%filename)
-                source_utils.download(url, downloadfile)
+            source_utils.download_progress_bar(url, downloadfile, force)
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?
