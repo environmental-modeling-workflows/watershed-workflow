@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy.spatial
+from scipy.spatial import cKDTree
 import itertools
 
 import shapely.geometry
@@ -168,8 +169,8 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
     coords2 = np.array([r.coords[0] for tree in rivers for r in tree.leaves()])
     coords = np.concatenate([coords1, coords2], axis=0)
-    kdtree = scipy.spatial.cKDTree(coords)
-
+    # kdtree = scipy.spatial.cKDTree(coords)
+    kdtree = cKDTree(coords)  
     # for each segment of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it
     for seg_handle, seg in hucs.segments.items():
@@ -339,8 +340,8 @@ def make_global_tree(rivers, tol=0.1):
 
     # make a kdtree of beginpoints
     coords = np.array([r.coords[0] for r in rivers])
-    kdtree = scipy.spatial.cKDTree(coords)
-
+    # kdtree = scipy.spatial.cKDTree(coords)
+    kdtree = cKDTree(coords)
     # make a node for each segment
     nodes = [workflow.river_tree.RiverTree(r) for r in rivers]
 

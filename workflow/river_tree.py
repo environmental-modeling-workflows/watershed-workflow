@@ -20,7 +20,7 @@ class RiverTree(tinytree.Tree):
         self.segment = segment
 
         assert(properties is None)
-        assert(hasattr(self.segment, 'properties'))
+        # assert(hasattr(self.segment, 'properties'))
         if properties is not None:
             self.properties = properties
         elif hasattr(self.segment, 'properties'):
