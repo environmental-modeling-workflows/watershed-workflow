@@ -1,4 +1,5 @@
 import matplotlib
+import matplotlib.pyplot as plt
 import matplotlib.colors
 import matplotlib.cm
 import numpy as np
@@ -163,7 +164,7 @@ def generate_indexed_colormap(indices, cmap='hot'):
 
 
 
-def generate_nlcd_colormap(indices=None):
+def generate_nlcd_colormap(indices=None, formatted=False):
     """Generates a colormap and labels for imaging with the NLCD colors.
 
     Parameters
@@ -187,6 +188,8 @@ def generate_nlcd_colormap(indices=None):
     labels : list(str)
         A list of labels associated with the ticks.  For use with
         `set_{x,y}ticklabels()`.
+    formatted: bool, 
+        To make the labels formatted nicely (i.e. add newline in long label names)
 
     Example
     -------
@@ -241,5 +244,77 @@ def generate_nlcd_colormap(indices=None):
     cmap = matplotlib.colors.ListedColormap(values)
     ticks = indices+[indices[-1]+1,]
     norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks)-1)
-    labels = [all_colors[k][0] for k in indices] + ['',]
+    labels = [all_colors[k][0] for k in indices]
+
+    if formatted:
+        nlcd_labels_fw = []
+        for label in labels:
+            label_fw = label
+            if len(label) > 15:
+                if ' ' in label:
+                    lsplit = label.split()
+                    if len(lsplit) == 2:
+                        label_fw = '\n'.join(lsplit)
+                    elif len(lsplit) == 4:
+                        label_fw = '\n'.join([' '.join(lsplit[0:2]),
+                                            ' '.join(lsplit[2:])])
+                    elif len(lsplit) == 3:
+                        if len(lsplit[0]) > len(lsplit[-1]):
+                            label_fw = '\n'.join([lsplit[0],
+                                                ' '.join(lsplit[1:])])
+                        else:
+                            label_fw = '\n'.join([' '.join(lsplit[:-1]),
+                                                lsplit[-1]])
+            nlcd_labels_fw.append(label_fw)  
+
+        labels = nlcd_labels_fw      
+
+    assert(len(indices) == len(labels))
+
     return indices, cmap, norm, ticks, labels
+
+def colorbar_index(ncolors, cmap, labels = None):
+    """add colorbar index based on colormap and ncolors. Thsi will set ticks in the middle of each color range.
+    Parameters:
+        ncolors, int
+            number of colors
+        cmap, colormap instance
+        labels, list, optional
+            List of labels that equal to the number of colors. Default is to use numbers.
+
+    See StackOverFlow post : https://stackoverflow.com/a/18707445/9319184
+    """
+    cmap = cmap_discretize(cmap, ncolors)
+    mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
+    mappable.set_array([])
+    mappable.set_clim(-0.5, ncolors+0.5)
+    colorbar = plt.colorbar(mappable,fraction=0.03, pad=0.04)
+    colorbar.set_ticks(np.linspace(0, ncolors, ncolors)) # set tick locations
+    # set tick labels
+    if labels is not None:
+        colorbar.set_ticklabels(labels)
+    else:
+        colorbar.set_ticklabels(range(ncolors)) 
+    
+def cmap_discretize(cmap, N):
+    """Return a discrete colormap from the continuous colormap cmap.
+        cmap: colormap instance, eg. cm.jet. 
+        N: number of colors.
+
+    Example
+        x = resize(arange(100), (5,100))
+        djet = cmap_discretize(cm.jet, 5)
+        imshow(x, cmap=djet)
+    """
+
+    if type(cmap) == str:
+        cmap = plt.get_cmap(cmap)
+    colors_i = np.concatenate((np.linspace(0, 1., N), (0.,0.,0.,0.)))
+    colors_rgba = cmap(colors_i)
+    indices = np.linspace(0, 1., N+1)
+    cdict = {}
+    for ki,key in enumerate(('red','green','blue')):
+        cdict[key] = [ (indices[i], colors_rgba[i-1,ki], colors_rgba[i,ki])
+                       for i in range(N+1) ]
+    # Return colormap object.
+    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%N, cdict, 1024)
