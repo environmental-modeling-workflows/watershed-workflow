@@ -39,31 +39,32 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
                                                   '', 'GLHYMPS.shp')
         super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
 
-    def get_shapes(self, shape, crs, force_download=None):
+    def get_shapes(self, bounds, crs, force_download=None):
         """Read the shapes in bounds provided by shape object.
 
         Parameters
         ----------
-        shape : fiona or shapely shape
-          Shape to provide bounds of the raster.
+        bounds : bounds tuple [x_min, y_min, x_max, y_max]
+          bounds in which to find GLHYMPS shapes.
         crs : CRS
-          CRS of the shape.
+          CRS of the bounds
 
         Returns
         -------
         profile : dict
             Fiona profile of the shapefile.
         shapes : list
-            List of fiona shapes that match the index or bounds.
+            List of fiona shapes that match the bounds.
         """
+        logging.info(f'Getting shapes of GLHYMPS on bounds: {bounds}')
         filename = self._download()
-        return super(FileManagerGLHYMPS, self).get_shapes(shape, crs)
+        return super(FileManagerGLHYMPS, self).get_shapes(bounds, crs)
 
     def _download(self):
         """Download the files, returning downloaded filename."""
         # check directory structure
         filename = self.names.file_name()
-        logging.debug('  requires: {}'.format(filename))
+        logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
             logging.error(f'GLHYMPS download file {filename} not found.')
             logging.error('See download instructions below\n\n')
@@ -71,15 +72,15 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
-    def get_shapes_and_properties(self, index_or_bounds=-1, crs=None):
+    def get_shapes_and_properties(self, bounds, crs):
         """Read shapes and process properties.
 
         Parameters
         ----------
-        shape : fiona or shapely shape
-          Shape to provide bounds of the raster.
+        bounds : bounds tuple [x_min, y_min, x_max, y_max]
+          bounds in which to find GLHYMPS shapes.
         crs : CRS
-          CRS of the shape.
+          CRS of the bounds.
 
         Returns
         -------
@@ -90,7 +91,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         properties : pandas dataframe
             Dataframe including geologic properties.
         """
-        profile, shapes = self.get_shapes(index_or_bounds, crs)
+        profile, shapes = self.get_shapes(bounds, crs)
 
         ids = np.array([shp['properties']['OBJECTID_1'] for shp in shapes], dtype=int)
         for shp in shapes:
@@ -105,7 +106,6 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         poro = np.maximum(poro, 0.01) # some values of fine clays are 0
         dtb = np.array([shp['properties']['MEAN'] for shp in shapes], dtype=float)
         dtb = dtb / 100 # cm --> m
-                       
 
         properties = pandas.DataFrame(data={'id' : ids,
                                             'source' : 'GLHYMPS',

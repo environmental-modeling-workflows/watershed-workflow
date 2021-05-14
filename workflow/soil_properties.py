@@ -51,7 +51,6 @@ def vgm_Rosetta(data, model_type):
     
     with rosetta.DB_Module.DB(host='localhost', user='root', db_name='Rosetta',
                               sqlite_path=db_path) as db:
-
         # choose the right model corresponding to data inputs
         ptf_model = rosetta.ANN_Module.PTF_MODEL(model_type, db)
         res_dict = ptf_model.predict(data, sum_data=True) 
@@ -140,6 +139,47 @@ def to_ATS(df):
         else:
             df_new[k] = df[k]
     return df_new
-        
+
+
+def _whiten(observations):
+    """This returns the mean/std deviation for use in unwhiten."""
+    means = np.mean(observations, axis=0)
+    whitened = observations - np.expand_dims(means, 0)
+    std = np.std(whitened, axis=0)
+    std[std == 0] = 1
+    whitened = whitened / np.expand_dims(std, 0)
+    return whitened, (means, std)
+
+def _unwhiten(observations, dat):
+    """This does the inverse of _whiten"""
+    means, std = dat
+    return observations * np.expand_dims(std, 0) + np.expand_dims(means, 0)
+    
+
+def cluster(rasters, nbins):
+    """Given a bunch of raster bands, cluster into nbins.
+
+    Returns the coloring map of the clusters."""
+    import scipy.cluster.vq
+    if len(rasters.shape) == 2:
+        rasters = np.expand_dims(rasters, -1)
+    assert(len(rasters.shape) == 3)
+    in_shp = rasters.shape[0:2]
+    total_shp = in_shp[0] * in_shp[1]
+
+    obs = np.reshape(rasters, (-1, rasters.shape[-1]))
+    obs_nonan = obs[~np.isnan(obs[:,0]),:]
+    
+    whiten_obs, whiten_dat = _whiten(obs_nonan)
+    codebook, dist1 = scipy.cluster.vq.kmeans(whiten_obs, nbins)
+    code, dist2 = scipy.cluster.vq.vq(whiten_obs, codebook)
+    codebook = _unwhiten(codebook, whiten_dat)
+
+    codes_nan = -1 * np.ones((total_shp,), 'i')
+    codes_nan[~np.isnan(obs[:,0])] = code
+    return codebook, codes_nan.reshape(in_shp), (dist1,dist2)
+
+
+
         
         

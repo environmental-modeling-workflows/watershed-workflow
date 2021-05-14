@@ -169,13 +169,21 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
     coords2 = np.array([r.coords[0] for tree in rivers for r in tree.leaves()])
     coords = np.concatenate([coords1, coords2], axis=0)
+
+    # limit to x,y
+    if (coords.shape[1] != 2):
+        coords = coords[:, 0:2]
     # kdtree = scipy.spatial.cKDTree(coords)
     kdtree = cKDTree(coords)  
     # for each segment of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it
     for seg_handle, seg in hucs.segments.items():
-        # check point 0
-        dists,inds = kdtree.query(np.array([seg.coords[0],seg.coords[-1]]))
+        # check point 0, -1
+        endpoints = np.array([seg.coords[0], seg.coords[1]])
+        # limit to x,y
+        if (endpoints.shape[1] != 2):
+            endpoints = endpoints[:,0:2]
+        dists,inds = kdtree.query(endpoints)
         if dists.min() < tol:
             new_seg = list(seg.coords)
             if dists[0] < tol:
@@ -256,8 +264,8 @@ def snap_endpoints(tree, hucs, tol=0.1):
                     # remove points that are closer
                     coords = list(river.coords)
                     done = False
-                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[-2]) < \
-                          workflow.utils.distance(new_coord, coords[-1]):
+                    while len(coords) > 2 and \
+                       workflow.utils.distance(new_coord, coords[-2]) < workflow.utils.distance(new_coord, coords[-1]):
                         coords.pop(-1)
                     coords[-1] = new_coord
                     river = shapely.geometry.LineString(coords)
@@ -344,7 +352,8 @@ def make_global_tree(rivers, tol=0.1):
     kdtree = cKDTree(coords)
     # make a node for each segment
     nodes = [workflow.river_tree.RiverTree(r) for r in rivers]
-
+    assert(len(nodes) > 0)
+    
     # match nodes to their parent through the kdtree
     trees = []
     doublesegs = []
@@ -375,7 +384,10 @@ def make_global_tree(rivers, tol=0.1):
         elif len(closest) == 0:
             trees.append(n)
         else:
+            assert(len(closest) == 1)
             nodes[closest[0]].addChild(n)
+
+    assert(len(trees) > 0)
     return trees
 
 
@@ -462,11 +474,12 @@ def prune_by_area_fraction(tree, tol, total_area=None):
         accumulate(tree)
     if total_area is None:
         total_area = tree.properties['total contributing area']
-
+    logging.info(f'... total contributing area = {total_area}')
+        
     count = 0
     for node in list(tree.preOrder()):
         if node.properties['total contributing area'] / total_area < tol:
-            logging.debug(f'removing: {node.properties["total contributing area"]} of {total_area}')
+            logging.info(f'... removing: {node.properties["total contributing area"]} of {total_area}')
             count += 1
             node.remove()
     return count

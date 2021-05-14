@@ -36,17 +36,28 @@ def shply(shp, old_crs, new_crs):
     """Warp a shapely object from old_crs to new_crs."""
     if workflow.crs.equal(old_crs, new_crs):
         return shp
-    
     old_crs_proj = workflow.crs.to_proj(old_crs)
     new_crs_proj = workflow.crs.to_proj(new_crs)
     transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
-    return shapely.ops.transform(lambda x,y:transformer.transform(x,y), shp)
+    shp_out = shapely.ops.transform(transformer.transform, shp)
+    if hasattr(shp, 'properties'):
+        shp_out.properties = shp.properties
+    return shp_out
 
 def shplys(shps, old_crs, new_crs):
     """Warp a collection of shapely objects from old_crs to new_crs."""
-    return [shply(shp, old_crs, new_crs) for shp in shps]
+    if workflow.crs.equal(old_crs, new_crs):
+        return shps
+    old_crs_proj = workflow.crs.to_proj(old_crs)
+    new_crs_proj = workflow.crs.to_proj(new_crs)
+    transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
+    shps_out = [shapely.ops.transform(transformer.transform, shp) for shp in shps]
+    for sout, sin in zip(shps_out, shps):
+        if hasattr(sin, 'properties'):
+            sout.properties = sin.properties
+    return shps_out
 
-def shape(feature, old_crs, new_crs):
+def  shape(feature, old_crs, new_crs):
     """Warp a fiona shape from old_crs to new_crs, in place."""
     # find the dimension -- can't trust the shape
     dim = -1
@@ -102,7 +113,7 @@ def raster(src_profile, src_array,
     """Warp a raster from src_profile to dst_crs, or resample resolution."""
 
     src_crs = workflow.crs.from_rasterio(src_profile['crs'])
-    if resolution is None and dst_height is None and dst_width is None\
+    if resolution is None and dst_height is None and dst_width is None and \
        (dst_crs is None or workflow.crs.equal(dst_crs, src_crs)):
         # nothing to do
         return src_profile, src_array

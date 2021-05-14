@@ -42,7 +42,7 @@ class FileManagerNED:
     file_format : str, optional
       Desired output format.  Default and universally available is `"IMG`".
     """
-    def __init__(self, resolution='1/3 arc-second', file_format='IMG'):
+    def __init__(self, resolution='1/3 arc-second', file_format='GeoTIFF'):
         """Create the manager."""
         self.name = 'National Elevation Dataset (NED)'
         self.file_format = file_format
@@ -54,9 +54,16 @@ class FileManagerNED:
         else:
             raise ValueError("{}: invalid resolution '{}', must be one of '1/9 arc-second', '1/3 arc-second', or '1 arc-second'".format(self.name))
 
-        self.resolution = resolution        
+        self.resolution = resolution
+
+        self.file_format = file_format
+        if self.file_format == 'GeoTIFF':
+            file_extension = 'tif'
+        else:
+            file_extension = self.file_format.lower()
+        
         self.names = workflow.sources.names.Names(self.name, 'dem', None,
-                                                  'USGS_NED_%s_n{:02}_w{:03}.%s'%(self.short_res,file_format.lower()),
+                                                  'USGS_NED_%s_n{:02}_w{:03}.%s'%(self.short_res,file_extension),
                                                   self.short_res+"_raw")
         self.crs = workflow.crs.from_epsg(4269)
 
@@ -126,18 +133,16 @@ class FileManagerNED:
         """
         rest_url = 'https://tnmaccess.nationalmap.gov/api/v1/products'
         rest_dataset = self.name + ' ' + self.resolution
-
-        rest_bounds = ','.join(str(b) for b in bounds)
+        rest_bounds = ','.join(str(b) for b in bounds)#[bounds[1], bounds[0], bounds[3], bounds[2]])
         try:
             r = requests.get(rest_url, params={'datasets':rest_dataset,
                                                'bbox':rest_bounds,
                                                'prodFormats':self.file_format})
-
+            logging.info(r.url)
         except requests.exceptions.ConnectionError as err:
             logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))
             raise err
 
-        assert(r.json()['total'] > 0)
         return r.json()
 
     def download(self, bounds, force=False):
@@ -196,34 +201,39 @@ class FileManagerNED:
                 if not os.path.exists(filename) or force:
                     downloadfilename = url.split("/")[-1]
                     downloadfile = os.path.join(self.names.raw_folder_name(north,west), downloadfilename)
-                    assert(downloadfile.endswith('.ZIP') or downloadfile.endswith('.zip'))
 
                     logging.info("Attempting to download source for target '%s'"%filename)
                     work_dir = self.names.raw_folder_name(north, west)
 
                     if not os.path.exists(downloadfile) or force:
                         source_utils.download(url, downloadfile, force)
-                    source_utils.unzip(downloadfile, work_dir)
-                    unzip_filename = downloadfilename[0:-4]
 
-                    # hope we can find it?
-                    img_files = []
-                    if os.path.isdir(os.path.join(work_dir, unzip_filename)):
-                        img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.lower())]
-                        if len(img_files) == 0:
-                            img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.upper())]
+                    if downloadfile.endswith('.ZIP') or downloadfile.endswith('.zip'):
+                        source_utils.unzip(downloadfile, work_dir)
+                        unzip_filename = downloadfilename[0:-4]
+
+                        # hope we can find it?
+                        img_files = []
+                        if os.path.isdir(os.path.join(work_dir, unzip_filename)):
+                            img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.lower())]
+                            if len(img_files) == 0:
+                                img_files = [os.path.join(unzip_filename,f) for f in os.listdir(os.path.join(work_dir, unzip_filename)) if f.endswith('.'+self.file_format.upper())]
                             
-                    if len(img_files) == 0:
-                        img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.lower())]
-                    if len(img_files) == 0:
-                        img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.upper())]
+                        if len(img_files) == 0:
+                            img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.lower())]
+                        if len(img_files) == 0:
+                            img_files = [f for f in os.listdir(work_dir) if f.endswith('.'+self.file_format.upper())]
 
-                    if len(img_files) == 0:
-                        raise RuntimeError("{}: Downloaded and unzipped '{}', but cannot find the img file.".format(self.name, downloadfile))
+                        if len(img_files) == 0:
+                            raise RuntimeError("{}: Downloaded and unzipped '{}', but cannot find the img file.".format(self.name, downloadfile))
+                        else:
+                            logging.debug("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
+
+                        source_utils.move(os.path.join(work_dir, img_files[0]), filename)
+
                     else:
-                        logging.debug("  Found '{}'".format(os.path.join(work_dir, img_files[0])))
-
-                    source_utils.move(os.path.join(work_dir, img_files[0]), filename)
+                        # move the file directly, no unzipping
+                        source_utils.move(downloadfile, filename)
                     
 
                 if not os.path.exists(filename):

@@ -119,6 +119,15 @@ def test_river_tree_properties():
     rivers2 = workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2,
                                           prune_by_area_fraction=0.03)
 
+def test_weird_nhd():
+    crs = workflow.crs.default_crs()
+    nhdp = workflow.source_list.FileManagerNHDPlus()
+    _, cc = workflow.get_split_form_hucs(nhdp, '041000050101', 12, crs)
+    _, reaches = workflow.get_reaches(nhdp, '041000050101', None, crs, crs, merge=False)
+
+    rivers1 = workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=10)
+    
+    
 
 
     

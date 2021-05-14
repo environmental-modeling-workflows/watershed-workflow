@@ -17,6 +17,7 @@ from workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulat
 from workflow.sources.manager_ned import FileManagerNED
 from workflow.sources.manager_nrcs import FileManagerNRCS
 from workflow.sources.manager_glhymps import FileManagerGLHYMPS
+from workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
 from workflow.sources.manager_nlcd import FileManagerNLCD
 from workflow.sources.manager_daymet import FileManagerDaymet
 
@@ -45,8 +46,9 @@ default_dem_source = 'NED 1 arc-second'
 
 # available and default soil survey datasets
 structure_sources = {'NRCS SSURGO' : FileManagerNRCS(),
-                'GLHYMPS' : FileManagerGLHYMPS(),
-                }
+                     'GLHYMPS' : FileManagerGLHYMPS(),
+                     'SoilGrids2017' : FileManagerSoilGrids2017('US'),
+                     }
 default_structure_source = 'NRCS SSURGO'
 
 # available and default land cover

@@ -10,7 +10,7 @@ import rasterio.mask
 import workflow.sources.utils as source_utils
 import workflow.sources.names
 import workflow.warp
-
+from workflow.sources.manager_raster import FileManagerRaster
 
 class FileManagerSoilGrids2017:
     """SoilGrids 250m (2017) datasets.
@@ -91,35 +91,16 @@ class FileManagerSoilGrids2017:
         Note that the raster provided is in SoilGrids native CRS
         (which is in the rasterio profile), not the shape's CRS.
         """
-        # get shape as a shapely, single Polygon
-        if type(shply) is dict:
-            shply = workflow.utils.shply(shply['geometry'])
-        if type(shply) is shapely.geometry.MultiPolygon:
-            shply = shapely.ops.cascaded_union(shply)
-
         # download (or hopefully don't) the file
         filename, profile = self._download(variable, layer)
         logging.info(f"CRS: {profile['crs']}")
 
-        # warp to crs
-        shply = workflow.warp.shply(shply, crs, workflow.crs.from_rasterio(profile['crs']))
-
         # load the raster
-        with rasterio.open(filename, 'r') as fid:
-            profile = fid.profile
-            out_image, out_transform = rasterio.mask.mask(fid, [shply,], crop=True)
+        manager = FileManagerRaster(filename)
+        return manager.get_raster(shply, crs)
 
-        profile.update({ "height" : out_image.shape[1],
-                         "width" : out_image.shape[2],
-                         "transform" : out_transform})
-
-        assert(len(out_image.shape) == 3)
-        return profile, out_image[0,:,:]
-
-        
     def get_depth_to_bedrock(self, shply, crs, force_download=False):
         return self.get_raster(shply, crs, 'BDTICM', None, force_download)
-
     
     def get_soil_texture(self, shply, crs, layer, force_download=False):
         rasters = []
@@ -131,7 +112,6 @@ class FileManagerSoilGrids2017:
         rasters = np.array(rasters)
         return prof, rasters
 
-
     def get_all_soil_texture(self, shply, crs, force_download=False):
         rasters = []
         for layer in range(1,8):
@@ -139,13 +119,11 @@ class FileManagerSoilGrids2017:
             rasters.append(raster)
         rasters = np.array(rasters)
         return prof, rasters
-    
 
     def get_bulk_density(self, shply, crs, layer, force_download=False):
         if layer == -1:
             layer = 7
         return self.get_raster(shply, crs, 'BLDFIE', layer, force_download)
-
 
     def get_all_bulk_density(self, shply, crs, force_download=False):
         rasters = []
@@ -154,7 +132,6 @@ class FileManagerSoilGrids2017:
             rasters.append(raster)
         rasters = np.array(rasters)
         return prof, rasters
-
 
     def get_layer7(self, shply, crs, force_download=False):
         data = dict()
@@ -185,7 +162,7 @@ class FileManagerSoilGrids2017:
         filename_base = self.names.file_name_base(variable=variable,
                                                   soillevel=soillevel)
         url = self.URL + filename_base
-        source_utils.download_progress_bar(url, filename, force)
+        source_utils.download(url, filename, force)
 
         # return raster profile
         with rasterio.open(filename, 'r') as fid:

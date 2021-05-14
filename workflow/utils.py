@@ -101,8 +101,11 @@ def shply(shape, properties=None, flip=False):
     thing : shapely shape
     """
     if 'geometry' in shape:
-        if properties is None and 'properties' in shape:
-            properties = shape['properties']
+        if properties is None:
+            if 'properties' in shape:
+                properties = shape['properties']
+            else:
+                properties = dict()
         shape = shape['geometry']        
     
     try:
@@ -119,18 +122,23 @@ def shply(shape, properties=None, flip=False):
             thing = shapely.ops.transform(lambda x,y:(y,x), thing)
 
         thing.properties = properties
-        return thing
+        thing_2D = remove_third_dimension(thing)
+        thing_2D.properties = thing.properties
+        return thing_2D
+
     except ValueError:
         raise ValueError('Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
 
 
-def round(list_of_things, digits):
+def round_shapes(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
     for shp in list_of_things:
         for ring in generate_rings(shp):
             ring[:] = list(np.array(ring).round(digits))
 
-
+def round_shplys(list_of_things, digits):
+    """Rounds coordinates in things or shapes to a given digits."""
+    return [shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0) for thing in list_of_things]
 
 _tol = 1.e-7
 def close(s1, s2, tol=_tol):
@@ -508,3 +516,66 @@ def flatten(list_of_shps):
         else:
             new_list.append(shp)
     return new_list
+
+def remove_third_dimension(geom):
+    """Removes the third dimension of a shapely object."""
+
+    if geom.is_empty:
+        return geom
+
+    if isinstance(geom, shapely.geometry.Polygon):
+        exterior = geom.exterior
+        new_exterior = remove_third_dimension(exterior)
+
+        interiors = geom.interiors
+        new_interiors = []
+        for int in interiors:
+            new_interiors.append(remove_third_dimension(int))
+
+        return shapely.geometry.Polygon(new_exterior, new_interiors)
+
+    elif isinstance(geom, shapely.geometry.LinearRing):
+        return shapely.geometry.LinearRing([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.LineString):
+        return shapely.geometry.LineString([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.Point):
+        return shapely.geometry.Point([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.MultiPoint):
+        points = list(geom.geoms)
+        new_points = []
+        for point in points:
+            new_points.append(remove_third_dimension(point))
+
+        return shapely.geometry.MultiPoint(new_points)
+
+    elif isinstance(geom, shapely.geometry.MultiLineString):
+        lines = list(geom.geoms)
+        new_lines = []
+        for line in lines:
+            new_lines.append(remove_third_dimension(line))
+
+        return shapely.geometry.MultiLineString(new_lines)
+
+    elif isinstance(geom, shapely.geometry.MultiPolygon):
+        pols = list(geom.geoms)
+
+        new_pols = []
+        for pol in pols:
+            new_pols.append(remove_third_dimension(pol))
+
+        return shapely.geometry.MultiPolygon(new_pols)
+
+    elif isinstance(geom, shapely.geometry.GeometryCollection):
+        geoms = list(geom.geoms)
+
+        new_geoms = []
+        for geom in geoms:
+            new_geoms.append(remove_third_dimension(geom))
+
+        return shapely.geometry.GeometryCollection(new_geoms)
+
+    else:
+        raise RuntimeError("Currently this type of geometry is not supported: {}".format(type(geom)))

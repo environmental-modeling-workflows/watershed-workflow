@@ -31,3 +31,16 @@ def test_vgm2():
     assert(all(ats['Rosetta permeability [m^2]'] < 1.e-10))
     
     
+
+def test_cluster():
+    arr_in = np.array([[1.01,1,1],
+                         [1,2,2],
+                         [2,2.01,2]])
+    arr_gd = np.array([[1,1,1],
+                       [1,0,0],
+                       [0,0,0]])
+
+    arr_in = np.expand_dims(arr_in, -1)
+    codebook, arr_out, dists = workflow.soil_properties.cluster(arr_in, 2)
+    assert((arr_gd == arr_out).all())
+    
