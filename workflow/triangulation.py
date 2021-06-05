@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 import scipy.spatial
 
 import shapely
-import meshpy.triangle
 
 import workflow.river_tree
 import workflow.split_hucs
@@ -118,6 +117,8 @@ def triangulate(hucs, rivers, tol=1, **kwargs):
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
+    import meshpy.triangle
+
     logging.info("Triangulating...")
     if type(hucs) is workflow.split_hucs.SplitHUCs:
         segments = list(hucs.segments)

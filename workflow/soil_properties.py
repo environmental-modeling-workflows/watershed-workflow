@@ -179,7 +179,25 @@ def cluster(rasters, nbins):
     codes_nan[~np.isnan(obs[:,0])] = code
     return codebook, codes_nan.reshape(in_shp), (dist1,dist2)
 
+def alpha_from_ksat(k, phi):
+    """Uses the relationship from Guarracino WRR 2007 to relate van Genuchten alpha to permeability and porosity.
 
+    Parameters
+    ----------
+    k : array(double)
+      Permeability, in [m^2]
+    Phi : array(double)
+      Porosity, [-]
 
-        
-        
+    Returns
+    -------
+    alpha : array(double)
+      van Genuchten alpha, in [Pa^-1]
+    """
+    # note all constants are as used in Guarracino paper to not
+    # introduce biases in unit changes.
+    K_m_per_s = k * 998. * 9.8 / 1e-3
+    K_cm_per_d = K_m_per_s * 100 * 86400.
+    alpha_per_cm = np.sqrt(K_cm_per_d / 4.65e4 / phi)
+    alpha_per_Pa = alpha_per_cm * 100 / 998. / 9.8
+    return alpha_per_Pa

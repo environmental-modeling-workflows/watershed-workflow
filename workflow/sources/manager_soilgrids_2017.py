@@ -96,6 +96,7 @@ class FileManagerSoilGrids2017:
         logging.info(f"CRS: {profile['crs']}")
 
         # load the raster
+        logging.info(f"filename: {filename}")
         manager = FileManagerRaster(filename)
         return manager.get_raster(shply, crs)
 

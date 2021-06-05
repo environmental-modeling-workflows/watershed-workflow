@@ -326,8 +326,6 @@ class FileManagerNRCS:
     
     def download_properties(self, mukeys, filename=None, force=False):
         """Queries REST API for parameters by MUKEY."""
-        import pandas
-
         if filename is None or (not os.path.exists(filename)) or force:
             logging.info(f'  Downloading raw properties data via request:')
             logging.info(f'    to file: {filename}')
@@ -450,8 +448,10 @@ class FileManagerNRCS:
             query = _query_template_shapes.format(box.wkt)
             data = {'FORMAT' : 'JSON',
                     'QUERY' : query}
+            print(self.url_spatial)
+            print(data)
             r = requests.post(self.url_data, data=data)
-            logging.debug(f'  full URL: {r.url}')
+            logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
             logging.info(f'  Converting to shapely')

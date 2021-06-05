@@ -20,7 +20,6 @@ from matplotlib import collections as pltc
 from matplotlib import cm as pcm
 import shapely
 import rasterio
-import descartes
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -292,6 +291,8 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     -------
     col : collection of matplotlib points or lines or patches
     """
+    import descartes
+    
     try:
         if len(shps) == 0:
             return

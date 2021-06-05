@@ -5,6 +5,40 @@ import matplotlib.cm
 import numpy as np
 import collections
 
+
+#
+# Lists of disparate color palettes
+#
+enumerated_palettes = {
+    1 : ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'],
+    2 : ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6',
+         '#6a3d9a','#ffff99','#b15928'],
+    3 : ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
+    }
+
+def enumerated_colors(count, palette=1, chain=True):
+    """Gets an enumerated list of count independent colors."""
+    p = enumerated_palettes[palette]
+    if count <= len(p):
+        return p[0:count]
+    else:
+        for p in enumerated_palettes.values():
+            if count <= len(p):
+                return p[0:count]
+
+    if chain:
+        # must chain...
+        p = enumerated_palettes[palette]
+        def chain_iter(p):
+            while True:
+                for c in p:
+                    yield c
+        return [c for (i,c) in zip(range(count),chain_iter(p))]
+        
+    else:
+        raise ValueError("No enumerated palettes of length {}.".format(count))        
+
+
 # black-zero jet is jet, but with the 0-value set to black, with an immediate jump to blue
 def blackzerojet_cmap(data):
     blackzerojet_dict = {'blue': [[0.0, 0.0, 0.0],
@@ -127,7 +161,7 @@ def lighten(color, fraction=0.6):
     return tuple(np.minimum(rgb + fraction*(1-rgb),1))
 
 
-def generate_indexed_colormap(indices, cmap='hot'):
+def generate_indexed_colormap(indices, cmap=None):
     """Generates an indexed colormap and labels for imaging, e.g. soil indices.
     Parameters
     ----------
@@ -154,9 +188,17 @@ def generate_indexed_colormap(indices, cmap='hot'):
     """
     indices = sorted(set(indices))
 
-    cm = cm_mapper(0, len(indices)-1, cmap=matplotlib.cm.get_cmap(cmap))
-    values = [cm(i) for i in range(0, len(indices))]
-    cmap = matplotlib.colors.ListedColormap(values)
+    cm_values = None
+    if cmap is None:
+        for i, palette in enumerated_palettes.items():
+            if len(indices) < len(palette):
+                cm_values = enumerated_colors(len(indices), palette=i)
+        if cm_values is None:
+            cmap = 'gist_rainbow'
+    if cm_values is None:
+        cm = cm_mapper(0, len(indices)-1, cmap=matplotlib.cm.get_cmap(cmap))
+        cm_values = [cm(i) for i in range(0, len(indices))]
+    cmap = matplotlib.colors.ListedColormap(cm_values)
     ticks = indices+[indices[-1]+1,]
     norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks)-1)
     labels = [str(i) for i in indices]

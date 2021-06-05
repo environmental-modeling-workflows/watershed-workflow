@@ -6,6 +6,7 @@ import pandas
 
 import workflow.sources.manager_shape
 import workflow.sources.names
+import workflow.soil_properties
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = {'GLHYMPS version 2.0' : 'https://doi.org/10.5683/SP2/TTJNIU'}
@@ -31,7 +32,6 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
        V1
 
     """
-
     def __init__(self):
         self.name = 'GLHYMPS version 2.0'
         self.names = workflow.sources.names.Names(self.name,
@@ -92,7 +92,6 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
             Dataframe including geologic properties.
         """
         profile, shapes = self.get_shapes(bounds, crs)
-
         ids = np.array([shp['properties']['OBJECTID_1'] for shp in shapes], dtype=int)
         for shp in shapes:
             shp['properties']['id'] = shp['properties']['OBJECTID_1']
@@ -104,14 +103,19 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         poro = np.array([shp['properties']['Porosity_x'] for shp in shapes], dtype=float) # [-]
         poro = poro / 100 # division by 100 is per GLHYMPS readme
         poro = np.maximum(poro, 0.01) # some values of fine clays are 0
-        dtb = np.array([shp['properties']['MEAN'] for shp in shapes], dtype=float)
-        dtb = dtb / 100 # cm --> m
+
+        # derived properties
+        vg_alpha = workflow.soil_properties.alpha_from_ksat(Ksat, poro)
+        vg_n = 3.0  # from Maxwell & Condon Science 2016
+        sr = 0.01  # arbitrarily chosen
 
         properties = pandas.DataFrame(data={'id' : ids,
                                             'source' : 'GLHYMPS',
                                             'permeability [m^2]' : Ksat,
                                             'logk_stdev [-]' : Ksat_std,
                                             'porosity [-]' : poro,
-                                            'depth to bedrock [m]' : dtb,
+                                            'van Genuchten alpha [Pa^-1]' : vg_alpha,
+                                            'van Genuchten n [-]' : vg_n,
+                                            'residual saturation [-]' : sr,
                                             })
         return profile, shapes, properties

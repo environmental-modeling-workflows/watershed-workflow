@@ -93,6 +93,9 @@ def from_fiona(crs):
         Equivalent workflow CRS.
 
     """
+    # if 'datum' in crs and crs['datum'] == 'WGS84' and 'epsg' not in crs and 'ellps' not in crs:
+    #     logging.warning('Old-style datum WGS84, moving to ellipse')
+    #     crs['ellps'] = crs.pop('datum')
     return CRS.from_dict(crs)
 
 def to_fiona(crs):
@@ -323,7 +326,7 @@ def default_alaska_crs():
     return from_epsg(3338)
 
 def daymet_crs():
-    """Returns the CRS used by DayMet files.
+    """Returns the CRS used by DayMet files, but in m, not km.
 
     Returns
     -------
@@ -331,8 +334,20 @@ def daymet_crs():
         The DayMet CRS.  The user should not care what this is.
 
     """
-    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
+    # old proj: return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
+    # new proj...
+    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs')
 
+def daymet_crs_native():
+    """Returns the CRS used by DayMet files natively, in km, not in m.
+
+    Returns
+    -------
+    out : crs-type
+        The DayMet CRS.  The user should not care what this is.
+
+    """
+    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs')
 
 def latlon_crs():
     """Returns the default latitude-longitude CRS.
