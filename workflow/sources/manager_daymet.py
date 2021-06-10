@@ -112,7 +112,7 @@ class FileManagerDaymet:
         feather_bounds[2] = feather_bounds[2] + .01
         feather_bounds[3] = feather_bounds[3] + .01
         fname = self.download(varname, year, feather_bounds, force=force_download)
-        return fname
+        return fname, feather_bounds
 
     def download(self, varname, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.

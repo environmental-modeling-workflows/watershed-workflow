@@ -59,7 +59,7 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-def collectDaymet(bounds, start, end, crs, vars=None, force=False, combine = False):
+def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = False):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
@@ -70,10 +70,12 @@ def collectDaymet(bounds, start, end, crs, vars=None, force=False, combine = Fal
         end date in the format of "doy-year", e.g., "365-2012"     
     crs : CRS object
           Coordinate system of the above polygon_or_bounds           
-    vars: list or None
+    vars: list or 'all'
         list of strings that are in VALID_VARIABLES. Default is use all available variables.
     force : bool
         Download or re-download the file if true.    
+    combine : bool
+        whether to combine downloaded raw files into a single NetCDF4 file. Default is False.
     """
     T0 = time.time()
 
@@ -81,7 +83,7 @@ def collectDaymet(bounds, start, end, crs, vars=None, force=False, combine = Fal
         start = stringToDate(start)
         end = stringToDate(end)
 
-    if vars == None:
+    if vars == 'all':
         vars = VALID_VARIABLES
         logging.info(f"downloading variables: {VALID_VARIABLES}")
 
@@ -93,7 +95,7 @@ def collectDaymet(bounds, start, end, crs, vars=None, force=False, combine = Fal
     for year in range(start.year, end.year+1):
         for var in vars:
 
-            fname = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force)
+            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force)
             x,y,v = loadFile(fname, var) # returned v.shape(nband, nrow, ncol)
             if not d_inited:
                 initData(dat, vars, numDays(start,end), len(x), len(y))
@@ -111,9 +113,11 @@ def collectDaymet(bounds, start, end, crs, vars=None, force=False, combine = Fal
                 dat[var][my_start:my_start+365,:,:] = v
 
     if combine:
+        logging.info(f"Combining all NetCDF into one...")
         path = '/'.join(re.split(r'\/', fname)[:-1]) + "/"
-        dset = xr.open_mfdataset(path +  "*.nc")
-        outfile = path + f"daymet_{start.doy}-{start.year}_{end.doy}-{end.year}.nc"
+        all_daymet = f"daymet_*_*_{feather_bounds[3]}x{feather_bounds[0]}_{feather_bounds[1]}x{feather_bounds[2]}.nc"
+        dset = xr.open_mfdataset(path +  all_daymet)
+        outfile = path + f"daymet_all_{start.doy}-{start.year}_{end.doy}-{end.year}.nc"
         dset.to_netcdf(outfile, format = "NETCDF4")
         logging.info(f"writing a single NetCDF to : {outfile}")
     logging.info(f'seconds to write: {time.time()-T0} s')
@@ -230,7 +234,7 @@ def smoothRaw(raw, smooth_filter = True, nyears = None):
 
     return smooth_dat
 
-def daymetToATS(dat, smooth = False, smooth_filter = False, nyears = None):
+def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
     """Accepts a numpy named array of DayMet data and returns a dictionary ATS data. 
     It has the option to smooth the data.
     Parameters:
@@ -239,7 +243,7 @@ def daymetToATS(dat, smooth = False, smooth_filter = False, nyears = None):
         smooth, bool
             whether to smooth the data or not
         smooth_filter, bool
-            whether to apply a savgol filter for smoothing. Default is False.
+            whether to apply a savgol filter for smoothing. Default is True.
         nyears, int
             how many years to repeat the typical year. Default is to get the same length as the raw data.
     """
@@ -307,7 +311,7 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
         for key, val in attrs.items():
             fid.attrs[key] = val
 
-    return
+    return time, dat
 
 def getAttrs(bounds, start, end):
     # set the wind speed height, which is made up
