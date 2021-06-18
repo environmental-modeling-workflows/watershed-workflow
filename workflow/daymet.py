@@ -59,7 +59,7 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = False):
+def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = False, buffer = 0.01):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
@@ -76,6 +76,8 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
         Download or re-download the file if true.    
     combine : bool
         whether to combine downloaded raw files into a single NetCDF4 file. Default is False.
+    buffer, float
+        buffer used for watershed shape (in degree)
     """
     T0 = time.time()
 
@@ -95,7 +97,7 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
     for year in range(start.year, end.year+1):
         for var in vars:
 
-            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force)
+            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force, buffer = buffer)
             x,y,v = loadFile(fname, var) # returned v.shape(nband, nrow, ncol)
             if not d_inited:
                 initData(dat, vars, numDays(start,end), len(x), len(y))
@@ -251,6 +253,10 @@ def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
     dout = dict()
     logging.info('Converting to ATS met input')
     
+    # make missing values Nans
+    for key in list(dat.keys()):
+        dat[key][dat[key] == -9999] = np.nan
+
     if smooth:
         dat = smoothRaw(dat, smooth_filter = smooth_filter, nyears = nyears)
         logging.info(f"shape of smoothed dat is {dat[list(dat.keys())[0]].shape}")
@@ -263,11 +269,15 @@ def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
-    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] # Wm2
+    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
     dout['wind speed [m s^-1]'] = 4. * np.ones_like(dout['relative humidity [-]'])
+
+    # make Nans = -9999
+    for key in list(dout.keys()):
+        dout[key][np.isnan(dout[key])] = -9999
 
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
     return time, dout
