@@ -40,7 +40,7 @@ class FileManagerDaymet:
           - Min/max daily air temperature
         * - srad
           - :math:`W / m^2`
-          - Incoming solar radiation
+          - Incoming solar radiation - per DAYLIT time!
         * - vp
           - :math:`Pa`
           - Vapor pressure
@@ -98,7 +98,7 @@ class FileManagerDaymet:
             polygon_or_bounds = workflow.utils.shply(polygon_or_bounds)
 
         # convert and get a bounds
-        if type(polygon_or_bounds) is list:
+        if type(polygon_or_bounds) is list or type(polygon_or_bounds) is tuple:
             # bounds
             bounds = workflow.warp.bounds(polygon_or_bounds, crs, workflow.crs.latlon_crs())
         else:
@@ -108,10 +108,10 @@ class FileManagerDaymet:
         # feather the bounds
         # get the bounds and download
         feather_bounds = list(bounds[:])
-        feather_bounds[0] = feather_bounds[0] - buffer
-        feather_bounds[1] = feather_bounds[1] - buffer
-        feather_bounds[2] = feather_bounds[2] + buffer
-        feather_bounds[3] = feather_bounds[3] + buffer
+        feather_bounds[0] = np.round(feather_bounds[0],4) - buffer
+        feather_bounds[1] = np.round(feather_bounds[1],4) - buffer
+        feather_bounds[2] = np.round(feather_bounds[2],4) + buffer
+        feather_bounds[3] = np.round(feather_bounds[3],4) + buffer
         fname = self.download(varname, year, feather_bounds, force=force_download)
         return fname, feather_bounds
 
@@ -142,6 +142,7 @@ class FileManagerDaymet:
         os.makedirs(self.names.folder_name(), exist_ok=True)
 
         # get the target filename
+        bounds = [f"{b:.4f}" for b in bounds]
         filename = self.names.file_name(var = varname, year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1])
 
         if (not os.path.exists(filename)) or force:
@@ -154,10 +155,10 @@ class FileManagerDaymet:
             request_params = [('var', 'lat'),
                           ('var', 'lon'),
                           ('var', varname),
-                          ('west', str(bounds[0])),
-                          ('south', str(bounds[1])),
-                          ('east', str(bounds[2])),
-                          ('north', str(bounds[3])),
+                          ('west', bounds[0]),
+                          ('south', bounds[1]),
+                          ('east', bounds[2]),
+                          ('north', bounds[3]),
                           ('horizStride', '1'),
                           ('time_start', '{}-01-01T12:00:00Z'.format(year)),
                           ('time_end', '{}-12-31T12:00:00Z'.format(year)),

@@ -33,7 +33,7 @@ dealing with these packages in an integrated form much simpler.
 """
 import logging
 import pyproj.crs
-from rasterio.crs import CRS
+from pyproj.crs import CRS
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -51,14 +51,15 @@ def from_proj(crs):
     out : crs-type
         Equivalent workflow CRS.
     """
-    try:
-        # if a proj.6 CRS object or a proj.4 Proj object
-        wkt_str = crs.to_wkt()
-    except AttributeError:
-        # if a proj.6 Proj object
-        wkt_str = crs.crs.to_wkt()
+    # try:
+    #     # if a proj.6 CRS object or a proj.4 Proj object
+    #     wkt_str = crs.to_wkt()
+    # except AttributeError:
+    #     # if a proj.6 Proj object
+    #     wkt_str = crs.crs.to_wkt()
+    # return CRS.from_wkt(wkt_str)
+    return crs
 
-    return CRS.from_wkt(wkt_str)
 
 def to_proj(crs):
     """Converts a workflow CRS standard to a Proj4 CRS.
@@ -73,7 +74,8 @@ def to_proj(crs):
     out : pyproj.crs.CRS
         Equivalent object.
     """
-    return pyproj.crs.CRS.from_wkt(crs.to_wkt())
+    #return pyproj.crs.CRS.from_wkt(crs.to_wkt())
+    return crs
 
 
 def from_fiona(crs):
@@ -91,6 +93,9 @@ def from_fiona(crs):
         Equivalent workflow CRS.
 
     """
+    # if 'datum' in crs and crs['datum'] == 'WGS84' and 'epsg' not in crs and 'ellps' not in crs:
+    #     logging.warning('Old-style datum WGS84, moving to ellipse')
+    #     crs['ellps'] = crs.pop('datum')
     return CRS.from_dict(crs)
 
 def to_fiona(crs):
@@ -123,7 +128,11 @@ def from_rasterio(crs):
         Equivalent workflow CRS.
 
     """
-    return crs
+    try:
+        # from authority seems to get better results with bounds?
+        return CRS.from_authority(*crs.to_authority())
+    except Exception:
+        return CRS.from_user_input(crs)
 
 def to_rasterio(crs):
     """Converts a workflow CRS to a fiona CRS.
@@ -135,11 +144,12 @@ def to_rasterio(crs):
 
     Returns
     -------
-    out : fiona-crs-dict
-        Equivalent fiona CRS.
+    out : rasterio.CRS
+        Equivalent rasterio object.
 
     """
-    return crs
+    import rasterio.crs
+    return rasterio.crs.CRS.from_user_input(crs)
 
 def from_epsg(epsg):
     """Converts from an EPSG code to a workflow CRS.
@@ -156,7 +166,26 @@ def from_epsg(epsg):
 
     """
     return CRS.from_epsg(epsg)
-        
+
+def to_epsg(crs):
+    """Attempts to conver to an EPSG code.
+
+    Parameters
+    ----------
+    crs : crs-type
+
+    Returns
+    -------
+    epsg : int
+      An EPSG code, if possible.
+
+    If not, this throws.
+    """
+    auth, code = crs.to_authority()
+    if auth == 'EPSG':
+        return code
+    else:
+        raise ValueError('Cannot convert CRS to EPSG code.')
         
 def from_cartopy(crs):
     """Converts a cartopy CRS to a workflow CRS.
@@ -172,7 +201,7 @@ def from_cartopy(crs):
         Equivalent workflow CRS.
 
     """
-    return pyproj.crs.CRS.from_dict(crs.proj4_params)
+    return CRS.from_dict(crs.proj4_params)
 
 def to_cartopy(crs):
     """Converts a workflow CRS to a cartopy.crs.Projection.
@@ -186,18 +215,15 @@ def to_cartopy(crs):
     -------
     A cartopy.crs.Projection object for plotting.
 
-    Adapted from: https://github.com/fmaussion/salem/blob/d0aaefab96bd4099c280d5088d4e66b52d20b72b/salem/gis.py#L901-L983
-    Better solution blocked by: https://github.com/SciTools/cartopy/issues/813
+    Adopted from: https://pyproj4.github.io/pyproj/stable/crs_compatibility.html
     """
     import cartopy.crs as ccrs
-    import osr
-    if equal(crs, latlon_crs()):
-        return ccrs.PlateCarree()
 
     # this is more robust, as srs could be anything (espg, etc.)
-    s1 = osr.SpatialReference()
-    s1.ImportFromProj4(crs.to_proj4())
-    srs = s1.ExportToProj4()
+    #s1 = osr.SpatialReference()
+    #s1.ImportFromProj4(crs.to_proj4())
+    #srs = s1.ExportToProj4()
+    srs = crs.to_dict()
 
     km_proj = {'lon_0': 'central_longitude',
                'lat_0': 'central_latitude',
@@ -215,12 +241,8 @@ def to_cartopy(crs):
     kw_proj = dict()
     kw_globe = dict()
     kw_std = dict()
-    for s in srs.split('+'):
-        s = s.split('=')
-        if len(s) != 2:
-            continue
-        k = s[0].strip()
-        v = s[1].strip()
+
+    for k, v in srs.items():
         try:
             v = float(v)
         except:
@@ -238,6 +260,11 @@ def to_cartopy(crs):
                 cl = ccrs.AlbersEqualArea
             elif v == 'laea':
                 cl = ccrs.LambertAzimuthalEqualArea
+            elif v == 'longlat':
+                cl = ccrs.PlateCarree
+            elif v == 'cea':
+                cl = ccrs.LambertCylindrical
+                kw_globe = None
             else:
                 raise NotImplementedError('Proj4-to-Cartopy needs to be updated.')
         if k in km_proj:
@@ -250,15 +277,16 @@ def to_cartopy(crs):
     globe = None
     if kw_globe:
         globe = ccrs.Globe(**kw_globe)
+        kw_proj['globe'] = globe
     if kw_std:
         kw_proj['standard_parallels'] = (kw_std['lat_1'], kw_std['lat_2'])
 
     # mercatoooor
-    if cl.__name__ == 'Mercator':
+    if cl.__name__ == 'Mercator' or cl.__name__ == 'LambertCylindrical':
         kw_proj.pop('false_easting', None)
         kw_proj.pop('false_northing', None)
 
-    return cl(globe=globe, **kw_proj)
+    return cl(**kw_proj)
 
 def from_string(string):
     """Returns a CRS from a proj string"""
@@ -298,7 +326,7 @@ def default_alaska_crs():
     return from_epsg(3338)
 
 def daymet_crs():
-    """Returns teh CRS used by DayMet files.
+    """Returns the CRS used by DayMet files, but in m, not km.
 
     Returns
     -------
@@ -306,8 +334,20 @@ def daymet_crs():
         The DayMet CRS.  The user should not care what this is.
 
     """
-    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
+    # old proj: return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
+    # new proj...
+    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs')
 
+def daymet_crs_native():
+    """Returns the CRS used by DayMet files natively, in km, not in m.
+
+    Returns
+    -------
+    out : crs-type
+        The DayMet CRS.  The user should not care what this is.
+
+    """
+    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs')
 
 def latlon_crs():
     """Returns the default latitude-longitude CRS.
@@ -339,6 +379,5 @@ def equal(crs1, crs2):
        Are equal?
 
     """
-    # rasterio supplies a __eq__ method, use that?
     return crs1 == crs2
     

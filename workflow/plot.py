@@ -20,13 +20,25 @@ from matplotlib import collections as pltc
 from matplotlib import cm as pcm
 import shapely
 import rasterio
-import descartes
 from mpl_toolkits.mplot3d import Axes3D
 
 
 import workflow.utils
 import workflow.crs
 import workflow.colors
+
+
+class PolyCollectionWithArray:
+    def __init__(self, poly, arr, **kwargs):
+        self.poly = poly
+        self.arr = arr
+        self.__dict__.update(**kwargs)
+
+    def get_array(self):
+        return self.arr
+
+    def autoscale_None(self):
+        pass
 
 def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **kwargs):
     """Returns an axis with a given projection.
@@ -207,7 +219,7 @@ def river(river, crs, color='b', ax=None, **kwargs):
     -------
     lines : matplotib LineCollection
     """
-    shply(river, crs, color, ax, **kwargs)
+    shplys(river, crs, color, ax, **kwargs)
 
 def rivers(rivers, crs, color='b', ax=None,  **kwargs):
     """Plot an itereable collection of river Tree objects.
@@ -243,7 +255,14 @@ def rivers(rivers, crs, color='b', ax=None,  **kwargs):
             river(r, crs, color, ax, **kwargs)
             
     
-def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
+def shply(shp, *args, **kwargs):
+    """Plot a single shapely object.  See shplys() for options."""
+    if type(shp) is list:
+        return shplys(shp, *args, **kwargs)
+    else:
+        return shplys([shp,], *args, **kwargs)
+
+def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     """Plot shapely objects.
 
     Currently this assumes shps is an iterable collection of Points, Lines, or
@@ -272,6 +291,8 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
     -------
     col : collection of matplotlib points or lines or patches
     """
+    import descartes
+    
     try:
         if len(shps) == 0:
             return
@@ -319,7 +340,7 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
             res = ax.add_collection(lc)
             ax.autoscale()
         
-    elif type(next(iter(shps))) is shapely.geometry.Polygon:
+    elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if 'linestyle' not in kwargs:
             kwargs['linestyle'] = style
 
@@ -333,7 +354,13 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
             if 'edgecolor' not in kwargs:
                 kwargs['edgecolor'] = color
             
-            multi_poly = shapely.geometry.MultiPolygon(shps)
+            # first must flatten
+            def listify(thing):
+                if type(thing) is shapely.geometry.MultiPolygon:
+                    return thing
+                else:
+                    return [thing,]
+            multi_poly = shapely.geometry.MultiPolygon([l for shp in shps for l in listify(shp)])
             patch = descartes.PolygonPatch(multi_poly, **kwargs)
             if projection is not None:
                 patch.set_transform(projection)
@@ -353,8 +380,6 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                     #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
             else:
-                res = []
-
                 if type(color[0]) is not tuple and type(color[0]) is not np.ndarray:
                     # likely just an array -- map using cmap
                     try:
@@ -368,7 +393,9 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                         cmap_norm = None
                         
                     cm = workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
-                    color = np.array([cm(c) for c in color])
+                    color_tuples = np.array([cm(c) for c in color])
+                else:
+                    raise RuntimeError("color option must be an array, not a list of colors")
 
                 if kwargs['facecolor'] == 'color':
                     kwargs.pop('facecolor')
@@ -376,7 +403,8 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                 else:
                     face_is_edge = False
                 
-                for c, shp in zip(color, shps):
+                res = []
+                for c, shp in zip(color_tuples, shps):
                     if face_is_edge:
                         patch = descartes.PolygonPatch(shp, facecolor=c, **kwargs)
                     else:
@@ -384,8 +412,12 @@ def shply(shps, crs, color=None, ax=None, style='-', **kwargs):
                         
                     # if projection is not None:
                     #     patch.set_transform(projection)
-                    res.append(ax.add_patch(patch))
-                    
+                    res.append(patch)
+                res = pltc.PatchCollection(res, cmap=cmap, norm=cmap_norm, alpha=1.0)
+                res.set_array(color)
+                clim = [np.nanmin(color), np.nanmax(color)]
+                res.set_clim(clim)
+                ax.add_collection(res)
         ax.autoscale()
     else:
         raise TypeError('Unknown shply type: {}'.format(type(next(iter(shps)))))
@@ -428,18 +460,31 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
     if type(color) is str and color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
 
+    def get_color_extents(color):
+        if 'vmin' not in kwargs:
+            vmin = np.nanmin(color)
+        else:
+            vmin = kwargs.pop('vmin')
+        if 'vmax' not in kwargs:
+            vmax = np.nanmax(color)
+        else:
+            vmax = kwargs.pop('vmax')
+        return vmin, vmax
+        
     if type(ax) is Axes3D:
         if type(color) is str and color == 'elevation':
             col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, points[:,2], **kwargs)
         elif type(color) != str:
-            col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, color, **kwargs)
+            vmin, vmax = get_color_extents(color)
+            col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, color, vmin=vmin, vmax=vmax, **kwargs)
         else:        
             col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, color=color, **kwargs)
     else:
         if type(color) is str and color == 'elevation':
             col =  ax.tripcolor(points[:,0], points[:,1], tris, points[:,2], **kwargs)
         elif type(color) != str:
-            col =  ax.tripcolor(points[:,0], points[:,1], tris, color, **kwargs)
+            vmin, vmax = get_color_extents(color)
+            col =  ax.tripcolor(points[:,0], points[:,1], tris, color, vmin=vmin, vmax=vmax, **kwargs)
         else:        
             col =  ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
     return col
@@ -475,7 +520,7 @@ def mesh(m2, crs, color='gray', ax=None, **kwargs):
 
 
 
-def raster(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
+def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
     """Plots a raster.
 
     A wrapper for matplotlib imshow()
@@ -486,8 +531,12 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
       Rasterio profile of the input raster.
     data : np.ndarray
       2D array of data.
+    ax : matplotlib ax object
+      Axes to plot on.  Calls get_ax() if not provided.
     vmin,vmax : float
       Min and max value to limit extent of color values.
+    mask : bool
+      If true (default), masks out values given as profile['nodata']
     kwargs : dict
       Dictionary of extra arguments passed to imshow().
     
@@ -499,6 +548,12 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     if ax is None:
         ax = get_ax(profile['crs'])
 
+    assert(mask)
+    assert('nodata' in profile)
+    if mask and 'nodata' in profile:
+        nnd = len(np.where(data == profile['nodata'])[0])
+        data = np.ma.array(data, mask=(data == profile['nodata']))
+        
     if vmin is None:
         vmin = np.nanmin(data)
     if vmax is None:

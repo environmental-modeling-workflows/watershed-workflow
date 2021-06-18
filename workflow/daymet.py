@@ -15,9 +15,7 @@ import workflow
 import rasterio
 # import scipy
 from scipy.signal import savgol_filter
-import xarray as xr
-import dask
-import re
+
 
 VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
 
@@ -59,7 +57,9 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
+
 def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = False, buffer = 0.01):
+
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
@@ -93,11 +93,11 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
     d_inited = False
 
     daymet_obj = workflow.sources.manager_daymet.FileManagerDaymet()
-
+ 
     for year in range(start.year, end.year+1):
         for var in vars:
-
             fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force, buffer = buffer)
+
             x,y,v = loadFile(fname, var) # returned v.shape(nband, nrow, ncol)
             if not d_inited:
                 initData(dat, vars, numDays(start,end), len(x), len(y))
@@ -116,6 +116,8 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
 
     if combine:
         logging.info(f"Combining all NetCDF into one...")
+        import xarray as xr
+
         path = '/'.join(re.split(r'\/', fname)[:-1]) + "/"
         all_daymet = f"daymet_*_*_{feather_bounds[3]}x{feather_bounds[0]}_{feather_bounds[1]}x{feather_bounds[2]}.nc"
         dset = xr.open_mfdataset(path +  all_daymet)
@@ -236,7 +238,8 @@ def smoothRaw(raw, smooth_filter = True, nyears = None):
 
     return smooth_dat
 
-def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
+
+def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     """Accepts a numpy named array of DayMet data and returns a dictionary ATS data. 
     It has the option to smooth the data.
     Parameters:
@@ -268,7 +271,9 @@ def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
 
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
+    dout['time [s]'] = time
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
+    # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
@@ -280,7 +285,7 @@ def daymetToATS(dat, smooth = False, smooth_filter = True, nyears = None):
         dout[key][np.isnan(dout[key])] = -9999
 
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
-    return time, dout
+    return dout
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
@@ -326,7 +331,6 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
 def getAttrs(bounds, start, end):
     # set the wind speed height, which is made up
     attrs = dict()
-    attrs['wind speed reference height [m]'] = 2.0
     attrs['DayMet x min'] = bounds[1]
     attrs['DayMet y min'] = bounds[0]
     attrs['DayMet x max'] = bounds[3]
@@ -344,9 +348,9 @@ def writeHDF5(dat, x, y, attrs, filename):
     except FileNotFoundError:
         pass
 
-    time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)
     with h5py.File(filename, 'w') as fid:
-        fid.create_dataset('time [d]', data=time)
+        time = dat.pop('time [s]')
+        fid.create_dataset('time [s]', data=time)
         assert(len(x.shape) == 1)
         assert(len(y.shape) == 1)
        
@@ -365,6 +369,7 @@ def writeHDF5(dat, x, y, attrs, filename):
             for i in range(len(time)):
                 idat = dat[key][i,:,:]
                 # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
+                # ETC: is this right?  Should be increasing, so in the lower left after flipped?
                 rev_idat = np.flip(idat, axis=0)               
                 grp.create_dataset(str(i), data=rev_idat)
 

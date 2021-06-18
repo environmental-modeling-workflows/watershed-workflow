@@ -159,12 +159,12 @@ class _FileManagerNHD:
         
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
-        logging.info('Using Hydrography file "{}"'.format(filename))
+        logging.info('  Using Hydrography file "{}"'.format(filename))
         
         # find and open the hydrography layer        
         filename = self.name_manager.file_name(huc[0:self.file_level])
         layer = 'NHDFlowline'
-        logging.debug("{}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
+        logging.info("  {}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
             bounds = workflow.warp.bounds(bounds, bounds_crs, workflow.crs.from_fiona(profile['crs']))
@@ -172,20 +172,27 @@ class _FileManagerNHD:
 
         # filter not in network
         if in_network:
+            logging.info("  Filtering reaches not in-network".format(self.name, filename, layer, bounds))
             reaches = [r for r in reaches if 'InNetwork' not in r['properties'] or r['properties']['InNetwork'] == 1]
             
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name:
             layer = 'NHDPlusCatchment'
-            logging.debug("{}: opening '{}' layer '{}' for catchment areas in '{}'".format(self.name, filename, layer, bounds))
+            logging.info("  {}: opening '{}' layer '{}' for catchment areas in '{}'".format(self.name, filename, layer, bounds))
             with fiona.open(filename, mode='r', layer=layer) as fid:
-                bounded_catchments = list(fid.items(bbox=bounds))
+                bounded_catchments = list(fid.items())#.items(bbox=bounds))
 
-            for reach in reaches:
+            missing_catchments = 0
+            for i, reach in enumerate(reaches):
                 try:
                     catch = next(c for (i,c) in bounded_catchments if c['properties']['NHDPlusID'] == reach['properties']['NHDPlusID'])
                 except StopIteration:
-                    pass
+                    logging.debug(f"reach missing catchment: {reach['properties']['NHDPlusID']}")
+
+                    if missing_catchments == i and missing_catchments > 10:
+                        # give up fairly quickly, as this can be slow
+                        break 
+                    missing_catchments += 1
                 else:
                     reach['properties']['catchment'] = catch
         
@@ -242,6 +249,20 @@ class _FileManagerNHD:
             return a1[1]
         else:
             logging.info('  REST query with polyCode... FAIL')
+
+
+        # may find via huc4?
+        if (self.file_level >= 4):
+            a2 = attempt({'datasets':self.name,
+                          'polyType':'huc4',
+                          'polyCode':hucstr[0:4]})
+            if not a2[0]:
+                logging.info('  REST query with polyCode... SUCCESS')
+                logging.info(f'  REST query: {a2[1]}')
+                return a2[1]
+            else:
+                logging.info('  REST query with polyCode... FAIL')
+
 
         # # works more univerasally but is a BIG lookup, then filter locally
         # a2 = attempt({'datasets':self.name})

@@ -32,6 +32,7 @@ def config():
                                             # path to ssl certs,
                                             # e.g. /etc/ssl/cert.perm
                                             # or similar
+    rcParams['DEFAULT']['proj_network'] = "False"
 
     # rosetta
     try:

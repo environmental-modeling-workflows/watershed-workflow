@@ -36,17 +36,28 @@ def shply(shp, old_crs, new_crs):
     """Warp a shapely object from old_crs to new_crs."""
     if workflow.crs.equal(old_crs, new_crs):
         return shp
-    
     old_crs_proj = workflow.crs.to_proj(old_crs)
     new_crs_proj = workflow.crs.to_proj(new_crs)
     transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
-    return shapely.ops.transform(lambda x,y:transformer.transform(x,y), shp)
+    shp_out = shapely.ops.transform(transformer.transform, shp)
+    if hasattr(shp, 'properties'):
+        shp_out.properties = shp.properties
+    return shp_out
 
 def shplys(shps, old_crs, new_crs):
     """Warp a collection of shapely objects from old_crs to new_crs."""
-    return [shply(shp, old_crs, new_crs) for shp in shps]
+    if workflow.crs.equal(old_crs, new_crs):
+        return shps
+    old_crs_proj = workflow.crs.to_proj(old_crs)
+    new_crs_proj = workflow.crs.to_proj(new_crs)
+    transformer = pyproj.Transformer.from_crs(old_crs_proj, new_crs_proj, always_xy=True)
+    shps_out = [shapely.ops.transform(transformer.transform, shp) for shp in shps]
+    for sout, sin in zip(shps_out, shps):
+        if hasattr(sin, 'properties'):
+            sout.properties = sin.properties
+    return shps_out
 
-def shape(feature, old_crs, new_crs):
+def  shape(feature, old_crs, new_crs):
     """Warp a fiona shape from old_crs to new_crs, in place."""
     # find the dimension -- can't trust the shape
     dim = -1
@@ -96,14 +107,21 @@ def shape(feature, old_crs, new_crs):
     return feature
                     
     
-def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_method=rasterio.warp.Resampling.nearest):
+def raster(src_profile, src_array,
+           dst_crs=None, resolution=None, dst_height=None, dst_width=None,
+           resampling_method=rasterio.warp.Resampling.nearest):
     """Warp a raster from src_profile to dst_crs, or resample resolution."""
 
     src_crs = workflow.crs.from_rasterio(src_profile['crs'])
-    if resolution is None and \
+    if resolution is None and dst_height is None and dst_width is None and \
        (dst_crs is None or workflow.crs.equal(dst_crs, src_crs)):
         # nothing to do
         return src_profile, src_array
+
+    if resolution is None and dst_height is None:
+        dst_height = src_profile['height']
+    if resolution is None and dst_width is None:
+        dst_width = src_profile['width']
 
     if dst_crs is None:
         dst_crs = workflow.crs.from_rasterio(src_profile['crs'])
@@ -117,7 +135,7 @@ def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_met
     dst_profile = src_profile.copy()
     dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
         src_profile['crs'], dst_crs_rasterio, src_profile['width'], src_profile['height'], 
-        *src_bounds, resolution=resolution)
+        *src_bounds, resolution=resolution, dst_height=dst_height, dst_width=dst_width)
         
     # update the relevant parts of the profile
     dst_profile.update({
@@ -140,8 +158,10 @@ def raster(src_profile, src_array, dst_crs=None, resolution=None, resampling_met
     logging.debug(f'  dst_array shape: {dst_array.shape}')
 
     dst_profile.update({'count': nband})
-    rasterio.warp.reproject(src_array, dst_array, src_transform=src_profile['transform'], src_crs=src_profile['crs'],
-                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio, dst_nodata=dst_profile['nodata'],
+    rasterio.warp.reproject(src_array, dst_array,
+                            src_transform=src_profile['transform'], src_crs=src_profile['crs'],
+                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio,
+                            dst_nodata=dst_profile['nodata'],
                             resampling=resampling_method)
 
     return dst_profile, dst_array

@@ -40,7 +40,7 @@ __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
 # functions for getting objects
 # -----------------------------------------------------------------------------
 
-def get_huc(source, huc, crs=None, digits=None):
+def get_huc(source, huc, out_crs=None, digits=None):
     """Get a HUC shape object from a given code.
 
     Parameters
@@ -49,7 +49,7 @@ def get_huc(source, huc, crs=None, digits=None):
         source object providing `get_hucs()`
     huc : str
         hydrologic unit code
-    crs : crs-type
+    out_crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int, optional
         Number of digits to round coordinates to.
@@ -63,12 +63,18 @@ def get_huc(source, huc, crs=None, digits=None):
 
     """
     huc = workflow.sources.utils.huc_str(huc)
-    crs, hu_shapes = get_hucs(source, huc, len(huc), crs, digits)
+
+    logging.info("")
+    logging.info(f"Loading HUC {huc}")
+    logging.info("-"*30)
+
+    out_crs, hu_shapes = get_hucs(source, huc, len(huc), out_crs, digits)
+    logging.info(f"... found {len(hu_shapes)}")
     assert(len(hu_shapes) == 1)
-    return crs, hu_shapes[0]
+    return out_crs, hu_shapes[0]
 
 
-def get_hucs(source, huc, level, crs=None, digits=None):
+def get_hucs(source, huc, level, out_crs=None, digits=None):
     """Get shape objects for all HUCs at a level contained in huc.
 
     Parameters
@@ -79,7 +85,7 @@ def get_hucs(source, huc, level, crs=None, digits=None):
         hydrologic unit code
     level : int
         HUC level of the requested sub-basins
-    crs : crs-type
+    out_crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int, optional
         Number of digits to round coordinates to.
@@ -98,33 +104,35 @@ def get_hucs(source, huc, level, crs=None, digits=None):
         level = len(huc)
 
     logging.info("")
-    logging.info("Preprocessing HUC")
+    logging.info(f"Loading level {level} HUCs in {huc}")
     logging.info("-"*30)
-    logging.info("Loading level {} HUCs in {}.".format(level, huc))
     
     profile, hus = source.get_hucs(huc, level)
-    logging.info('  found {} HUCs.'.format(len(hus)))
+    logging.info("... found {} HUCs".format(len(hus)))
     for hu in hus:
         logging.info('  -- {}'.format(workflow.sources.utils.get_code(hu,level)))
     
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
-    if crs and not workflow.crs.equal(crs, native_crs):
+    if out_crs and not workflow.crs.equal(out_crs, native_crs):
+        logging.info("Converting to out_crs")
         for hu in hus:
-            workflow.warp.shape(hu, native_crs, crs)
+            workflow.warp.shape(hu, native_crs, out_crs)
     else:
-        crs = native_crs
+        out_crs = native_crs
 
     # round
     if digits != None:
-        workflow.utils.round(hus, digits)
+        logging.info("Rounding coordinates")
+        workflow.utils.round_shapes(hus, digits)
 
     # convert to shapely
+    logging.info("Converting to shapely")
     hu_shapes = [workflow.utils.shply(hu) for hu in hus]
-    return crs, hu_shapes
+    return out_crs, hu_shapes
 
 
-def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
+def get_split_form_hucs(source, huc, level=None, out_crs=None, digits=None):
     """Get a SplitHUCs object for all HUCs at level contained in huc.
 
     A SplitHUCs object is an object which stores a collection of polygons which
@@ -139,7 +147,7 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
         hydrologic unit code
     level : int
         HUC level of the requested sub-basins
-    crs : crs-type
+    out_crs : crs-type
         Output coordinate system.  Default is source's crs.
     digits : int, optional
         Number of digits to round coordinates to.
@@ -152,14 +160,15 @@ def get_split_form_hucs(source, huc, level=None, crs=None, digits=None):
         Split-form HUCs object containing subbasins.
 
     """
-    crs, hu_shapes = get_hucs(source, huc, level, crs, digits)
-    return crs, workflow.split_hucs.SplitHUCs(hu_shapes)
+    out_crs, hu_shapes = get_hucs(source, huc, level, out_crs, digits)
+    logging.info("Creating split form")
+    return out_crs, workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
-def get_shapes(source, index_or_bounds=None, crs=None, digits=None, properties=False):
+def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False):
     """Read a shapefile.
 
-    If index_or_bounds is a bounding box, crs must not be None and is the crs
+    If index_or_bounds is a bounding box, in_crs must not be None and is the crs
     of the bounding box.
 
     Parameters
@@ -171,9 +180,11 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None, properties=F
         Filter the file, either by selecting a specific shape by index of the
         requested shape in the file, or providing a bounds-type tuple to select
         only shapes that intersect with the bounding box.
-    crs : crs-type, optional
-        Coordinate system of out and/or the bounding box provided in `filter`.
-        The default is source's crs.
+    in_crs : crs-type, optional
+        Coordinate system of the bounding box.
+    out_crs : crs-type, optional
+        Coordinate system to which shapes will be warped.  If not
+        provided, the native crs of the file will be used.
     digits : int, optional
         Number of digits to round coordinates to.
     properties : bool, optional
@@ -187,45 +198,50 @@ def get_shapes(source, index_or_bounds=None, crs=None, digits=None, properties=F
         List of shapely objects in the shapefile meeting the criteria.
     out_properties : pandas dataframe
         Only if properties == True, a dataframe of corresponding properties
+
     """
     logging.info("")
-    logging.info("Preprocessing Shapes")
+    logging.info("Loading shapes")
     logging.info("-"*30)
 
     # load shapefile
     if type(source) is str:
-        logging.info('loading file: "{}"'.format(source))
+        logging.info(f"Loading file: '{source}'")
         source = workflow.sources.manager_shape.FileManagerShape(source)
 
     if properties:
-        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, crs)
+        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs)
     else:
-        profile, shps = source.get_shapes(index_or_bounds, crs)
+        profile, shps = source.get_shapes(index_or_bounds, in_crs)
+    logging.info(f"... found {len(shps)} shapes")
 
+    # convert to shapely
+    logging.info("Converting to shapely")
+    shplys = [workflow.utils.shply(shp) for shp in shps]
+    
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
-    if crs and not workflow.crs.equal(crs, native_crs):
-        for shp in shps:
-            workflow.warp.shape(shp, native_crs, crs)
+    if out_crs and not workflow.crs.equal(out_crs, native_crs):
+        logging.info("Converting to requested CRS")
+        shplys = workflow.warp.shplys(shplys, native_crs, out_crs)
     else:
-        crs = native_crs
+        out_crs = native_crs
         
     # round
     if digits != None:
-        workflow.utils.round(shps, digits)
+        logging.info("Rounding coordinates")
+        workflow.utils.round_shplys(shplys, digits)
 
-    # convert to shapely
-    shplys = [workflow.utils.shply(shp) for shp in shps]
     if properties:
-        return crs, shplys, out_props
+        return out_crs, shplys, out_props
     else:
-        return crs, shplys
+        return out_crs, shplys
 
-def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None, simplify = None):
+def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None, digits=None):
     """Read a shapefile.
 
-    Note that if index_or_bounds is a bounding box, crs must not be None and is
-    the crs of the bounding box.
+    Note that if index_or_bounds is a bounding box, in_crs must not be
+    None and is the crs of the bounding box.
 
     Parameters
     ----------
@@ -235,9 +251,11 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None, sim
         Filter the shapes, either by selecting a specific shape by index of the
         requested shape in the file, or providing a bounds-type tuple to select
         only shapes that intersect with the bounding box.
-    crs : crs-type, optional
-        Coordinate system of out and/or the bounding box provided in `filter`.
-        The default is source's crs.
+    in_crs : crs-type, optional
+        Coordinate system of out and/or the bounding box provided.
+    out_crs : crs-type, optional
+        Coordinate system to which shapes will be warped.  If not
+        provided, the native crs of the file will be used.
     digits : int, optional
         Number of digits to round coordinates to.
 
@@ -249,11 +267,12 @@ def get_split_form_shapes(source, index_or_bounds=-1, crs=None, digits=None, sim
         Split-form polygons object containing subbasins.
 
     """
-    crs, shapes = get_shapes(source, index_or_bounds, crs, digits)
+    crs, shapes = get_shapes(source, index_or_bounds, in_crs, out_crs, digits)
     return crs, workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merge=False, presimplify=None, cvrt = True):
+def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
+                digits=None, long=None, merge=False, presimplify=None):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -273,21 +292,25 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
         smaller.
     bounds : [xmin, ymin, xmax, ymax] bounds, optional
         Bounding box to filter the river network.
-    crs : crs-type, optional
-        Output coordinate system and coordinate system of bounds.  Defaults to
-        the source's crs.
+    in_crs : crs-type, optional
+        Coordinate system of the bounds.
+    out_crs : crs-type, optional
+        Coordinate system of the output reaches.  Default is the
+        native crs of the source.
+
     digits : int, optional
         Number of digits to round coordinates to.
     long : float, optional
-        If a reach is longer than this value it gets filtered.  Some NHD data
-        has QC issues, or other wierd extra-long, single segment reaches that
-        don't make sense...
+        If a reach is longer than this value it gets filtered.  Some
+        NHD data has impoundments or other artifacts which appear
+        as very long, perfectly straight single segment reaches.
     merge : bool, optional
         If true, reaches are merged (via shapely.ops.linemerge), collapsing 
         connected, non-branching reaches into a single LineString.
     presimplify : double, optional
-        If provided, reaches are simplified according to shapely.simplify as 
-        soon as possible for big extents.
+        If provided, reaches are simplified within the specified
+        tolerance as soon as possible for big extents.  Units are that
+        of out_crs.
 
     Returns
     -------
@@ -298,60 +321,62 @@ def get_reaches(source, huc, bounds=None, crs=None, digits=None, long=None, merg
 
     """
     logging.info("")
-    logging.info("Preprocessing Hydrography")
+    logging.info("Loading Hydrography")
     logging.info("-"*30)
-    logging.info("Loading streams in HUC {}".format(huc))
-    logging.info("         and/or bounds {}".format(bounds))
+    logging.info(f"Loading streams in HUC {huc}")
+    logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, crs)
-    logging.info("  found {} reaches".format(len(reaches)))
+    profile, reaches = source.get_hydro(huc, bounds, in_crs)
+    logging.info("... found {} reaches".format(len(reaches)))
 
-    if presimplify != None:
-        # convert to shapely and simplify
-        reaches_s = [workflow.utils.shply(r).simplify(presimplify) for r in reaches]
-
-        # convert back to fiona, keeping properties
-        reaches2 = [dict(geometry=shapely.geometry.mapping(r)) for r in reaches_s]
-        for r1, r2 in zip(reaches, reaches2):
-            r2['properties'] = r1['properties']
-        reaches = reaches2
+    # convert to shapely
+    logging.info("Converting to shapely")
+    reaches = [workflow.utils.shply(reach) for reach in reaches]
         
     # convert to destination crs
     native_crs = workflow.crs.from_fiona(profile['crs'])
-    if crs and not workflow.crs.equal(crs, native_crs) and cvrt:
+    if out_crs and not workflow.crs.equal(out_crs, native_crs):
+        logging.info("Converting to out_crs")
+        reaches = workflow.warp.shplys(reaches, native_crs, out_crs)
+
         for reach in reaches:
-            workflow.warp.shape(reach, native_crs, crs)
-
-            if 'catchment' in reach['properties']:
-                workflow.warp.shape(reach['properties']['catchment'], native_crs, crs)
-                reach['properties']['area'] = workflow.utils.shply(reach['properties']['catchment']).area
-            
+            if 'catchment' in reach.properties:
+                reach.properties['catchment'] = workflow.utils.shply(reach.properties['catchment'])
+                reach.properties['catchment'] = workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
+                reach.properties['area'] = reach.properties['catchment'].area
     else:
-        crs = native_crs
+        out_crs = native_crs
 
+    if presimplify != None:
+        logging.info("Pre-simplifying")
+        # convert to shapely and simplify
+        reaches_s = [r.simplify(presimplify) for r in reaches]
+        for r1, r2 in zip(reaches, reaches_s):
+            r2.properties = r1.properties
+        reaches = reaches_s
+
+    if merge:
+        logging.info("Merging (warning: this loses properties)")
+        reaches = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches)))
+        
     # round
     if digits != None:
-        workflow.utils.round(reaches, digits)
-
-    # convert to shapely
-    reaches_s = [workflow.utils.shply(reach) for reach in reaches]
-    if merge:
-        reaches_s = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches_s)))
+        logging.info("Rounding coordinates")
+        workflow.utils.round_shapes(reaches, digits)
 
     # not too long
     if long != None:
+        logging.info(f"Filtering extra-long reaches")
         n_r = len(reaches_s)
         reaches_s = [reach for reach in reaches_s if reach.length < long]
-        logging.info("  filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
+        logging.info("... filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
         
-    return crs, reaches_s
+    return out_crs, reaches
 
 
-def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0., 
-                        mask=False, nodata=None, resampling_res = None, 
-                        resampling_method = None, smooth_sigma = None,
-                        plot = False, plot_nodata = True):
+def get_raster_on_shape(source, shape, in_crs, out_crs=None,
+                        buffer=0, mask=False, nodata=None, **kwargs):
     """Collects a raster that covers the requested shape.
 
     Parameters
@@ -359,12 +384,13 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     source : str or source-type
         Filename to parse, or a source object providing the get_raster()
         method.
-    shape : Polygon
-        Shapely or fiona polygon on which to get the raster.
-    crs : crs-type
+    shape : polygon
+        shapely or fiona polygon on which to get the raster.
+    in_crs : crs-type
         CRS of shape.
-    raster_crs : crs-type, optional
-        Output crs.  Defaults to the source's crs.
+    out_crs : crs-type, optional
+        CRS of the raster.  Defaults to the source's CRS.
+
     buffer : double, optional
         Size of a buffer, in units of the shape's CRS, added to shape to ensure
         pixels cover the entire shape.  Default is 0.
@@ -372,13 +398,8 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
         If True, mask the raster outside of shape.
     nodata : dtype, optional=raster nodata
         Value to place outside of shape.
-    resampling_res : int, optional
-        Resampling raster to a given resolution using rasterio.
-    resampling_method: str, optional
-        Resampling method provided by rasterio. 
-    smooth_sigma : int, optional 
-        Used for scipy.ndimage.gaussian_filter(). Higher value will make raster smoother.
-
+    kwargs
+        All extra arguments are passed to the source's get_raster() method.
 
     Returns
     -------
@@ -389,12 +410,12 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
 
     """
     logging.info("")
-    logging.info("Preprocessing Raster")
+    logging.info("Loading Raster")
     logging.info("-"*30)
 
     # load file
     if type(source) is str:
-        logging.info('loading file: "{}"'.format(source))
+        logging.info(f"Loading file: '{source}'")
         source = workflow.sources.manager_raster.FileManagerRaster(source)
 
     if type(shape) is dict:
@@ -404,61 +425,23 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
     shape_original = shape
     shape = shape.buffer(buffer)
 
-    logging.info("collecting raster")
-    profile, raster = source.get_raster(shape, crs)
-    logging.info("Got raster of shape: {}".format(raster.shape))
+    logging.info("Collecting raster")
+    profile, raster = source.get_raster(shape, in_crs, **kwargs)
+    logging.info(f"... got raster of shape: {raster.shape}")
 
     # warp the raster to the requested output
-    if raster_crs != None:
-        profile, raster = workflow.warp.raster(profile, raster, raster_crs)
-    # else:
-        # raster_crs = workflow.crs.from_rasterio(profile['crs'])
+    if out_crs:
+        logging.info("Warping to out_crs")
+        profile, raster = workflow.warp.raster(profile, raster, out_crs)
 
-    if resampling_res != None:
-        raster_raw = raster
-        if resampling_method == None:
-            resampling_method = "bilinear"
-        logging.info(f"resamping raster using {resampling_method} method...")
-        resampling_algorithms = {'nearest':rasterio.warp.Resampling.nearest,
-                                'bilinear':rasterio.warp.Resampling.bilinear,
-                                'cubic':rasterio.warp.Resampling.cubic}
-        resampling_method = resampling_algorithms[resampling_method]
-        # raster_crs = workflow.crs.from_rasterio(profile['crs'])          
-        profile, raster = workflow.warp.raster(profile, raster, dst_crs = crs, resolution=resampling_res, resampling_method=resampling_method)
-        if plot:
-            plt.figure()
-            plt.subplot(121)
-            plt.imshow(raster_raw)
-            plt.title('raw')
-            plt.subplot(122)
-            plt.imshow(raster)
-            plt.title(f'resampled ({resampling_res} m)')
-
-    if smooth_sigma is not None:
-        logging.info(f"smoothing using Gaussian filter with sigma = {smooth_sigma}...")
-        raster_smooth = scipy.ndimage.gaussian_filter(raster, sigma = smooth_sigma, mode='nearest')
-        logging.info(f'raw minmax: {np.nanmin(raster)}, {np.nanmax(raster)}')
-        logging.info(f'smoothed minmax: {np.nanmin(raster_smooth)}, {np.nanmax(raster_smooth)}')
-        if plot:
-            plt.figure()
-            plt.subplot(121)
-            plt.imshow(raster)
-            plt.title('non-smoothed')
-            
-            plt.subplot(122)
-            plt.imshow(raster_smooth)
-            plt.title('gaussian_smoothed')
-
-        raster = raster_smooth
-
-    raster_crs = workflow.crs.from_rasterio(profile['crs'])
+    out_crs = workflow.crs.from_rasterio(profile['crs'])
     
     if mask:
         # mask the raster
         logging.info("Masking to shape")
-        if raster_crs != crs:
-            shape = workflow.warp.shply(shape, crs, raster_crs)
-        logging.info("shape bounds: {}".format(shape.bounds))
+        if out_crs != in_crs:
+            shape = workflow.warp.shply(shape, in_crs, out_crs)
+        logging.info("  shape bounds: {}".format(shape.bounds))
         mask = rasterio.features.geometry_mask([shape,], raster.shape,
                                                profile['transform'], invert=True)
         if nodata is None:
@@ -475,41 +458,19 @@ def get_raster_on_shape(source, shape, crs, raster_crs=None, buffer=0.,
             else:
                 nodata = profile['nodata']
             
-        logging.info(f"Casting mask of dtype: {profile['dtype']} to: {nodata}")
+        logging.info(f"  casting mask of dtype: {profile['dtype']} to: {nodata}")
         raster[~mask] = nodata
 
     transform = profile['transform']
     x0 = transform * (0,0)
     x1 = transform * (profile['width'], profile['height'])
-    logging.info("Raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
-
-    if plot:
-
-        def nodata_minmax(array, nodata):
-            masked_array = np.ma.masked_equal(array, nodata, copy=False)
-            vmin,vmax = masked_array.min(), masked_array.max()
-            return vmin, vmax
-        vmin,vmax = nodata_minmax(raster, 0)
-        extent = rasterio.transform.array_bounds(profile['height'], profile['width'], profile['transform']) # (x0, y0, x1, y1)
-        plot_extent = extent[0], extent[2], extent[1], extent[3] # (x0, x1, y0, y1)
-        plt.figure()
-        if plot_nodata:
-            cax = plt.matshow(raster, extent=plot_extent)
-        else:
-            cax = plt.matshow(raster, extent=plot_extent, vmin = vmin, vmax = vmax)
-        if crs != raster_crs:
-            shape_original = workflow.warp.shply(shape_original, crs, raster_crs)
-        plt.plot(*shape_original.exterior.xy, 'r')
-        plt.colorbar(cax,fraction=0.046, pad=0.04)
-        plt.title("Final raster within watershed")
-
+    logging.info("... got raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
     return profile, raster
 
 #
 # functions for relating objects
 # -----------------------------------------------------------------------------
-
-def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
+def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
     """Finds the smallest HUC containing shp.
 
     Parameters
@@ -518,7 +479,7 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
         Source object providing a get_hucs() method.
     shape : Polygon
         Shapely or fiona polygon on which to get the raster.
-    crs : crs-type
+    in_crs : crs-type
         CRS of shape.
     hint : str
         HUC in which to start searching.  This should be at least as long as
@@ -583,29 +544,30 @@ def find_huc(source, shape, crs, hint, shrink_factor=1.e-5):
 
     hint = workflow.sources.utils.huc_str(hint)
 
-    _, hint_hu = get_huc(source, hint, crs)
+    _, hint_hu = get_huc(source, hint, in_crs)
     inhuc = _in_huc(shply_s, hint_hu)
     if inhuc != 2:
         raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
 
-    result = _find_huc(source, shply_s, crs, hint)
+    result = _find_huc(source, shply_s, in_crs, hint)
     return result
 
 
+#
+# functions for manipulating objects
+# -----------------------------------------------------------------------------
 def simplify_and_prune(hucs, reaches,
                        filter=True,
-                       simplify=10,
-                       ignore_small_rivers=0,
+                       simplify=None,
+                       ignore_small_rivers=None,
                        prune_by_area=0,
                        prune_by_area_fraction=0,
+                       snap=False,
                        cut_intersections=False):
     """Cleans up the HUC and river shapes.
 
     Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
     rivers must be in the same crs.
-
-    .. note: 
-        This also may modify the hucs object in-place.
 
     Parameters
     ----------
@@ -616,29 +578,41 @@ def simplify_and_prune(hucs, reaches,
     filter : bool, optional=True
         If true, filter reaches to the boundary of hucs.
     simplify : float, optional
-        Argument to shapely's simplify, a measure of how far to allow shapes to
-        move.  Default is 10 (units are in that of the CRS of hucs and
-        reaches).
+        If provided, simply the shapes by moving points at most this
+        many units (see also shapely.simplify).  Units are that of the
+        CRS of shapes.
     ignore_small_rivers : int, optional
         If provided, remove rivers with fewer than this number of reaches.
     prune_by_area : float, optional
         If provided, remove reaches whose total contributing area is
-        less than this tol.  NOTE: only for NHDPlus.
+        less than this tol.  NOTE: only valid for reaches that include
+        a contributing area property (e.g. NHDPlus).
     prune_by_area_fraction : float, optional
         If provided, remove reaches whose total contributing area, as
         a fraction of the area of hucs, is less than this tol.  NOTE:
-        only for NHDPlus.
-    cut_intersections : bool
-        Cut HUC segments at the river input/output, potentially resulting in
-        simpler geometries.  This is work in progress.  Default is False.
+        only valid for reaches that include a contributing area
+        property (e.g. NHDPlus).
+    snap : bool, optional
+        If true, tries to make sure that streams and the boundary, if
+        they cross, the crossing point is in both geometries
+        (discretely).  This is important if the streams are to be
+        included in the mesh.
+    cut_intersections : bool, optional
+        If True, cut HUC segments at the river input/output,
+        potentially resulting in simpler geometries.  This is work in
+        progress.
 
-    Note, pruning is only possible for reaches which include an 'area'
-    property.  Currently this only includes NHDPlus hydrography.
+    .. note: 
+       Pruning is only possible for reaches which include an 'area'
+       property.  Currently this only includes NHDPlus hydrography.
 
     Returns
     ------- 
     out : list(RiverTree)
         A list of rivers, as RiverTree objects.
+
+    .. note: 
+        This also may modify the hucs object in-place.
 
     """
     tol = simplify
@@ -646,16 +620,17 @@ def simplify_and_prune(hucs, reaches,
     logging.info("")
     logging.info("Simplifying and pruning")
     logging.info("-"*30)
-    logging.info("Filtering rivers outside of the HUC space")
     if filter:
+        logging.info("Filtering rivers outside of the HUC space")
         count = len(reaches)
         reaches = workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
-        logging.info("  filtered from {} to {} reaches.".format(count, len(reaches)))
+        logging.info("... filtered from {} to {} reaches.".format(count, len(reaches)))
     if len(reaches) == 0:
         return reaches
 
-    logging.info("Generate the river tree")
+    logging.info("Generating the river tree")
     rivers = workflow.hydrography.make_global_tree(reaches)
+    assert(len(rivers) > 0)
 
     if ignore_small_rivers > 0:
         logging.info("Removing rivers with fewer than {} reaches.".format(ignore_small_rivers))
@@ -679,20 +654,32 @@ def simplify_and_prune(hucs, reaches,
     if prune_by_area > 0:
         logging.info(f"Pruning by total contributing area < {prune_by_area}")
         count = 0
+        sufficiently_big_rivers = []
         for river in rivers:
-            count += workflow.hydrography.prune_by_area(river, prune_by_area)
-        logging.info(f"  pruned {count}")
+            workflow.hydrography.accumulate(river)
+            if river.properties['total contributing area'] >= prune_by_area:
+                count += workflow.hydrography.prune_by_area(river, prune_by_area)
+                sufficiently_big_rivers.append(river)
+        logging.info(f"... pruned {count}")
+        rivers = sufficiently_big_rivers
+
     if prune_by_area_fraction > 0:
         logging.info(f"Pruning by fractional contributing area < {prune_by_area_fraction}")
         count = 0
         total_area = hucs.exterior().area
+        sufficiently_big_rivers = []
         for river in rivers:
-            count += workflow.hydrography.prune_by_area_fraction(river, prune_by_area_fraction, total_area)
-        logging.info(f"  pruned {count}")
+            workflow.hydrography.accumulate(river)
+            if river.properties['total contributing area'] >= prune_by_area_fraction * total_area:
+                count += workflow.hydrography.prune_by_area_fraction(river, prune_by_area_fraction, total_area)
+                sufficiently_big_rivers.append(river)
+        logging.info(f"... pruned {count}")
+        rivers = sufficiently_big_rivers
 
     # snap
-    logging.info("snapping rivers and HUCs")
-    rivers = workflow.hydrography.snap(hucs, rivers, tol, 3*tol, cut_intersections)
+    if snap:
+        logging.info("Snapping river and HUC (nearly) coincident nodes")
+        rivers = workflow.hydrography.snap(hucs, rivers, tol, 3*tol, cut_intersections)
     
     logging.info("")
     logging.info("Simplification Diagnostics")
@@ -704,20 +691,21 @@ def simplify_and_prune(hucs, reaches,
                 coords = np.array(line.coords[:])
                 dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
                 mins.append(np.min(dz))
-        logging.info("  river min seg length: %g"%min(mins))
-        logging.info("  river median seg length: %g"%np.median(np.array(mins)))
+        logging.info(f"  river min seg length: {min(mins)}")
+        logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
     mins = []
-
+    workflow.split_hucs.simplify(hucs, 0)
     for line in hucs.segments:
         coords = np.array(line.coords[:])
         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
         mins.append(np.min(dz))
-    logging.info("  HUC min seg length: %g"%min(mins))
-    logging.info("  HUC median seg length: %g"%np.median(np.array(mins)))
+    logging.info(f"  HUC min seg length: {min(mins)}")
+    logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
     return rivers
     
-def triangulate(hucs, rivers, mesh_rivers=False, diagnostics=True, verbosity=1, tol=1,
+def triangulate(hucs, rivers,
+                mesh_rivers=False, diagnostics=True, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False, river_region_dist = None):
     """Triangulates HUCs and rivers.

@@ -910,7 +910,7 @@ class Mesh3D(object):
         e.close()
 
     @staticmethod
-    def summarize_extrusion(layer_types, layer_data, ncells_per_layer, mat_ids):
+    def summarize_extrusion(layer_types, layer_data, ncells_per_layer, mat_ids, surface_cell_id=0):
         """
         Summarizes extruded data by printing info to log file.
 
@@ -926,7 +926,7 @@ class Mesh3D(object):
         for i,thick in enumerate(layer_data):
             for j in range(ncells_per_layer[i]):
                 try:
-                    mat_id = mat_ids[i][0]
+                    mat_id = mat_ids[i][surface_cell_id]
                 except TypeError:
                     mat_id = mat_ids[i]
                 logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f"%(i,

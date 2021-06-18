@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 import shapely
 import math
+import urllib.request
 
 import workflow.utils
 import workflow.conf
@@ -66,6 +67,42 @@ def download(url, location, force=False):
                 shutil.copyfileobj(r.raw, f)
 
     return os.path.isfile(location)
+
+
+def download_progress_bar(url, location, force=False):
+    """Download a file from URL to location, with a progres bar.
+
+    If force, clobber whatever is there.
+    """
+    from tqdm.autonotebook import tqdm 
+
+    if os.path.isfile(location) and force:
+        os.remove(location)
+        
+    if not os.path.isfile(location):
+        logging.info('Downloading: "%s"'%url)
+        logging.info('         to: "%s"'%location)
+        verify = workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        logging.info('       cert: "%s"'%verify)
+        if verify == "True":
+            verify = True
+        elif verify == "False":
+            verify = False
+            
+        r = requests.get(url, stream=True)
+        total = int(r.headers.get('content-length', 0))
+        with open(location, 'wb') as file, tqdm(desc=os.path.split(location)[-1],
+                                                total=total,
+                                                unit='iB',
+                                                unit_scale=True,
+                                                unit_divisor=1024,
+                                                ) as bar:
+            for data in r.iter_content(chunk_size=1024):
+                size = file.write(data)
+                bar.update(size)
+        
+    return os.path.isfile(location)
+
 
 def unzip(filename, to_location, format=None):
     """Unzip the corresponding, assumed to exist, zipped DEM into the DEM directory."""

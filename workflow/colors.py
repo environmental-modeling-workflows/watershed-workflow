@@ -5,6 +5,40 @@ import matplotlib.cm
 import numpy as np
 import collections
 
+
+#
+# Lists of disparate color palettes
+#
+enumerated_palettes = {
+    1 : ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'],
+    2 : ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6',
+         '#6a3d9a','#ffff99','#b15928'],
+    3 : ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
+    }
+
+def enumerated_colors(count, palette=1, chain=True):
+    """Gets an enumerated list of count independent colors."""
+    p = enumerated_palettes[palette]
+    if count <= len(p):
+        return p[0:count]
+    else:
+        for p in enumerated_palettes.values():
+            if count <= len(p):
+                return p[0:count]
+
+    if chain:
+        # must chain...
+        p = enumerated_palettes[palette]
+        def chain_iter(p):
+            while True:
+                for c in p:
+                    yield c
+        return [c for (i,c) in zip(range(count),chain_iter(p))]
+        
+    else:
+        raise ValueError("No enumerated palettes of length {}.".format(count))        
+
+
 # black-zero jet is jet, but with the 0-value set to black, with an immediate jump to blue
 def blackzerojet_cmap(data):
     blackzerojet_dict = {'blue': [[0.0, 0.0, 0.0],
@@ -127,7 +161,7 @@ def lighten(color, fraction=0.6):
     return tuple(np.minimum(rgb + fraction*(1-rgb),1))
 
 
-def generate_indexed_colormap(indices, cmap='hot'):
+def generate_indexed_colormap(indices, cmap=None):
     """Generates an indexed colormap and labels for imaging, e.g. soil indices.
     Parameters
     ----------
@@ -154,9 +188,17 @@ def generate_indexed_colormap(indices, cmap='hot'):
     """
     indices = sorted(set(indices))
 
-    cm = cm_mapper(0, len(indices)-1, cmap=matplotlib.cm.get_cmap(cmap))
-    values = [cm(i) for i in range(0, len(indices))]
-    cmap = matplotlib.colors.ListedColormap(values)
+    cm_values = None
+    if cmap is None:
+        for i, palette in enumerated_palettes.items():
+            if len(indices) < len(palette):
+                cm_values = enumerated_colors(len(indices), palette=i)
+        if cm_values is None:
+            cmap = 'gist_rainbow'
+    if cm_values is None:
+        cm = cm_mapper(0, len(indices)-1, cmap=matplotlib.cm.get_cmap(cmap))
+        cm_values = [cm(i) for i in range(0, len(indices))]
+    cmap = matplotlib.colors.ListedColormap(cm_values)
     ticks = indices+[indices[-1]+1,]
     norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks)-1)
     labels = [str(i) for i in indices]
@@ -211,30 +253,8 @@ def generate_nlcd_colormap(indices=None, formatted=False):
         cb.ax.set_xticklabels(labels, rotation=45)
 
     """
-    all_colors = {
-        0:  ('None', (0.00000000000,  0.00000000000,  0.00000000000)),
-        11: ('Open Water', (0.27843137255,  0.41960784314,  0.62745098039)),
-        12: ('Perrenial Ice/Snow', (0.81960784314,  0.86666666667,  0.97647058824)),
-        21: ('Developed, Open Space', (0.86666666667,  0.78823529412,  0.78823529412)),
-        22: ('Developed, Low Intensity', (0.84705882353,  0.57647058824,  0.50980392157)),
-        23: ('Developed, Medium Intensity', (0.92941176471,  0.00000000000,  0.00000000000)),
-        24: ('Developed, High Intensity', (0.66666666667,  0.00000000000,  0.00000000000)),
-        31: ('Barren Land', (0.69803921569,  0.67843137255,  0.63921568628)),
-        41: ('Deciduous Forest', (0.40784313726,  0.66666666667,  0.38823529412)),
-        42: ('Evergreen Forest', (0.10980392157,  0.38823529412,  0.18823529412)),
-        43: ('Mixed Forest', (0.70980392157,  0.78823529412,  0.55686274510)),
-        51: ('Dwarf Scrub', (0.64705882353,  0.54901960784,  0.18823529412)),
-        52: ('Shrub/Scrub', (0.80000000000,  0.72941176471,  0.48627450980)),
-        71: ('Grassland/Herbaceous', (0.88627450980,  0.88627450980,  0.75686274510)),
-        72: ('Sedge/Herbaceous', (0.78823529412,  0.78823529412,  0.46666666667)),
-        73: ('Lichens', (0.60000000000,  0.75686274510,  0.27843137255)),
-        74: ('Moss', (0.46666666667,  0.67843137255,  0.57647058824)),
-        81: ('Pasture/Hay', (0.85882352941,  0.84705882353,  0.23921568628)),
-        82: ('Cultivated Crops', (0.66666666667,  0.43921568628,  0.15686274510)),
-        90: ('Woody Wetlands', (0.72941176471,  0.84705882353,  0.91764705882)),
-        95: ('Emergent Herbaceous Wetlands', (0.43921568628,  0.63921568628,  0.72941176471)),
-    }
-
+    from workflow.sources.manager_nlcd import colors as all_colors
+    
     if indices is None:
         indices = list(all_colors.keys())
 

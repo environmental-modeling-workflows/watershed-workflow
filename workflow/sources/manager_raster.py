@@ -51,6 +51,7 @@ class FileManagerRaster:
             my_crs = workflow.crs.from_rasterio(profile['crs'])
             shply = workflow.warp.shply(shape, crs, my_crs)
             bounds = shply.bounds
+            print(f'bounds in my_crs: {bounds}')
 
             # find an appropriate window offset
             x0, y0 = inv_transform * (bounds[0], bounds[3])
@@ -74,4 +75,6 @@ class FileManagerRaster:
             raster = fid.read(band, window=window)
             assert(raster.shape == (window_profile['height'], window_profile['width']))
 
+        if 'nodata' in window_profile:
+            window_profile['nodata'] = np.array([window_profile['nodata'],], dtype=raster.dtype)[0]
         return window_profile, raster

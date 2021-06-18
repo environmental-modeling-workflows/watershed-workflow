@@ -11,7 +11,7 @@ class Point:
     neighbors = attr.ib(factory=set)
 
 def points_from_mesh(m2):
-    """Generates a Point dictionary from a surface mesh, for use with condition"""
+    """Generates a Point dictionary from a surface mesh, for use with fill_pits"""
     points = dict( (i, Point(c)) for (i,c) in enumerate(m2.coords) )
     for conn in m2.conn:
         for c in conn:
@@ -21,7 +21,7 @@ def points_from_mesh(m2):
     return points
 
 
-def condition1(points, outletID=None):
+def fill_pits1(points, outletID=None):
     """Conditions a mesh, in place, by removing pits.
 
     Inputs:
@@ -69,7 +69,7 @@ def condition1(points, outletID=None):
     return
 
 
-def condition2(points, outletID):
+def fill_pits2(points, outletID):
     """Conditions a mesh, in place, by removing pits.
 
     Inputs:
@@ -102,7 +102,7 @@ def condition2(points, outletID):
     return
 
 
-def condition3(points, outletID):
+def fill_pits3(points, outletID):
     """Conditions a mesh, in place, by removing pits.
 
     Inputs:
@@ -149,7 +149,7 @@ def condition3(points, outletID):
                     
         
 
-def condition(mesh, outlet=None, algorithm=3):
+def fill_pits(mesh, outlet=None, algorithm=3):
     """Condition a 2D mesh, in place.
     
     Starts at outlet, if not provided, this defaults to the lowpoint on the boundary.
@@ -165,13 +165,52 @@ def condition(mesh, outlet=None, algorithm=3):
         outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes,2])]
 
     if algorithm == 1:
-        condition1(points_dict, outlet)
+        fill_pits1(points_dict, outlet)
     elif algorithm == 2:
-        condition2(points_dict, outlet)
+        fill_pits2(points_dict, outlet)
     elif algorithm == 3:
-        condition3(points_dict, outlet)
+        fill_pits3(points_dict, outlet)
     else:
         raise RuntimeError('Unknown algorithm "%r"'%(algorithm))
 
     mesh.points = np.array([p.coords for p in points_dict.values()])
     
+
+def smooth(img_in, algorithm='gaussian', **kwargs):
+    """Smooths an image according to an algorithm, passing kwargs on to that algorithm."""
+    if algorithm == 'gaussian':
+        import scipy.ndimage
+        if 'method' not in kwargs:
+            kwargs['method'] = 'nearest'
+        if 'sigma' not in kwargs:
+            sigma = 5
+        else:
+            sigma = kwargs.pop('sigma')
+        return scipy.ndimage.gaussian_filter(img_in, sigma, **kwargs)
+    else:
+        raise ValueError(f'Unknown smoothing algorithm: "{algorithm}"')
+
+
+def fill_gaps(img_in, nodata=np.nan):
+    import scipy.ndimage
+    import scipy.interpolate
+
+    if nodata is np.nan:
+        mask = ~np.isnan(img_in)
+    else:
+        mask = ~(img_in == nodata)
+
+    # array of (number of points, 2) containing the x,y coordinates of the valid values only
+    xx, yy = np.meshgrid(np.arange(img_in.shape[1]), np.arange(img_in.shape[0]))
+    xym = np.vstack((np.ravel(xx[mask]), np.ravel(yy[mask]))).T
+
+    # the valid values, as 1D arrays (in the same order as their coordinates in xym)
+    img_in0 = np.ravel(img_in[:,:][mask])
+
+    # interpolator
+    interp0 = scipy.interpolate.NearestNDInterpolator(xym, img_in0)
+
+    # interpolate the whole image
+    return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
+
+

@@ -10,15 +10,18 @@ import fiona
 import requests
 import numpy as np
 import pandas
+import collections
+import shapely.wkt
 
 import workflow.crs
 import workflow.sources.names
 import workflow.warp
 import workflow.utils
 import workflow.soil_properties
+import workflow.io
 
 
-_query_template = """
+_query_template_props = """
 SELECT
  saversion, saverest, l.areasymbol, l.areaname, l.lkey, musym, muname, museq, mu.mukey, comppct_r, compname, localphase, slope_r, c.cokey, hzdept_r, hzdepb_r, ksat_r, sandtotal_r, claytotal_r, silttotal_r, dbthirdbar_r , partdensity, wsatiated_r, ch.chkey
 
@@ -29,6 +32,44 @@ FROM sacatalog sac
 ({})
   LEFT OUTER JOIN component c ON c.mukey = mu.mukey
 LEFT OUTER JOIN chorizon ch ON ch.cokey = c.cokey
+"""
+
+_query_template_shapes = """
+~DeclareGeometry(@aoiGeom)~
+~DeclareGeometry(@aoiGeomFixed)~
+CREATE TABLE #AoiTable
+    ( aoiid INT IDENTITY (1,1),
+    landunit VARCHAR(20),
+    aoigeom GEOMETRY )
+;
+ 
+SELECT @aoiGeom = GEOMETRY::STGeomFromText('{}', 4326);
+SELECT @aoiGeomFixed = @aoiGeom.MakeValid().STUnion(@aoiGeom.STStartPoint());
+INSERT INTO #AoiTable ( landunit, aoigeom ) 
+VALUES ('My Geom', @aoiGeomFixed);
+-- End of AOI geometry section
+-- #AoiSoils table contains intersected soil polygon table with geometry
+CREATE TABLE #AoiSoils
+    ( polyid INT IDENTITY (1,1),
+    aoiid INT,
+    landunit VARCHAR(20),
+    mukey INT,
+    soilgeom GEOMETRY )
+;
+-- End of CREATE TABLE section
+-- Populate #AoiSoils table with intersected soil polygon geometry
+INSERT INTO #AoiSoils (aoiid, landunit, mukey, soilgeom)
+    SELECT A.aoiid, A.landunit, M.mukey, M.mupolygongeo.STIntersection(A.aoigeom ) AS soilgeom
+    FROM mupolygon M, #AoiTable A
+    WHERE mupolygongeo.STIntersects(A.aoigeom) = 1
+;
+-- #AoiSoils2 is single part polygon
+SELECT landunit, I.mukey, musym, soilgeom.STGeometryN(Numbers.n).MakeValid() AS wktgeom
+FROM #AoiSoils AS I
+JOIN Numbers ON Numbers.n <= I.soilgeom.STNumGeometries()
+INNER JOIN mapunit M ON I.mukey = M.mukey
+;
+-- END OF AOI GEOMETRY QUERY
 """
 
 
@@ -227,9 +268,12 @@ class FileManagerNRCS:
         self.name_manager = workflow.sources.names.Names(self.name,
                                                          os.path.join('soil_structure','SSURGO'),
                                                          '',
-                                                         'SSURGO_%s.gml'%self.fstring)
+                                                         'SSURGO_%s.shp'%self.fstring)
 
-        self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
+
+        #self.url_spatial = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
+        #self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
+        self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
         
@@ -260,16 +304,17 @@ class FileManagerNRCS:
         bounds = self.bounds(bounds, bounds_crs)
         filename = self._download(bounds, force=force_download)
 
-        def _flip(shp):
-            """Generate a new fiona shape in long-lat from one in lat-long"""
-            for ring in workflow.utils.generate_rings(shp):
-                for i,c in enumerate(ring):
-                    ring[i] = c[1],c[0]
-            return shp
+        # def _flip(shp):
+        #     """Generate a new fiona shape in long-lat from one in lat-long"""
+        #     for ring in workflow.utils.generate_rings(shp):
+        #         for i,c in enumerate(ring):
+        #             ring[i] = c[1],c[0]
+        #     return shp
         
         with fiona.open(filename, 'r') as fid:
             profile = fid.profile
-            shapes = [_flip(s) for s in fid]
+            #shapes = [_flip(s) for s in fid]
+            shapes = list(fid)
 
         for s in shapes:
             s['properties']['id'] = s['id']
@@ -281,8 +326,6 @@ class FileManagerNRCS:
     
     def download_properties(self, mukeys, filename=None, force=False):
         """Queries REST API for parameters by MUKEY."""
-        import pandas
-
         if filename is None or (not os.path.exists(filename)) or force:
             logging.info(f'  Downloading raw properties data via request:')
             logging.info(f'    to file: {filename}')
@@ -300,12 +343,12 @@ class FileManagerNRCS:
                             float, int]
             
             mukey_list_string = ','.join([f"'{k}'" for k in mukeys])
-            query = _query_template.format(mukey_list_string)
+            query = _query_template_props.format(mukey_list_string)
 
             data = {'FORMAT' : 'JSON',
                     'QUERY' : query}
             r = requests.post(self.url_data, data=data)
-            logging.debug(f'  full URL: {r.url}')
+            logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
             table = np.array(r.json()['Table'])
@@ -346,7 +389,6 @@ class FileManagerNRCS:
 
         # all structure data frames are expected to have a 'source' and an 'id' in that source field
         df_ats['source'] = 'NRCS'
-        df_ats['id'] = df_ats['mukey']
         return df_ats
 
     
@@ -377,7 +419,7 @@ class FileManagerNRCS:
         filename = self.name_manager.file_name(*bounds_inner)
 
         profile, shapes = self.get_shapes(bounds, bounds_crs, force_download)
-        mukeys = set([s['properties']['id'] for s in shapes])
+        mukeys = set([s['properties']['mukey'] for s in shapes])
 
         data_filename = filename[:-4]+"_properties.csv"
         df = self.get_properties(mukeys, data_filename, force_download)
@@ -399,17 +441,27 @@ class FileManagerNRCS:
 
         if not os.path.exists(filename) or force:
             logging.info('  Downloading spatial data via request:')
-            logging.info('    to file: {filename}')
-            logging.info('       from: {self.url_spatial}')
+            logging.info(f'    to file: {filename}')
+            logging.info(f'       from: {self.url_spatial}')
 
-            params = {'REQUEST':'GetFeature',
-                      'TYPENAME':'MapunitPoly',
-                      'BBOX':self.qstring.format(*bounds)}
-            r = requests.get(self.url_spatial, params=params)
-            logging.debug(f'  full URL: {r.url}')
+            box = shapely.geometry.box(*bounds)
+            query = _query_template_shapes.format(box.wkt)
+            data = {'FORMAT' : 'JSON',
+                    'QUERY' : query}
+            print(self.url_spatial)
+            print(data)
+            r = requests.post(self.url_data, data=data)
+            logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
-            with open(filename, 'w') as fid:
-                fid.write(r.text)
+            logging.info(f'  Converting to shapely')
+            table = r.json()['Table']
+
+            shps = [shapely.wkt.loads(ent[3]) for ent in table]
+            for shp, t in zip(shps, table):
+                shp.properties = dict(mukey=int(t[1]))
+
+            logging.info(f'  Writing to shapefile')
+            workflow.io.write_to_shapefile(filename, shps, self.crs)
 
         return filename
