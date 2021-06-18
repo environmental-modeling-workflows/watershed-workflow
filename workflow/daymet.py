@@ -258,7 +258,8 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
 
     dout['time [s]'] = time
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
-    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] # Wm2
+    # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
+    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
