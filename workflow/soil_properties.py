@@ -4,13 +4,8 @@ Leverages Rosetta to go from soil properties to van Genucten curves.
 - Get soil property such as permeability, porosity, and van Genutchen parameters from SSURGO/gSSURGO/gNATSGO .gdb files (https://nrcs.app.box.com/v/soils/folder/17971946225).
 - Get geology property (i.e., permeability and porosity) from GLHYMPS v2 (https://dataverse.scholarsportal.info/dataset.xhtml?persistentId=doi:10.5683/SP2/TTJNIU) 
 
-Usage:
------
-    soil_prop = get_soil_property_from_SSURGO(SSURGO_gdb_file, sqlite_path, rosetta_model = 3, outfile= None)
-    geol_prop = get_GLHYMPSv2_property(GLHYMPS_file, outfile = None)
-
-Author: Pin Shuai (pin.shuai@pnnl.gov)
-Date: 11/01/2020
+Authors: Pin Shuai (pin.shuai@pnnl.gov)
+         Ethan Coon (coonet@ornl.gov)
 """
 
 import numpy as np
@@ -179,14 +174,14 @@ def cluster(rasters, nbins):
     codes_nan[~np.isnan(obs[:,0])] = code
     return codebook, codes_nan.reshape(in_shp), (dist1,dist2)
 
-def alpha_from_ksat(k, phi):
+def alpha_from_permeability(perm, poro):
     """Uses the relationship from Guarracino WRR 2007 to relate van Genuchten alpha to permeability and porosity.
 
     Parameters
     ----------
-    k : array(double)
+    perm : array(double)
       Permeability, in [m^2]
-    Phi : array(double)
+    poro : array(double)
       Porosity, [-]
 
     Returns
@@ -196,8 +191,31 @@ def alpha_from_ksat(k, phi):
     """
     # note all constants are as used in Guarracino paper to not
     # introduce biases in unit changes.
-    K_m_per_s = k * 998. * 9.8 / 1e-3
+    K_m_per_s = perm * 998. * 9.8 / 1e-3
     K_cm_per_d = K_m_per_s * 100 * 86400.
-    alpha_per_cm = np.sqrt(K_cm_per_d / 4.65e4 / phi)
+    alpha_per_cm = np.sqrt(K_cm_per_d / 4.65e4 / poro)
     alpha_per_Pa = alpha_per_cm * 100 / 998. / 9.8
     return alpha_per_Pa
+
+
+# make a bedrock dataframe
+def get_bedrock_properties():
+    """Simple helper function to get a one-row dataframe with bedrock properties.
+
+    This uses standard default parameters, feel free to modify this
+    dataframe with your own numbers, but it helps to have the
+    structure correct.
+    """
+    poro = 0.15
+    perm = 1.0e-16
+    
+    df = pandas.DataFrame()
+    df['ats_id'] = [999,]
+    df['porosity [-]'] = [poro,]
+    df['permeability [m^2]'] = [perm,]
+    df['van Genuchten alpha [Pa^-1]'] = alpha_from_permeability(perm, poro)
+    df['van Genuchten n [-]'] = 3.0
+    df['residual saturation [-]'] = 0.01
+    df['source'] = 'n/a'
+    df.set_index('ats_id', drop=True, inplace=True)
+    return df

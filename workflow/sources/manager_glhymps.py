@@ -102,11 +102,12 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         Ksat_std = Ksat_std / 100 # division by 100 is per GLHYMPS readme
         poro = np.array([shp['properties']['Porosity_x'] for shp in shapes], dtype=float) # [-]
         poro = poro / 100 # division by 100 is per GLHYMPS readme
-        poro = np.maximum(poro, 0.01) # some values of fine clays are 0
+        poro = np.maximum(poro, 0.01) # some values are 0?
 
         # derived properties
-        vg_alpha = workflow.soil_properties.alpha_from_ksat(Ksat, poro)
-        vg_n = 3.0  # from Maxwell & Condon Science 2016
+        # - this scaling law has trouble for really small porosity, especially high permeability low porosity
+        vg_alpha = workflow.soil_properties.alpha_from_permeability(Ksat, np.maximum(poro,0.1))
+        vg_n = 2.0  # arbitrarily chosen
         sr = 0.01  # arbitrarily chosen
 
         properties = pandas.DataFrame(data={'id' : ids,
