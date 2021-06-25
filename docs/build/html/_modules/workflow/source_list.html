@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -180,6 +181,7 @@
 <span class="kn">from</span> <span class="nn">workflow.sources.manager_ned</span> <span class="kn">import</span> <span class="n">FileManagerNED</span>
 <span class="kn">from</span> <span class="nn">workflow.sources.manager_nrcs</span> <span class="kn">import</span> <span class="n">FileManagerNRCS</span>
 <span class="kn">from</span> <span class="nn">workflow.sources.manager_glhymps</span> <span class="kn">import</span> <span class="n">FileManagerGLHYMPS</span>
+<span class="kn">from</span> <span class="nn">workflow.sources.manager_soilgrids_2017</span> <span class="kn">import</span> <span class="n">FileManagerSoilGrids2017</span>
 <span class="kn">from</span> <span class="nn">workflow.sources.manager_nlcd</span> <span class="kn">import</span> <span class="n">FileManagerNLCD</span>
 <span class="kn">from</span> <span class="nn">workflow.sources.manager_daymet</span> <span class="kn">import</span> <span class="n">FileManagerDaymet</span>
 
@@ -208,8 +210,9 @@
 
 <span class="c1"># available and default soil survey datasets</span>
 <span class="n">structure_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NRCS SSURGO&#39;</span> <span class="p">:</span> <span class="n">FileManagerNRCS</span><span class="p">(),</span>
-                <span class="s1">&#39;GLHYMPS&#39;</span> <span class="p">:</span> <span class="n">FileManagerGLHYMPS</span><span class="p">(),</span>
-                <span class="p">}</span>
+                     <span class="s1">&#39;GLHYMPS&#39;</span> <span class="p">:</span> <span class="n">FileManagerGLHYMPS</span><span class="p">(),</span>
+                     <span class="s1">&#39;SoilGrids2017&#39;</span> <span class="p">:</span> <span class="n">FileManagerSoilGrids2017</span><span class="p">(</span><span class="s1">&#39;US&#39;</span><span class="p">),</span>
+                     <span class="p">}</span>
 <span class="n">default_structure_source</span> <span class="o">=</span> <span class="s1">&#39;NRCS SSURGO&#39;</span>
 
 <span class="c1"># available and default land cover</span>

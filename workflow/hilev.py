@@ -632,7 +632,7 @@ def simplify_and_prune(hucs, reaches,
     rivers = workflow.hydrography.make_global_tree(reaches)
     assert(len(rivers) > 0)
 
-    if ignore_small_rivers > 0:
+    if ignore_small_rivers is not None:
         logging.info("Removing rivers with fewer than {} reaches.".format(ignore_small_rivers))
         for i in reversed(range(len(rivers))):
             ltree = len(rivers[i])

@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -214,6 +215,7 @@
             <span class="n">my_crs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_rasterio</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
             <span class="n">shply</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">my_crs</span><span class="p">)</span>
             <span class="n">bounds</span> <span class="o">=</span> <span class="n">shply</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;bounds in my_crs: </span><span class="si">{</span><span class="n">bounds</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
             <span class="c1"># find an appropriate window offset</span>
             <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">inv_transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
@@ -237,6 +239,8 @@
             <span class="n">raster</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">band</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
             <span class="k">assert</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]))</span>
 
+        <span class="k">if</span> <span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">window_profile</span><span class="p">:</span>
+            <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">],],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">window_profile</span><span class="p">,</span> <span class="n">raster</span></div></div>
 </pre></div>
 

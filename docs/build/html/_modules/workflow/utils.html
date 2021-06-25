@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -264,8 +265,11 @@
 <span class="sd">    thing : shapely shape</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="s1">&#39;geometry&#39;</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;properties&#39;</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
-            <span class="n">properties</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">properties</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;properties&#39;</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
+                <span class="n">properties</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">properties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]</span>        
     
     <span class="k">try</span><span class="p">:</span>
@@ -282,18 +286,23 @@
             <span class="n">thing</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">),</span> <span class="n">thing</span><span class="p">)</span>
 
         <span class="n">thing</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">properties</span>
-        <span class="k">return</span> <span class="n">thing</span>
+        <span class="n">thing_2D</span> <span class="o">=</span> <span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span>
+        <span class="n">thing_2D</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">thing</span><span class="o">.</span><span class="n">properties</span>
+        <span class="k">return</span> <span class="n">thing_2D</span>
+
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Converting to shapely got error: &quot;</span><span class="si">%s</span><span class="s1">&quot;  Maybe you forgot to do shp[&quot;geometry&quot;]?&#39;</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">round</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">round_shapes</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Rounds coordinates in things or shapes to a given digits.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_things</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">generate_rings</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
             <span class="n">ring</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">digits</span><span class="p">))</span>
 
-
+<span class="k">def</span> <span class="nf">round_shplys</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rounds coordinates in things or shapes to a given digits.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">wkt</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">wkt</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thing</span><span class="p">,</span> <span class="n">rounding_precision</span><span class="o">=</span><span class="n">digits</span><span class="p">))</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">thing</span> <span class="ow">in</span> <span class="n">list_of_things</span><span class="p">]</span>
 
 <span class="n">_tol</span> <span class="o">=</span> <span class="mf">1.e-7</span>
 <div class="viewcode-block" id="close"><a class="viewcode-back" href="../../api.html#workflow.utils.close">[docs]</a><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
@@ -671,6 +680,69 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_list</span>
+
+<span class="k">def</span> <span class="nf">remove_third_dimension</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Removes the third dimension of a shapely object.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">geom</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+        <span class="n">exterior</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">exterior</span>
+        <span class="n">new_exterior</span> <span class="o">=</span> <span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">exterior</span><span class="p">)</span>
+
+        <span class="n">interiors</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">interiors</span>
+        <span class="n">new_interiors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="nb">int</span> <span class="ow">in</span> <span class="n">interiors</span><span class="p">:</span>
+            <span class="n">new_interiors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">remove_third_dimension</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">new_exterior</span><span class="p">,</span> <span class="n">new_interiors</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LinearRing</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LinearRing</span><span class="p">([</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">)])</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">)])</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">([</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">)])</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">):</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
+        <span class="n">new_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+            <span class="n">new_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">point</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">(</span><span class="n">new_points</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
+        <span class="n">new_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="n">new_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span><span class="n">new_lines</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">):</span>
+        <span class="n">pols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
+
+        <span class="n">new_pols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="n">pols</span><span class="p">:</span>
+            <span class="n">new_pols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">pol</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">(</span><span class="n">new_pols</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">):</span>
+        <span class="n">geoms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
+
+        <span class="n">new_geoms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">:</span>
+            <span class="n">new_geoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">remove_third_dimension</span><span class="p">(</span><span class="n">geom</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">(</span><span class="n">new_geoms</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Currently this type of geometry is not supported: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">geom</span><span class="p">)))</span>
 </pre></div>
 
            </div>

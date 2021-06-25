@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -167,8 +168,6 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">shapely</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
-<span class="kn">import</span> <span class="nn">rasterio.windows</span>
-<span class="kn">import</span> <span class="nn">rasterio.transform</span>
 <span class="kn">import</span> <span class="nn">rasterio.mask</span>
 
 <span class="kn">import</span> <span class="nn">workflow.sources.utils</span> <span class="k">as</span> <span class="nn">source_utils</span>
@@ -178,6 +177,32 @@
 
 <span class="c1"># No API for getting NLCD locally -- must download the whole thing.</span>
 <span class="n">urls</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NLCD_2016_Land_Cover_L48&#39;</span> <span class="p">:</span> <span class="s1">&#39;https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip&#39;</span> <span class="p">}</span>
+
+<span class="n">colors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">0</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;None&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.00000000000</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">)),</span>
+    <span class="mi">11</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Open Water&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.27843137255</span><span class="p">,</span>  <span class="mf">0.41960784314</span><span class="p">,</span>  <span class="mf">0.62745098039</span><span class="p">)),</span>
+    <span class="mi">12</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Perrenial Ice/Snow&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.81960784314</span><span class="p">,</span>  <span class="mf">0.86666666667</span><span class="p">,</span>  <span class="mf">0.97647058824</span><span class="p">)),</span>
+    <span class="mi">21</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Developed, Open Space&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.86666666667</span><span class="p">,</span>  <span class="mf">0.78823529412</span><span class="p">,</span>  <span class="mf">0.78823529412</span><span class="p">)),</span>
+    <span class="mi">22</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Developed, Low Intensity&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.84705882353</span><span class="p">,</span>  <span class="mf">0.57647058824</span><span class="p">,</span>  <span class="mf">0.50980392157</span><span class="p">)),</span>
+    <span class="mi">23</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Developed, Medium Intensity&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.92941176471</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">)),</span>
+    <span class="mi">24</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Developed, High Intensity&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.66666666667</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">,</span>  <span class="mf">0.00000000000</span><span class="p">)),</span>
+    <span class="mi">31</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Barren Land&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.69803921569</span><span class="p">,</span>  <span class="mf">0.67843137255</span><span class="p">,</span>  <span class="mf">0.63921568628</span><span class="p">)),</span>
+    <span class="mi">41</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Deciduous Forest&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.40784313726</span><span class="p">,</span>  <span class="mf">0.66666666667</span><span class="p">,</span>  <span class="mf">0.38823529412</span><span class="p">)),</span>
+    <span class="mi">42</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Evergreen Forest&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.10980392157</span><span class="p">,</span>  <span class="mf">0.38823529412</span><span class="p">,</span>  <span class="mf">0.18823529412</span><span class="p">)),</span>
+    <span class="mi">43</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Mixed Forest&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.70980392157</span><span class="p">,</span>  <span class="mf">0.78823529412</span><span class="p">,</span>  <span class="mf">0.55686274510</span><span class="p">)),</span>
+    <span class="mi">51</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Dwarf Scrub&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.64705882353</span><span class="p">,</span>  <span class="mf">0.54901960784</span><span class="p">,</span>  <span class="mf">0.18823529412</span><span class="p">)),</span>
+    <span class="mi">52</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Shrub/Scrub&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.80000000000</span><span class="p">,</span>  <span class="mf">0.72941176471</span><span class="p">,</span>  <span class="mf">0.48627450980</span><span class="p">)),</span>
+    <span class="mi">71</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Grassland/Herbaceous&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.88627450980</span><span class="p">,</span>  <span class="mf">0.88627450980</span><span class="p">,</span>  <span class="mf">0.75686274510</span><span class="p">)),</span>
+    <span class="mi">72</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Sedge/Herbaceous&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.78823529412</span><span class="p">,</span>  <span class="mf">0.78823529412</span><span class="p">,</span>  <span class="mf">0.46666666667</span><span class="p">)),</span>
+    <span class="mi">73</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Lichens&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.60000000000</span><span class="p">,</span>  <span class="mf">0.75686274510</span><span class="p">,</span>  <span class="mf">0.27843137255</span><span class="p">)),</span>
+    <span class="mi">74</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Moss&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.46666666667</span><span class="p">,</span>  <span class="mf">0.67843137255</span><span class="p">,</span>  <span class="mf">0.57647058824</span><span class="p">)),</span>
+    <span class="mi">81</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Pasture/Hay&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.85882352941</span><span class="p">,</span>  <span class="mf">0.84705882353</span><span class="p">,</span>  <span class="mf">0.23921568628</span><span class="p">)),</span>
+    <span class="mi">82</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Cultivated Crops&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.66666666667</span><span class="p">,</span>  <span class="mf">0.43921568628</span><span class="p">,</span>  <span class="mf">0.15686274510</span><span class="p">)),</span>
+    <span class="mi">90</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Woody Wetlands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.72941176471</span><span class="p">,</span>  <span class="mf">0.84705882353</span><span class="p">,</span>  <span class="mf">0.91764705882</span><span class="p">)),</span>
+    <span class="mi">95</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Emergent Herbaceous Wetlands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.43921568628</span><span class="p">,</span>  <span class="mf">0.63921568628</span><span class="p">,</span>  <span class="mf">0.72941176471</span><span class="p">)),</span>
+<span class="p">}</span>
+
+<span class="n">indices</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">pars</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">pars</span><span class="p">)</span> <span class="ow">in</span> <span class="n">colors</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
 
 <div class="viewcode-block" id="FileManagerNLCD"><a class="viewcode-back" href="../../../sources.html#workflow.sources.manager_nlcd.FileManagerNLCD">[docs]</a><span class="k">class</span> <span class="nc">FileManagerNLCD</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;National Land Cover Database provides a raster for indexed land cover types</span>
@@ -205,6 +230,9 @@
 <span class="sd">    .. [NLCD] https://www.mrlc.gov/</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">colors</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
+    
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s1">&#39;Land_Cover&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;L48&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_input</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
         
@@ -302,12 +330,8 @@
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Not yet implemented (but trivial to add, just ask!): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">))</span>
 
-            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Downloading NLCD dataset: </span><span class="si">{}</span><span class="s1"> -- this will take a long time, depending upon internet connection.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">))</span>
-
             <span class="n">downloadfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_folder</span><span class="p">,</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">downloadfile</span><span class="p">)</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to download source for target &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="n">filename</span><span class="p">)</span>
-                <span class="n">source_utils</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">downloadfile</span><span class="p">)</span>
+            <span class="n">source_utils</span><span class="o">.</span><span class="n">download_progress_bar</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">downloadfile</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span>
             <span class="n">source_utils</span><span class="o">.</span><span class="n">unzip</span><span class="p">(</span><span class="n">downloadfile</span><span class="p">,</span> <span class="n">work_folder</span><span class="p">)</span>
 
             <span class="c1"># hope we can find it?</span>
