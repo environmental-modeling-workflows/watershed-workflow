@@ -15,7 +15,7 @@ import workflow
 import rasterio
 # import scipy
 from scipy.signal import savgol_filter
-
+import re
 
 VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
 
@@ -57,9 +57,7 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-
-def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = False, buffer = 0.01):
-
+def collectDaymet(bounds, start, end, crs, vars='all', force=False, buffer=0.01):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
@@ -74,8 +72,6 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
         list of strings that are in VALID_VARIABLES. Default is use all available variables.
     force : bool
         Download or re-download the file if true.    
-    combine : bool
-        whether to combine downloaded raw files into a single NetCDF4 file. Default is False.
     buffer, float
         buffer used for watershed shape (in degree)
     """
@@ -114,20 +110,10 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, combine = Fa
                 my_start = 365 * (year - start.year) - start.doy + 1
                 dat[var][my_start:my_start+365,:,:] = v
 
-    if combine:
-        logging.info(f"Combining all NetCDF into one...")
-        import xarray as xr
-
-        path = '/'.join(re.split(r'\/', fname)[:-1]) + "/"
-        all_daymet = f"daymet_*_*_{feather_bounds[3]}x{feather_bounds[0]}_{feather_bounds[1]}x{feather_bounds[2]}.nc"
-        dset = xr.open_mfdataset(path +  all_daymet)
-        outfile = path + f"daymet_all_{start.doy}-{start.year}_{end.doy}-{end.year}.nc"
-        dset.to_netcdf(outfile, format = "NETCDF4")
-        logging.info(f"writing a single NetCDF to : {outfile}")
     logging.info(f'seconds to write: {time.time()-T0} s')
     return dat, x, y
 
-def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
+def reproj_Daymet(x, y, raw, dst_crs, resolution=None):
     """
     reproject daymet raw data to watershed CRS.
     Parameters:
@@ -202,7 +188,7 @@ def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
     
     return new_x, new_y, new_extent, new_dat, daymet_profile
 
-def smoothRaw(raw, smooth_filter = True, nyears = None):
+def smoothRaw(raw, smooth_filter=True, nyears=None):
     """Smooth daymet to get a typical year by averaging each day across all years. Optionally can apply 
     a moving average filter to get smoother time series data.
     Parameters:
@@ -238,7 +224,6 @@ def smoothRaw(raw, smooth_filter = True, nyears = None):
 
     return smooth_dat
 
-
 def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     """Accepts a numpy named array of DayMet data and returns a dictionary ATS data. 
     It has the option to smooth the data.
@@ -248,7 +233,7 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
         smooth, bool
             whether to smooth the data or not
         smooth_filter, bool
-            whether to apply a savgol filter for smoothing. Default is True.
+            whether to apply a savgol filter for smoothing. Default is False.
         nyears, int
             how many years to repeat the typical year. Default is to get the same length as the raw data.
     """
@@ -256,12 +241,12 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     dout = dict()
     logging.info('Converting to ATS met input')
     
-    # make missing values Nans
-    for key in list(dat.keys()):
+    # make missing values -9999 Nans
+    for key in dat.keys():
         dat[key][dat[key] == -9999] = np.nan
 
     if smooth:
-        dat = smoothRaw(dat, smooth_filter = smooth_filter, nyears = nyears)
+        dat = smoothRaw(dat, smooth_filter=smooth_filter, nyears=nyears)
         logging.info(f"shape of smoothed dat is {dat[list(dat.keys())[0]].shape}")
     mean_air_temp_c = (dat['tmin'] + dat['tmax'])/2.0
     precip_ms = dat['prcp'] / 1.e3 / 86400. # mm/day --> m/s
@@ -278,10 +263,9 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
-    dout['wind speed [m s^-1]'] = 4. * np.ones_like(dout['relative humidity [-]'])
 
     # make Nans = -9999
-    for key in list(dout.keys()):
+    for key in dout.keys():
         dout[key][np.isnan(dout[key])] = -9999
 
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
