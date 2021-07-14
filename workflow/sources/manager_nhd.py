@@ -193,6 +193,7 @@ class _FileManagerNHD:
                         # give up fairly quickly, as this can be slow
                         break 
                     missing_catchments += 1
+                    reach['properties']['catchment'] = None
                 else:
                     reach['properties']['catchment'] = catch
         

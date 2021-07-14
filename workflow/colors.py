@@ -113,16 +113,29 @@ def gas_cmap():
 
 # jet-by-index
 def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
-    """Factory for a Scalar Mappable, which gives a color based upon a scalar value.
+    """Provide a function that maps scalars to colors in a given colormap.
 
-    Typical Usage:
-      >>> # plots 11 lines, with color scaled by index into jet
-      >>> mapper = cm_mapper(vmin=0, vmax=10, cmap=matplotlib.cm.jet)
-      >>> for i in range(11):
-      ...     data = np.load('data_%03d.npy'%i)
-      ...     plt.plot(x, data, color=mapper(i))
-      ...
-      >>> plt.show()
+    Parameters
+    ----------
+    vmin, vmax : scalar
+      Min and max scalars to be mapped.
+    cmap : str or matplotlib.cmap instance
+      The colormap to discretize.
+    norm : optional, matplotlib Norm object
+      A normalization.
+
+    Returns
+    -------
+    Function, cmap(scalar) -> (r,g,b,a)
+
+    Example
+    -------
+        # plot 4 lines
+        x = np.arange(10)
+        cm = cm_mapper(0,3,'jet')
+        for i in range(4):
+            plt.plot(x, x**i, color=cm(i))
+
     """
     if norm is None:
         norm = matplotlib.colors.Normalize(vmin, vmax)
@@ -130,6 +143,42 @@ def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
     def mapper(value):
         return sm.to_rgba(value)
     return mapper
+
+
+def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
+    """Calculate a discrete colormap with N entries from the continuous colormap cmap.
+
+    Parameters
+    ----------
+    ncolors : int
+      Number of colors.
+    cmap : str or matplotlib.cmap instance, optional
+      The colormap to discretize.  Default is 'jet'.
+
+    Returns
+    -------
+    matplotlib.colors.LinearSegmentedColormap instance
+
+    Example
+    -------
+        # plot 4 lines
+        x = np.arange(10)
+        colors = cmap_discretize('jet', 4)
+        for i in range(4):
+            plt.plot(x, x**i, color=colors[i])
+
+    """
+    if type(cmap) == str:
+        cmap = plt.get_cmap(cmap)
+    colors_i = np.concatenate((np.linspace(0, 1., ncolors), (0.,0.,0.,0.)))
+    colors_rgba = cmap(colors_i)
+    indices = np.linspace(0, 1., ncolors+1)
+    cdict = {}
+    for ki,key in enumerate(('red','green','blue')):
+        cdict[key] = [ (indices[i], colors_rgba[i-1,ki], colors_rgba[i,ki])
+                       for i in range(ncolors+1) ]
+    # Return colormap object.
+    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
 
 
 def float_list_type(mystring):
@@ -293,48 +342,46 @@ def generate_nlcd_colormap(indices=None, formatted=False):
 
     return indices, cmap, norm, ticks, labels
 
-def colorbar_index(ncolors, cmap, labels = None):
-    """add colorbar index based on colormap and ncolors. Thsi will set ticks in the middle of each color range.
-    Parameters:
-        ncolors, int
-            number of colors
-        cmap, colormap instance
-        labels, list, optional
-            List of labels that equal to the number of colors. Default is to use numbers.
 
-    See StackOverFlow post : https://stackoverflow.com/a/18707445/9319184
+def colorbar_index(ncolors, cmap, labels=None, **kwargs):
+    """Add an indexed colorbar based on a given colormap.
+
+    This sets ticks in the middle of each color range, adds the
+    colorbar, and sets the labels if provided.
+
+    Parameters
+    ----------
+    ncolors : int
+      Number of colors to display.
+    cmap : matplotlib.cmap instance
+      The colormap used in the image.
+    labels : list
+      Optional list of label strings that equal to the number of
+      colors. If not provided, labels are set to range(ncolors).
+    kwargs : dict
+      Other arguments are passed on to the plt.colorbar() call, which
+      can be used for things like fraction, pad, etc to control the
+      location/spacing of the colorbar.
+
+    Returns
+    -------
+    colorbar : the colorbar object
+
     """
-    cmap = cmap_discretize(cmap, ncolors)
+    cmap = cm_discrete(ncolors, cmap)
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
     mappable.set_array([])
     mappable.set_clim(-0.5, ncolors+0.5)
-    colorbar = plt.colorbar(mappable,fraction=0.03, pad=0.04)
+
+    if 'fraction' not in kwargs: kwargs['fraction'] = 0.03
+    if 'pad' not in kwargs: kwargs['pad'] = 0.04
+    
+    colorbar = plt.colorbar(mappable,**kwargs)
     colorbar.set_ticks(np.linspace(0, ncolors, ncolors)) # set tick locations
     # set tick labels
     if labels is not None:
         colorbar.set_ticklabels(labels)
     else:
         colorbar.set_ticklabels(range(ncolors)) 
-    
-def cmap_discretize(cmap, N):
-    """Return a discrete colormap from the continuous colormap cmap.
-        cmap: colormap instance, eg. cm.jet. 
-        N: number of colors.
+    return colorbar
 
-    Example
-        x = resize(arange(100), (5,100))
-        djet = cmap_discretize(cm.jet, 5)
-        imshow(x, cmap=djet)
-    """
-
-    if type(cmap) == str:
-        cmap = plt.get_cmap(cmap)
-    colors_i = np.concatenate((np.linspace(0, 1., N), (0.,0.,0.,0.)))
-    colors_rgba = cmap(colors_i)
-    indices = np.linspace(0, 1., N+1)
-    cdict = {}
-    for ki,key in enumerate(('red','green','blue')):
-        cdict[key] = [ (indices[i], colors_rgba[i-1,ki], colors_rgba[i,ki])
-                       for i in range(N+1) ]
-    # Return colormap object.
-    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%N, cdict, 1024)

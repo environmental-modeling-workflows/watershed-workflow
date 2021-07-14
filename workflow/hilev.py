@@ -342,9 +342,12 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
 
         for reach in reaches:
             if 'catchment' in reach.properties:
-                reach.properties['catchment'] = workflow.utils.shply(reach.properties['catchment'])
-                reach.properties['catchment'] = workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
-                reach.properties['area'] = reach.properties['catchment'].area
+                if reach.properties['catchment'] == None:
+                    reach.properties['area'] = 0
+                else:
+                    reach.properties['catchment'] = workflow.utils.shply(reach.properties['catchment'])
+                    reach.properties['catchment'] = workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
+                    reach.properties['area'] = reach.properties['catchment'].area
     else:
         out_crs = native_crs
 
@@ -942,6 +945,8 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
             up = mybox[0,0] + jj * (mybox[0,1] - mybox[0,0])
             dn = mybox[1,0] + jj * (mybox[1,1] - mybox[1,0])
             out[k] = up + (dn - up) * ii
+    else:
+        raise ValueError(f'Invalid algorithm "{algorithm}", valid are "nearest" and "piecewise bilinear"')
     return out
     
 
