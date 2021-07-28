@@ -72,7 +72,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
-    def get_shapes_and_properties(self, bounds, crs):
+    def get_shapes_and_properties(self, bounds, crs, min_porosity=0.01, max_permeability=np.inf):
         """Read shapes and process properties.
 
         Parameters
@@ -81,6 +81,15 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
           bounds in which to find GLHYMPS shapes.
         crs : CRS
           CRS of the bounds.
+        min_porosity : optional, double in [0,1]
+          Some GLHYMPs formations have zero porosity, and this breaks
+          most codes.  This allows the user to set the minimum valid
+          porosity.  Defaults to 0.01 (1%).
+        max_permeability : optional, double > 0
+          Some GLHYMPs formations (fractured bedrock?) have very 
+          high permeability, and this results in very slow runs.  This
+          allows the user to set a maximum valid permeability [m^2].
+          Defaults to inf.
 
         Returns
         -------
@@ -90,6 +99,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
             List of fiona shapes that match the index or bounds.
         properties : pandas dataframe
             Dataframe including geologic properties.
+
         """
         profile, shapes = self.get_shapes(bounds, crs)
         ids = np.array([shp['properties']['OBJECTID_1'] for shp in shapes], dtype=int)
@@ -98,15 +108,16 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         
         Ksat = np.array([shp['properties']['logK_Ferr_'] for shp in shapes], dtype=float)
         Ksat = 10**(Ksat / 100) # units = m^2, division by 100 is per GLHYMPS Readme file
+        Ksat = np.minimum(Ksat, max_permeability)
         Ksat_std = np.array([shp['properties']['K_stdev_x1'] for shp in shapes], dtype=float) # standard deviation
         Ksat_std = Ksat_std / 100 # division by 100 is per GLHYMPS readme
         poro = np.array([shp['properties']['Porosity_x'] for shp in shapes], dtype=float) # [-]
         poro = poro / 100 # division by 100 is per GLHYMPS readme
-        poro = np.maximum(poro, 0.01) # some values are 0?
+        poro = np.maximum(poro, min_porosity) # some values are 0?
 
         # derived properties
         # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-        vg_alpha = workflow.soil_properties.alpha_from_permeability(Ksat, np.maximum(poro,0.1))
+        vg_alpha = workflow.soil_properties.alpha_from_permeability(Ksat, poro)
         vg_n = 2.0  # arbitrarily chosen
         sr = 0.01  # arbitrarily chosen
 

@@ -165,7 +165,7 @@ def get_split_form_hucs(source, huc, level=None, out_crs=None, digits=None):
     return out_crs, workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
-def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False):
+def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False, **kwargs):
     """Read a shapefile.
 
     If index_or_bounds is a bounding box, in_crs must not be None and is the crs
@@ -189,6 +189,8 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         Number of digits to round coordinates to.
     properties : bool, optional
         If true, also get properties from the source.
+    kwargs : dict
+        All extra parameters are passed to the source manager's function.
 
     Returns
     -------
@@ -210,9 +212,9 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         source = workflow.sources.manager_shape.FileManagerShape(source)
 
     if properties:
-        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs)
+        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs, **kwargs)
     else:
-        profile, shps = source.get_shapes(index_or_bounds, in_crs)
+        profile, shps = source.get_shapes(index_or_bounds, in_crs, **kwargs)
     logging.info(f"... found {len(shps)} shapes")
 
     # convert to shapely

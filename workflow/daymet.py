@@ -192,7 +192,7 @@ def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
     
     return new_x, new_y, new_extent, new_dat, daymet_profile
 
-def smoothRaw(raw, smooth_filter = True, nyears = None):
+def smoothRaw(raw, smooth_filter=True, nyears=None):
     """Smooth daymet to get a typical year by averaging each day across all years. Optionally can apply 
     a moving average filter to get smoother time series data.
     Parameters:
@@ -246,7 +246,7 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     logging.info('Converting to ATS met input')
     
     if smooth:
-        dat = smoothRaw(dat, smooth_filter = smooth_filter, nyears = nyears)
+        dat = smoothRaw(dat, smooth_filter=smooth_filter, nyears=nyears)
         logging.info(f"shape of smoothed dat is {dat[list(dat.keys())[0]].shape}")
     mean_air_temp_c = (dat['tmin'] + dat['tmax'])/2.0
     precip_ms = dat['prcp'] / 1.e3 / 86400. # mm/day --> m/s
