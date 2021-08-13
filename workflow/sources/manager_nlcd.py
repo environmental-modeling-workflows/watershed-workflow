@@ -12,7 +12,7 @@ import workflow.warp
 import workflow.sources.names
 
 # No API for getting NLCD locally -- must download the whole thing.
-urls = {'NLCD_2016_Land_Cover_L48' : 'https://s3-us-west-2.amazonaws.com/mrlc/NLCD_2016_Land_Cover_L48_20190424.zip' }
+urls = {'NLCD_2016_Land_Cover_L48' : 'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_20210604.zip' }
 
 colors = {
     0:  ('None', (0.00000000000,  0.00000000000,  0.00000000000)),

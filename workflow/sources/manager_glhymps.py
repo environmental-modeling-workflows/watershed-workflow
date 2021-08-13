@@ -115,6 +115,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         poro = poro / 100 # division by 100 is per GLHYMPS readme
         poro = np.maximum(poro, min_porosity) # some values are 0?
 
+        descriptions = [shp['properties']['Descriptio'] for shp in shapes]
         # derived properties
         # - this scaling law has trouble for really small porosity, especially high permeability low porosity
         vg_alpha = workflow.soil_properties.alpha_from_permeability(Ksat, poro)
@@ -129,5 +130,6 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
                                             'van Genuchten alpha [Pa^-1]' : vg_alpha,
                                             'van Genuchten n [-]' : vg_n,
                                             'residual saturation [-]' : sr,
+                                            'description' : descriptions,
                                             })
         return profile, shapes, properties
