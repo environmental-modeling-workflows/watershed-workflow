@@ -1,6 +1,7 @@
 import numpy as np
 import attr
 import sortedcontainers
+import logging
 
 @attr.s
 class Point:
