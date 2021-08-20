@@ -159,14 +159,28 @@ class Mesh2D(object):
         return tuple(sorted((i,j)))
     
     def edges(self):
-        return self.edge_counts().keys()
+        return self.edges_to_cells().keys()
 
     def edge_counts(self):
+        if not hasattr(self, '_edge_counts'):
+            if not hasattr(self, '_edges_to_cells'):
+                self._edges_to_cells = self.edges_to_cells()
+            self._edge_counts = dict( (e,len(v)) for (e,v) in self._edges_to_cells.items() )
+        return self._edge_counts
+
+    def edges_to_cells(self):
         try:
-            return self._edges
+            return self._edges_to_cells
         except AttributeError:
-            self._edges = collections.Counter(self.edge_hash(f[i], f[(i+1)%len(f)]) for f in self.conn for i in range(len(f)))
-        return self._edges
+            self._edges_to_cells = collections.defaultdict(list)
+            for i,c in enumerate(self.conn):
+                for e in self.cell_edges(c):
+                    self._edges_to_cells[e].append(i)
+        return self._edges_to_cells
+
+    def cell_edges(self, conn):
+        for i in range(len(conn)):
+            yield self.edge_hash(conn[i], conn[(i+1)%len(conn)])
 
     def boundary_edges(self):
         """Return edges in the boundary of the mesh, ordered around the boundary."""
@@ -182,7 +196,7 @@ class Mesh2D(object):
             except StopIteration:
                 new_e = next( e for e in be if e[1] == be_ordered[-1][1])
                 be.remove(new_e)
-                new_e = list(reversed(new_e))
+                new_e = tuple(reversed(new_e))
 
             be_ordered.append(new_e)
             done = len(be) == 0
@@ -209,13 +223,17 @@ class Mesh2D(object):
             if cross < 0:
                 conn.reverse()
 
-    def centroids(self):
+
+    def compute_centroid(self, c):
+        """Computes, based on coords, the centroid of a cell with ID c"""
+        points = np.array([self.coords[i] for i in self.conn[c]])
+        return points.mean(axis=0)
+
+    def centroids(self, recompute=False):
         """Calculate surface mesh centroids."""
-        result = np.zeros((self.num_cells(),3),'d')
-        for c, conn in enumerate(self.conn):
-            points = np.array([self.coords[c] for c in conn])
-            result[c,:] = points.mean(axis=0)
-        return result
+        if recompute or not hasattr(self, '_centroids'):
+            self._centroids = np.array([self.compute_centroid(c) for c in range(self.num_cells())])
+        return self._centroids
     
     def plot(self, color=None, ax=None):
         """Plot the flattened 2D mesh."""
@@ -1069,7 +1087,7 @@ class Mesh3D(object):
                 elif layer_type.lower() == 'cell':
                     # interpolate cell thicknesses to node thicknesses
                     import scipy.interpolate
-                    centroids = mesh2D.cell_centroids()
+                    centroids = mesh2D.centroids()
                     interp = scipy.interpolate.interp2d(centroids[:,0], centroids[:,1], layer_datum, kind='linear')
                     layer_bottom[:] = coords[:,cell_layer_start,2] - interp(mesh2D.coords[:,0], mesh2D.coords[:,1])
 
