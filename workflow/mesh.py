@@ -1149,7 +1149,7 @@ class Mesh3D(object):
                         cells[face_cell].append(i_f)
 
                         # check if this is an external
-                        if mesh2D._edges[edge] == 1:
+                        if mesh2D.edge_counts()[edge] == 1:
                             vertical_side_cells.append(face_cell)
                             vertical_side_indices.append(len(cells[face_cell])-1)
                         
