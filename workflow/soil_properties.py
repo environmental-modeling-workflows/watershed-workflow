@@ -7,13 +7,13 @@ Leverages Rosetta to go from soil properties to van Genucten curves.
 Authors: Pin Shuai (pin.shuai@pnnl.gov)
          Ethan Coon (coonet@ornl.gov)
 """
-
+import os
 import numpy as np
 import logging
 import pandas
-
+import tarfile
 import workflow.conf
-
+import workflow.sources.utils as source_utils
 
 def vgm_Rosetta(data, model_type):
     """
@@ -35,7 +35,21 @@ def vgm_Rosetta(data, model_type):
     import rosetta.ANN_Module
 
     db_path = workflow.conf.rcParams['DEFAULT']['rosetta_db_path'] 
-    
+    rosetta_path = workflow.conf.rcParams['DEFAULT']['rosetta_path'] 
+    rosetta_url = 'http://www.u.arizona.edu/~ygzhang/rosettav3/Rosetta-3.0beta-py3.tar.gz'
+    downloadfile = os.path.join(rosetta_path, 'Rosetta-3.0beta-py3.tar.gz')
+    if not os.path.exists(rosetta_path):
+        logging.info(f"Downloading Rosetta...")
+        os.makedirs(rosetta_path, exist_ok=True)
+        source_utils.download(rosetta_url, downloadfile)
+        # unzip
+        file = tarfile.open(downloadfile)
+        file.extractall(rosetta_path)
+        file.close()
+        logging.info(f"Rosetta is downloaded to: {rosetta_path}")
+        # remove the zip file
+        os.remove(downloadfile)
+
     logging.info(f'Running Rosetta for van Genutchen parameters')
     logging.info(f'  database: {db_path}')
     logging.info(f'  model type: {model_type}')
