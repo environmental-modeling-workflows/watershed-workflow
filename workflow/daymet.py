@@ -57,7 +57,7 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False):
+def collectDaymet(bounds, crs, start, end, vars=None, force=False):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
@@ -107,13 +107,6 @@ def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False
                 my_start = 365 * (year - start.year) - start.doy + 1
                 dat[var][my_start:my_start+365,:,:] = v
 
-    if combine:
-        import xarray as xr
-        path = '/'.join(re.split(r'\/', fname)[:-1]) + "/"
-        dset = xr.open_mfdataset(path +  "*.nc")
-        outfile = path + f"daymet_{start.doy}-{start.year}_{end.doy}-{end.year}.nc"
-        dset.to_netcdf(outfile, format = "NETCDF4")
-        logging.info(f"writing a single NetCDF to : {outfile}")
     logging.info(f'seconds to write: {time.time()-T0} s')
     return dat, x, y
 
@@ -172,7 +165,7 @@ def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
         'interleave': 'pixel'
     }
 
-    logging.info(f'daymet profile: {daymet_profile}') 
+    logging.debug(f'daymet profile: {daymet_profile}') 
     
     logging.info(f'reprojecting to new crs: {dst_crs}') 
     new_dat = {}
@@ -256,7 +249,7 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
 
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
-    dout['time [s]'] = time
+    # dout['time [s]'] = time
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
@@ -264,7 +257,7 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
-    return dout
+    return time, dout
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
@@ -299,7 +292,6 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
                 idat = dat[key][i,:,:]
                 # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
                 rev_idat = np.flip(idat, axis=0)
-                
                 grp.create_dataset(str(i), data=rev_idat)
 
         for key, val in attrs.items():
@@ -328,7 +320,7 @@ def writeHDF5(dat, x, y, attrs, filename):
         pass
 
     with h5py.File(filename, 'w') as fid:
-        time = dat.pop('time [s]')
+        time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
         fid.create_dataset('time [s]', data=time)
         assert(len(x.shape) == 1)
         assert(len(y.shape) == 1)
