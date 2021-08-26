@@ -211,8 +211,6 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         source_filename = source
         logging.info(f"Loading file: '{source}'")      
         source = workflow.sources.manager_shape.FileManagerShape(source)
-        if 'GLHYMPS' in source_filename:
-            source = workflow.sources.manager_glhymps.FileManagerGLHYMPS()
 
     if properties:
         profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs, **kwargs)

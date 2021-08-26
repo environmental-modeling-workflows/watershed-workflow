@@ -166,7 +166,6 @@ def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
     }
 
     logging.debug(f'daymet profile: {daymet_profile}') 
-    
     logging.info(f'reprojecting to new crs: {dst_crs}') 
     new_dat = {}
     for var in var_list:
@@ -249,7 +248,6 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
 
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
-    # dout['time [s]'] = time
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
@@ -310,7 +308,7 @@ def getAttrs(bounds, start, end):
     attrs['DayMet end date'] = str(end)
     return attrs    
 
-def writeHDF5(dat, x, y, attrs, filename):
+def writeHDF5(dat, x, y, attrs, filename, time=None):
     """Write daymet to a single HDF5 file."""
     logging.info('Writing HDF5 file: {}'.format(filename))
 
@@ -319,8 +317,12 @@ def writeHDF5(dat, x, y, attrs, filename):
     except FileNotFoundError:
         pass
 
-    with h5py.File(filename, 'w') as fid:
+    if time is None:
         time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
+    else:
+        assert(len(time) == dat[list(dat.keys())[0]].shape[0])
+
+    with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=time)
         assert(len(x.shape) == 1)
         assert(len(y.shape) == 1)
