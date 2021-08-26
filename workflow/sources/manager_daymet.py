@@ -66,7 +66,7 @@ class FileManagerDaymet:
         self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
-    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False, buffer = 0.01):
+    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False, buffer=0.01):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -83,6 +83,7 @@ class FileManagerDaymet:
           Download or re-download the file if true.
         buffer, float
           buffer used for watershed shape (in degree)
+
         Returns
         -------
         filename : str

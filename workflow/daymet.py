@@ -13,9 +13,7 @@ import numpy as np
 import time
 import workflow
 import rasterio
-# import scipy
 from scipy.signal import savgol_filter
-import re
 
 VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
 
@@ -57,23 +55,23 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-def collectDaymet(bounds, start, end, crs, vars='all', force=False, buffer=0.01):
+def collectDaymet(bounds, crs, start, end, vars=None, force=False, buffer=0.01):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
           Collect a file that covers this shape or bounds.
+    crs : CRS object
+          Coordinate system of the above polygon_or_bounds           
     start: str
         start date in the format of "doy-year", e.g., "1-2012"
     end: str
         end date in the format of "doy-year", e.g., "365-2012"     
-    crs : CRS object
-          Coordinate system of the above polygon_or_bounds           
     vars: list or 'all'
         list of strings that are in VALID_VARIABLES. Default is use all available variables.
     force : bool
         Download or re-download the file if true.    
     buffer, float
-        buffer used for watershed shape (in degree)
+        buffer used for watershed shape (in degrees!)
     """
     T0 = time.time()
 
@@ -81,7 +79,7 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, buffer=0.01)
         start = stringToDate(start)
         end = stringToDate(end)
 
-    if vars == 'all':
+    if vars == 'all' or vars is None:
         vars = VALID_VARIABLES
         logging.info(f"downloading variables: {VALID_VARIABLES}")
 
@@ -92,7 +90,7 @@ def collectDaymet(bounds, start, end, crs, vars='all', force=False, buffer=0.01)
  
     for year in range(start.year, end.year+1):
         for var in vars:
-            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download = force, buffer = buffer)
+            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download=force, buffer=buffer)
 
             x,y,v = loadFile(fname, var) # returned v.shape(nband, nrow, ncol)
             if not d_inited:
