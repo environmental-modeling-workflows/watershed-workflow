@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -173,15 +174,18 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">shapely.wkt</span>
 
 <span class="kn">import</span> <span class="nn">workflow.crs</span>
 <span class="kn">import</span> <span class="nn">workflow.sources.names</span>
 <span class="kn">import</span> <span class="nn">workflow.warp</span>
 <span class="kn">import</span> <span class="nn">workflow.utils</span>
 <span class="kn">import</span> <span class="nn">workflow.soil_properties</span>
+<span class="kn">import</span> <span class="nn">workflow.io</span>
 
 
-<span class="n">_query_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="n">_query_template_props</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">SELECT</span>
 <span class="s2"> saversion, saverest, l.areasymbol, l.areaname, l.lkey, musym, muname, museq, mu.mukey, comppct_r, compname, localphase, slope_r, c.cokey, hzdept_r, hzdepb_r, ksat_r, sandtotal_r, claytotal_r, silttotal_r, dbthirdbar_r , partdensity, wsatiated_r, ch.chkey</span>
 
@@ -192,6 +196,44 @@
 <span class="s2">(</span><span class="si">{}</span><span class="s2">)</span>
 <span class="s2">  LEFT OUTER JOIN component c ON c.mukey = mu.mukey</span>
 <span class="s2">LEFT OUTER JOIN chorizon ch ON ch.cokey = c.cokey</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">_query_template_shapes</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">~DeclareGeometry(@aoiGeom)~</span>
+<span class="s2">~DeclareGeometry(@aoiGeomFixed)~</span>
+<span class="s2">CREATE TABLE #AoiTable</span>
+<span class="s2">    ( aoiid INT IDENTITY (1,1),</span>
+<span class="s2">    landunit VARCHAR(20),</span>
+<span class="s2">    aoigeom GEOMETRY )</span>
+<span class="s2">;</span>
+<span class="s2"> </span>
+<span class="s2">SELECT @aoiGeom = GEOMETRY::STGeomFromText(&#39;</span><span class="si">{}</span><span class="s2">&#39;, 4326);</span>
+<span class="s2">SELECT @aoiGeomFixed = @aoiGeom.MakeValid().STUnion(@aoiGeom.STStartPoint());</span>
+<span class="s2">INSERT INTO #AoiTable ( landunit, aoigeom ) </span>
+<span class="s2">VALUES (&#39;My Geom&#39;, @aoiGeomFixed);</span>
+<span class="s2">-- End of AOI geometry section</span>
+<span class="s2">-- #AoiSoils table contains intersected soil polygon table with geometry</span>
+<span class="s2">CREATE TABLE #AoiSoils</span>
+<span class="s2">    ( polyid INT IDENTITY (1,1),</span>
+<span class="s2">    aoiid INT,</span>
+<span class="s2">    landunit VARCHAR(20),</span>
+<span class="s2">    mukey INT,</span>
+<span class="s2">    soilgeom GEOMETRY )</span>
+<span class="s2">;</span>
+<span class="s2">-- End of CREATE TABLE section</span>
+<span class="s2">-- Populate #AoiSoils table with intersected soil polygon geometry</span>
+<span class="s2">INSERT INTO #AoiSoils (aoiid, landunit, mukey, soilgeom)</span>
+<span class="s2">    SELECT A.aoiid, A.landunit, M.mukey, M.mupolygongeo.STIntersection(A.aoigeom ) AS soilgeom</span>
+<span class="s2">    FROM mupolygon M, #AoiTable A</span>
+<span class="s2">    WHERE mupolygongeo.STIntersects(A.aoigeom) = 1</span>
+<span class="s2">;</span>
+<span class="s2">-- #AoiSoils2 is single part polygon</span>
+<span class="s2">SELECT landunit, I.mukey, musym, soilgeom.STGeometryN(Numbers.n).MakeValid() AS wktgeom</span>
+<span class="s2">FROM #AoiSoils AS I</span>
+<span class="s2">JOIN Numbers ON Numbers.n &lt;= I.soilgeom.STNumGeometries()</span>
+<span class="s2">INNER JOIN mapunit M ON I.mukey = M.mukey</span>
+<span class="s2">;</span>
+<span class="s2">-- END OF AOI GEOMETRY QUERY</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
 
@@ -390,9 +432,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name_manager</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                                                          <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;soil_structure&#39;</span><span class="p">,</span><span class="s1">&#39;SSURGO&#39;</span><span class="p">),</span>
                                                          <span class="s1">&#39;&#39;</span><span class="p">,</span>
-                                                         <span class="s1">&#39;SSURGO_</span><span class="si">%s</span><span class="s1">.gml&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">fstring</span><span class="p">)</span>
+                                                         <span class="s1">&#39;SSURGO_</span><span class="si">%s</span><span class="s1">.shp&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">fstring</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">url_spatial</span> <span class="o">=</span> <span class="s1">&#39;https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs&#39;</span>
+
+        <span class="c1">#self.url_spatial = &#39;https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs&#39;</span>
+        <span class="c1">#self.url_spatial = &#39;https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url_spatial</span> <span class="o">=</span> <span class="s1">&#39;https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url_data</span> <span class="o">=</span> <span class="s1">&#39;https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest&#39;</span>
 
         
@@ -423,16 +468,17 @@
         <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">)</span>
         <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">_flip</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Generate a new fiona shape in long-lat from one in lat-long&quot;&quot;&quot;</span>
-            <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">generate_rings</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ring</span><span class="p">):</span>
-                    <span class="n">ring</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">shp</span>
+        <span class="c1"># def _flip(shp):</span>
+        <span class="c1">#     &quot;&quot;&quot;Generate a new fiona shape in long-lat from one in lat-long&quot;&quot;&quot;</span>
+        <span class="c1">#     for ring in workflow.utils.generate_rings(shp):</span>
+        <span class="c1">#         for i,c in enumerate(ring):</span>
+        <span class="c1">#             ring[i] = c[1],c[0]</span>
+        <span class="c1">#     return shp</span>
         
         <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
             <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
-            <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">_flip</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">fid</span><span class="p">]</span>
+            <span class="c1">#shapes = [_flip(s) for s in fid]</span>
+            <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
             <span class="n">s</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
@@ -444,8 +490,6 @@
     
     <span class="k">def</span> <span class="nf">download_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mukeys</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Queries REST API for parameters by MUKEY.&quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">pandas</span>
-
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  Downloading raw properties data via request:&#39;</span><span class="p">)</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    to file: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -463,12 +507,12 @@
                             <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
             
             <span class="n">mukey_list_string</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mukeys</span><span class="p">])</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="n">_query_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mukey_list_string</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">_query_template_props</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mukey_list_string</span><span class="p">)</span>
 
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FORMAT&#39;</span> <span class="p">:</span> <span class="s1">&#39;JSON&#39;</span><span class="p">,</span>
                     <span class="s1">&#39;QUERY&#39;</span> <span class="p">:</span> <span class="n">query</span><span class="p">}</span>
             <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_data</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  full URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  full URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
             <span class="n">table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;Table&#39;</span><span class="p">])</span>
@@ -509,7 +553,6 @@
 
         <span class="c1"># all structure data frames are expected to have a &#39;source&#39; and an &#39;id&#39; in that source field</span>
         <span class="n">df_ats</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;NRCS&#39;</span>
-        <span class="n">df_ats</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_ats</span><span class="p">[</span><span class="s1">&#39;mukey&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">df_ats</span>
 
     
@@ -540,7 +583,7 @@
         <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_manager</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="o">*</span><span class="n">bounds_inner</span><span class="p">)</span>
 
         <span class="n">profile</span><span class="p">,</span> <span class="n">shapes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
-        <span class="n">mukeys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">])</span>
+        <span class="n">mukeys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;mukey&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">])</span>
 
         <span class="n">data_filename</span> <span class="o">=</span> <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;_properties.csv&quot;</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_properties</span><span class="p">(</span><span class="n">mukeys</span><span class="p">,</span> <span class="n">data_filename</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
@@ -550,8 +593,8 @@
     <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a bounds in the NRCS coordinate system for use in downloading.&quot;&quot;&quot;</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">bounds_crs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-.</span><span class="mi">0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-.</span><span class="mi">0001</span><span class="p">,</span>
-                  <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+.</span><span class="mi">0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+.</span><span class="mi">0001</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-</span><span class="mf">.0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">-</span><span class="mf">.0001</span><span class="p">,</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+</span><span class="mf">.0001</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="mi">4</span><span class="p">)</span><span class="o">+</span><span class="mf">.0001</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">b</span>
 
     <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -562,18 +605,28 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  Downloading spatial data via request:&#39;</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;    to file: </span><span class="si">{filename}</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;       from: </span><span class="si">{self.url_spatial}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    to file: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;       from: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url_spatial</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
-            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;REQUEST&#39;</span><span class="p">:</span><span class="s1">&#39;GetFeature&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;TYPENAME&#39;</span><span class="p">:</span><span class="s1">&#39;MapunitPoly&#39;</span><span class="p">,</span>
-                      <span class="s1">&#39;BBOX&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">qstring</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)}</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_spatial</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  full URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">box</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">box</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">_query_template_shapes</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">box</span><span class="o">.</span><span class="n">wkt</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FORMAT&#39;</span> <span class="p">:</span> <span class="s1">&#39;JSON&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;QUERY&#39;</span> <span class="p">:</span> <span class="n">query</span><span class="p">}</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_spatial</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_data</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  full URL: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
-                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  Converting to shapely&#39;</span><span class="p">)</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;Table&#39;</span><span class="p">]</span>
+
+            <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">wkt</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">ent</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="n">table</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">shp</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">table</span><span class="p">):</span>
+                <span class="n">shp</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">mukey</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  Writing to shapefile&#39;</span><span class="p">)</span>
+            <span class="n">workflow</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_to_shapefile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">shps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">filename</span></div>
 </pre></div>

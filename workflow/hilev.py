@@ -165,7 +165,7 @@ def get_split_form_hucs(source, huc, level=None, out_crs=None, digits=None):
     return out_crs, workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
-def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False):
+def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False, **kwargs):
     """Read a shapefile.
 
     If index_or_bounds is a bounding box, in_crs must not be None and is the crs
@@ -189,6 +189,8 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         Number of digits to round coordinates to.
     properties : bool, optional
         If true, also get properties from the source.
+    kwargs : dict
+        All extra parameters are passed to the source manager's function.
 
     Returns
     -------
@@ -210,9 +212,9 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         source = workflow.sources.manager_shape.FileManagerShape(source)
 
     if properties:
-        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs)
+        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs, **kwargs)
     else:
-        profile, shps = source.get_shapes(index_or_bounds, in_crs)
+        profile, shps = source.get_shapes(index_or_bounds, in_crs, **kwargs)
     logging.info(f"... found {len(shps)} shapes")
 
     # convert to shapely
@@ -342,9 +344,12 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
 
         for reach in reaches:
             if 'catchment' in reach.properties:
-                reach.properties['catchment'] = workflow.utils.shply(reach.properties['catchment'])
-                reach.properties['catchment'] = workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
-                reach.properties['area'] = reach.properties['catchment'].area
+                if reach.properties['catchment'] == None:
+                    reach.properties['area'] = 0
+                else:
+                    reach.properties['catchment'] = workflow.utils.shply(reach.properties['catchment'])
+                    reach.properties['catchment'] = workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
+                    reach.properties['area'] = reach.properties['catchment'].area
     else:
         out_crs = native_crs
 
@@ -632,7 +637,7 @@ def simplify_and_prune(hucs, reaches,
     rivers = workflow.hydrography.make_global_tree(reaches)
     assert(len(rivers) > 0)
 
-    if ignore_small_rivers > 0:
+    if ignore_small_rivers is not None:
         logging.info("Removing rivers with fewer than {} reaches.".format(ignore_small_rivers))
         for i in reversed(range(len(rivers))):
             ltree = len(rivers[i])
@@ -942,6 +947,8 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
             up = mybox[0,0] + jj * (mybox[0,1] - mybox[0,0])
             dn = mybox[1,0] + jj * (mybox[1,1] - mybox[1,0])
             out[k] = up + (dn - up) * ii
+    else:
+        raise ValueError(f'Invalid algorithm "{algorithm}", valid are "nearest" and "piecewise bilinear"')
     return out
     
 

@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
@@ -29,12 +31,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -251,14 +252,14 @@ removed from the installation below.</p>
 environment that includes the required packages:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">Packages for general users</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest</span>
 <span class="go">conda activate watershed_workflow</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id2">
 <div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes requests sortedcontainers attrs h5py netCDF4 pytest sphinx=1.8.5 numpydoc sphinx_rtd_theme nbsphinx</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest sphinx numpydoc sphinx_rtd_theme nbsphinx</span>
 <span class="go">conda activate watershed_watershed_dev</span>
 </pre></div>
 </div>

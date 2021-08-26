@@ -1,6 +1,7 @@
 import numpy as np
 import attr
 import sortedcontainers
+import logging
 
 @attr.s
 class Point:
@@ -147,9 +148,171 @@ def fill_pits3(points, outletID):
     assert(len(waterway) == len(points))
     return
                     
-        
+
+def fill_pits_dual(m2, outlet_edge=None, eps=1e-3):
+    """Conditions a dual mesh, ensuring the property that, starting with
+    an outlet cell, there is a path to every cell by way of faces that is
+    monotonically increasing in elevation.
+    """
+    if outlet_edge is None:
+        # determine the outlet edge -- the lowest edge point
+        boundary_edges = m2.boundary_edges()
+        outlet_edge = boundary_edges[0]
+        be_elev = (m2.coords[outlet_edge[0],2] + m2.coords[outlet_edge[1],2])/2.
+
+        for e in boundary_edges[1:]:
+            eh = (m2.coords[e[0],2] + m2.coords[e[1],2])/2.
+            if eh < be_elev:
+                be_elev = eh
+                outlet_edge = e
+    outlet_edge = m2.edge_hash(*outlet_edge)
+    
+
+    outlet_cell = m2.edges_to_cells()[outlet_edge]
+    assert(len(outlet_cell) == 1)
+    outlet_cell = outlet_cell[0]
+
+    class Waterway:
+        """Waterway is the set of cells that are already conditioned and can be reached."""
+        def __init__(self):
+            self.cells = set()
+
+            # Waterway edges is the set of edges whose cells are all in waterway
+            self.edges = set()
+            self.max_z = -1e10
+
+        def add(self, be):
+            """Add BoundaryEntry object to the waterway"""
+            logging.debug(f"adding cell {be.cell} (z = {be.z})")
+            assert(be.cell not in self.cells)
+            self.cells.add(be.cell)
+            for e in be.edges:
+                assert(e not in self.edges)
+                self.edges.add(e)
+            assert(be.z >= self.max_z)
+            self.max_z = be.z
+    waterway = Waterway()
+    
+    class BoundaryEntry:
+        """A cell that is not yet in the waterway, but has at least one edge whose other cell is in the waterway."""
+        def __init__(self, cell, edges):
+            assert(type(cell) is int)
+            assert(0 <= cell < m2.num_cells())
+            assert(type(edges) is list)
+            for e in edges:
+                assert(type(e) is tuple)
+
+            self.cell = cell
+            self.edges = edges
+            self.z = m2.compute_centroid(self.cell)[2]
+
+                
+    # Boundary is a list of (EDGE,EXTERNAL_CELL) tuples which are NOT
+    # yet in waterway_edges, or waterway, respectively, but whose
+    # cells other than EXTERNAL_CELL are in waterway.  The tuple is
+    # sorted by the elevation of EXTERNAL_CELL's centroid.  Note that
+    # EXTERNAL_CELL's centroid has been conditioned, so its elevation
+    # is at least as high as the highest elevation of cells in
+    # waterway.
+    def boundary_cell_sorting_value(be):
+        return be.z
+    boundary = sortedcontainers.SortedList([BoundaryEntry(outlet_cell, [outlet_edge,]),], key=boundary_cell_sorting_value)
+
+    while len(boundary) > 0:
+        # pop the lowest boundary cell and stick its edge and cell
+        next_be = boundary.pop(0)
+        waterway.add(next_be)
+
+        # find all other edges of the cell just added
+        for other_e in m2.cell_edges(m2.conn[next_be.cell]):
+            if other_e in waterway.edges: continue
+
+            # find the cell on the other side of other_e
+            other_e_cells = m2.edges_to_cells()[other_e]
+            if len(other_e_cells) == 1:
+                # boundary edge, add it to the waterway
+                assert(next_be.cell == other_e_cells[0])
+                waterway.edges.add(other_e)
+                continue 
+
+            assert(len(other_e_cells) == 2)
+            assert(next_be.cell in other_e_cells)
+            if next_be.cell == other_e_cells[0]:
+                other_c = other_e_cells[1]
+            else:
+                assert(next_be.cell == other_e_cells[1])
+                other_c = other_e_cells[0]
+
+            # this would break assumption of what it means to be
+            # in boundary.
+            assert(other_c not in waterway.cells)
+
+            # now we have an other_e, other_c pair to add into
+            # boundary.  But first we may need to condition.
+            other_c_centroid = m2.compute_centroid(other_c)
+            if other_c_centroid[2] < waterway.max_z:
+                other_c_nodes = m2.conn[other_c]
+                    
+                # for this to be possible, there must be at least
+                # one free node in the nodes of next_c.  By free,
+                # we mean that its elevation can be changed
+                # without breaking everything.  This means that
+                # neither of that node's edges can be in
+                # waterway.edges or boundary.
+                #
+                # we also need the fixed (non-free) node elevations
+                fixed_node_elevs = dict()
+
+                for e in m2.cell_edges(other_c_nodes):
+                    if (e == other_e) or (e in waterway.edges) or any((e == i) for be in boundary for i in be.edges):
+                        if e[0] not in fixed_node_elevs:
+                            fixed_node_elevs[e[0]] = m2.coords[e[0],2]
+                        if e[1] not in fixed_node_elevs:
+                            fixed_node_elevs[e[1]] = m2.coords[e[1],2]
+                free_nodes = [n for n in other_c_nodes if n not in fixed_node_elevs]
+
+                # should not be possible to be both lower
+                # elevation and not have a free node, or it would
+                # already be in boundary, and therefore have no
+                # free nodes
+                assert(len(free_nodes) > 0) 
+
+                # calculate the z of the free node required to
+                # make the triangle's centroid == waterway_max
+                #
+                # this formula is likely triangle-only?
+                z_free = (waterway.max_z * len(other_c_nodes) - sum(fixed_node_elevs.values())) / len(free_nodes) + eps
+
+                # for now, we'll assume triangular.  I'm not sure
+                # what to do if this is bigger than length
+                # 1... something like evenly raise up all free
+                # nodes?  But with triangles, there can only be
+                # one free node so it is easy.
+                assert(len(free_nodes) == 1)
+                logging.debug(f'  moving z node {free_nodes[0]} from {m2.coords[free_nodes[0],2]} to {z_free}')
+                m2.coords[free_nodes[0],2] = z_free
+
+            # now it is conditioned, add it to the boundary
+            try:
+                # is it already in the boundary?
+                other_be = next(be for be in boundary if be.cell == other_c)
+            except StopIteration:
+                # no, add it
+                logging.debug(f'  adding to boundary: edge: {other_e}  cell: {other_c}')
+                boundary.add(BoundaryEntry(other_c, [other_e,]))
+            else:
+                # yes, just add this edge to that entry
+                assert(other_e not in other_be.edges)
+                other_be.edges.append(other_e)
+                        
+    # when this is done, all cells should be in waterway
+    assert(len(waterway.cells) == m2.num_cells())
+    assert(len(waterway.edges) == m2.num_edges())
+    return
+
 
 def fill_pits(mesh, outlet=None, algorithm=3):
+
     """Condition a 2D mesh, in place.
     
     Starts at outlet, if not provided, this defaults to the lowpoint on the boundary.
@@ -174,7 +337,7 @@ def fill_pits(mesh, outlet=None, algorithm=3):
         raise RuntimeError('Unknown algorithm "%r"'%(algorithm))
 
     mesh.points = np.array([p.coords for p in points_dict.values()])
-    
+
 
 def smooth(img_in, algorithm='gaussian', **kwargs):
     """Smooths an image according to an algorithm, passing kwargs on to that algorithm."""
