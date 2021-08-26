@@ -76,7 +76,7 @@ class FileManagerRaster:
             raster = fid.read(band, window=window)
             assert(raster.shape == (window_profile['height'], window_profile['width']))
 
-        if 'nodata' in window_profile:
+        if 'nodata' in window_profile and window_profile['nodata'] is not None:
             if window_profile['nodata'] is not None:
                 window_profile['nodata'] = np.array([window_profile['nodata'],], dtype=raster.dtype)[0]
         return window_profile, raster
