@@ -32,12 +32,17 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
        V1
 
     """
-    def __init__(self):
-        self.name = 'GLHYMPS version 2.0'
-        self.names = workflow.sources.names.Names(self.name,
-                                                  os.path.join('soil_structure','GLHYMPS'),
-                                                  '', 'GLHYMPS.shp')
-        super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
+    def __init__(self, filename=None):
+        if filename is None:
+            self.name = 'GLHYMPS version 2.0'
+            self.names = workflow.sources.names.Names(self.name,
+                                                      os.path.join('soil_structure','GLHYMPS'),
+                                                      '', 'GLHYMPS.shp')
+            super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
+        else:
+            self.name = filename
+            self.names = None
+            super(FileManagerGLHYMPS, self).__init__(self.name)
 
     def get_shapes(self, bounds, crs, force_download=None):
         """Read the shapes in bounds provided by shape object.
@@ -63,6 +68,8 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
     def _download(self):
         """Download the files, returning downloaded filename."""
         # check directory structure
+        if self.names is None:
+            raise ValueError('GLHYMPS file manager was given a custom path -- downloading not available')
         filename = self.names.file_name()
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
