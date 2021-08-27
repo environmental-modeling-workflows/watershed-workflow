@@ -38,6 +38,10 @@ from pyproj.crs import CRS
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+def is_native(crs):
+    """Is this crs in the native format?"""
+    return type(crs) == type(to_proj(crs))
+
 def from_proj(crs):
     """Converts a Proj CRS to the workflow CRS standard.
 
