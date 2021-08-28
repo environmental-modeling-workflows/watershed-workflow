@@ -7,6 +7,7 @@ import fiona
 import workflow.warp
 import workflow.utils
 import workflow.conf
+import workflow.crs
 
 @attr.s
 class FileManagerShape:
@@ -72,7 +73,15 @@ class FileManagerShape:
                 else:
                     shps = [s for s in fid]
             else:
-                bounds = workflow.warp.bounds(index_or_bounds, crs, workflow.crs.from_fiona(profile['crs']))
+                crs_file = profile['crs']
+                try:
+                    crs_file = workflow.crs.from_fiona(profile['crs'])
+                except workflow.crs.CRSError:
+                    # try to read a damaged file with only wkt
+                    crs_file = workflow.crs.from_wkt(profile['crs_wkt'])
+                    profile['crs'] = workflow.crs.to_fiona(crs_file)
+                    
+                bounds = workflow.warp.bounds(index_or_bounds, crs, crs_file)
                 shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps

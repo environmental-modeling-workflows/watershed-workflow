@@ -34,6 +34,7 @@ dealing with these packages in an integrated form much simpler.
 import logging
 import pyproj.crs
 from pyproj.crs import CRS
+from pyproj.crs import CRSError
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
