@@ -69,7 +69,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
         """Download the files, returning downloaded filename."""
         # check directory structure
         if self.names is None:
-            raise ValueError('GLHYMPS file manager was given a custom path -- downloading not available')
+            return self.name
         filename = self.names.file_name()
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
