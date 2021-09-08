@@ -36,14 +36,13 @@ def config():
 
     # rosetta
     try:
-        rosetta_db_path = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'], 'workflow_tpls',
-                                       'rosetta', 'sqlite', 'rosetta.sqlite')
+        rosetta_path = os.path.join(os.environ['WATERSHED_WORKFLOW_DIR'],
+                                    'workflow_tpls', 'rosetta')
     except KeyError:
         workflow_dir = os.path.split(os.path.split(__file__)[0])[0]
-        rosetta_db_path = os.path.join(workflow_dir, 'workflow_tpls',
-                                       'rosetta', 'sqlite', 'rosetta.sqlite')
-    rcParams['DEFAULT']['rosetta_db_path'] = rosetta_db_path
-
+        rosetta_path = os.path.join(workflow_dir, 'workflow_tpls', 'rosetta')                                       
+    rcParams['DEFAULT']['rosetta_path'] = rosetta_path
+    rcParams['DEFAULT']['rosetta_db_path'] = os.path.join(rosetta_path, 'sqlite', 'Rosetta.sqlite')
                                             
     rcParams.read([os.path.join(os.getcwd(), 'watershed_workflowrc'),
                    os.path.join(os.getcwd(), '.watershed_workflowrc'),

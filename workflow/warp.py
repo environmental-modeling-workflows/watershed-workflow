@@ -111,8 +111,13 @@ def raster(src_profile, src_array,
            dst_crs=None, resolution=None, dst_height=None, dst_width=None,
            resampling_method=rasterio.warp.Resampling.nearest):
     """Warp a raster from src_profile to dst_crs, or resample resolution."""
+    if workflow.crs.is_native(src_profile['crs']):
+        src_crs = src_profile['crs']
+        src_crs_rio = workflow.crs.to_rasterio(src_crs)
+    else:
+        src_crs_rio = src_profile['crs']
+        src_crs = workflow.crs.from_rasterio(src_crs_rio)
 
-    src_crs = workflow.crs.from_rasterio(src_profile['crs'])
     if resolution is None and dst_height is None and dst_width is None and \
        (dst_crs is None or workflow.crs.equal(dst_crs, src_crs)):
         # nothing to do
@@ -124,8 +129,8 @@ def raster(src_profile, src_array,
         dst_width = src_profile['width']
 
     if dst_crs is None:
-        dst_crs = workflow.crs.from_rasterio(src_profile['crs'])
-    dst_crs_rasterio = workflow.crs.to_rasterio(dst_crs)
+        dst_crs = src_crs
+    dst_crs_rio = workflow.crs.to_rasterio(dst_crs)
 
     src_bounds = rasterio.transform.array_bounds(src_profile['height'], src_profile['width'], src_profile['transform'])
     logging.debug('Warping raster with bounds: {} to CRS: {}'.format(src_bounds, dst_crs))
@@ -134,12 +139,12 @@ def raster(src_profile, src_array,
     # Calculate the ideal dimensions and transformation in the new crs
     dst_profile = src_profile.copy()
     dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
-        src_profile['crs'], dst_crs_rasterio, src_profile['width'], src_profile['height'], 
+        src_crs_rio, dst_crs_rio, src_profile['width'], src_profile['height'], 
         *src_bounds, resolution=resolution, dst_height=dst_height, dst_width=dst_width)
         
     # update the relevant parts of the profile
     dst_profile.update({
-        'crs' : dst_crs_rasterio,
+        'crs' : dst_crs_rio,
         'transform' : dst_transform,
         'width' : dst_width,
         'height' : dst_height})
@@ -159,8 +164,8 @@ def raster(src_profile, src_array,
 
     dst_profile.update({'count': nband})
     rasterio.warp.reproject(src_array, dst_array,
-                            src_transform=src_profile['transform'], src_crs=src_profile['crs'],
-                            dst_transform=dst_transform, dst_crs=dst_crs_rasterio,
+                            src_transform=src_profile['transform'], src_crs=src_crs_rio,
+                            dst_transform=dst_transform, dst_crs=dst_crs_rio,
                             dst_nodata=dst_profile['nodata'],
                             resampling=resampling_method)
 

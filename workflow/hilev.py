@@ -209,7 +209,8 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
 
     # load shapefile
     if type(source) is str:
-        logging.info(f"Loading file: '{source}'")
+        source_filename = source
+        logging.info(f"Loading file: '{source}'")      
         source = workflow.sources.manager_shape.FileManagerShape(source)
 
     if properties:

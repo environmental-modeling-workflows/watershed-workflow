@@ -66,7 +66,7 @@ class FileManagerDaymet:
         self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
-    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False):
+    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False, buffer=0.01):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -81,6 +81,8 @@ class FileManagerDaymet:
           Coordinate system of the above polygon_or_bounds
         force_download : bool
           Download or re-download the file if true.
+        buffer, float
+          buffer used for watershed shape (in degree)
 
         Returns
         -------
@@ -107,12 +109,12 @@ class FileManagerDaymet:
         # feather the bounds
         # get the bounds and download
         feather_bounds = list(bounds[:])
-        feather_bounds[0] = np.round(feather_bounds[0],4) - .01
-        feather_bounds[1] = np.round(feather_bounds[1],4) - .01
-        feather_bounds[2] = np.round(feather_bounds[2],4) + .01
-        feather_bounds[3] = np.round(feather_bounds[3],4) + .01
+        feather_bounds[0] = np.round(feather_bounds[0],4) - buffer
+        feather_bounds[1] = np.round(feather_bounds[1],4) - buffer
+        feather_bounds[2] = np.round(feather_bounds[2],4) + buffer
+        feather_bounds[3] = np.round(feather_bounds[3],4) + buffer
         fname = self.download(varname, year, feather_bounds, force=force_download)
-        return fname
+        return fname, feather_bounds
 
     def download(self, varname, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.

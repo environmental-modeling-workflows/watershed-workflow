@@ -13,9 +13,7 @@ import numpy as np
 import time
 import workflow
 import rasterio
-# import scipy
 from scipy.signal import savgol_filter
-
 
 VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
 
@@ -57,21 +55,23 @@ def initData(d, vars, num_days, nx, ny):
         # d[v] has shape (nband, nrow, ncol)
         d[v] = np.zeros((num_days, ny, nx),'d')
 
-def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False):
+def collectDaymet(bounds, crs, start, end, vars=None, force=False, buffer=0.01):
     """Calls the DayMet Rest API to get data and save raw data.
     Parameters:
     bounds: fiona or shapely shape, or [xmin, ymin, xmax, ymax]
           Collect a file that covers this shape or bounds.
+    crs : CRS object
+          Coordinate system of the above polygon_or_bounds           
     start: str
         start date in the format of "doy-year", e.g., "1-2012"
     end: str
         end date in the format of "doy-year", e.g., "365-2012"     
-    crs : CRS object
-          Coordinate system of the above polygon_or_bounds           
-    vars: list or None
+    vars: list or 'all'
         list of strings that are in VALID_VARIABLES. Default is use all available variables.
     force : bool
         Download or re-download the file if true.    
+    buffer, float
+        buffer used for watershed shape (in degrees!)
     """
     T0 = time.time()
 
@@ -79,7 +79,7 @@ def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False
         start = stringToDate(start)
         end = stringToDate(end)
 
-    if vars == None:
+    if vars == 'all' or vars is None:
         vars = VALID_VARIABLES
         logging.info(f"downloading variables: {VALID_VARIABLES}")
 
@@ -90,7 +90,8 @@ def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False
  
     for year in range(start.year, end.year+1):
         for var in vars:
-            fname = daymet_obj.get_meteorology(var, year, bounds, crs, force_download=force)
+            fname, feather_bounds = daymet_obj.get_meteorology(var, year, bounds, crs, force_download=force, buffer=buffer)
+
             x,y,v = loadFile(fname, var) # returned v.shape(nband, nrow, ncol)
             if not d_inited:
                 initData(dat, vars, numDays(start,end), len(x), len(y))
@@ -107,17 +108,10 @@ def collectDaymet(bounds, crs, start, end, vars=None, force=False, combine=False
                 my_start = 365 * (year - start.year) - start.doy + 1
                 dat[var][my_start:my_start+365,:,:] = v
 
-    if combine:
-        import xarray as xr
-        path = '/'.join(re.split(r'\/', fname)[:-1]) + "/"
-        dset = xr.open_mfdataset(path +  "*.nc")
-        outfile = path + f"daymet_{start.doy}-{start.year}_{end.doy}-{end.year}.nc"
-        dset.to_netcdf(outfile, format = "NETCDF4")
-        logging.info(f"writing a single NetCDF to : {outfile}")
     logging.info(f'seconds to write: {time.time()-T0} s')
     return dat, x, y
 
-def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
+def reproj_Daymet(x, y, raw, dst_crs, resolution=None):
     """
     reproject daymet raw data to watershed CRS.
     Parameters:
@@ -172,8 +166,7 @@ def reproj_Daymet(x, y, raw, dst_crs, resolution = None):
         'interleave': 'pixel'
     }
 
-    logging.info(f'daymet profile: {daymet_profile}') 
-    
+    logging.debug(f'daymet profile: {daymet_profile}') 
     logging.info(f'reprojecting to new crs: {dst_crs}') 
     new_dat = {}
     for var in var_list:
@@ -245,6 +238,10 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     dout = dict()
     logging.info('Converting to ATS met input')
     
+    # make missing values -9999 Nans
+    for key in dat.keys():
+        dat[key][dat[key] == -9999] = np.nan
+
     if smooth:
         dat = smoothRaw(dat, smooth_filter=smooth_filter, nyears=nyears)
         logging.info(f"shape of smoothed dat is {dat[list(dat.keys())[0]].shape}")
@@ -256,15 +253,19 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
 
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
-    dout['time [s]'] = time
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c # K
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl']/86400 # Wm2
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
+
+    # make Nans = -9999
+    for key in dout.keys():
+        dout[key][np.isnan(dout[key])] = -9999
+
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
-    return dout
+    return time, dout
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
@@ -299,13 +300,12 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
                 idat = dat[key][i,:,:]
                 # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
                 rev_idat = np.flip(idat, axis=0)
-                
                 grp.create_dataset(str(i), data=rev_idat)
 
         for key, val in attrs.items():
             fid.attrs[key] = val
 
-    return
+    return time, dat
 
 def getAttrs(bounds, start, end):
     # set the wind speed height, which is made up
@@ -318,7 +318,7 @@ def getAttrs(bounds, start, end):
     attrs['DayMet end date'] = str(end)
     return attrs    
 
-def writeHDF5(dat, x, y, attrs, filename):
+def writeHDF5(dat, x, y, attrs, filename, time=None):
     """Write daymet to a single HDF5 file."""
     logging.info('Writing HDF5 file: {}'.format(filename))
 
@@ -327,8 +327,12 @@ def writeHDF5(dat, x, y, attrs, filename):
     except FileNotFoundError:
         pass
 
+    if time is None:
+        time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
+    else:
+        assert(len(time) == dat[list(dat.keys())[0]].shape[0])
+
     with h5py.File(filename, 'w') as fid:
-        time = dat.pop('time [s]')
         fid.create_dataset('time [s]', data=time)
         assert(len(x.shape) == 1)
         assert(len(y.shape) == 1)
