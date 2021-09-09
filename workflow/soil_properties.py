@@ -220,7 +220,7 @@ def get_bedrock_properties():
     df.set_index('ats_id', drop=True, inplace=True)
     return df
 
-def mangle_glhymps_properties(shapes, min_porosity=0.01, max_permeability=np.inf):
+def mangle_glhymps_properties(shapes, min_porosity=0.01, max_permeability=np.inf, max_vg_alpha=np.inf):
     """GLHYMPs properties need their units changed."""
     assert(len(shapes) > 0)
     if type(shapes[0]) is dict:
@@ -244,7 +244,7 @@ def mangle_glhymps_properties(shapes, min_porosity=0.01, max_permeability=np.inf
     #descriptions = [prop['Descriptio'] for prop in shp_props]
     # derived properties
     # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-    vg_alpha = workflow.soil_properties.alpha_from_permeability(Ksat, poro)
+    vg_alpha = np.minimum(workflow.soil_properties.alpha_from_permeability(Ksat, poro), max_vg_alpha)
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
 

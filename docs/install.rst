@@ -55,7 +55,11 @@ below.
 **Optional:** Here we use `jupyter` notebooks to provide examples and
 illustrate usage of the package.  If you do not intend to use jupyter,
 it is not necessary, adds a lot of extra packages, and can safely be
-removed from the installation below.
+removed from the installation below.  Similarly, if you use `jupyter`,
+you should also use `papermill`, which allows workflows to be
+pipelined -- you develop a notebook, then use `papermill` to use the
+notebook as a script.
+
 
 
 Recommended process
@@ -68,13 +72,13 @@ environment that includes the required packages:
 .. code-block:: console
     :caption: Packages for general users
                 
-    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest 
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest papermill
     conda activate watershed_workflow
 
 .. code-block:: console
     :caption: Packages for developers and building documentation
 
-    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest sphinx numpydoc sphinx_rtd_theme nbsphinx
+    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest papermill sphinx numpydoc sphinx_rtd_theme nbsphinx
     conda activate watershed_watershed_dev
 
 Note that, for OSX users, it is recommended you install `python.app`
