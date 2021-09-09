@@ -47,7 +47,7 @@ default_dem_source = 'NED 1 arc-second'
 # available and default soil survey datasets
 structure_sources = {'NRCS SSURGO' : FileManagerNRCS(),
                      'GLHYMPS' : FileManagerGLHYMPS(),
-                     'SoilGrids2017' : FileManagerSoilGrids2017('US'),
+                     'SoilGrids2017' : FileManagerSoilGrids2017(),
                      }
 default_structure_source = 'NRCS SSURGO'
 

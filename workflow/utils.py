@@ -12,6 +12,8 @@ import numpy as np
 import shapely.geometry
 import shapely.ops
 import shapely.affinity
+import rasterio
+import workflow
 
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
@@ -579,3 +581,29 @@ def remove_third_dimension(geom):
 
     else:
         raise RuntimeError("Currently this type of geometry is not supported: {}".format(type(geom)))
+
+
+def create_empty_raster(target_bounds,crs,target_dx,dtype, nodata):
+    target_x0 = np.round(target_bounds[0] - target_dx/2)
+    target_y1 = np.round(target_bounds[3] + target_dx/2)
+    width = int(np.ceil((target_bounds[2] + target_dx/2 - target_x0)/target_dx))
+    height = int(np.ceil((target_y1 - target_bounds[1] - target_dx/2)/target_dx))
+
+    out_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
+
+    logging.info('  target_bounds = {}'.format(target_bounds))
+    logging.info('  out_bounds = {}'.format(out_bounds))
+    logging.info('  pixel_size = {}'.format(target_dx))
+    logging.info('  width = {}, height = {}'.format(width, height))
+
+    transform = rasterio.transform.from_origin(target_x0, target_y1, target_dx, target_dx)
+
+    out_profile = {'height':height,
+                      'width':width,
+                      'count':1,
+                      'dtype':dtype,
+                      'crs':workflow.crs.to_rasterio(crs),
+                      'transform':transform,
+                      'nodata':nodata}
+    out = nodata * np.ones((height, width), dtype)
+    return out, out_profile

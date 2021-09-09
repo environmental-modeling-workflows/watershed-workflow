@@ -29,6 +29,7 @@ import workflow.split_hucs
 import workflow.hydrography
 import workflow.sources.utils 
 import workflow.sources.manager_shape
+import workflow.utils
 
 __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
            'get_shapes', 'get_split_form_shapes', 'get_reaches',
@@ -954,7 +955,7 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
     
 
 def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
-                             shapes_crs, nodata=-1):
+                             shapes_crs, nodata=-1, raster=None, raster_profile=None):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas specified by bounds and pixel size, color a raster by, for
@@ -979,6 +980,10 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
     nodata : dtype, optional
         Value to place in pixels which intersect no shape.  Note the type of
         this should be the same as the type of shape_colors.  Default is -1.
+    raster_profile : rasterio profile, optional
+        Profile of the corresponding raster
+    raster : numpy.ndarray, optional
+        Array into which the shapes are colored.
 
     Returns
     -------
@@ -992,38 +997,24 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
     """
     assert(len(shapes) == len(shape_colors))
     assert(len(shapes) > 0)
-    
-    dtype = np.dtype(type(shape_colors[0]))
-    
-    target_x0 = np.round(target_bounds[0] - target_dx/2)
-    target_y1 = np.round(target_bounds[3] + target_dx/2)
-    width = int(np.ceil((target_bounds[2] + target_dx/2 - target_x0)/target_dx))
-    height = int(np.ceil((target_y1 - target_bounds[1] - target_dx/2)/target_dx))
-
-    out_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
 
     logging.info('Coloring shapes onto raster:')
-    logging.info('  target_bounds = {}'.format(target_bounds))
-    logging.info('  out_bounds = {}'.format(out_bounds))
-    logging.info('  pixel_size = {}'.format(target_dx))
-    logging.info('  width = {}, height = {}'.format(width, height))
+   
+    if raster is None : 
+        dtype = np.dtype(type(shape_colors[0]))
+        raster_profile, raster = workflow.utils.create_empty_raster(target_bounds,crs,target_dx,dtype,nodata)
+    else:
+        assert(raster_profile is not None)
+        assert(shape_colors is not None)
+        assert(raster_profile['dtype'] == np.dtype(type(shape_colors[0])) )
+        dtype = raster_profile['dtype']
+    
     logging.info('  and {} independent colors of dtype {}'.format(len(set(shape_colors)), dtype))
 
-    transform = rasterio.transform.from_origin(target_x0, target_y1, target_dx, target_dx)
-    
-    out_profile = {'height':height,
-                      'width':width,
-                      'count':1,
-                      'dtype':dtype,
-                      'crs':workflow.crs.to_rasterio(shapes_crs),
-                      'transform':transform,
-                      'nodata':nodata}
-    
-    out = nodata * np.ones((height, width), dtype)
     for p, p_id in zip(shapes, shape_colors):
-        mask = rasterio.features.geometry_mask([p,], out.shape, transform, invert=True)
-        out[mask] = p_id
-    return out, out_profile, out_bounds
+        mask = rasterio.features.geometry_mask([p,], raster.shape, raster_profile['transform'], invert=True)
+        raster[mask] = p_id
+    return raster, raster_profile
 
 
 
