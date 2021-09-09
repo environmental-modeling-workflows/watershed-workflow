@@ -606,4 +606,4 @@ def create_empty_raster(target_bounds,crs,target_dx,dtype, nodata):
                       'transform':transform,
                       'nodata':nodata}
     out = nodata * np.ones((height, width), dtype)
-    return out, out_profile
+    return out_profile, out

@@ -955,7 +955,7 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
     
 
 def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
-                             shapes_crs, nodata=-1, raster=None, raster_profile=None):
+                             crs, nodata=-1, raster=None, raster_profile=None):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas specified by bounds and pixel size, color a raster by, for
@@ -968,15 +968,15 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
     Parameters
     ----------
     target_bounds : [xmin, ymin, xmax, ymax]
-        Bounding box for the output raster.
+        Bounding box for the output raster, in the given CRS.
     target_dx : float
         Pixel size (assumed the same in both x and y).
     shapes : list(Polygon)
         Collection of shapes (likely) overlapping the canvas.
     shapes_colors : np.array((n_shapes,), dtype)
         Color to label the interior of each polygon with.
-    shapes_crs : crs-type
-        Coordinate system of the shapes.
+    crs : crs-type
+        Coordinate system of the shapes and target_bounds
     nodata : dtype, optional
         Value to place in pixels which intersect no shape.  Note the type of
         this should be the same as the type of shape_colors.  Default is -1.
@@ -1014,7 +1014,7 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
     for p, p_id in zip(shapes, shape_colors):
         mask = rasterio.features.geometry_mask([p,], raster.shape, raster_profile['transform'], invert=True)
         raster[mask] = p_id
-    return raster, raster_profile
+    return raster_profile, raster
 
 
 
