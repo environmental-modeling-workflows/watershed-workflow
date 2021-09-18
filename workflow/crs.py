@@ -101,7 +101,9 @@ def from_fiona(crs):
     # if 'datum' in crs and crs['datum'] == 'WGS84' and 'epsg' not in crs and 'ellps' not in crs:
     #     logging.warning('Old-style datum WGS84, moving to ellipse')
     #     crs['ellps'] = crs.pop('datum')
-    return CRS.from_dict(crs)
+    if 'init' in crs and crs['init'].startswith('epsg:'):
+        epsg,code = crs.pop('init').split(':')
+    return CRS.from_epsg(code)
 
 def to_fiona(crs):
     """Converts a workflow CRS to a fiona CRS.

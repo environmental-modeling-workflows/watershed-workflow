@@ -17,12 +17,15 @@ def epsg_harness(epsg, test_cartopy=True):
 
     fcrs = workflow.crs.from_fiona(fiona.crs.from_epsg(epsg))
     rcrs = workflow.crs.from_rasterio(rasterio.crs.CRS.from_string('EPSG:{}'.format(epsg)))
-    ppcrs = workflow.crs.from_proj(pyproj.Proj('EPSG:{}'.format(epsg)))
     ppcrs2 = workflow.crs.from_proj(pyproj.crs.CRS('EPSG:{}'.format(epsg)))
 
+    # print(f'gold: {gold}')
+    # print(f'fiona: {fcrs}')
+    # print(f'rasterio: {rcrs}')
+    # print(f'proj: {ppcrs2}')
+    
     assert(workflow.crs.equal(gold, fcrs))
     assert(workflow.crs.equal(gold, rcrs))
-    assert(workflow.crs.equal(gold, ppcrs))
     assert(workflow.crs.equal(gold, ppcrs2))
 
     if test_cartopy:

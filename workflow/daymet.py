@@ -259,13 +259,14 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     dout['relative humidity [-]'] = np.minimum(1.0, dat['vp']/sat_vp_Pa) # -
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
+    dout['time [s]'] = time
 
     # make Nans = -9999
     for key in dout.keys():
         dout[key][np.isnan(dout[key])] = -9999
 
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
-    return time, dout
+    return dout
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
@@ -318,7 +319,7 @@ def getAttrs(bounds, start, end):
     attrs['DayMet end date'] = str(end)
     return attrs    
 
-def writeHDF5(dat, x, y, attrs, filename, time=None):
+def writeHDF5(dat, x, y, attrs, filename):
     """Write daymet to a single HDF5 file."""
     logging.info('Writing HDF5 file: {}'.format(filename))
 
@@ -327,10 +328,11 @@ def writeHDF5(dat, x, y, attrs, filename, time=None):
     except FileNotFoundError:
         pass
 
-    if time is None:
-        time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
-    else:
+    if 'time [s]' in dat:
+        time = dat['time [s]'][:]
         assert(len(time) == dat[list(dat.keys())[0]].shape[0])
+    else:
+        time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
     with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=time)
@@ -343,18 +345,19 @@ def writeHDF5(dat, x, y, attrs, filename, time=None):
         fid.create_dataset('x [m]', data=x)
 
         for key in dat.keys():
-            # dat has shape (nband, nrow, ncol) 
-            assert(dat[key].shape[0] == time.shape[0])
-            assert(dat[key].shape[1] == y.shape[0])
-            assert(dat[key].shape[2] == x.shape[0])
+            if key != 'time [s]':
+                # dat has shape (nband, nrow, ncol) 
+                assert(dat[key].shape[0] == time.shape[0])
+                assert(dat[key].shape[1] == y.shape[0])
+                assert(dat[key].shape[2] == x.shape[0])
 
-            grp = fid.create_group(key)
-            for i in range(len(time)):
-                idat = dat[key][i,:,:]
-                # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
-                # ETC: is this right?  Should be increasing, so in the lower left after flipped?
-                rev_idat = np.flip(idat, axis=0)               
-                grp.create_dataset(str(i), data=rev_idat)
+                grp = fid.create_group(key)
+                for i in range(len(time)):
+                    idat = dat[key][i,:,:]
+                    # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
+                    # ETC: is this right?  Should be increasing, so in the lower left after flipped?
+                    rev_idat = np.flip(idat, axis=0)               
+                    grp.create_dataset(str(i), data=rev_idat)
 
         for key, val in attrs.items():
             fid.attrs[key] = val
