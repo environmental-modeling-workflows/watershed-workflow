@@ -125,25 +125,25 @@ def _snap_crossing(hucs, river_node, tol=0.1):
 
             if seg.intersects(r):
                 logging.debug("  - YES")
-                try:
-                    new_spine = workflow.utils.cut(seg, r, tol)
-                except RuntimeError as err:
-                    plt.figure()
-                    workflow.plot.hucs(hucs,color='gray')
-                    plt.plot(seg.xy[0], seg.xy[1], 'b-+')
-                    plt.plot(r.xy[0], r.xy[1], 'r-x')
-                    plt.show()
-                    raise err
+                #try:
+                new_spine = workflow.utils.cut(seg, r, tol)
+                # except RuntimeError as err:
+                #     plt.figure()
+                #     workflow.plot.hucs(hucs,None,color='gray')
+                #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
+                #     plt.plot(r.xy[0], r.xy[1], 'r-x')
+                #     plt.show()
+                #     raise err
 
-                try:
-                    new_rivers = workflow.utils.cut(r, seg, tol)
-                except RuntimeError as err:
-                    plt.figure()
-                    workflow.plot.hucs(hucs,color='gray')
-                    plt.plot(seg.xy[0], seg.xy[1], 'b-+')
-                    plt.plot(r.xy[0], r.xy[1], 'r-x')
-                    plt.show()
-                    raise err
+                #try:
+                new_rivers = workflow.utils.cut(r, seg, tol)
+                # except RuntimeError as err:
+                #     plt.figure()
+                #     workflow.plot.hucs(hucs,None,color='gray')
+                #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
+                #     plt.plot(r.xy[0], r.xy[1], 'r-x')
+                #     plt.show()
+                #     raise err
                 
                 river_node.segment = new_rivers[-1]
                 if len(new_rivers) > 1:

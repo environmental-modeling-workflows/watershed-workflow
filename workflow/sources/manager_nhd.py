@@ -114,7 +114,8 @@ class _FileManagerNHD:
         profile['always_xy'] = True
         return profile, hus
         
-    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True, force_download=False):
+    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True,
+                  include_catchments=False, force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -128,6 +129,9 @@ class _FileManagerNHD:
           CRS of the above bounds.
         in_network : bool, optional
           If True (default), remove reaches that are not "in" the NHD network
+        include_catchments : bool, optional
+          If True (default is False) and data source is NHDPlus, attach the 
+          reach catchment as a property to every reach.
         force_download : bool
           Download or re-download the file if true.
 
@@ -176,7 +180,7 @@ class _FileManagerNHD:
             reaches = [r for r in reaches if 'InNetwork' not in r['properties'] or r['properties']['InNetwork'] == 1]
             
         # associate catchment areas with the reaches if NHDPlus
-        if 'Plus' in self.name:
+        if 'Plus' in self.name and include_catchments:
             layer = 'NHDPlusCatchment'
             logging.info("  {}: opening '{}' layer '{}' for catchment areas in '{}'".format(self.name, filename, layer, bounds))
             with fiona.open(filename, mode='r', layer=layer) as fid:
@@ -197,6 +201,8 @@ class _FileManagerNHD:
                 else:
                     reach['properties']['catchment'] = catch
         
+
+
         return profile, reaches
             
     def _url(self, hucstr):
