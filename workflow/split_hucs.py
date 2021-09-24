@@ -88,6 +88,14 @@ class SplitHUCs:
         self.boundaries = HandledCollection() # stores handles into segments
         self.intersections = HandledCollection() # stores handles into segments
 
+        # save the property dictionaries to give back upon request
+        self.properties = []
+        for s in shapes:
+            try:
+                self.properties.append(s.properties)
+            except AttributeError:
+                self.properties.append(None)
+
         # initialize
         shapes = partition(shapes, abs_tol, rel_tol)
         uniques, intersections = intersect_and_split(shapes)
@@ -130,13 +138,6 @@ class SplitHUCs:
         # the list of shapes, each entry in the list is a tuple
         self.gons = [(u,i) for u,i in zip(boundary_gon, intersection_gon)]
 
-        # save the property dictionaries to give back upon request
-        self.properties = []
-        for s in shapes:
-            try:
-                self.properties.append(s.properties)
-            except AttributeError:
-                self.properties.append(None)
         
 
     def polygon(self, i):

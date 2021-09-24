@@ -276,7 +276,8 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
 
 
 def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
-                digits=None, long=None, merge=False, presimplify=None):
+                digits=None, long=None, merge=False, presimplify=None,
+                **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
     Collects reach datasets within a HUC and/or a bounding box.  If bounds are
@@ -315,6 +316,8 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         If provided, reaches are simplified within the specified
         tolerance as soon as possible for big extents.  Units are that
         of out_crs.
+    **kwargs : dict, optional
+        Other arguments are passed to the file manager's get_reaches() method.
 
     Returns
     -------
@@ -331,7 +334,7 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs)
+    profile, reaches = source.get_hydro(huc, bounds, in_crs, **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
 
     # convert to shapely
@@ -712,9 +715,9 @@ def simplify_and_prune(hucs, reaches,
     return rivers
     
 def triangulate(hucs, rivers,
-                mesh_rivers=False, diagnostics=True, verbosity=1, tol=1,
+                mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
-                refine_min_angle=None, enforce_delaunay=False, river_region_dist = None):
+                refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -730,6 +733,9 @@ def triangulate(hucs, rivers,
         Include stream network in the mesh discretely.
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
+    stream_outlet_width : float, optional
+        If provided, adds edge sets within the provided distance from
+        all outlets, used to track discharge observation regions.
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit is the same as 
         that of the watershed's CRS. The default is 1.

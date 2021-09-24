@@ -179,7 +179,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     # closest.  If within tolerance, move it
     for seg_handle, seg in hucs.segments.items():
         # check point 0, -1
-        endpoints = np.array([seg.coords[0], seg.coords[1]])
+        endpoints = np.array([seg.coords[0], seg.coords[-1]])
         # limit to x,y
         if (endpoints.shape[1] != 2):
             endpoints = endpoints[:,0:2]
@@ -188,10 +188,12 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
             new_seg = list(seg.coords)
             if dists[0] < tol:
                 new_seg[0] = coords[inds[0]]
-                logging.debug("  Moving HUC segment point 0 to river at %r"%list(new_seg[0]))
+                logging.debug(f"  Moving HUC segment point 0,1: {list(seg.coords)[0]}, {list(seg.coords)[-1]}")
+                logging.debug("        point 0 to river at %r"%list(new_seg[0]))
             if dists[1] < tol:
                 new_seg[-1] = coords[inds[1]]
-                logging.debug("  Moving HUC segment point -1 to river at %r"%list(new_seg[-1]))
+                logging.debug(f"  Moving HUC segment point 0,1: {list(seg.coords)[0]}, {list(seg.coords)[-1]}")
+                logging.debug("        point -1 to river at %r"%list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
 def snap_endpoints(tree, hucs, tol=0.1):
@@ -393,6 +395,8 @@ def make_global_tree(rivers, tol=0.1):
 
 def filter_rivers_to_shape(shape, rivers, tol):
     """Filters out rivers not inside the HUCs provided."""
+    shape = shape.buffer(2*tol)
+    
     # removes any rivers that are not at least partial contained in the hucs
     if type(rivers) is list and len(rivers) == 0:
         return list()
@@ -487,7 +491,7 @@ def prune_by_area_fraction(tree, tol, total_area=None):
 def merge(tree, tol=0.1):
     """Remove inner branches that are short, combining branchpoints as needed."""
     for node in list(tree.preOrder()):
-        if node.segment.length < tol:
+        if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r"%(node.segment.length, node.segment.centroid.coords[0]))
             num_children = len(node.children)
             for child in node.children:
@@ -501,5 +505,8 @@ def simplify(tree, tol=0.1):
     """Simplify, IN PLACE, all tree segments."""
     for node in tree.preOrder():
         if node.segment is not None:
-            node.segment = node.segment.simplify(tol)
+            new_seg = node.segment.simplify(tol)
+            assert(workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))
+            assert(workflow.utils.close(new_seg.coords[-1], node.segment.coords[-1]))
+            node.segment = new_seg
             

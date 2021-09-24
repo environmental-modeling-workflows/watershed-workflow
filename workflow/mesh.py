@@ -19,6 +19,9 @@ import collections
 import logging
 import attr
 import scipy.optimize
+import shapely
+
+import workflow.utils
 
 try:
     import exodus
@@ -68,30 +71,63 @@ _is_str = attr.validators.instance_of(str)
 _is_entity = attr.validators.in_(['CELL', 'FACE', 'NODE'])
 
 @attr.s
-class SideSet(object):
+class SideSet:
     """A collection of faces in elements."""
     name = attr.ib(validator=_is_str)
     setid = attr.ib(validator=_v(_is_valid_index))
     elem_list = attr.ib(validator=_v(_iter_is_nonnegative))
     side_list = attr.ib(validator=_v(_iter_is_nonnegative))
+
+    def validate(self, cell_faces):
+        ncells = len(cell_faces)
+        for c,s in zip(self.elem_list, self.side_list):
+            assert(0 <= c < ncells)
+            assert(0 <= s < len(cell_faces[c]))
+
     
 @attr.s
-class LabeledSet(object):
+class LabeledSet:
     """A generic collection of entities."""
     name = attr.ib(validator=_is_str)
     setid = attr.ib(validator=_v(_is_valid_index))
     entity = attr.ib(validator=_is_entity)
-    ent_ids = attr.ib(validator=_v(_iter_is_nonnegative))
+    ent_ids = attr.ib(validator=_v(_is_list_or_array))
 
-    def validate(self, size):
-        for i in self.ent_ids:
-            assert(-1 < i < size)
-        
+    def validate(self, size, is_tuple=False):
+        if is_tuple:
+            # edges
+            self.ent_ids = [(int(e[0]), int(e[1])) for e in self.ent_ids]
+            for e in self.ent_ids:
+                assert(-1 < e[0] < size)
+                assert(-1 < e[1] < size)
+        else:
+            self.ent_ids = [int(i) for i in self.ent_ids]
+            for i in self.ent_ids:
+                assert(-1 < i < size)
 
-class Mesh2D(object):
+@attr.s
+class _ExtrusionHelper:
+    """Helper class for extruding 2D --> 3D"""
+    ncells_tall = attr.ib(validator=_v(_is_valid_index))
+    ncells_2D = attr.ib(validator=_v(_is_valid_index))
+
+    def col_to_id(self, column, z_cell):
+        """Maps 2D cell ID and index in the vertical to a 3D cell ID"""
+        return z_cell + column * self.ncells_tall
+
+    def node_to_id(self, node, z_node):
+        """Maps 2D node ID and index in the vertical to a 3D node ID"""
+        return z_node + node * (self.ncells_tall+1)
+
+    def edge_to_id(self, edge, z_cell):
+        """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face"""
+        return (self.ncells_tall + 1) * self.ncells_2D + z_cell + edge * self.ncells_tall
+            
+
+class Mesh2D:
     """A surface mesh."""
     def __init__(self, coords, conn,
-                 labeled_sets=None, check_handedness=True, eps=0.01):
+                 labeled_sets=None, check_handedness=True, eps=0.01, validate=True):
         """Creates a 2D mesh.
 
         Parameters
@@ -115,16 +151,21 @@ class Mesh2D(object):
         self.coords = coords
         self.conn = conn
 
+        self.labeled_sets = []
         if labeled_sets is None:
             labeled_sets = []
-        self.labeled_sets = labeled_sets
-
-        self.validate()
+        for ls in labeled_sets:
+            self.add_labeled_set(ls)
 
         self.dim = self.coords.shape[1]
+
+        if validate:
+            self.validate()
+
         self.edge_counts()
-        if check_handedness:
-            self.check_handedness()
+        if validate:
+            if check_handedness:
+                self.check_handedness()
 
     def validate(self):
         """Checks the validity of the mesh, or throws an AssertionError."""
@@ -136,14 +177,28 @@ class Mesh2D(object):
                 j = (i+1)%len(c)
                 assert np.linalg.norm(self.coords[c[i]] - self.coords[c[j]]) > self.eps
 
-        assert(type(self.labeled_sets) is list)
-        for ls in self.labeled_sets:
-            if ls.entity == 'NODE':
-                size = len(self.coords)
-            elif ls.entity == 'CELL':
-                size = len(self.conn)
-            ls.validate(size)
 
+    def add_labeled_set(self, ls):
+        if any(ls.setid == other.setid for other in self.labeled_sets):
+            raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
+        is_tuple = False
+        if ls.entity == 'CELL':
+           size = self.num_cells()
+        elif ls.entity == 'FACE':
+            size = self.num_nodes() # note there are no faces, edges are tuples of nodes
+            is_tuple = True
+        elif ls.entity == 'NODE':
+            size = self.num_nodes()
+        ls.validate(size, is_tuple)
+        self.labeled_sets.append(ls)
+
+    def next_available_labeled_setid(self):
+        """Returns next available LS id."""
+        i = 10000
+        while any(i == ls.setid for ls in self.labeled_sets):
+            i += 1
+        return i                        
+        
     def num_cells(self):
         return len(self.conn)
 
@@ -715,8 +770,6 @@ class Mesh2D(object):
 
         return dual_nodes, dual_cells, np.array(dual_from_primal_mapping)
         
-
-
 class Mesh3D(object):
     """A 3D mesh object."""
     
@@ -750,13 +803,17 @@ class Mesh3D(object):
         self.face_to_node_conn = face_to_node_conn
         self.elem_to_face_conn = elem_to_face_conn
 
+        self.labeled_sets = []
         if labeled_sets is None:
             labeled_sets = []
-        self.labeled_sets = labeled_sets
+        for ls in labeled_sets:
+            self.add_labeled_set(ls)
 
+        self.side_sets = []
         if side_sets is None:
             side_sets = []
-        self.side_sets = side_sets
+        for ss in side_sets:
+            self.add_side_set(ss)
 
         if material_ids is None:
             material_ids = [10000,]
@@ -773,20 +830,40 @@ class Mesh3D(object):
         _valid_conn(self.face_to_node_conn, len(self.coords))
         _valid_conn(self.elem_to_face_conn, len(self.face_to_node_conn))
 
-        assert(type(self.labeled_sets) is list)
-        for ls in self.labeled_sets:
-            if ls.entity == 'NODE':
-                size = self.num_nodes()
-            elif ls.entity == 'FACE':
-                size = self.num_faces()
-            elif ls.entity == 'CELL':
-                size = self.num_cells()
-            ls.validate(size)
-
         for ss in self.side_sets:
             for j,i in zip(ss.elem_list, ss.side_list):
                 assert -1 < j < self.num_cells()
                 assert -1 < i < len(self.elem_to_face_conn[j])
+
+    def add_labeled_set(self, ls):
+        if any(ls.setid == other.setid for other in self.labeled_sets):
+            raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
+        if any(ls.setid == other.setid for other in self.side_sets):
+            raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
+        if ls.entity == 'CELL':
+            size = self.num_cells()
+        elif ls.entity == 'FACE':
+            size = self.num_faces()
+        elif ls.entity == 'NODE':
+            size = self.num_nodes()
+        ls.validate(size)
+        self.labeled_sets.append(ls)
+
+    def add_side_set(self, ls):
+        if any(ls.setid == other.setid for other in self.labeled_sets):
+            raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
+        if any(ls.setid == other.setid for other in self.side_sets):
+            raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
+        ls.validate(self.elem_to_face_conn)
+        self.side_sets.append(ls)
+        
+    def next_available_labeled_setid(self):
+        """Returns next available LS id."""
+        i = 10000
+        while any(i == ls.setid for ls in self.labeled_sets) or \
+              any(i == ls.setid for ls in self.side_sets):
+            i += 1
+        return i                        
 
     def num_cells(self):
         return len(self.elem_to_face_conn)
@@ -992,7 +1069,7 @@ class Mesh3D(object):
                 return False
             else:
                 return True
-        
+
         if is_list(layer_types):
             if not is_list(layer_data):
                 layer_data = [layer_data,]*len(layer_types)
@@ -1029,6 +1106,8 @@ class Mesh3D(object):
         nfaces_total = (ncells_tall+1) * mesh2D.num_cells() + ncells_tall * mesh2D.num_edges()
         nnodes_total = (ncells_tall+1) * mesh2D.num_nodes()
 
+        eh = _ExtrusionHelper(ncells_tall, mesh2D.num_cells())
+
         np_mat_ids = np.array(mat_ids, dtype=int)
         if np_mat_ids.size == np.size(np_mat_ids, 0):
             if np_mat_ids.size == 1:
@@ -1038,18 +1117,6 @@ class Mesh3D(object):
                 for ilay in range(len(ncells_per_layer)):
                     np_mat_ids[ilay, :] = np.full(mesh2D.num_cells(), mat_ids[ilay], dtype=int)
 
-
-        def col_to_id(column, z_cell):
-            """Maps 2D cell ID and index in the vertical to a 3D cell ID"""
-            return z_cell + column * ncells_tall
-
-        def node_to_id(node, z_node):
-            """Maps 2D node ID and index in the vertical to a 3D node ID"""
-            return z_node + node * (ncells_tall+1)
-
-        def edge_to_id(edge, z_cell):
-            """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face"""
-            return (ncells_tall + 1) * mesh2D.num_cells() + z_cell + edge * ncells_tall
 
         # create coordinates
         # ---------------------------------
@@ -1109,18 +1176,18 @@ class Mesh3D(object):
         # -- loop over the columns, adding the horizontal faces
         for col in range(mesh2D.num_cells()):
             nodes_2 = mesh2D.conn[col]
-            surface.append(col_to_id(col,0))
+            surface.append(eh.col_to_id(col,0))
             for z_face in range(ncells_tall + 1):
                 i_f = len(faces)
-                f = [node_to_id(n, z_face) for n in nodes_2]
+                f = [eh.node_to_id(n, z_face) for n in nodes_2]
 
                 if z_face != ncells_tall:
-                    cells[col_to_id(col, z_face)].append(i_f)
+                    cells[eh.col_to_id(col, z_face)].append(i_f)
                 if z_face != 0:
-                    cells[col_to_id(col, z_face-1)].append(i_f)
+                    cells[eh.col_to_id(col, z_face-1)].append(i_f)
 
                 faces.append(f)
-            bottom.append(col_to_id(col,ncells_tall-1))
+            bottom.append(eh.col_to_id(col,ncells_tall-1))
 
         # -- loop over the columns, adding the vertical faces
         added = dict()
@@ -1139,13 +1206,13 @@ class Mesh3D(object):
                     
                     for z_face in range(ncells_tall):
                         i_f = len(faces)
-                        assert i_f == edge_to_id(i_e, z_face)
-                        f = [node_to_id(edge[0], z_face),
-                             node_to_id(edge[1], z_face),
-                             node_to_id(edge[1], z_face+1),
-                             node_to_id(edge[0], z_face+1)]
+                        assert i_f == eh.edge_to_id(i_e, z_face)
+                        f = [eh.node_to_id(edge[0], z_face),
+                             eh.node_to_id(edge[1], z_face),
+                             eh.node_to_id(edge[1], z_face+1),
+                             eh.node_to_id(edge[0], z_face+1)]
                         faces.append(f)
-                        face_cell = col_to_id(col, z_face)
+                        face_cell = eh.col_to_id(col, z_face)
                         cells[face_cell].append(i_f)
 
                         # check if this is an external
@@ -1156,8 +1223,8 @@ class Mesh3D(object):
                 else:
                     # faces already added from previous column
                     for z_face in range(ncells_tall):
-                        i_f = edge_to_id(i_e, z_face)
-                        cells[col_to_id(col, z_face)].append(i_f)
+                        i_f = eh.edge_to_id(i_e, z_face)
+                        cells[eh.col_to_id(col, z_face)].append(i_f)
 
 
         # Do some idiot checking
@@ -1183,7 +1250,7 @@ class Mesh3D(object):
             for ilay in range(len(ncells_per_layer)):
                 ncells = ncells_per_layer[ilay]
                 for i in range(z_cell, z_cell+ncells):
-                    material_ids[col_to_id(col, i)] = np_mat_ids[ilay, col]
+                    material_ids[eh.col_to_id(col, i)] = np_mat_ids[ilay, col]
                 z_cell = z_cell + ncells
 
         # make the side sets
@@ -1192,20 +1259,40 @@ class Mesh3D(object):
         side_sets.append(SideSet("surface", 2, surface, [0,]*len(surface)))
         side_sets.append(SideSet("external_sides", 3, vertical_side_cells, vertical_side_indices))
 
+        for ls in mesh2D.labeled_sets:
+            if ls.entity == 'CELL':
+                # top surface cells become side sets
+                elem_list = [eh.col_to_id(c,0) for c in ls.ent_ids]
+                side_list = [0 for c in ls.ent_ids]
+                side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
+            elif ls.entity == 'FACE':
+                # top surface faces become faces in the subsurface
+                # mesh, as they will extract correctly for surface BCs/observations
+                outlet_ids_names = []
+
+                # given a 2D edge, find the 2D cell it touches
+                col_ids = [mesh2D.edges_to_cells()[mesh2D.edge_hash(e[0],e[1])][0]
+                           for e in ls.ent_ids]
+                elem_list = [eh.col_to_id(c, 0) for c in col_ids]
+                face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], 0)
+                         for e in ls.ent_ids]
+                side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
+                side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
+        
         # reshape coords
         coords = coords.reshape(nnodes_total, 3)        
         
-        for e,s in zip(side_sets[0].elem_list, side_sets[0].side_list):
-            face = cells[e][s]
-            fz_coords = np.array([coords[n] for n in faces[face]])
+        # for e,s in zip(side_sets[0].elem_list, side_sets[0].side_list):
+        #     face = cells[e][s]
+        #     fz_coords = np.array([coords[n] for n in faces[face]])
 
-        for e,s in zip(side_sets[1].elem_list, side_sets[1].side_list):
-            face = cells[e][s]
-            fz_coords = np.array([coords[n] for n in faces[face]])
+        # for e,s in zip(side_sets[1].elem_list, side_sets[1].side_list):
+        #     face = cells[e][s]
+        #     fz_coords = np.array([coords[n] for n in faces[face]])
         
         # instantiate the mesh
-        return cls(coords, faces, cells, side_sets=side_sets, material_ids=material_ids)
-
+        m3 = cls(coords, faces, cells, side_sets=side_sets, material_ids=material_ids)
+        return m3
 
 
 def telescope_factor(ncells, dz, layer_dz):
@@ -1289,3 +1376,159 @@ def transform_rotation(radians):
     return np.array([[ np.cos(radians), np.sin(radians), 0],
                      [-np.sin(radians), np.cos(radians), 0],
                      [               0,               0, 1]])
+
+
+def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
+    """Given a 2D mesh and an array of length m2.num_cells() of indices, add labeled sets."""
+    inds = np.unique(nlcd_colors)
+    for ind in inds:
+        ent_ids = list(np.where(nlcd_colors == ind)[0])
+        ls = LabeledSet(nlcd_names[ind], int(ind), 'CELL', ent_ids)
+        m2.add_labeled_set(ls)
+
+
+def _get_labels(polygons):
+    labels = []
+    for i,p in enumerate(polygons):
+        try:
+            label = p.properties['ToHUC']
+        except (KeyError, AttributeError):
+            label = f'watershed {i}'
+        labels.append(label)
+    return labels
+    
+        
+def add_watershed_regions(m2, polygons, labels=None):
+    """Add labeled sets to m2 for each polygon."""
+    import shapely
+    if labels is None:
+        labels = _get_labels(polygons)
+    else:
+        assert(len(labels) == len(polygons))
+        
+    partitions = [list() for p in polygons]
+    for c in range(m2.num_cells()):
+        cc = m2.compute_centroid(c)
+        cc = shapely.geometry.Point(cc[0], cc[1])
+        try:
+            ip = next(i for (i,p) in enumerate(polygons) if p.contains(cc))
+        except StopIteration:
+            pass
+        else:
+            partitions[ip].append(c)
+
+    for label, part in zip(labels, partitions):
+        if len(part) > 0:
+            setid = m2.next_available_labeled_setid()
+            ls = LabeledSet(label, setid, 'CELL', part)
+            m2.add_labeled_set(ls)
+    return partitions
+
+def add_watershed_regions_and_outlets(m2, polygons, rivers, outlet_width, labels=None):
+    """Add two labeled sets to m2 for each polygon -- one for the shape
+    itself and one for the outlet, given by intersecting rivers with the
+    polygons.
+    """
+    if labels is None:
+        labels = _get_labels(polygons)
+    else:
+        assert(len(labels) == len(polygons))
+    partitions = add_watershed_regions(m2, polygons, labels)
+
+    # find a list of faces on the boundary of these sets of triangles
+    #
+    # UGLY HACK -- create a Mesh2D object with nan coordinates and
+    # edges that are unordered nodes.  This could never be used for
+    # anything geometric, but may allow us to exploit the existing
+    # topologic routines in Mesh2D
+    m2_hacks = []
+    boundary_edges = []
+    for tris in partitions:
+        subdomain_conn = [list(m2.conn[tri]) for tri in tris]
+        subdomain_nodes = set([c for e in subdomain_conn for c in e])
+        subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
+        m2h = Mesh2D(subdomain_coords, subdomain_conn, validate=False)
+        m2_hacks.append(m2h)
+        boundary_edges.append(m2h.boundary_edges())
+
+    # next determine the outlet, and all boundary edges within x m of that outlet
+    crossings = []
+    for subdomain in polygons:
+        my_crossings = []
+        for river in rivers:
+            for reach in river.preOrder():
+                if subdomain.exterior.intersects(reach.segment):
+                    my_crossings.append(subdomain.exterior.intersection(reach.segment))
+        crossings.append(my_crossings)
+
+    # cluster crossings that are within tolerance
+    crossing_clusters = []
+    for crossing in crossings:
+        assert(len(crossing) > 0)
+        clusters = []
+        p1 = crossing[0]
+        clusters.append([p1,])
+        for p in crossing[1:]:
+            found = False
+            for cluster in clusters:
+                if workflow.utils.close(cluster[0], p, outlet_width/2.0):
+                    found = True
+                    cluster.append(p)
+                    break
+
+            if not found:
+                clusters.append([p,])
+
+        clusters = [c[0] for c in clusters]
+        crossing_clusters.append(clusters)
+
+    # create the tree, iterating to find the single outlet for each HUC
+    outlets = dict()
+    crossing_cluster_indices = list(range(len(crossing_clusters)))
+    itercount = 0
+    while len(crossing_clusters) > 0:
+        logging.debug(f'itercount = {itercount}')
+        logging.debug(f'-----------------')
+        for lcv, (i, cc) in reversed(list(enumerate(zip(crossing_cluster_indices,
+                                                        crossing_clusters)))):
+            if len(cc) == 1:
+                outlets[i] = cc[0]
+                crossing_cluster_indices.pop(lcv)
+                crossing_clusters.pop(lcv)
+                logging.debug(f'{i}: found an outlet')
+            else:
+                for j, crossing in reversed(list(enumerate(cc))):
+                    try:
+                        inlet = next(outlet for outlet in outlets.values() 
+                                     if workflow.utils.close(crossing, outlet, outlet_width))
+                    except StopIteration:
+                        pass
+                    else:
+                        cc.pop(j)
+                        logging.debug(f'{i}: found an inlet, now length = {len(cc)}')
+        itercount += 1
+        logging.debug('')
+        if (itercount > 50):
+            logging.debug('quitting')
+            break
+
+    # for each outlet, find the boundary faces within tol of the outlet
+    outlet_face_sets = []
+    for i,outlet in outlets.items():
+        def inside_ball(outlet, edge):
+            n1 = m2.coords[edge[0]]
+            n2 = m2.coords[edge[1]]
+            c = (n1 + n2)/2.
+            close = workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+            return close
+        outlet_faces = [e for e in boundary_edges[i] if inside_ball(outlet, e)]
+        outlet_face_sets.append(outlet_faces)
+
+    # add the labeled set
+    for label, outlet in zip(labels,outlet_face_sets):
+        edges = [(int(e[0]), int(e[1])) for e in outlet]
+        ls = LabeledSet(label+' outlet', m2.next_available_labeled_setid(),
+                        'FACE', edges)
+        m2.add_labeled_set(ls)
+
+
