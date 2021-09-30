@@ -179,6 +179,7 @@ class Mesh2D:
 
 
     def add_labeled_set(self, ls):
+        logging.info(f'  -- adding labeled set id {ls.setid} : {ls.entity} : "{ls.name}"')
         if any(ls.setid == other.setid for other in self.labeled_sets):
             raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
         is_tuple = False
@@ -804,19 +805,20 @@ class Mesh3D(object):
         self.elem_to_face_conn = elem_to_face_conn
 
         self.labeled_sets = []
+        self.side_sets = []
+
         if labeled_sets is None:
             labeled_sets = []
         for ls in labeled_sets:
             self.add_labeled_set(ls)
 
-        self.side_sets = []
         if side_sets is None:
             side_sets = []
         for ss in side_sets:
             self.add_side_set(ss)
 
         if material_ids is None:
-            material_ids = [10000,]
+            material_ids = [100,]
         self.material_ids = material_ids
         self.material_ids_list = list(set(self.material_ids))
 
@@ -836,6 +838,7 @@ class Mesh3D(object):
                 assert -1 < i < len(self.elem_to_face_conn[j])
 
     def add_labeled_set(self, ls):
+        assert(type(ls) is LabeledSet)
         if any(ls.setid == other.setid for other in self.labeled_sets):
             raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
         if any(ls.setid == other.setid for other in self.side_sets):
@@ -850,6 +853,7 @@ class Mesh3D(object):
         self.labeled_sets.append(ls)
 
     def add_side_set(self, ls):
+        assert(type(ls) is SideSet)
         if any(ls.setid == other.setid for other in self.labeled_sets):
             raise ValueError(f'Invalid set ID in labeled set "{ls.name}" -- set id "{ls.setid}" already taken.')
         if any(ls.setid == other.setid for other in self.side_sets):
@@ -1259,12 +1263,18 @@ class Mesh3D(object):
         side_sets.append(SideSet("surface", 2, surface, [0,]*len(surface)))
         side_sets.append(SideSet("external_sides", 3, vertical_side_cells, vertical_side_indices))
 
+        labeled_sets = []
         for ls in mesh2D.labeled_sets:
             if ls.entity == 'CELL':
-                # top surface cells become side sets
-                elem_list = [eh.col_to_id(c,0) for c in ls.ent_ids]
-                side_list = [0 for c in ls.ent_ids]
-                side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
+                if hasattr(ls, 'to_extrude') and ls.to_extrude:
+                    # top surface cells, to become columns of cells
+                    elem_list = [eh.col_to_id(c,j) for j in range(ncells_tall) for c in ls.ent_ids]
+                    labeled_sets.append(LabeledSet(ls.name, ls.setid, 'CELL', elem_list))
+                else:
+                    # top surface cells, to become side sets
+                    elem_list = [eh.col_to_id(c,0) for c in ls.ent_ids]
+                    side_list = [0 for c in ls.ent_ids]
+                    side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
             elif ls.entity == 'FACE':
                 # top surface faces become faces in the subsurface
                 # mesh, as they will extract correctly for surface BCs/observations
@@ -1273,25 +1283,23 @@ class Mesh3D(object):
                 # given a 2D edge, find the 2D cell it touches
                 col_ids = [mesh2D.edges_to_cells()[mesh2D.edge_hash(e[0],e[1])][0]
                            for e in ls.ent_ids]
-                elem_list = [eh.col_to_id(c, 0) for c in col_ids]
-                face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], 0)
-                         for e in ls.ent_ids]
-                side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
+                if hasattr(ls, 'to_extrude') and ls.to_extrude:
+                    elem_list = [eh.col_to_id(c, i) for c in col_ids for i in range(ncells_tall)]
+                    face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], i)
+                                 for e in ls.ent_ids for i in range(ncells_tall)]
+                    side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
+                else:
+                    elem_list = [eh.col_to_id(c, 0) for c in col_ids]
+                    face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], 0)
+                                 for e in ls.ent_ids]
+                    side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
                 side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
         
         # reshape coords
         coords = coords.reshape(nnodes_total, 3)        
         
-        # for e,s in zip(side_sets[0].elem_list, side_sets[0].side_list):
-        #     face = cells[e][s]
-        #     fz_coords = np.array([coords[n] for n in faces[face]])
-
-        # for e,s in zip(side_sets[1].elem_list, side_sets[1].side_list):
-        #     face = cells[e][s]
-        #     fz_coords = np.array([coords[n] for n in faces[face]])
-        
         # instantiate the mesh
-        m3 = cls(coords, faces, cells, side_sets=side_sets, material_ids=material_ids)
+        m3 = cls(coords, faces, cells, material_ids=material_ids, side_sets=side_sets, labeled_sets=labeled_sets)
         return m3
 
 
@@ -1419,15 +1427,21 @@ def add_watershed_regions(m2, polygons, labels=None):
 
     for label, part in zip(labels, partitions):
         if len(part) > 0:
-            setid = m2.next_available_labeled_setid()
-            ls = LabeledSet(label, setid, 'CELL', part)
-            m2.add_labeled_set(ls)
+            # add a region, denoting this one as "to extrude".  This
+            # will become the volume region
+            setid2 = m2.next_available_labeled_setid()
+            ls2 = LabeledSet(label, setid2, 'CELL', part)
+            m2.add_labeled_set(ls2)
+            ls2.to_extrude = True
     return partitions
 
-def add_watershed_regions_and_outlets(m2, polygons, rivers, outlet_width, labels=None):
-    """Add two labeled sets to m2 for each polygon -- one for the shape
-    itself and one for the outlet, given by intersecting rivers with the
-    polygons.
+def add_watershed_regions_and_outlets(m2, polygons,
+                                      rivers=None, outlet_width=None, labels=None):
+    """Add three labeled sets to m2 for each polygon -- one for the
+    polygon cells, one for the polygon's boundary edges, and one for
+    all polygon boundary edges within outlet_width of outgoing
+    crossings of the river with the polygon boundary.
+
     """
     if labels is None:
         labels = _get_labels(polygons)
@@ -1443,7 +1457,7 @@ def add_watershed_regions_and_outlets(m2, polygons, rivers, outlet_width, labels
     # topologic routines in Mesh2D
     m2_hacks = []
     boundary_edges = []
-    for tris in partitions:
+    for label, tris in zip(labels, partitions):
         subdomain_conn = [list(m2.conn[tri]) for tri in tris]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
         subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
@@ -1451,84 +1465,96 @@ def add_watershed_regions_and_outlets(m2, polygons, rivers, outlet_width, labels
         m2_hacks.append(m2h)
         boundary_edges.append(m2h.boundary_edges())
 
-    # next determine the outlet, and all boundary edges within x m of that outlet
-    crossings = []
-    for subdomain in polygons:
-        my_crossings = []
-        for river in rivers:
-            for reach in river.preOrder():
-                if subdomain.exterior.intersects(reach.segment):
-                    my_crossings.append(subdomain.exterior.intersection(reach.segment))
-        crossings.append(my_crossings)
-
-    # cluster crossings that are within tolerance
-    crossing_clusters = []
-    for crossing in crossings:
-        assert(len(crossing) > 0)
-        clusters = []
-        p1 = crossing[0]
-        clusters.append([p1,])
-        for p in crossing[1:]:
-            found = False
-            for cluster in clusters:
-                if workflow.utils.close(cluster[0], p, outlet_width/2.0):
-                    found = True
-                    cluster.append(p)
-                    break
-
-            if not found:
-                clusters.append([p,])
-
-        clusters = [c[0] for c in clusters]
-        crossing_clusters.append(clusters)
-
-    # create the tree, iterating to find the single outlet for each HUC
-    outlets = dict()
-    crossing_cluster_indices = list(range(len(crossing_clusters)))
-    itercount = 0
-    while len(crossing_clusters) > 0:
-        logging.debug(f'itercount = {itercount}')
-        logging.debug(f'-----------------')
-        for lcv, (i, cc) in reversed(list(enumerate(zip(crossing_cluster_indices,
-                                                        crossing_clusters)))):
-            if len(cc) == 1:
-                outlets[i] = cc[0]
-                crossing_cluster_indices.pop(lcv)
-                crossing_clusters.pop(lcv)
-                logging.debug(f'{i}: found an outlet')
-            else:
-                for j, crossing in reversed(list(enumerate(cc))):
-                    try:
-                        inlet = next(outlet for outlet in outlets.values() 
-                                     if workflow.utils.close(crossing, outlet, outlet_width))
-                    except StopIteration:
-                        pass
-                    else:
-                        cc.pop(j)
-                        logging.debug(f'{i}: found an inlet, now length = {len(cc)}')
-        itercount += 1
-        logging.debug('')
-        if (itercount > 50):
-            logging.debug('quitting')
-            break
-
-    # for each outlet, find the boundary faces within tol of the outlet
-    outlet_face_sets = []
-    for i,outlet in outlets.items():
-        def inside_ball(outlet, edge):
-            n1 = m2.coords[edge[0]]
-            n2 = m2.coords[edge[1]]
-            c = (n1 + n2)/2.
-            close = workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
-            return close
-        outlet_faces = [e for e in boundary_edges[i] if inside_ball(outlet, e)]
-        outlet_face_sets.append(outlet_faces)
-
-    # add the labeled set
-    for label, outlet in zip(labels,outlet_face_sets):
-        edges = [(int(e[0]), int(e[1])) for e in outlet]
-        ls = LabeledSet(label+' outlet', m2.next_available_labeled_setid(),
-                        'FACE', edges)
+        edges = [(int(e[0]), int(e[1])) for e in m2h.boundary_edges()]
+        ls = LabeledSet(label+' boundary', m2.next_available_labeled_setid(),
+                       'FACE', edges)
+        ls.to_extrude = True # this marker tells the extrusion routine
+                             # to not limit it to the surface
         m2.add_labeled_set(ls)
+
+
+    if outlet_width is None:
+        outlet_width = 300
+
+    if rivers is not None:
+        # next determine the outlet, and all boundary edges within x m of that outlet
+        crossings = []
+        for subdomain in polygons:
+            my_crossings = []
+            for river in rivers:
+                for reach in river.preOrder():
+                    if subdomain.exterior.intersects(reach.segment):
+                        my_crossings.append(subdomain.exterior.intersection(reach.segment))
+            crossings.append(my_crossings)
+
+        # cluster crossings that are within tolerance
+        crossing_clusters = []
+        for crossing in crossings:
+            assert(len(crossing) > 0)
+            clusters = []
+            p1 = crossing[0]
+            clusters.append([p1,])
+            for p in crossing[1:]:
+                found = False
+                for cluster in clusters:
+                    if workflow.utils.close(cluster[0], p, outlet_width/2.0):
+                        found = True
+                        cluster.append(p)
+                        break
+
+                if not found:
+                    clusters.append([p,])
+
+            clusters = [c[0] for c in clusters]
+            crossing_clusters.append(clusters)
+
+        # create the tree, iterating to find the single outlet for each HUC
+        outlets = dict()
+        crossing_cluster_indices = list(range(len(crossing_clusters)))
+        itercount = 0
+        while len(crossing_clusters) > 0:
+            logging.debug(f'itercount = {itercount}')
+            logging.debug(f'-----------------')
+            for lcv, (i, cc) in reversed(list(enumerate(zip(crossing_cluster_indices,
+                                                            crossing_clusters)))):
+                if len(cc) == 1:
+                    outlets[i] = cc[0]
+                    crossing_cluster_indices.pop(lcv)
+                    crossing_clusters.pop(lcv)
+                    logging.debug(f'{i}: found an outlet')
+                else:
+                    for j, crossing in reversed(list(enumerate(cc))):
+                        try:
+                            inlet = next(outlet for outlet in outlets.values() 
+                                         if workflow.utils.close(crossing, outlet, outlet_width))
+                        except StopIteration:
+                            pass
+                        else:
+                            cc.pop(j)
+                            logging.debug(f'{i}: found an inlet, now length = {len(cc)}')
+            itercount += 1
+            logging.debug('')
+            if (itercount > 50):
+                logging.debug('quitting')
+                break
+
+        # for each outlet, find the boundary faces within tol of the outlet
+        outlet_face_sets = []
+        for i,outlet in outlets.items():
+            def inside_ball(outlet, edge):
+                n1 = m2.coords[edge[0]]
+                n2 = m2.coords[edge[1]]
+                c = (n1 + n2)/2.
+                close = workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+                return close
+            outlet_faces = [e for e in boundary_edges[i] if inside_ball(outlet, e)]
+            outlet_face_sets.append(outlet_faces)
+
+        # add the labeled sets -- one for the entire set of faces, one for the outlet
+        for label, outlet, boundary_edge in zip(labels, outlet_face_sets, boundary_edges):
+            edges = [(int(e[0]), int(e[1])) for e in outlet]
+            ls = LabeledSet(label+' surface outlet', m2.next_available_labeled_setid(),
+                            'FACE', edges)
+            m2.add_labeled_set(ls)
 
 
