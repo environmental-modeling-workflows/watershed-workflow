@@ -383,6 +383,26 @@ def triangle_area(vertices):
     return A
 
 
+def angle(v1, v2):
+    """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
+    of 2 relative to 1 in a clockwise notion."""
+    x1 = v1[0]; y1 = v1[1]
+    x2 = v2[0]; y2 = v2[1]
+    mag = 180./np.pi * np.arccos((x1 * x2 + y1 * y2) / ( np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)))
+    sign =  x1*y2 - x2*y1
+    if sign < 0:
+        return -mag
+    else:
+        return mag
+
+
+def midpoint(p1, p2):
+    """Returns the midpoint of two points"""
+    if type(p1) is tuple:
+        return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
+    else:
+        return shapely.geometry.Point(midpoint(p1.coords[0], p2.coords[0]))
+    
 def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
     if type(centering) is shapely.geometry.Point:
