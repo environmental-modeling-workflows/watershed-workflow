@@ -11,7 +11,7 @@ def y_with_extension():
     return shapely.geometry.MultiLineString(points)
 
 y = y_with_extension()
-box = shapely.geometry.Polygon([(-3,-3), (3,-3), (3,3), (-3,3)])
+box = shapely.geometry.Polygon([(-0.1,-1.1), (2.1,-1.1), (2.1,1.1), (-0.1,1.1)])
 sbox = workflow.split_hucs.SplitHUCs([box,])
 rivers = workflow.simplify_and_prune(sbox,y, simplify=0)
 river = rivers[0]
@@ -26,11 +26,12 @@ ax.plot(corr.exterior.xy[0], corr.exterior.xy[1], 'b-x')
 for reach in rivers[0].dfs():
     ax.plot(reach.xy[0], reach.xy[1], 'r-x')
 
-conn = workflow.river_tree.to_quads(river)
+coords = list(corr.exterior.coords)
+conn = workflow.river_tree.to_quads(river, 0.04, sbox, coords[:-1], ax)
 for elem in conn:
     looped_conn = elem[:]
     looped_conn.append(elem[0])
-    coords = np.array([corr.exterior.coords[n] for n in looped_conn])
-    ax.plot(coords[:,0], coords[:,1], 'm-^')
+    cc = np.array([coords[n] for n in looped_conn])
+    ax.plot(cc[:,0], cc[:,1], 'm-^')
 
 plt.show()

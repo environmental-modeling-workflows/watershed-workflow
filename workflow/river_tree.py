@@ -269,9 +269,9 @@ def to_quads(river, delta, huc, coords, ax=None, ):
     ic = 0
     total_touches = 0
     for node in river.prePostInBetweenOrder():
-        print(f'touching {node.id} (previously touched {node.touched} times with {len(node.children)} children)')
+        logging.debug(f'touching {node.id} (previously touched {node.touched} times with {len(node.children)} children)')
         if node.touched == 0:
-            print(f'  first time around! {node.touched+1}')
+            logging.debug(f'  first time around! {node.touched+1}')
             # not yet touched -- add the first coordinates
             seg_coords = [coords[ic],]
             for j in range(len(node.elements)):
@@ -290,7 +290,7 @@ def to_quads(river, delta, huc, coords, ax=None, ):
 
         elif node.touched == 1 and len(node.children) == 0:
             # leaf node, last time
-            print(f' last time around a leaf! {node.touched+1}')
+            logging.debug(f' last time around a leaf! {node.touched+1}')
             # increment to avoid double-counting the point in the triangle on the ends
             seg_coords = [coords[ic],]
             ic += 1
@@ -322,7 +322,7 @@ def to_quads(river, delta, huc, coords, ax=None, ):
             
 
         elif node.touched == len(node.children):
-            print(f'  last time around! {node.touched+1}')
+            logging.debug(f'  last time around! {node.touched+1}')
             seg_coords = [coords[ic],]
             # touched enough times that this is the last appearance
             # add the last coordinates
@@ -347,9 +347,11 @@ def to_quads(river, delta, huc, coords, ax=None, ):
                 else:
                     assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
-                # for c in cc:
-                #     assert(workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 3*delta) or \
-                #            workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 3*delta))
+                for c in cc:
+                    # note, the more acute an angle, the bigger this distance can get...
+                    # so it is a bit hard to pin this multiple down -- using 5 seems ok?
+                    assert(workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
+                           workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
                            
                            
                 ax.plot(cc[:,0], cc[:,1], 'g-o')
@@ -357,7 +359,7 @@ def to_quads(river, delta, huc, coords, ax=None, ):
             
             
         else:
-            print(f'  middle time around! {node.touched+1}')
+            logging.debug(f'  middle time around! {node.touched+1}')
             assert(node.touched < len(node.children))
             # touched in between children
             # therefore this is at least a pentagon
