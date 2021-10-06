@@ -1398,10 +1398,11 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
 def _get_labels(polygons):
     labels = []
     for i,p in enumerate(polygons):
-        try:
-            label = p.properties['ToHUC']
-        except (KeyError, AttributeError):
+        huc_k = [k for k in p.properties if k.startswith('HUC')]
+        if len(huc_k) == 0:
             label = f'watershed {i}'
+        else:
+            label = p.properties[huc_k[0]]
         labels.append(label)
     return labels
     
@@ -1556,5 +1557,6 @@ def add_watershed_regions_and_outlets(m2, polygons,
             ls = LabeledSet(label+' surface outlet', m2.next_available_labeled_setid(),
                             'FACE', edges)
             m2.add_labeled_set(ls)
+
 
 

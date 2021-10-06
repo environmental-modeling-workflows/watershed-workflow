@@ -17,9 +17,10 @@ river = rivers[0]
 corr1, corr2, corr3 = workflow.river_tree.create_river_corridor(river, 6)
 corr = corr3
 
-plt.ion()
+
+#plt.ion()
 fig = plt.figure()
-plt.show()
+#plt.show()
 ax = fig.add_subplot(111)
 ax.plot(huc.exterior().exterior.xy[0], huc.exterior().exterior.xy[1], 'k')
 for reach in rivers[0].dfs():
