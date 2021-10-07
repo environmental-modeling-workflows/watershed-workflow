@@ -449,14 +449,24 @@ def prune_by_segment_length(tree, prune_tol=10):
                 leaf.parent.properties['area'] += leaf.properties['area']
             leaf.remove()
 
+
 def accumulate(tree):
     """Accumulates areas up the tree."""
-    try:
-        for node in tree.postOrder():
+    for node in tree.postOrder():
+        if len(node.children) == 0:
+            node.properties['order'] = 1
+            node.properties['num contributing reaches'] = 1
+        else:
+            node.properties['order'] = max(c.properties['order'] for c in node.children)+1
+            node.properties['num contributing reaches'] = sum(c.properties['num contributing reaches'] for c in node.children)+1
+
+        try:
             total_area = sum(c.properties['total contributing area'] for c in node.children)
+        except KeyError:
+            raise ValueError("accumulate() cannot be called on rivers whose reaches do not include the 'area' property.")
+        else:
             node.properties['total contributing area'] = total_area + node.properties['area']
-    except KeyError:
-        raise ValueError("accumulate() cannot be called on rivers whose reaches do not include the 'area' property.")
+
 
 def prune_by_area(tree, tol):
     """Removes segments whose contributing area is less than tolerance.  
@@ -482,7 +492,7 @@ def prune_by_area_fraction(tree, tol, total_area=None):
         
     count = 0
     for node in list(tree.preOrder()):
-        if node.properties['total contributing area'] / total_area < tol:
+        if node.properties['total contributing area'] < total_area * tol:
             logging.info(f'... removing: {node.properties["total contributing area"]} of {total_area}')
             count += 1
             node.remove()
