@@ -40,11 +40,10 @@ sbox = workflow.split_hucs.SplitHUCs([watershed_boundary,])
 
 ### **** some functions 
 
-def points_on_in_rc(points, rc_coords):
+def points_on_in_rc(points, polygon_):
     """function to identify which nodes of the mesh falls on or in the river corridor"""
     # in mixed-element mesh we have this information, this function is for a more general case
     points_ = [Point(point[0], point[1])  for point in points] # underscore represents shapely object
-    polygon_ = Polygon(list(rc_coords))
     res1=[polygon_.touches(point_) for point_ in points_]
     res2=[polygon_.contains(point_) for point_ in points_]
     res=[]
@@ -125,7 +124,7 @@ points3[:,:2]=points
 points3[:,2]=9+abs(points[:,0]-200)/800+points[:,1]/500 # gradient towards the outlet 
 
 # identifying the mesh points in the river corridor
-inds=points_on_in_rc(points, corr_coords)
+inds=points_on_in_rc(points, corr)
 points3[inds,2]=points3[inds,2]-2 # depressing the surface by 2 units in the stream
 
 # creating surface mesh in 3D using watershed workflow tools
