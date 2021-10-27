@@ -4,6 +4,7 @@ import logging
 import collections
 import numpy as np
 import math
+import copy
 from scipy import interpolate
 
 import shapely
@@ -20,9 +21,11 @@ def DensifyTree(tree,tree_, limit=100, collinear=False):
       limit             | limit of section length above which more points are added
       collinear         | boolean to check for collinearity 
       """
-    for node, node_ in zip(tree.preOrder(), tree_.preOrder()):
+    assert (len(tree)==len(tree_))
+    tree_densified=copy.deepcopy(tree)
+    for node, node_ in zip(tree_densified.preOrder(), tree_.preOrder()):
         node.segment=DensifyNodeSegments(node,node_,limit=limit,collinear=collinear)
-    return tree
+    return tree_densified
 
 
 def DensifyNodeSegments(node,node_,limit=100,collinear=False):
@@ -61,8 +64,8 @@ def DensifyHucs(huc,huc_,limit=200):
       limit             | limit of section length above which more points are added
     """
  
-    coords=list(huc.segments[0].coords) 
-    coords_=list(huc_.segments[0].coords)
+    coords=list(huc.exterior().exterior.coords) 
+    coords_=list(huc_.exterior().exterior.coords)
     coords_densified=coords.copy()
 
     j=0

@@ -102,33 +102,41 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     return mesh_points, mesh_tris
 
 def huc_edge_with_river_outlet(river_corr,hucs):
-    """Returns huc edge (shapely.geometry.LineString) on which river outlet lies"""
+    """Returns huc edges (list of shapely.geometry.LineString) on which river outlet lies (can be single line or two lines)"""
     # huc as multiLineString object
     huc_perimeter=list(hucs.segments)[0]
-    # spliting huc perimeter into individual lines and finding which line has river outlet
+    # spliting huc perimeter into individual lines and finding which lines has river outlet
     points_to_split = MultiPoint([Point(x,y) for x,y in huc_perimeter.coords[:-1]])
     huc_splitted = split(huc_perimeter,points_to_split)
+    outlet_huc_edges=[]
     for line in huc_splitted:
         if line.intersects(river_corr):
-            outlet_huc_edge=line 
-    return outlet_huc_edge
+            outlet_huc_edges.append(line)
+    return outlet_huc_edges
 
 def outlet_face(fdata, pdata, river_corr, hucs):
     """A function to update facet data such that river-corridor outlet is defined on the huc boundary"""
     # get the edge on huc where river outlet lies (as LineString)
-    outlet_huc_edge= huc_edge_with_river_outlet(river_corr,hucs)
-    # end-point coordinates of the huc edge containing outlet
-    outlet_huc_edge_coords=list((outlet_huc_edge.coords)) 
-    # indices of end points of huc edge with outlet
-    inds_huc=[pdata.index(point)  for point in outlet_huc_edge_coords]
+    outlet_huc_edges= huc_edge_with_river_outlet(river_corr,hucs)
+    # indices of end points of huc edges with outlet
+    inds_huc_outlet=[]
+    for line in outlet_huc_edges:
+        inds_huc_outlet.append(list(orient([pdata.index(tuple(round(num, 3) for num in coord)) for coord in line.coords])))
     # points on the river corridor at the outlet
     nodes_edges_rc = NodesEdges([river_corr])
-    inds_rc=[0,len(nodes_edges_rc.nodes)-1]
+    inds_rc_outlet=[0,len(nodes_edges_rc.nodes)-1]
     # removing the larger facet
-    fdata.remove(inds_huc) # removing the larger facet
+    for inds in inds_huc_outlet:
+        fdata.remove(inds)
+    
+    # inds to be used in defining new fdata sets
+    if len(outlet_huc_edges) == 2:
+        inds_huc_inserted=[max(inds) for inds in inds_huc_outlet] # minimum index is the outlet of the huc (is it allways true??)
+    else:
+        inds_huc_inserted=inds_huc_outlet[0]
     # adding two smaller facets adjacent to stream outlet 
-    fdata.insert(0,orient([inds_rc[0],inds_huc[0]]))
-    fdata.insert(0,orient([inds_rc[1],inds_huc[1]]))
+    fdata.insert(0,orient([inds_rc_outlet[0],inds_huc_inserted[0]]))
+    fdata.insert(0,orient([inds_rc_outlet[1],inds_huc_inserted[1]]))
     
     return fdata
 
