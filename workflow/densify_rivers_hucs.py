@@ -55,16 +55,17 @@ def DensifyNodeSegments(node,node_,limit=100,collinear=False):
     return shapely.geometry.LineString(seg_coords_densified)
 
 
-def DensifyHucs(huc,huc_,limit=200):
+def DensifyHucs(hucs,huc_,limit=200):
 
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
      Arguments:
-      huc              | huc to be densified (workflow.split_hucs.SplitHUCs)
+      hucs              | hucs to be densified (workflow.split_hucs.SplitHUCs)
       node_             | original huc containing all the known points fromthe source (workflow.split_hucs.SplitHUCs)
       limit             | limit of section length above which more points are added
     """
- 
-    coords=list(huc.exterior().exterior.coords) 
+    # first if there are multiple segments, we define outer-ring and remove close points
+    huc_ring=hucs.exterior().exterior.simplify(tolerance=1)
+    coords=list(huc_ring.coords) 
     coords_=list(huc_.exterior().exterior.coords)
     coords_densified=coords.copy()
 

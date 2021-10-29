@@ -37,12 +37,12 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     logging.info("Triangulating...")
-    if type(hucs) is workflow.split_hucs.SplitHUCs:
-        segments = list(hucs.segments)
-    elif type(hucs) is list:
-        segments = hucs
-    elif type(hucs) is shapely.geometry.Polygon:
-        segments = [hucs,]
+
+    logging.info("Adding river outlet in huc...")
+
+    if type(hucs) is workflow.split_hucs.SplitHUCs or list or shapely.geometry.Polygon:
+        huc_segment=add_river_outlet_in_huc(river_corr,hucs) # adjusting hucs to accomodate river corridor
+        segments = [huc_segment]
     else:
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
         
@@ -64,9 +64,6 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
-
-    # break the huc boundary intersecting with river outlet to create outlet face
-    fdata=outlet_face(fdata, pdata, river_corr, hucs)
 
     info.set_points(pdata)
     info.set_facets(fdata)
@@ -101,44 +98,21 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
     return mesh_points, mesh_tris
 
-def huc_edge_with_river_outlet(river_corr,hucs):
-    """Returns huc edges (list of shapely.geometry.LineString) on which river outlet lies (can be single line or two lines)"""
-    # huc as multiLineString object
-    huc_perimeter=list(hucs.segments)[0]
-    # spliting huc perimeter into individual lines and finding which lines has river outlet
-    points_to_split = MultiPoint([Point(x,y) for x,y in huc_perimeter.coords[:-1]])
-    huc_splitted = split(huc_perimeter,points_to_split)
-    outlet_huc_edges=[]
-    for line in huc_splitted:
-        if line.intersects(river_corr):
-            outlet_huc_edges.append(line)
-    return outlet_huc_edges
+def add_river_outlet_in_huc(river_corr,hucs):
+    """Returns updated huc with river outlet repsented"""
+    if type(hucs) is workflow.split_hucs.SplitHUCs:
+        huc_segment = hucs.segments[0]
+    elif type(hucs) is list:
+        huc_segment = hucs[0]
+    elif type(hucs) is shapely.geometry.Polygon:
+        huc_segment  = hucs.exterior()
 
-def outlet_face(fdata, pdata, river_corr, hucs):
-    """A function to update facet data such that river-corridor outlet is defined on the huc boundary"""
-    # get the edge on huc where river outlet lies (as LineString)
-    outlet_huc_edges= huc_edge_with_river_outlet(river_corr,hucs)
-    # indices of end points of huc edges with outlet
-    inds_huc_outlet=[]
-    for line in outlet_huc_edges:
-        inds_huc_outlet.append(list(orient([pdata.index(tuple(round(num, 3) for num in coord)) for coord in line.coords])))
-    # points on the river corridor at the outlet
-    nodes_edges_rc = NodesEdges([river_corr])
-    inds_rc_outlet=[0,len(nodes_edges_rc.nodes)-1]
-    # removing the larger facet
-    for inds in inds_huc_outlet:
-        fdata.remove(inds)
+    huc_coords=list(huc_segment.coords)
+    huc_coords[0]=river_corr.exterior.coords[0]
+    huc_coords[-1]=river_corr.exterior.coords[-2]
+    huc_segment_new=LineString(huc_coords)
     
-    # inds to be used in defining new fdata sets
-    if len(outlet_huc_edges) == 2:
-        inds_huc_inserted=[max(inds) for inds in inds_huc_outlet] # minimum index is the outlet of the huc (is it allways true??)
-    else:
-        inds_huc_inserted=inds_huc_outlet[0]
-    # adding two smaller facets adjacent to stream outlet 
-    fdata.insert(0,orient([inds_rc_outlet[0],inds_huc_inserted[0]]))
-    fdata.insert(0,orient([inds_rc_outlet[1],inds_huc_inserted[1]]))
-    
-    return fdata
+    return huc_segment_new
 
 def pick_hole_point(poly):
     """A function to pick a point inside a polygon"""
