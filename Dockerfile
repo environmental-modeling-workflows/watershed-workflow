@@ -24,12 +24,11 @@ RUN echo "conda activate watershed_workflow" >> ~/.bashrc
 SHELL ["/bin/bash", "--login", "-c"]
 
 # get pip and install this package (which also installs rosetta)
-#RUN conda install pip && \
-#    python -m pip install -e .
-
+RUN conda install pip && \
+    python -m pip install -e .
 
 # create a watershed_workflowrc that will be picked up
-#RUN cat watershed_workflowrc > .watershed_workflowrc
+RUN cat watershed_workflowrc > .watershed_workflowrc
 
 
 
