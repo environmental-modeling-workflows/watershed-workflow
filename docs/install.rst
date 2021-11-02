@@ -1,25 +1,9 @@
 Installation and Setup
 =========================
 
-All code is in python3, though the dependencies (because of their need
-for GIS libraries) can be tricky to get right.  It is recommended to
-use Anaconda3 as a package manager, generating a unique environment
-for use with this package, as this makes it fairly easy to get all the
-required packages.
-
-Note that this package is not currently installed in a typical
-pythononic way (i.e. setuptools), but instead expects you to simply
-use it in place.  This will change at some point.  In the meantime, to
-install this package, simply place it and its third party libraries
-(TPLs) in your python path:
-
-.. code-block:: console
-
-    cd /path/to/repository
-    export PYTHONPATH=`pwd`:`pwd`/workflow_tpls:${PYTHONPATH}
-
-Dependencies
-~~~~~~~~~~~~~~~~~~
+All code in this package is pure python3, though the dependencies
+(because of their need for GIS libraries) can be tricky to get all of
+the dependencies to coexist.
 
 Standard packages needed include `argparse` and `subprocess`, and for
 testing, `pytest` and `dist_utils`.  Standard math packages include
@@ -46,11 +30,10 @@ be installed separately.  See below.  Exodus, in turn, needs
 **Optional:** Finally, soil properties often come in percent
 silt/clay/sand, yet hydrologic properties such as porosity,
 permeability, and van Genuchten curves are the most frequently used in
-models.  `Rosetta3 <http://www.u.arizona.edu/~ygzhang/download.html>`_
-is a tool providing pedotransfer functions to convert these properties
-into the needed model parameters.  There is no current package
-available for this either, so it must be installed separately.  See
-below.
+models.  Rosetta3 is a tool providing pedotransfer functions to
+convert these properties into the needed model parameters.  Rosetta
+packages are provided by the `rosetta-soil` pip package, which _is_
+installed via the above setup.py.
 
 **Optional:** Here we use `jupyter` notebooks to provide examples and
 illustrate usage of the package.  If you do not intend to use jupyter,
@@ -61,9 +44,15 @@ pipelined -- you develop a notebook, then use `papermill` to use the
 notebook as a script.
 
 
+Use with Docker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Recommended process
+Installation
 ~~~~~~~~~~~~~~~~~~~
+
+It is recommended to use Anaconda3 as a package manager, generating a
+unique environment for use with this package, as this makes it fairly
+easy to get all the required packages.
 
 Download and install `Anaconda3
 <https://www.anaconda.com/distribution/>`_.  Then create a new
@@ -72,13 +61,13 @@ environment that includes the required packages:
 .. code-block:: console
     :caption: Packages for general users
                 
-    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest papermill
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill 
     conda activate watershed_workflow
 
 .. code-block:: console
     :caption: Packages for developers and building documentation
 
-    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest papermill sphinx numpydoc sphinx_rtd_theme nbsphinx
+    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill sphinx numpydoc sphinx_rtd_theme nbsphinx
     conda activate watershed_watershed_dev
 
 Note that, for OSX users, it is recommended you install `python.app`
@@ -96,7 +85,7 @@ Check your python installation:
 
      
 Installing ExodusII (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 Clone the package from `source <https://github.com/gsjaardema/seacas>`_
 
@@ -120,62 +109,47 @@ PYTHONPATH and import the python wrappers:
     export PYTHONPATH=${SEACAS_DIR}/lib
     python -c 'import exodus3; print("SUCCESS")'
 
-Installing Rosetta (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Download the Rosetta-3.0beta-py3 package:
+Installing this package
+--------------------------------------
 
-.. code-block:: console
-
-   cd workflow_tpls
-   mkdir rosetta
-   cd rosetta
-   wget http://www.u.arizona.edu/~ygzhang/rosettav3/Rosetta-3.0beta-py3.tar.gz
-   tar xzf Rosetta-3.0beta-py3.tar.gz
-
-This should be sufficient, check the installation:
+Once you've got this environment set up, this package and the Rosetta
+dependency are installed via:
 
 .. code-block:: console
 
-   python -c 'import rosetta.ANN_Module; print("SUCCESS")'
+     cd /path/to/this/repository
+     python -m pip install -e .
 
-Setup
-~~~~~
+
+
+Configuration
+--------------------
 
 Little is needed to set up the package, but likely you want to set a
-data directory for storing all downloaded files.  Usually this is done
-via exporting the WATERSHED_WORKFLOW_DIR environment variable to your
-downloaded package directory, but it can also be placed arbitrarily in
-your filesystem.
+data directory for storing all downloaded files.  This directory,
+along with other configuration information (e.g. account info for
+protected data archives) are stored in an rc file.  setup.py installs
+a blank configure template in your home directory, so you should look
+at and potentially edit this file: `~/.watershed_workflowrc`
 
-Then, each time you use Watershed Workflow, you must do the following
-things (they may go in a bashrc or similar):
+Run the test suite
+~~~~~~~~~~~~~~~
 
-.. code-block:: console
-
-   conda activate watershed_workflow
-   export SEACAS_DIR=/path/to/your/seacas  # optional!
-   export WATERSHED_WORKFLOW_DIRECTORY=/path/to/your/watershed_workflow
-   export PYTHONPATH=${WATERSHED_WORKFLOW_DIR}:${WATERSHED_WORKFLOW_DIR}/workflow_tpls:${SEACAS_DIR}/lib:${PYTHONPATH}
-
-   
-Run the test suite (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Given that you have activated your environment, set your PYTHONPATH,
-and successfully install the above, the following tests should all
-pass.  They are not all fast -- some download files and may be
-internet-connection-speed dependent.  You may be happy enough just
-running the high-level tests:
+Given that you have activated your environment and successfully
+install the above, the following tests should all pass.  They are not
+all fast -- some download files and may be internet-connection-speed
+dependent.  You may be happy enough just running the core
+functionality tests:
 
 .. code-block:: console
 
-   pytest workflow/test/test_hilev.py
+   pytest watershed_workflow/test
 
 
 but you can also run the entire suite:
 
 .. code-block:: console
 
-    pytest workflow                
+    pytest watershed_workflow                
 
