@@ -4,11 +4,12 @@ DayMet is downloaded in box mode based on watershed bounds, then it can be conve
 hdf5 files that models can read.
 """
 
-import requests
-import datetime
+# import requests
+# import datetime
 import logging
-import h5py, netCDF4
-import sys, os
+import h5py
+import netCDF4
+import os
 import numpy as np
 import time
 import workflow
@@ -16,6 +17,7 @@ import rasterio
 from scipy.signal import savgol_filter
 
 VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
+
 
 class Date:
     """Struct to store day of year and year."""
@@ -266,7 +268,7 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
         dout[key][np.isnan(dout[key])] = -9999
 
     logging.debug(f"output dout shape: {dout['incoming shortwave radiation [W m^-2]'].shape}")
-    return dout
+    return time, dout
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
@@ -290,7 +292,9 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
         fid.create_dataset('row coordinate [m]', data=rev_y) 
         fid.create_dataset('col coordinate [m]', data=x)
 
-        for key in dat.keys():
+        keys = list(dat.keys())
+        keys.remove('time [s]')
+        for key in keys:
             # dat has shape (nband, nrow, ncol) 
             assert(dat[key].shape[0] == time.shape[0])
             assert(dat[key].shape[1] == y.shape[0])
@@ -306,7 +310,7 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
         for key, val in attrs.items():
             fid.attrs[key] = val
 
-    return time, dat
+    return 
 
 def getAttrs(bounds, start, end):
     # set the wind speed height, which is made up
