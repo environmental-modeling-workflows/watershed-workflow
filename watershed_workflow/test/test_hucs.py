@@ -8,6 +8,7 @@ from watershed_workflow.test.shapes import two_boxes, three_boxes
 
 
 def test_hc():
+    """HandledCollection is in the inner guts of split_hucs"""
     # construction
     things = ['a','b','c','d']
     hc = watershed_workflow.split_hucs.HandledCollection(things)

@@ -6,22 +6,8 @@ import shapely.geometry
 import numpy as np
 import watershed_workflow.crs
 import watershed_workflow.hilev
-import watershed_workflow.source_list
 
-
-@pytest.fixture
-def datadir(tmpdir, request):
-    """Fixture responsible for searching a folder with the same name of test
-    module and, if available, moving all contents to a temporary directory so
-    tests can use them freely.
-    """
-    filename = request.module.__file__
-    test_dir, _ = os.path.splitext(filename)
-
-    if os.path.isdir(test_dir):
-        dir_util.copy_tree(test_dir, str(tmpdir))
-    return tmpdir
-
+from source_fixtures import datadir, sources
 
 def get_fiona(filename):
     with fiona.open(str(filename), 'r') as fid:
@@ -35,17 +21,8 @@ def get_fiona(filename):
     return crs, shply
 
 
-@pytest.fixture
-def sources():
-    sources = dict()
-    #sources['HUC08'] = watershed_workflow.files.NHDFileManager()
-    sources['HUC'] = watershed_workflow.source_list.FileManagerNHDPlus()
-    sources['DEM'] = watershed_workflow.source_list.FileManagerNED()
-    return sources
-
-
-def test_find_raises(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find_raises(datadir, sources):
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_shapefile.shp')
     crs, shp = get_fiona(testshpfile)
@@ -55,8 +32,8 @@ def test_find_raises(datadir):
     with pytest.raises(ValueError):
         watershed_workflow.hilev.find_huc(nhd, shp, crs, '06')
 
-def test_find12(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find12(datadir, sources):
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_shapefile.shp')
     crs, shp = get_fiona(testshpfile)
@@ -65,8 +42,8 @@ def test_find12(datadir):
     print(shp.area)
     assert('060102020103' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601'))
 
-def test_find12_exact(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find12_exact(datadir, sources):
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_shapefile.shp')
     crs, shp = get_fiona(testshpfile)
@@ -75,8 +52,9 @@ def test_find12_exact(datadir):
     print(shp.area)
     assert('060102020103' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '060102020103'))
 
-def test_find12_raises(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find12_raises(datadir, sources):
+    """This throws because the shape is not in this huc"""
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_shapefile.shp')
     crs, shp = get_fiona(testshpfile)
@@ -86,46 +64,38 @@ def test_find12_raises(datadir):
     with pytest.raises(RuntimeError):
         watershed_workflow.hilev.find_huc(nhd, shp, crs, '060101080204')
 
-def test_find8(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find8(datadir, sources):
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_polygon.shp')
     crs, shp = get_fiona(testshpfile)
     assert('06010202' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601'))
 
-def test_find8_exact(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find8_exact(datadir, sources):
+    nhd = sources['HUC']
 
     testshpfile = datadir.join('test_polygon.shp')
     crs, shp = get_fiona(testshpfile)
     assert('06010202' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '06010202'))
 
-def test_find8_raises(datadir):
-    nhd = watershed_workflow.source_list.FileManagerNHDPlus()
+def test_find8_raises(datadir, sources):
+    nhd = sources['HUC']
 
-    testshpfile = datadir.join('test_polygon.shp')
+    testshpfile = datadir.join('copper_creek.shp')
     crs, shp = get_fiona(testshpfile)
     with pytest.raises(RuntimeError):
-        watershed_workflow.hilev.find_huc(nhd, shp, crs, '0204')
+        watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601')
 
-
-def test_river_tree_properties():
+def test_river_tree_properties(sources):
     crs = watershed_workflow.crs.default_crs()
-    nhdp = watershed_workflow.source_list.FileManagerNHDPlus()
-    _, cc = watershed_workflow.get_split_form_hucs(nhdp, '140200010204', 12, crs)
-    _, reaches = watershed_workflow.get_reaches(nhdp, '140200010204',None,crs, merge=False)
+    nhd = sources['HUC']
+    _, cc = watershed_workflow.get_split_form_hucs(nhd, '060102020103', 12, crs)
+    _, reaches = watershed_workflow.get_reaches(nhd, '060102020103',None,crs, merge=False)
 
     rivers1 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2)
     rivers2 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2,
                                           prune_by_area_fraction=0.03)
 
-def test_weird_nhd():
-    crs = watershed_workflow.crs.default_crs()
-    nhdp = watershed_workflow.source_list.FileManagerNHDPlus()
-    _, cc = watershed_workflow.get_split_form_hucs(nhdp, '041000050101', 12, crs)
-    _, reaches = watershed_workflow.get_reaches(nhdp, '041000050101', None, crs, crs, merge=False)
-
-    rivers1 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=10)
     
     
 
