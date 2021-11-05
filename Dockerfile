@@ -58,4 +58,4 @@ RUN cp watershed_workflowrc .watershed_workflowrc
 
 RUN python -m pytest watershed_workflow/test/
 
-
+CMD [ "python", "-m", "pytest", "watershed_workflow/test/" ]
