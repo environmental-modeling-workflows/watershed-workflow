@@ -2,13 +2,14 @@ FROM continuumio/miniconda3 AS environ
 #
 # Stage 1 -- setup environment
 #
-LABEL Description="Watershed Workflow CI container for dependencies/TPLs and environment setup"
+LABEL Description="Environment Docker Container for Watershed Workflow"
 
 RUN mkdir /ww
 WORKDIR /ww
 
 # set the workdir as the user's home directory
 COPY environment.yml /ww/environment.yml
+COPY requirements.txt /ww/requirements.txt
 
 # create an environment based on yml file
 RUN conda env create -f environment.yml && \
