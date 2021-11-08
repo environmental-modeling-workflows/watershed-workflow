@@ -39,7 +39,7 @@ ENV WATERSHED_WORKFLOW_DIR=/ww
 COPY watershed_workflow /ww/watershed_workflow
 
 # get pip and install this package (which also installs rosetta)
-COPY setup.py /ww/setup.py
+COPY . /ww
 WORKDIR /ww
 RUN python -m pip install -e .
 
