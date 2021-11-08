@@ -1,0 +1,37 @@
+FROM continuumio/miniconda3 AS environ
+#
+# Stage 1 -- setup environment
+#
+LABEL Description="Watershed Workflow CI container for dependencies/TPLs and environment setup"
+
+RUN mkdir /ww
+WORKDIR /ww
+
+# set the workdir as the user's home directory
+COPY environment.yml /ww/environment.yml
+
+# create an environment based on yml file
+RUN conda env create -f environment.yml && \
+    conda clean -afy
+
+# add extras pip
+RUN conda install -c conda-forge --yes --freeze-installed pip conda-pack
+
+# pack the environment into a new directory
+RUN conda-pack -n watershed_workflow -o /tmp/env.tar && \
+    mkdir /ww_env && cd /ww_env && tar xf /tmp/env.tar && \
+    rm /tmp/env.tar 
+
+# We've put env in same path it'll be in final image,
+# so now fix up paths:
+RUN /ww_env/bin/conda-unpack
+
+#
+# Stage 2 -- clone repo run
+#
+FROM ubuntu:20.04 AS watershed_workflow_env
+
+COPY --from=environ /opt/conda/envs/watershed_workflow /opt
+ENV PATH="/opt/bin:${PATH}"
+ENV WATERSHED_WORKFLOW_DIR=/ww
+
