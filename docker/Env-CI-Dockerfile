@@ -15,9 +15,6 @@ COPY requirements.txt /ww/requirements.txt
 RUN conda env create -f environment.yml && \
     conda clean -afy
 
-# add extras pip
-RUN conda install -c conda-forge -n watershed_workflow --yes --freeze-installed pip
-
 # add pip-only packages
 RUN conda run -n watershed_workflow python -m pip install -r requirements.txt
 
