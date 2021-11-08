@@ -15,7 +15,10 @@ RUN conda env create -f environment.yml && \
     conda clean -afy
 
 # add extras pip
-RUN conda install -c conda-forge --yes --freeze-installed pip conda-pack
+RUN conda install -c conda-forge -n watershed_workflow --yes --freeze-installed pip conda-pack
+
+# add pip-only packages
+RUN conda run -n watershed_workflow python -m pip install -r requirements.txt
 
 # pack the environment into a new directory
 RUN conda-pack -n watershed_workflow -o /tmp/env.tar && \
