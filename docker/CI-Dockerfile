@@ -5,10 +5,10 @@ FROM continuumio/miniconda3 AS environ
 LABEL Description="Watershed Workflow CI container for dependencies/TPLs and environment setup"
 
 # set the workdir as the user's home directory
-#WORKDIR $GITHUB_WORKSPACE
+COPY environment.yml /environment.yml
 
 RUN echo ${PWD}
-RUN ls -la
+RUN ls -la environment.yml
 
 # create an environment based on standard process -- yml not working?
 #RUN conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill
