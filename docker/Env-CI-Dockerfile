@@ -8,11 +8,11 @@ RUN mkdir /ww
 WORKDIR /ww
 
 # set the workdir as the user's home directory
-COPY environment-CI.yml /ww/environment-CI.yml
 COPY requirements.txt /ww/requirements.txt
 
 # create an environment based on yml file
-RUN conda env create -f environment-CI.yml && \
+COPY environments/environment-CI-Linux.yml /ww/environment-CI-Linux.yml
+RUN conda env create -f environment-CI-Linux.yml && \
     conda clean -afy
 
 # add pip-only packages
