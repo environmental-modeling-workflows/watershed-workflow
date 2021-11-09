@@ -59,23 +59,29 @@ Download and install `Anaconda3
 environment that includes the required packages:
 
 .. code-block:: console
-    :caption: Packages for general users
+    :caption: Packages for general users.
                 
-    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill 
+    conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython jupyterlab ipykernel nb_conda_kernels nb_conda numpy matplotlib scipy pandas meshpy fiona rasterio shapely cartopy descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill 
     conda activate watershed_workflow
 
 .. code-block:: console
     :caption: Packages for developers and building documentation
 
-    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill sphinx numpydoc sphinx_rtd_theme nbsphinx
+    conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels nb_conda numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest papermill sphinx numpydoc sphinx_rtd_theme nbsphinx
     conda activate watershed_watershed_dev
+
+.. code-block:: console
+   :caption: Packages for CI -- the minimum requirements to just run tests.
+
+    conda create -n watershed_workflow_ci -c conda-forge -c defaults python=3 numpy matplotlib scipy pandas meshpy fiona rasterio shapely cartopy descartes pyproj requests sortedcontainers attrs pip libarchive h5py netCDF4 pytest
 
 Note that, for OSX users, it is recommended you install `python.app`
 as well, which ensures a framework python and makes matplotlib
 plotting cleaner.  Solving this environment can take a few minutes.  A
 current, complete, and tested conda environement for OSX is provided
-in `workflow_tpls/environment.yml` and
-`workflow_tpls/environment_dev.yml`.
+in `environment.yml`, `environment_dev.yml`, and `environment_CI.yml`
+respectively.  Note that the docker container is built on this
+`environment_dev.yml`.
 
 Check your python installation:
 
