@@ -249,7 +249,7 @@ def create_river_corridor(river, river_width):
     return corr, corr2, corr3
 
 
-def to_quads(river, delta, huc, coords, ax=None, ):
+def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' ):
     """Iterate over the rivers, creating quads and pentagons forming the corridor."""
     
     # number the nodes in a dfs pattern, creating empty space for elements
@@ -372,9 +372,63 @@ def to_quads(river, delta, huc, coords, ax=None, ):
 
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
-    return [el for node in river.preOrder() for el in node.elements]
+    elems=[el for node in river.preOrder() for el in node.elements]
+    ## ensuring that the pentagons at the junctions are convex
+    elems=junction_treatment(elems, coords,junction_option='all_pentagons')
+    return elems
 
-            
+def junction_treatment(elems, coords,junction_option='all_pentagons'):
+    """Iterate over pentagon elements, check for convexity and treat non-convexity"""
+    elem_lens=[len(elem) for elem in elems]
+    pents=np.where(np.array(elem_lens)==5)[0]
+    tri_count=0
+    for pent in pents:
+        elem=elems[pent]
+        points=[coords[i] for i in elem]
+        if junction_option=='all_tris':
+            elems[pent]=[elem[i] for i in [0,1,3,4]]
+            tri=[elem[i] for i in [1,2,3]]
+            elems.append(tri) 
+        elif junction_option=='tris_at_convex':
+            if not workflow.utils.isConvex(points):
+                elems[pent]=[elem[i] for i in [0,1,3,4]] # made the DS element quad
+                tri=[elem[i] for i in [1,2,3]] # defined traingle for the junction
+                elems.append(tri)
+        elif junction_option=='all_pentagons':
+            if not workflow.utils.isConvex(points):
+                elems[pent]=[elem[i] for i in [0,1,3,4]]
+
+                # making upstream **branch 1** as pentagon
+                logging.debug(f'attemping to create convex pentagon on branch 1')
+                pent_up=[elem[1],elem[1]+1,elem[2]-1,elem[2],elem[3]]# making one branch as pengaton
+                # check convexity
+                points_new=[coords[i] for i in pent_up]
+                if workflow.utils.isConvex(points_new):
+                    logging.debug(f'branch 1 converted into a convex pentagon')
+                    ind_to_replace=elems.index(pent_up[:-1])
+                    elems[ind_to_replace]=pent_up
+                else:
+                    logging.debug(f'pentagon in branch 1 is not convex, now trying branch 2')
+                    pent_up=[elem[2],elem[2]+1,elem[3]-1,elem[3],elem[1]]# making one branch as pengaton
+                    points_new=[coords[i] for i in pent_up]
+                    if workflow.utils.isConvex(points_new):
+                        logging.debug(f'branch 2 converted into a convex pentagon')
+                        ind_to_replace=elems.index(pent_up[:-1])
+                        elems[ind_to_replace]=pent_up
+                    else:
+                        logging.debug(f'failed to create convex polygon at the junction, adding a traingle')
+                        tri=[elem[i] for i in [1,2,3]]
+                        elems.append(tri)
+                        tri_count=+1
+    if tri_count>0:                    
+        print('Warning: ',tri_count," triangles introduced at junctions" )                    
+    return elems
+                    
+        
+
+        
+        
+                  
                 
                 
         

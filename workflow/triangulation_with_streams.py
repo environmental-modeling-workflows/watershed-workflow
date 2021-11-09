@@ -99,7 +99,7 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     return mesh_points, mesh_tris
 
 def add_river_outlet_in_huc(river_corr,hucs):
-    """Returns updated huc with river outlet repsented"""
+    """Returns updated huc with river outlet represented"""
     if type(hucs) is workflow.split_hucs.SplitHUCs:
         huc_segment = hucs.segments[0]
     elif type(hucs) is list:
