@@ -16,12 +16,12 @@ RUN conda env create -f environment-CI-Linux.yml && \
     conda clean -afy
 
 # add pip-only packages
-RUN conda run -n watershed_workflow python -m pip install -r requirements.txt
+RUN conda run -n watershed_workflow_CI python -m pip install -r requirements.txt
 
 # pack the environment into a new directory
 # -- install conda-pack in the MAIN conda -- we won't move this to the env
 RUN conda install -c conda-forge --yes --freeze-installed conda-pack
-RUN conda-pack -n watershed_workflow -o /tmp/env.tar && \
+RUN conda-pack -n watershed_workflow_CI -o /tmp/env.tar && \
     mkdir /ww_env && cd /ww_env && tar xf /tmp/env.tar && \
     rm /tmp/env.tar 
 
@@ -32,9 +32,9 @@ RUN /ww_env/bin/conda-unpack
 #
 # Stage 2 -- clone repo run
 #
-FROM ubuntu:20.04 AS watershed_workflow_env
+FROM ubuntu:20.04 AS watershed_workflow_CI_env
 
-COPY --from=environ /opt/conda/envs/watershed_workflow /opt
+COPY --from=environ /opt/conda/envs/watershed_workflow_CI /opt
 ENV PATH="/opt/bin:${PATH}"
 ENV WATERSHED_WORKFLOW_DIR=/ww
 
