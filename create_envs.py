@@ -91,7 +91,7 @@ def dump_env(env_type=None):
     lines.append(stdout[0].split('-')[0])
 
     for line in stdout[1:]:
-        if not any(line.strip().startswith(m) for m in TO_STRIP):
+        if not any(line.strip(' -').startswith(m) for m in TO_STRIP):
             lines.append(line)
 
     with open(dump_filename, 'w') as fid:
