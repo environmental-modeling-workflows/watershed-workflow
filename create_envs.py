@@ -37,8 +37,6 @@ PACKAGES_USER=['ipython',
                ]
 
 TO_STRIP=['libgfort',
-          'libglib',
-          'libcx',
           'python.app',
           ]
 
