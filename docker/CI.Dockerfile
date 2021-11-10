@@ -14,3 +14,5 @@ RUN cp watershed_workflowrc .watershed_workflowrc
 
 # run the tests
 RUN python -m pytest watershed_workflow/test/
+
+

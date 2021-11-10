@@ -68,22 +68,22 @@ FROM ubuntu:20.04 AS ww_env_ci
 COPY --from=ww_env_ci_moved /ww_env /ww_env
 ENV PATH="/ww_env/bin:${PATH}"
 
-#
-# Stage 6 -- run tests!
-#
-FROM ww_env_ci AS ww_ci
+# #
+# # Stage 6 -- run tests!
+# #
+# FROM ww_env_ci AS ww_ci
 
-WORKDIR /ww
+# WORKDIR /ww
 
-# copy over source code
-COPY . /ww
-RUN python -m pip install -e .
+# # copy over source code
+# COPY . /ww
+# RUN python -m pip install -e .
 
-# create a watershed_workflowrc that will be picked up
-RUN cp watershed_workflowrc .watershed_workflowrc
+# # create a watershed_workflowrc that will be picked up
+# RUN cp watershed_workflowrc .watershed_workflowrc
 
-# run the tests
-RUN python -m pytest watershed_workflow/test/
+# # run the tests
+# RUN python -m pytest watershed_workflow/test/
 
 
 
