@@ -28,17 +28,24 @@ PACKAGES_BASE=['python=3',
 PACKAGES_EXTRAS=['ipykernel',]
 
 # a user environment that can use the WW env
-PACKAGES_USER_BASE=['ipython',
-               'jupyterlab',
-               'ipykernel',
-               'nb_conda',
-               'nb_conda_kernels',
+PACKAGES_USER_BASE=[
                'papermill',
                'sphinx',
                'numpydoc',
                'sphinx_rtd_theme',
                'nbsphinx',
                ]
+# PACKAGES_USER_BASE=['ipython',
+#                'jupyterlab',
+#                'ipykernel',
+#                'nb_conda',
+#                'nb_conda_kernels',
+#                'papermill',
+#                'sphinx',
+#                'numpydoc',
+#                'sphinx_rtd_theme',
+#                'nbsphinx',
+#                ]
 
 # my personal extras that go in my user env
 PACKAGES_USER_EXTRAS=['numpy',
@@ -224,6 +231,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.docker:
+        raise ValueError('Creating in docker is no longer supported -- instead, we run this script during docker build.')
         func = create_and_dump_env_docker
     else:
         func = create_and_dump_env_local

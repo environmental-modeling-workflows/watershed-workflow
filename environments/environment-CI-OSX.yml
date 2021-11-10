@@ -1,4 +1,0 @@
-name: watershed_workflow_CI
-channels:
-  - defaults
-prefix: /Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_CI-2021-11-09
