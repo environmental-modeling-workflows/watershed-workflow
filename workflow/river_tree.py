@@ -374,7 +374,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
     assert(len(river)*2 == total_touches)
     elems=[el for node in river.preOrder() for el in node.elements]
     ## ensuring that the pentagons at the junctions are convex
-    elems=junction_treatment(elems, coords,junction_option='all_pentagons')
+    elems=junction_treatment(elems, coords,junction_option)
     return elems
 
 def junction_treatment(elems, coords,junction_option='all_pentagons'):
@@ -420,6 +420,8 @@ def junction_treatment(elems, coords,junction_option='all_pentagons'):
                         tri=[elem[i] for i in [1,2,3]]
                         elems.append(tri)
                         tri_count=+1
+        else:
+            print('junction_option not valid')
     if tri_count>0:                    
         print('Warning: ',tri_count," triangles introduced at junctions" )                    
     return elems
