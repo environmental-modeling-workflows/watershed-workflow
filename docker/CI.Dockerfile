@@ -1,7 +1,7 @@
 #
 # Stage 2 -- clone repo run
 #
-FROM ecoon/watershed_workflow-CI-Env:latest AS watershed_workflow
+FROM ecoon/watershed_workflow-ci_env:latest AS watershed_workflow
 
 WORKDIR /ww
 
