@@ -33,6 +33,7 @@ SOFTWARE.
 import logging
 import numpy
 
+from watershed_workflow import __version__
 
 
 
@@ -408,7 +409,7 @@ def write(filename,
 
     with open(filename, 'wb') as f:
         f.write('# vtk DataFile Version 4.2\n'.encode('utf-8'))
-        f.write('written by meshio v{}\n'.format(__version__).encode('utf-8'))
+        f.write('written by Watershed Workflow v{}\n'.format(__version__).encode('utf-8'))
         f.write(('BINARY\n' if write_binary else 'ASCII\n').encode('utf-8'))
         f.write('DATASET UNSTRUCTURED_GRID\n'.encode('utf-8'))
 
