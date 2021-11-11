@@ -17,7 +17,7 @@ def get_default_config():
     """
     rcParams = configparser.ConfigParser()
 
-    rcParams['DEFAULT']['data_directory'] = None
+    rcParams['DEFAULT']['data_directory'] = ""
     rcParams['DEFAULT']['ssl_cert'] = "True"  # note this can be True,
                                             # False (bad
                                             # idea/permissive) or a
