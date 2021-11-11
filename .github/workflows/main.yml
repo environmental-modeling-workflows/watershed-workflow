@@ -43,7 +43,7 @@ jobs:
           context: ./
           file: ./docker/CI.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed-workflow:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-CI:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           

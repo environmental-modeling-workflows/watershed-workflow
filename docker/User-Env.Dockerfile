@@ -82,15 +82,22 @@ WORKDIR /home/${user}/watershed_workflow
 COPY  --chown=${user}:${user} . /home/${user}/watershed_workflow
 RUN python -m pip install -e .
 
-# create a watershed_workflowrc that will be picked up, create and use a data directory
-#
-# NOTE, the user should mount a persistent volume at this location!
-RUN cp watershed_workflowrc /home/${user}/.watershed_workflowrc
-RUN mkdir /home/${user}/watershed_workflow_data && \
-    echo "data_directory : /home/${user}/watershed_workflow_data" >> /home/${user}/.watershed_workflowrc
-
 # run the tests
 RUN conda run -n watershed_workflow python -m pytest watershed_workflow/test/
+
+# Set up the workspace.
+#
+# create a watershed_workflowrc that will be picked up
+RUN cp watershed_workflowrc /home/${user}/.watershed_workflowrc
+
+# create a directory for data -- NOTE, the user should mount a
+# persistent volume at this location!
+RUN mkdir /home/${user}/data
+
+# create a working directory -- NOTE, the user should mount a
+# persistent volume at this location!
+RUN mkdir /home/${user}/workdir
+WORKDIR /home/${user}/workdir
 
 # set the command
 CMD [ "jupyter", "lab", "--port=8888" ]
