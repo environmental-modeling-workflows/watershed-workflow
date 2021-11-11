@@ -15,11 +15,18 @@ WORKDIR /home/${user}/tmp
 COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
 RUN mkdir environments
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    python create_envs.py --env=${env_name} --tools-env=watershed_workflow_tools --user-env=default Linux
+    python create_envs.py --env-name=${env_name} \
+        --with-tools-env --tools-env-name=watershed_workflow_tools \
+        --with-user-env --user-env-name=default Linux
+
+# dump the environments to disk so they can be recovered if desired
+RUN mkdir /home/${user}/environments
+RUN conda env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
 
 # install the kernel on base's jupyterlab
 USER root
-RUN conda run -n ${env_name} python -m ipykernel install --name watershed_workflow --display-name "Python3 (watershed_workflow)"
+RUN conda run -n ${env_name} python -m ipykernel install \
+        --name watershed_workflow --display-name "Python3 (watershed_workflow)"
 USER ${user}
 
 #

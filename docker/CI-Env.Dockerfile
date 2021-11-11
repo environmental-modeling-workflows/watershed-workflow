@@ -11,7 +11,8 @@ WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
 RUN mkdir environments
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    python create_envs.py --CI --env=${env_name} --tools-env=watershed_workflow_tools Linux
+    python create_envs.py --env-name=${env_name} --env-type=CI \
+        --with-tools-env --tools-env-name=watershed_workflow_tools Linux
 
 #
 # Stage 2 -- add in the pip
@@ -70,6 +71,8 @@ ENV PATH="/ww_env/bin:${PATH}"
 
 # #
 # # Stage 6 -- run tests!
+# #
+# # Note, this is in CI.Dockerfile as well
 # #
 # FROM ww_env_ci AS ww_ci
 
