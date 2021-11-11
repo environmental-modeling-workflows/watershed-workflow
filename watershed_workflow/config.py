@@ -38,7 +38,7 @@ def get_config():
     rc.read([os.path.join(home(), '.watershed_workflowrc'),
              os.path.join(os.getcwd(), '.watershed_workflowrc'),
              os.path.join(os.getcwd(), 'watershed_workflowrc'),
-             os.path.join(os.getcwd(), '.docker_watershed_workflowrc'])
+             os.path.join(os.getcwd(), '.docker_watershed_workflowrc')])
              
     return rc
 
