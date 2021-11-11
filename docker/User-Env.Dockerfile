@@ -11,17 +11,14 @@ LABEL Description="Base env for CI of Watershed Workflow"
 ARG env_name=watershed_workflow
 ARG user=jovyan
 
+USER ${user}
+
 WORKDIR /home/${user}/tmp
 COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
 RUN mkdir environments
-RUN SUDO_UID=
-RUN SUDO_GID=
-RUN SUDO_USER=
-RUN unset SUDO_UID
-RUN unset SUDO_GID
-RUN unset SUDO_USER
-RUN unset SUDO_COMMAND
-RUN --mount=type=cache,target=/opt/conda/pkgs \
+
+RUN ls -l /opt/conda
+RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
     python create_envs.py --env-name=${env_name} \
         --with-tools-env --tools-env-name=watershed_workflow_tools \
         --with-user-env --user-env-name=default Linux
