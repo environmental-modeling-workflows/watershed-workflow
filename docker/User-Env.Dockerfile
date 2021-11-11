@@ -14,7 +14,6 @@ ARG user=jovyan
 WORKDIR /home/${user}/tmp
 COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
 RUN mkdir environments
-RUN env | grep SUDO
 RUN SUDO_UID=
 RUN SUDO_GID=
 RUN SUDO_USER=
@@ -22,7 +21,6 @@ RUN unset SUDO_UID
 RUN unset SUDO_GID
 RUN unset SUDO_USER
 RUN unset SUDO_COMMAND
-RUN env | grep SUDO
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     python create_envs.py --env-name=${env_name} \
         --with-tools-env --tools-env-name=watershed_workflow_tools \
