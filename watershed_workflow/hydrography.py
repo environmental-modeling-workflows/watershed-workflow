@@ -9,7 +9,7 @@ import itertools
 
 import shapely.geometry
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.utils
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs

@@ -18,7 +18,7 @@ class Nodes:
     Note this uses round() for an efficient solution, which is
     potentially fragile if numbers were not generated consistently.
     In this use case, however, it should be safe -- numbers were
-    originally rounded (in watershed_workflow.conf), and then any function which
+    originally rounded (in watershed_workflow.config), and then any function which
     inserted new points or moved points were always careful to ensure
     that all duplicates were always assigned the identical values --
     i.e. all math was done BEFORE assignment.  So duplicates have

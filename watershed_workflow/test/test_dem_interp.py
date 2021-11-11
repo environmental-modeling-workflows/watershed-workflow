@@ -5,7 +5,7 @@ import rasterio.crs
 import numpy as np
 
 import watershed_workflow
-import watershed_workflow.conf
+import watershed_workflow.config
 
 @pytest.fixture
 def dem_and_points():

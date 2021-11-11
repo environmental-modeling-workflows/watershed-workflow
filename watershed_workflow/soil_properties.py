@@ -13,7 +13,7 @@ import logging
 import pandas
 import rosetta
 
-import watershed_workflow.conf
+import watershed_workflow.config
 
 
 def vgm_Rosetta(data, model_type=None):

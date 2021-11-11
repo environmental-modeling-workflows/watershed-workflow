@@ -10,7 +10,7 @@ import math
 import urllib.request
 
 import watershed_workflow.utils
-import watershed_workflow.conf
+import watershed_workflow.config
 
 
 def get_code(fiona_or_shply_obj, level):
@@ -48,7 +48,7 @@ def download(url, location, force=False):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"'%url)
         logging.info('         to: "%s"'%location)
-        verify = watershed_workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
         logging.info('       cert: "%s"'%verify)
         if verify == "True":
             verify = True
@@ -82,7 +82,7 @@ def download_progress_bar(url, location, force=False):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"'%url)
         logging.info('         to: "%s"'%location)
-        verify = watershed_workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
         logging.info('       cert: "%s"'%verify)
         if verify == "True":
             verify = True

@@ -4,7 +4,7 @@ import os
 import shapely
 import numpy as np
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.sources.manager_ned
 import watershed_workflow.sources.manager_nhd
 

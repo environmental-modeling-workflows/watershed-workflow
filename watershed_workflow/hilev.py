@@ -18,7 +18,7 @@ import rasterio.features
 
 import shapely
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.triangulation
 import watershed_workflow.warp
 import watershed_workflow.plot

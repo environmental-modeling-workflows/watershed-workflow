@@ -6,7 +6,7 @@ import shapely
 import numpy as np
 import fiona
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.manager_nhd
 import watershed_workflow.sources.utils as sutils

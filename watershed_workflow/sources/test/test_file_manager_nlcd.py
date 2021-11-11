@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import rasterio
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.sources.manager_nlcd as manager_nlcd
 import watershed_workflow.sources.manager_nhd
 

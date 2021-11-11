@@ -9,7 +9,7 @@ from crs_fixtures import point, point_ak, shift, points, lines, polygons
 
 import watershed_workflow.plot
 import watershed_workflow.warp
-import watershed_workflow.conf
+import watershed_workflow.config
 import pickle
 
 crss = [(None, None),

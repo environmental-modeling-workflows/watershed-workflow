@@ -10,7 +10,7 @@ import shapely.geometry
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
 

@@ -4,7 +4,7 @@ import logging
 import argparse
 import fiona
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.sources.utils
 import watershed_workflow.source_list
 

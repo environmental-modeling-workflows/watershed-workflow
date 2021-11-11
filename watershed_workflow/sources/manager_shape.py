@@ -6,7 +6,7 @@ import fiona
 
 import watershed_workflow.warp
 import watershed_workflow.utils
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.crs
 
 @attr.s

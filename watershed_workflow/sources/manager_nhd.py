@@ -6,7 +6,7 @@ import attr
 import requests
 
 import watershed_workflow.sources.utils as source_utils
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.sources.names
 import watershed_workflow.utils
 import watershed_workflow.warp
