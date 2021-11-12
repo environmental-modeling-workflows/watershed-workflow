@@ -17,7 +17,6 @@ WORKDIR /home/${user}/tmp
 COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
 RUN mkdir environments
 
-RUN ls -l /opt/conda
 RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
     python create_envs.py --env-name=${env_name} \
         --with-tools-env --tools-env-name=watershed_workflow_tools \
@@ -84,7 +83,7 @@ WORKDIR /home/${user}/watershed_workflow
 
 # copy over source code
 COPY  --chown=${user}:${user} . /home/${user}/watershed_workflow
-RUN python -m pip install -e .
+RUN conda run -n watershed_workflow python -m pip install -e .
 
 # run the tests
 RUN conda run -n watershed_workflow python -m pytest watershed_workflow/test/
@@ -103,9 +102,4 @@ RUN mkdir /home/${user}/data
 RUN mkdir /home/${user}/workdir
 WORKDIR /home/${user}/workdir
 
-# set the command
-CMD [ "jupyter", "lab", "--port=8888" ]
-
-
-
-
+# note, don't set a command here, the entrypoint is set by the jupyter stack

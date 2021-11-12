@@ -51,7 +51,7 @@ def start_docker(data_library, workdir, port):
     if not os.path.isdir(abspath_workdir):
         raise FileNotFoundError(f'Working directory {abspath_workdir} does not exist.')
 
-    cmd = ['docker', 'run', '-it', '--rm', '-p', f'{port}:8888',
+    cmd = ['docker', 'run', '-it', '--rm', '--pull', '-p', f'{port}:8888',
                     '-v', f'{abspath_data_library}:/home/jovyan/data:delegated',
                     '-v', f'{abspath_workdir}:/home/jovyan/workdir:delegated',
                     'ecoon/watershed-workflow:latest']
