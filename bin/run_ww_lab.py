@@ -42,7 +42,7 @@ def set_up_docker_config(workdir, data_library):
 
     return data_library
     
-def start_docker(data_library, workdir, port):
+def start_docker(data_library, workdir, port, pull='missing'):
     abspath_data_library = os.path.abspath(data_library)
     if not os.path.isdir(abspath_data_library):
         raise FileNotFoundError(f'Data library directory {abspath_data_library} does not exist.')
@@ -51,10 +51,10 @@ def start_docker(data_library, workdir, port):
     if not os.path.isdir(abspath_workdir):
         raise FileNotFoundError(f'Working directory {abspath_workdir} does not exist.')
 
-    cmd = ['docker', 'run', '-it', '--rm', '--pull', '-p', f'{port}:8888',
+    cmd = ['docker', 'run', '-it', '--rm', '-p', f'{port}:8888', '--pull', pull,
                     '-v', f'{abspath_data_library}:/home/jovyan/data:delegated',
                     '-v', f'{abspath_workdir}:/home/jovyan/workdir:delegated',
-                    'ecoon/watershed-workflow:latest']
+                    'ecoon/watershed_workflow:latest']
     print(f'Running: {" ".join(cmd)}')
     subprocess.run(cmd, check=True)
 
@@ -66,6 +66,9 @@ if __name__ == '__main__':
     parser.add_argument('--rc', type=str, default=None, help='Configuration file, see below.')
     parser.add_argument('--data-library', type=str, default=None, help='Location of data library.')
     parser.add_argument('-p', '--port', type=int, default='8888', help='Port to open for jupyterlab.')
+    parser.add_argument('--pull', type=str, default='missing',
+                        choices=['missing', 'always', 'never'],
+                        help='Option to pull layers before running.')
     parser.add_argument('WORKDIR', type=str, help='Where to store output files.')
     args = parser.parse_args()
 
@@ -73,4 +76,4 @@ if __name__ == '__main__':
         raise FileNotFoundError(f'Invalid working directory: {args.WORKDIR}')
 
     data_library = set_up_docker_config(args.WORKDIR, args.data_library)
-    start_docker(data_library, args.WORKDIR, args.port)
+    start_docker(data_library, args.WORKDIR, args.port, args.pull)

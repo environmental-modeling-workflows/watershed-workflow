@@ -3,6 +3,7 @@
 import os
 import subprocess
 import configparser
+import getpass
 
 def home():
     return os.path.expanduser('~')
@@ -34,12 +35,18 @@ def get_config():
         data_directory = os.path.join(os.getcwd(), 'data')
     rc = get_default_config()
     rc['DEFAULT']['data_directory'] = data_directory
-                                            
-    rc.read([os.path.join(home(), '.watershed_workflowrc'),
-             os.path.join(os.getcwd(), '.watershed_workflowrc'),
-             os.path.join(os.getcwd(), 'watershed_workflowrc'),
-             os.path.join(os.getcwd(), '.docker_watershed_workflowrc')])
-             
+
+    # paths to search for rc files
+    rc_paths = [os.path.join(home(), '.watershed_workflowrc'),
+                os.path.join(os.getcwd(), '.watershed_workflowrc'),
+                os.path.join(os.getcwd(), 'watershed_workflowrc'),]
+
+    # this is a bit fragile -- it checks if the user is the docker user
+    if getpass.getuser() == 'jovyan':
+        rc_paths.append(os.path.join(os.getcwd(), '.docker_watershed_workflowrc'))
+
+    # read the rc files
+    rc.read(rc_paths)
     return rc
 
 def set_data_directory(path):
