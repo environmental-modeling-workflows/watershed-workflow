@@ -42,7 +42,7 @@ def set_up_docker_config(workdir, data_library):
 
     return data_library
     
-def start_docker(data_library, workdir, port, pull='missing'):
+def start_docker(data_library, workdir, port, pull='missing', tag='latest'):
     abspath_data_library = os.path.abspath(data_library)
     if not os.path.isdir(abspath_data_library):
         raise FileNotFoundError(f'Data library directory {abspath_data_library} does not exist.')
@@ -51,10 +51,14 @@ def start_docker(data_library, workdir, port, pull='missing'):
     if not os.path.isdir(abspath_workdir):
         raise FileNotFoundError(f'Working directory {abspath_workdir} does not exist.')
 
-    cmd = ['docker', 'run', '-it', '--rm', '-p', f'{port}:8888', '--pull', pull,
-                    '-v', f'{abspath_data_library}:/home/jovyan/data:delegated',
-                    '-v', f'{abspath_workdir}:/home/jovyan/workdir:delegated',
-                    'ecoon/watershed_workflow:latest']
+    cmd = ['docker', 'run', '-it', '--rm', # remove the image after completion
+           '-p', f'{port}:8888', # port here is the host port
+           '--pull', pull, # options for whether to update
+           '-e', 'JUPYTER_ENABLE_LAB=yes', # use jupyterlab, not notebook
+           '-v', f'{abspath_data_library}:/home/jovyan/data:delegated', # volume for data
+           '-v', f'{abspath_workdir}:/home/jovyan/workdir:delegated', # volume for output
+           f'ecoon/watershed_workflow:{tag}'
+           ]
     print(f'Running: {" ".join(cmd)}')
     subprocess.run(cmd, check=True)
 
@@ -69,6 +73,8 @@ if __name__ == '__main__':
     parser.add_argument('--pull', type=str, default='missing',
                         choices=['missing', 'always', 'never'],
                         help='Option to pull layers before running.')
+    parser.add_argument('-t', '--tag', type=str, default='latest',
+                        help='Tag of the watershed_workflow container.')
     parser.add_argument('WORKDIR', type=str, help='Where to store output files.')
     args = parser.parse_args()
 
@@ -76,4 +82,4 @@ if __name__ == '__main__':
         raise FileNotFoundError(f'Invalid working directory: {args.WORKDIR}')
 
     data_library = set_up_docker_config(args.WORKDIR, args.data_library)
-    start_docker(data_library, args.WORKDIR, args.port, args.pull)
+    start_docker(data_library, args.WORKDIR, args.port, args.pull, args.tag)

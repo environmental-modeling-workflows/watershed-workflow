@@ -3,6 +3,7 @@ import watershed_workflow.sources.utils as source_utils
 
 class FileManagerNHDPlusAccumulator:
     """NHDPlus is organized by HUC4s, but sometimes we need them on 2s."""
+    lowest_level = 2 # we can accumulate to anything!
     def __init__(self):
         self.nhd_plus = nhd.FileManagerNHDPlus()
         self.wbd = nhd.FileManagerWBD()

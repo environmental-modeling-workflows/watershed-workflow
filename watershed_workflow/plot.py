@@ -303,7 +303,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
         kwargs['facecolor'] = 'none'
 
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
 
     if not hasattr(ax, 'projection') or crs is None:
         projection = None
@@ -455,7 +455,7 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
 
     """
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
     
     if type(color) is str and color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
@@ -546,7 +546,7 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
       Return value of imshow()
     """
     if ax is None:
-        ax = get_ax(profile['crs'])
+        fig, ax = get_ax(profile['crs'])
 
     assert(mask)
     assert('nodata' in profile)
@@ -603,7 +603,7 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
     import cartopy.feature
 
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
 
     if land_kwargs is not False:
         if land_kwargs is None:
