@@ -1,0 +1,48 @@
+name: watershed_workflow_tools
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1
+  - _openmp_mutex=4.5
+  - binutils_impl_linux-64=2.36.1
+  - binutils_linux-64=2.36
+  - bzip2=1.0.8
+  - c-ares=1.18.1
+  - ca-certificates=2021.10.8
+  - cmake=3.21.3
+  - expat=2.4.1
+  - gcc_impl_linux-64=11.2.0
+  - gcc_linux-64=11.2.0
+  - gfortran_impl_linux-64=11.2.0
+  - gfortran_linux-64=11.2.0
+  - gxx_impl_linux-64=11.2.0
+  - gxx_linux-64=11.2.0
+  - kernel-headers_linux-64=2.6.32
+  - krb5=1.19.2
+  - ld_impl_linux-64=2.36.1
+  - libcurl=7.80.0
+  - libedit=3.1.20191231
+  - libev=4.33
+  - libgcc-devel_linux-64=11.2.0
+  - libgcc-ng=11.2.0
+  - libgfortran5=11.2.0
+  - libgomp=11.2.0
+  - libnghttp2=1.43.0
+  - libsanitizer=11.2.0
+  - libssh2=1.10.0
+  - libstdcxx-devel_linux-64=11.2.0
+  - libstdcxx-ng=11.2.0
+  - libuv=1.42.0
+  - libzlib=1.2.11
+  - lz4-c=1.9.3
+  - make=4.3
+  - ncurses=6.2
+  - openssl=3.0.0
+  - rhash=1.4.1
+  - sysroot_linux-64=2.12
+  - tk=8.6.11
+  - xz=5.2.5
+  - zlib=1.2.11
+  - zstd=1.5.0
+prefix: /opt/conda/envs/watershed_workflow_tools
