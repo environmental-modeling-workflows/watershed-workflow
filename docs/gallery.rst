@@ -7,10 +7,10 @@ running a plotting script from `bin`, other times it is a custom
 workflow.
 
 Data Sources
-------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 National Hydrologic Data across resolutions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------
 
 .. code-block:: console
 

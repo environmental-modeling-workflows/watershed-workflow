@@ -1,74 +1,34 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <title>Installation and Setup &mdash; Watershed Workflow 0.1 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+  <title>Installation and Setup &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Workflow library Concepts" href="concepts.html" />
-    <link rel="prev" title="Gallery" href="gallery.html" /> 
+    <link rel="prev" title="Example: mesh a delineated watershed" href="examples/mesh_coweeta.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html" class="icon icon-home"> Watershed Workflow
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -76,103 +36,53 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#recommended-process">Recommended process</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installing-exodusii-optional">Installing ExodusII (optional)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installing-rosetta-optional">Installing Rosetta (optional)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-the-test-suite-optional">Run the test suite (optional)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#summary-of-dependencies-and-their-usage">Summary of Dependencies and their Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#use-with-docker">Use with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#local-installation">Local Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installing-exodusii-optional">Installing ExodusII (optional)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-this-package">Installing this package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-test-suite">Run the test suite</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Watershed Workflow</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
       <li>Installation and Setup</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/install.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS overrides for sphinx_rtd_theme */
@@ -198,29 +108,29 @@
 }
 </style>
 <div class="section" id="installation-and-setup">
-<h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Permalink to this headline">¶</a></h1>
-<p>All code is in python3, though the dependencies (because of their need
-for GIS libraries) can be tricky to get right.  It is recommended to
-use Anaconda3 as a package manager, generating a unique environment
-for use with this package, as this makes it fairly easy to get all the
-required packages.</p>
-<p>Note that this package is not currently installed in a typical
-pythononic way (i.e. setuptools), but instead expects you to simply
-use it in place.  This will change at some point.  In the meantime, to
-install this package, simply place it and its third party libraries
-(TPLs) in your python path:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd /path/to/repository</span>
-<span class="go">export PYTHONPATH=`pwd`:`pwd`/workflow_tpls:${PYTHONPATH}</span>
-</pre></div>
-</div>
-<div class="section" id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Permalink to this headline"></a></h1>
+<p>All code in this package is pure python3, though it can be tricky to
+get all of the dependencies to coexist because of their need for GIS
+libraries.</p>
+<p>Once the code is installed, typical usage builds on two directories:
+the data library and the working directory.  Watershed Workflow
+downloads a lot of datasets, and stores them in a common “data
+library” for (re-)use by multiple workflows.  Any given workflow
+consists of scripts or notebooks along with the synthesized data
+products created by the workflow (meshes, forcing files, etc) – these
+live in the “working directory.”  Additionally, for each workflow, a
+configuration file is required.  This file is typically stored as
+<cite>~/.watershed_workflowrc</cite> but may also live in the working directory.
+This includes the path to the data library, along with other common
+settings.</p>
+<div class="section" id="summary-of-dependencies-and-their-usage">
+<h2>Summary of Dependencies and their Usage<a class="headerlink" href="#summary-of-dependencies-and-their-usage" title="Permalink to this headline"></a></h2>
 <p>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for
 testing, <cite>pytest</cite> and <cite>dist_utils</cite>.  Standard math packages include
 <cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.  Soil properties often come in
-geodatabase files, which are best read with <cite>pandas</cite> and <cite>geopandas</cite>.</p>
+geodatabase files, which are best read with <cite>pandas</cite>.</p>
 <p>GIS work is typically done using expensive/closed source and GUI-based
-tools.  For this work, we instead build on the extremely high-quality,
+tools.  For this work, we instead build on extremely high-quality,
 open-source packages for GIS in python: <cite>fiona</cite>, <cite>rasterio</cite>, <cite>shapely</cite>
 and <cite>cartopy</cite>.</p>
 <p><strong>Optional:</strong> Mesh generation of 2D, “map view” surface meshes uses
@@ -232,111 +142,130 @@ ExodusII here (though it would be straightforward to extend this to
 other packages such as VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
 python3 set of wrappers, but there is no current package, so this must
 be installed separately.  See below.  Exodus, in turn, needs
-<cite>netCDF4</cite>, which can be from conda.</p>
-<p><strong>Optional:</strong> Finally, soil properties often come in percent
-silt/clay/sand, yet hydrologic properties such as porosity,
-permeability, and van Genuchten curves are the most frequently used in
-models.  <a class="reference external" href="http://www.u.arizona.edu/~ygzhang/download.html">Rosetta3</a>
-is a tool providing pedotransfer functions to convert these properties
-into the needed model parameters.  There is no current package
-available for this either, so it must be installed separately.  See
-below.</p>
-<p><strong>Optional:</strong> Here we use <cite>jupyter</cite> notebooks to provide examples and
-illustrate usage of the package.  If you do not intend to use jupyter,
-it is not necessary, adds a lot of extra packages, and can safely be
-removed from the installation below.</p>
+<cite>netCDF4</cite>.</p>
+<p><strong>Optional:</strong> Soil properties often come in percent silt/clay/sand,
+yet hydrologic properties such as porosity, permeability, and van
+Genuchten curves are the most frequently used in models.  Rosetta3 is
+a tool providing pedotransfer functions to convert these properties
+into the needed model parameters.  Rosetta packages are provided by
+the <cite>rosetta-soil</cite> pip package.</p>
+<p><strong>Optional:</strong> Here we use <cite>jupyter</cite> lab/notebooks to provide examples
+and illustrate usage of the package.  If you do not intend to use
+jupyter, it is not necessary, adds a lot of extra packages, and can
+safely be removed from the installation below.  If you do use
+<cite>jupyter</cite>, you should also use <cite>papermill</cite>, which allows workflows to
+be pipelined – you develop a notebook, then use <cite>papermill</cite> to use
+the notebook as a script.</p>
 </div>
-<div class="section" id="recommended-process">
-<h2>Recommended process<a class="headerlink" href="#recommended-process" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="use-with-docker">
+<h2>Use with Docker<a class="headerlink" href="#use-with-docker" title="Permalink to this headline"></a></h2>
+<p>Because of this complex set of processes, the simplest form of using
+Watershed Workflow is through the provided Docker containers.  To do
+this, simply install the Docker desktop app, then run the script
+<cite>bin/run_ww_lab.py</cite>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python bin/run_ww_lab.py /path/to/working/directory</span>
+</pre></div>
+</div>
+<p>Then, following the instructions on the terminal window, navigate your
+browser to the provided URL.</p>
+<p>Note that this script needs a <cite>.watershed_workflowrc</cite> file – it will
+search, in order of precedence, for:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A path provided on the command line via the <cite>–rc</cite> option,</p></li>
+<li><p><cite>/path/to/working/directory/watershed_workflowrc</cite>,</p></li>
+<li><p><cite>/path/to/working/directory/.watershed_workflowrc</cite>, or</p></li>
+<li><p><cite>${HOME}/.watershed_workflowrc</cite></p></li>
+</ul>
+</div></blockquote>
+<p>This file will then be stored at
+<cite>/path/to/working/directory/watershed_workflowrc</cite> for use within the
+container.</p>
+<p>An example configure file is found at <cite>watershed_workflowrc</cite> in the
+top directory of this repository.</p>
+</div>
+<div class="section" id="local-installation">
+<h2>Local Installation<a class="headerlink" href="#local-installation" title="Permalink to this headline"></a></h2>
+<p>It is recommended to use Anaconda3 as a package manager, generating a
+unique environment for use with this package, as this makes it fairly
+easy to get all the required packages.</p>
 <p>Download and install <a class="reference external" href="https://www.anaconda.com/distribution/">Anaconda3</a>.  Then create a new
 environment that includes the required packages:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">Packages for general users</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest</span>
+<div class="code-block-caption"><span class="caption-text">Packages for general users.</span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda env create -f environments/environment-OSX.yml</span>
 <span class="go">conda activate watershed_workflow</span>
 </pre></div>
 </div>
 </div>
+<p>Note OSX can be replaced by Linux where appropriate, and the
+environments folder includes environment-*.yml files for developers
+and CI.  Windows users are recommended to use the docker container, or
+to run the <cite>environments/create_envs.py</cite> script to generate
+appropriate environments.</p>
+<p>Developers should also install a few packages for building
+documentation, testing, etc:</p>
 <div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n watershed_workflow_dev -c conda-forge -c defaults python=3 ipython ipykernel jupyter notebook nb_conda_kernels numpy matplotlib scipy pandas geopandas meshpy fiona rasterio shapely cartopy pyepsg descartes pyproj requests sortedcontainers attrs libarchive h5py netCDF4 pytest sphinx numpydoc sphinx_rtd_theme nbsphinx</span>
+<div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda env create -f environments/environment-OSX-dev.yml</span>
 <span class="go">conda activate watershed_watershed_dev</span>
 </pre></div>
 </div>
 </div>
-<p>Note that, for OSX users, it is recommended you install <cite>python.app</cite>
-as well, which ensures a framework python and makes matplotlib
-plotting cleaner.  Solving this environment can take a few minutes.  A
-current, complete, and tested conda environement for OSX is provided
-in <cite>workflow_tpls/environment.yml</cite> and
-<cite>workflow_tpls/environment_dev.yml</cite>.</p>
+<p>The expectation is that you have installed jupyterlab and/or related
+packages in your own base environment or elsewhere, and will simply
+use the watershed_workflow environment as a kernel within Jupyter.</p>
 <p>Check your python installation:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
 </div>
-</div>
 <div class="section" id="installing-exodusii-optional">
-<h2>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Permalink to this headline">¶</a></h2>
+<h3>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Permalink to this headline"></a></h3>
 <p>Clone the package from <a class="reference external" href="https://github.com/gsjaardema/seacas">source</a></p>
-<p>Unfortunately this package does not do regular releases except as part
-of the Trilinos project, and those releases are often somewhat old.
-So we must build from master; the python3 wrappers are fairly new.
-Edit the script at:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">workflow_tpls/configure-seacas.sh</span>
-</pre></div>
-</div>
-<p>defining your compilers (likely clang if Mac and gcc if Linux) and
-pointing to your SEACAS repo and Anaconda environment installation.</p>
+<p>Unfortunately this package does not do semantic versioned releases
+except as part of the Trilinos project, and those releases are often
+somewhat old.  Configuration is done through cmake – an example use
+is provided at <cite>docker/configure-seacas.sh</cite>.  Create a configure
+script defining your compilers (likely clang if Mac and gcc if Linux)
+and pointing to your SEACAS repo and Anaconda environment installation
+of the required packages (which are all in your environment created
+above).</p>
 <p>Hopefully you are then able to add your installed SEACAS to your
 PYTHONPATH and import the python wrappers:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">export PYTHONPATH=${SEACAS_DIR}/lib</span>
 <span class="go">python -c &#39;import exodus3; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
 </div>
+<p>Note if you have trouble doing this for a local build, try following
+the more detailed formula in Stage 3 of the docker file,
+<cite>docker/User-Env.Dockerfile</cite>.</p>
 </div>
-<div class="section" id="installing-rosetta-optional">
-<h2>Installing Rosetta (optional)<a class="headerlink" href="#installing-rosetta-optional" title="Permalink to this headline">¶</a></h2>
-<p>Download the Rosetta-3.0beta-py3 package:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd workflow_tpls</span>
-<span class="go">mkdir rosetta</span>
-<span class="go">cd rosetta</span>
-<span class="go">wget http://www.u.arizona.edu/~ygzhang/rosettav3/Rosetta-3.0beta-py3.tar.gz</span>
-<span class="go">tar xzf Rosetta-3.0beta-py3.tar.gz</span>
+<div class="section" id="installing-this-package">
+<h3>Installing this package<a class="headerlink" href="#installing-this-package" title="Permalink to this headline"></a></h3>
+<p>Once you’ve got this environment set up, this package and the Rosetta
+dependency are installed via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd /path/to/this/repository</span>
+<span class="go">python -m pip install -e .</span>
 </pre></div>
 </div>
-<p>This should be sufficient, check the installation:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import rosetta.ANN_Module; print(&quot;SUCCESS&quot;)&#39;</span>
-</pre></div>
+<p>As in the docker case, a configuration file must be found.  By
+default, installing this package via <cite>setup.py</cite> places a copy of
+<cite>watershed_workflowrc</cite> in your home directory – this can and should
+be modified.</p>
 </div>
 </div>
-<div class="section" id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<p>Little is needed to set up the package, but likely you want to set a
-data directory for storing all downloaded files.  Usually this is done
-via exporting the WATERSHED_WORKFLOW_DIR environment variable to your
-downloaded package directory, but it can also be placed arbitrarily in
-your filesystem.</p>
-<p>Then, each time you use Watershed Workflow, you must do the following
-things (they may go in a bashrc or similar):</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda activate watershed_workflow</span>
-<span class="go">export SEACAS_DIR=/path/to/your/seacas  # optional!</span>
-<span class="go">export WATERSHED_WORKFLOW_DIRECTORY=/path/to/your/watershed_workflow</span>
-<span class="go">export PYTHONPATH=${WATERSHED_WORKFLOW_DIR}:${WATERSHED_WORKFLOW_DIR}/workflow_tpls:${SEACAS_DIR}/lib:${PYTHONPATH}</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="run-the-test-suite-optional">
-<h2>Run the test suite (optional)<a class="headerlink" href="#run-the-test-suite-optional" title="Permalink to this headline">¶</a></h2>
-<p>Given that you have activated your environment, set your PYTHONPATH,
-and successfully install the above, the following tests should all
-pass.  They are not all fast – some download files and may be
-internet-connection-speed dependent.  You may be happy enough just
-running the high-level tests:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest workflow/test/test_hilev.py</span>
+<div class="section" id="run-the-test-suite">
+<h2>Run the test suite<a class="headerlink" href="#run-the-test-suite" title="Permalink to this headline"></a></h2>
+<p>Given that you have activated your environment and successfully
+install the above, the unit tests should all pass.  They are not
+all fast – some download files and may be internet-connection-speed
+dependent.  You may be happy enough just running the core
+library tests:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest watershed_workflow/test</span>
 </pre></div>
 </div>
 <p>but you can also run the entire suite:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest workflow</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest watershed_workflow</span>
 </pre></div>
 </div>
 </div>
@@ -344,50 +273,33 @@ running the high-level tests:</p>
 
 
            </div>
-           
           </div>
-          <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples/mesh_coweeta.html" class="btn btn-neutral float-left" title="Example: mesh a delineated watershed" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="concepts.html" class="btn btn-neutral float-right" title="Workflow library Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="gallery.html" class="btn btn-neutral float-left" title="Gallery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2019, UT Battelle, Ethan Coon.
-
-    </p>
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
