@@ -42,7 +42,7 @@ def set_up_docker_config(workdir, data_library):
 
     return data_library
     
-def start_docker(data_library, workdir, port, pull='missing', tag='latest'):
+def start_docker(data_library, workdir, port, pull='missing', tag='v1.1'):
     abspath_data_library = os.path.abspath(data_library)
     if not os.path.isdir(abspath_data_library):
         raise FileNotFoundError(f'Data library directory {abspath_data_library} does not exist.')
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--pull', type=str, default='missing',
                         choices=['missing', 'always', 'never'],
                         help='Option to pull layers before running.')
-    parser.add_argument('-t', '--tag', type=str, default='latest',
+    parser.add_argument('-t', '--tag', type=str, default='v1.1',
                         help='Tag of the watershed_workflow container.')
     parser.add_argument('WORKDIR', type=str, help='Where to store output files.')
     args = parser.parse_args()
