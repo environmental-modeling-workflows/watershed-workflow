@@ -27,16 +27,6 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 [Visit our Installation documentation.](https://ecoon.github.io/watershed-workflow/build/html/install.html)
 
-
-## A first example
-
-A good way to get started is to open your jupyter notebook and check out the main workflow:
-
-    jupyter notebook
-
-And navigate to [examples/mesh_coweeta.ipynb](https://github.com/ecoon/watershed-workflow/blob/master/examples/mesh_coweeta.ipynb)
-
-
 ## For more...
 
 * [See the documentation](https://ecoon.github.io/watershed-workflow)
