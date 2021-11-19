@@ -65,7 +65,7 @@ RUN make -j install
 
 # exodus installs its wrappers in an invalid place for python...
 RUN mv /opt/conda/envs/${env_name}/lib/exodus3.py \
-       /opt/conda/envs/${env_name}/lib/python3.9/site-packages/exodus3.py
+       /opt/conda/envs/${env_name}/lib/python*/site-packages/exodus3.py
 
 
 # clean up
