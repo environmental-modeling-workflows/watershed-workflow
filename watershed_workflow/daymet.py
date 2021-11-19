@@ -270,20 +270,19 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
 
 def writeATS(dat, x, y, attrs, filename, **kwargs):
     """Accepts a dictionary of ATS data and writes it to HDF5 file."""
-
-    logging.info('Writing ATS file: {}'.format(filename))
-
     try:
         os.remove(filename)
     except FileNotFoundError:
         pass
     
-    time, dat = daymetToATS(dat, **kwargs)
+    dat = daymetToATS(dat, **kwargs)
 
+    logging.info('Writing ATS file: {}'.format(filename))
     with h5py.File(filename, 'w') as fid:
-        fid.create_dataset('time [s]', data=time)
+        fid.create_dataset('time [s]', data=dat['time [s]'])
         assert(len(x.shape) == 1)
         assert(len(y.shape) == 1)
+        ntimes = dat['time [s]'].shape[0]
        
         # ATS requires increasing order for y
         rev_y = y[::-1]
@@ -291,22 +290,23 @@ def writeATS(dat, x, y, attrs, filename, **kwargs):
         fid.create_dataset('col coordinate [m]', data=x)
 
         for key in dat.keys():
-            # dat has shape (nband, nrow, ncol) 
-            assert(dat[key].shape[0] == time.shape[0])
-            assert(dat[key].shape[1] == y.shape[0])
-            assert(dat[key].shape[2] == x.shape[0])
-            # dat[key] = dat[key].swapaxes(1,2) # reshape to (nband, nrow, ncol)
-            grp = fid.create_group(key)
-            for i in range(len(time)):
-                idat = dat[key][i,:,:]
-                # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
-                rev_idat = np.flip(idat, axis=0)
-                grp.create_dataset(str(i), data=rev_idat)
+            if key != 'time [s]':
+                # dat has shape (nband, nrow, ncol) 
+                assert(dat[key].shape[0] == ntimes)
+                assert(dat[key].shape[1] == y.shape[0])
+                assert(dat[key].shape[2] == x.shape[0])
+                # dat[key] = dat[key].swapaxes(1,2) # reshape to (nband, nrow, ncol)
+                grp = fid.create_group(key)
+                for i in range(ntimes):
+                    idat = dat[key][i,:,:]
+                    # flip rows to match the order of y, so it starts with (x0,y0) in the upper left
+                    rev_idat = np.flip(idat, axis=0)
+                    grp.create_dataset(str(i), data=rev_idat)
 
         for key, val in attrs.items():
             fid.attrs[key] = val
 
-    return time, dat
+    return dat
 
 def getAttrs(bounds, start, end):
     # set the wind speed height, which is made up
@@ -321,8 +321,6 @@ def getAttrs(bounds, start, end):
 
 def writeHDF5(dat, x, y, attrs, filename):
     """Write daymet to a single HDF5 file."""
-    logging.info('Writing HDF5 file: {}'.format(filename))
-
     try:
         os.remove(filename)
     except FileNotFoundError:
@@ -334,6 +332,7 @@ def writeHDF5(dat, x, y, attrs, filename):
     else:
         time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1)*86400.
 
+    logging.info('Writing HDF5 file: {}'.format(filename))
     with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=time)
         assert(len(x.shape) == 1)

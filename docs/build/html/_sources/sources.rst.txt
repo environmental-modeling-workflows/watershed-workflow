@@ -17,7 +17,7 @@ types of data are provide by existing managers.
 Source List
 ~~~~~~~~~~~
 
-.. automodule:: workflow.source_list
+.. automodule:: watershed_workflow.source_list
         :members:
 
 Implementing a new data source for an existing type of data should
@@ -66,7 +66,7 @@ manager.
 USGS National Hydrography and Water Boundary Datasets (NHD / WBD)
 -----------------------------------------------------------------
 
-.. autoclass:: workflow.sources.manager_nhd._FileManagerNHD
+.. autoclass:: watershed_workflow.sources.manager_nhd._FileManagerNHD
       :members: get_huc, get_hucs, get_hydro
                
 Digital Elevation Models
@@ -90,7 +90,7 @@ of the underlying elevation dataset.
 National Elevation Dataset
 --------------------------
 
-.. autoclass:: workflow.sources.manager_ned.FileManagerNED
+.. autoclass:: watershed_workflow.sources.manager_ned.FileManagerNED
         :members: get_raster
 
 Land Cover
@@ -106,7 +106,7 @@ parameters.
 National Land Cover Dataset
 ---------------------------
 
-.. autoclass:: workflow.sources.manager_nlcd.FileManagerNLCD
+.. autoclass:: watershed_workflow.sources.manager_nlcd.FileManagerNLCD
         :members: get_raster               
 
 Soil structure and properties
@@ -121,7 +121,7 @@ mapped into the simulation mesh.
 National Resources Conservation Service Soils
 ---------------------------------------------
 
-.. autoclass:: workflow.sources.manager_nrcs.FileManagerNRCS
+.. autoclass:: watershed_workflow.sources.manager_nrcs.FileManagerNRCS
         :members: get_shapes
 
 Meteorology
@@ -141,7 +141,7 @@ Daymet
           documentation may be correct, and it is definitely a moving
           target.  Buyer beware!
 
-.. autoclass:: workflow.sources.manager_daymet.FileManagerDaymet
+.. autoclass:: watershed_workflow.sources.manager_daymet.FileManagerDaymet
         :members: get_meteorology               
                   
 Generic Files
@@ -152,11 +152,11 @@ generic use.
 
 Generic rasters
 ---------------
-.. autoclass:: workflow.sources.manager_raster.FileManagerRaster
+.. autoclass:: watershed_workflow.sources.manager_raster.FileManagerRaster
         :members: get_raster               
    
 Generic shapefiles
 ------------------
-.. autoclass:: workflow.sources.manager_shape.FileManagerShape
+.. autoclass:: watershed_workflow.sources.manager_shape.FileManagerShape
         :members: get_shape, get_shapes
 

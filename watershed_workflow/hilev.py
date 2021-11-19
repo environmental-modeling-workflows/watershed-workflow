@@ -991,12 +991,10 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
 
     Returns
     -------
-    out : np.array(target_bounds, dtype)
-        Raster of colors.
     out_profile : dict
         rasterio profile of the color raster.
-    out_bounds : [x_min, y_min, x_max, y_max]
-        Physial bounds of the resulting image.
+    out : np.array(target_bounds, dtype)
+        Raster of colors.
 
     """
     assert(len(shapes) == len(shape_colors))

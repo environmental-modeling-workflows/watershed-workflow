@@ -234,8 +234,8 @@ def to_cartopy(crs):
     #s1.ImportFromProj4(crs.to_proj4())
     #srs = s1.ExportToProj4()
     srs = crs.to_dict()
-    if 'zone' in srs:
-        print(f'found a zone: it is {srs["zone"]} of type {type(srs["zone"])}')
+    # if 'zone' in srs:
+    #     print(f'found a zone: it is {srs["zone"]} of type {type(srs["zone"])}')
 
     km_proj = {'lon_0': 'central_longitude',
                'lat_0': 'central_latitude',
@@ -296,12 +296,11 @@ def to_cartopy(crs):
     if kw_std:
         kw_proj['standard_parallels'] = (kw_std['lat_1'], kw_std['lat_2'])
 
-    # mercatoooor
+    # mercator
     if cl.__name__ == 'Mercator' or cl.__name__ == 'LambertCylindrical':
         kw_proj.pop('false_easting', None)
         kw_proj.pop('false_northing', None)
 
-    print(kw_proj)
     return cl(**kw_proj)
 
 def from_string(string):
