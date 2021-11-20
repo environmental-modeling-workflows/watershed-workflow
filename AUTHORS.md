@@ -2,8 +2,8 @@
 
 ## Maintainer
 
-* Ethan Coon <coonet _at_ ornl _dot_ gov>
+* [Ethan Coon](https://github.com/ecoon/)
 
 ## Contributors
 
-* Pin Shuai <Pin.Shuai _at_ pnnl _dot_ gov>
+* [Pin Shuai](https://github.com/pinshuai/)
