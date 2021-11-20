@@ -40,6 +40,6 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 ## Funding, attribution, etc
 
-This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
+This work was supported by multiple US Department of Energy projects, and was mostly developed at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
 
 Collaborators and contributions are very welcome!
