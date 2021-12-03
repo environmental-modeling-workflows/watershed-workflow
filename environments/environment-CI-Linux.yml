@@ -1,4 +1,4 @@
-name: ww_ci
+name: watershed_workflow_CI
 channels:
   - conda-forge
   - defaults
