@@ -42,7 +42,12 @@ def set_up_docker_config(workdir, data_library):
 
     return data_library
     
-def start_docker(data_library, workdir, port, pull='missing', tag='latest'):
+def start_docker(data_library, workdir, port, pull='missing', tag='latest', for_ats=False):
+    if for_ats:
+        repo = 'watershed_workflow-ats'
+    else:
+        repo = 'watershed_workflow'
+
     abspath_data_library = os.path.abspath(data_library)
     if not os.path.isdir(abspath_data_library):
         raise FileNotFoundError(f'Data library directory {abspath_data_library} does not exist.')
@@ -57,7 +62,7 @@ def start_docker(data_library, workdir, port, pull='missing', tag='latest'):
            '-e', 'JUPYTER_ENABLE_LAB=yes', # use jupyterlab, not notebook
            '-v', f'{abspath_data_library}:/home/jovyan/data:delegated', # volume for data
            '-v', f'{abspath_workdir}:/home/jovyan/workdir:delegated', # volume for output
-           f'ecoon/watershed_workflow:{tag}'
+           f'ecoon/{repo}:{tag}'
            ]
     print(f'Running: {" ".join(cmd)}')
     subprocess.run(cmd, check=True)
@@ -67,6 +72,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__,
                                      epilog=epilog)
+    parser.add_argument('--ats', action='store_true', help='Use docker image with ATS and ats_input_spec included.')
     parser.add_argument('--rc', type=str, default=None, help='Configuration file, see below.')
     parser.add_argument('--data-library', type=str, default=None, help='Location of data library.')
     parser.add_argument('-p', '--port', type=int, default='8888', help='Port to open for jupyterlab.')
@@ -82,4 +88,4 @@ if __name__ == '__main__':
         raise FileNotFoundError(f'Invalid working directory: {args.WORKDIR}')
 
     data_library = set_up_docker_config(args.WORKDIR, args.data_library)
-    start_docker(data_library, args.WORKDIR, args.port, args.pull, args.tag)
+    start_docker(data_library, args.WORKDIR, args.port, pull=args.pull, tag=args.tag, for_ats=args.ats)

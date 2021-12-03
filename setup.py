@@ -4,7 +4,6 @@ from setuptools import setup, find_packages
 import sys
 import versioneer
 import warnings
-import shutil
 
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
 # to ensure that we error out properly for people with outdated setuptools
