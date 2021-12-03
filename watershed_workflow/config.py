@@ -43,7 +43,7 @@ def get_config():
 
     # this is a bit fragile -- it checks if the user is the docker user
     if getpass.getuser() == 'jovyan':
-        rc_paths.append(os.path.join(os.getcwd(), '.docker_watershed_workflowrc'))
+        rc_paths.append('/home/jovyan/workdir/.docker_watershed_workflowrc')
 
     # read the rc files
     rc.read(rc_paths)
