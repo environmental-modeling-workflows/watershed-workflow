@@ -32,9 +32,21 @@ RUN mkdir /home/${user}/environments
 #
 # New approach, use the current environment.yml
 #
+# -- creates env: watershed_workflow
 COPY environments/environment-Linux.yml /home/${user}/environments
 RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
     conda env create -f /home/${user}/environments/environment-Linux.yml
+
+# -- creates env: watershed_workflow_tools
+COPY environments/environment-TOOLS-Linux.yml /home/${user}/environments
+RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+    conda env create -f /home/${user}/environments/environment-TOOLS-Linux.yml
+
+# shouldn't need default?
+# -- creates env: default
+#COPY environments/environment-USER-Linux.yml /home/${user}/environments
+#RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+#    conda env create -f /home/${user}/environments/environment-USER-Linux.yml
 
 # install the kernel on base's jupyterlab
 USER root
