@@ -76,9 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--rc', type=str, default=None, help='Configuration file, see below.')
     parser.add_argument('--data-library', type=str, default=None, help='Location of data library.')
     parser.add_argument('-p', '--port', type=int, default='8888', help='Port to open for jupyterlab.')
-    parser.add_argument('--pull', type=str, default='missing',
-                        choices=['missing', 'always', 'never'],
-                        help='Option to pull layers before running.')
+    parser.add_argument('--pull', action='store_true', help='Pull latest changes from dockerhub')
     parser.add_argument('-t', '--tag', type=str, default='latest',
                         help='Tag of the watershed_workflow container.')
     parser.add_argument('WORKDIR', type=str, help='Where to store output files.')
@@ -88,4 +86,9 @@ if __name__ == '__main__':
         raise FileNotFoundError(f'Invalid working directory: {args.WORKDIR}')
 
     data_library = set_up_docker_config(args.WORKDIR, args.data_library)
-    start_docker(data_library, args.WORKDIR, args.port, pull=args.pull, tag=args.tag, for_ats=args.ats)
+
+    if args.pull:
+        pull = 'always'
+    else:
+        pull = 'ifneeded'
+    start_docker(data_library, args.WORKDIR, args.port, pull=pull, tag=args.tag, for_ats=args.ats)

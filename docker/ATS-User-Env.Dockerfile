@@ -7,7 +7,7 @@
 #
 # Stage 1 -- setup base CI environment
 #
-FROM ecoon/watershed_workflow:v1.1
+FROM ecoon/watershed_workflow:latest
 LABEL Description="ATS layers on top of WW"
 
 ARG env_name=watershed_workflow
