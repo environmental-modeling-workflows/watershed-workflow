@@ -75,7 +75,10 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
+COPY environments/exodus_py.patch /opt/conda/envs/${env_name}/src/exodus_py.patch
 RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
+WORKDIR /opt/conda/envs/${env_name}/src/seacas
+RUN git apply ../exodus_py.patch
 
 # configure
 WORKDIR /home/${user}/tmp
