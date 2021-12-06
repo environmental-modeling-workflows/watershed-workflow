@@ -20,7 +20,7 @@ WORKDIR /home/${user}/ats
 RUN git clone --recursive --depth=1 https://github.com/amanzi/amanzi amanzi-ats
 WORKDIR /home/${user}/ats/amanzi-ats/tools/amanzi_xml
 RUN conda run -n ${env_name} python -m pip install -e .
-ENV AMANZI_SRC_DIR=/home/${user}/ats/amanzi-ats/tools/amanzi_xml
+ENV AMANZI_SRC_DIR=/home/${user}/ats/amanzi-ats
 ENV ATS_SRC_DIR=/home/${user}/ats/amanzi-ats/src/physics/ats
 
 ENV PYTHONPATH=/home/${user}/ats/amanzi-ats/src/physics/ats/tools/utils
