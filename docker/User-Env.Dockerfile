@@ -14,17 +14,39 @@ ARG user=jovyan
 USER ${user}
 
 WORKDIR /home/${user}/tmp
-COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
-RUN mkdir environments
-
-RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
-    python create_envs.py --env-name=${env_name} \
-        --with-tools-env --tools-env-name=watershed_workflow_tools \
-        --with-user-env --user-env-name=default Linux
-
-# dump the environments to disk so they can be recovered if desired
 RUN mkdir /home/${user}/environments
-RUN conda env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
+
+#
+# Old approaach : create the env on the fly
+#
+# RUN mkdir environments
+# COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
+# RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+#     python create_envs.py --env-name=${env_name} \
+#         --with-tools-env --tools-env-name=watershed_workflow_tools \
+#         --with-user-env --user-env-name=default Linux
+
+# # dump the environments to disk so they can be recovered if desired
+# RUN conda env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
+
+#
+# New approach, use the current environment.yml
+#
+# -- creates env: watershed_workflow
+COPY environments/environment-Linux.yml /home/${user}/environments
+RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+    conda env create -f /home/${user}/environments/environment-Linux.yml
+
+# -- creates env: watershed_workflow_tools
+COPY environments/environment-TOOLS-Linux.yml /home/${user}/environments
+RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+    conda env create -f /home/${user}/environments/environment-TOOLS-Linux.yml
+
+# shouldn't need default?
+# -- creates env: default
+#COPY environments/environment-USER-Linux.yml /home/${user}/environments
+#RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
+#    conda env create -f /home/${user}/environments/environment-USER-Linux.yml
 
 # install the kernel on base's jupyterlab
 USER root
@@ -53,7 +75,10 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
+COPY environments/exodus_py.patch /opt/conda/envs/${env_name}/src/exodus_py.patch
 RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
+WORKDIR /opt/conda/envs/${env_name}/src/seacas
+RUN git apply ../exodus_py.patch
 
 # configure
 WORKDIR /home/${user}/tmp

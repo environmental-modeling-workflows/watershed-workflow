@@ -82,7 +82,7 @@ search, in order of precedence, for:
  - `${HOME}/.watershed_workflowrc`
 
 This file will then be stored at
-`/path/to/working/directory/watershed_workflowrc` for use within the
+`/path/to/working/directory/.docker_watershed_workflowrc` for use within the
 container.
 
 An example configure file is found at `watershed_workflowrc` in the

@@ -391,15 +391,15 @@ div.rendered_html tbody tr:hover {
 <span class="n">pandas</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="kc">None</span>
 
 
-<span class="kn">import</span> <span class="nn">workflow</span>
-<span class="kn">import</span> <span class="nn">workflow.source_list</span>
-<span class="kn">import</span> <span class="nn">workflow.ui</span>
-<span class="kn">import</span> <span class="nn">workflow.colors</span>
-<span class="kn">import</span> <span class="nn">workflow.condition</span>
-<span class="kn">import</span> <span class="nn">workflow.mesh</span>
-<span class="kn">import</span> <span class="nn">workflow.split_hucs</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.source_list</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.ui</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.colors</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.condition</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.mesh</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.split_hucs</span>
 
-<span class="n">workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
 <span class="n">figsize_3d</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
 </pre></div>
@@ -414,7 +414,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># specify the input shapefile and a hint as to what HUC it is in.</span>
-<span class="n">coweeta_shapefile</span> <span class="o">=</span> <span class="s1">&#39;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#39;</span>
+<span class="n">coweeta_shapefile</span> <span class="o">=</span> <span class="s1">&#39;Coweeta/input_data/coweeta_basin.shp&#39;</span>
 <span class="n">hint</span> <span class="o">=</span> <span class="s1">&#39;0601&#39;</span>  <span class="c1"># hint: HUC 4 containing this shape.</span>
                <span class="c1"># This is necessary to avoid downloading all HUCs to search for this shape</span>
 <span class="n">simplify</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># length scale to target average edge</span>
@@ -424,7 +424,7 @@ div.rendered_html tbody tr:hover {
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
 
 <span class="c1"># get the shape and crs of the shape</span>
-<span class="n">crs</span><span class="p">,</span> <span class="n">coweeta</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_split_form_shapes</span><span class="p">(</span><span class="n">coweeta_shapefile</span><span class="p">)</span>
+<span class="n">crs</span><span class="p">,</span> <span class="n">coweeta</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_split_form_shapes</span><span class="p">(</span><span class="n">coweeta_shapefile</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -433,15 +433,15 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:18,540 - root - INFO:
-2021-06-25 11:08:18,542 - root - INFO: Meshing shape: ../data/hydrologic_units/others/Coweeta/coweeta_basin.shp
-2021-06-25 11:08:18,543 - root - INFO: ==============================
-2021-06-25 11:08:18,543 - root - INFO:
-2021-06-25 11:08:18,544 - root - INFO: Loading shapes
-2021-06-25 11:08:18,544 - root - INFO: ------------------------------
-2021-06-25 11:08:18,545 - root - INFO: Loading file: &#39;../data/hydrologic_units/others/Coweeta/coweeta_basin.shp&#39;
-2021-06-25 11:08:18,564 - root - INFO: ... found 1 shapes
-2021-06-25 11:08:18,565 - root - INFO: Converting to shapely
+2021-11-19 12:20:32,538 - root - INFO:
+2021-11-19 12:20:32,539 - root - INFO: Meshing shape: Coweeta/input_data/coweeta_basin.shp
+2021-11-19 12:20:32,540 - root - INFO: ==============================
+2021-11-19 12:20:32,541 - root - INFO:
+2021-11-19 12:20:32,542 - root - INFO: Loading shapes
+2021-11-19 12:20:32,542 - root - INFO: ------------------------------
+2021-11-19 12:20:32,543 - root - INFO: Loading file: &#39;Coweeta/input_data/coweeta_basin.shp&#39;
+2021-11-19 12:20:32,560 - root - INFO: ... found 1 shapes
+2021-11-19 12:20:32,561 - root - INFO: Converting to shapely
 </pre></div></div>
 </div>
 <p>A wide range of data sources are available; here we use the defaults except for using NHD Plus for watershed boundaries and hydrography (the default is NHD, which is lower resolution and therefore smaller download sizes).</p>
@@ -451,8 +451,8 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># set up a dictionary of source objects</span>
-<span class="n">sources</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">get_default_sources</span><span class="p">()</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">log_sources</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
+<span class="n">sources</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">get_default_sources</span><span class="p">()</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">log_sources</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -461,16 +461,16 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:18,583 - root - INFO: Using sources:
-2021-06-25 11:08:18,584 - root - INFO: --------------
-2021-06-25 11:08:18,585 - root - INFO: HUC: National Watershed Boundary Dataset (WBD)
-2021-06-25 11:08:18,586 - root - INFO: hydrography: National Hydrography Dataset (NHD)
-2021-06-25 11:08:18,586 - root - INFO: DEM: National Elevation Dataset (NED)
-2021-06-25 11:08:18,587 - root - INFO: soil structure: National Resources Conservation Service Soil Survey (NRCS Soils)
-2021-06-25 11:08:18,588 - root - INFO: geologic structure: GLHYMPS version 2.0
-2021-06-25 11:08:18,588 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
-2021-06-25 11:08:18,589 - root - INFO: soil thickness: None
-2021-06-25 11:08:18,590 - root - INFO: meteorology: DayMet 1km
+2021-11-19 12:20:32,576 - root - INFO: Using sources:
+2021-11-19 12:20:32,577 - root - INFO: --------------
+2021-11-19 12:20:32,578 - root - INFO: HUC: National Watershed Boundary Dataset (WBD)
+2021-11-19 12:20:32,579 - root - INFO: hydrography: National Hydrography Dataset (NHD)
+2021-11-19 12:20:32,580 - root - INFO: DEM: National Elevation Dataset (NED)
+2021-11-19 12:20:32,581 - root - INFO: soil structure: National Resources Conservation Service Soil Survey (NRCS Soils)
+2021-11-19 12:20:32,582 - root - INFO: geologic structure: GLHYMPS version 2.0
+2021-11-19 12:20:32,582 - root - INFO: land cover: National Land Cover Database (NLCD) Layer: NLCD_2016_Land_Cover_L48
+2021-11-19 12:20:32,583 - root - INFO: soil thickness: None
+2021-11-19 12:20:32,584 - root - INFO: meteorology: DayMet 1km
 </pre></div></div>
 </div>
 </div>
@@ -483,7 +483,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># find what HUC our shape is in</span>
-<span class="n">huc</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">find_huc</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;HUC&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">shrink_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">huc</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">find_huc</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;HUC&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">shrink_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found Coweeta in HUC: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">huc</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -493,68 +493,68 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:18,601 - root - INFO:
-2021-06-25 11:08:18,602 - root - INFO: Loading HUC 0601
-2021-06-25 11:08:18,603 - root - INFO: ------------------------------
-2021-06-25 11:08:18,603 - root - INFO:
-2021-06-25 11:08:18,604 - root - INFO: Loading level 4 HUCs in 0601
-2021-06-25 11:08:18,605 - root - INFO: ------------------------------
-2021-06-25 11:08:18,607 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
-2021-06-25 11:08:18,671 - root - INFO: ... found 1 HUCs
-2021-06-25 11:08:18,672 - root - INFO:   -- 0601
-2021-06-25 11:08:18,682 - root - INFO: Converting to out_crs
-2021-06-25 11:08:18,756 - root - INFO: Converting to shapely
-2021-06-25 11:08:18,772 - root - INFO: ... found 1
-2021-06-25 11:08:18,777 - root - INFO:
-2021-06-25 11:08:18,777 - root - INFO: Loading level 6 HUCs in 0601
-2021-06-25 11:08:18,778 - root - INFO: ------------------------------
-2021-06-25 11:08:18,780 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
-2021-06-25 11:08:18,819 - root - INFO: ... found 2 HUCs
-2021-06-25 11:08:18,820 - root - INFO:   -- 060102
-2021-06-25 11:08:18,820 - root - INFO:   -- 060101
-2021-06-25 11:08:18,831 - root - INFO: Converting to out_crs
-2021-06-25 11:08:18,972 - root - INFO: Converting to shapely
-2021-06-25 11:08:19,002 - root - INFO:
-2021-06-25 11:08:19,003 - root - INFO: Loading level 8 HUCs in 060102
-2021-06-25 11:08:19,003 - root - INFO: ------------------------------
-2021-06-25 11:08:19,004 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
-2021-06-25 11:08:19,067 - root - INFO: ... found 8 HUCs
-2021-06-25 11:08:19,068 - root - INFO:   -- 06010201
-2021-06-25 11:08:19,068 - root - INFO:   -- 06010207
-2021-06-25 11:08:19,069 - root - INFO:   -- 06010208
-2021-06-25 11:08:19,069 - root - INFO:   -- 06010205
-2021-06-25 11:08:19,070 - root - INFO:   -- 06010202
-2021-06-25 11:08:19,070 - root - INFO:   -- 06010203
-2021-06-25 11:08:19,070 - root - INFO:   -- 06010204
-2021-06-25 11:08:19,071 - root - INFO:   -- 06010206
-2021-06-25 11:08:19,081 - root - INFO: Converting to out_crs
-2021-06-25 11:08:19,398 - root - INFO: Converting to shapely
-2021-06-25 11:08:19,424 - root - INFO:
-2021-06-25 11:08:19,425 - root - INFO: Loading level 10 HUCs in 06010202
-2021-06-25 11:08:19,426 - root - INFO: ------------------------------
-2021-06-25 11:08:19,427 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
-2021-06-25 11:08:19,541 - root - INFO: ... found 5 HUCs
-2021-06-25 11:08:19,542 - root - INFO:   -- 0601020203
-2021-06-25 11:08:19,542 - root - INFO:   -- 0601020204
-2021-06-25 11:08:19,543 - root - INFO:   -- 0601020201
-2021-06-25 11:08:19,543 - root - INFO:   -- 0601020202
-2021-06-25 11:08:19,544 - root - INFO:   -- 0601020205
-2021-06-25 11:08:19,554 - root - INFO: Converting to out_crs
-2021-06-25 11:08:19,725 - root - INFO: Converting to shapely
-2021-06-25 11:08:19,732 - root - INFO:
-2021-06-25 11:08:19,733 - root - INFO: Loading level 12 HUCs in 0601020201
-2021-06-25 11:08:19,734 - root - INFO: ------------------------------
-2021-06-25 11:08:19,735 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
-2021-06-25 11:08:19,923 - root - INFO: ... found 6 HUCs
-2021-06-25 11:08:19,924 - root - INFO:   -- 060102020106
-2021-06-25 11:08:19,924 - root - INFO:   -- 060102020104
-2021-06-25 11:08:19,925 - root - INFO:   -- 060102020105
-2021-06-25 11:08:19,925 - root - INFO:   -- 060102020101
-2021-06-25 11:08:19,926 - root - INFO:   -- 060102020102
-2021-06-25 11:08:19,927 - root - INFO:   -- 060102020103
-2021-06-25 11:08:19,939 - root - INFO: Converting to out_crs
-2021-06-25 11:08:20,135 - root - INFO: Converting to shapely
-2021-06-25 11:08:20,142 - root - INFO: Found Coweeta in HUC: 060102020103
+2021-11-19 12:20:32,597 - root - INFO:
+2021-11-19 12:20:32,598 - root - INFO: Loading HUC 0601
+2021-11-19 12:20:32,599 - root - INFO: ------------------------------
+2021-11-19 12:20:32,599 - root - INFO:
+2021-11-19 12:20:32,600 - root - INFO: Loading level 4 HUCs in 0601
+2021-11-19 12:20:32,601 - root - INFO: ------------------------------
+2021-11-19 12:20:32,604 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
+2021-11-19 12:20:32,767 - root - INFO: ... found 1 HUCs
+2021-11-19 12:20:32,768 - root - INFO:   -- 0601
+2021-11-19 12:20:32,769 - root - INFO: Converting to out_crs
+2021-11-19 12:20:32,808 - root - INFO: Converting to shapely
+2021-11-19 12:20:32,827 - root - INFO: ... found 1
+2021-11-19 12:20:32,834 - root - INFO:
+2021-11-19 12:20:32,835 - root - INFO: Loading level 6 HUCs in 0601
+2021-11-19 12:20:32,835 - root - INFO: ------------------------------
+2021-11-19 12:20:32,837 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
+2021-11-19 12:20:32,885 - root - INFO: ... found 2 HUCs
+2021-11-19 12:20:32,885 - root - INFO:   -- 060102
+2021-11-19 12:20:32,886 - root - INFO:   -- 060101
+2021-11-19 12:20:32,887 - root - INFO: Converting to out_crs
+2021-11-19 12:20:32,952 - root - INFO: Converting to shapely
+2021-11-19 12:20:32,986 - root - INFO:
+2021-11-19 12:20:32,987 - root - INFO: Loading level 8 HUCs in 060102
+2021-11-19 12:20:32,988 - root - INFO: ------------------------------
+2021-11-19 12:20:32,990 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
+2021-11-19 12:20:33,072 - root - INFO: ... found 8 HUCs
+2021-11-19 12:20:33,073 - root - INFO:   -- 06010201
+2021-11-19 12:20:33,074 - root - INFO:   -- 06010207
+2021-11-19 12:20:33,075 - root - INFO:   -- 06010208
+2021-11-19 12:20:33,075 - root - INFO:   -- 06010205
+2021-11-19 12:20:33,076 - root - INFO:   -- 06010202
+2021-11-19 12:20:33,077 - root - INFO:   -- 06010203
+2021-11-19 12:20:33,078 - root - INFO:   -- 06010204
+2021-11-19 12:20:33,078 - root - INFO:   -- 06010206
+2021-11-19 12:20:33,081 - root - INFO: Converting to out_crs
+2021-11-19 12:20:33,174 - root - INFO: Converting to shapely
+2021-11-19 12:20:33,207 - root - INFO:
+2021-11-19 12:20:33,208 - root - INFO: Loading level 10 HUCs in 06010202
+2021-11-19 12:20:33,208 - root - INFO: ------------------------------
+2021-11-19 12:20:33,210 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
+2021-11-19 12:20:33,336 - root - INFO: ... found 5 HUCs
+2021-11-19 12:20:33,337 - root - INFO:   -- 0601020203
+2021-11-19 12:20:33,338 - root - INFO:   -- 0601020204
+2021-11-19 12:20:33,338 - root - INFO:   -- 0601020201
+2021-11-19 12:20:33,339 - root - INFO:   -- 0601020202
+2021-11-19 12:20:33,339 - root - INFO:   -- 0601020205
+2021-11-19 12:20:33,341 - root - INFO: Converting to out_crs
+2021-11-19 12:20:33,363 - root - INFO: Converting to shapely
+2021-11-19 12:20:33,371 - root - INFO:
+2021-11-19 12:20:33,372 - root - INFO: Loading level 12 HUCs in 0601020201
+2021-11-19 12:20:33,372 - root - INFO: ------------------------------
+2021-11-19 12:20:33,374 - root - INFO: Using HUC file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/WBD_06_GDB/WBD_06.gdb&#34;
+2021-11-19 12:20:33,587 - root - INFO: ... found 6 HUCs
+2021-11-19 12:20:33,588 - root - INFO:   -- 060102020106
+2021-11-19 12:20:33,588 - root - INFO:   -- 060102020104
+2021-11-19 12:20:33,589 - root - INFO:   -- 060102020105
+2021-11-19 12:20:33,589 - root - INFO:   -- 060102020101
+2021-11-19 12:20:33,589 - root - INFO:   -- 060102020102
+2021-11-19 12:20:33,590 - root - INFO:   -- 060102020103
+2021-11-19 12:20:33,592 - root - INFO: Converting to out_crs
+2021-11-19 12:20:33,614 - root - INFO: Converting to shapely
+2021-11-19 12:20:33,622 - root - INFO: Found Coweeta in HUC: 060102020103
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -565,16 +565,16 @@ div.rendered_html tbody tr:hover {
 <span></span><span class="n">rivers</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="k">if</span> <span class="n">rivers</span><span class="p">:</span>
     <span class="c1"># download/collect the river network within that shape&#39;s bounds</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_reaches</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;hydrography&#39;</span><span class="p">],</span> <span class="n">huc</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_reaches</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;hydrography&#39;</span><span class="p">],</span> <span class="n">huc</span><span class="p">,</span>
                                       <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
     <span class="c1"># simplify and prune rivers not IN the shape, constructing a tree-like data structure</span>
     <span class="c1"># for the river network</span>
-    <span class="n">rivers</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">simplify_and_prune</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simplify</span><span class="o">=</span><span class="n">simplify</span><span class="p">,</span> <span class="n">snap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">simplify_and_prune</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">reaches</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simplify</span><span class="o">=</span><span class="n">simplify</span><span class="p">,</span> <span class="n">snap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                          <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="k">else</span><span class="p">:</span>
     <span class="n">rivers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="n">workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">simplify</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">simplify</span><span class="p">)</span>
 
 
 </pre></div>
@@ -585,41 +585,39 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:20,148 - root - INFO:
-2021-06-25 11:08:20,149 - root - INFO: Loading Hydrography
-2021-06-25 11:08:20,150 - root - INFO: ------------------------------
-2021-06-25 11:08:20,151 - root - INFO: Loading streams in HUC 060102020103
-2021-06-25 11:08:20,151 - root - INFO:          and/or bounds (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:20,153 - root - INFO:   Using Hydrography file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/NHD_H_06010202_GDB/NHD_H_06010202.gdb&#34;
-2021-06-25 11:08:20,153 - root - INFO:   National Hydrography Dataset (NHD): opening &#39;/Users/uec/code/watershed_workflow/data-library/hydrography/NHD_H_06010202_GDB/NHD_H_06010202.gdb&#39; layer &#39;NHDFlowline&#39; for streams in &#39;(273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)&#39;
-/Users/uec/code/watershed_workflow/repos/master/workflow/sources/manager_nhd.py:171: RuntimeWarning: Sequential read of iterator was interrupted. Resetting iterator. This can negatively impact the performance.
-  reaches = [r for (i,r) in fid.items(bbox=bounds)]
-2021-06-25 11:08:20,323 - root - INFO:   Filtering reaches not in-network
-2021-06-25 11:08:20,324 - root - INFO: ... found 35 reaches
-2021-06-25 11:08:20,324 - root - INFO: Converting to shapely
-2021-06-25 11:08:20,340 - root - INFO: Converting to out_crs
-2021-06-25 11:08:20,381 - root - INFO:
-2021-06-25 11:08:20,382 - root - INFO: Simplifying and pruning
-2021-06-25 11:08:20,383 - root - INFO: ------------------------------
-2021-06-25 11:08:20,383 - root - INFO: Filtering rivers outside of the HUC space
-2021-06-25 11:08:20,384 - root - INFO:   ...filtering
-2021-06-25 11:08:20,389 - root - INFO: ... filtered from 35 to 21 reaches.
-2021-06-25 11:08:20,390 - root - INFO: Generating the river tree
-2021-06-25 11:08:20,393 - root - INFO: Simplifying rivers
-2021-06-25 11:08:20,398 - root - INFO: Simplifying HUCs
-2021-06-25 11:08:20,399 - root - INFO: Snapping river and HUC (nearly) coincident nodes
-2021-06-25 11:08:20,402 - root - INFO:   snapping polygon segment boundaries to river endpoints
-2021-06-25 11:08:20,406 - root - INFO:   snapping river endpoints to the polygon
-2021-06-25 11:08:20,418 - root - INFO:   cutting at crossings
-2021-06-25 11:08:20,427 - root - INFO:   filtering rivers to HUC
-2021-06-25 11:08:20,428 - root - INFO:   ...filtering
-2021-06-25 11:08:20,431 - root - INFO:
-2021-06-25 11:08:20,432 - root - INFO: Simplification Diagnostics
-2021-06-25 11:08:20,432 - root - INFO: ------------------------------
-2021-06-25 11:08:20,435 - root - INFO:   river min seg length: 87.37142879298393
-2021-06-25 11:08:20,436 - root - INFO:   river median seg length: 160.85900507901667
-2021-06-25 11:08:20,438 - root - INFO:   HUC min seg length: 42.195003270380795
-2021-06-25 11:08:20,439 - root - INFO:   HUC median seg length: 55.87002795054712
+2021-11-19 12:20:33,630 - root - INFO:
+2021-11-19 12:20:33,631 - root - INFO: Loading Hydrography
+2021-11-19 12:20:33,631 - root - INFO: ------------------------------
+2021-11-19 12:20:33,632 - root - INFO: Loading streams in HUC 060102020103
+2021-11-19 12:20:33,633 - root - INFO:          and/or bounds (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:20:33,636 - root - INFO:   Using Hydrography file &#34;/Users/uec/code/watershed_workflow/data-library/hydrography/NHD_H_06010202_GDB/NHD_H_06010202.gdb&#34;
+2021-11-19 12:20:33,637 - root - INFO:   National Hydrography Dataset (NHD): opening &#39;/Users/uec/code/watershed_workflow/data-library/hydrography/NHD_H_06010202_GDB/NHD_H_06010202.gdb&#39; layer &#39;NHDFlowline&#39; for streams in &#39;(273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)&#39;
+2021-11-19 12:20:33,855 - root - INFO:   Filtering reaches not in-network
+2021-11-19 12:20:33,856 - root - INFO: ... found 35 reaches
+2021-11-19 12:20:33,856 - root - INFO: Converting to shapely
+2021-11-19 12:20:33,869 - root - INFO: Converting to out_crs
+2021-11-19 12:20:33,878 - root - INFO:
+2021-11-19 12:20:33,878 - root - INFO: Simplifying and pruning
+2021-11-19 12:20:33,879 - root - INFO: ------------------------------
+2021-11-19 12:20:33,879 - root - INFO: Filtering rivers outside of the HUC space
+2021-11-19 12:20:33,880 - root - INFO:   ...filtering
+2021-11-19 12:20:33,890 - root - INFO: ... filtered from 35 to 21 reaches.
+2021-11-19 12:20:33,891 - root - INFO: Generating the river tree
+2021-11-19 12:20:33,895 - root - INFO: Simplifying rivers
+2021-11-19 12:20:33,903 - root - INFO: Simplifying HUCs
+2021-11-19 12:20:33,905 - root - INFO: Snapping river and HUC (nearly) coincident nodes
+2021-11-19 12:20:33,908 - root - INFO:   snapping polygon segment boundaries to river endpoints
+2021-11-19 12:20:33,911 - root - INFO:   snapping river endpoints to the polygon
+2021-11-19 12:20:33,924 - root - INFO:   cutting at crossings
+2021-11-19 12:20:33,934 - root - INFO:   filtering rivers to HUC
+2021-11-19 12:20:33,935 - root - INFO:   ...filtering
+2021-11-19 12:20:33,940 - root - INFO:
+2021-11-19 12:20:33,941 - root - INFO: Simplification Diagnostics
+2021-11-19 12:20:33,941 - root - INFO: ------------------------------
+2021-11-19 12:20:33,946 - root - INFO:   river min seg length: 87.37142879298393
+2021-11-19 12:20:33,948 - root - INFO:   river median seg length: 160.85900507901667
+2021-11-19 12:20:33,950 - root - INFO:   HUC min seg length: 42.195003270380795
+2021-11-19 12:20:33,951 - root - INFO:   HUC median seg length: 55.87002795054712
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -629,10 +627,10 @@ div.rendered_html tbody tr:hover {
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot what we have so far -- an image of the HUC and its stream network</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -643,8 +641,8 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_20210603/lib/python3.9/site-packages/pyproj/crs/crs.py:543: UserWarning: You will likely lose important projection information when converting to a PROJ string from another format. See: https://proj.org/faq.html#what-is-the-best-format-for-describing-coordinate-reference-systems
-  proj_string = self.to_proj4()
+/Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_DEV-2021-11-10/lib/python3.9/site-packages/pyproj/crs/crs.py:1256: UserWarning: You will likely lose important projection information when converting to a PROJ string from another format. See: https://proj.org/faq.html#what-is-the-best-format-for-describing-coordinate-reference-systems
+  return self._crs.to_proj4(version=version)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -675,11 +673,11 @@ div.rendered_html tbody tr:hover {
 <span class="n">min_angle</span> <span class="o">=</span> <span class="mi">32</span> <span class="c1"># degrees</span>
 
 <span class="c1"># make 2D mesh</span>
-<span class="n">mesh_points2</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span>
+<span class="n">mesh_points2</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span>
                                                <span class="n">refine_distance</span><span class="o">=</span><span class="p">[</span><span class="n">d0</span><span class="p">,</span><span class="n">A0</span><span class="p">,</span><span class="n">d1</span><span class="p">,</span><span class="n">A1</span><span class="p">],</span>
                                                <span class="n">refine_min_angle</span><span class="o">=</span><span class="n">min_angle</span><span class="p">,</span>
                                                <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="c1">#mesh_points2, mesh_tris, d = workflow.triangulate(coweeta, rivers,</span>
+<span class="c1">#mesh_points2, mesh_tris, d = watershed_workflow.triangulate(coweeta, rivers,</span>
 <span class="c1">#                                                 refine_max_area=100000,</span>
 <span class="c1">#                                                 enforce_delaunay=True,</span>
 <span class="c1">#                                                 diagnostics=True)</span>
@@ -691,19 +689,19 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:20,656 - root - INFO:
-2021-06-25 11:08:20,657 - root - INFO: Meshing
-2021-06-25 11:08:20,658 - root - INFO: ------------------------------
-2021-06-25 11:08:20,667 - root - INFO: Triangulating...
-2021-06-25 11:08:20,668 - root - INFO:    62 points and 62 facets
-2021-06-25 11:08:20,669 - root - INFO:  checking graph consistency
-2021-06-25 11:08:20,670 - root - INFO:  tolerance is set to 1
-2021-06-25 11:08:20,671 - root - INFO:  building graph data structures
-2021-06-25 11:08:20,672 - root - INFO:  triangle.build...
-2021-06-25 11:08:24,129 - root - INFO:   ...built: 8086 mesh points and 15945 triangles
-2021-06-25 11:08:24,130 - root - INFO: Plotting triangulation diagnostics
-2021-06-25 11:08:24,978 - root - INFO:   min area = 289.77447509765625
-2021-06-25 11:08:24,979 - root - INFO:   max area = 4979.40869140625
+2021-11-19 12:20:34,201 - root - INFO:
+2021-11-19 12:20:34,202 - root - INFO: Meshing
+2021-11-19 12:20:34,203 - root - INFO: ------------------------------
+2021-11-19 12:20:34,216 - root - INFO: Triangulating...
+2021-11-19 12:20:34,217 - root - INFO:    62 points and 62 facets
+2021-11-19 12:20:34,218 - root - INFO:  checking graph consistency
+2021-11-19 12:20:34,218 - root - INFO:  tolerance is set to 1
+2021-11-19 12:20:34,220 - root - INFO:  building graph data structures
+2021-11-19 12:20:34,222 - root - INFO:  triangle.build...
+2021-11-19 12:20:38,350 - root - INFO:   ...built: 8086 mesh points and 15945 triangles
+2021-11-19 12:20:38,351 - root - INFO: Plotting triangulation diagnostics
+2021-11-19 12:20:39,481 - root - INFO:   min area = 289.77447509765625
+2021-11-19 12:20:39,482 - root - INFO:   max area = 4979.40869140625
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -719,10 +717,10 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># get a raster for the elevation map, based on NED</span>
-<span class="n">dem_profile</span><span class="p">,</span> <span class="n">dem</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;DEM&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">)</span>
+<span class="n">dem_profile</span><span class="p">,</span> <span class="n">dem</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;DEM&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">)</span>
 
 <span class="c1"># elevate the triangle nodes to the dem</span>
-<span class="n">mesh_points3</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">mesh_points2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">)</span>
+<span class="n">mesh_points3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">mesh_points2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -731,19 +729,19 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:25,282 - root - INFO:
-2021-06-25 11:08:25,283 - root - INFO: Loading Raster
-2021-06-25 11:08:25,283 - root - INFO: ------------------------------
-2021-06-25 11:08:25,284 - root - INFO: Collecting raster
-2021-06-25 11:08:25,317 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186388, 35.01734099944037, -83.41165773504302, 35.08381933600275]
-2021-06-25 11:08:25,318 - root - INFO:   Need:
-2021-06-25 11:08:25,318 - root - INFO:     /Users/uec/code/watershed_workflow/data-library/dem/USGS_NED_1as_n36_w084.tif
-2021-06-25 11:08:25,319 - root - INFO: source files already exist!
-2021-06-25 11:08:25,337 - root - INFO: ... got raster of shape: (240, 277)
-2021-06-25 11:08:25,347 - root - INFO: ... got raster bounds: (-83.48845037186388, 35.08381933600275, -83.41150592741688, 35.01715266933387)
-2021-06-25 11:08:25,348 - root - INFO:
-2021-06-25 11:08:25,348 - root - INFO: Elevating Triangulation to DEM
-2021-06-25 11:08:25,349 - root - INFO: ------------------------------
+2021-11-19 12:20:39,820 - root - INFO:
+2021-11-19 12:20:39,821 - root - INFO: Loading Raster
+2021-11-19 12:20:39,822 - root - INFO: ------------------------------
+2021-11-19 12:20:39,823 - root - INFO: Collecting raster
+2021-11-19 12:20:39,827 - root - INFO: Collecting DEMs to tile bounds: [-83.48845037186388, 35.01734099944037, -83.41165773504302, 35.08381933600275]
+2021-11-19 12:20:39,829 - root - INFO:   Need:
+2021-11-19 12:20:39,830 - root - INFO:     /Users/uec/code/watershed_workflow/data-library/dem/USGS_NED_1as_n36_w084.tif
+2021-11-19 12:20:39,831 - root - INFO: source files already exist!
+2021-11-19 12:20:39,853 - root - INFO: ... got raster of shape: (239, 276)
+2021-11-19 12:20:39,854 - root - INFO: ... got raster bounds: (-83.48845037186388, 35.08381933600275, -83.41178370519467, 35.01743044711165)
+2021-11-19 12:20:39,856 - root - INFO:
+2021-11-19 12:20:39,856 - root - INFO: Elevating Triangulation to DEM
+2021-11-19 12:20:39,856 - root - INFO: ------------------------------
 </pre></div></div>
 </div>
 <p>Plotting the resulting mesh can be done in a variety of ways, including both 3D plots and mapview. We show both here, but hereafter use mapview plots as they are a bit clearer (if not so flashy)…</p>
@@ -754,7 +752,7 @@ div.rendered_html tbody tr:hover {
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot the resulting surface mesh</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize_3d</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
 <span class="n">cax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.23</span><span class="p">,</span><span class="mf">0.18</span><span class="p">,</span><span class="mf">0.58</span><span class="p">,</span><span class="mf">0.03</span><span class="p">])</span>
 
 <span class="n">mp</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">mesh_points3</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">mesh_points3</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span>
@@ -767,7 +765,6 @@ div.rendered_html tbody tr:hover {
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 
-<span class="c1">#fig.savefig(&#39;coweeta_dem_3d&#39;)</span>
 </pre></div>
 </div>
 </div>
@@ -776,7 +773,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/uec/code/watershed_workflow/repos/master/workflow/plot.py:110: MatplotlibDeprecationWarning: Axes3D(fig) adding itself to the figure is deprecated since 3.4. Pass the keyword argument auto_add_to_figure=False and use fig.add_axes(ax) to suppress this warning. The default value of auto_add_to_figure will change to False in mpl3.5 and True values will no longer work in 3.6.  This is consistent with other Axes classes.
+/Users/Shared/ornldev/code/watershed_workflow/repos/setup_py/watershed_workflow/plot.py:110: MatplotlibDeprecationWarning: Axes3D(fig) adding itself to the figure is deprecated since 3.4. Pass the keyword argument auto_add_to_figure=False and use fig.add_axes(ax) to suppress this warning. The default value of auto_add_to_figure will change to False in mpl3.5 and True values will no longer work in 3.6.  This is consistent with other Axes classes.
   ax = Axes3D(fig, rect=window)
 </pre></div></div>
 </div>
@@ -810,25 +807,25 @@ div.rendered_html tbody tr:hover {
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot the resulting surface mesh</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
-<span class="c1">#ax2 = workflow.plot.get_ax(crs,fig, window=[0.65,0.05,0.3,0.5])</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
+<span class="c1">#ax2 = watershed_workflow.plot.get_ax(crs,fig, window=[0.65,0.05,0.3,0.5])</span>
 <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">([</span><span class="mf">0.65</span><span class="p">,</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.3</span><span class="p">,</span><span class="mf">0.5</span><span class="p">])</span>
 <span class="n">cbax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span><span class="mf">0.05</span><span class="p">])</span>
 
 <span class="n">xlim</span> <span class="o">=</span> <span class="p">(</span><span class="mf">275900.</span><span class="p">,</span> <span class="mf">276400.</span><span class="p">)</span>
 <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="mf">3882300.</span><span class="p">,</span> <span class="mf">3883000.</span><span class="p">)</span>
 
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cbax</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;datalim&#39;</span><span class="p">)</span>
 
-<span class="n">mp2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
+<span class="n">mp2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hucs</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ylim</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
@@ -840,7 +837,7 @@ div.rendered_html tbody tr:hover {
 <span class="nb">print</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">())</span>
 <span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_dem2&#39;</span><span class="p">)</span>
+
 </pre></div>
 </div>
 </div>
@@ -849,15 +846,24 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-(273391.62315978715, 279720.3829351623)
-(3878583.928534328, 3884209.492779106)
+(273391.6231597869, 279720.3829351625)
+(3878583.928534328, 3884209.4927791064)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;elevation [m]&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_15_1.png" src="../_images/examples_mesh_coweeta_15_1.png" />
+<img alt="../_images/examples_mesh_coweeta_15_2.png" src="../_images/examples_mesh_coweeta_15_2.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -866,7 +872,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># construct the 2D mesh</span>
-<span class="n">m2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">mesh_points3</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">))</span>
+<span class="n">m2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">mesh_points3</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -876,14 +882,14 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># hydrologically condition the mesh, removing pits</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
 
 <span class="c1"># plot the change between the two meshes</span>
 <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">)</span>
 <span class="n">diff</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">mesh_points3</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max diff = &quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
                             <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;conditioned dz&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -916,11 +922,11 @@ max diff =  6.589355426081738
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># download the NLCD raster</span>
-<span class="n">lc_profile</span><span class="p">,</span> <span class="n">lc_raster</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;land cover&#39;</span><span class="p">],</span>
+<span class="n">lc_profile</span><span class="p">,</span> <span class="n">lc_raster</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;land cover&#39;</span><span class="p">],</span>
                                                      <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">)</span>
 
 <span class="c1"># resample the raster to the triangles</span>
-<span class="n">lc</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">lc_raster</span><span class="p">,</span> <span class="n">lc_profile</span><span class="p">)</span>
+<span class="n">lc</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">lc_raster</span><span class="p">,</span> <span class="n">lc_profile</span><span class="p">)</span>
 
 <span class="c1"># what land cover types did we get?</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found land cover dtypes: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lc</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
@@ -934,15 +940,15 @@ max diff =  6.589355426081738
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:28,905 - root - INFO:
-2021-06-25 11:08:28,906 - root - INFO: Loading Raster
-2021-06-25 11:08:28,907 - root - INFO: ------------------------------
-2021-06-25 11:08:28,908 - root - INFO: Collecting raster
-2021-06-25 11:08:28,915 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1],AXIS[&#34;Easting&#34;,EAST],AXIS[&#34;Northing&#34;,NORTH]]
-2021-06-25 11:08:29,023 - root - INFO: ... got raster of shape: (180, 173)
-2021-06-25 11:08:29,035 - root - INFO: ... got raster bounds: (1129275.0, 1410015.0, 1134465.0, 1404615.0)
-2021-06-25 11:08:29,315 - root - INFO: Found land cover dtypes: uint8
-2021-06-25 11:08:29,317 - root - INFO: Found land cover types: {0, 41, 42, 43, 81, 52, 21, 22, 23}
+2021-11-19 12:20:43,447 - root - INFO:
+2021-11-19 12:20:43,448 - root - INFO: Loading Raster
+2021-11-19 12:20:43,449 - root - INFO: ------------------------------
+2021-11-19 12:20:43,450 - root - INFO: Collecting raster
+2021-11-19 12:20:43,549 - root - INFO: CRS: PROJCS[&#34;Albers_Conical_Equal_Area&#34;,GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],PRIMEM[&#34;Greenwich&#34;,0,AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],PROJECTION[&#34;Albers_Conic_Equal_Area&#34;],PARAMETER[&#34;latitude_of_center&#34;,23],PARAMETER[&#34;longitude_of_center&#34;,-96],PARAMETER[&#34;standard_parallel_1&#34;,29.5],PARAMETER[&#34;standard_parallel_2&#34;,45.5],PARAMETER[&#34;false_easting&#34;,0],PARAMETER[&#34;false_northing&#34;,0],UNIT[&#34;meters&#34;,1],AXIS[&#34;Easting&#34;,EAST],AXIS[&#34;Northing&#34;,NORTH]]
+2021-11-19 12:20:43,658 - root - INFO: ... got raster of shape: (180, 173)
+2021-11-19 12:20:43,746 - root - INFO: ... got raster bounds: (1129275.0, 1410015.0, 1134465.0, 1404615.0)
+2021-11-19 12:20:44,122 - root - INFO: Found land cover dtypes: uint8
+2021-11-19 12:20:44,124 - root - INFO: Found land cover types: {0, 41, 42, 43, 81, 52, 21, 22, 23}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -954,7 +960,7 @@ max diff =  6.589355426081738
 
 <span class="c1"># -- get the NLCD colormap which uses official NLCD colors and labels</span>
 <span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">nlcd_ticks</span><span class="p">,</span> <span class="n">nlcd_labels</span> <span class="o">=</span> \
-                <span class="n">workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_nlcd_colormap</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
+                <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_nlcd_colormap</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
 
 <span class="c1"># this is just hacking the label names to make them display a bit neater for a cleaner plot.  Likely it</span>
 <span class="c1"># should get put into the NLCD manager instead of here! See #8</span>
@@ -980,24 +986,32 @@ max diff =  6.589355426081738
 
 <span class="c1"># plot the image</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
-<span class="n">polys</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">lc</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
+<span class="n">polys</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">lc</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
                                      <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">mp</span> <span class="o">=</span> <span class="n">pcm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">nlcd_cmap</span><span class="p">)</span>
 <span class="n">cb</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">(</span><span class="n">nlcd_ticks</span><span class="p">)</span>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">(</span><span class="n">nlcd_labels_fw</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;land cover index&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_nlcd&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;land cover index&#39;)
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_20_0.png" src="../_images/examples_mesh_coweeta_20_0.png" />
+<img alt="../_images/examples_mesh_coweeta_20_1.png" src="../_images/examples_mesh_coweeta_20_1.png" />
 </div>
 </div>
 </div>
@@ -1017,7 +1031,7 @@ max diff =  6.589355426081738
 <span class="c1"># -- download the shapes</span>
 <span class="n">target_bounds</span> <span class="o">=</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;target bounds: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">))</span>
-<span class="n">soil_profile</span><span class="p">,</span> <span class="n">soil_survey</span><span class="p">,</span> <span class="n">soil_survey_props</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;soil structure&#39;</span><span class="p">],</span>
+<span class="n">soil_profile</span><span class="p">,</span> <span class="n">soil_survey</span><span class="p">,</span> <span class="n">soil_survey_props</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;soil structure&#39;</span><span class="p">],</span>
                                                                    <span class="n">target_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># -- determine the NRCS mukey for each soil unit; this uniquely identifies soil</span>
@@ -1026,12 +1040,12 @@ max diff =  6.589355426081738
 
 <span class="c1"># -- color a raster by the polygons (this makes identifying a triangle&#39;s value much</span>
 <span class="c1">#    more efficient)</span>
-<span class="n">soil_color_raster</span><span class="p">,</span> <span class="n">soil_color_profile</span><span class="p">,</span> <span class="n">img_bounds</span> <span class="o">=</span> \
-            <span class="n">workflow</span><span class="o">.</span><span class="n">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">soil_survey</span><span class="p">,</span>
+<span class="n">soil_color_profile</span><span class="p">,</span> <span class="n">soil_color_raster</span> <span class="o">=</span> \
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">soil_survey</span><span class="p">,</span>
                                               <span class="n">soil_ids</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
 
 <span class="c1"># -- resample the raster to the triangles</span>
-<span class="n">soil_color</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span>
+<span class="n">soil_color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span>
                                          <span class="n">soil_color_raster</span><span class="p">,</span> <span class="n">soil_color_profile</span><span class="p">)</span>
 
 <span class="c1"># -- select only those that appear in our color map</span>
@@ -1045,27 +1059,27 @@ max diff =  6.589355426081738
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:33,249 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:33,250 - root - INFO:
-2021-06-25 11:08:33,251 - root - INFO: Loading shapes
-2021-06-25 11:08:33,251 - root - INFO: ------------------------------
-2021-06-25 11:08:33,353 - root - INFO: Attempting to download source for target &#39;/Users/uec/code/watershed_workflow/data-library/soil_structure/SSURGO/SSURGO_-83.4790_35.0269_-83.4208_35.0743.shp&#39;
-2021-06-25 11:08:33,371 - root - INFO:   Found 490 shapes.
-2021-06-25 11:08:33,382 - root - INFO:   and crs: +init=epsg:4326 +type=crs
-2021-06-25 11:08:33,395 - root - INFO: found 43 unique MUKEYs.
-2021-06-25 11:08:35,541 - root - INFO: Running Rosetta for van Genutchen parameters
-2021-06-25 11:08:35,542 - root - INFO:   database: /Users/uec/code/watershed_workflow/repos/master/workflow_tpls/rosetta/sqlite/rosetta.sqlite
-2021-06-25 11:08:35,542 - root - INFO:   model type: 3
-2021-06-25 11:08:35,735 - root - INFO:   ... done
-2021-06-25 11:08:35,745 - root - INFO: ... found 490 shapes
-2021-06-25 11:08:35,746 - root - INFO: Converting to shapely
-2021-06-25 11:08:35,792 - root - INFO: Converting to requested CRS
-2021-06-25 11:08:35,887 - root - INFO: Coloring shapes onto raster:
-2021-06-25 11:08:35,888 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:35,889 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
-2021-06-25 11:08:35,890 - root - INFO:   pixel_size = 10
-2021-06-25 11:08:35,890 - root - INFO:   width = 518, height = 512
-2021-06-25 11:08:35,890 - root - INFO:   and 43 independent colors of dtype int32
+2021-11-19 12:20:48,483 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:20:48,484 - root - INFO:
+2021-11-19 12:20:48,484 - root - INFO: Loading shapes
+2021-11-19 12:20:48,485 - root - INFO: ------------------------------
+2021-11-19 12:20:48,509 - root - INFO: Attempting to download source for target &#39;/Users/uec/code/watershed_workflow/data-library/soil_structure/SSURGO/SSURGO_-83.4790_35.0269_-83.4208_35.0743.shp&#39;
+2021-11-19 12:20:48,528 - root - INFO:   Found 490 shapes.
+2021-11-19 12:20:48,530 - root - INFO:   and crs: epsg:4326
+2021-11-19 12:20:48,540 - root - INFO: found 43 unique MUKEYs.
+2021-11-19 12:20:50,641 - root - INFO: Running Rosetta for van Genutchen parameters
+2021-11-19 12:20:50,844 - root - INFO:   ... done
+2021-11-19 12:20:50,846 - root - INFO:   requested 43 values
+2021-11-19 12:20:50,847 - root - INFO:   got 43 responses
+2021-11-19 12:20:50,857 - root - INFO: ... found 490 shapes
+2021-11-19 12:20:50,858 - root - INFO: Converting to shapely
+2021-11-19 12:20:50,909 - root - INFO: Converting to requested CRS
+2021-11-19 12:20:50,980 - root - INFO: Coloring shapes onto raster:
+2021-11-19 12:20:50,981 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:20:50,981 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
+2021-11-19 12:20:50,981 - root - INFO:   pixel_size = 10
+2021-11-19 12:20:50,982 - root - INFO:   width = 518, height = 512
+2021-11-19 12:20:50,984 - root - INFO:   and 43 independent colors of dtype int32
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1739,20 +1753,18 @@ max diff =  6.589355426081738
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot the soil mukey</span>
-<span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_indexed_colormap</span><span class="p">(</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab20c&#39;</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+<span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_indexed_colormap</span><span class="p">(</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab20c&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
 
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span>
                         <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">soil_color</span><span class="p">,</span>
                         <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">norm</span>
                        <span class="p">)</span>
 
-<span class="n">workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">colorbar_index</span><span class="p">(</span><span class="n">ncolors</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">soil_color</span><span class="p">)),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">colorbar_index</span><span class="p">(</span><span class="n">ncolors</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">soil_color</span><span class="p">)),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_soils&#39;</span><span class="p">)</span>
-
 
 </pre></div>
 </div>
@@ -1762,15 +1774,24 @@ max diff =  6.589355426081738
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_20210603/lib/python3.9/site-packages/pyproj/crs/crs.py:543: UserWarning: You will likely lose important projection information when converting to a PROJ string from another format. See: https://proj.org/faq.html#what-is-the-best-format-for-describing-coordinate-reference-systems
-  proj_string = self.to_proj4()
+/Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_DEV-2021-11-10/lib/python3.9/site-packages/pyproj/crs/crs.py:1256: UserWarning: You will likely lose important projection information when converting to a PROJ string from another format. See: https://proj.org/faq.html#what-is-the-best-format-for-describing-coordinate-reference-systems
+  return self._crs.to_proj4(version=version)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(273712.5998, 279399.40619999997, 3878583.92855, 3884209.4924500003)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_24_1.png" src="../_images/examples_mesh_coweeta_24_1.png" />
+<img alt="../_images/examples_mesh_coweeta_24_2.png" src="../_images/examples_mesh_coweeta_24_2.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1795,22 +1816,21 @@ max diff =  6.589355426081738
 
 
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
-<span class="n">ax1</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="n">porosity_nrcs</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">pmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">pmax</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;porosity (NRCS) [-]&#39;</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
 
 
-<span class="n">ax2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="n">porosity_rosetta</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">pmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">pmax</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;porosity (Rosetta) [-]&#39;</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_porosity&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1826,14 +1846,23 @@ Index([&#39;residual saturation [-]&#39;, &#39;Rosetta porosity [-]&#39;,
        &#39;total sand pct [%]&#39;, &#39;total silt pct [%]&#39;, &#39;total clay pct [%]&#39;,
        &#39;source&#39;],
       dtype=&#39;object&#39;)
-min, max =  0.2355549116198203 0.467109593771068
+min, max =  0.2355549116198203 0.4671095937710679
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(273712.5998, 279399.40619999997, 3878583.92855, 3884209.4924500003)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_mesh_coweeta_25_1.png" src="../_images/examples_mesh_coweeta_25_1.png" />
+<img alt="../_images/examples_mesh_coweeta_25_2.png" src="../_images/examples_mesh_coweeta_25_2.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
@@ -1858,22 +1887,20 @@ min, max =  0.2355549116198203 0.467109593771068
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;min = </span><span class="si">{</span><span class="n">pmin</span><span class="si">}</span><span class="s1">, max = </span><span class="si">{</span><span class="n">pmax</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="n">ax1</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">soil_perm_nrcs</span><span class="p">),</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">,</span>
                                 <span class="n">vmin</span><span class="o">=</span><span class="n">pmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">pmax</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;log permeability (NRCS) [m^2]&#39;</span><span class="p">)</span>
 
-<span class="n">ax2</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">triangulation</span><span class="p">(</span><span class="n">mesh_points3</span><span class="p">,</span> <span class="n">mesh_tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span>
                                  <span class="n">color</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">soil_perm_rosetta</span><span class="p">),</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">,</span>
                                 <span class="n">vmin</span><span class="o">=</span><span class="n">pmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">pmax</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;log permeability (Rosetta) [m^2]&#39;</span><span class="p">)</span>
 
-
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_permeability&#39;</span><span class="p">)</span>
 
 
 </pre></div>
@@ -1888,12 +1915,12 @@ min = -14.488486163789586, max = -11.204929002586569
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
 </div>
-<div class="output_area stderr docutils container">
+<div class="output_area docutils container">
 <div class="highlight"><pre>
-/Users/Shared/ornldev/code/miniconda3/envs/watershed_workflow_20210603/lib/python3.9/site-packages/pyproj/crs/crs.py:543: UserWarning: You will likely lose important projection information when converting to a PROJ string from another format. See: https://proj.org/faq.html#what-is-the-best-format-for-describing-coordinate-reference-systems
-  proj_string = self.to_proj4()
+Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1915,7 +1942,7 @@ min = -14.488486163789586, max = -11.204929002586569
 <span class="n">target_bounds</span> <span class="o">=</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;target bounds: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">))</span>
 
-<span class="n">_</span><span class="p">,</span> <span class="n">geo_survey</span><span class="p">,</span> <span class="n">geo_survey_props</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;geologic structure&#39;</span><span class="p">],</span> <span class="n">target_bounds</span><span class="p">,</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">geo_survey</span><span class="p">,</span> <span class="n">geo_survey_props</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;geologic structure&#39;</span><span class="p">],</span> <span class="n">target_bounds</span><span class="p">,</span>
                                                       <span class="n">crs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># -- log the bounds targetted and found</span>
@@ -1928,12 +1955,12 @@ min = -14.488486163789586, max = -11.204929002586569
 
 <span class="c1"># -- color a raster by the polygons (this makes identifying a triangle&#39;s value much</span>
 <span class="c1">#    more efficient)</span>
-<span class="n">geo_color_raster</span><span class="p">,</span> <span class="n">geo_color_profile</span><span class="p">,</span> <span class="n">img_bounds</span> <span class="o">=</span> \
-            <span class="n">workflow</span><span class="o">.</span><span class="n">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">geo_survey</span><span class="p">,</span>
+<span class="n">geo_color_profile</span><span class="p">,</span> <span class="n">geo_color_raster</span> <span class="o">=</span> \
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">color_raster_from_shapes</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">geo_survey</span><span class="p">,</span>
                                               <span class="n">geo_ids</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
 
 <span class="c1"># -- resample the raster to the triangles</span>
-<span class="n">geo_color</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span>
+<span class="n">geo_color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span>
                                          <span class="n">geo_color_raster</span><span class="p">,</span> <span class="n">geo_color_profile</span><span class="p">)</span>
 
 </pre></div>
@@ -1944,25 +1971,23 @@ min = -14.488486163789586, max = -11.204929002586569
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:42,534 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:42,535 - root - INFO:
-2021-06-25 11:08:42,536 - root - INFO: Loading shapes
-2021-06-25 11:08:42,536 - root - INFO: ------------------------------
-2021-06-25 11:08:42,537 - root - INFO: Getting shapes of GLHYMPS on bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:42,537 - root - INFO:   from file: /Users/uec/code/watershed_workflow/data-library/soil_structure/GLHYMPS/GLHYMPS.shp
-2021-06-25 11:08:42,644 - fiona.ogrext - INFO: Failed to auto identify EPSG: 7
-/Users/uec/code/watershed_workflow/repos/master/workflow/sources/manager_shape.py:76: RuntimeWarning: Sequential read of iterator was interrupted. Resetting iterator. This can negatively impact the performance.
-  shps = [s for (i,s) in fid.items(bbox=bounds)]
-2021-06-25 11:08:54,749 - root - INFO: ... found 1 shapes
-2021-06-25 11:08:54,749 - root - INFO: Converting to shapely
-2021-06-25 11:08:54,766 - root - INFO: Converting to requested CRS
-2021-06-25 11:08:54,842 - root - INFO: shape union bounds: (159518.27011641115, 3816621.6554112737, 431027.3363569959, 4024643.4346461874)
-2021-06-25 11:08:54,844 - root - INFO: Coloring shapes onto raster:
-2021-06-25 11:08:54,845 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
-2021-06-25 11:08:54,846 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
-2021-06-25 11:08:54,847 - root - INFO:   pixel_size = 10
-2021-06-25 11:08:54,849 - root - INFO:   width = 518, height = 512
-2021-06-25 11:08:54,850 - root - INFO:   and 1 independent colors of dtype int32
+2021-11-19 12:20:58,280 - root - INFO: target bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:20:58,281 - root - INFO:
+2021-11-19 12:20:58,282 - root - INFO: Loading shapes
+2021-11-19 12:20:58,283 - root - INFO: ------------------------------
+2021-11-19 12:20:58,283 - root - INFO: Getting shapes of GLHYMPS on bounds: (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:20:58,284 - root - INFO:   from file: /Users/uec/code/watershed_workflow/data-library/soil_structure/GLHYMPS/GLHYMPS.shp
+2021-11-19 12:20:58,425 - fiona.ogrext - INFO: Failed to auto identify EPSG: 7
+2021-11-19 12:21:03,478 - root - INFO: ... found 1 shapes
+2021-11-19 12:21:03,479 - root - INFO: Converting to shapely
+2021-11-19 12:21:03,491 - root - INFO: Converting to requested CRS
+2021-11-19 12:21:03,523 - root - INFO: shape union bounds: (159518.27011641115, 3816621.6554112737, 431027.3363569959, 4024643.4346461874)
+2021-11-19 12:21:03,524 - root - INFO: Coloring shapes onto raster:
+2021-11-19 12:21:03,525 - root - INFO:   target_bounds = (273971.0911428096, 3878839.6361173145, 279140.9150949494, 3883953.7853134344)
+2021-11-19 12:21:03,527 - root - INFO:   out_bounds = [273966.0, 3878839.0, 279146.0, 3883959.0]
+2021-11-19 12:21:03,528 - root - INFO:   pixel_size = 10
+2021-11-19 12:21:03,528 - root - INFO:   width = 518, height = 512
+2021-11-19 12:21:03,531 - root - INFO:   and 1 independent colors of dtype int32
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1972,13 +1997,11 @@ min = -14.488486163789586, max = -11.204929002586569
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># plot the geologic formation id</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
-<span class="n">mp</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;color&#39;</span><span class="p">,</span>
                                  <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">geo_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab20c&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
-
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;coweeta_geology&#39;</span><span class="p">)</span>
 <span class="n">geo_survey_props</span>
 
 
@@ -2026,7 +2049,7 @@ min = -14.488486163789586, max = -11.204929002586569
       <td>3.019952e-11</td>
       <td>1.61</td>
       <td>0.01</td>
-      <td>0.007574</td>
+      <td>0.023953</td>
       <td>2.0</td>
       <td>0.01</td>
     </tr>
@@ -2078,7 +2101,7 @@ min = -14.488486163789586, max = -11.204929002586569
       <span class="n">subsurface_props</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1024</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;residual saturation [-]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten alpha [Pa^-1]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten n [-]&#39;</span><span class="p">]]</span>
 
 <span class="c1"># save the properties to disk for use in generating input file</span>
-<span class="n">subsurface_props</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;coweeta_subsurface_properties.csv&#39;</span><span class="p">)</span>
+<span class="n">subsurface_props</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Coweeta&#39;</span><span class="p">,</span> <span class="s1">&#39;output_data&#39;</span><span class="p">,</span> <span class="s1">&#39;coweeta_subsurface_properties.csv&#39;</span><span class="p">))</span>
 
 
 </pre></div>
@@ -2095,7 +2118,7 @@ min = -14.488486163789586, max = -11.204929002586569
 <span></span><span class="c1"># Generate a dz structure for the top 2m of soil -- it appears from above that the soil thickness is uniformly 2m</span>
 <span class="c1">#</span>
 <span class="c1"># here we try for 10 cells, starting at 5cm at the top and going to 50cm at the bottom of the 2m thick soil</span>
-<span class="n">dzs</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">optimize_dzs</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">dzs</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">optimize_dzs</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">dzs</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -2163,7 +2186,7 @@ min = -14.488486163789586, max = -11.204929002586569
 <span class="n">layer_mat_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">geo_color</span><span class="p">)</span>
 
 <span class="c1"># print the summary</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarize_extrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarize_extrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
                                             <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -2173,33 +2196,33 @@ min = -14.488486163789586, max = -11.204929002586569
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-2021-06-25 11:08:59,804 - root - INFO: Cell summary:
-2021-06-25 11:08:59,805 - root - INFO: ------------------------------------------------------------
-2021-06-25 11:08:59,806 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
-2021-06-25 11:08:59,806 - root - INFO: ------------------------------------------------------------
-2021-06-25 11:08:59,807 - root - INFO:  00      | 00    | 545882        |   0.050000    |   0.000000
-2021-06-25 11:08:59,807 - root - INFO:  01      | 01    | 545882        |   0.050000    |   0.050000
-2021-06-25 11:08:59,808 - root - INFO:  02      | 02    | 545882        |   0.050000    |   0.100000
-2021-06-25 11:08:59,808 - root - INFO:  03      | 03    | 545882        |   0.120000    |   0.150000
-2021-06-25 11:08:59,808 - root - INFO:  04      | 04    | 545882        |   0.230000    |   0.270000
-2021-06-25 11:08:59,809 - root - INFO:  05      | 05    | 545882        |   0.500000    |   0.500000
-2021-06-25 11:08:59,810 - root - INFO:  06      | 06    | 545882        |   0.500000    |   1.000000
-2021-06-25 11:08:59,811 - root - INFO:  07      | 07    | 545882        |   0.500000    |   1.500000
-2021-06-25 11:08:59,812 - root - INFO:  08      | 08    | 1793338       |   1.000000    |   2.000000
-2021-06-25 11:08:59,812 - root - INFO:  08      | 09    | 1793338       |   1.000000    |   3.000000
-2021-06-25 11:08:59,813 - root - INFO:  08      | 10    | 1793338       |   1.000000    |   4.000000
-2021-06-25 11:08:59,813 - root - INFO:  08      | 11    | 1793338       |   1.000000    |   5.000000
-2021-06-25 11:08:59,813 - root - INFO:  08      | 12    | 1793338       |   1.000000    |   6.000000
-2021-06-25 11:08:59,814 - root - INFO:  08      | 13    | 1793338       |   1.000000    |   7.000000
-2021-06-25 11:08:59,814 - root - INFO:  08      | 14    | 1793338       |   1.000000    |   8.000000
-2021-06-25 11:08:59,814 - root - INFO:  08      | 15    | 1793338       |   1.000000    |   9.000000
-2021-06-25 11:08:59,815 - root - INFO:  08      | 16    | 1793338       |   1.000000    |  10.000000
-2021-06-25 11:08:59,815 - root - INFO:  08      | 17    | 1793338       |   1.000000    |  11.000000
-2021-06-25 11:08:59,816 - root - INFO:  08      | 18    | 1793338       |   1.000000    |  12.000000
-2021-06-25 11:08:59,816 - root - INFO:  08      | 19    | 1793338       |   1.000000    |  13.000000
-2021-06-25 11:08:59,817 - root - INFO:  08      | 20    | 1793338       |   1.000000    |  14.000000
-2021-06-25 11:08:59,817 - root - INFO:  08      | 21    | 1793338       |   1.000000    |  15.000000
-2021-06-25 11:08:59,817 - root - INFO:  08      | 22    | 1793338       |   1.000000    |  16.000000
+2021-11-19 12:21:08,800 - root - INFO: Cell summary:
+2021-11-19 12:21:08,802 - root - INFO: ------------------------------------------------------------
+2021-11-19 12:21:08,803 - root - INFO: l_id     | c_id  |mat_id | dz            | z_top
+2021-11-19 12:21:08,803 - root - INFO: ------------------------------------------------------------
+2021-11-19 12:21:08,804 - root - INFO:  00      | 00    | 545882        |   0.050000    |   0.000000
+2021-11-19 12:21:08,805 - root - INFO:  01      | 01    | 545882        |   0.050000    |   0.050000
+2021-11-19 12:21:08,805 - root - INFO:  02      | 02    | 545882        |   0.050000    |   0.100000
+2021-11-19 12:21:08,806 - root - INFO:  03      | 03    | 545882        |   0.120000    |   0.150000
+2021-11-19 12:21:08,806 - root - INFO:  04      | 04    | 545882        |   0.230000    |   0.270000
+2021-11-19 12:21:08,807 - root - INFO:  05      | 05    | 545882        |   0.500000    |   0.500000
+2021-11-19 12:21:08,807 - root - INFO:  06      | 06    | 545882        |   0.500000    |   1.000000
+2021-11-19 12:21:08,808 - root - INFO:  07      | 07    | 545882        |   0.500000    |   1.500000
+2021-11-19 12:21:08,809 - root - INFO:  08      | 08    | 1793338       |   1.000000    |   2.000000
+2021-11-19 12:21:08,809 - root - INFO:  08      | 09    | 1793338       |   1.000000    |   3.000000
+2021-11-19 12:21:08,810 - root - INFO:  08      | 10    | 1793338       |   1.000000    |   4.000000
+2021-11-19 12:21:08,810 - root - INFO:  08      | 11    | 1793338       |   1.000000    |   5.000000
+2021-11-19 12:21:08,811 - root - INFO:  08      | 12    | 1793338       |   1.000000    |   6.000000
+2021-11-19 12:21:08,812 - root - INFO:  08      | 13    | 1793338       |   1.000000    |   7.000000
+2021-11-19 12:21:08,812 - root - INFO:  08      | 14    | 1793338       |   1.000000    |   8.000000
+2021-11-19 12:21:08,814 - root - INFO:  08      | 15    | 1793338       |   1.000000    |   9.000000
+2021-11-19 12:21:08,814 - root - INFO:  08      | 16    | 1793338       |   1.000000    |  10.000000
+2021-11-19 12:21:08,816 - root - INFO:  08      | 17    | 1793338       |   1.000000    |  11.000000
+2021-11-19 12:21:08,816 - root - INFO:  08      | 18    | 1793338       |   1.000000    |  12.000000
+2021-11-19 12:21:08,817 - root - INFO:  08      | 19    | 1793338       |   1.000000    |  13.000000
+2021-11-19 12:21:08,818 - root - INFO:  08      | 20    | 1793338       |   1.000000    |  14.000000
+2021-11-19 12:21:08,819 - root - INFO:  08      | 21    | 1793338       |   1.000000    |  15.000000
+2021-11-19 12:21:08,819 - root - INFO:  08      | 22    | 1793338       |   1.000000    |  16.000000
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -2208,7 +2231,7 @@ min = -14.488486163789586, max = -11.204929002586569
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># extrude</span>
-<span class="n">m3</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
+<span class="n">m3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
                                              <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -2223,7 +2246,7 @@ min = -14.488486163789586, max = -11.204929002586569
 
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_labels</span><span class="p">):</span>
     <span class="n">where</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lc</span> <span class="o">==</span> <span class="n">index</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ss</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">SideSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">),</span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">SideSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">),</span>
                             <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">elem_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">],</span>
                             <span class="p">[</span><span class="n">surf_ss</span><span class="o">.</span><span class="n">side_list</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">where</span><span class="p">])</span>
     <span class="n">m3</span><span class="o">.</span><span class="n">side_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span>
@@ -2237,28 +2260,54 @@ min = -14.488486163789586, max = -11.204929002586569
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># save to disk</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;coweeta_basin.exo&#39;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Coweeta&#39;</span><span class="p">,</span> <span class="s1">&#39;output_data&#39;</span><span class="p">,</span> <span class="s1">&#39;coweeta_basin.exo&#39;</span><span class="p">))</span>
 <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
     <span class="k">pass</span>
-<span class="n">m3</span><span class="o">.</span><span class="n">write_exodus</span><span class="p">(</span><span class="s1">&#39;coweeta_basin.exo&#39;</span><span class="p">)</span>
+<span class="n">m3</span><span class="o">.</span><span class="n">write_exodus</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Coweeta&#39;</span><span class="p">,</span> <span class="s1">&#39;output_data&#39;</span><span class="p">,</span> <span class="s1">&#39;coweeta_basin.exo&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+You are using exodus.py v 1.20.10 (seacas-py3), a python wrapper of some of the exodus library.
+
+Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 National Technology &amp;
+Engineering Solutions of Sandia, LLC (NTESS).  Under the terms of
+Contract DE-NA0003525 with NTESS, the U.S. Government retains certain
+rights in this software.
+
+Opening exodus file: Coweeta/output_data/coweeta_basin.exo
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2021-11-19 12:21:19,092 - root - INFO: adding side set: 1
+2021-11-19 12:21:19,144 - root - INFO: adding side set: 2
+2021-11-19 12:21:19,200 - root - INFO: adding side set: 3
+2021-11-19 12:21:19,240 - root - INFO: adding side set: 0
+2021-11-19 12:21:19,275 - root - INFO: adding side set: 21
+2021-11-19 12:21:19,311 - root - INFO: adding side set: 22
+2021-11-19 12:21:19,347 - root - INFO: adding side set: 23
+2021-11-19 12:21:19,381 - root - INFO: adding side set: 41
+2021-11-19 12:21:19,428 - root - INFO: adding side set: 42
+2021-11-19 12:21:19,463 - root - INFO: adding side set: 43
+2021-11-19 12:21:19,507 - root - INFO: adding side set: 52
+2021-11-19 12:21:19,542 - root - INFO: adding side set: 81
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-
-You are using exodus.py v 1.20.0 (seacas-py3), a python wrapper of some of the exodus library.
-
-Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 National Technology &amp;
-Engineering Solutions of Sandia, LLC (NTESS).  Under the terms of
-Contract DE-NA0003525 with NTESS, the U.S. Government retains certain
-rights in this software.
-
-Opening exodus file: coweeta_basin.exo
-Closing exodus file: coweeta_basin.exo
+Closing exodus file: Coweeta/output_data/coweeta_basin.exo
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
