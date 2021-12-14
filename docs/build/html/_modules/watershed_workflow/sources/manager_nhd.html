@@ -85,7 +85,6 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.utils</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.warp</span>
 
-
 <div class="viewcode-block" id="_FileManagerNHD"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_nhd._FileManagerNHD">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
 <span class="k">class</span> <span class="nc">_FileManagerNHD</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Manager for interacting with USGS National Hydrography Datasets.</span>
@@ -309,9 +308,9 @@
             <span class="c1">#logging.debug(json)</span>
 
             <span class="n">matches</span> <span class="o">=</span> <span class="p">[(</span><span class="n">m</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_valid_url</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">hucstr</span><span class="p">))</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">m</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">])]</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;     found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span><span class="si">}</span><span class="s1"> matches&#39;</span><span class="p">)</span> 
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;     found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span><span class="si">}</span><span class="s1"> matches&#39;</span><span class="p">)</span> 
             <span class="n">matches_f</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span> <span class="k">lambda</span> <span class="n">tup</span> <span class="p">:</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">matches</span> <span class="p">))</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;     found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matches_f</span><span class="p">)</span><span class="si">}</span><span class="s1"> valid matches&#39;</span><span class="p">)</span> 
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;     found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matches_f</span><span class="p">)</span><span class="si">}</span><span class="s1"> valid matches&#39;</span><span class="p">)</span> 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches_f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: no matches for HUC </span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hucstr</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)))</span>
                 <span class="k">return</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: not able to find HUC </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hucstr</span><span class="p">)</span>
@@ -327,11 +326,11 @@
                       <span class="s1">&#39;polyType&#39;</span><span class="p">:</span><span class="s1">&#39;huc</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span><span class="p">),</span>
                       <span class="s1">&#39;polyCode&#39;</span><span class="p">:</span><span class="n">hucstr</span><span class="p">})</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">a1</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... SUCCESS&#39;</span><span class="p">)</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  REST query: </span><span class="si">{</span><span class="n">a1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... SUCCESS&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  REST query: </span><span class="si">{</span><span class="n">a1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">a1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... FAIL&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... FAIL&#39;</span><span class="p">)</span>
 
         <span class="c1"># may find via huc4?</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_level</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">):</span>
@@ -339,20 +338,20 @@
                           <span class="s1">&#39;polyType&#39;</span><span class="p">:</span><span class="s1">&#39;huc4&#39;</span><span class="p">,</span>
                           <span class="s1">&#39;polyCode&#39;</span><span class="p">:</span><span class="n">hucstr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]})</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">a2</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... SUCCESS&#39;</span><span class="p">)</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  REST query: </span><span class="si">{</span><span class="n">a2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... SUCCESS&#39;</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  REST query: </span><span class="si">{</span><span class="n">a2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">a2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... FAIL&#39;</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;  REST query with polyCode... FAIL&#39;</span><span class="p">)</span>
 
         <span class="c1"># # works more univerasally but is a BIG lookup, then filter locally</span>
         <span class="c1"># a2 = attempt({&#39;datasets&#39;:self.name})</span>
         <span class="c1"># if not a2[0]:</span>
-        <span class="c1">#     logging.info(&#39;  REST query without polyCODE... SUCCESS&#39;)</span>
-        <span class="c1">#     logging.info(f&#39;  REST query: {a2[1]}&#39;)</span>
+        <span class="c1">#     logging.debug(&#39;  REST query without polyCODE... SUCCESS&#39;)</span>
+        <span class="c1">#     logging.debug(f&#39;  REST query: {a2[1]}&#39;)</span>
         <span class="c1">#     return a2[1]</span>
 
-        <span class="c1"># logging.info(&#39;  REST query without polyCODE... FAIL&#39;)</span>
+        <span class="c1"># logging.debug(&#39;  REST query without polyCODE... FAIL&#39;)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: cannot find HUC </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hucstr</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_valid_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">gdb_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -385,7 +384,7 @@
             <span class="n">ok</span> <span class="o">=</span> <span class="s2">&quot;title&quot;</span> <span class="ow">in</span> <span class="n">match</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;title in match? </span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ok</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">abbrev</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NHD&#39;</span><span class="p">,</span> <span class="s1">&#39;NHDPlus HR&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">abbrev</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NHD&#39;</span><span class="p">,</span> <span class="s1">&#39;NHDPlus&#39;</span><span class="p">,</span> <span class="s1">&#39;WBD&#39;</span><span class="p">]:</span>
                 <span class="n">my_abbrev</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">abbrev</span><span class="si">}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">my_abbrev</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                     <span class="k">break</span>
@@ -430,7 +429,7 @@
 
             <span class="n">downloadfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_folder</span><span class="p">,</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">downloadfile</span><span class="p">)</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to download source for target &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="n">filename</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Attempting to download source for target &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="o">%</span><span class="n">filename</span><span class="p">)</span>
                 <span class="n">source_utils</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">downloadfile</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span>
                 
             <span class="n">source_utils</span><span class="o">.</span><span class="n">unzip</span><span class="p">(</span><span class="n">downloadfile</span><span class="p">,</span> <span class="n">work_folder</span><span class="p">)</span>
