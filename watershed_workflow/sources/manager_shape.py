@@ -19,6 +19,7 @@ class FileManagerShape:
       Path to the shapefile.
     """
     _filename = attr.ib(type=str)
+    name = 'shapefile'
     
     def get_shape(self, *args, **kwargs):
         """Read the file and filter to get shapes, then ensures there is only one
