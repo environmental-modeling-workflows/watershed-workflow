@@ -11,6 +11,7 @@ import watershed_workflow.sources.names
 import watershed_workflow.utils
 import watershed_workflow.warp
 
+
 @attr.s
 class _FileManagerNHD:
     """Manager for interacting with USGS National Hydrography Datasets.
@@ -234,9 +235,9 @@ class _FileManagerNHD:
             #logging.debug(json)
 
             matches = [(m,self._valid_url(i, m, hucstr)) for (i,m) in enumerate(json['items'])]
-            logging.debug(f'     found {len(matches)} matches') 
+            logging.info(f'     found {len(matches)} matches') 
             matches_f = list(filter( lambda tup : tup[1], matches ))
-            logging.debug(f'     found {len(matches_f)} valid matches') 
+            logging.info(f'     found {len(matches_f)} valid matches') 
             if len(matches_f) == 0:
                 logging.error('{}: no matches for HUC {} ({})'.format(self.name, hucstr, len(matches)))
                 return 1, '{}: not able to find HUC {}'.format(self.name, hucstr)
@@ -252,11 +253,11 @@ class _FileManagerNHD:
                       'polyType':'huc{}'.format(self.file_level),
                       'polyCode':hucstr})
         if not a1[0]:
-            logging.debug('  REST query with polyCode... SUCCESS')
-            logging.debug(f'  REST query: {a1[1]}')
+            logging.info('  REST query with polyCode... SUCCESS')
+            logging.info(f'  REST query: {a1[1]}')
             return a1[1]
         else:
-            logging.debug('  REST query with polyCode... FAIL')
+            logging.info('  REST query with polyCode... FAIL')
 
         # may find via huc4?
         if (self.file_level >= 4):
@@ -264,20 +265,20 @@ class _FileManagerNHD:
                           'polyType':'huc4',
                           'polyCode':hucstr[0:4]})
             if not a2[0]:
-                logging.debug('  REST query with polyCode... SUCCESS')
-                logging.debug(f'  REST query: {a2[1]}')
+                logging.info('  REST query with polyCode... SUCCESS')
+                logging.info(f'  REST query: {a2[1]}')
                 return a2[1]
             else:
-                logging.debug('  REST query with polyCode... FAIL')
+                logging.info('  REST query with polyCode... FAIL')
 
         # # works more univerasally but is a BIG lookup, then filter locally
         # a2 = attempt({'datasets':self.name})
         # if not a2[0]:
-        #     logging.debug('  REST query without polyCODE... SUCCESS')
-        #     logging.debug(f'  REST query: {a2[1]}')
+        #     logging.info('  REST query without polyCODE... SUCCESS')
+        #     logging.info(f'  REST query: {a2[1]}')
         #     return a2[1]
 
-        # logging.debug('  REST query without polyCODE... FAIL')
+        # logging.info('  REST query without polyCODE... FAIL')
         raise ValueError('{}: cannot find HUC {}'.format(self.name, hucstr))
 
     def _valid_url(self, i, match, huc, gdb_only=True):
@@ -310,7 +311,7 @@ class _FileManagerNHD:
             ok = "title" in match
             logging.debug(f'title in match? {ok}')
         if ok:
-            for abbrev in ['NHD', 'NHDPlus', 'WBD']:
+            for abbrev in ['NHD', 'NHDPlus HR']:
                 my_abbrev = f'({abbrev})'.lower()
                 if my_abbrev in self.name.lower():
                     break
@@ -355,7 +356,7 @@ class _FileManagerNHD:
 
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
             if not os.path.exists(downloadfile) or force:
-                logging.info("Attempting to download source for target '%s'"%filename)
+                logging.debug("Attempting to download source for target '%s'"%filename)
                 source_utils.download(url, downloadfile, force)
                 
             source_utils.unzip(downloadfile, work_folder)

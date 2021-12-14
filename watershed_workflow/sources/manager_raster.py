@@ -18,7 +18,6 @@ class FileManagerRaster:
       Path to the raster file.
     """
     _filename = attr.ib(type=str)
-    name = 'raster'
     
     def get_raster(self, shape, crs, band=1):
         """Download and read a DEM for this shape, clipping to the shape.

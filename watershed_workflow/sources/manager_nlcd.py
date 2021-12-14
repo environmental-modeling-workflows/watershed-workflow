@@ -167,7 +167,7 @@ class FileManagerNLCD:
                 raise NotImplementedError('Not yet implemented (but trivial to add, just ask!): {}'.format(self.layer_name))
 
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            source_utils.download(url, downloadfile, force)
+            source_utils.download_progress_bar(url, downloadfile, force)
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?

@@ -71,16 +71,7 @@ this, simply install the Docker desktop app, then run the script
    python bin/run_ww_lab.py /path/to/working/directory
 
 Then, following the instructions on the terminal window, navigate your
-browser to the provided URL.  Note this will use your working
-directory to save downloaded datasets.  As another example, to use the
-ATS-centric docker container, using a specific common data library and
-pulling the latest docker images, use:
-
-.. code-block:: console
-
-   python bin/run_ww_lab.py --pull --ats --data-library=/my/data \
-          /path/to/working/directory
-
+browser to the provided URL.
 
 Note that this script needs a `.watershed_workflowrc` file -- it will
 search, in order of precedence, for:
