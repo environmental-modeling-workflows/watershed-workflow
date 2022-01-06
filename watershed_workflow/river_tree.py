@@ -169,3 +169,269 @@ def is_consistent(tree, tol=1.e-8):
 def get_inconsistent(tree, tol=1.e-8):
     """Gets a list of inconsistent nodes of the tree."""
     return [n for node in tree.preOrder() for n in node.get_inconsistent(tol)]
+
+def sort_children_by_angle(tree, reverse=False):
+    """Sorts the children of a given segment by their angle with respect to that segment."""
+    for node in tree.preOrder():
+        if len(node.children) > 1:
+            # compute tangents
+            my_seg_tan = np.array(node.segment.coords[0]) - np.array(node.segment.coords[1])
+
+            if reverse:
+                def angle(c):
+                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
+                    return -workflow.utils.angle(my_seg_tan, tan)
+            else:
+                def angle(c):
+                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
+                    return workflow.utils.angle(my_seg_tan, tan)
+
+            node.children.sort(key=angle)
+            
+
+def create_river_corridor(river, river_width):
+    """Returns a polygon representing the river corridor."""
+    # first sort the river so that in a search we always take paddlers right...
+    sort_children_by_angle(river, True)
+    delta = river_width / 2.
+
+    # buffer by the width
+    mls = shapely.geometry.MultiLineString([r for r in river.dfs()])
+    corr = mls.buffer(delta, cap_style=shapely.geometry.CAP_STYLE.flat,
+                      join_style=shapely.geometry.JOIN_STYLE.mitre)
+
+    # cycle the corridor points to start and end with the 1st point...
+    corr_p = list(corr.exterior.coords[:-1])
+    outlet_p = river.segment.coords[-1]
+    index_min = min(range(len(corr_p)), key=lambda i : workflow.utils.distance(corr_p[i], outlet_p))
+    plus_one = (index_min+1)%len(corr_p)
+    minus_one = (index_min-1)%len(corr_p)
+    if (workflow.utils.distance(corr_p[plus_one], outlet_p) < workflow.utils.distance(corr_p[minus_one], outlet_p)):
+        corr2_p = corr_p[plus_one:]+corr_p[0:plus_one]
+    else:
+        corr2_p = corr_p[index_min:]+corr_p[0:index_min]
+    corr2 = shapely.geometry.Polygon(corr2_p)
+
+    # remove endpoint-doubles that we want to be a single point and
+    # weird artifact triples at junctions
+    corr3_p = []
+    i = 0
+    while i < len(corr2_p):
+        logging.debug(f'considering {i}')
+        if i == 0 or i == len(corr2_p)-1:
+            # keep first and last always -- first two points make the outlet segment
+            logging.debug(f' always keeping')
+            corr3_p.append(corr2_p[i])
+        else:
+            if workflow.utils.distance(corr2_p[i-1], corr2_p[i]) < 3*delta:
+                # is this a triple point?
+                if workflow.utils.distance(corr2_p[i+1], corr2_p[i]) < 3*delta:
+                    logging.debug(' triple point!')
+                    # triple point, average neighbors and skip the next point
+                    corr3_p.append(workflow.utils.midpoint(corr2_p[i+1], corr2_p[i-1]))
+                    i += 1
+                else:
+                    # double point -- an end of a first order stream
+                    logging.debug(' double point')
+                    corr3_p.append(workflow.utils.midpoint(corr2_p[i-1], corr2_p[i]))
+            else:
+                # will the next point deal with this?
+                if workflow.utils.distance(corr2_p[i], corr2_p[i+1]) < 3*delta:
+                    logging.debug(' not my problem')
+                    pass
+                else:
+                    logging.debug(' keeping')
+                    corr3_p.append(corr2_p[i])
+        i += 1
+
+    # create the polgyon
+    corr3 = shapely.geometry.Polygon(corr3_p)
+    return corr, corr2, corr3
+
+
+def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' ):
+    """Iterate over the rivers, creating quads and pentagons forming the corridor."""
+    
+    # number the nodes in a dfs pattern, creating empty space for elements
+    for i, node in enumerate(river.preOrder()):
+        node.id = i
+        node.elements = [list() for l in range(len(node.segment.coords)-1)]
+        assert(len(node.elements) >= 1)
+        node.touched = 0
+
+    import time
+    def pause():
+        time.sleep(0.)
+        
+    # iterate over the tree in an out-and-back-and-in-between
+    # traversal, where every node appears num_children + 1 times,
+    # before and after and between each child.    
+    ic = 0
+    total_touches = 0
+    for node in river.prePostInBetweenOrder():
+        logging.debug(f'touching {node.id} (previously touched {node.touched} times with {len(node.children)} children)')
+        if node.touched == 0:
+            logging.debug(f'  first time around! {node.touched+1}')
+            # not yet touched -- add the first coordinates
+            seg_coords = [coords[ic],]
+            for j in range(len(node.elements)):
+                node.elements[j].append(ic)
+                ic += 1
+                node.elements[j].append(ic)
+                seg_coords.append(coords[ic])
+
+            node.touched += 1
+            total_touches += 1
+
+            # plot it...
+            seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+            pause()
+
+        elif node.touched == 1 and len(node.children) == 0:
+            # leaf node, last time
+            logging.debug(f' last time around a leaf! {node.touched+1}')
+            # increment to avoid double-counting the point in the triangle on the ends
+            seg_coords = [coords[ic],]
+            ic += 1
+            node.elements[-1].append(ic)
+            seg_coords.append(coords[ic])
+            for j in reversed(range(len(node.elements)-1)):
+                node.elements[j].append(ic)
+                ic += 1
+                node.elements[j].append(ic)
+                seg_coords.append(coords[ic])
+            node.touched += 1
+            total_touches += 1
+
+            # plot it...
+            seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+
+            # also plot the conn
+            for i, elem in enumerate(node.elements):
+                looped_conn = elem[:]
+                looped_conn.append(elem[0])
+                if i == len(node.elements)-1:
+                    assert(len(looped_conn) == 4)
+                else:
+                    assert(len(looped_conn) == 5)
+                cc = np.array([coords[n] for n in looped_conn])
+                ax.plot(cc[:,0], cc[:,1], 'g-o')
+            pause()
+            
+
+        elif node.touched == len(node.children):
+            logging.debug(f'  last time around! {node.touched+1}')
+            seg_coords = [coords[ic],]
+            # touched enough times that this is the last appearance
+            # add the last coordinates
+            for j in reversed(range(len(node.elements))):
+                node.elements[j].append(ic)
+                ic += 1
+                node.elements[j].append(ic)
+                seg_coords.append(coords[ic])
+            node.touched += 1
+            total_touches += 1
+
+            # plot it...
+            seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+
+            # also plot the conn
+            for i,elem in enumerate(node.elements):
+                looped_conn = elem[:]
+                looped_conn.append(elem[0])
+                if i == len(node.elements)-1:
+                    assert(len(looped_conn) == (node.touched+3))
+                else:
+                    assert(len(looped_conn) == 5)
+                cc = np.array([coords[n] for n in looped_conn])
+                for c in cc:
+                    # note, the more acute an angle, the bigger this distance can get...
+                    # so it is a bit hard to pin this multiple down -- using 5 seems ok?
+                    assert(workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
+                           workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
+                           
+                           
+                ax.plot(cc[:,0], cc[:,1], 'g-o')
+            pause()
+            
+            
+        else:
+            logging.debug(f'  middle time around! {node.touched+1}')
+            assert(node.touched < len(node.children))
+            # touched in between children
+            # therefore this is at least a pentagon
+            # add the middle node on the last element
+            node.elements[-1].append(ic)
+            node.touched += 1
+
+            ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
+            pause()
+
+    assert(len(coords) == (ic+1))
+    assert(len(river)*2 == total_touches)
+    elems=[el for node in river.preOrder() for el in node.elements]
+    ## ensuring that the pentagons at the junctions are convex
+    elems=junction_treatment(elems, coords,junction_option)
+    return elems
+
+def junction_treatment(elems, coords,junction_option='all_pentagons'):
+    """Iterate over pentagon elements, check for convexity and treat non-convexity"""
+    elem_lens=[len(elem) for elem in elems]
+    pents=np.where(np.array(elem_lens)==5)[0]
+    tri_count=0
+    for pent in pents:
+        elem=elems[pent]
+        points=[coords[i] for i in elem]
+        if junction_option=='all_tris':
+            elems[pent]=[elem[i] for i in [0,1,3,4]]
+            tri=[elem[i] for i in [1,2,3]]
+            elems.append(tri) 
+        elif junction_option=='tris_at_convex':
+            if not workflow.utils.isConvex(points):
+                elems[pent]=[elem[i] for i in [0,1,3,4]] # made the DS element quad
+                tri=[elem[i] for i in [1,2,3]] # defined traingle for the junction
+                elems.append(tri)
+        elif junction_option=='all_pentagons':
+            if not workflow.utils.isConvex(points):
+                elems[pent]=[elem[i] for i in [0,1,3,4]]
+
+                # making upstream **branch 1** as pentagon
+                logging.debug(f'attemping to create convex pentagon on branch 1')
+                pent_up=[elem[1],elem[1]+1,elem[2]-1,elem[2],elem[3]]# making one branch as pengaton
+                # check convexity
+                points_new=[coords[i] for i in pent_up]
+                if workflow.utils.isConvex(points_new):
+                    logging.debug(f'branch 1 converted into a convex pentagon')
+                    ind_to_replace=elems.index(pent_up[:-1])
+                    elems[ind_to_replace]=pent_up
+                else:
+                    logging.debug(f'pentagon in branch 1 is not convex, now trying branch 2')
+                    pent_up=[elem[2],elem[2]+1,elem[3]-1,elem[3],elem[1]]# making one branch as pengaton
+                    points_new=[coords[i] for i in pent_up]
+                    if workflow.utils.isConvex(points_new):
+                        logging.debug(f'branch 2 converted into a convex pentagon')
+                        ind_to_replace=elems.index(pent_up[:-1])
+                        elems[ind_to_replace]=pent_up
+                    else:
+                        logging.debug(f'failed to create convex polygon at the junction, adding a traingle')
+                        tri=[elem[i] for i in [1,2,3]]
+                        elems.append(tri)
+                        tri_count=+1
+        else:
+            print('junction_option not valid')
+    if tri_count>0:                    
+        print('Warning: ',tri_count," triangles introduced at junctions" )                    
+    return elems
+                    
+        
+
+        
+        
+                  
+                
+                
+        
+             
