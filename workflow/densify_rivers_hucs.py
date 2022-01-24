@@ -12,7 +12,7 @@ import shapely.geometry
 
 import workflow.utils
 
-def DensifyTree(tree,tree_, limit=100, collinear=False):
+def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
     """This function preOrder travers through the tree and density node.segments
     
      Arguments:
@@ -22,13 +22,15 @@ def DensifyTree(tree,tree_, limit=100, collinear=False):
       collinear         | boolean to check for collinearity 
       """
     assert (len(tree)==len(tree_))
+    k=0
     tree_densified=copy.deepcopy(tree)
     for node, node_ in zip(tree_densified.preOrder(), tree_.preOrder()):
-        node.segment=DensifyNodeSegments(node,node_,limit=limit,collinear=collinear)
+        k+=1
+        node.segment=DensifyNodeSegments(node,node_,limit=limit,treat_collinearity=treat_collinearity)
     return tree_densified
 
 
-def DensifyNodeSegments(node,node_,limit=100,collinear=False):
+def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
     """This function adds equally space point in the reach-sections longer than the limit
      Arguments:
       node              | node whose segment to be densified (workflow.river_tree.RiverTree)
@@ -50,8 +52,8 @@ def DensifyNodeSegments(node,node_,limit=100,collinear=False):
             seg_coords_densified[j+1:j+1]= new_points
             j+=number_new_points        
         j+=1 
-    if collinear:
-        assert (sum(CheckSegmentCollinearity(seg_coords_densified))==0)
+    if treat_collinearity:
+        seg_coords_densified=TreatSegmentCollinearity(seg_coords_densified)
     return shapely.geometry.LineString(seg_coords_densified)
 
 
@@ -68,7 +70,6 @@ def DensifyHucs(hucs,huc_,limit=200):
     coords=list(huc_ring.coords) 
     coords_=list(huc_.exterior().exterior.coords)
     coords_densified=coords.copy()
-
     j=0
     for i in range(len(coords)-1):
         section_length=math.dist(coords[i],coords[i+1])
@@ -88,7 +89,9 @@ def Interpolate(end_points,interp_data,n):
 
     """this function uses original shape to interpolate points while densifying a LineString shape"""
 
-    inds=[closest_point(point,interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
+    inds=[workflow.utils.closest_point(point,interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
+    if inds[1]<inds[0]: # this is to deal with corner case of interpolation of the last segment
+        inds[1]=-2        
     section_interp_data=np.array(interp_data[inds[0]:inds[1]+1]) # coordinates on section
     a=np.array(end_points); (dx,dy)=abs(a[0,:]-a[1,:])
     if dx>dy: # interpolating on x axis
@@ -103,25 +106,26 @@ def Interpolate(end_points,interp_data,n):
     return new_points
 
         
-def CheckSegmentCollinearity(segment_coords):
-    """this functions checks for collinearity in a node segment"""
-
+def TreatSegmentCollinearity(segment_coords, tol=1e-6):
+    """this functions removes collinearity from a node segment by making small pertubations"""
     col_checks=[]
-    for i in range(0,len(segment_coords)-2):
+    for i in range(0,len(segment_coords)-2): # going along segment, checking 3 consecutive points at a time
         p0=segment_coords[i]
         p1=segment_coords[i+1]
         p2=segment_coords[i+2]
-        col_checks.append(collinearity(p0, p1, p2))
-    return col_checks       
+        if CheckCollinearity(p0, p1, p2, tol=tol): # treating collinearity through a small pertubation
+            del_ortho=10*tol # shift in the middle point
+            m=(p2[1] - p0[1])/(p2[0] - p0[0])
+            del_y=del_ortho/(1+m**2)**0.5
+            del_x=-1*del_ortho*m/(1+m**2)**0.5
+            p1=(p1[0]+del_x , p1[1]+del_y)
+            segment_coords[i+1]=p1
+        col_checks.append(CheckCollinearity(p0, p1, p2))
+    assert (sum(col_checks)==0)
+    return  segment_coords   
 
-def collinearity(p0, p1, p2, tol=1e-6):
+def CheckCollinearity(p0, p1, p2, tol=1e-6):
     """this fucntion checks if three points are collinear for given tolerance value"""
     x1, y1 = p1[0] - p0[0], p1[1] - p0[1]
     x2, y2 = p2[0] - p0[0], p2[1] - p0[1]
     return abs(x1 * y2 - x2 * y1) < tol
-
-
-def closest_point(point, points):
-    points = np.asarray(points)
-    dist_2 = np.sum((points - point)**2, axis=1)
-    return np.argmin(dist_2)

@@ -438,7 +438,6 @@ class FileManagerNRCS:
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         filename = self.name_manager.file_name(*bounds)
         logging.info("Attempting to download source for target '%s'"%filename)
-
         if not os.path.exists(filename) or force:
             logging.info('  Downloading spatial data via request:')
             logging.info(f'    to file: {filename}')
@@ -448,8 +447,6 @@ class FileManagerNRCS:
             query = _query_template_shapes.format(box.wkt)
             data = {'FORMAT' : 'JSON',
                     'QUERY' : query}
-            print(self.url_spatial)
-            print(data)
             r = requests.post(self.url_data, data=data)
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()

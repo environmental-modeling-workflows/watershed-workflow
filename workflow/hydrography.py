@@ -428,6 +428,7 @@ def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
 
     This returns rivers in a forest, not in a list.
     """
+    merge_tol=10 ### currently the global tol is used here. This causes scale issues for different treatment
     # simplify
     if simp_tol is not None:
         for tree in rivers:
