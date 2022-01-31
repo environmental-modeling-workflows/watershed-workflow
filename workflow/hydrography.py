@@ -53,7 +53,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # note this is a null-op on cases dealt with above
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
-        snap_endpoints(tree, hucs, tol)
+        snap_endpoints(tree, hucs, 0.5*tol)
     if not all(workflow.river_tree.is_consistent(river) for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
