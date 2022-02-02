@@ -4,9 +4,9 @@ import logging
 import argparse
 import fiona
 
-import workflow.conf
-import workflow.sources.utils
-import workflow.source_list
+import watershed_workflow.config
+import watershed_workflow.sources.utils
+import watershed_workflow.source_list
 
 verb_to_level = {0:logging.WARNING,
                  1:logging.INFO,
@@ -82,14 +82,14 @@ def projection(parser):
         except ValueError as err:
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'"%str(err))
         return epsg
-    parser.add_argument('--projection', type=valid_epsg, default=workflow.crs.default_crs(),
+    parser.add_argument('--projection', type=valid_epsg, default=watershed_workflow.crs.default_crs(),
                         help='Output coordinate system.  Default is from rcParams.')
     return parser
 
 
 def valid_hucstr(hucstr):
     try:
-        huc_valid = workflow.sources.utils.huc_str(hucstr)
+        huc_valid = watershed_workflow.sources.utils.huc_str(hucstr)
     except RuntimeError as err:
         raise argparse.ArgumentTypeError("In parsing HUC string: '%s'"%str(err))
     else:
@@ -232,21 +232,21 @@ def center_options(parser):
 
 def huc_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-huc', type=str, default=workflow.source_list.default_huc_source,
-                        choices=set(workflow.source_list.huc_sources.keys()),
-                        help='Hydrologic unit shapefile dataset.  (default = "{}")'.format(workflow.source_list.default_huc_source))
+    parser.add_argument('--source-huc', type=str, default=watershed_workflow.source_list.default_huc_source,
+                        choices=set(watershed_workflow.source_list.huc_sources.keys()),
+                        help='Hydrologic unit shapefile dataset.  (default = "{}")'.format(watershed_workflow.source_list.default_huc_source))
 
 def dem_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-dem', type=str, default=workflow.source_list.default_dem_source,
-                        choices=set(workflow.source_list.dem_sources.keys()),
-                        help='Digital Elevation Model dataset.  (default = "{}")'.format(workflow.source_list.default_dem_source))
+    parser.add_argument('--source-dem', type=str, default=watershed_workflow.source_list.default_dem_source,
+                        choices=set(watershed_workflow.source_list.dem_sources.keys()),
+                        help='Digital Elevation Model dataset.  (default = "{}")'.format(watershed_workflow.source_list.default_dem_source))
 
 def hydro_source_options(parser):
     """Add options for sources."""
-    parser.add_argument('--source-hydro', type=str, default=workflow.source_list.default_hydrography_source,
-                        choices=set(workflow.source_list.hydrography_sources.keys()),
-                        help='Hydrography dataset.  (default = "{}"'.format(workflow.source_list.default_hydrography_source))
+    parser.add_argument('--source-hydro', type=str, default=watershed_workflow.source_list.default_hydrography_source,
+                        choices=set(watershed_workflow.source_list.hydrography_sources.keys()),
+                        help='Hydrography dataset.  (default = "{}"'.format(watershed_workflow.source_list.default_hydrography_source))
     
         
                         

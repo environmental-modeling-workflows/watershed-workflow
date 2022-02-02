@@ -13,12 +13,12 @@ import pandas
 import collections
 import shapely.wkt
 
-import workflow.crs
-import workflow.sources.names
-import workflow.warp
-import workflow.utils
-import workflow.soil_properties
-import workflow.io
+import watershed_workflow.crs
+import watershed_workflow.sources.names
+import watershed_workflow.warp
+import watershed_workflow.utils
+import watershed_workflow.soil_properties
+import watershed_workflow.io
 
 
 _query_template_props = """
@@ -130,8 +130,6 @@ def aggregate_component_values(df, agg_var):
     
     for icokey in cokeys:
         idf_horizon = df.loc[df['cokey'] == icokey, horizon_selected_cols]
-        logging.debug(f'COKEY = {icokey}')
-        logging.debug(idf_horizon[['mukey','cokey','chkey','porosity [-]']])
 
         imukey = idf_horizon['mukey'].values[0]
         assert(np.all(idf_horizon['mukey'].values == imukey))
@@ -171,8 +169,6 @@ def aggregate_component_values(df, agg_var):
         # append to df
         df_comp = df_comp.append(idf_comp)
 
-    logging.debug('Component-Aggregated DF')
-    logging.debug(df_comp[['mukey','cokey','porosity [-]']])
     return df_comp
 
 def aggregate_mukey_values(df, agg_var=None):
@@ -210,8 +206,6 @@ def aggregate_mukey_values(df, agg_var=None):
     
     for imukey in df_comp['mukey'].unique()[:]:
         idf_comp = df_comp.loc[df_comp['mukey'] == imukey]
-        logging.debug(f'MUKEY = {imukey}')
-        logging.debug(idf_comp[['mukey','cokey','component pct [%]', 'porosity [-]']])
         area_agg_value = []
 
         # component-uniform quantities
@@ -233,7 +227,6 @@ def aggregate_mukey_values(df, agg_var=None):
         df_mukey = df_mukey.append(idf_mukey)
 
     df_mukey['mukey'] = np.array(df_mukey['mukey'], dtype=int)
-    logging.debug(df_mukey[['mukey', 'porosity [-]']])
     return df_mukey
 
 
@@ -262,10 +255,10 @@ class FileManagerNRCS:
     """
     def __init__(self):
         self.name = 'National Resources Conservation Service Soil Survey (NRCS Soils)'
-        self.crs = workflow.crs.from_epsg('4326')
+        self.crs = watershed_workflow.crs.from_epsg('4326')
         self.fstring = '{:.4f}_{:.4f}_{:.4f}_{:.4f}'
         self.qstring = self.fstring.replace('_',',')
-        self.name_manager = workflow.sources.names.Names(self.name,
+        self.name_manager = watershed_workflow.sources.names.Names(self.name,
                                                          os.path.join('soil_structure','SSURGO'),
                                                          '',
                                                          'SSURGO_%s.shp'%self.fstring)
@@ -306,7 +299,7 @@ class FileManagerNRCS:
 
         # def _flip(shp):
         #     """Generate a new fiona shape in long-lat from one in lat-long"""
-        #     for ring in workflow.utils.generate_rings(shp):
+        #     for ring in watershed_workflow.utils.generate_rings(shp):
         #         for i,c in enumerate(ring):
         #             ring[i] = c[1],c[0]
         #     return shp
@@ -320,7 +313,7 @@ class FileManagerNRCS:
             s['properties']['id'] = s['id']
 
         logging.info('  Found {} shapes.'.format(len(shapes)))
-        logging.info('  and crs: {}'.format(workflow.crs.from_fiona(profile['crs'])))
+        logging.info('  and crs: {}'.format(watershed_workflow.crs.from_fiona(profile['crs'])))
         return profile, shapes
 
     
@@ -382,10 +375,10 @@ class FileManagerNRCS:
         df_agg = aggregate_mukey_values(df)
 
         # get dataframe with van genuchten models
-        df_vgm = workflow.soil_properties.vgm_from_SSURGO(df_agg)
+        df_vgm = watershed_workflow.soil_properties.vgm_from_SSURGO(df_agg)
 
         # fix units
-        df_ats = workflow.soil_properties.to_ATS(df_vgm)
+        df_ats = watershed_workflow.soil_properties.to_ATS(df_vgm)
 
         # all structure data frames are expected to have a 'source' and an 'id' in that source field
         df_ats['source'] = 'NRCS'
@@ -428,7 +421,7 @@ class FileManagerNRCS:
     
     def bounds(self, b, bounds_crs):
         """Create a bounds in the NRCS coordinate system for use in downloading."""
-        b = workflow.warp.bounds(b, bounds_crs, self.crs)
+        b = watershed_workflow.warp.bounds(b, bounds_crs, self.crs)
         b = [np.round(b[0],4)-.0001, np.round(b[1],4)-.0001,
                   np.round(b[2],4)+.0001, np.round(b[3],4)+.0001]
         return b
@@ -459,6 +452,6 @@ class FileManagerNRCS:
                 shp.properties = dict(mukey=int(t[1]))
 
             logging.info(f'  Writing to shapefile')
-            workflow.io.write_to_shapefile(filename, shps, self.crs)
+            watershed_workflow.io.write_to_shapefile(filename, shps, self.crs)
 
         return filename

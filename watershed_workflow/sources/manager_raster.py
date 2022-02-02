@@ -5,7 +5,7 @@ import numpy as np
 import attr
 import rasterio
 import rasterio.windows
-import workflow.crs
+import watershed_workflow.crs
 import logging
 
 @attr.s
@@ -18,6 +18,7 @@ class FileManagerRaster:
       Path to the raster file.
     """
     _filename = attr.ib(type=str)
+    name = 'raster'
     
     def get_raster(self, shape, crs, band=1):
         """Download and read a DEM for this shape, clipping to the shape.
@@ -42,15 +43,15 @@ class FileManagerRaster:
         rasterio profile), not the shape's CRS.
         """
         if type(shape) is dict:
-            shape = workflow.utils.shply(shape)
+            shape = watershed_workflow.utils.shply(shape)
 
         with rasterio.open(self._filename, 'r') as fid:
             profile = fid.profile
             inv_transform = ~profile['transform']
 
             # warp to my crs
-            my_crs = workflow.crs.from_rasterio(profile['crs'])
-            shply = workflow.warp.shply(shape, crs, my_crs)
+            my_crs = watershed_workflow.crs.from_rasterio(profile['crs'])
+            shply = watershed_workflow.warp.shply(shape, crs, my_crs)
             bounds = shply.bounds
             logging.info(f'bounds in my_crs: {bounds}')
 

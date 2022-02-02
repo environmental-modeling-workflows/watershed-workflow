@@ -9,18 +9,18 @@ import itertools
 
 import shapely.geometry
 
-import workflow.conf
-import workflow.utils
-import workflow.river_tree
-import workflow.split_hucs
-import workflow.plot
+import watershed_workflow.config
+import watershed_workflow.utils
+import watershed_workflow.river_tree
+import watershed_workflow.split_hucs
+import watershed_workflow.plot
 
 
 def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
-    assert(type(hucs) is workflow.split_hucs.SplitHUCs)
+    assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
-    assert(all(workflow.river_tree.is_consistent(river) for river in rivers))
+    assert(all(watershed_workflow.river_tree.is_consistent(river) for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) == 0:
@@ -35,7 +35,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
     snap_polygon_endpoints(hucs, rivers, tol_triples)
-    if not all(workflow.river_tree.is_consistent(river) for river in rivers):
+    if not all(watershed_workflow.river_tree.is_consistent(river) for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -47,14 +47,19 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     logging.debug('snap part 1')
     logging.debug(list(rivers[0].segment.coords))
     logging.debug(list(hucs.polygon(0).boundary.coords))
-    #workflow.plot.hucs(hucs, style='-x')
+    #watershed_workflow.plot.hucs(hucs, style='-x')
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
+<<<<<<< HEAD:watershed_workflow/hydrography.py
         snap_endpoints(tree, hucs, 0.5*tol)
     if not all(workflow.river_tree.is_consistent(river) for river in rivers):
+=======
+        snap_endpoints(tree, hucs, tol)
+    if not all(watershed_workflow.river_tree.is_consistent(river) for river in rivers):
+>>>>>>> master:workflow/hydrography.py
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -71,7 +76,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     if cut_intersections:
         logging.info("  cutting at crossings")
         snap_crossings(hucs, rivers, tol)
-        consistent = all(workflow.river_tree.is_consistent(river) for river in rivers)
+        consistent = all(watershed_workflow.river_tree.is_consistent(river) for river in rivers)
         if not consistent:
             logging.info("  ...resulted in inconsistent rivers!")
             return False
@@ -96,15 +101,15 @@ def _snap_and_cut(point, line, tol=0.1):
     the line, cut the line at that point and snapping the endpoints as
     needed.
     """
-    if workflow.utils.in_neighborhood(shapely.geometry.Point(point), line, tol):
+    if watershed_workflow.utils.in_neighborhood(shapely.geometry.Point(point), line, tol):
         logging.debug("  - in neighborhood")
-        nearest_p = workflow.utils.nearest_point(line, point)
-        dist = workflow.utils.distance(nearest_p, point)
+        nearest_p = watershed_workflow.utils.nearest_point(line, point)
+        dist = watershed_workflow.utils.distance(nearest_p, point)
         logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
         if dist < tol:
             if dist < 1.e-7:
                 # filter case where the point is already there
-                if any(workflow.utils.close(point, c) for c in line.coords):
+                if any(watershed_workflow.utils.close(point, c) for c in line.coords):
                     return None 
             return nearest_p
     return None
@@ -126,20 +131,20 @@ def _snap_crossing(hucs, river_node, tol=0.1):
             if seg.intersects(r):
                 logging.debug("  - YES")
                 #try:
-                new_spine = workflow.utils.cut(seg, r, tol)
+                new_spine = watershed_workflow.utils.cut(seg, r, tol)
                 # except RuntimeError as err:
                 #     plt.figure()
-                #     workflow.plot.hucs(hucs,None,color='gray')
+                #     watershed_workflow.plot.hucs(hucs,None,color='gray')
                 #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
                 #     plt.plot(r.xy[0], r.xy[1], 'r-x')
                 #     plt.show()
                 #     raise err
 
                 #try:
-                new_rivers = workflow.utils.cut(r, seg, tol)
+                new_rivers = watershed_workflow.utils.cut(r, seg, tol)
                 # except RuntimeError as err:
                 #     plt.figure()
-                #     workflow.plot.hucs(hucs,None,color='gray')
+                #     watershed_workflow.plot.hucs(hucs,None,color='gray')
                 #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
                 #     plt.plot(r.xy[0], r.xy[1], 'r-x')
                 #     plt.show()
@@ -148,7 +153,7 @@ def _snap_crossing(hucs, river_node, tol=0.1):
                 river_node.segment = new_rivers[-1]
                 if len(new_rivers) > 1:
                     assert(len(new_rivers) == 2)
-                    river_node.inject(workflow.river_tree.RiverTree(new_rivers[0]))
+                    river_node.inject(watershed_workflow.river_tree.RiverTree(new_rivers[0]))
 
                 hucs.segments[seg_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -232,8 +237,8 @@ def snap_endpoints(tree, hucs, tol=0.1):
                     # remove points that are closer
                     coords = list(river.coords)
                     done = False
-                    while len(coords) > 2 and workflow.utils.distance(new_coord, coords[1]) < \
-                          workflow.utils.distance(new_coord, coords[0]):
+                    while len(coords) > 2 and watershed_workflow.utils.distance(new_coord, coords[1]) < \
+                          watershed_workflow.utils.distance(new_coord, coords[0]):
                         coords.pop(0)
                     coords[0] = new_coord
                     river = shapely.geometry.LineString(coords)
@@ -267,7 +272,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
                     coords = list(river.coords)
                     done = False
                     while len(coords) > 2 and \
-                       workflow.utils.distance(new_coord, coords[-2]) < workflow.utils.distance(new_coord, coords[-1]):
+                       watershed_workflow.utils.distance(new_coord, coords[-2]) < watershed_workflow.utils.distance(new_coord, coords[-1]):
                         coords.pop(-1)
                     coords[-1] = new_coord
                     river = shapely.geometry.LineString(coords)
@@ -284,7 +289,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
 
     # find the set of points to add to each given segment
     def equal(p1,p2):
-        if workflow.utils.close(p1[2].segment.coords[p1[1]], p2[2].segment.coords[p2[1]], 1.e-5):
+        if watershed_workflow.utils.close(p1[2].segment.coords[p1[1]], p2[2].segment.coords[p2[1]], 1.e-5):
             assert(p1[0] == p2[0])
             return True
         else:
@@ -304,9 +309,9 @@ def snap_endpoints(tree, hucs, tol=0.1):
         # coord, then sort it by arclength along the segment.
         #
         # Note this needs special care if the seg is a loop, or else the endpoint gets sorted twice        
-        if not workflow.utils.close(seg.coords[0], seg.coords[-1]):
+        if not watershed_workflow.utils.close(seg.coords[0], seg.coords[-1]):
             new_coords = [[p[2].segment.coords[p[1]],1] for p in insert_list]
-            old_coords = [[c,0] for c in seg.coords if not any(workflow.utils.close(c, nc, tol) for nc in new_coords)]
+            old_coords = [[c,0] for c in seg.coords if not any(watershed_workflow.utils.close(c, nc, tol) for nc in new_coords)]
             new_seg_coords = sorted(new_coords+old_coords,
                                     key = lambda a:seg.project(shapely.geometry.Point(a)))
 
@@ -315,7 +320,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
 
         else:
             new_coords = [[p[2].segment.coords[p[1]],1] for p in insert_list]
-            old_coords = [[c,0] for c in seg.coords[:-1] if not any(workflow.utils.close(c, nc, tol) for nc in new_coords)]
+            old_coords = [[c,0] for c in seg.coords[:-1] if not any(watershed_workflow.utils.close(c, nc, tol) for nc in new_coords)]
             new_seg_coords = sorted(new_coords+old_coords,
                                     key = lambda a:seg.project(shapely.geometry.Point(a)))
             breakpoint_inds = [i for i,(c,f) in enumerate(new_seg_coords) if f == 1]
@@ -353,7 +358,7 @@ def make_global_tree(rivers, tol=0.1):
     # kdtree = scipy.spatial.cKDTree(coords)
     kdtree = cKDTree(coords)
     # make a node for each segment
-    nodes = [workflow.river_tree.RiverTree(r) for r in rivers]
+    nodes = [watershed_workflow.river_tree.RiverTree(r) for r in rivers]
     assert(len(nodes) > 0)
     
     # match nodes to their parent through the kdtree
@@ -404,9 +409,9 @@ def filter_rivers_to_shape(shape, rivers, tol):
     logging.info("  ...filtering")
     if type(rivers) is shapely.geometry.MultiLineString or \
        (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
-        rivers2 = [r for r in rivers if workflow.utils.non_point_intersection(shape,r)]
-    elif type(rivers) is list and type(rivers[0]) is workflow.river_tree.RiverTree:
-        rivers2 = [r for river in rivers for r in river.preOrder() if workflow.utils.non_point_intersection(shape,r.segment)]
+        rivers2 = [r for r in rivers if watershed_workflow.utils.non_point_intersection(shape,r)]
+    elif type(rivers) is list and type(rivers[0]) is watershed_workflow.river_tree.RiverTree:
+        rivers2 = [r for river in rivers for r in river.preOrder() if watershed_workflow.utils.non_point_intersection(shape,r.segment)]
         for r in rivers2:
             r.segment.properties = r.properties
         rivers2 = make_global_tree([r.segment for r in rivers2])
@@ -517,7 +522,7 @@ def simplify(tree, tol=0.1):
     for node in tree.preOrder():
         if node.segment is not None:
             new_seg = node.segment.simplify(tol)
-            assert(workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))
-            assert(workflow.utils.close(new_seg.coords[-1], node.segment.coords[-1]))
+            assert(watershed_workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))
+            assert(watershed_workflow.utils.close(new_seg.coords[-1], node.segment.coords[-1]))
             node.segment = new_seg
             

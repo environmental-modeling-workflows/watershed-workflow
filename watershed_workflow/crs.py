@@ -210,7 +210,8 @@ def from_cartopy(crs):
         Equivalent workflow CRS.
 
     """
-    return CRS.from_dict(crs.proj4_params)
+    return crs
+    #return CRS.from_dict(crs.proj4_params)
 
 def to_cartopy(crs):
     """Converts a workflow CRS to a cartopy.crs.Projection.
@@ -233,6 +234,8 @@ def to_cartopy(crs):
     #s1.ImportFromProj4(crs.to_proj4())
     #srs = s1.ExportToProj4()
     srs = crs.to_dict()
+    # if 'zone' in srs:
+    #     print(f'found a zone: it is {srs["zone"]} of type {type(srs["zone"])}')
 
     km_proj = {'lon_0': 'central_longitude',
                'lat_0': 'central_latitude',
@@ -253,9 +256,12 @@ def to_cartopy(crs):
 
     for k, v in srs.items():
         try:
-            v = float(v)
+            v = int(v)
         except:
-            pass
+            try:
+                v = float(v)
+            except:
+                pass
         if k == 'proj':
             if v == 'tmerc':
                 cl = ccrs.TransverseMercator
@@ -290,7 +296,7 @@ def to_cartopy(crs):
     if kw_std:
         kw_proj['standard_parallels'] = (kw_std['lat_1'], kw_std['lat_2'])
 
-    # mercatoooor
+    # mercator
     if cl.__name__ == 'Mercator' or cl.__name__ == 'LambertCylindrical':
         kw_proj.pop('false_easting', None)
         kw_proj.pop('false_northing', None)

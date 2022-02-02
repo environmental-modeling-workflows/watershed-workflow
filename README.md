@@ -1,4 +1,10 @@
 # Watershed Workflow
+[![Docs](https://img.shields.io/badge/docs-link-blue?style=for-the-badge)](https://ecoon.github.io/watershed-workflow/build/html/index.html)
+[![Release](https://img.shields.io/github/v/release/ecoon/watershed-workflow?display_name=release&style=for-the-badge)](https://github.com/ecoon/watershed-workflow/releases/tag/watershed-workflow-1.1.0)
+
+[![Build Status](https://img.shields.io/github/workflow/status/ecoon/watershed-workflow/CI%20to%20Docker%20Hub?label=tests&style=for-the-badge)](https://github.com/ecoon/watershed-workflow/actions)
+[![Issues](https://img.shields.io/github/issues/ecoon/watershed-workflow?style=for-the-badge)](https://github.com/ecoon/watershed-workflow/issues)
+[![Issues](https://img.shields.io/github/issues-pr/ecoon/watershed-workflow?style=for-the-badge)](https://github.com/ecoon/watershed-workflow/pulls)
 
 ![sample image](https://ecoon.github.io/watershed-workflow/build/html/_images/watershed_workflow.png "Example output of the Coweeta Hydrologic Lab watersheds across scales.")
 
@@ -27,16 +33,6 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 [Visit our Installation documentation.](https://ecoon.github.io/watershed-workflow/build/html/install.html)
 
-
-## A first example
-
-A good way to get started is to open your jupyter notebook and check out the main workflow:
-
-    jupyter notebook
-
-And navigate to [examples/mesh_coweeta.ipynb](https://github.com/ecoon/watershed-workflow/blob/master/examples/mesh_coweeta.ipynb)
-
-
 ## For more...
 
 * [See the documentation](https://ecoon.github.io/watershed-workflow)
@@ -44,6 +40,6 @@ And navigate to [examples/mesh_coweeta.ipynb](https://github.com/ecoon/watershed
 
 ## Funding, attribution, etc
 
-This work was supported by multiple US Department of Energy projects, largely by Ethan Coon (coonet _at_ ornl _dot_ gov) at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
+This work was supported by multiple US Department of Energy projects, and was mostly developed at the Oak Ridge National Laboratory.  Use of this codebase in the academic literature should cite this repository (paper in preparation).
 
 Collaborators and contributions are very welcome!

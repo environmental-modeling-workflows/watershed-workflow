@@ -302,7 +302,7 @@ def generate_nlcd_colormap(indices=None, formatted=False):
         cb.ax.set_xticklabels(labels, rotation=45)
 
     """
-    from workflow.sources.manager_nlcd import colors as all_colors
+    from watershed_workflow.sources.manager_nlcd import colors as all_colors
     
     if indices is None:
         indices = list(all_colors.keys())

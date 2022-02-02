@@ -4,20 +4,20 @@ import os
 import shapely
 import numpy as np
 
-import workflow.conf
-import workflow.utils
-import workflow.sources.manager_glhymps
-import workflow
+import watershed_workflow.config
+import watershed_workflow.utils
+import watershed_workflow.sources.manager_glhymps
+import watershed_workflow
     
 
 def test_glhymps():
     # single file covers it
     coweeta_shapefile = "./data/hydrologic_units/others/Coweeta/coweeta_basin.shp"
-    crs, coweeta = workflow.get_split_form_shapes(coweeta_shapefile)
+    crs, coweeta = watershed_workflow.get_split_form_shapes(coweeta_shapefile)
     target_bounds = coweeta.exterior().bounds
 
     # get imgs
-    glhymps = workflow.sources.manager_glhymps.FileManagerGLHYMPS()
+    glhymps = watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS()
     profile, shps, df = glhymps.get_shapes_and_properties(target_bounds,crs)
 
     # check df

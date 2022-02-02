@@ -4,10 +4,10 @@
 import attr
 import fiona
 
-import workflow.warp
-import workflow.utils
-import workflow.conf
-import workflow.crs
+import watershed_workflow.warp
+import watershed_workflow.utils
+import watershed_workflow.config
+import watershed_workflow.crs
 
 @attr.s
 class FileManagerShape:
@@ -19,6 +19,7 @@ class FileManagerShape:
       Path to the shapefile.
     """
     _filename = attr.ib(type=str)
+    name = 'shapefile'
     
     def get_shape(self, *args, **kwargs):
         """Read the file and filter to get shapes, then ensures there is only one
@@ -75,13 +76,13 @@ class FileManagerShape:
             else:
                 crs_file = profile['crs']
                 try:
-                    crs_file = workflow.crs.from_fiona(profile['crs'])
-                except workflow.crs.CRSError:
+                    crs_file = watershed_workflow.crs.from_fiona(profile['crs'])
+                except watershed_workflow.crs.CRSError:
                     # try to read a damaged file with only wkt
-                    crs_file = workflow.crs.from_wkt(profile['crs_wkt'])
-                    profile['crs'] = workflow.crs.to_fiona(crs_file)
+                    crs_file = watershed_workflow.crs.from_wkt(profile['crs_wkt'])
+                    profile['crs'] = watershed_workflow.crs.to_fiona(crs_file)
                     
-                bounds = workflow.warp.bounds(index_or_bounds, crs, crs_file)
+                bounds = watershed_workflow.warp.bounds(index_or_bounds, crs, crs_file)
                 shps = [s for (i,s) in fid.items(bbox=bounds)]
 
         return profile, shps

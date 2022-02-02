@@ -8,11 +8,11 @@ import requests
 import requests.exceptions
 
 
-import workflow.utils
-import workflow.sources.utils as source_utils
-import workflow.conf
-import workflow.warp
-import workflow.sources.names
+import watershed_workflow.utils
+import watershed_workflow.sources.utils as source_utils
+import watershed_workflow.config
+import watershed_workflow.warp
+import watershed_workflow.sources.names
 
 
 
@@ -62,10 +62,10 @@ class FileManagerNED:
         else:
             file_extension = self.file_format.lower()
         
-        self.names = workflow.sources.names.Names(self.name, 'dem', None,
+        self.names = watershed_workflow.sources.names.Names(self.name, 'dem', None,
                                                   'USGS_NED_%s_n{:02}_w{:03}.%s'%(self.short_res,file_extension),
                                                   self.short_res+"_raw")
-        self.crs = workflow.crs.from_epsg(4269)
+        self.crs = watershed_workflow.crs.from_epsg(4269)
 
     def get_raster(self, shape, crs, force_download=False):
         """Download and read a DEM for this shape, clipping to the shape.
@@ -90,10 +90,10 @@ class FileManagerNED:
         rasterio profile), not the shape's CRS.
         """
         if type(shape) is dict:
-            shape = workflow.utils.shply(shape)
+            shape = watershed_workflow.utils.shply(shape)
         
         # warp to my crs
-        shply = workflow.warp.shply(shape, crs, self.crs)
+        shply = watershed_workflow.warp.shply(shape, crs, self.crs)
 
         # get the bounds and download
         bounds = shply.bounds

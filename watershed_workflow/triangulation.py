@@ -8,8 +8,8 @@ import scipy.spatial
 
 import shapely
 
-import workflow.river_tree
-import workflow.split_hucs
+import watershed_workflow.river_tree
+import watershed_workflow.split_hucs
 
 
 class Nodes:
@@ -18,7 +18,7 @@ class Nodes:
     Note this uses round() for an efficient solution, which is
     potentially fragile if numbers were not generated consistently.
     In this use case, however, it should be safe -- numbers were
-    originally rounded (in workflow.conf), and then any function which
+    originally rounded (in watershed_workflow.config), and then any function which
     inserted new points or moved points were always careful to ensure
     that all duplicates were always assigned the identical values --
     i.e. all math was done BEFORE assignment.  So duplicates have
@@ -112,15 +112,15 @@ def triangulate(hucs, rivers, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
-      hucs              | a workflow.split_hucs.SplitHUCs instance
-      rivers            | a list of workflow.river_tree.Tree instances
+      hucs              | a watershed_workflow.split_hucs.SplitHUCs instance
+      rivers            | a list of watershed_workflow.river_tree.Tree instances
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     import meshpy.triangle
 
     logging.info("Triangulating...")
-    if type(hucs) is workflow.split_hucs.SplitHUCs:
+    if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
         segments = list(hucs.segments)
     elif type(hucs) is list:
         segments = hucs
@@ -130,7 +130,7 @@ def triangulate(hucs, rivers, tol=1, **kwargs):
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
         
     if rivers != None:
-        segments = segments + list(workflow.river_tree.forest_to_list(rivers))
+        segments = segments + list(watershed_workflow.river_tree.forest_to_list(rivers))
 
     nodes_edges = NodesEdges(segments)
 
@@ -174,7 +174,7 @@ def triangulate(hucs, rivers, tol=1, **kwargs):
 def refine_from_max_area(max_area):
     """Returns a refinement function based on max area, for use with Triangle."""
     def refine(vertices, area):
-        """A function for use with workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
+        """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
         res = bool(area > max_area)
         # if area < 1.e-5:
         #     raise RuntimeError("TinyTriangle Error")
@@ -206,9 +206,9 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
             area = near_area + (distance - near_distance) / (away_distance - near_distance) * (away_area - near_area)
         return area
 
-    river_multiline = workflow.river_tree.forest_to_list(rivers)
+    river_multiline = watershed_workflow.river_tree.forest_to_list(rivers)
     def refine(vertices, area):
-        """A function for use with workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
+        """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
         bary = np.sum(np.array(vertices), axis=0)/3
         bary_p = shapely.geometry.Point(bary[0], bary[1])
         distance = bary_p.distance(river_multiline)

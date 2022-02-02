@@ -16,12 +16,12 @@ Browse the code at: https://github.com/ecoon/watershed-workflow/
 
    Introduction <intro>
    examples/mesh_coweeta.ipynb
-   Gallery <gallery>
    Installation <install>
    Concepts <concepts>
    Scripts <scripts>
    Data Sources <sources>
    API Documentation <api>
+   Gallery <gallery>
 
    
 Indices and tables

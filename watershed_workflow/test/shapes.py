@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 import shapely.geometry
-import workflow.utils
+import watershed_workflow.utils
 
 _tol = 1.e-7
 def assert_close(s1, s2, tol=_tol):
@@ -13,7 +13,7 @@ def assert_close(s1, s2, tol=_tol):
             assert((c1[0] - c2[0])**2 + (c1[1] - c2[1])**2 <= tol**2)
     elif type(s1) is shapely.geometry.MultiLineString:
         assert(len(s1) == len(s2))
-        cl = workflow.utils.close(s1,s2)
+        cl = watershed_workflow.utils.close(s1,s2)
         if not cl:
             print("not close s1:")
             for l in s1:

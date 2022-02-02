@@ -6,10 +6,10 @@ import shapely
 import rasterio
 import rasterio.mask
 
-import workflow.sources.utils as source_utils
-import workflow.conf
-import workflow.warp
-import workflow.sources.names
+import watershed_workflow.sources.utils as source_utils
+import watershed_workflow.config
+import watershed_workflow.warp
+import watershed_workflow.sources.names
 
 # No API for getting NLCD locally -- must download the whole thing.
 urls = {'NLCD_2016_Land_Cover_L48' : 'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_20210604.zip' }
@@ -50,7 +50,7 @@ class FileManagerNLCD:
        already local.
 
     TODO: Labels and colors for these indices should get moved here, but
-    currently reside in workflow.colors.
+    currently reside in watershed_workflow.colors.
 
     Parameter
     ---------
@@ -74,7 +74,7 @@ class FileManagerNLCD:
         
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
-        self.names = workflow.sources.names.Names(self.name, 'land_cover', self.layer_name,
+        self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover', self.layer_name,
                                                   self.layer_name+'.img')
 
     def validate_input(self, layer, year, location):
@@ -125,7 +125,7 @@ class FileManagerNLCD:
         """
         # get shape as a shapely, single Polygon
         if type(shply) is dict:
-            shply = workflow.utils.shply(shply['geometry'])
+            shply = watershed_workflow.utils.shply(shply['geometry'])
         if type(shply) is shapely.geometry.MultiPolygon:
             shply = shapely.ops.cascaded_union(shply)
 
@@ -136,7 +136,7 @@ class FileManagerNLCD:
         logging.info('CRS: {}'.format(nlcd_profile['crs']))
 
         # warp to crs
-        shply = workflow.warp.shply(shply, crs, workflow.crs.from_rasterio(nlcd_profile['crs']))
+        shply = watershed_workflow.warp.shply(shply, crs, watershed_workflow.crs.from_rasterio(nlcd_profile['crs']))
 
         # load raster
         with rasterio.open(filename, 'r') as fid:
@@ -167,7 +167,7 @@ class FileManagerNLCD:
                 raise NotImplementedError('Not yet implemented (but trivial to add, just ask!): {}'.format(self.layer_name))
 
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            source_utils.download_progress_bar(url, downloadfile, force)
+            source_utils.download(url, downloadfile, force)
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?

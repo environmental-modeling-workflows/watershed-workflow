@@ -1,12 +1,12 @@
 """Test van Genuchten from Rosetta"""
 import numpy as np
-import workflow.soil_properties
+import watershed_workflow.soil_properties
 
 def test_vgm():
     # headers: sand %, silt %, clay %, bulk dens
     data = np.array([70,15,15,1.4])
 
-    vgm = workflow.soil_properties.vgm_Rosetta(data, 3)
+    vgm = watershed_workflow.soil_properties.vgm_Rosetta(data, 3)
     print(vgm)
 
 
@@ -15,8 +15,8 @@ def test_vgm2():
     data = np.array([[70,15,15,1.4],
                      [50,25,25,1.4]]).transpose()
 
-    vgm = workflow.soil_properties.vgm_Rosetta(data, 3)
-    ats = workflow.soil_properties.to_ATS(vgm)
+    vgm = watershed_workflow.soil_properties.vgm_Rosetta(data, 3)
+    ats = watershed_workflow.soil_properties.to_ATS(vgm)
     print(ats.keys())
     assert(all(ats['residual saturation [-]'] < 1))
     assert(all(ats['residual saturation [-]'] >= 0))
@@ -41,6 +41,9 @@ def test_cluster():
                        [0,0,0]])
 
     arr_in = np.expand_dims(arr_in, -1)
-    codebook, arr_out, dists = workflow.soil_properties.cluster(arr_in, 2)
-    assert((arr_gd == arr_out).all())
+    codebook, arr_out, dists = watershed_workflow.soil_properties.cluster(arr_in, 2)
+    print(arr_out)
+
+    assert((arr_out[arr_gd == 0] == arr_out[-1,-1]).all())
+    assert((arr_out[arr_gd == 1] == arr_out[0,0]).all())
     

@@ -19,9 +19,3 @@
 #
 # ssl_cert : True
 
-
-# The Rosetta package relies on a database file that is distributed
-# with the code.  Provide a link to your Rosetta database here if it
-# isn't in the default location:
-#
-# rosetta_db_path : ${WATERSHED_WORKFLOW_DIR}/workflow_tpls/rosetta/sqlite/rosetta.sqlite

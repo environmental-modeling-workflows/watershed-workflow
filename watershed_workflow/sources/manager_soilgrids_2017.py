@@ -7,10 +7,10 @@ import shapely
 import rasterio
 import rasterio.mask
 
-import workflow.sources.utils as source_utils
-import workflow.sources.names
-import workflow.warp
-from workflow.sources.manager_raster import FileManagerRaster
+import watershed_workflow.sources.utils as source_utils
+import watershed_workflow.sources.names
+import watershed_workflow.warp
+from watershed_workflow.sources.manager_raster import FileManagerRaster
 
 class FileManagerSoilGrids2017:
     """SoilGrids 250m (2017) datasets.
@@ -61,11 +61,11 @@ class FileManagerSoilGrids2017:
     def __init__(self, variant=None):
         if variant == 'US':
             self.name = 'SoilGrids2017_US'
-            self.names = workflow.sources.names.Names(self.name, 'soil_structure',
+            self.names = watershed_workflow.sources.names.Names(self.name, 'soil_structure',
                                                       self.name, '{variable}_M_{soillevel}250m_ll_us.tif')
         else:
             self.name = 'SoilGrids2017'
-            self.names = workflow.sources.names.Names(self.name, 'soil_structure',
+            self.names = watershed_workflow.sources.names.Names(self.name, 'soil_structure',
                                                       self.name, '{variable}_M_{soillevel}250m_ll.tif')
 
         

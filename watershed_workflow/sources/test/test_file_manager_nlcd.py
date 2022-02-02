@@ -4,9 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 import rasterio
 
-import workflow.conf
-import workflow.sources.manager_nlcd as manager_nlcd
-import workflow.sources.manager_nhd
+import watershed_workflow.config
+import watershed_workflow.sources.manager_nlcd as manager_nlcd
+import watershed_workflow.sources.manager_nhd
 
 
 
@@ -21,11 +21,11 @@ def test_nlcd_downloads_plots(nlcd):
 
 def test_nlcd(nlcd):
     # requires tiles
-    nhd = workflow.sources.manager_nhd.FileManagerNHDPlus()
+    nhd = watershed_workflow.sources.manager_nhd.FileManagerNHDPlus()
     profile, huc = nhd.get_huc('02040101')
 
     # get imgs
-    dem_prof, dem = nlcd.get_raster(huc, workflow.crs.from_fiona(profile['crs']))
+    dem_prof, dem = nlcd.get_raster(huc, watershed_workflow.crs.from_fiona(profile['crs']))
     #plt.imshow(dem)
     #plt.show()
     

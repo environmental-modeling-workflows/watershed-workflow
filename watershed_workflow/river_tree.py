@@ -1,4 +1,4 @@
-"""Module for working with tree data structures, built on tinytree"""
+"""Module for working with tree data structures, built on watershed_workflow.tinytree"""
 import logging
 import collections
 import numpy as np
@@ -7,13 +7,13 @@ import itertools
 import shapely.geometry
 import shapely.ops
 
-import workflow.utils
-import tinytree
+import watershed_workflow.utils
+import watershed_workflow.tinytree
 
 
 _tol = 1.e-7
 
-class RiverTree(tinytree.Tree):
+class RiverTree(watershed_workflow.tinytree.Tree):
     """A tree node data structure"""
     def __init__(self, segment=None, properties=None, children=None):
         super(RiverTree, self).__init__(children)
@@ -60,14 +60,14 @@ class RiverTree(tinytree.Tree):
 
     def check_child_consistency(self, tol=1.e-8):
         for child in self.children:
-            if not workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
+            if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
                 return False
         return True
 
     def get_inconsistent(self, tol=1.e-8):
         inconsistent = []
         for child in self.children:
-            if not workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
+            if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
                 logging.warning("  INCONSISTENT:")
                 logging.warning("    child: %r"%(child.segment.coords[:]))
                 logging.warning("    parent: %r"%(self.segment.coords[:]))
@@ -78,7 +78,7 @@ class RiverTree(tinytree.Tree):
 def _get_matches(seg, segments, segment_found):
     """Find segments attached to seg amongst those not already found"""
     matches = [i for i in range(len(segments)) if not segment_found[i]
-               and workflow.utils.close(segments[i].coords[-1], seg.coords[0])]
+               and watershed_workflow.utils.close(segments[i].coords[-1], seg.coords[0])]
     segment_found[matches] = True
     return matches
 
@@ -107,7 +107,7 @@ def make_trees(segments):
             inter = next(i for i,seg in enumerate(segments)
                          if endpoint_seg.intersects(seg)
                          and i != endpoint_index
-                         and workflow.utils.close(endpoint_seg.intersection(seg).coords[0], endpoint_seg.coords[-1], 1.e-5))
+                         and watershed_workflow.utils.close(endpoint_seg.intersection(seg).coords[0], endpoint_seg.coords[-1], 1.e-5))
         except StopIteration:
             logging.debug("   outlet %i is not faux"%endpoint_index)
         else:
@@ -116,7 +116,7 @@ def make_trees(segments):
             
             print("splitting segment: %r"%list(segments[inter].coords))
             print("   at: %r"%list(segments[endpoint_index].coords[-1]))
-            segs_to_add.extend(workflow.utils.cut(segments[inter], endpoint_seg))
+            segs_to_add.extend(watershed_workflow.utils.cut(segments[inter], endpoint_seg))
             
     if len(segs_to_remove) != 0:
         segments = list(segments)
@@ -150,7 +150,7 @@ def find_endpoints(segments):
     for i,s in enumerate(segments):
         c = s.coords[-1]
         try:
-            next(s2 for s2 in segments if workflow.utils.close(s2.coords[0], c))
+            next(s2 for s2 in segments if watershed_workflow.utils.close(s2.coords[0], c))
         except StopIteration:
             endpoints.append(i)
     return endpoints

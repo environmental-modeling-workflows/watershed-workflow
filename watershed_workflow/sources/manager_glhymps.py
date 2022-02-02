@@ -4,15 +4,15 @@ import logging
 import numpy as np
 import pandas
 
-import workflow.sources.manager_shape
-import workflow.sources.names
-import workflow.soil_properties
+import watershed_workflow.sources.manager_shape
+import watershed_workflow.sources.names
+import watershed_workflow.soil_properties
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = {'GLHYMPS version 2.0' : 'https://doi.org/10.5683/SP2/TTJNIU'}
 
 
-class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
+class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerShape):
     """The [GLHYMPS]_ global hydrogeology map provides global values of a
     two-layer (unconsolidated, consolidated) structure.
 
@@ -35,7 +35,7 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
     def __init__(self, filename=None):
         if filename is None:
             self.name = 'GLHYMPS version 2.0'
-            self.names = workflow.sources.names.Names(self.name,
+            self.names = watershed_workflow.sources.names.Names(self.name,
                                                       os.path.join('soil_structure','GLHYMPS'),
                                                       '', 'GLHYMPS.shp')
             super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
@@ -109,5 +109,5 @@ class FileManagerGLHYMPS(workflow.sources.manager_shape.FileManagerShape):
 
         """
         profile, shapes = self.get_shapes(bounds, crs)
-        props = workflow.soil_properties.mangle_glhymps_properties(shapes, **kwargs)
+        props = watershed_workflow.soil_properties.mangle_glhymps_properties(shapes, **kwargs)
         return profile, shapes, props

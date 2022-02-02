@@ -4,8 +4,8 @@ import rasterio.transform
 import rasterio.crs
 import numpy as np
 
-import workflow
-import workflow.conf
+import watershed_workflow
+import watershed_workflow.config
 
 @pytest.fixture
 def dem_and_points():
@@ -39,12 +39,12 @@ def dem_and_points():
 
 def test_nearest(dem_and_points):
     dem, dem_profile, xy = dem_and_points
-    vals = workflow.values_from_raster(xy, workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'nearest')
+    vals = watershed_workflow.values_from_raster(xy, watershed_workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'nearest')
     assert(np.allclose(np.array([1,1,1,10,10,10,10,2,1]), vals))
 
 
 def test_interp(dem_and_points):
     dem, dem_profile, xy = dem_and_points
-    vals = workflow.values_from_raster(xy, workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'piecewise bilinear')
+    vals = watershed_workflow.values_from_raster(xy, watershed_workflow.crs.from_rasterio(dem_profile['crs']), dem, dem_profile,'piecewise bilinear')
     assert(np.allclose(np.array([1,1,3.5,3.5,3.5,10,10,2,1]), vals, 1.e-4))
     

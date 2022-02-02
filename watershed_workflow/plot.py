@@ -23,9 +23,9 @@ import rasterio
 from mpl_toolkits.mplot3d import Axes3D
 
 
-import workflow.utils
-import workflow.crs
-import workflow.colors
+import watershed_workflow.utils
+import watershed_workflow.crs
+import watershed_workflow.colors
 
 
 class PolyCollectionWithArray:
@@ -98,7 +98,7 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
             # 3d plot
             ax = fig.add_subplot(*axargs, projection='3d')
         else:
-            projection = workflow.crs.to_cartopy(crs)
+            projection = watershed_workflow.crs.to_cartopy(crs)
             ax = fig.add_subplot(*axargs, projection=projection)
 
     else:
@@ -110,7 +110,7 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
             ax = Axes3D(fig, rect=window)
 
         else:
-            projection = workflow.crs.to_cartopy(crs)
+            projection = watershed_workflow.crs.to_cartopy(crs)
             fig.add_axes(window, projection=projection)
             ax = fig.gca()
 
@@ -151,7 +151,7 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     
     Parameters
     ----------
-    hucs : workflow.split_hucs.SplitHucs object
+    hucs : watershed_workflow.split_hucs.SplitHucs object
       The collection of hucs to plot.
     crs : CRS object
       The coordinate system to plot in.
@@ -193,7 +193,7 @@ def shapes(shps, crs, color='k', ax=None, **kwargs):
     -------
     patches : matplotib PatchCollection
     """
-    shplys = [workflow.utils.shply(shp) for shp in shps]
+    shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
     shply(shplys, crs, color, ax, **kwargs)
 
 def river(river, crs, color='b', ax=None, **kwargs):
@@ -303,12 +303,12 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
         kwargs['facecolor'] = 'none'
 
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
 
     if not hasattr(ax, 'projection') or crs is None:
         projection = None
     else:
-        projection = workflow.crs.to_cartopy(crs)
+        projection = watershed_workflow.crs.to_cartopy(crs)
         
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
@@ -392,7 +392,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
                     except KeyError:
                         cmap_norm = None
                         
-                    cm = workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
+                    cm = watershed_workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
                     color_tuples = np.array([cm(c) for c in color])
                 else:
                     raise RuntimeError("color option must be an array, not a list of colors")
@@ -455,7 +455,7 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
 
     """
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
     
     if type(color) is str and color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
@@ -491,7 +491,7 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
 
 
 def mesh(m2, crs, color='gray', ax=None, **kwargs):
-    """Plots a workflow.mesh.Mesh2D object.
+    """Plots a watershed_workflow.mesh.Mesh2D object.
 
     Parameters
     ----------
@@ -546,7 +546,7 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
       Return value of imshow()
     """
     if ax is None:
-        ax = get_ax(profile['crs'])
+        fig, ax = get_ax(profile['crs'])
 
     assert(mask)
     assert('nodata' in profile)
@@ -603,7 +603,7 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
     import cartopy.feature
 
     if ax is None:
-        ax = get_ax(crs)
+        fig, ax = get_ax(crs)
 
     if land_kwargs is not False:
         if land_kwargs is None:

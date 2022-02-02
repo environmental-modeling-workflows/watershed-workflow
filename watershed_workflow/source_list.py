@@ -12,17 +12,17 @@ These dictionaries are provided as module-local (singleton) variables.
 """
 import logging
 
-from workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
-from workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
-from workflow.sources.manager_ned import FileManagerNED
-from workflow.sources.manager_nrcs import FileManagerNRCS
-from workflow.sources.manager_glhymps import FileManagerGLHYMPS
-from workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
-from workflow.sources.manager_nlcd import FileManagerNLCD
-from workflow.sources.manager_daymet import FileManagerDaymet
+from watershed_workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
+from watershed_workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
+from watershed_workflow.sources.manager_ned import FileManagerNED
+from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
+from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
+from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
+from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
+from watershed_workflow.sources.manager_daymet import FileManagerDaymet
 
-from workflow.sources.manager_shape import FileManagerShape
-from workflow.sources.manager_raster import FileManagerRaster
+from watershed_workflow.sources.manager_shape import FileManagerShape
+from watershed_workflow.sources.manager_raster import FileManagerRaster
 
 
 # available and default water boundary datasets
@@ -87,7 +87,7 @@ def get_sources(args):
     ---------
     args : struct
       A python struct generated from an argparse.ArgumentParser object with
-      source options set by workflow.ui.*_source_options
+      source options set by watershed_workflow.ui.*_source_options
 
     Returns
     -------

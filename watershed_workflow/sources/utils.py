@@ -9,8 +9,8 @@ import shapely
 import math
 import urllib.request
 
-import workflow.utils
-import workflow.conf
+import watershed_workflow.utils
+import watershed_workflow.config
 
 
 def get_code(fiona_or_shply_obj, level):
@@ -48,7 +48,7 @@ def download(url, location, force=False):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"'%url)
         logging.info('         to: "%s"'%location)
-        verify = workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
         logging.info('       cert: "%s"'%verify)
         if verify == "True":
             verify = True
@@ -70,7 +70,7 @@ def download(url, location, force=False):
 
 
 def download_progress_bar(url, location, force=False):
-    """Download a file from URL to location, with a progres bar.
+    """Download a file from URL to location, with a progress bar.
 
     If force, clobber whatever is there.
     """
@@ -78,17 +78,17 @@ def download_progress_bar(url, location, force=False):
 
     if os.path.isfile(location) and force:
         os.remove(location)
-        
+
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"'%url)
         logging.info('         to: "%s"'%location)
-        verify = workflow.conf.rcParams['DEFAULT']['ssl_cert']
+        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
         logging.info('       cert: "%s"'%verify)
         if verify == "True":
             verify = True
         elif verify == "False":
             verify = False
-            
+
         r = requests.get(url, stream=True)
         total = int(r.headers.get('content-length', 0))
         with open(location, 'wb') as file, tqdm(desc=os.path.split(location)[-1],
@@ -100,7 +100,6 @@ def download_progress_bar(url, location, force=False):
             for data in r.iter_content(chunk_size=1024):
                 size = file.write(data)
                 bar.update(size)
-        
     return os.path.isfile(location)
 
 

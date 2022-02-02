@@ -4,7 +4,7 @@ import fiona
 import shapely.geometry
 import collections
 
-import workflow.crs
+import watershed_workflow.crs
 
 # write the shapefile
 def write_to_shapefile(filename, shps, crs, extra_properties=None):
@@ -47,8 +47,8 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
 
     with fiona.open(filename, 'w', 
                     driver='ESRI Shapefile', 
-                    crs=workflow.crs.to_fiona(crs), 
-                    crs_wkt=workflow.crs.to_wkt(crs),
+                    crs=watershed_workflow.crs.to_fiona(crs), 
+                    crs_wkt=watershed_workflow.crs.to_wkt(crs),
                     schema=schema) as c:
         for shp in shps:
             props = extra_properties.copy()

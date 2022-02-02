@@ -7,9 +7,9 @@ import numpy.testing as npt
 
 from crs_fixtures import point, point_ak, shift, points, lines, polygons
 
-import workflow.plot
-import workflow.warp
-import workflow.conf
+import watershed_workflow.plot
+import watershed_workflow.warp
+import watershed_workflow.config
 import pickle
 
 crss = [(None, None),
@@ -36,7 +36,7 @@ if not show:
 import collections
 def default_dict():
     return collections.defaultdict(default_dict)
-pickle_file_name = os.path.join('workflow','test', 'test_plot_gold.pickle')
+pickle_file_name = os.path.join('watershed_workflow','test', 'test_plot_gold.pickle')
 
 if new_gold:
     gold = default_dict()
@@ -97,19 +97,19 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
         fig = globals()['fig']
 
     if epsg_ax is not None:
-        epsg_ax = workflow.crs.from_epsg(epsg_ax)
-    ax = workflow.plot.get_ax(epsg_ax, fig)
+        epsg_ax = watershed_workflow.crs.from_epsg(epsg_ax)
+    ax = watershed_workflow.plot.get_ax(epsg_ax, fig)
     if epsg_ax is not None:
         ax.stock_img()
 
     if epsg_data is not None:
-        crs = workflow.crs.from_epsg(epsg_data)
-        objs = workflow.warp.shplys(obj_gen(start_p), workflow.crs.latlon_crs(), crs)
+        crs = watershed_workflow.crs.from_epsg(epsg_data)
+        objs = watershed_workflow.warp.shplys(obj_gen(start_p), watershed_workflow.crs.latlon_crs(), crs)
     else:
         epsg_data = 'None'
         crs = None
         objs = obj_gen(start_p)
-    res = workflow.plot.shply(objs, crs, 'r', ax=ax)
+    res = watershed_workflow.plot.shply(objs, crs, 'r', ax=ax)
 
     if new_gold:
         if hasattr(res, 'get_paths'):

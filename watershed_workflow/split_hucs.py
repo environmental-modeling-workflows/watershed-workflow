@@ -5,7 +5,7 @@ import logging
 import shapely.geometry
 import shapely.ops
 
-import workflow.utils
+import watershed_workflow.utils
 
 class HandledCollection:
     """A collection of of objects and handles for those objects."""
@@ -102,7 +102,7 @@ class SplitHUCs:
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
         for i,u in enumerate(uniques):
-            if workflow.utils.empty_shapely(u):
+            if watershed_workflow.utils.empty_shapely(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
                 handle = self.segments.add(u)
@@ -119,7 +119,7 @@ class SplitHUCs:
         for i in range(len(shapes)):
             for j in range(len(shapes)):
                 inter = intersections[i][j]
-                if workflow.utils.empty_shapely(inter):
+                if watershed_workflow.utils.empty_shapely(inter):
                     pass
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
@@ -203,7 +203,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
             s2 = list_of_shapes[j]
 
             s2 = s2.buffer(abs_tol)
-            if workflow.utils.intersects(s1, s2):
+            if watershed_workflow.utils.intersects(s1, s2):
                 s2 = s2.difference(s1)
                 list_of_shapes[j] = s2.difference(s1)
 
@@ -223,7 +223,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
                 # give it to someone, anyone, doesn't matter who
                 logging.info("Found a little hole: area = {}".format(hole.area))
                 for i,poly in enumerate(list_of_shapes):
-                    if workflow.utils.non_point_intersection(poly, hole):
+                    if watershed_workflow.utils.non_point_intersection(poly, hole):
                         logging.info('touches {}'.format(i))
                         poly = poly.union(hole)
                         list_of_shapes[i] = poly
@@ -251,7 +251,7 @@ def intersect_and_split(list_of_shapes):
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
-            if i != j and workflow.utils.non_point_intersection(s1,s2):
+            if i != j and watershed_workflow.utils.non_point_intersection(s1,s2):
                 inter = s1.intersection(s2)
 
                 if type(inter) is shapely.geometry.MultiLineString:
@@ -281,6 +281,6 @@ def intersect_and_split(list_of_shapes):
 
     uniques_r = [None,]*len(uniques)
     for i,u in enumerate(uniques):
-        if not workflow.utils.empty_shapely(u):
+        if not watershed_workflow.utils.empty_shapely(u):
             uniques_r[i] = u
     return uniques_r, intersections

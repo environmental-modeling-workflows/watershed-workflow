@@ -6,22 +6,22 @@ import shapely
 import numpy as np
 import fiona
 
-import workflow.conf
-import workflow.warp
-import workflow.sources.manager_nhd
-import workflow.sources.utils as sutils
+import watershed_workflow.config
+import watershed_workflow.warp
+import watershed_workflow.sources.manager_nhd
+import watershed_workflow.sources.utils as sutils
 
 bounds4_ll = np.array([-76.3955534, 36.8008194, -73.9026218, 42.4624454])
 bounds8_ll = np.array([-75.5722117, 41.487746, -74.5581047, 42.4624454])
 
-#bounds4_crs = np.array(list(workflow.warp.xy(bounds4[0], bounds4[1], workflow.crs.latlon_crs(), workflow.crs.default_crs())) + list(workflow.warp.xy(bounds4[2], bounds4[3], workflow.crs.latlon_crs(), workflow.crs.default_crs())))
+#bounds4_crs = np.array(list(watershed_workflow.warp.xy(bounds4[0], bounds4[1], watershed_workflow.crs.latlon_crs(), watershed_workflow.crs.default_crs())) + list(watershed_workflow.warp.xy(bounds4[2], bounds4[3], watershed_workflow.crs.latlon_crs(), watershed_workflow.crs.default_crs())))
 
-#bounds8_crs = np.array(list(workflow.warp.xy(bounds8[0], bounds8[1], workflow.crs.latlon_crs(), workflow.crs.default_crs())) + list(workflow.warp.xy(bounds8[2], bounds8[3], workflow.crs.latlon_crs(), workflow.crs.default_crs())))
+#bounds8_crs = np.array(list(watershed_workflow.warp.xy(bounds8[0], bounds8[1], watershed_workflow.crs.latlon_crs(), watershed_workflow.crs.default_crs())) + list(watershed_workflow.warp.xy(bounds8[2], bounds8[3], watershed_workflow.crs.latlon_crs(), watershed_workflow.crs.default_crs())))
 
 
 @pytest.fixture
 def nhd():
-    return workflow.sources.manager_nhd.FileManagerNHD()
+    return watershed_workflow.sources.manager_nhd.FileManagerNHD()
 
 
 def test_nhd_url(nhd):
@@ -57,7 +57,7 @@ def test_nhd_download(nhd):
 def test_nhd_get(nhd):
     # download
     profile, huc = nhd.get_huc('02040101')
-    bounds = workflow.utils.shply(huc['geometry']).bounds
+    bounds = watershed_workflow.utils.shply(huc['geometry']).bounds
     assert(np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 # hydro tests

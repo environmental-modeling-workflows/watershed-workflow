@@ -11,11 +11,12 @@ Authors: Pin Shuai (pin.shuai@pnnl.gov)
 import numpy as np
 import logging
 import pandas
+import rosetta
 
-import workflow.conf
+import watershed_workflow.config
 
 
-def vgm_Rosetta(data, model_type):
+def vgm_Rosetta(data, model_type=None):
     """
     Return van Genutchen model parameters using Rosetta v3 model ( Zhang and Schaap, 2017 WRR).
     
@@ -25,49 +26,43 @@ def vgm_Rosetta(data, model_type):
       Input data.
     model_type : int
       Rosetta model type: 2--using sand/silt/clay pct, 3--using sand/silt/clay pct + bulk density
+      NOTE: this is now ignored as the new rosetta-soil package predicts this.
         
     Returns:
     ----
     params : pandas dataframe
         van Genutchen model parameters
     """
-    import rosetta.DB_Module
-    import rosetta.ANN_Module
-
-    db_path = workflow.conf.rcParams['DEFAULT']['rosetta_db_path'] 
-    
     logging.info(f'Running Rosetta for van Genutchen parameters')
-    logging.info(f'  database: {db_path}')
-    logging.info(f'  model type: {model_type}')
 
-    #convert data from 1d array to nd matrix if necessary
+    #convert data from 1d array to 2d matrix if necessary
+    #
+    # tranpose for backward compatibility!
     if data.ndim == 1:
-        data = data.reshape(data.shape[0],1)
+        data = [list(data),]
+    else:
+        data = [list(entry) for entry in data.transpose()]
     
-    with rosetta.DB_Module.DB(host='localhost', user='root', db_name='Rosetta',
-                              sqlite_path=db_path) as db:
-        # choose the right model corresponding to data inputs
-        ptf_model = rosetta.ANN_Module.PTF_MODEL(model_type, db)
-        res_dict = ptf_model.predict(data, sum_data=True) 
-
+    soildata = rosetta.SoilData.from_array(data)
+    result_mean, result_std, codes = rosetta.rosetta(3, soildata)
     logging.info(f'  ... done')
-        
+    result_mean = np.array(result_mean)
+       
     # check results
     #   output log10 of VG-alpha,VG-n, and Ks
-    vgm_mean = res_dict['sum_res_mean']
     df = pandas.DataFrame(columns=['Rosetta residual volumetric water content [cm^3 cm^-3]',
                                    'Rosetta saturated volumetric water content [cm^3 cm^-3]',
                                    'Rosetta log van Genuchten alpha [cm^-1]',
                                    'Rosetta log van Genuchten n [-]',
                                    'Rosetta log Ksat [um s^-1]'], dtype=float)
-    df['Rosetta residual volumetric water content [cm^3 cm^-3]'] = vgm_mean[0]
-    df['Rosetta saturated volumetric water content [cm^3 cm^-3]'] = vgm_mean[1]
-    df['Rosetta log van Genuchten alpha [cm^-1]'] = vgm_mean[2]
-    df['Rosetta log van Genuchten n [-]'] = vgm_mean[3]
-    df['Rosetta log Ksat [um s^-1]'] = np.log10( (10**vgm_mean[4]) / 86400 * 1e4 ) # log cm/d --> log um/s
+    df['Rosetta residual volumetric water content [cm^3 cm^-3]'] = result_mean[:,0]
+    df['Rosetta saturated volumetric water content [cm^3 cm^-3]'] = result_mean[:,1]
+    df['Rosetta log van Genuchten alpha [cm^-1]'] = result_mean[:,2]
+    df['Rosetta log van Genuchten n [-]'] = result_mean[:,3]
+    df['Rosetta log Ksat [um s^-1]'] = np.log10( (10**result_mean[:,4]) / 86400 * 1e4 ) # log cm/d --> log um/s
     return df
 
-def vgm_from_SSURGO(df, rosetta_model=3):
+def vgm_from_SSURGO(df, rosetta_model=None):
     """Get van Genutchen model parameters using Rosetta v3.
     
     Parameters
@@ -75,7 +70,9 @@ def vgm_from_SSURGO(df, rosetta_model=3):
     df : pandas dataframe
       SSURGO properties dataframe, from manager_nrcs.FileManagerNRCS().get_properties()
     rosetta_model: int
-                Type of Rosetta model. Default is 3 (i.e., need sand/silt/clay pct and bulk density)
+      Type of Rosetta model. Default is 3 (i.e., need sand/silt/clay pct and bulk density)
+      NOTE: now ignored -- newer model guesses which you want by inputs.
+                
     
     Returns
     -------
@@ -92,7 +89,13 @@ def vgm_from_SSURGO(df, rosetta_model=3):
     # need to transpose the data so that the array have the shape (nvar, nsample) 
     data = df_rosetta[rosetta_input_header].values.T
     vgm = vgm_Rosetta(data, model_type=rosetta_model)
-    assert(len(vgm) == len(df_rosetta))
+
+    n_shapes = len(df_rosetta)
+    n_resp = len(vgm["Rosetta residual volumetric water content [cm^3 cm^-3]"])
+    logging.info(f'  requested {n_shapes} values')
+    logging.info(f'  got {n_resp} responses')
+    assert(n_shapes == n_resp)
+
     vgm['mukey'] = df_rosetta['mukey'].values
 
     # merge back so that we do not lose data
@@ -244,7 +247,7 @@ def mangle_glhymps_properties(shapes, min_porosity=0.01, max_permeability=np.inf
     #descriptions = [prop['Descriptio'] for prop in shp_props]
     # derived properties
     # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-    vg_alpha = np.minimum(workflow.soil_properties.alpha_from_permeability(Ksat, poro), max_vg_alpha)
+    vg_alpha = np.minimum(watershed_workflow.soil_properties.alpha_from_permeability(Ksat, poro), max_vg_alpha)
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
 

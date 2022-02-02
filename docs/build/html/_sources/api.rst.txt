@@ -3,20 +3,20 @@ API Documentation
 
 High Level API
 ~~~~~~~~~~~~~~
-.. automodule:: workflow.hilev
+.. automodule:: watershed_workflow.hilev
     :members:
 
 CRS module API
 ~~~~~~~~~~~~~~
-.. automodule:: workflow.crs
+.. automodule:: watershed_workflow.crs
     :members:               
 
 plot module API
 ~~~~~~~~~~~~~~~
-.. automodule:: workflow.plot
+.. automodule:: watershed_workflow.plot
     :members:
                 
 utils module API
 ~~~~~~~~~~~~~~~~
-.. automodule:: workflow.utils
+.. automodule:: watershed_workflow.utils
     :members: shply, bounds, close

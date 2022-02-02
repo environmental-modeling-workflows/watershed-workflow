@@ -19,13 +19,13 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Watershed Workflow'
-copyright = '2019, UT Battelle, Ethan Coon'
+copyright = '2019-202X, UT Battelle, Ethan Coon'
 author = 'Ethan Coon'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------

@@ -8,11 +8,11 @@ import requests
 import requests.exceptions
 import shapely.geometry
 
-import workflow.sources.utils as source_utils
-import workflow.crs
-import workflow.conf
-import workflow.warp
-import workflow.sources.names
+import watershed_workflow.sources.utils as source_utils
+import watershed_workflow.crs
+import watershed_workflow.config
+import watershed_workflow.warp
+import watershed_workflow.sources.names
 
 
 class FileManagerDaymet:
@@ -63,7 +63,7 @@ class FileManagerDaymet:
     def __init__(self):
         #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
-        self.names = workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
+        self.names = watershed_workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
     def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False, buffer=0.01):
@@ -96,15 +96,15 @@ class FileManagerDaymet:
 
         if type(polygon_or_bounds) is dict:
             # fiona shape object, convert to shapely to get a copy
-            polygon_or_bounds = workflow.utils.shply(polygon_or_bounds)
+            polygon_or_bounds = watershed_workflow.utils.shply(polygon_or_bounds)
 
         # convert and get a bounds
         if type(polygon_or_bounds) is list or type(polygon_or_bounds) is tuple:
             # bounds
-            bounds = workflow.warp.bounds(polygon_or_bounds, crs, workflow.crs.latlon_crs())
+            bounds = watershed_workflow.warp.bounds(polygon_or_bounds, crs, watershed_workflow.crs.latlon_crs())
         else:
             # polygon
-            bounds = workflow.warp.shply(polygon_or_bounds, crs, workflow.crs.latlon_crs()).bounds
+            bounds = watershed_workflow.warp.shply(polygon_or_bounds, crs, watershed_workflow.crs.latlon_crs()).bounds
 
         # feather the bounds
         # get the bounds and download

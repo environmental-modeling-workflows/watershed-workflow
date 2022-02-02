@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import logging
 
-import workflow.condition
+import watershed_workflow.condition
 
 def make_points_1D(elevs):
     points = {}
@@ -14,17 +14,17 @@ def make_points_1D(elevs):
             neighbors = [i-1,]
         else:
             neighbors = [i-1,i+1]
-        points[i] = workflow.condition.Point(coords, neighbors)
+        points[i] = watershed_workflow.condition.Point(coords, neighbors)
     return points
 
 def run_test_1D(elev_in, elev_out, alg):
     points = make_points_1D(elev_in)
     if alg == 1:
-        workflow.condition.fill_pits1(points, 0)
+        watershed_workflow.condition.fill_pits1(points, 0)
     elif alg == 2:
-        workflow.condition.fill_pits2(points, 0)
+        watershed_workflow.condition.fill_pits2(points, 0)
     elif alg == 3:
-        workflow.condition.fill_pits3(points, 0)
+        watershed_workflow.condition.fill_pits3(points, 0)
 
     print("GOT COORDS:")
     print(([points[i].coords[2] for i in range(len(points))]))
@@ -67,7 +67,7 @@ def test_gap_filling():
     arr_in =  np.array([[1,1,1],
                        [1,-1,1],
                        [1,1,1]])
-    arr_out = workflow.condition.fill_gaps(arr_in, -1)
+    arr_out = watershed_workflow.condition.fill_gaps(arr_in, -1)
     arr_gd =  np.array([[1,1,1],
                         [1,1,1],
                         [1,1,1]])

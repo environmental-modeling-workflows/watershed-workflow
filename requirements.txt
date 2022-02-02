@@ -1,0 +1,7 @@
+# NOTE: the requirements.txt listed here is VERY incomplete.  This is
+# intentional -- most of the pip-based GIS packages don't correctly
+# deal with dependencies on GIS libraries.  Instead, the majority of
+# packages here MUST be installed via Anaconda or done manually.
+# However, there are a few requirements that cannot be provided via
+# conda, but CAN be provided via pip, so we get those here...
+rosetta-soil
