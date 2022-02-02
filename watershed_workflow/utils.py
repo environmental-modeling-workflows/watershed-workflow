@@ -689,3 +689,9 @@ def isConvex(points):
                 prev = curr
  
     return True
+
+
+def closest_point(point, points):
+    points = np.asarray(points)
+    dist_2 = np.sum((points - point)**2, axis=1)
+    return np.argmin(dist_2)
