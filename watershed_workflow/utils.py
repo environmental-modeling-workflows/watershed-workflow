@@ -13,7 +13,7 @@ import shapely.geometry
 import shapely.ops
 import shapely.affinity
 import rasterio
-import watershed_workflow
+import watershed_workflow as workflow
 
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
@@ -383,6 +383,26 @@ def triangle_area(vertices):
     return A
 
 
+def angle(v1, v2):
+    """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
+    of 2 relative to 1 in a clockwise notion."""
+    x1 = v1[0]; y1 = v1[1]
+    x2 = v2[0]; y2 = v2[1]
+    mag = 180./np.pi * np.arccos((x1 * x2 + y1 * y2) / ( np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)))
+    sign =  x1*y2 - x2*y1
+    if sign < 0:
+        return -mag
+    else:
+        return mag
+
+
+def midpoint(p1, p2):
+    """Returns the midpoint of two points"""
+    if type(p1) is tuple:
+        return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
+    else:
+        return shapely.geometry.Point(midpoint(p1.coords[0], p2.coords[0]))
+    
 def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
     if type(centering) is shapely.geometry.Point:
@@ -602,8 +622,76 @@ def create_empty_raster(target_bounds,crs,target_dx,dtype, nodata):
                       'width':width,
                       'count':1,
                       'dtype':dtype,
-                      'crs':watershed_workflow.crs.to_rasterio(crs),
+                      'crs':workflow.crs.to_rasterio(crs),
                       'transform':transform,
                       'nodata':nodata}
     out = nodata * np.ones((height, width), dtype)
     return out_profile, out
+
+def CrossProduct(A):
+     
+    # Stores coefficient of X
+    # direction of vector A[1]A[0]
+    X1 = (A[1][0] - A[0][0])
+ 
+    # Stores coefficient of Y
+    # direction of vector A[1]A[0]
+    Y1 = (A[1][1] - A[0][1])
+ 
+    # Stores coefficient of X
+    # direction of vector A[2]A[0]
+    X2 = (A[2][0] - A[0][0])
+ 
+    # Stores coefficient of Y
+    # direction of vector A[2]A[0]
+    Y2 = (A[2][1] - A[0][1])
+ 
+    # Return cross product
+    return (X1 * Y2 - Y1 * X2)
+ 
+
+def isConvex(points):
+    """# Function to check if the polygon is convex polygon or not"""
+     
+    # Stores count of
+    # edges in polygon
+    N = len(points)
+ 
+    # Stores direction of cross product
+    # of previous traversed edges
+    prev = 0
+ 
+    # Stores direction of cross product
+    # of current traversed edges
+    curr = 0
+ 
+    # Traverse the array
+    for i in range(N):
+         
+        # Stores three adjacent edges
+        # of the polygon
+        temp = [points[i], points[(i + 1) % N],
+                           points[(i + 2) % N]]
+ 
+        # Update curr
+        curr = CrossProduct(temp)
+ 
+        # If curr is not equal to 0
+        if (curr != 0):
+             
+            # If direction of cross product of
+            # all adjacent edges are not same
+            if (curr * prev < 0):
+                return False
+            else:
+                 
+                # Update curr
+                prev = curr
+ 
+    return True
+
+
+def closest_point(point, points):
+    points = np.asarray(points)
+    dist_2 = np.sum((points - point)**2, axis=1)
+    return np.argmin(dist_2)

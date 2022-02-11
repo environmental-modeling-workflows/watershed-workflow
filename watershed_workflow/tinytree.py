@@ -1,16 +1,3 @@
-"""A very simple tree implementation.
-
-This is derived from Aldo Cortesi's code, and includes the license to
-that code in the source.
-
-Acquired from: https://github.com/cortesi/tinytree/blob/master/tinytree.py
-
-Changes made to introduce several new iteration patterns which are
-useful in this application.
-
-"""
-
-#
 # The MIT License
 #
 # Copyright (c) 2007 Aldo Cortesi
@@ -32,6 +19,9 @@ useful in this application.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+
+
+# acquired from: https://github.com/cortesi/tinytree/blob/master/tinytree.py
 
 import sys, itertools, copy, unicodedata
 
@@ -256,6 +246,18 @@ class Tree(object):
                 yield j
         yield self
 
+    def prePostInBetweenOrder(self):
+        """
+            Return a list of subnodes in pre and post order, but also in between children.
+        """
+        yield self
+        for i in self.children[:]:
+            for j in i.prePostInBetweenOrder():
+                yield j
+            yield self
+        if len(self.children) == 0:
+            yield self
+        
     def _find(self, itr, *func, **kwargs):
         for i in itr:
             if kwargs:

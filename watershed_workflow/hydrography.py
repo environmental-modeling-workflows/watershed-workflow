@@ -53,7 +53,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # note this is a null-op on cases dealt with above
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
-        snap_endpoints(tree, hucs, tol)
+        snap_endpoints(tree, hucs, 0.5*tol)
     if not all(watershed_workflow.river_tree.is_consistent(river) for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
@@ -425,9 +425,10 @@ def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
     """Some hydrography data seems to get some random branches, typically
     quite short, that are nearly perfectly parallel to other, longer
     branches.  Surely this is a data error -- remove them.
-
+    
     This returns rivers in a forest, not in a list.
     """
+    merge_tol=10
     # simplify
     if simp_tol is not None:
         for tree in rivers:
