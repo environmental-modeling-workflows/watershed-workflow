@@ -1,14 +1,10 @@
-from . import _version
-__version__ = _version.get_versions()['version']
-
-import os
-from watershed_workflow.config import rcParams
-
-if rcParams['DEFAULT']['proj_network'] == "True":
+import workflow.conf
+if workflow.conf.rcParams['DEFAULT']['proj_network'] == "True":
+    import os
     os.environ['PROJ_NETWORK'] = 'ON'
-elif rcParams['DEFAULT']['proj_network'] == "False":
+elif workflow.conf.rcParams['DEFAULT']['proj_network'] == "False":
+    import os
     os.environ['PROJ_NETWORK'] = 'OFF'
 
 from .hilev import *
-
 
