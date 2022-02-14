@@ -10,14 +10,14 @@ from scipy import interpolate
 import shapely
 import shapely.geometry
 
-import workflow.utils
+import watershed_workflow.utils
 
 def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
     """This function preOrder travers through the tree and density node.segments
     
      Arguments:
-      tree              | tree to be densified (workflow.river_tree.RiverTree)
-      tree_             | original tree containing all the known points from NHDPlus (workflow.river_tree.RiverTree)
+      tree              | tree to be densified (watershed_workflow.river_tree.RiverTree)
+      tree_             | original tree containing all the known points from NHDPlus (watershed_workflow.river_tree.RiverTree)
       limit             | limit of section length above which more points are added
       collinear         | boolean to check for collinearity 
       """
@@ -33,8 +33,8 @@ def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
 def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
     """This function adds equally space point in the reach-sections longer than the limit
      Arguments:
-      node              | node whose segment to be densified (workflow.river_tree.RiverTree)
-      node_             | original node containing all the known points from NHDPlus (workflow.river_tree.RiverTree)
+      node              | node whose segment to be densified (watershed_workflow.river_tree.RiverTree)
+      node_             | original node containing all the known points from NHDPlus (watershed_workflow.river_tree.RiverTree)
       limit             | limit of section length above which more points are added
       collinear         | boolean to check for collinearity 
       """
@@ -44,7 +44,7 @@ def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
     seg_coords_densified=seg_coords.copy() # segment coordinates densified
     j=0
     for i in range(len(seg_coords)-1):
-        section_length=workflow.utils.distance(seg_coords[i],seg_coords[i+1])
+        section_length=watershed_workflow.utils.distance(seg_coords[i],seg_coords[i+1])
         if section_length>limit:
             number_new_points=int(section_length//limit)
             end_points=[seg_coords[i],seg_coords[i+1]] # points betwen which more points will be added
@@ -72,15 +72,15 @@ def DensifyHucs(hucs,huc_,river,limit_scales=None):
     else:
         coords_densified=DensifyHucs_(coords,coords_,river,limit_scales=limit_scales)
 
-    return workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
+    return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
 
 
 def DensifyHucs_(coords,coords_,river,limit_scales=None):
 
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
      Arguments:
-      hucs              | hucs to be densified (workflow.split_hucs.SplitHUCs)
-      huc_              | original huc containing all the known points fromthe source (workflow.split_hucs.SplitHUCs)
+      hucs              | hucs to be densified (watershed_workflow.split_hucs.SplitHUCs)
+      huc_              | original huc containing all the known points fromthe source (watershed_workflow.split_hucs.SplitHUCs)
       limit             | limit of section length above which more points are added
     """
     adaptive=type(limit_scales) is list # setting up flag
@@ -117,7 +117,7 @@ def Interpolate(end_points,interp_data,n):
 
     """this function uses original shape to interpolate points while densifying a LineString shape"""
 
-    inds=[workflow.utils.closest_point(point,interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
+    inds=[watershed_workflow.utils.closest_point(point,interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
     if inds[1]<inds[0]: # this is to deal with corner case of interpolation of the last segment
         inds[1]=-2     
     section_interp_data=np.array(interp_data[inds[0]:inds[1]+1]) # coordinates on section
@@ -181,7 +181,7 @@ def limit_from_river_distance(segment_ends,limit_scales,river):
     p0=shapely.geometry.Point(segment_ends[0])
     p1=shapely.geometry.Point(segment_ends[1])
     p_mid=shapely.geometry.Point([(segment_ends[0][0]+segment_ends[1][0])/2,(segment_ends[0][1]+segment_ends[1][1])/2])
-    river_multiline = workflow.river_tree.forest_to_list([river])
+    river_multiline = watershed_workflow.river_tree.forest_to_list([river])
     distance=min(p0.distance(river_multiline),p_mid.distance(river_multiline),p1.distance(river_multiline))
 
     if distance > away_distance:

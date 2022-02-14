@@ -1,3 +1,16 @@
+"""A very simple tree implementation.
+
+This is derived from Aldo Cortesi's code, and includes the license to
+that code in the source.
+
+Acquired from: https://github.com/cortesi/tinytree/blob/master/tinytree.py
+
+Changes made to introduce several new iteration patterns which are
+useful in this application.
+
+"""
+
+#
 # The MIT License
 #
 # Copyright (c) 2007 Aldo Cortesi
@@ -19,9 +32,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-
-
-# acquired from: https://github.com/cortesi/tinytree/blob/master/tinytree.py
 
 import sys, itertools, copy, unicodedata
 

@@ -13,7 +13,7 @@ import shapely.geometry
 import shapely.ops
 import shapely.affinity
 import rasterio
-import watershed_workflow as workflow
+import watershed_workflow 
 
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.

@@ -20,14 +20,15 @@ import logging
 import attr
 import scipy.optimize
 import shapely
+import warnings
 
-import workflow.utils
+import watershed_workflow.vtk_io
+import watershed_workflow.utils
 
 try:
     import exodus
 except Exception:
     import exodus3 as exodus
-    
 
 def _is_list_or_array(val):
     assert type(val) is list or type(val) is np.ndarray
@@ -145,7 +146,7 @@ class Mesh2D:
             A small measure of length between coords.
 
         Note: (coords, conn) may be output provided by a
-        workflow.triangulation.triangulate() call.
+        watershed_workflow.triangulation.triangulate() call.
         """
         self.eps = eps
         self.coords = coords
@@ -312,8 +313,7 @@ class Mesh2D:
     def write_VTK(self, filename):
         """Writes to VTK."""
         assert(all(len(c) == 3 for c in self.conn))
-        from workflow_tpls import vtk_io
-        vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
+        watershed_workflow.vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
 
     def transform(self, mat=None, shift=None):
         """Transform a 2D mesh"""
@@ -403,7 +403,6 @@ class Mesh2D:
                         idx += n_in_gon + 1
                     assert(idx == n_to_read)
                     polygons_found = True
-                        
 
         if not points_found:
             raise RuntimeError("Unstructured VTK must contain sections 'POINTS'")
@@ -415,12 +414,9 @@ class Mesh2D:
     @classmethod
     def read_VTK_Simplices(cls, filename):
         """Constructor from an structured VTK file.
-
-        Stolen from meshio, https://github.com/nschloe/meshio/blob/master/meshio/vtk_io.py
         """
-        from workflow_tpls import vtk_io
         with open(filename,'rb') as fid:
-            data = vtk_io.read_buffer(fid)
+            data = watershed_workflow.vtk_io.read_buffer(fid)
 
         points = data[0]
         if len(data[1]) != 1:
@@ -676,7 +672,7 @@ class Mesh2D:
                     cn = c[up_i:] + c[0:up_i]
                 else:
                     # I screwed up... debug me!
-                    print("Uh oh borked geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
+                    print("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
 
@@ -689,14 +685,14 @@ class Mesh2D:
                     plt.show()
 
                     fig = plt.figure(figsize=figsize)
-                    ax = workflow.plot.get_ax(crs, fig)
+                    ax = watershed_workflow.plot.get_ax(crs, fig)
 
-                    mp = workflow.plot.triangulation(mesh_points3, mesh_tris, crs, ax=ax, 
+                    mp = watershed_workflow.plot.triangulation(mesh_points3, mesh_tris, crs, ax=ax, 
                                          color='elevation', edgecolor='white', linewidth=0.4)
                     cbar = fig.colorbar(mp, orientation="horizontal", pad=0.05)
-                    #workflow.plot.hucs(shapes, crs, ax=ax, color='k', linewidth=1)
-                    workflow.plot.shply([shapely.geometry.LineString(cc_sorted),], crs, ax=ax, color='red', linewidth=1)
-                    workflow.plot.shply([shapely.geometry.LineString(cb_sorted),], crs, ax=ax, color='blue', linewidth=1)
+                    #watershed_workflow.plot.hucs(shapes, crs, ax=ax, color='k', linewidth=1)
+                    watershed_workflow.plot.shply([shapely.geometry.LineString(cc_sorted),], crs, ax=ax, color='red', linewidth=1)
+                    watershed_workflow.plot.shply([shapely.geometry.LineString(cb_sorted),], crs, ax=ax, color='blue', linewidth=1)
                     ax.set_aspect('equal', 'datalim')
 
                     raise RuntimeError('uh oh borked geom')
@@ -797,7 +793,7 @@ class Mesh3D(object):
             A small measure of length between coords.
 
         Note: (coords, conn) may be output provided by a
-        workflow.triangulation.triangulate() call.
+        watershed_workflow.triangulation.triangulate() call.
         """
         self.eps = eps
         self.coords = coords
@@ -972,7 +968,9 @@ class Mesh3D(object):
                                    num_face_blk=len(face_blks),
                                    num_elem=num_elems,
                                    num_elem_blk=len(elem_blks),
-                                   num_side_sets=len(self.side_sets))
+                                   num_side_sets=len(self.side_sets),
+                                   num_elem_sets=sum(1 for ls in self.labeled_sets if ls.entity == 'CELL'),
+                                   )
         e = exodus.exodus(filename, mode='w', array_type='numpy', init_params=ep)
 
         # put the coordinates
@@ -997,13 +995,25 @@ class Mesh3D(object):
             e.put_elem_face_conn(m_id, np.array(elems_raveled)+1)
 
         # add sidesets
-        e.put_side_set_names([ss.name for ss in self.side_sets])
         for ss in self.side_sets:
+            logging.info(f'adding side set: {ss.setid}')
             for elem in ss.elem_list:
                 assert old_to_new_elems[elem][0] == elem
             new_elem_list = [old_to_new_elems[elem][1] for elem in ss.elem_list]                
             e.put_side_set_params(ss.setid, len(ss.elem_list), 0)
+            e.put_side_set_name(ss.setid, ss.name)
             e.put_side_set(ss.setid, np.array(new_elem_list)+1, np.array(ss.side_list)+1)
+
+        # add labeled sets
+        for ls in self.labeled_sets:
+            if ls.entity == 'CELL':
+                logging.info(f'adding elem set: {ls.setid}')
+                new_elem_list = [old_to_new_elems[elem][1] for elem in ls.ent_ids]                
+                e.put_elem_set_params(ls.setid, len(new_elem_list), None)
+                e.put_elem_set_name(ls.setid, ls.name)
+                e.put_elem_set(ls.setid, np.array(new_elem_list)+1)
+            else:
+                warnings.warning(f'Cannot write labeled set of type {ls.entity}')
 
         # finish and close
         e.close()
@@ -1398,11 +1408,7 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
 def _get_labels(polygons):
     labels = []
     for i,p in enumerate(polygons):
-        huc_k = [k for k in p.properties if k.startswith('HUC')]
-        if len(huc_k) == 0:
-            label = f'watershed {i}'
-        else:
-            label = p.properties[huc_k[0]]
+        label = f'watershed {i}'
         labels.append(label)
     return labels
     
@@ -1430,24 +1436,34 @@ def add_watershed_regions(m2, polygons, labels=None):
         if len(part) > 0:
             # add a region, denoting this one as "to extrude".  This
             # will become the volume region
+            setid = m2.next_available_labeled_setid()
+            ls = LabeledSet(label, setid, 'CELL', part)
+            m2.add_labeled_set(ls)
+            ls.to_extrude = True
+
+            # add a second region, denoting this one as the top surface of faces
             setid2 = m2.next_available_labeled_setid()
-            ls2 = LabeledSet(label, setid2, 'CELL', part)
+            ls2 = LabeledSet(label+' surface', setid2, 'CELL', part)
             m2.add_labeled_set(ls2)
-            ls2.to_extrude = True
+
     return partitions
 
 def add_watershed_regions_and_outlets(m2, polygons,
                                       rivers=None, outlet_width=None, labels=None):
-    """Add three labeled sets to m2 for each polygon -- one for the
-    polygon cells, one for the polygon's boundary edges, and one for
-    all polygon boundary edges within outlet_width of outgoing
-    crossings of the river with the polygon boundary.
+    """Add four labeled sets to m2 for each polygon:
+
+    - cells in the polygon, to be extruded
+    - cells in the polygon, to be kept as faces upon extrusion
+    - boundary of the polygon (edges)
+    - outlet of the polygon (edges within outlet width of the outlet)
 
     """
     if labels is None:
         labels = _get_labels(polygons)
     else:
         assert(len(labels) == len(polygons))
+
+    # this adds the first two sets
     partitions = add_watershed_regions(m2, polygons, labels)
 
     # find a list of faces on the boundary of these sets of triangles
@@ -1473,10 +1489,10 @@ def add_watershed_regions_and_outlets(m2, polygons,
                              # to not limit it to the surface
         m2.add_labeled_set(ls)
 
-
     if outlet_width is None:
         outlet_width = 300
 
+    logging.info('adding outlets')
     if rivers is not None:
         # next determine the outlet, and all boundary edges within x m of that outlet
         crossings = []
@@ -1498,7 +1514,7 @@ def add_watershed_regions_and_outlets(m2, polygons,
             for p in crossing[1:]:
                 found = False
                 for cluster in clusters:
-                    if workflow.utils.close(cluster[0], p, outlet_width/2.0):
+                    if watershed_workflow.utils.close(cluster[0], p, outlet_width/2.0):
                         found = True
                         cluster.append(p)
                         break
@@ -1513,31 +1529,35 @@ def add_watershed_regions_and_outlets(m2, polygons,
         outlets = dict()
         crossing_cluster_indices = list(range(len(crossing_clusters)))
         itercount = 0
+        logging.info(crossing_clusters)
         while len(crossing_clusters) > 0:
-            logging.debug(f'itercount = {itercount}')
-            logging.debug(f'-----------------')
+            logging.info(f'itercount = {itercount}')
+            logging.info(f'-----------------')
             for lcv, (i, cc) in reversed(list(enumerate(zip(crossing_cluster_indices,
                                                             crossing_clusters)))):
                 if len(cc) == 1:
                     outlets[i] = cc[0]
                     crossing_cluster_indices.pop(lcv)
                     crossing_clusters.pop(lcv)
-                    logging.debug(f'{i}: found an outlet')
+                    logging.info(f'{i}: found an outlet')
                 else:
                     for j, crossing in reversed(list(enumerate(cc))):
                         try:
                             inlet = next(outlet for outlet in outlets.values() 
-                                         if workflow.utils.close(crossing, outlet, outlet_width))
+                                         if watershed_workflow.utils.close(crossing, outlet, outlet_width))
                         except StopIteration:
                             pass
                         else:
                             cc.pop(j)
-                            logging.debug(f'{i}: found an inlet, now length = {len(cc)}')
+                            logging.info(f'{i}: found an inlet, now length = {len(cc)}')
             itercount += 1
-            logging.debug('')
+            logging.info('')
             if (itercount > 50):
-                logging.debug('quitting')
+                logging.info('quitting')
                 break
+
+        logging.info(f'last outlet is {i}')
+        final_outlet = i
 
         # for each outlet, find the boundary faces within tol of the outlet
         outlet_face_sets = []
@@ -1546,17 +1566,23 @@ def add_watershed_regions_and_outlets(m2, polygons,
                 n1 = m2.coords[edge[0]]
                 n2 = m2.coords[edge[1]]
                 c = (n1 + n2)/2.
-                close = workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+                close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
                 return close
             outlet_faces = [e for e in boundary_edges[i] if inside_ball(outlet, e)]
             outlet_face_sets.append(outlet_faces)
 
         # add the labeled sets -- one for the entire set of faces, one for the outlet
-        for label, outlet, boundary_edge in zip(labels, outlet_face_sets, boundary_edges):
+        for i, (label, outlet, boundary_edge) in enumerate(zip(labels, outlet_face_sets, boundary_edges)):
             edges = [(int(e[0]), int(e[1])) for e in outlet]
             ls = LabeledSet(label+' surface outlet', m2.next_available_labeled_setid(),
                             'FACE', edges)
+            ls.to_extrude = True # this marker tells the extrusion routine
+                                 # to not limit it to the surface
             m2.add_labeled_set(ls)
 
-
-
+            if i == final_outlet:
+                # also write one for the full domain
+                ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(),
+                                 'FACE', edges)
+                ls2.to_extrude = True
+                m2.add_labeled_set(ls2)
