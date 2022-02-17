@@ -3,6 +3,8 @@ import logging
 import collections
 import numpy as np
 import copy
+import fiona
+import pandas as pd
 import itertools
 
 import shapely.geometry
@@ -75,10 +77,16 @@ class RiverTree(watershed_workflow.tinytree.Tree):
                 inconsistent.append(child)
         return inconsistent
 
-    def __deepcopy__(self):
+    def deep_copy(self):
         cp = copy.deepcopy(self)
         for seg1,seg2 in zip(cp,self):
             seg1.properties = copy.deepcopy(seg2.properties)
+        return cp
+
+    def shallow_copy(self):
+        cp = copy.copy(self)
+        for seg1,seg2 in zip(cp,self):
+            seg1.properties = copy.copy(seg2.properties)
         return cp
     
             
@@ -195,6 +203,44 @@ def sort_children_by_angle(tree, reverse=False):
 
             node.children.sort(key=angle)
             
+def insert_vaa_table_data(gdb, river):
+    """This functions expands the properties dictionary for river tree using VAA attrobute table"""
+
+    #creating lists of needed attributes
+    nhdID=[] # for matching with the reach NHDid
+    order=[] # stream order
+    max_elev=[] # maximum elevation in the reach
+    min_elev=[] # minimum elevation in the reach
+    with fiona.open(gdb, 'r', layer='NHDPlusFlowlineVAA') as fid:
+        for i in range(1,len(fid)-1):
+            flowline = fid[i]
+            nhdID.append(int(flowline['properties']['NHDPlusID']))
+            order.append(int(flowline['properties']['StreamOrde']))
+            max_elev.append(flowline['properties']['MaxElevSmo'])
+            min_elev.append(flowline['properties']['MinElevSmo'])
+
+    #creating DataFrame from above created lists
+    flow_line_df= pd.DataFrame(
+        {'nhdID': nhdID,
+        'order': order,
+        'max_elev': max_elev,
+        'min_elev': min_elev
+        })
+    logging.debug("Created dataframe" %flow_line_df)
+    
+
+    #adding relevant VAA attributes to the river tree
+    logging.info('NAME: length NHDPlusID order max_elev(m) min_elev(m)')
+    logging.info('------------------------------------------------------')
+    for r in river:
+        r.properties['order']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).order)
+        r.properties['max_elev']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).max_elev)/100
+        r.properties['min_elev']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).min_elev)/100
+        logging.info(f"{r.properties['GNIS_Name']} : {r.properties['NHDPlusID']} : {r.properties['order']} : {r.properties['max_elev']} : {r.properties['min_elev']} ")
+        #logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
+    return river
+
+
 
 def create_river_corridor(river, river_width):
     """Returns a polygon representing the river corridor."""

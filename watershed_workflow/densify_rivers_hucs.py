@@ -4,7 +4,7 @@ import logging
 import collections
 import numpy as np
 import math
-import copy
+#import copy
 from scipy import interpolate
 
 import shapely
@@ -23,7 +23,7 @@ def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
       """
     assert (len(tree)==len(tree_))
     k=0
-    tree_densified=copy.deepcopy(tree)
+    tree_densified=tree.deep_copy()
     for node, node_ in zip(tree_densified.preOrder(), tree_.preOrder()):
         k+=1
         node.segment=DensifyNodeSegments(node,node_,limit=limit,treat_collinearity=treat_collinearity)
@@ -54,7 +54,8 @@ def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
         j+=1 
     if treat_collinearity:
         seg_coords_densified=TreatSegmentCollinearity(seg_coords_densified)
-    return shapely.geometry.LineString(seg_coords_densified)
+    node.segment.coords=seg_coords_densified
+    return node.segment
 
 def DensifyHucs(hucs,huc_,river,limit_scales=None):
 

@@ -11,9 +11,9 @@ import shapely
 from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import split
 
-import workflow.river_tree
-import workflow.split_hucs
-from workflow.triangulation import Nodes, NodesEdges
+import watershed_workflow.river_tree
+import watershed_workflow.split_hucs
+from watershed_workflow.triangulation import Nodes, NodesEdges
 
 def orient(e):
     if e[0] > e[1]:
@@ -28,7 +28,7 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
-      hucs              | a workflow.split_hucs.SplitHUCs instance
+      hucs              | a watershed_workflow.split_hucs.SplitHUCs instance
       river_corr        | a shapely.geometry.polygon.Polygon given by river_tree.create_river_corridor
       mixed             | boolean for mixed-element mesh
        
@@ -40,7 +40,7 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
 
     logging.info("Adding river outlet in huc...")
 
-    if type(hucs) is workflow.split_hucs.SplitHUCs or list or shapely.geometry.Polygon:
+    if type(hucs) is watershed_workflow.split_hucs.SplitHUCs or list or shapely.geometry.Polygon:
         huc_segment=add_river_outlet_in_huc(river_corr,hucs) # adjusting hucs to accomodate river corridor
         segments = [huc_segment]
     else:
@@ -100,7 +100,7 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
 
 def add_river_outlet_in_huc(river_corr,hucs):
     """Returns updated huc with river outlet represented"""
-    if type(hucs) is workflow.split_hucs.SplitHUCs:
+    if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
         huc_segment = hucs.segments[0]
     elif type(hucs) is list:
         huc_segment = hucs[0]
@@ -108,7 +108,7 @@ def add_river_outlet_in_huc(river_corr,hucs):
         huc_segment  = hucs.exterior()
 
     huc_coords=list(huc_segment.coords)[:-1] # to avoid repeated points interferring in the river outlet adjustment
-    ind=workflow.utils.closest_point(river_corr.exterior.coords[0],huc_coords)# this is the point to be eliminated from huc boundary
+    ind=watershed_workflow.utils.closest_point(river_corr.exterior.coords[0],huc_coords)# this is the point to be eliminated from huc boundary
     huc_coords[ind]=river_corr.exterior.coords[-2] # point on the huc boundary closest to the river outlet is replaced by one of the two points at river outlet
     huc_coords.insert(ind+1,river_corr.exterior.coords[0]) # other point of the river outlet is inserted into the huc boundary
     huc_coords.append(huc_coords[0]) # to make the polygonal loop complete
