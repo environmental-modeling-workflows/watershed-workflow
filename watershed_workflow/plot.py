@@ -168,7 +168,16 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     patches : matplotib PatchCollection
     """
     ps = list(hucs.polygons())
-    return shply(ps, crs, color, ax, **kwargs)
+    polys = shply(ps, crs, color, ax, **kwargs)
+
+    if hucs.polygon_outlets is not None and ax is not None:
+        x = np.array([p.xy[0][0] for p in hucs.polygon_outlets])
+        y = np.array([p.xy[1][0] for p in hucs.polygon_outlets])
+        if 'markersize' in kwargs:
+            s = kwargs['markersize']
+        else:
+            s = 100
+        ax.scatter(x, y, s=s, c=color)
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
     """Plot an itereable collection of fiona shapes.

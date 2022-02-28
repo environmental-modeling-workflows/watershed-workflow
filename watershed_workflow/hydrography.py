@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import scipy.spatial
 from scipy.spatial import cKDTree
 import itertools
+import collections
 
 import shapely.geometry
 
@@ -88,8 +89,9 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # dealing with crossings might have generated river segments
     # outside of my space.  remove these.  Note the use of negative tol
     logging.info("  filtering rivers to HUC")
-    rivers = filter_rivers_to_shape(hucs.exterior(), rivers, -0.1*tol)
+    rivers = filter_reaches_to_shape(hucs.exterior(), rivers, -0.1*tol)
     return rivers
+
 
 def _snap_and_cut(point, line, tol=0.1):
     """Determine the closest point to a line and, if it is within tol of
@@ -108,6 +110,7 @@ def _snap_and_cut(point, line, tol=0.1):
                     return None 
             return nearest_p
     return None
+
 
 def _snap_crossing(hucs, river_node, tol=0.1):
     """Snap a single river node"""
@@ -156,13 +159,15 @@ def _snap_crossing(hucs, river_node, tol=0.1):
                     new_handle = hucs.segments.add(new_spine[1])
                     spine.add(new_handle)
                 break
-                    
+
+            
 def snap_crossings(hucs, rivers, tol=0.1):
     """Snaps HUC boundaries and rivers to crossings."""
     for tree in rivers:
         for river_node in tree.preOrder():
             _snap_crossing(hucs, river_node, tol)
-    
+
+            
 def snap_polygon_endpoints(hucs, rivers, tol=0.1):
     """Snaps the endpoints of HUC segments to endpoints of rivers."""
     # make the kdTree of endpoints of all rivers
@@ -343,6 +348,7 @@ def snap_endpoints(tree, hucs, tol=0.1):
 
     return river
 
+
 def make_global_tree(rivers, tol=0.1):
     """Sorts shapely river objects into a list of tree structures."""
     if len(rivers) == 0:
@@ -393,26 +399,26 @@ def make_global_tree(rivers, tol=0.1):
     return trees
 
 
-def filter_rivers_to_shape(shape, rivers, tol):
-    """Filters out rivers not inside the HUCs provided."""
+def filter_reaches_to_shape(shape, reaches, tol):
+    """Filters out reaches (or reaches in rivers) not inside the HUCs provided."""
     shape = shape.buffer(2*tol)
     
-    # removes any rivers that are not at least partial contained in the hucs
-    if type(rivers) is list and len(rivers) == 0:
+    # removes any reaches that are not at least partial contained in the hucs
+    if type(reaches) is list and len(reaches) == 0:
         return list()
 
     logging.info("  ...filtering")
-    if type(rivers) is shapely.geometry.MultiLineString or \
-       (type(rivers) is list and type(rivers[0]) is shapely.geometry.LineString):
-        rivers2 = [r for r in rivers if watershed_workflow.utils.non_point_intersection(shape,r)]
-    elif type(rivers) is list and type(rivers[0]) is watershed_workflow.river_tree.RiverTree:
-        rivers2 = [r for river in rivers for r in river.preOrder() if watershed_workflow.utils.non_point_intersection(shape,r.segment)]
-        for r in rivers2:
+    if type(reaches) is shapely.geometry.MultiLineString or \
+       (type(reaches) is list and type(reaches[0]) is shapely.geometry.LineString):
+        reaches2 = [r for r in reaches if watershed_workflow.utils.non_point_intersection(shape,r)]
+    elif type(reaches) is list and type(reaches[0]) is watershed_workflow.river_tree.RiverTree:
+        reaches2 = [r for river in reaches for r in river.preOrder() if watershed_workflow.utils.non_point_intersection(shape,r.segment)]
+        for r in reaches2:
             r.segment.properties = r.properties
-        rivers2 = make_global_tree([r.segment for r in rivers2])
+        reaches2 = make_global_tree([r.segment for r in reaches2])
     else:
         raise RuntimeError("Unrecognized river shape type?")
-    return rivers2
+    return reaches2
     
 def quick_cleanup(rivers, tol=0.1):
     """First pass to clean up hydro data"""
@@ -466,10 +472,11 @@ def prune_by_area(tree, tol):
         accumulate(tree)
 
     count = 0
-    for node in list(tree.preOrder()):
+    for node in tree.preOrder():
         if node.properties['total contributing area'] < tol:
             count += 1
             node.remove()
+            node.clear() # this ensures we can stop removing anything upstream of this
     return count
 
 def prune_by_area_fraction(tree, tol, total_area=None):
@@ -481,11 +488,12 @@ def prune_by_area_fraction(tree, tol, total_area=None):
     logging.info(f'... total contributing area = {total_area}')
         
     count = 0
-    for node in list(tree.preOrder()):
+    for node in tree.preOrder():
         if node.properties['total contributing area'] / total_area < tol:
             logging.info(f'... removing: {node.properties["total contributing area"]} of {total_area}')
             count += 1
             node.remove()
+            node.clear() # this ensures we can stop removing anything upstream of this
     return count
     
 def merge(tree, tol=0.1):

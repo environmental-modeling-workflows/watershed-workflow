@@ -607,3 +607,18 @@ def create_empty_raster(target_bounds,crs,target_dx,dtype, nodata):
                       'nodata':nodata}
     out = nodata * np.ones((height, width), dtype)
     return out_profile, out
+
+def cluster(points, tol):
+    """Given a list of points, determine a list of clusters.
+
+    Each cluster is within tol of each other.
+
+    Returns (cluster_index, cluster_centroid)
+    """
+    import scipy.cluster.hierarchy as hcluster
+    if type(points) is list:
+        points = np.array(points)
+    indices = hcluster.fclusterdata(points, tol, criterion='distance')
+    centroids = [points[indices==(i+1)].mean(axis=0) for i in range(indices.max())]
+    return indices-1, centroids
+    

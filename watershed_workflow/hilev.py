@@ -1,4 +1,4 @@
-"""High-level routines -- these are imported into the top level `"workflow`" namespace.
+"""High-level routines -- these are imported into the top level `"watershed_workflow`" namespace.
 
 This top level module provides functionality for getting shapes and rasters
 representing watershed boundaries, river networks, digital elevation models,
@@ -30,9 +30,9 @@ import watershed_workflow.sources.manager_shape
 import watershed_workflow.utils
 
 __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
-           'get_shapes', 'get_split_form_shapes', 'get_reaches',
-           'find_huc', 'simplify_and_prune', 'triangulate',
-           'get_raster_on_shape', 'values_from_raster',
+           'get_shapes', 'get_split_form_shapes', 'find_huc',
+           'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune',
+           'triangulate', 'get_raster_on_shape', 'values_from_raster',
            'elevate', 'color_raster_from_shapes']
 
 #
@@ -219,7 +219,12 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
 
     # convert to shapely
     logging.info("Converting to shapely")
-    shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+    if len(shps) == 0:
+        shplys = []
+    elif type(shps[0]) is dict:
+        shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+    else:
+        shplys = shps
     
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
@@ -346,7 +351,7 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
 
         for reach in reaches:
-            if 'catchment' in reach.properties:
+            if 'catchment' in reach.properties and 'area' not in reach.properties:
                 if reach.properties['catchment'] == None:
                     reach.properties['area'] = 0
                 else:
@@ -564,18 +569,15 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 #
 # functions for manipulating objects
 # -----------------------------------------------------------------------------
-def simplify_and_prune(hucs, reaches,
-                       filter=True,
-                       simplify=None,
-                       ignore_small_rivers=None,
-                       prune_by_area=0,
-                       prune_by_area_fraction=0,
-                       snap=False,
-                       cut_intersections=False):
-    """Cleans up the HUC and river shapes.
+def construct_rivers(hucs, reaches,
+                     filter=True,
+                     ignore_small_rivers=None,
+                     tol=None,
+                     prune_by_area=0,
+                     prune_by_area_fraction=0):
+    """Create a river, which is a tree of reaches.
 
-    Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
-    rivers must be in the same crs.
+    Note, HUCs and rivers must be in the same crs.
 
     Parameters
     ----------
@@ -585,12 +587,6 @@ def simplify_and_prune(hucs, reaches,
         A list of reaches.
     filter : bool, optional=True
         If true, filter reaches to the boundary of hucs.
-    simplify : float, optional
-        If provided, simply the shapes by moving points at most this
-        many units (see also shapely.simplify).  Units are that of the
-        CRS of shapes.
-    ignore_small_rivers : int, optional
-        If provided, remove rivers with fewer than this number of reaches.
     prune_by_area : float, optional
         If provided, remove reaches whose total contributing area is
         less than this tol.  NOTE: only valid for reaches that include
@@ -600,38 +596,20 @@ def simplify_and_prune(hucs, reaches,
         a fraction of the area of hucs, is less than this tol.  NOTE:
         only valid for reaches that include a contributing area
         property (e.g. NHDPlus).
-    snap : bool, optional
-        If true, tries to make sure that streams and the boundary, if
-        they cross, the crossing point is in both geometries
-        (discretely).  This is important if the streams are to be
-        included in the mesh.
-    cut_intersections : bool, optional
-        If True, cut HUC segments at the river input/output,
-        potentially resulting in simpler geometries.  This is work in
-        progress.
-
-    .. note: 
-       Pruning is only possible for reaches which include an 'area'
-       property.  Currently this only includes NHDPlus hydrography.
 
     Returns
     ------- 
     out : list(RiverTree)
         A list of rivers, as RiverTree objects.
 
-    .. note: 
-        This also may modify the hucs object in-place.
-
     """
-    tol = simplify
-    
     logging.info("")
-    logging.info("Simplifying and pruning")
+    logging.info("Constructing river network")
     logging.info("-"*30)
     if filter:
-        logging.info("Filtering rivers outside of the HUC space")
+        logging.info("Filtering reaches outside of the HUC space")
         count = len(reaches)
-        reaches = watershed_workflow.hydrography.filter_rivers_to_shape(hucs.exterior(), reaches, tol)
+        reaches = watershed_workflow.hydrography.filter_reaches_to_shape(hucs.exterior(), reaches, tol)
         logging.info("... filtered from {} to {} reaches.".format(count, len(reaches)))
     if len(reaches) == 0:
         return reaches
@@ -651,13 +629,6 @@ def simplify_and_prune(hucs, reaches,
                 logging.info("  ...keeping river with %d reaches"%ltree)
         if len(rivers) == 0:
             return rivers
-            
-    if tol > 0:
-        logging.info("Simplifying rivers")
-        watershed_workflow.hydrography.cleanup(rivers, tol, tol, tol)
-
-        logging.info("Simplifying HUCs")
-        watershed_workflow.split_hucs.simplify(hucs, tol)
 
     if prune_by_area > 0:
         logging.info(f"Pruning by total contributing area < {prune_by_area}")
@@ -674,20 +645,96 @@ def simplify_and_prune(hucs, reaches,
     if prune_by_area_fraction > 0:
         logging.info(f"Pruning by fractional contributing area < {prune_by_area_fraction}")
         count = 0
-        total_area = hucs.exterior().area
         sufficiently_big_rivers = []
         for river in rivers:
             watershed_workflow.hydrography.accumulate(river)
+        total_area = sum(river.properties['total contributing area'] for river in rivers)
+        for river in rivers:
             if river.properties['total contributing area'] >= prune_by_area_fraction * total_area:
                 count += watershed_workflow.hydrography.prune_by_area_fraction(river, prune_by_area_fraction, total_area)
                 sufficiently_big_rivers.append(river)
+            else:
+                logging.info(f"... pruning river with area {river.properties['total contributing area']} of {total_area}")
         logging.info(f"... pruned {count}")
         rivers = sufficiently_big_rivers
+        
+    return rivers
 
-    # snap
+
+def simplify(hucs,
+             rivers,
+             simplify_hucs=0,
+             simplify_rivers=None,
+             prune_tol=None,
+             merge_tol=None,
+             snap=False,
+             cut_intersections=False):
+    """Simplifies the HUC and river shapes.
+
+    Parameters
+    ----------
+    hucs : SplitHUCs
+        A split-form HUC object containing all reaches.
+    rivers : list(RiverTree)
+        A list of river objects.
+    simplify_hucs : float, optional
+        If provided, simply the hucs by moving points at most this
+        many units (see also shapely.simplify).  Units are that of the
+        CRS of shapes.
+    simplify_rivers : float, optional
+        If provided, simply the rivers by moving points at most this
+        many units (see also shapely.simplify).  Units are that of the
+        CRS of shapes.  If not provided, use the simplify_hucs value.
+        Provide 0 to make no changes to the rivers.
+    prune_tol : float, optional
+        Prune leaf reaches that are smaller than this tolerance.  If
+        not provided, uses simplify_rivers value.  Provide 0 to not do
+        this step.
+    merge_tol : float, optional
+        Merges reaches that are smaller than this tolerance their
+        downstream parent reach.  Note that if htere is a branchpoint
+        at the downstream node of the small reach, it will get moved
+        to the upstream node.  If not provided, uses simplify_rivers
+        value.  Provide 0 to not do this step.
+    snap : bool, optional
+        If true, snaps river and HUC nodes that are nearly coincident
+        to be discretely coincident.
+    cut_intersections : bool, optional
+        If true, force intersections of the river network and the HUC
+        boundary to occur at a coincident node by adding nodes as
+        needed.
+
+    .. note: 
+        This also may modify the hucs object in-place.
+
+    """
+    assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
+    assert(type(rivers) is list)
+    assert(all(type(r) is watershed_workflow.river_tree.RiverTree for r in rivers))
+
+    if simplify_rivers is None:
+        simplify_rivers = simplify_hucs
+    if prune_tol is None:
+        prune_tol = simplify_rivers
+    if merge_tol is None:
+        merge_tol = simplify_rivers
+    
+    logging.info("")
+    logging.info("Simplifying")
+    logging.info("-"*30)
+            
+    if simplify_rivers > 0:
+        logging.info("Simplifying rivers")
+        watershed_workflow.hydrography.cleanup(rivers, simplify_rivers, prune_tol, merge_tol)
+
+    if simplify_hucs > 0:
+        logging.info("Simplifying HUCs")
+        watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
+
     if snap:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
-        rivers = watershed_workflow.hydrography.snap(hucs, rivers, tol, 3*tol, cut_intersections)
+        rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
+                                                     3*simplify_rivers, cut_intersections)
     
     logging.info("")
     logging.info("Simplification Diagnostics")
@@ -710,7 +757,22 @@ def simplify_and_prune(hucs, reaches,
         mins.append(np.min(dz))
     logging.info(f"  HUC min seg length: {min(mins)}")
     logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
+
+
+def simplify_and_prune(hucs, reaches,
+                       filter=True,
+                       simplify_hucs=None,
+                       simplify_rivers=None,
+                       ignore_small_rivers=None,
+                       prune_by_area=0,
+                       prune_by_area_fraction=0,
+                       snap=False, cut_intersections=False):
+    """DEPRECATED: simply calls construct_rivers() and simplify()"""
+    rivers = construct_rivers(hucs, reaches, filter, ignore_small_rivers, simplify_hucs,
+                              prune_by_area, prune_by_area_fraction)
+    simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
+
     
 def triangulate(hucs, rivers,
                 mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
