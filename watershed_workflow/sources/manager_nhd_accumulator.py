@@ -24,8 +24,12 @@ class FileManagerNHDPlusAccumulator:
             prof, wbd_hucs = self.wbd.get_hucs(huc, 4)
             contained = []
             for hu in wbd_hucs:
-                print(list(hu['properties'].keys()))
-                prof, subhucs = self.nhd_plus.get_hucs(hu['properties']['HUC4'], level)
+                if 'HUC4' in hu['properties']:
+                    prof, subhucs = self.nhd_plus.get_hucs(hu['properties']['HUC4'], level)
+                elif 'huc4' in hu['properties']:
+                    prof, subhucs = self.nhd_plus.get_hucs(hu['properties']['huc4'], level)
+                else:
+                    raise RuntimeError(f'Cannot find HUC4 property name in HUC properties for {huc}')
                 contained.extend(subhucs)
             return prof, contained
 
