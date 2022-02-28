@@ -385,15 +385,15 @@ class FileManagerNRCS:
         return df_ats
 
     
-    def get_shapes_and_properties(self, bounds, bounds_crs, force_download=False):
+    def get_shapes_and_properties(self, shapes, crs, force_download=False, split_download=False):
         """Downloads and reads soil shapefiles, and aggregates SSURGO data onto MUKEYS
 
-        This accepts only a bounding box.  
+        Accepts either a bounding box, shape, or list of shapes.
 
         Parameters
         ----------
-        bounds : [xmin, ymin, xmax, ymax]
-            Bounding box to filter shapes.
+        shapes : shply, list(shply), or [xmin, ymin, xmax, ymax]
+            Shapes on which to run the query.
         crs : CRS
             Coordinate system of the bounding box.
         force_download : bool
@@ -408,17 +408,64 @@ class FileManagerNRCS:
         properties : pandas dataframe
             Dataframe of data by mukey = shape['id']
         """
-        bounds_inner = self.bounds(bounds, bounds_crs)
-        filename = self.name_manager.file_name(*bounds_inner)
+        if type(shapes) is list:
+            if len(shapes) == 0:
+                return None, list(), None
+            elif len(shapes) == 4 and type(shapes[0]) is float:
+                list_of_bounds = [shapes,]
+            else:
+                list_of_bounds = [shapely.ops.cascaded_union(shapes).bounds,]
+        else:
+            list_of_bounds = [shapes.bounds,]
 
-        profile, shapes = self.get_shapes(bounds, bounds_crs, force_download)
-        mukeys = set([s['properties']['mukey'] for s in shapes])
+        total_bounds = list_of_bounds[0]
+        filename = self.name_manager.file_name(*self.bounds(total_bounds, crs))
+
+        if not split_download:
+            try:
+                profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs, force_download)
+            except requests.HTTPError as e:
+                if '500 Server Error' in str(e):
+                    # failed because too big!
+                    if type(shapes) is list and type(shapes[0]) is not float:
+                        # get the shapes independently
+                        list_of_bounds = [shp.bounds for shp in shapes]
+                        logging.info('Shape is too big -- attempting to download as separate shapes and merge.')
+                        profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs, force_download)
+                    else:
+                        raise ValueError('NRCS get_shapes() called with too large of a shape for NRCS servers.  Trying splitting it into smaller polygons and trying again.')
+                else:
+                    raise e
+        else:
+            list_of_bounds = [shp.bounds for shp in shapes]
+            profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs, force_download)
 
         data_filename = filename[:-4]+"_properties.csv"
         df = self.get_properties(mukeys, data_filename, force_download)
         return profile, shapes, df
 
-    
+    def _get_shapes(self, list_of_bounds, crs, force_download=False):
+        """Inner function called by above, accepts list of bounds only."""
+        shapes = []
+        for bounds in list_of_bounds:
+            bounds_inner = self.bounds(bounds, crs)
+            profile, shapes_l = self.get_shapes(bounds, crs, force_download)
+            shapes.extend(shapes_l)
+
+        logging.info(f'  Downloaded {len(shapes)} total shapes')
+
+        # find unique
+        unique = collections.defaultdict(list)
+        for s in shapes:
+            unique[s['properties']['mukey']].append(s)
+        logging.info(f'  Downloaded {len(unique)} unique mukeys')
+
+        # merge the shapes into multipolygons, converting to shapely in the process
+        for mukey in unique:
+            unique[mukey] = [watershed_workflow.utils.shply(s) for s in unique[mukey]]
+        shapes = [shapely.ops.cascaded_union(l) for l in unique.values()]
+        return profile, list(unique.keys()), shapes
+
     def bounds(self, b, bounds_crs):
         """Create a bounds in the NRCS coordinate system for use in downloading."""
         b = watershed_workflow.warp.bounds(b, bounds_crs, self.crs)
