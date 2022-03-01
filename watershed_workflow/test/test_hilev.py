@@ -92,8 +92,8 @@ def test_river_tree_properties(sources):
     _, cc = watershed_workflow.get_split_form_hucs(nhd, '060102020103', 12, crs)
     _, reaches = watershed_workflow.get_reaches(nhd, '060102020103',None,crs, merge=False)
 
-    rivers1 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2)
-    rivers2 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify=50, cut_intersections=False, ignore_small_rivers=2,
+    rivers1 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify_hucs=50, cut_intersections=False, ignore_small_rivers=2)
+    rivers2 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify_hucs=50, cut_intersections=False, ignore_small_rivers=2,
                                           prune_by_area_fraction=0.03)
 
     
