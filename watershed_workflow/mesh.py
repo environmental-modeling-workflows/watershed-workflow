@@ -1484,6 +1484,13 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     # edges that are unordered nodes.  This could never be used for
     # anything geometric, but may allow us to exploit the existing
     # topologic routines in Mesh2D
+    def inside_ball(outlet, edge):
+        n1 = m2.coords[edge[0]]
+        n2 = m2.coords[edge[1]]
+        c = (n1 + n2)/2.
+        close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+        return close
+
     for label, tris, outlet in zip(labels, partitions, hucs.polygon_outlets):
         subdomain_conn = [list(m2.conn[tri]) for tri in tris]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
@@ -1498,14 +1505,6 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         m2.add_labeled_set(ls)
 
         # every polygon now has an outlet -- find the boundary faces near that outlet
-        outlet_face_sets = []
-        def inside_ball(outlet, edge):
-            n1 = m2.coords[edge[0]]
-            n2 = m2.coords[edge[1]]
-            c = (n1 + n2)/2.
-            close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
-            return close
-
         outlet_faces = [e for e in m2h.boundary_edges() if inside_ball(outlet, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
         ls = LabeledSet(label+' outlet', m2.next_available_labeled_setid(),
@@ -1514,11 +1513,13 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
                              # to not limit it to the surface
         m2.add_labeled_set(ls)
 
-        if watershed_workflow.utils.close(outlet, hucs.exterior_outlet):
-            # also write one for the full domain
-            ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(),
-                             'FACE', edges)
-            ls2.to_extrude = True
-            m2.add_labeled_set(ls2)
+    # also write one for the full domain
+    if hucs.exterior_outlet is not None:
+        outlet_faces = [e for e in m2.boundary_edges() if inside_ball(hucs.exterior_outlet, e)]
+        edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
+        ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(),
+                         'FACE', edges)
+        ls2.to_extrude = True
+        m2.add_labeled_set(ls2)
 
         
