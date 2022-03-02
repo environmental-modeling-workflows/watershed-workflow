@@ -50,6 +50,8 @@ class FileManagerMODISAppEEARS:
         if login_token is None:
             login_token = self._authenticate()
         self.login_token = login_token
+        if not os.path.isdir(self.names.folder_name()):
+            os.mkdir(self.names.folder_name())
         self.tasks = []
 
     def _authenticate(self, username=None, password=None):
@@ -185,7 +187,7 @@ class FileManagerMODISAppEEARS:
             return False
         else:
             json = response.json()
-            return json['file'][0]
+            return next(f for f in json['files'] if f['file_type'] == 'nc')
 
     def _download(self, task=None, file_id=None):
         """Downloads the provided task/file_id.
@@ -204,7 +206,7 @@ class FileManagerMODISAppEEARS:
             task = self.tasks[0]
         task_id, filename = task
 
-        url = self._BUNDLE_URL_TEMPLATE + task_id + '/' + file_id
+        url = self._BUNDLE_URL_TEMPLATE + task_id + '/' + file_id['file_id']
         logging.info("  Downloading: {}".format(url))
         logging.info("      to file: {}".format(filename))
 
