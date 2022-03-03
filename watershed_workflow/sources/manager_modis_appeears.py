@@ -7,11 +7,13 @@ import time
 import datetime
 import shapely
 import numpy as np
+import netCDF4
 
 import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.sources.names
 import watershed_workflow.warp
+import watershed_workflow.crs
 
 class FileManagerMODISAppEEARS:
     """MODIS data through the AppEEARS data portal.
@@ -219,11 +221,31 @@ class FileManagerMODISAppEEARS:
         return filename
 
 
-    def _open(self, filename):
-        """Open the file and get the data"""
-        assert(os.path.isfile(filename))
-        return np.array([1,2,3,4]), dict()
-    
+    def _open(self, filename, variable):
+        """Open the file and get the data -- currently these reads it all, which may not be necessary."""
+        profile = dict()
+        with netCDF4.Dataset(filename, 'r') as nc:
+            profile['crs'] = watershed_workflow.crs.from_epsg(nc.variables['crs'].epsg_code)
+            profile['width'] = nc.dimensions['lon'].size
+            profile['height'] = nc.dimensions['lat'].size
+            profile['count'] = nc.dimensions['time'].size
+            profile['nodata'] = np.nan
+
+            # this assumes it is a fixed dx and dy, which should be
+            # pretty good for not-too-big domains.
+            lat = nc.variables['lat'][:]
+            lon = nc.variables['lon'][:]
+            profile['dx'] = (lon[1:] - lon[:-1]).mean()
+            profile['dy'] = (lat[1:] - lat[:-1]).mean()
+            profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
+            # do we need to make an affine transform?
+
+            varname = self._PRODUCTS[variable]['layer']
+            profile['layer'] = varname
+            data = nc.variables[varname][:].filled(np.nan)
+        return data, profile
+
+
     def get_data(self, polygon_or_bounds, crs, start=None, end=None, variable='LAI',
                    force_download=False, wait_time=0, check_interval=1, task=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
@@ -300,7 +322,7 @@ class FileManagerMODISAppEEARS:
             if force_download:
                 os.path.remove(filename)
             else:
-                return self._open(filename)
+                return self._open(filename, variable)
 
         if task_id is None:
             # create the task
@@ -316,7 +338,7 @@ class FileManagerMODISAppEEARS:
             file_id = self._is_ready(task)
             if file_id:
                 self._download(task, file_id)
-                return self._open(task)
+                return self._open(filename, variable)
             time.sleep(check_interval * 60)
 
         return task
