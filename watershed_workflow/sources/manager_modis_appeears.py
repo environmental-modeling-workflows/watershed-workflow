@@ -49,8 +49,6 @@ class FileManagerMODISAppEEARS:
         self.name = 'MODIS'
         self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover',
                                                             self.name, 'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
-        if login_token is None:
-            login_token = self._authenticate()
         self.login_token = login_token
         if not os.path.isdir(self.names.folder_name()):
             os.mkdir(self.names.folder_name())
@@ -144,6 +142,9 @@ class FileManagerMODISAppEEARS:
           Integer token for downloading this data.
 
         """
+        if login_token is None:
+            login_token = self._authenticate()
+
         filename = self._filename(bounds_ll, start, end, variable)
         (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
 
@@ -191,6 +192,7 @@ class FileManagerMODISAppEEARS:
             json = response.json()
             return next(f for f in json['files'] if f['file_type'] == 'nc')
 
+        
     def _download(self, task=None, file_id=None):
         """Downloads the provided task/file_id.
 
@@ -243,11 +245,11 @@ class FileManagerMODISAppEEARS:
             varname = self._PRODUCTS[variable]['layer']
             profile['layer'] = varname
             data = nc.variables[varname][:].filled(np.nan)
-        return data, profile
+        return profile, data
 
 
     def get_data(self, polygon_or_bounds, crs, start=None, end=None, variable='LAI',
-                   force_download=False, wait_time=0, check_interval=1, task=None):
+                   force_download=False, task=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -272,15 +274,6 @@ class FileManagerMODISAppEEARS:
           is LAI.
         force_download : bool, optional
           Force a new file to be downloaded.  Default is False.
-        wait_time : int, optional
-          Wait for up to this many minutes for the data to be ready.
-          Default is 0, which returns a token instantly rather than
-          waiting. Presumably you do some work that does not need this
-          data, then call this again with the token argument, at which
-          point your data is magically ready to be downloaded.
-        check_interval : int, optional
-          Check each interval minutes for the data (up to the wait_time).
-          Default is 1 minute.
         task : (str, str) tuple of task_id, filename
           If a request has already been created, use this task to
           access the data rather than creating a new request.  Default
@@ -330,15 +323,10 @@ class FileManagerMODISAppEEARS:
             assert(filename == task[1])
             task_id = task[0]
 
-        # we DO NOT want an infinite loop here...
-        assert(wait_time >= 0)
-        assert(check_interval > 0)
         task = (task_id, filename)
-        for i in range(0, wait_time, check_interval):
-            file_id = self._is_ready(task)
-            if file_id:
-                self._download(task, file_id)
-                return self._open(filename, variable)
-            time.sleep(check_interval * 60)
+        file_id = self._is_ready(task)
+        if file_id:
+            self._download(task, file_id)
+            return self._open(filename, variable)
 
         return task
