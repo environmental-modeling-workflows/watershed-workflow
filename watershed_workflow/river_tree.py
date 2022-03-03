@@ -299,7 +299,7 @@ def create_river_corridor(river, river_width):
 
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
-    return corr, corr2, corr3
+    return corr3
 
 
 def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' ):
@@ -428,10 +428,18 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
     elems=[el for node in river.preOrder() for el in node.elements]
     ## ensuring that the pentagons at the junctions are convex
     elems=junction_treatment(elems, coords,junction_option)
+    # note that after junction_treatment1 node.elemements and m2d.conn may not be exactly same
+    i=0
+    for node in river.preOrder():
+        for j, el in enumerate(node.elements):
+            node.elements[j] = elems[i]
+            i+=1
+    assert([el for node in river.preOrder() for el in node.elements]==elems)
     return elems
 
 def junction_treatment(elems, coords,junction_option='all_pentagons'):
-    """Iterate over pentagon elements, check for convexity and treat non-convexity"""
+    """Iterate over pentagon elements, check for convexity and treat non-convexity 
+    by either using triangle at the junction or making one of the upstream point as triangle"""
     elem_lens=[len(elem) for elem in elems]
     pents=np.where(np.array(elem_lens)==5)[0]
     tri_count=0

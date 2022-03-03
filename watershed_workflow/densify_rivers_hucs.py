@@ -1,7 +1,9 @@
 """this code increases the resolution of river network and huc boundmary in a controlled way using original river network and huc"""
 
+from cmath import nan
 import logging
 import collections
+from turtle import fd
 import numpy as np
 import math
 #import copy
@@ -12,7 +14,7 @@ import shapely.geometry
 
 import watershed_workflow.utils
 
-def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
+def DensifyTree(tree,tree_, limit=100,use_original=False, treat_collinearity=False):
     """This function preOrder travers through the tree and density node.segments
     
      Arguments:
@@ -26,11 +28,11 @@ def DensifyTree(tree,tree_, limit=100, treat_collinearity=False):
     tree_densified=tree.deep_copy()
     for node, node_ in zip(tree_densified.preOrder(), tree_.preOrder()):
         k+=1
-        node.segment=DensifyNodeSegments(node,node_,limit=limit,treat_collinearity=treat_collinearity)
+        node.segment=DensifyNodeSegments(node,node_,limit=limit,use_original=use_original,treat_collinearity=treat_collinearity)
     return tree_densified
 
 
-def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
+def DensifyNodeSegments(node,node_,limit=100,use_original=False,treat_collinearity=False):
     """This function adds equally space point in the reach-sections longer than the limit
      Arguments:
       node              | node whose segment to be densified (watershed_workflow.river_tree.RiverTree)
@@ -48,7 +50,10 @@ def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
         if section_length>limit:
             number_new_points=int(section_length//limit)
             end_points=[seg_coords[i],seg_coords[i+1]] # points betwen which more points will be added
-            new_points=Interpolate(end_points,seg_coords_,number_new_points)
+            if use_original:
+                new_points=Interpolate(end_points,seg_coords_,number_new_points)
+            else:
+                new_points=Interpolate_simple(end_points,number_new_points)
             seg_coords_densified[j+1:j+1]= new_points
             j+=number_new_points        
         j+=1 
@@ -57,22 +62,27 @@ def DensifyNodeSegments(node,node_,limit=100,treat_collinearity=False):
     node.segment.coords=seg_coords_densified
     return node.segment
 
-def DensifyHucs(hucs,huc_,river,limit_scales=None):
+def DensifyHucs(hucs,huc_,river, use_original=False,limit_scales=None):
 
     # first if there are multiple segments, we define outer-ring and remove close points
     huc_ring=hucs.exterior().exterior.simplify(tolerance=1)
     coords=list(huc_ring.coords) 
     coords_=list(huc_.exterior().exterior.coords)
 
-    if type(limit_scales)is list:
-        # basic refine
-        coords_densified_basic=DensifyHucs_(coords,coords_,river,limit_scales=limit_scales[-1])
-        # adaptive refine
-        coords_densified=DensifyHucs_(coords_densified_basic,coords_,river,limit_scales=limit_scales)
-        
-    else:
+    if use_original:
+        if type(limit_scales)is list:
+            # basic refine
+            coords_densified_basic=DensifyHucs_(coords,coords_,river,limit_scales=limit_scales[-1])
+            # adaptive refine
+            coords_densified=DensifyHucs_(coords_densified_basic,coords_,river,limit_scales=limit_scales)
+            
+        else:
+            coords_densified=DensifyHucs_(coords,coords_,river,limit_scales=limit_scales)
+      
+    else: # in this case original huc boundary coordinates are used for interpolation
         coords_densified=DensifyHucs_(coords,coords_,river,limit_scales=limit_scales)
 
+        
     return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
 
 
@@ -151,6 +161,8 @@ def TreatSegmentCollinearity(segment_coords, tol=1e-6):
         if CheckCollinearity(p0, p1, p2, tol=tol): # treating collinearity through a small pertubation
             del_ortho=10*tol # shift in the middle point
             m=(p2[1] - p0[1])/(p2[0] - p0[0])
+            if abs(m)==float('inf'):
+                m=1e6
             del_y=del_ortho/(1+m**2)**0.5
             del_x=-1*del_ortho*m/(1+m**2)**0.5
             p1=(p1[0]+del_x , p1[1]+del_y)

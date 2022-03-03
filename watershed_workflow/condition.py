@@ -377,3 +377,122 @@ def fill_gaps(img_in, nodata=np.nan):
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
 
 
+def condition_river_mesh(m2, river, mode="upper"):
+    """ makes the bed profile of the stream smooth, removes hills and ponds
+            m2: mesh2D object generated from Watershed Workflow
+            river: river_tree object
+    """
+    river_corr_ids=[] # collecting IDs of all nodes in the river/stream
+    for node in river.preOrder():
+        for elem in node.elements:
+            for id in elem:
+                if id not in river_corr_ids: 
+                    river_corr_ids.append(id)
+    
+    for node in river.preOrder():
+        order=node.segment.properties['order']
+        profile=get_reach_profile(node, m2)
+        profile_new=condition_reach(profile, mode=mode)
+
+        if not order == 5: # if we wish to put control of river order for conditioning. 
+            # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
+            for i, elem in enumerate(node.elements):
+                for j in range(len(elem)):
+                    m2.coords[elem[j]][2]=profile_new[i,1]-1 # lower by 1 m
+                
+                bank_node_ids=bank_nodes_from_elem(elem, m2)
+                for node_id in bank_node_ids:
+                     if node_id not in river_corr_ids:
+                        if m2.coords[node_id][2]<profile_new[i,1]-1:
+                               m2.coords[node_id][2]= profile_new[i,1]+0.25
+
+def get_reach_profile(node,m2):
+    """ for a given node segment of a river tree, this function return the profile
+        of the stream bed based on the centroid elevation of the quads
+
+        node: node of a river_tree object
+        m2: mesh2D object
+    """
+    from math import dist
+    n_quads=len(node.elements); # this includes traingles and pentagons
+    profile=np.zeros((n_quads,2))
+
+    for i, elem in enumerate(node.elements):
+        if i ==0:
+            d=0
+            ind=m2.conn.index(node.elements[i])
+            centroid=m2.centroids()[ind]
+            p=(centroid[0],centroid[1])
+        else:
+            ind=m2.conn.index(node.elements[i])
+            centroid=m2.centroids()[ind]
+            p_new=(centroid[0],centroid[1])
+            delta=dist(p,p_new)
+            d=d+delta
+            p=p_new
+        profile[i,0]=d
+        profile[i,1]=centroid[2]
+    return profile
+        
+def condition_reach(profile, mode='upper'):
+    """performs a condiotning of the stream bed by using a high-order polynomial and pass for monotonicity enforcement
+    """
+    import copy 
+    import numpy
+    from numpy.polynomial import polynomial as poly
+
+    profile_new=copy.deepcopy(profile)
+    if not len(profile)==1:
+        p = poly.polyfit(profile[:,0], profile[:,1], deg=5)
+        profile_new[:,1]=poly.polyval(profile_new[:,0],p)
+        if  mode=='upper':
+            for i in range(len(profile_new)-1):
+                if profile_new[i+1,1] < profile_new[i,1]:
+                    profile_new[i+1,1]=profile_new[i,1]
+        elif mode=='lower':
+            for i in range(len(profile_new)-1, 0,-1):
+                if profile_new[i-1,1] > profile_new[i,1]:
+                    profile_new[i-1,1] = profile_new[i,1]
+    return profile_new
+ 
+
+def bank_nodes_from_elem(elem, m2):
+    # function yileding back id of the bank-node for a given stream-mesh element 
+    edge_r=list(m2.cell_edges(elem))[0]   # edge on the right as we look from the downstream direction
+    edge_l=list(m2.cell_edges(elem))[2]  # edge on the left as we look from the downstream direction
+    
+    return [bank_nodes_from_edge(edge_r, elem, m2), bank_nodes_from_edge(edge_l, elem, m2)]
+
+def bank_nodes_from_edge(edge, elem, m2):
+    cell_ids=m2._edges_to_cells[edge]
+    cells_to_edge=[m2.conn[cell_id] for cell_id in cell_ids] 
+    cells_to_edge.remove(elem)
+    bank_tri=cells_to_edge[0]
+    node_id=(set(bank_tri)-set(edge)).pop()
+    return node_id
+
+
+# def condition_river_mesh(m2, river):
+#     for node in river.preOrder():
+#         order, min_elev, max_elev=[node.segment.properties['order'], node.segment.properties['min_elev'], node.segment.properties['max_elev']]
+#         if not order == 5: # leaving out 4th order streams
+#             n_quads=len(node.elements); # this includes traingles and pentagons
+#             elevations=np.linspace(min_elev,max_elev,n_quads+1)
+#             for i, elem in enumerate(node.elements):
+#                 if len(elem)==3:          
+#                     m2.coords[elem[0]][2]= m2.coords[elem[2]][2]= min_elev #elevations[i]
+#                     m2.coords[elem[1]][2]= min_elev #elevations[i+1]
+
+#                 elif len(elem)==4: 
+#                     m2.coords[elem[0]][2]= m2.coords[elem[3]][2]= min_elev #elevations[i]
+#                     m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= min_elev #elevations[i+1]
+#                 elif len(elem)==5:  
+                    
+#                     m2.coords[elem[0]][2]= m2.coords[elem[4]][2]= min_elev #elevations[i]
+#                     m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= min_elev #elevations[i+1]
+
+#             # conditioning of the stream bank if stream is "placed" into a pond or pit
+#             # bank_node_ids=bank_nodes_from_elem(elem, m2)
+#             # for node_id in bank_node_ids:
+#             #         if m2.coords[node_id][2]<elevations[i]:
+#             #                m2.coords[node_id][2]= elevations[i]+1.5
