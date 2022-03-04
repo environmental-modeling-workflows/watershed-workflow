@@ -382,6 +382,13 @@ class FileManagerNRCS:
 
         # all structure data frames are expected to have a 'source' and an 'id' in that source field
         df_ats['source'] = 'NRCS'
+
+        # resort the dataframe to have the same order as was passed in
+        # in the list mukeys.  This alleviates potential mistakes if
+        # they get zipped or otherwise iterated over together.
+        df_ats.set_index('mukey', inplace=True)
+        df_ats = df_ats.reindex(mukeys)
+        df_ats.reset_index(inplace=True)
         return df_ats
 
     
@@ -448,7 +455,6 @@ class FileManagerNRCS:
         """Inner function called by above, accepts list of bounds only."""
         shapes = []
         for bounds in list_of_bounds:
-            bounds_inner = self.bounds(bounds, crs)
             profile, shapes_l = self.get_shapes(bounds, crs, force_download)
             shapes.extend(shapes_l)
 
@@ -463,8 +469,17 @@ class FileManagerNRCS:
         # merge the shapes into multipolygons, converting to shapely in the process
         for mukey in unique:
             unique[mukey] = [watershed_workflow.utils.shply(s) for s in unique[mukey]]
-        shapes = [shapely.ops.cascaded_union(l) for l in unique.values()]
-        return profile, list(unique.keys()), shapes
+
+        # sort -- this just keeps everything cleaner
+        unique = sorted(unique.items())
+        shapes = [shapely.ops.cascaded_union(l[1]) for l in unique]
+        mukeys = [l[0] for l in unique]
+
+        # put the mukey on the MultiPolygon object
+        for mukey, shp in zip(mukeys, shapes):
+            shp.properties = {'mukey' : mukey }
+
+        return profile, mukeys, shapes
 
     def bounds(self, b, bounds_crs):
         """Create a bounds in the NRCS coordinate system for use in downloading."""
