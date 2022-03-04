@@ -26,6 +26,10 @@ def get_default_config():
                                             # e.g. /etc/ssl/cert.perm
                                             # or similar
     rcParams['DEFAULT']['proj_network'] = "False"
+
+    rcParams.add_section('AppEEARS')
+    rcParams['AppEEARS']['username'] = 'NOT_PROVIDED'
+    rcParams['AppEEARS']['password'] = 'NOT_PROVIDED'
     return rcParams
 
 def get_config():
