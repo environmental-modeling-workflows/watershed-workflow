@@ -1,6 +1,7 @@
 """A module for working with multi-polys, a MultiLine that together forms a Polygon"""
 
 import logging
+import numpy as np
 
 import shapely.geometry
 import shapely.ops
@@ -78,7 +79,8 @@ class SplitHUCs:
                         | intersections -- which together form the polygon.
 
     """
-    def __init__(self, shapes, abs_tol=0., rel_tol=1.e-5):
+    def __init__(self, shapes, abs_tol=0., rel_tol=1.e-5,
+                 exterior_outlet=None, polygon_outlets=None):
         # all shapes are stored as a collection of collections of segments
         self.segments = HandledCollection() # stores segments
 
@@ -95,6 +97,16 @@ class SplitHUCs:
                 self.properties.append(s.properties)
             except AttributeError:
                 self.properties.append(None)
+
+        if polygon_outlets is not None:
+            assert len(shapes) == len(polygon_outlets)
+            for out in polygon_outlets:
+                assert type(out) is shapely.geometry.Point
+        self.polygon_outlets = polygon_outlets
+
+        if exterior_outlet is not None:
+            assert type(exterior_outlet) is shapely.geometry.Point
+        self.exterior_outlet = exterior_outlet
 
         # initialize
         shapes = partition(shapes, abs_tol, rel_tol)
@@ -284,3 +296,163 @@ def intersect_and_split(list_of_shapes):
         if not watershed_workflow.utils.empty_shapely(u):
             uniques_r[i] = u
     return uniques_r, intersections
+
+
+def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
+    """For each HUC, find all outlets using a river network's crossing points."""
+    if tol is None:
+        tol = 10
+    # next determine the outlet, and all boundary edges within x m of that outlet
+    polygons = list(hucs.polygons())
+    poly_crossings = []
+    for i_sub, poly in enumerate(polygons):
+        my_crossings = []
+        for reach in river.preOrder():
+            if poly.exterior.intersects(reach.segment):
+                my_crossings.append(poly.exterior.intersection(reach.segment))
+
+        # cluster my_crossings to make sure that multiple crossings are only counted once
+        my_crossing_centroids = []
+        for crossing in my_crossings:
+            my_crossing_centroids.append([crossing.centroid.xy[0][0], crossing.centroid.xy[1][0]])
+        my_crossing_centroids = np.array(my_crossing_centroids)
+        if len(my_crossing_centroids) > 1:
+            clusters, cluster_centroids = watershed_workflow.utils.cluster(my_crossing_centroids, tol)
+        else:
+            cluster_centroids = my_crossing_centroids
+        poly_crossings.append(cluster_centroids)
+
+    logging.info("Crossings by Polygon:")
+    for i,c in enumerate(poly_crossings):
+        logging.info(f'  Polygon {i}')
+        for p in c:
+            logging.info(f'    crossing: {p}')
+
+    # unravel the clusters
+    all_crossings = [c for p in poly_crossings for c in p]
+
+    # cluster crossings that are within tolerance across polygons
+    crossings_clusters_indices, crossings_clusters_centroids = \
+        watershed_workflow.utils.cluster(all_crossings, tol)
+
+    # now group cluster ids by polygon and polygon ids by cluster
+    poly_cluster_indices = dict()
+    cluster_poly_indices = collections.defaultdict(list)
+    lcv = 0
+    for lcv_poly, pc in enumerate(poly_crossings):
+        my_inds = []
+        for c in pc:
+            my_inds.append(crossings_clusters_indices[lcv])
+            lcv += 1
+        poly_cluster_indices[lcv_poly] = my_inds
+        for ci in my_inds:
+            cluster_poly_indices[ci].append(lcv_poly)
+
+    # assert equivalent
+    for pi, clusters in poly_cluster_indices.items():
+        for ci in clusters:
+            assert(pi in cluster_poly_indices[ci])
+    for ci, polys in cluster_poly_indices.items():
+        for pi in polys:
+            assert(ci in poly_cluster_indices[pi])
+
+    # create a tree, recursively finding all polygons with only
+    # one crossing -- this must be an outlet -- then removing it
+    # from the list, hopefully leaving a downstream polygon with
+    # only one outlet.  This must be done N iterations, where N is
+    # the maximal number of polygons crossed from 0th order to
+    # maximal order.
+    logging.info('Constructing outlet list')
+    outlets = dict()
+    inlets = collections.defaultdict(list)
+    itercount = 0
+    done = False
+    while not done:
+        logging.info(f'Iteration = {itercount}')
+        logging.info(f'-----------------')
+        new_outlets = dict()
+
+        # look for polygons with only one crossing -- this must be an outlet.
+        for pi, clusters in poly_cluster_indices.items():
+            if len(clusters) == 1 and pi not in outlets:
+                # only one crossing cluster, this is the outlet
+                cluster_id = clusters[0]
+                new_outlets[pi] = cluster_id
+                cluster_poly_indices[cluster_id].remove(pi)
+                logging.info(f' poly outlet {pi} : {cluster_id}, {crossings_clusters_centroids[cluster_id]}')
+                last_outlet = cluster_id
+                last_outlet_poly = pi
+
+
+        # look for clusters with only one poly -- this must be an inlet
+        to_remove = []
+        for ci, polys in cluster_poly_indices.items():
+            if len(polys) == 1:
+                poly_id = polys[0]
+                poly_cluster_indices[poly_id].remove(ci)
+                logging.info(f' poly inlet {poly_id} : {ci}, {crossings_clusters_centroids[ci]}')
+                to_remove.append(ci)
+                inlets[poly_id].append(ci)
+        for ci in to_remove:
+            cluster_poly_indices.pop(ci)
+
+        if debug_plot and len(new_outlets) > 0:
+            fig, ax = watershed_workflow.plot.get_ax(None)
+            watershed_workflow.plot.shplys(polygons, None, color='k', ax=ax)
+            watershed_workflow.plot.rivers([river,], None, color='b', ax=ax)
+            for pi, ci in outlets.items():
+                outlet = crossings_clusters_centroids[ci]
+                ax.scatter([outlet[0],], [outlet[1],], s=100, c='b', marker='o')
+            for pi, ci in new_outlets.items():
+                outlet = crossings_clusters_centroids[ci]
+                ax.scatter([outlet[0],], [outlet[1],], s=100, c='r', marker='o')
+            for ci in range(len(crossings_clusters_centroids)):
+                if ci not in outlets.values() and ci not in new_outlets.values():
+                    crossing = crossings_clusters_centroids[ci]
+                    ax.scatter([crossing[0],], [crossing[1],], s=100, c='k', marker='o')
+            from matplotlib import pyplot as plt
+            ax.set_title(f'Outlets after iteration {itercount}')
+            plt.show()
+
+        outlets.update(new_outlets)
+        itercount += 1
+        done = itercount > 50 or len(outlets) == len(polygons) or len(new_outlets) == 0
+
+    logging.info(f'last outlet is {last_outlet} in polygon {last_outlet_poly} at {crossings_clusters_centroids[last_outlet]}')
+
+    # create the output
+    outlet_locs = {}
+    inlet_locs = {}
+    for pi, ci in outlets.items():
+        outlet = crossings_clusters_centroids[ci]
+        outlet_locs[pi] = shapely.geometry.Point(outlet[0], outlet[1])
+    for pi, cis in inlets.items():
+        my_inlet_locs = []
+        for ci in cis:
+            inlet = crossings_clusters_centroids[ci]
+            my_inlet_locs.append(shapely.geometry.Point(inlet[0], inlet[1]))
+        inlet_locs[pi] = my_inlet_locs
+
+    last_outlet_p = crossings_clusters_centroids[last_outlet]
+    last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
+
+    hucs.exterior_outlet = last_outlet_loc
+    hucs.polygon_outlets = outlet_locs
+
+
+def find_outlets_by_elevation(hucs, crs, elev_raster, elev_raster_profile):
+    """Find outlets by the minimum elevation on the boundary."""
+    import watershed_workflow
+    exterior = hucs.exterior().exterior
+    mesh_points = np.array([exterior.coords])[0,:,:]
+    mesh_points = watershed_workflow.elevate(mesh_points, crs, elev_raster, elev_raster_profile)
+    i = np.argmin(mesh_points[:,2])
+    hucs.exterior_outlet = shapely.geometry.Point(mesh_points[i,0], mesh_points[i,1])
+
+    outlets = []
+    for poly in hucs.polygons():
+        mesh_points = np.array([poly.exterior.coords])[0,:,:]
+        mesh_points = watershed_workflow.elevate(mesh_points, crs, elev_raster, elev_raster_profile)
+        i = np.argmin(mesh_points[:,2])
+        outlets.append(shapely.geometry.Point(mesh_points[i,0], mesh_points[i,1]))
+    hucs.polygon_outlets = outlets

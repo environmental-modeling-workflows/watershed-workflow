@@ -115,7 +115,8 @@ class _FileManagerNHD:
         return profile, hus
         
     def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True,
-                  include_catchments=False, force_download=False):
+                  include_catchments=False, include_catchment_areas=False,
+                  force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -132,6 +133,9 @@ class _FileManagerNHD:
         include_catchments : bool, optional
           If True (default is False) and data source is NHDPlus, attach the 
           reach catchment as a property to every reach.
+        include_catchment_areas : bool, optional
+          If True (default is False) and data source is NHDPlus, attach the 
+          reach catchment area as a property, in the native coordinate system.
         force_download : bool
           Download or re-download the file if true.
 
@@ -177,31 +181,29 @@ class _FileManagerNHD:
         # filter not in network
         if in_network:
             logging.info("  Filtering reaches not in-network".format(self.name, filename, layer, bounds))
-            reaches = [r for r in reaches if 'InNetwork' not in r['properties'] or r['properties']['InNetwork'] == 1]
-            
+            reaches = [r for r in reaches if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1]
+
         # associate catchment areas with the reaches if NHDPlus
-        if 'Plus' in self.name and include_catchments:
+        if 'Plus' in self.name and include_catchments or include_catchment_areas:
+            reach_dict = dict((r['properties']['NHDPlusID'],r) for r in reaches)
             layer = 'NHDPlusCatchment'
             logging.info("  {}: opening '{}' layer '{}' for catchment areas in '{}'".format(self.name, filename, layer, bounds))
+
+            if include_catchments:
+                for r in reaches:
+                    r['properties']['catchment'] = None
+            if include_catchment_areas:
+                for r in reaches:
+                    r['properties']['area'] = 0
+
             with fiona.open(filename, mode='r', layer=layer) as fid:
-                bounded_catchments = list(fid.items())#.items(bbox=bounds))
-
-            missing_catchments = 0
-            for i, reach in enumerate(reaches):
-                try:
-                    catch = next(c for (i,c) in bounded_catchments if c['properties']['NHDPlusID'] == reach['properties']['NHDPlusID'])
-                except StopIteration:
-                    logging.debug(f"reach missing catchment: {reach['properties']['NHDPlusID']}")
-
-                    if missing_catchments == i and missing_catchments > 10:
-                        # give up fairly quickly, as this can be slow
-                        break 
-                    missing_catchments += 1
-                    reach['properties']['catchment'] = None
-                else:
-                    reach['properties']['catchment'] = catch
-        
-
+                for catchment in fid.values():
+                    reach = reach_dict.get(catchment['properties']['NHDPlusID'])
+                    if reach is not None:
+                        if include_catchments:
+                            reach['properties']['catchment'] = catch
+                        if include_catchment_areas:
+                            reach['properties']['area'] = watershed_workflow.utils.shply(catchment).area
 
         return profile, reaches
             
@@ -310,7 +312,7 @@ class _FileManagerNHD:
             ok = "title" in match
             logging.debug(f'title in match? {ok}')
         if ok:
-            for abbrev in ['NHD', 'NHDPlus', 'WBD']:
+            for abbrev in ['NHD', 'NHDPlus', 'NHDPlus HR', 'WBD']:
                 my_abbrev = f'({abbrev})'.lower()
                 if my_abbrev in self.name.lower():
                     break

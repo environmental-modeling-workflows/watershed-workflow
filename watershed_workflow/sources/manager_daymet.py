@@ -88,6 +88,8 @@ class FileManagerDaymet:
         -------
         filename : str
           Path to the data file.
+        bounds : [xmin,ymin,xmax,ymax]
+          Updated bounds, buffered and in the coordinate system of the data.
         """
         if year > self.VALID_YEARS[1] or year < self.VALID_YEARS[0]:
             raise ValueError("DayMet data is available from {} to {} (does not include {})".format(self.VALID_YEARS[0], self.VALID_YEARS[1], year))
