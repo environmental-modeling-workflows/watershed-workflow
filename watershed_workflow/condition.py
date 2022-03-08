@@ -403,7 +403,7 @@ def condition_river_mesh(m2, river, mode="upper"):
                 bank_node_ids=bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                      if node_id not in river_corr_ids:
-                        if m2.coords[node_id][2]<profile_new[i,1]-1:
+                        if m2.coords[node_id][2]<profile_new[i,1]:
                                m2.coords[node_id][2]= profile_new[i,1]+0.25
 
 def get_reach_profile(node,m2):
