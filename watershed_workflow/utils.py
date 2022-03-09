@@ -241,7 +241,6 @@ def contains(s1, s2, tol=_tol):
 
 def cut(line, cutline, tol=1.e-5):
     """Cuts a line at all intersections with cutline."""
-
     def plot():
         from matplotlib import pyplot as plt
         plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
@@ -260,6 +259,7 @@ def cut(line, cutline, tol=1.e-5):
         seg = shapely.geometry.LineString(coords[i:i + 2])
         #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
+       
         if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
             #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])
@@ -695,6 +695,7 @@ def closest_point(point, points):
     points = np.asarray(points)
     dist_2 = np.sum((points - point)**2, axis=1)
     return np.argmin(dist_2)
+
 def cluster(points, tol):
     """Given a list of points, determine a list of clusters.
 
