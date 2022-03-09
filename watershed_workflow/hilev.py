@@ -352,9 +352,17 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
 
         for reach in reaches:
-            if 'catchment' in reach.properties:
+            
+            if 'catchment' in reach.properties and 'area' not in reach.properties:
+                if reach.properties['catchment'] == None:
+                    reach.properties['area'] = 0
+                else:
                     reach.properties['catchment'] = watershed_workflow.utils.shply(reach.properties['catchment'])
                     reach.properties['catchment'] = watershed_workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
+                    if 'CatchmentAreaSqKm' in reach.properties:
+                        reach.properties['area'] = reach.properties['CatchmentAreaSqKm']*1e6
+                    else:
+                        reach.properties['area'] = reach.properties['catchment'].area
     else:
         out_crs = native_crs
 
