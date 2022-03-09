@@ -279,7 +279,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
 
 
 def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
-                digits=None, long=None, merge=False, presimplify=None,
+                digits=None, long=None, merge=False, presimplify=None, properties=None,
                 **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
@@ -305,7 +305,6 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
     out_crs : crs-type, optional
         Coordinate system of the output reaches.  Default is the
         native crs of the source.
-
     digits : int, optional
         Number of digits to round coordinates to.
     long : float, optional
@@ -319,6 +318,8 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         If provided, reaches are simplified within the specified
         tolerance as soon as possible for big extents.  Units are that
         of out_crs.
+    properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
+        (Table 16 and 17 NHDPlus user guide)
     **kwargs : dict, optional
         Other arguments are passed to the file manager's get_reaches() method.
 
@@ -337,9 +338,9 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs, **kwargs)
+    profile, reaches = source.get_hydro(huc, bounds, in_crs,properties=properties ,**kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
-
+  
     # convert to shapely
     logging.info("Converting to shapely")
     reaches = [watershed_workflow.utils.shply(reach) for reach in reaches]
@@ -351,13 +352,9 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
 
         for reach in reaches:
-            if 'catchment' in reach.properties and 'area' not in reach.properties:
-                if reach.properties['catchment'] == None:
-                    reach.properties['area'] = 0
-                else:
+            if 'catchment' in reach.properties:
                     reach.properties['catchment'] = watershed_workflow.utils.shply(reach.properties['catchment'])
                     reach.properties['catchment'] = watershed_workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
-                    reach.properties['area'] = reach.properties['catchment'].area
     else:
         out_crs = native_crs
 
