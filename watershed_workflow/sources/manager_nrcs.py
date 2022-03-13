@@ -421,7 +421,7 @@ class FileManagerNRCS:
             elif len(shapes) == 4 and type(shapes[0]) is float:
                 list_of_bounds = [shapes,]
             else:
-                list_of_bounds = [shapely.ops.cascaded_union(shapes).bounds,]
+                list_of_bounds = [shapely.ops.unary_union(shapes).bounds,]
         else:
             list_of_bounds = [shapes.bounds,]
 
@@ -472,7 +472,7 @@ class FileManagerNRCS:
 
         # sort -- this just keeps everything cleaner
         unique = sorted(unique.items())
-        shapes = [shapely.ops.cascaded_union(l[1]) for l in unique]
+        shapes = [shapely.ops.unary_union(l[1]) for l in unique]
         mukeys = [l[0] for l in unique]
 
         # put the mukey on the MultiPolygon object

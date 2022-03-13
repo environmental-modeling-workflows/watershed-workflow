@@ -11,7 +11,7 @@ import watershed_workflow.plot
 
 def test_null_cleanup(rivers):
     """Tests that cleanup on nice river network does nothing"""
-    riversc = watershed_workflow.hydrography.quick_cleanup(rivers)
+    riversc = watershed_workflow.hydrography.simplify_and_merge(rivers)
     print(type(rivers))
     print(type(riversc))
     assert_close(riversc, rivers)
@@ -20,14 +20,14 @@ def test_close_cleanup(rivers):
     """Tests that cleanup can remove close points"""
     extra = shapely.geometry.LineString([(15,-3.00000001), (15,-3)])
     rivers_wextra = shapely.geometry.MultiLineString(list(rivers)+[extra,])
-    rivers_clean = watershed_workflow.hydrography.quick_cleanup(rivers_wextra)
+    rivers_clean = watershed_workflow.hydrography.simplify_and_merge(rivers_wextra)
     assert_close(rivers_clean, rivers, 0.1)
 
 def data(poly_hucs, river_segs):
     hucs = watershed_workflow.split_hucs.SplitHUCs(poly_hucs)
-    rivers = watershed_workflow.hydrography.make_global_tree(river_segs)
+    rivers = watershed_workflow.hydrography.make_global_tree(river_segs, method='geometry')
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
     return hucs,rivers
 
 def check1(hucs,rivers):
@@ -60,7 +60,7 @@ def check1(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
 
 def check1b(hucs,rivers):
     assert(len(hucs) is 1)
@@ -93,7 +93,7 @@ def check1b(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
 
 
 def check1c(hucs,rivers):
@@ -127,7 +127,7 @@ def check1c(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0), (15,0.001)])))
 
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
         
         
 def check2(hucs,rivers):
@@ -147,7 +147,7 @@ def check2(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[1], shapely.geometry.LineString([(5,0), (10,0)])))
 
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
     
 
 def check2b(hucs,rivers):
@@ -169,7 +169,7 @@ def check2b(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10,0)])))
     
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
 
 def check2b_nullop(hucs,rivers):
     assert(len(hucs) is 2)
@@ -190,7 +190,7 @@ def check2b_nullop(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[2], shapely.geometry.LineString([(5,-2), (10.1001,0)])))
     
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
         
 def check3(hucs,rivers):
     assert(len(hucs) is 3)
@@ -213,7 +213,7 @@ def check3(hucs,rivers):
     assert(watershed_workflow.utils.close(riverlist[2], shapely.geometry.LineString([(15.,0.), (10.,5.)])))
 
     for tree in rivers:
-        assert(watershed_workflow.river_tree.is_consistent(tree))
+        assert(tree.is_consistent())
     
 def test_snap0():
     # snap a river endpoint onto a huc, exact point in river, none on huc
@@ -433,3 +433,16 @@ def test_snap8():
     check2b(hucs,rivers)
 
     
+def test_remove_divergences(braided_stream):
+    rivers = watershed_workflow.hydrography.make_global_tree(braided_stream, 'hydroseq')
+    assert(len(rivers) == 1)
+    assert(len(rivers[0]) == 6)
+
+    rivers = watershed_workflow.hydrography.remove_divergences(rivers)
+    assert(len(rivers) == 1)
+    assert(len(rivers[0]) == 4)
+
+    hydroseq = [r.properties['HydrologicSequence'] for r in rivers[0]]
+    expected = [1,2,3,6]
+    assert(all((e == h) for (e,h) in zip(expected, hydroseq)))
+

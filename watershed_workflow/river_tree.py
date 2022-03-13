@@ -3,6 +3,7 @@ import logging
 import collections
 import numpy as np
 import itertools
+from scipy.spatial import cKDTree
 
 import shapely.geometry
 import shapely.ops
@@ -13,29 +14,36 @@ import watershed_workflow.tinytree
 
 _tol = 1.e-7
 
-class RiverTree(watershed_workflow.tinytree.Tree):
+class River(watershed_workflow.tinytree.Tree):
     """A tree node data structure"""
-    def __init__(self, segment=None, properties=None, children=None):
-        super(RiverTree, self).__init__(children)
+    def __init__(self, segment=None, children=None):
+        """Do not call me.  Instead use the class factory methods, one of:
+
+        - construct_rivers_by_geometry() # generic data
+        - construct_rivers_by_hydroseq() # NHDPlus data
+
+        This method initializes a single node in the River,
+        representing one reach and its upstream children.
+
+        """
+        super(River, self).__init__(children)
         self.segment = segment
 
-        assert(properties is None)
-        # assert(hasattr(self.segment, 'properties'))
-        if properties is not None:
-            self.properties = properties
-        elif hasattr(self.segment, 'properties'):
+        if hasattr(self.segment, 'properties'):
             self.properties = self.segment.properties
         else:
             self.properties = dict()
 
     def addChild(self, segment):
-        if type(segment) is RiverTree:
-            super(RiverTree,self).addChild(segment)
+        """Append a child (upstream) reach to this reach."""
+        if type(segment) is River:
+            super(River,self).addChild(segment)
         else:
-            super(RiverTree,self).addChild(type(self)(segment))
+            super(River,self).addChild(type(self)(segment))
         return self.children[-1]
 
     def dfs(self):
+        """Iterates of reaches in the river in an "upstream-first" or "depth-first" ordering."""
         for node in self.preOrder():
             if node.segment is not None:
                 yield node.segment
@@ -47,125 +55,118 @@ class RiverTree(watershed_workflow.tinytree.Tree):
                 yield it
 
     def leaves(self):
-        """Generator for all leaves of the tree."""
+        """Generator for all leaf reaches of the tree."""
         for n in self.leaf_nodes():
             yield n.segment
 
     def __len__(self):
-        # kinda hacky way of getting the count
+        """Number of total reaches in the river."""
         return sum(1 for i in self.dfs())
 
     def __iter__(self):
         return self.dfs()
 
-    def check_child_consistency(self, tol=1.e-8):
-        for child in self.children:
-            if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
-                return False
+    def _is_consistent(self, child, tol=_tol):
+        """Is a given child consistent."""
+        if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol):
+            return False
         return True
+    
+    def is_consistent(self, tol=_tol):
+        """Checks geometric consistency of the river.
 
-    def get_inconsistent(self, tol=1.e-8):
+        Confirms that all upstream children's downstream coordinate
+        coincides with self's upstream coordinate.
+        """
+        return all(self._is_consistent(child, tol) for child in self.children)
+
+    def get_inconsistent(self, tol=_tol):
+        """Returns a list of inconsistent children."""
         inconsistent = []
         for child in self.children:
-            if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0]):
+            if not self._is_consistent(child, tol):
                 logging.warning("  INCONSISTENT:")
                 logging.warning("    child: %r"%(child.segment.coords[:]))
                 logging.warning("    parent: %r"%(self.segment.coords[:]))
                 inconsistent.append(child)
         return inconsistent
+
+
+    #
+    # Factory functions
+    #
+    @classmethod
+    def construct_rivers_by_geometry(cls, reaches, tol=_tol):
+        """Forms a list of River trees from a list of reaches by looking for
+        close endpoints of those reaches.
+
+        Note that this expects that endpoints of a reach coincide with
+        beginpoints of their downstream reach, and does not work for
+        cases where the junction is at a midpoint of a reach.
+        """
+        logging.debug("Generating Rivers")
+
+        if len(reaches) == 0:
+            return list()
+
+        # make a kdtree of beginpoints
+        coords = np.array([r.coords[0] for r in reaches])
+        kdtree = cKDTree(coords)
+
+        # make a node for each segment
+        nodes = [cls(r) for r in reaches]
+
+        # match nodes to their parent through the kdtree
+        rivers = []
+        divergence = []
+        divergence_matches = []
+        for j,n in enumerate(nodes):
+            # find the closest beginpoint the this node's endpoint
+            closest = kdtree.query_ball_point(n.segment.coords[-1], tol)
+            if len(closest) > 1:
+                logging.debug("Bad multi segment:")
+                logging.debug(" connected to %d: %r"%(j,list(n.segment.coords[-1])))
+                divergence.append(j)
+                divergence_matches.append(closest)
+
+                # end at the same point, pick the min angle deviation
+                my_tan = np.array(n.segment.coords[-1]) - np.array(n.segment.coords[-2])
+                my_tan = my_tan / np.linalg.norm(my_tan)
+
+                other_tans = [np.array(reaches[c].coords[1]) - np.array(reaches[c].coords[0]) for c in closest]
+                other_tans = [ot/np.linalg.norm(ot) for ot in other_tans]
+                dots = [np.inner(ot,my_tan) for ot in other_tans]
+                for i,c in enumerate(closest):
+                    logging.debug("  %d: %r --> %r with dot product = %g"%(c,coords[c],reaches[c].coords[-1], dots[i]))
+                c = closest[np.argmax(dots)]
+                nodes[c].addChild(n)
+
+            elif len(closest) == 0:
+                rivers.append(n)
+            else:
+                assert(len(closest) == 1)
+                nodes[closest[0]].addChild(n)
+
+        assert(len(rivers) > 0)
+        return rivers
+
+
+    @classmethod
+    def construct_rivers_by_hydroseq(cls, segments):
+        """Given a list of segments, create a list of rivers using the
+        HydroSeq maps provided in NHDPlus datasets.
+        """
+        # create a map of all segments from HydroSeqID to segment
+        hydro_seq_ids = dict((seg.properties['HydrologicSequence'], cls(seg)) for seg in segments)
+
+        roots = []
+        for hs_id, node in hydro_seq_ids.items():
+            down_hs_id = node.properties['DownstreamMainPathHydroSeq']
+            try:
+                hydro_seq_ids[down_hs_id].addChild(node)
+            except KeyError:
+                roots.append(node)
+        return roots
     
-            
-def _get_matches(seg, segments, segment_found):
-    """Find segments attached to seg amongst those not already found"""
-    matches = [i for i in range(len(segments)) if not segment_found[i]
-               and watershed_workflow.utils.close(segments[i].coords[-1], seg.coords[0])]
-    segment_found[matches] = True
-    return matches
 
-def _go(i_seg, tree, segments, segments_found):
-    """Recursive helper function for generating a tree based on a matching function."""
-    count = 0
-    tree.addChild(segments[i_seg])
-    for m in _get_matches(segments[i_seg], segments, segments_found):
-        count += _go(m, tree, segments, segments_found)
-    return count + 1
 
-def make_trees(segments):
-    """Forms tree(s) from a list of segments."""
-    logging.debug("Generating trees")
-    endpoint_indices = find_endpoints(segments)
-    logging.debug("  found: %i outlets"%len(endpoint_indices))
-    for endp in endpoint_indices:
-        logging.debug("    at: %r"%list(segments[endp].coords[-1]))
-
-    # check if any endpoint lives on another segment
-    segs_to_remove = []
-    segs_to_add = []
-    for endpoint_index in endpoint_indices:
-        endpoint_seg = shapely.geometry.LineString(segments[endpoint_index].coords[-2:])
-        try:
-            inter = next(i for i,seg in enumerate(segments)
-                         if endpoint_seg.intersects(seg)
-                         and i != endpoint_index
-                         and watershed_workflow.utils.close(endpoint_seg.intersection(seg).coords[0], endpoint_seg.coords[-1], 1.e-5))
-        except StopIteration:
-            logging.debug("   outlet %i is not faux"%endpoint_index)
-        else:
-            logging.debug("   faux outlet: %i segment: %i"%(endpoint_index, inter))
-            segs_to_remove.append(inter)
-            
-            print("splitting segment: %r"%list(segments[inter].coords))
-            print("   at: %r"%list(segments[endpoint_index].coords[-1]))
-            segs_to_add.extend(watershed_workflow.utils.cut(segments[inter], endpoint_seg))
-            
-    if len(segs_to_remove) != 0:
-        segments = list(segments)
-        for i in sorted(segs_to_remove, reverse=True):
-            segments.pop(i)
-        segments.extend(segs_to_add)
-        segments = shapely.geometry.MultiLineString(segments)
-
-        # regenerate endpoints (indicies may have changed)
-        endpoint_indices = find_endpoints(segments)
-        logging.debug("  found: %i outlets"%len(endpoint_indices))
-
-    # generate all trees
-    segment_found = np.zeros((len(segments),), bool)
-    gcount = 0
-    trees = []
-    for endpoint_index in endpoint_indices:
-        tree = RiverTree()
-        gcount += _go(endpoint_index, tree, segments, segment_found)
-        trees.append(tree)
-    assert(gcount == len(segments))
-    return trees
-
-def find_endpoints(segments):
-    """Finds a list of indices of all segments whose endpoint is not a beginpoint.
-
-    Note these may truely be the tree root, or they may end at a
-    midpoint on another segment (mistake in input data).
-    """
-    endpoints = []
-    for i,s in enumerate(segments):
-        c = s.coords[-1]
-        try:
-            next(s2 for s2 in segments if watershed_workflow.utils.close(s2.coords[0], c))
-        except StopIteration:
-            endpoints.append(i)
-    return endpoints
-
-def tree_to_list(tree):
-    return shapely.geometry.MultiLineString(list(tree.dfs()))
-
-def forest_to_list(forest):
-    """A forest is a list of trees.  Returns a flattened list of trees."""
-    return shapely.geometry.MultiLineString([r for tree in forest for r in tree.dfs()])
-
-def is_consistent(tree, tol=1.e-8):
-    """Checks the geometric consistency of the tree."""
-    return not any(not node.check_child_consistency(tol) for node in tree.preOrder())
-
-def get_inconsistent(tree, tol=1.e-8):
-    """Gets a list of inconsistent nodes of the tree."""
-    return [n for node in tree.preOrder() for n in node.get_inconsistent(tol)]

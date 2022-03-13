@@ -2,6 +2,7 @@
 
 import logging
 import numpy as np
+import collections
 
 import shapely.geometry
 import shapely.ops
@@ -220,7 +221,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
                 list_of_shapes[j] = s2.difference(s1)
 
     # remove holes
-    union = shapely.ops.cascaded_union(list_of_shapes)
+    union = shapely.ops.unary_union(list_of_shapes)
     assert(type(union) is shapely.geometry.Polygon)
 
     # -- deal with disjoint sections separately

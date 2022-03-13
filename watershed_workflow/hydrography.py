@@ -3,7 +3,6 @@ import copy
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
-import scipy.spatial
 from scipy.spatial import cKDTree
 import itertools
 import collections
@@ -16,12 +15,24 @@ import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.plot
 
+_tol = 0.1 # meters by default
 
-def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
+
+def accumulate(tree, outprop, inprop, op=sum):
+    """Accumulates areas up the tree."""
+    try:
+        for node in tree.postOrder():
+            total_area = op(c.properties[outprop] for c in node.children)
+            node.properties[inprop] = total_area + node.properties[inprop]
+    except KeyError:
+        raise ValueError(f"accumulate() called with nonexistent property {inprop}")
+
+
+def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
     assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
-    assert(all(watershed_workflow.river_tree.is_consistent(river) for river in rivers))
+    assert(all(river.is_consistent() for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) == 0:
@@ -36,7 +47,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
     snap_polygon_endpoints(hucs, rivers, tol_triples)
-    if not all(watershed_workflow.river_tree.is_consistent(river) for river in rivers):
+    if not all(river.is_consistent() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -55,7 +66,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
         snap_endpoints(tree, hucs, tol)
-    if not all(watershed_workflow.river_tree.is_consistent(river) for river in rivers):
+    if not all(river.is_consistent() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -72,7 +83,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     if cut_intersections:
         logging.info("  cutting at crossings")
         snap_crossings(hucs, rivers, tol)
-        consistent = all(watershed_workflow.river_tree.is_consistent(river) for river in rivers)
+        consistent = all(river.is_consistent() for river in rivers)
         if not consistent:
             logging.info("  ...resulted in inconsistent rivers!")
             return False
@@ -93,7 +104,7 @@ def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
     return rivers
 
 
-def _snap_and_cut(point, line, tol=0.1):
+def _snap_and_cut(point, line, tol=_tol):
     """Determine the closest point to a line and, if it is within tol of
     the line, cut the line at that point and snapping the endpoints as
     needed.
@@ -112,7 +123,7 @@ def _snap_and_cut(point, line, tol=0.1):
     return None
 
 
-def _snap_crossing(hucs, river_node, tol=0.1):
+def _snap_crossing(hucs, river_node, tol=_tol):
     """Snap a single river node"""
     r = river_node.segment
     logging.debug("len spine, boundary = {0},{1}".format(len(hucs.intersections), len(hucs.boundaries)))
@@ -151,7 +162,7 @@ def _snap_crossing(hucs, river_node, tol=0.1):
                 river_node.segment = new_rivers[-1]
                 if len(new_rivers) > 1:
                     assert(len(new_rivers) == 2)
-                    river_node.inject(watershed_workflow.river_tree.RiverTree(new_rivers[0]))
+                    river_node.inject(watershed_workflow.river_tree.River(new_rivers[0]))
 
                 hucs.segments[seg_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -161,14 +172,14 @@ def _snap_crossing(hucs, river_node, tol=0.1):
                 break
 
             
-def snap_crossings(hucs, rivers, tol=0.1):
+def snap_crossings(hucs, rivers, tol=_tol):
     """Snaps HUC boundaries and rivers to crossings."""
     for tree in rivers:
         for river_node in tree.preOrder():
             _snap_crossing(hucs, river_node, tol)
 
             
-def snap_polygon_endpoints(hucs, rivers, tol=0.1):
+def snap_polygon_endpoints(hucs, rivers, tol=_tol):
     """Snaps the endpoints of HUC segments to endpoints of rivers."""
     # make the kdTree of endpoints of all rivers
     coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
@@ -201,7 +212,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=0.1):
                 logging.debug("        point -1 to river at %r"%list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
-def snap_endpoints(tree, hucs, tol=0.1):
+def snap_endpoints(tree, hucs, tol=_tol):
     """Snap river endpoints to huc segments and insert that point into
     the boundary.
 
@@ -349,58 +360,21 @@ def snap_endpoints(tree, hucs, tol=0.1):
     return river
 
 
-def make_global_tree(rivers, tol=0.1):
-    """Sorts shapely river objects into a list of tree structures."""
-    if len(rivers) == 0:
-        return list()
-
-    # make a kdtree of beginpoints
-    coords = np.array([r.coords[0] for r in rivers])
-    # kdtree = scipy.spatial.cKDTree(coords)
-    kdtree = cKDTree(coords)
-    # make a node for each segment
-    nodes = [watershed_workflow.river_tree.RiverTree(r) for r in rivers]
-    assert(len(nodes) > 0)
-    
-    # match nodes to their parent through the kdtree
-    trees = []
-    doublesegs = []
-    doublesegs_matches = []
-    doublesegs_winner = []
-    for j,n in enumerate(nodes):
-        # find the closest beginpoint the this node's endpoint
-        closest = kdtree.query_ball_point(n.segment.coords[-1], tol)
-        if len(closest) > 1:
-            logging.debug("Bad multi segment:")
-            logging.debug(" connected to %d: %r"%(j,list(n.segment.coords[-1])))
-            doublesegs.append(j)
-            doublesegs_matches.append(closest)
-
-            # end at the same point, pick the min angle deviation
-            my_tan = np.array(n.segment.coords[-1]) - np.array(n.segment.coords[-2])
-            my_tan = my_tan / np.linalg.norm(my_tan)
-            
-            other_tans = [np.array(rivers[c].coords[1]) - np.array(rivers[c].coords[0]) for c in closest]
-            other_tans = [ot/np.linalg.norm(ot) for ot in other_tans]
-            dots = [np.inner(ot,my_tan) for ot in other_tans]
-            for i,c in enumerate(closest):
-                logging.debug("  %d: %r --> %r with dot product = %g"%(c,coords[c],rivers[c].coords[-1], dots[i]))
-            c = closest[np.argmax(dots)]
-            doublesegs_winner.append(c)
-            nodes[c].addChild(n)
-
-        elif len(closest) == 0:
-            trees.append(n)
-        else:
-            assert(len(closest) == 1)
-            nodes[closest[0]].addChild(n)
-
-    assert(len(trees) > 0)
-    return trees
+def make_global_tree(reaches, method='geometry', tol=_tol):
+    """Constructs River objects from a list of reaches."""
+    if method == 'hydroseq':
+        return watershed_workflow.river_tree.River.construct_rivers_by_hydroseq(reaches)
+    elif method == 'geometry':
+        return watershed_workflow.river_tree.River.construct_rivers_by_geometry(reaches,tol)
+    else:
+        raise ValueError("Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
-def filter_reaches_to_shape(shape, reaches, tol):
-    """Filters out reaches (or reaches in rivers) not inside the HUCs provided."""
+def filter_reaches_to_shape(shape, reaches, tol=_tol):
+    """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
+
+    Always returns a list of reaches, independent of the input.
+    """
     shape = shape.buffer(2*tol)
     
     # removes any reaches that are not at least partial contained in the hucs
@@ -411,23 +385,23 @@ def filter_reaches_to_shape(shape, reaches, tol):
     if type(reaches) is shapely.geometry.MultiLineString or \
        (type(reaches) is list and type(reaches[0]) is shapely.geometry.LineString):
         reaches2 = [r for r in reaches if watershed_workflow.utils.non_point_intersection(shape,r)]
-    elif type(reaches) is list and type(reaches[0]) is watershed_workflow.river_tree.RiverTree:
+    elif type(reaches) is list and type(reaches[0]) is watershed_workflow.river_tree.River:
         reaches2 = [r for river in reaches for r in river.preOrder() if watershed_workflow.utils.non_point_intersection(shape,r.segment)]
         for r in reaches2:
             r.segment.properties = r.properties
-        reaches2 = make_global_tree([r.segment for r in reaches2])
     else:
         raise RuntimeError("Unrecognized river shape type?")
     return reaches2
     
-def quick_cleanup(rivers, tol=0.1):
-    """First pass to clean up hydro data"""
-    logging.info("  quick cleaning rivers")
-    assert(type(rivers) is shapely.geometry.MultiLineString)
-    rivers = shapely.ops.linemerge(rivers).simplify(tol)
-    return rivers
 
-def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
+def simplify_and_merge(reaches, tol=_tol):
+    """First pass to clean up hydro data"""
+    logging.info("  quick simplify of reaches")
+    reaches = shapely.ops.linemerge(reaches).simplify(tol)
+    return list(reaches.geoms)
+
+
+def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
     """Some hydrography data seems to get some random branches, typically
     quite short, that are nearly perfectly parallel to other, longer
     branches.  Surely this is a data error -- remove them.
@@ -446,6 +420,7 @@ def cleanup(rivers, simp_tol=0.1, prune_tol=10, merge_tol=10):
         if merge_tol != prune_tol and prune_tol is not None:
             prune_by_segment_length(tree, prune_tol)
 
+
 def prune_by_segment_length(tree, prune_tol=10):
     """Removes any leaf segments that are shorter than prune_tol"""
     for leaf in tree.leaf_nodes():
@@ -455,48 +430,143 @@ def prune_by_segment_length(tree, prune_tol=10):
                 leaf.parent.properties['area'] += leaf.properties['area']
             leaf.remove()
 
-def accumulate(tree):
-    """Accumulates areas up the tree."""
-    try:
-        for node in tree.postOrder():
-            total_area = sum(c.properties['total contributing area'] for c in node.children)
-            node.properties['total contributing area'] = total_area + node.properties['area']
-    except KeyError:
-        raise ValueError("accumulate() cannot be called on rivers whose reaches do not include the 'area' property.")
 
-def prune_by_area(tree, tol):
-    """Removes segments whose contributing area is less than tolerance.  
+def prune_river_by_area(river, area):
+    """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
-    Units of tol are that of the CRS, squared"""
-    if 'total contributing area' not in tree.properties:
-        accumulate(tree)
-
+    Note this requires NHDPlus data to have been used and the
+    'TotalDrainageAreaSqKm' property to have been set.
+    """
     count = 0
     for node in tree.preOrder():
-        if node.properties['total contributing area'] < tol:
+        if node.properties['TotalDrainageAreaSqKm'] < area:
             count += 1
             node.remove()
             node.clear() # this ensures we can stop removing anything upstream of this
     return count
 
-def prune_by_area_fraction(tree, tol, total_area=None):
-    """Removes segements whose contributing area, divided by the total area, is < tol."""
-    if 'total contributing area' not in tree.properties:
-        accumulate(tree)
+def prune_by_area(rivers, area):
+    """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
+
+    Note this requires NHDPlus data to have been used and the
+    'TotalDrainageAreaSqKm' property to have been set.
+    """
+    logging.info(f"Pruning by total contributing area < {area}")
+    count = 0
+    sufficiently_big_rivers = []
+    for river in rivers:
+        if river.properties['TotalDrainageAreaSqKm'] >= area:
+            count += prune_river_by_area(river, area)
+            sufficiently_big_rivers.append(river)
+    logging.info(f"... pruned {count}")
+    return sufficiently_big_rivers
+
+def prune_river_by_fractional_contributing_area(river, area_fraction, total_area=None):
+    """Removes, IN PLACE, reaches whose CA/total_area < area_fraction.
+
+    Note this requires NHDPlus data to have been used and the
+    'TotalDrainageAreaSqKm' property to have been set.
+    """
     if total_area is None:
-        total_area = tree.properties['total contributing area']
+        total_area = river.properties['TotalDrainageAreaSqKm']
     logging.info(f'... total contributing area = {total_area}')
         
     count = 0
-    for node in tree.preOrder():
-        if node.properties['total contributing area'] / total_area < tol:
-            logging.info(f'... removing: {node.properties["total contributing area"]} of {total_area}')
+    for node in river.preOrder():
+        if node.properties['TotalDrainageAreaSqKm'] / total_area < area_fraction:
+            logging.info(f"... removing: {node.properties['TotalDrainageAreaSqKm']} of {total_area}")
             count += 1
             node.remove()
             node.clear() # this ensures we can stop removing anything upstream of this
     return count
-    
-def merge(tree, tol=0.1):
+
+
+def prune_by_fractional_contributing_area(rivers, area_fraction, total_area=None):
+    """Removes, IN PLACE, reaches whose CA/total_area < area_fraction.
+
+    Note this requires NHDPlus data to have been used and the
+    'TotalDrainageAreaSqKm' property to have been set.
+    """
+    logging.info(f"Pruning by fractional contributing area < {area_fraction}")
+    count = 0
+    sufficiently_big_rivers = []
+    if total_area is None:
+        total_area = sum(river.properties['TotalDrainageAreaSqKm'] for river in rivers)
+
+    for river in rivers:
+        if river.properties['TotalDrainageAreaSqKm'] >= area_fraction * total_area:
+            count += prune_river_by_fractional_contributing_area(
+                river, area_fraction, total_area)
+            sufficiently_big_rivers.append(river)
+        else:
+            logging.info(f"... pruning river with area {river.properties['TotalDrainageAreaSqKm']} of {total_area}")
+    logging.info(f"... pruned {count}")
+    return sufficiently_big_rivers
+
+
+def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
+    """Uses the NHDPlus property DIVERGENCE to remove divergences, IN PLACE.
+
+    These can be of two types:
+
+    Diversions are divergences that do not return to the stream
+    network.  These will consist of individual rivers, typically with
+    only one leaf reach, whose leaf reaches are all divergences.
+
+    Braids are divergences that return to the river network, and so
+    look like branches of a river tree, all of whose leaves are
+    divergences.
+    """
+    if remove_diversions:
+        logging.info("Remove diversions.")
+        non_diversion = []
+        for river in rivers:
+            if all(leaf.properties['DivergenceCode'] == 2 for leaf in river.leaf_nodes()):
+                logging.info(f"  ...remove river with {len(river)} reaches.")
+            else:
+                non_diversion.append(river)
+        rivers = non_diversion
+
+    if remove_braids:
+        logging.info("Pruning divergences.")
+        for river in rivers:
+            for reach in river.leaf_nodes():
+                if reach.properties['DivergenceCode'] == 2:
+                    upstream_hydroseq = reach.properties['UpstreamMainPathHydroSeq']
+                    try:
+                        upstream = next(r for r in river if r.properties['UpstreamMainPathHydroSeq'] == upstream_hydroseq)
+                    except StopIteration:
+                        # a diversion, not a divergence
+                        pass
+                    else:
+                        # a divergence, start removing until we meet a junction
+                        done = False
+                        count = 1
+                        while not done:
+                            parent = reach.parent
+                            reach.remove()
+                            done = len(parent.children) > 0
+                            count += 1
+                            reach = parent
+                        logging.info(f"  ... pruning braid of length {count}")
+    return rivers
+
+
+def filter_small_rivers(rivers, count):
+    """Remove any rivers with fewer than count reaches."""
+    logging.info(f"Removing rivers with fewer than {count} reaches.")
+    new_rivers = []
+    for river in rivers:
+        ltree = len(river)
+        if ltree < count:
+            logging.info("  ...removing river with %d reaches"%ltree)
+        else:
+            new_rivers.append(river)
+            logging.info("  ...keeping river with %d reaches"%ltree)
+    return new_rivers
+
+
+def merge(tree, tol=_tol):
     """Remove inner branches that are short, combining branchpoints as needed."""
     for node in list(tree.preOrder()):
         if node.segment.length < tol and node.parent is not None:
@@ -509,7 +579,8 @@ def merge(tree, tol=0.1):
                 node.parent.addChild(child)
             node.remove()
             
-def simplify(tree, tol=0.1):
+
+def simplify(tree, tol=_tol):
     """Simplify, IN PLACE, all tree segments."""
     for node in tree.preOrder():
         if node.segment is not None:

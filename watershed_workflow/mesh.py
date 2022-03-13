@@ -825,7 +825,7 @@ class Mesh3D(object):
         if material_ids is None:
             material_ids = [100,]
         self.material_ids = material_ids
-        self.material_ids_list = list(set(self.material_ids))
+        self.material_ids_list = sorted(list(set(self.material_ids)))
 
         self.validate()
         self.dim = self.coords.shape[1]
@@ -1008,16 +1008,18 @@ class Mesh3D(object):
             logging.info(f'adding side set: {ss.setid}')
             for elem in ss.elem_list:
                 assert old_to_new_elems[elem][0] == elem
-            new_elem_list = [old_to_new_elems[elem][1] for elem in ss.elem_list]                
+            new_elem_list = sorted([(old_to_new_elems[elem][1],side) for (elem,side) in zip(ss.elem_list, ss.side_list)])
             e.put_side_set_params(ss.setid, len(ss.elem_list), 0)
             e.put_side_set_name(ss.setid, ss.name)
-            e.put_side_set(ss.setid, np.array(new_elem_list)+1, np.array(ss.side_list)+1)
+            e.put_side_set(ss.setid,
+                           np.array([e_id for (e_id, side) in new_elem_list])+1,
+                           np.array([side for (e_id, side) in new_elem_list])+1)
 
         # add labeled sets
         for ls in self.labeled_sets:
             if ls.entity == 'CELL':
                 logging.info(f'adding elem set: {ls.setid}')
-                new_elem_list = [old_to_new_elems[elem][1] for elem in ls.ent_ids]                
+                new_elem_list = sorted([old_to_new_elems[elem][1] for elem in ls.ent_ids])
                 e.put_elem_set_params(ls.setid, len(new_elem_list), None)
                 e.put_elem_set_name(ls.setid, ls.name)
                 e.put_elem_set(ls.setid, np.array(new_elem_list)+1)

@@ -127,7 +127,7 @@ class FileManagerNLCD:
         if type(shply) is dict:
             shply = watershed_workflow.utils.shply(shply['geometry'])
         if type(shply) is shapely.geometry.MultiPolygon:
-            shply = shapely.ops.cascaded_union(shply)
+            shply = shapely.ops.unary_union(shply)
 
         # download (or hopefully don't) the file
         filename, nlcd_profile = self._download()

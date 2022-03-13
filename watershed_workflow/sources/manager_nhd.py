@@ -4,6 +4,7 @@ import fiona
 import shapely
 import attr
 import requests
+import shutil
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
@@ -44,6 +45,19 @@ class _FileManagerNHD:
     name_manager = attr.ib()
     #name_manager_shp = attr.ib()
 
+    _nhdplus_vaa = dict({'StreamOrder' : 'StreamOrde',
+                         'StreamLevel' : 'StreamLeve' ,
+                         'HydrologicSequence' : 'HydroSeq',
+                         'DownstreamMainPathHydroSeq' : 'DnHydroSeq',
+                         'UpstreamMainPathHydroSeq' : 'UpHydroSeq',
+                         'DivergenceCode' : 'Divergence',
+                         'CatchmentAreaSqKm' : 'AreaSqKm',
+                         'TotalDrainageAreaSqKm' : 'TotDASqKm'})
+    _nhdplus_eromma = dict({'MeanAnnualFlow' : 'QAMA',
+                            'MeanAnnualVelocity' : 'VAMA',
+                            'MeanAnnualFlowGaugeAdj': 'QEMA'})
+
+    
     def get_huc(self, huc, force_download=False):
         """Get the specified HUC in its native CRS.
 
@@ -129,10 +143,26 @@ class _FileManagerNHD:
           CRS of the above bounds.
         in_network : bool, optional
           If True (default), remove reaches that are not "in" the NHD network
-        properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
-          (Table 16 and 17 NHDPlus user guide)
-        force_download : bool
-        Download or re-download the file if true.
+
+        properties : list(str) or bool, optional
+          A list of property aliases to be added to reaches.  See
+          alias names in Table 16 (NHDPlusFlowlineVAA) or 17
+          (NHDPlusEROMMA) of NHDPlus User Guide).  This is only
+          supported for NHDPlus.  Commonly used properties include: 
+
+           - 'TotalDrainageAreaKmSq' : total drainage area
+           - 'CatchmentAreaKmSq' : differential catchment contributing area
+           - 'HydrologicSequence' : VAA sequence information
+           - 'DownstreamMainPathHydroSeq' : VAA sequence information
+           - 'UpstreamMainPathHydroSeq' : VAA sequence information
+           - 'catchment' : catchment polygon geometry
+
+          If bool is provided and the value is True, a standard
+          default set of VAA and EROMMA attributes are added as
+          properties.
+        
+        force_download : bool Download
+          or re-download the file if true.
 
         Returns
         -------
@@ -142,7 +172,10 @@ class _FileManagerNHD:
           List of fiona shape objects representing the stream reaches.
 
         Note this finds and downloads files as needed.
-        """  
+
+        """
+        if properties is True:
+            properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys())
         
         if 'WBD' in self.name:
             raise RuntimeError('{}: does not provide hydrographic data.'.format(self.name))
@@ -159,7 +192,7 @@ class _FileManagerNHD:
         
         # error checking on the levels, require file_level <= huc_level <= lowest_level
         if hint_level < self.file_level:
-            raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
+            raise ValueError(f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level.")
         
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
@@ -173,9 +206,10 @@ class _FileManagerNHD:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
             reaches = [r for (i,r) in fid.items(bbox=bounds)]
+            logging.info(f"  Found total of {len(reaches)} in bounds.")
 
         # filter not in network
-        if in_network:
+        if 'NHDPlus' in self.name and in_network:
             logging.info("  Filtering reaches not in-network".format(self.name, filename, layer, bounds))
             reaches = [r for r in reaches if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1]
 
@@ -183,19 +217,14 @@ class _FileManagerNHD:
         if 'Plus' in self.name and properties != None:
             reach_dict = dict((r['properties']['NHDPlusID'],r) for r in reaches)
 
-            # these dictionaries are needed to access properties from NHDPLus tables {'property alias name': 'property key/code'} 
-            # Want to support more properties?? Add their alias names and codes in respective dictionaries (Table 16 and 17 NHDPlus user guide)
-            layer_vaa = dict({'StreamOrder':'StreamOrde' ,'StreamLevel':'StreamLeve' ,'HydrologicSequence': 'HydroSeq','DivergenceCode':'Divergence' , 'CatchmentAreaSqKm':'AreaSqKm' , 'TotalDrainageAreaSqKm':'TotDASqKm' })
-            layer_erroma = dict({'MeanAnnualFlow':'QAMA' ,'MeanAnnualVelocity':'VAMA' ,'MeanAnnualFlowGaugeAdj': 'QEMA'})
-            
             # validation of properties
-            valid_props=list(layer_vaa.keys())+list(layer_erroma.keys())+['catchments']
+            valid_props = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys()) + ['catchment',]
             for prop in properties:
-                assert(prop in valid_props)
+                if prop not in valid_props:
+                    raise ValueError(f'Unrecognized NHDPlus property {prop}.  If you are sure this is valid, add the alias and variable name to the nhdplus tables in FileManagerNHDPlus.')
 
             # flags for which layers will be needed
-            layer_flags=dict({'catchments': 'catchments' in properties ,'vaa': not set(properties).isdisjoint(list(layer_vaa.keys())),'erroma':not set(properties).isdisjoint(list(layer_erroma.keys()))})        
-            if layer_flags['catchments']:
+            if 'catchment' in properties:
                 layer = 'NHDPlusCatchment'
                 logging.info("  {}: opening '{}' layer '{}' for catchments in '{}'".format(self.name, filename, layer, bounds))
                 for r in reaches:
@@ -206,7 +235,7 @@ class _FileManagerNHD:
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
-            if layer_flags['vaa']:
+            if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusFlowlineVAA'
                 logging.info("  {}: opening '{}' layer '{}' for river network properties in '{}'".format(self.name, filename, layer, bounds))
                 with fiona.open(filename, mode='r', layer=layer) as fid:
@@ -214,11 +243,11 @@ class _FileManagerNHD:
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
                         if reach is not None:
                             for prop in properties:
-                                if prop in list(layer_vaa.keys()):
-                                    prop_code=layer_vaa[prop]
+                                if prop in list(self._nhdplus_vaa.keys()):
+                                    prop_code = self._nhdplus_vaa[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
-            if layer_flags['erroma']:
+            if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusEROMMA'
                 logging.info("  {}: opening '{}' layer '{}' for river network properties in '{}'".format(self.name, filename, layer, bounds))
                 with fiona.open(filename, mode='r', layer=layer) as fid:
@@ -226,8 +255,8 @@ class _FileManagerNHD:
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
                         if reach is not None:
                             for prop in properties:
-                                if prop in list(layer_erroma.keys()):
-                                    prop_code=layer_erroma[prop]
+                                if prop in list(self._nhdplus_eromma.keys()):
+                                    prop_code = self._nhdplus_eromma[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
           
         return profile, reaches
@@ -275,9 +304,9 @@ class _FileManagerNHD:
             return 0, matches_f[0][1]
 
         # cheaper if it works, may not work in alaska?
-        a1 = attempt({'datasets':self.name,
-                      'polyType':'huc{}'.format(self.file_level),
-                      'polyCode':hucstr})
+        a1 = attempt({'datasets' : self.name,
+                      'polyType' : 'huc{}'.format(self.file_level),
+                      'polyCode' : hucstr})
         if not a1[0]:
             logging.debug('  REST query with polyCode... SUCCESS')
             logging.debug(f'  REST query: {a1[1]}')
@@ -287,9 +316,9 @@ class _FileManagerNHD:
 
         # may find via huc4?
         if (self.file_level >= 4):
-            a2 = attempt({'datasets':self.name,
-                          'polyType':'huc4',
-                          'polyCode':hucstr[0:4]})
+            a2 = attempt({'datasets' : self.name,
+                          'polyType' : 'huc4',
+                          'polyCode' : hucstr[0:4]})
             if not a2[0]:
                 logging.debug('  REST query with polyCode... SUCCESS')
                 logging.debug(f'  REST query: {a2[1]}')
@@ -310,26 +339,27 @@ class _FileManagerNHD:
     def _valid_url(self, i, match, huc, gdb_only=True):
         """Helper function that returns the URL if valid, or False if not."""
         ok = True
+        logging.info(f'Checking match for {huc}? {match["downloadURL"]}')
 
         if ok:
             ok = "format" in match
-            logging.debug(f'format in match? {ok}')
+            logging.info(f'format in match? {ok}')
         if ok:
             ok = "urls" in match
-            logging.debug(f'urls in match? {ok}')
-        if ok and "FileGDB" in match["urls"]:
-            url = match['urls']["FileGDB"]
-            logging.debug(f'FileGDB in urls? {ok}')
-        elif ok and "FileGDB 10.1" in match["urls"]:
-            url = match['urls']["FileGDB 10.1"]
-            logging.debug(f'FileGDB 10.1 in urls? {ok}')
-        else:
-            logging.debug(f'Cannot find GDB url')
-            return False
+            logging.info(f'urls in match? {ok}')
+        if ok:
+            # search for a GDB url
+            try:
+                url_type = next(ut for ut in match['urls'] if 'GDB' in ut or 'GeoDatabase' in ut)
+            except StopIteration:
+                logging.info(f'Cannot find GDB url: {list(match["urls"].keys())}')
+                return False
+            else:
+                url = match['urls'][url_type]
 
         # we have a url, is it actually this huc?
         url_split = url.split('/')
-        logging.debug(f'YAY: {url}')
+        logging.info(f'YAY: {url}')
         logging.info(f'Checking match {i}: {url_split[-2]}, {url_split[-1]}')
 
         # check the title contains (NHD) if NHD, or (NHDPlus HR) if NHDPlus
@@ -390,6 +420,9 @@ class _FileManagerNHD:
             # hope we can find it?
             gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
             assert(len(gdb_files) == 1)
+
+            if os.path.exists(filename):
+                shutil.rmtree(filename)
             source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
 
         if not os.path.exists(filename):
