@@ -100,8 +100,9 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     # dealing with crossings might have generated river segments
     # outside of my space.  remove these.  Note the use of negative tol
     logging.info("  filtering rivers to HUC")
-    rivers = filter_reaches_to_shape(hucs.exterior(), rivers, -0.1*tol)
-    return rivers
+    reaches = [r for river in rivers for r in river.dfs()]
+    reaches = watershed_workflow.utils.filter_to_shape(hucs.exterior(), reaches, -0.1*tol)
+    return make_global_tree(reaches)
 
 
 def _snap_and_cut(point, line, tol=_tol):

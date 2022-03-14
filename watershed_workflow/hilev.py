@@ -726,6 +726,7 @@ def construct_rivers(hucs, reaches, method='geometry',
 
     logging.info("Generating the river tree")
     rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method)
+    logging.info(f" ... generated {len(rivers)} rivers")
 
     if ignore_small_rivers is not None:
         rivers = watershed_workflow.hydrography.filter_small_rivers(rivers, ignore_small_rivers)
@@ -862,7 +863,6 @@ def simplify(hucs,
 
 
 def simplify_and_prune(hucs, reaches,
-                       filter=True,
                        simplify_hucs=None,
                        simplify_rivers=None,
                        ignore_small_rivers=None,
@@ -870,7 +870,7 @@ def simplify_and_prune(hucs, reaches,
                        prune_by_area_fraction=0,
                        snap=False, cut_intersections=False):
     """DEPRECATED: simply calls construct_rivers() and simplify()"""
-    rivers = construct_rivers(hucs, reaches, filter, ignore_small_rivers, simplify_hucs,
+    rivers = construct_rivers(hucs, reaches, ignore_small_rivers, simplify_hucs,
                               prune_by_area, prune_by_area_fraction)
     simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
