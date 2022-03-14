@@ -178,7 +178,7 @@ class _FileManagerNHD:
             properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys())
         
         if 'WBD' in self.name:
-            raise RuntimeError('{}: does not provide hydrographic data.'.format(self.name))
+            raise RuntimeError(f'{self.name}: does not provide hydrographic data.')
         
         huc = source_utils.huc_str(huc)
         hint_level = len(huc)
@@ -201,7 +201,7 @@ class _FileManagerNHD:
         # find and open the hydrography layer        
         filename = self.name_manager.file_name(huc[0:self.file_level])
         layer = 'NHDFlowline'
-        logging.info("  {}: opening '{}' layer '{}' for streams in '{}'".format(self.name, filename, layer, bounds))
+        logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
@@ -210,7 +210,7 @@ class _FileManagerNHD:
 
         # filter not in network
         if 'NHDPlus' in self.name and in_network:
-            logging.info("  Filtering reaches not in-network".format(self.name, filename, layer, bounds))
+            logging.info("  Filtering reaches not in-network")
             reaches = [r for r in reaches if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1]
 
         # associate catchment areas with the reaches if NHDPlus
@@ -226,7 +226,7 @@ class _FileManagerNHD:
             # flags for which layers will be needed
             if 'catchment' in properties:
                 layer = 'NHDPlusCatchment'
-                logging.info("  {}: opening '{}' layer '{}' for catchments in '{}'".format(self.name, filename, layer, bounds))
+                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for catchments in '{bounds}'")
                 for r in reaches:
                     r['properties']['catchment'] = None
                 with fiona.open(filename, mode='r', layer=layer) as fid:
@@ -237,7 +237,7 @@ class _FileManagerNHD:
 
             if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusFlowlineVAA'
-                logging.info("  {}: opening '{}' layer '{}' for river network properties in '{}'".format(self.name, filename, layer, bounds))
+                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'")
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
@@ -249,7 +249,7 @@ class _FileManagerNHD:
 
             if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusEROMMA'
-                logging.info("  {}: opening '{}' layer '{}' for river network properties in '{}'".format(self.name, filename, layer, bounds))
+                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'")
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
@@ -260,7 +260,67 @@ class _FileManagerNHD:
                                     reach['properties'][prop] = flowline['properties'][prop_code]
           
         return profile, reaches
-            
+
+    def get_waterbodies(self, huc, bounds=None, bounds_crs=None, force_download=False):
+        """Get all water bodies, e.g. lakes, reservoirs, etc, within a given HUC and/or coordinate bounds.
+
+        Parameters
+        ----------
+        huc : int or str
+          The USGS Hydrologic Unit Code
+        bounds : [xmin, ymin, xmax, ymax], optional
+          Coordinate bounds to filter reaches returned.  If this is provided,
+          bounds_crs must also be provided.
+        bounds_crs : CRS, optional
+          CRS of the above bounds.
+        force_download : bool Download
+          or re-download the file if true.
+
+        Returns
+        -------
+        profile : dict
+          The fiona shapefile profile (see Fiona documentation).
+        reaches : list(dict)
+          List of fiona shape objects representing the stream reaches.
+
+        Note this finds and downloads files as needed.
+
+        """
+        
+        if 'NHDPlus' not in self.name:
+            raise RuntimeError(f'{self.name}: does not provide water body data.')
+        
+        huc = source_utils.huc_str(huc)
+        hint_level = len(huc)
+
+        # try to get bounds if not provided
+        if bounds is None:
+            # can we infer a bounds by getting the HUC?
+            profile, hu = self.get_huc(huc)
+            bounds = watershed_workflow.utils.bounds(hu)
+            bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
+        
+        # error checking on the levels, require file_level <= huc_level <= lowest_level
+        if hint_level < self.file_level:
+            raise ValueError(f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level.")
+        
+        # download the file
+        filename = self._download(huc[0:self.file_level], force=force_download)
+        logging.info('  Using Hydrography file "{}"'.format(filename))
+        
+        # find and open the waterbody layer        
+        filename = self.name_manager.file_name(huc[0:self.file_level])
+        layer = 'NHDWaterbody'
+        logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
+        with fiona.open(filename, mode='r', layer=layer) as fid:
+            profile = fid.profile
+            bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
+            bodies = [r for (i,r) in fid.items(bbox=bounds)]
+            logging.info(f"  Found total of {len(bodies)} in bounds.")
+
+        return profile, bodies
+
+    
     def _url(self, hucstr):
         """Use the USGS REST API to find the URL to download a file for a given huc.
 
