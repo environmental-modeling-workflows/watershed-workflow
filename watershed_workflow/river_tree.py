@@ -66,31 +66,34 @@ class River(watershed_workflow.tinytree.Tree):
     def __iter__(self):
         return self.dfs()
 
-    def _is_consistent(self, child, tol=_tol):
-        """Is a given child consistent."""
-        if not watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol):
-            return False
-        return True
+    def _is_continuous(self, child, tol=_tol):
+        """Is a given child continuous with self.."""
+        return watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol)
     
-    def is_consistent(self, tol=_tol):
-        """Checks geometric consistency of the river.
+    def is_continuous(self, tol=_tol):
+        """Checks geometric continuity of the river.
 
         Confirms that all upstream children's downstream coordinate
         coincides with self's upstream coordinate.
         """
-        return all(self._is_consistent(child, tol) for child in self.children)
+        return all(self._is_continuous(child, tol) for child in self.children) and \
+            all(child.is_continuous(tol) for child in self.children)
 
-    def get_inconsistent(self, tol=_tol):
-        """Returns a list of inconsistent children."""
-        inconsistent = []
-        for child in self.children:
-            if not self._is_consistent(child, tol):
-                logging.warning("  INCONSISTENT:")
-                logging.warning("    child: %r"%(child.segment.coords[:]))
-                logging.warning("    parent: %r"%(self.segment.coords[:]))
-                inconsistent.append(child)
-        return inconsistent
+    def is_hydroseq_consistent(self):
+        """Confirms that hydrosequence is valid."""
+        if len(self.children) == 0:
+            return True
+        
+        self.children = sorted(self.children, key=lambda c : c.properties['HydrologicSequence'])
+        return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
+            all(child.is_hydroseq_consistent() for child in self.children)
 
+    def is_consistent(self, tol=_tol):
+        """Validity checking of the tree."""
+        good = self.is_continuous(tol)
+        if 'HydrologicSequence' in self.properties:
+            good |= self.is_hydroseq_consistent()
+        return good
 
     #
     # Factory functions
