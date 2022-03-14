@@ -32,7 +32,7 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     """Snap HUCs to rivers."""
     assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
-    assert(all(river.is_consistent() for river in rivers))
+    assert(all(river.is_continuous() for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) == 0:
@@ -47,7 +47,7 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
     snap_polygon_endpoints(hucs, rivers, tol_triples)
-    if not all(river.is_consistent() for river in rivers):
+    if not all(river.is_continuous() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -66,7 +66,7 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
         snap_endpoints(tree, hucs, tol)
-    if not all(river.is_consistent() for river in rivers):
+    if not all(river.is_continuous() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
     try:
@@ -83,7 +83,7 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     if cut_intersections:
         logging.info("  cutting at crossings")
         snap_crossings(hucs, rivers, tol)
-        consistent = all(river.is_consistent() for river in rivers)
+        consistent = all(river.is_continuous() for river in rivers)
         if not consistent:
             logging.info("  ...resulted in inconsistent rivers!")
             return False

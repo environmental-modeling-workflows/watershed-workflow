@@ -801,6 +801,12 @@ def simplify(hucs,
         boundary to occur at a coincident node by adding nodes as
         needed.
 
+    Returns
+    -------
+    rivers : list(River)
+       Snap may change the rivers, so this returns the list of updated
+       rivers.
+
     .. note: 
         This also may modify the hucs and waterbody objects in-place.
 
@@ -860,6 +866,7 @@ def simplify(hucs,
         mins.append(np.min(dz))
     logging.info(f"  HUC min seg length: {min(mins)}")
     logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
+    return rivers
 
 
 def simplify_and_prune(hucs, reaches,
