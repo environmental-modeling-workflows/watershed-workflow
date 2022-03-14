@@ -15,6 +15,8 @@ import shapely.affinity
 import rasterio
 import watershed_workflow
 
+_tol = 1.e-7
+
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
 
@@ -143,7 +145,6 @@ def round_shplys(list_of_things, digits):
     return [shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0) for thing in list_of_things]
 
 
-_tol = 1.e-7
 def close(s1, s2, tol=_tol):
     """Are two shapely shapes topologically equivalent and geometrically close?
 
@@ -532,6 +533,19 @@ def non_point_intersection(shp1, shp2):
     elif empty_shapely(inter):
         return False
     return True
+
+
+def filter_to_shape(shape, to_filter, tol=None):
+    """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
+
+    Always returns a list of reaches, independent of the input.
+    """
+    if tol is None:
+        tol = _tol
+    shape = shape.buffer(2*tol)
+    filtered = [r for r in to_filter if non_point_intersection(shape,r)]
+    return filtered
+
 
 def flatten(list_of_shps):
     """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""

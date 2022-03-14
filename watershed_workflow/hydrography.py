@@ -370,30 +370,6 @@ def make_global_tree(reaches, method='geometry', tol=_tol):
         raise ValueError("Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
-def filter_reaches_to_shape(shape, reaches, tol=_tol):
-    """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
-
-    Always returns a list of reaches, independent of the input.
-    """
-    shape = shape.buffer(2*tol)
-    
-    # removes any reaches that are not at least partial contained in the hucs
-    if type(reaches) is list and len(reaches) == 0:
-        return list()
-
-    logging.info("  ...filtering")
-    if type(reaches) is shapely.geometry.MultiLineString or \
-       (type(reaches) is list and type(reaches[0]) is shapely.geometry.LineString):
-        reaches2 = [r for r in reaches if watershed_workflow.utils.non_point_intersection(shape,r)]
-    elif type(reaches) is list and type(reaches[0]) is watershed_workflow.river_tree.River:
-        reaches2 = [r for river in reaches for r in river.preOrder() if watershed_workflow.utils.non_point_intersection(shape,r.segment)]
-        for r in reaches2:
-            r.segment.properties = r.properties
-    else:
-        raise RuntimeError("Unrecognized river shape type?")
-    return reaches2
-    
-
 def simplify_and_merge(reaches, tol=_tol):
     """First pass to clean up hydro data"""
     logging.info("  quick simplify of reaches")
