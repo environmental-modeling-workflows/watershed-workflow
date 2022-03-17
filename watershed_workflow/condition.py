@@ -149,14 +149,36 @@ def fill_pits3(points, outletID):
     return
                     
 
-def fill_pits_dual(m2, outlet_edge=None, eps=1e-3):
-    """Conditions a dual mesh, ensuring the property that, starting with
-    an outlet cell, there is a path to every cell by way of faces that is
-    monotonically increasing in elevation.
+def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
+    """Conditions a dual mesh IN PLACE, ensuring the property that,
+    starting with an outlet cell, there is a path to every cell by way
+    of faces that is monotonically increasing in elevation (except in
+    cells which are a part of waterbodies).
+
+    If the is_waterbody mask is provided, these cells are special
+    cells that may be pits -- e.g. lakes, reservoirs, etc.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to condition.
+    is_waterbody : np.ndarray(int, shape=ncells), optional
+      A boolean/integer mask of length m2.num_cells(), with True
+      values indicating that the given cell is a part of a waterbody
+      that may be a depression.  This is important for
+      reservoirs/lakes/etc where bathymetry is known and pits are
+      physical.
+    outlet_edge : (int,int), optional
+      If provided, the point to start conditioning from.  If not
+      provided, will use the edge on the boundary of m2 with the
+      lowest elevation.
+    eps : float, optional=1e-3
+      A small vertical displacement for soft tolerances.
+
     """
     if outlet_edge is None:
         # determine the outlet edge -- the lowest edge point
-        boundary_edges = m2.boundary_edges()
+        boundary_edges = m2.boundary_edges
         outlet_edge = boundary_edges[0]
         be_elev = (m2.coords[outlet_edge[0],2] + m2.coords[outlet_edge[1],2])/2.
 
@@ -166,7 +188,6 @@ def fill_pits_dual(m2, outlet_edge=None, eps=1e-3):
                 be_elev = eh
                 outlet_edge = e
     outlet_edge = m2.edge_hash(*outlet_edge)
-    
 
     outlet_cell = m2.edges_to_cells()[outlet_edge]
     assert(len(outlet_cell) == 1)
@@ -206,17 +227,13 @@ def fill_pits_dual(m2, outlet_edge=None, eps=1e-3):
             self.edges = edges
             self.z = m2.compute_centroid(self.cell)[2]
 
-                
-    # Boundary is a list of (EDGE,EXTERNAL_CELL) tuples which are NOT
-    # yet in waterway_edges, or waterway, respectively, but whose
-    # cells other than EXTERNAL_CELL are in waterway.  The tuple is
-    # sorted by the elevation of EXTERNAL_CELL's centroid.  Note that
-    # EXTERNAL_CELL's centroid has been conditioned, so its elevation
-    # is at least as high as the highest elevation of cells in
-    # waterway.
-    def boundary_cell_sorting_value(be):
-        return be.z
-    boundary = sortedcontainers.SortedList([BoundaryEntry(outlet_cell, [outlet_edge,]),], key=boundary_cell_sorting_value)
+    boundary = sortedcontainers.SortedList([BoundaryEntry(outlet_cell, [outlet_edge,]),], key=lambda be : be.z)
+
+    # masked cells are always in the boundary, allowing them to be picked up as we reach that elevation.
+    if is_waterbody is not None:
+        assert(len(is_waterbody) == m2.num_cells())
+        masked_cells = [BoundaryEntry(c, list()) for (c, mask) in enumerate(is_waterbody) if mask]
+        boundary.update(masked_cells)
 
     while len(boundary) > 0:
         # pop the lowest boundary cell and stick its edge and cell
@@ -324,7 +341,7 @@ def fill_pits(mesh, outlet=None, algorithm=3):
     """
     points_dict = points_from_mesh(mesh)
     if outlet is None:
-        boundary_nodes = mesh.boundary_nodes()
+        boundary_nodes = mesh.boundary_nodes
         outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes,2])]
 
     if algorithm == 1:

@@ -108,6 +108,10 @@ def datadir(tmpdir, request):
         dir_util.copy_tree(test_dir, str(tmpdir))
     return tmpdir
 
+@pytest.fixture
+def sources_download(request):
+    return watershed_workflow.source_list.get_default_sources()
+
 
 
 

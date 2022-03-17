@@ -15,6 +15,8 @@ import shapely.affinity
 import rasterio
 import watershed_workflow
 
+_tol = 1.e-7
+
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
 
@@ -112,12 +114,12 @@ def shply(shape, properties=None, flip=False):
     
     try:
         thing = shapely.geometry.shape(shape)
-        if type(thing) is shapely.geometry.MultiPoint and len(thing) == 1:
-            thing = thing[0]
-        elif type(thing) is shapely.geometry.MultiLineString and len(thing) == 1:
-            thing = thing[0]
-        elif type(thing) is shapely.geometry.MultiPolygon and len(thing) == 1:
-            thing = thing[0]
+        if type(thing) is shapely.geometry.MultiPoint and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
+        elif type(thing) is shapely.geometry.MultiLineString and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
+        elif type(thing) is shapely.geometry.MultiPolygon and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
 
         # first check for latlon instead of lonlat
         if flip:
@@ -142,7 +144,7 @@ def round_shplys(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
     return [shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0) for thing in list_of_things]
 
-_tol = 1.e-7
+
 def close(s1, s2, tol=_tol):
     """Are two shapely shapes topologically equivalent and geometrically close?
 
@@ -162,23 +164,52 @@ def close(s1, s2, tol=_tol):
     close : bool
       Is close?
     """
+    # deal with Multi* or list objects
+    def is_multi(thing):
+        if isinstance(thing, shapely.geometry.MultiPoint):
+            return True
+        if isinstance(thing, shapely.geometry.MultiLineString):
+            return True
+        if isinstance(thing, shapely.geometry.MultiPolygon):
+            return True
+        if isinstance(thing, list):
+            return True
+        return False
+
+    def local_len(thing):
+        try:
+            return len(thing)
+        except AttributeError:
+            return len(thing.geoms)
+    
+    def iter(thing):
+        assert(is_multi(thing))
+        if isinstance(thing, list):
+            for t in thing:
+                yield t
+        else:
+            for t in thing.geoms:
+                yield t
+
+
+    if is_multi(s1):
+        if local_len(s1) == 1:
+            return close(next(iter(s1)), s2, tol)
+
+    if is_multi(s2):
+        if local_len(s2) == 1:
+            return close(s1, next(iter(s2)), tol)
+
+    if is_multi(s1) and is_multi(s2):
+        if local_len(s1) != local_len(s2):
+            return False
+        return all(close(i1, i2, tol) for (i1,i2) in zip(s1,s2))
+        
     # points get compared as tuples
     if isinstance(s1, shapely.geometry.Point):
         return close(s1.coords[0], s2, tol)
     if isinstance(s2, shapely.geometry.Point):
         return close(s1, s2.coords[0], tol)
-
-    # length 1 multi-shapes get compared as individual shapes
-    if isinstance(s1, (shapely.geometry.MultiPoint,
-                       shapely.geometry.MultiLineString,
-                       shapely.geometry.MultiPolygon)) and \
-       len(s1) == 1:
-        return close(s1[0], s2, tol)
-    if isinstance(s2, (shapely.geometry.MultiPoint,
-                       shapely.geometry.MultiLineString,
-                       shapely.geometry.MultiPolygon)) and \
-       len(s2) == 1:
-        return close(s1, s2[0], tol)
 
     # types should be the same now
     if type(s1) != type(s2):
@@ -240,7 +271,10 @@ def contains(s1, s2, tol=_tol):
 
 
 def cut(line, cutline, tol=1.e-5):
-    """Cuts a line at all intersections with cutline."""
+    """Cuts a line at all intersections with cutline.  If an existing
+    point in line is within tol of the cutline, do not add an additional
+    coordinate, just move that coordinate.  Otherwise, add a new
+    coordinate."""
 
     def plot():
         from matplotlib import pyplot as plt
@@ -388,10 +422,10 @@ def center(objects, centering=True):
     if type(centering) is shapely.geometry.Point:
         centroid = centering
     elif centering is True or centering == 'geometric':
-        union = shapely.ops.cascaded_union(objects)
+        union = shapely.ops.unary_union(objects)
         centroid = shapely.geometry.Point([(union.bounds[0] + union.bounds[2])/2., (union.bounds[1] + union.bounds[3])/2.])
     elif centering == 'mass':
-        union = shapely.ops.cascaded_union(objects)
+        union = shapely.ops.unary_union(objects)
         centroid = union.centroid
     else:
         raise ValueError('Centering: option centering = "{}" unknown'.format(centering))
@@ -407,31 +441,31 @@ def center(objects, centering=True):
 
 def merge(ml1, ml2):
     """Merges two multilines that are assumed to overlap except at their endpoints."""
-    assert(len(ml1) > 1)
-    assert(len(ml2) > 1)
-    assert(close(ml1[0].coords[0], ml2[0].coords[0]))
-    assert(close(ml1[-1].coords[-1], ml2[-1].coords[-1]))
+    assert(len(ml1.geoms) > 1)
+    assert(len(ml2.geoms) > 1)
+    assert(close(ml1.geoms[0].coords[0], ml2.geoms[0].coords[0]))
+    assert(close(ml1.geoms[-1].coords[-1], ml2.geoms[-1].coords[-1]))
 
     new_ml = []
     i1 = 0
-    c1 = ml1[i1]
+    c1 = ml1.geoms[i1]
     i2 = 0
-    c2 = ml2[i2]
+    c2 = ml2.geoms[i2]
     done = False
     tol = 1.e-5
     while not done:
         if close(c1,c2,tol):
             new_ml.append(c1)
             i1 += 1
-            if i1 < len(ml1):
-                c1 = ml1[i1]
+            if i1 < len(ml1.geoms):
+                c1 = ml1.geoms[i1]
             else:
                 c1 = None
                 done = True
             
             i2 += 1
-            if i2 < len(ml2):
-                c2 = ml2[i2]
+            if i2 < len(ml2.geoms):
+                c2 = ml2.geoms[i2]
             else:
                 c2 = None
                 done = True
@@ -445,8 +479,8 @@ def merge(ml1, ml2):
             c2 = shapely.geometry.LineString([c1.coords[-1],]+c2.coords[len(c1.coords)-1:])
 
             i1 += 1
-            if i1 < len(ml1):
-                c1 = ml1[i1]
+            if i1 < len(ml1.geoms):
+                c1 = ml1.geoms[i1]
             else:
                 c1 = None
                 done = True
@@ -460,8 +494,8 @@ def merge(ml1, ml2):
             c1 = shapely.geometry.LineString([c2.coords[-1],]+c1.coords[len(c2.coords)-1:])
 
             i2 += 1
-            if i2 < len(ml2):
-                c2 = ml2[i2]
+            if i2 < len(ml2.geoms):
+                c2 = ml2.geoms[i2]
             else:
                 c2 = None
                 done = True
@@ -479,14 +513,8 @@ def merge(ml1, ml2):
 def empty_shapely(shp):
     if shp is None:
         return True
-    if type(shp) is shapely.geometry.GeometryCollection and len(shp) == 0:
-        return True
-    if type(shp) is shapely.geometry.LineString and len(shp.coords) == 0:
-        return True
-    if type(shp) is shapely.geometry.Polygon and len(shp.exterior.coords) == 0:
-        return True
-    return False
-        
+    return shp.is_empty
+    
 def intersects(shp1, shp2):
     """Checks whether an intersection exists.
     
@@ -508,6 +536,19 @@ def non_point_intersection(shp1, shp2):
     elif empty_shapely(inter):
         return False
     return True
+
+
+def filter_to_shape(shape, to_filter, tol=None):
+    """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
+
+    Always returns a list of reaches, independent of the input.
+    """
+    if tol is None:
+        tol = _tol
+    shape = shape.buffer(2*tol)
+    filtered = [r for r in to_filter if non_point_intersection(shape,r)]
+    return filtered
+
 
 def flatten(list_of_shps):
     """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""

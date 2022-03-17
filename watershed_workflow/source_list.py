@@ -26,17 +26,19 @@ from watershed_workflow.sources.manager_raster import FileManagerRaster
 
 
 # available and default water boundary datasets
-huc_sources = {'NHD Plus' : FileManagerNHDPlusAccumulator(),
+huc_sources = {'NHDPlus' : FileManagerNHDPlusAccumulator(),
                'NHD' : FileManagerNHD(),
                'WBD' : FileManagerWBD()
                }
-default_huc_source = 'WBD'
+huc_sources['NHD Plus'] = huc_sources['NHDPlus'] # historical typo, kept for backward compatibility
+default_huc_source = 'NHDPlus'
 
 # available and default hydrography datasets
-hydrography_sources = {'NHD Plus' : FileManagerNHDPlus(),
+hydrography_sources = {'NHDPlus' : FileManagerNHDPlus(),
                        'NHD' : FileManagerNHD(),
                        }
-default_hydrography_source = 'NHD'
+hydrography_sources['NHD Plus'] = hydrography_sources['NHDPlus'] # historical typo, kept for backward compatibility
+default_hydrography_source = 'NHDPlus'
 
 # available and default digital elevation maps
 dem_sources = {'NED 1/3 arc-second' : FileManagerNED('1/3 arc-second'),
@@ -61,6 +63,7 @@ default_land_cover = 'NLCD (L48)'
 # available and default meteorology
 met_sources = {'DayMet' : FileManagerDaymet()}
 default_met = 'DayMet'
+
 
 def get_default_sources():
     """Provides a default set of data sources.
