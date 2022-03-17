@@ -20,16 +20,16 @@ def vgm_Rosetta(data, model_type=None):
     """
     Return van Genutchen model parameters using Rosetta v3 model ( Zhang and Schaap, 2017 WRR).
     
-    Parameters: 
-    -----
+    Parameters 
+    ----------
     data : numpy.ndarray(nvar, nsamples)
       Input data.
     model_type : int
       Rosetta model type: 2--using sand/silt/clay pct, 3--using sand/silt/clay pct + bulk density
       NOTE: this is now ignored as the new rosetta-soil package predicts this.
         
-    Returns:
-    ----
+    Returns
+    -------
     params : pandas dataframe
         van Genutchen model parameters
     """
