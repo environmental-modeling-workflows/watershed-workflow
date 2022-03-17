@@ -59,6 +59,14 @@ class River(watershed_workflow.tinytree.Tree):
         for n in self.leaf_nodes():
             yield n.segment
 
+    def accumulate(self, to_accumulate, to_save=None, op=sum):
+        """Accumulates a property across the river tree."""
+        val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
+        val = op([val, self.properties[to_accumulate]])
+        if to_save is not None:
+            self.properties[to_save] = val
+        return val
+            
     def __len__(self):
         """Number of total reaches in the river."""
         return sum(1 for i in self.dfs())
@@ -171,5 +179,7 @@ class River(watershed_workflow.tinytree.Tree):
                 roots.append(node)
         return roots
     
+
+
 
 

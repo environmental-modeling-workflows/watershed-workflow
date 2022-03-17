@@ -18,17 +18,17 @@ import watershed_workflow.plot
 _tol = 0.1 # meters by default
 
 
-def accumulate(tree, outprop, inprop, op=sum):
-    """Accumulates areas up the tree."""
-    try:
-        for node in tree.postOrder():
-            total_area = op(c.properties[outprop] for c in node.children)
-            node.properties[inprop] = total_area + node.properties[inprop]
-    except KeyError:
-        raise ValueError(f"accumulate() called with nonexistent property {inprop}")
+def make_global_tree(reaches, method='geometry', tol=_tol):
+    """Constructs River objects from a list of reaches."""
+    if method == 'hydroseq':
+        return watershed_workflow.river_tree.River.construct_rivers_by_hydroseq(reaches)
+    elif method == 'geometry':
+        return watershed_workflow.river_tree.River.construct_rivers_by_geometry(reaches,tol)
+    else:
+        raise ValueError("Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
-def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
+def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=False):
     """Snap HUCs to rivers."""
     assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
@@ -41,12 +41,12 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     for r in rivers:
         assert(len(r) > 0)
 
-    if tol_triples is None:
-        tol_triples = tol
+    if tol_triple_junctions is None:
+        tol_triple_junctions = tol
 
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
-    snap_polygon_endpoints(hucs, rivers, tol_triples)
+    snap_polygon_endpoints(hucs, rivers, tol_triple_junctions)
     if not all(river.is_continuous() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
@@ -55,11 +55,6 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
     except AssertionError:
         logging.info("    ...resulted in inconsistent HUCs")
         return False
-
-    logging.debug('snap part 1')
-    logging.debug(list(rivers[0].segment.coords))
-    logging.debug(list(hucs.polygon(0).boundary.coords))
-    #watershed_workflow.plot.hucs(hucs, style='-x')
     
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
@@ -75,96 +70,124 @@ def snap(hucs, rivers, tol=_tol, tol_triples=None, cut_intersections=False):
         logging.info("    ...resulted in inconsistent HUCs")
         return False
 
-    logging.debug('snap part 2')
-    logging.debug(list(rivers[0].segment.coords))
-    logging.debug(list(hucs.polygon(0).boundary.coords))
-
-    # deal with intersections
     if cut_intersections:
-        logging.info("  cutting at crossings")
-        snap_crossings(hucs, rivers, tol)
-        consistent = all(river.is_continuous() for river in rivers)
-        if not consistent:
-            logging.info("  ...resulted in inconsistent rivers!")
-            return False
-        try:
-            list(hucs.polygons())
-        except AssertionError:
-            logging.info("  ...resulted in inconsistent HUCs")
-            return False
-
-    logging.debug('snap part 3')
-    logging.debug(list(rivers[0].segment.coords))
-    logging.debug(list(hucs.polygon(0).boundary.coords))
-
-    # dealing with crossings might have generated river segments
-    # outside of my space.  remove these.  Note the use of negative tol
-    logging.info("  filtering rivers to HUC")
-    reaches = [r for river in rivers for r in river.dfs()]
-    reaches = watershed_workflow.utils.filter_to_shape(hucs.exterior(), reaches, -0.1*tol)
-    return make_global_tree(reaches)
+        cut_and_snap_crossings(hucs, rivers, tol)
+    return rivers
 
 
-def _snap_and_cut(point, line, tol=_tol):
-    """Determine the closest point to a line and, if it is within tol of
-    the line, cut the line at that point and snapping the endpoints as
-    needed.
+def cut_and_snap_crossings(hucs, rivers, tol=_tol):
+    """If any reach crosses a HUC boundary:
+
+    1. If it crosses an external boundary, cut the reach in two and
+       discard the portion outside of the domain.
+
+    2. If it crosses an internal boundary, ensure there is a
+       coordinate the reach that is on the internal boundary.
+
+    Either way, also ensure there is a coordinate on the HUC
+    boundary at the crossing point.
+    
     """
-    if watershed_workflow.utils.in_neighborhood(shapely.geometry.Point(point), line, tol):
-        logging.debug("  - in neighborhood")
-        nearest_p = watershed_workflow.utils.nearest_point(line, point)
-        dist = watershed_workflow.utils.distance(nearest_p, point)
-        logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
-        if dist < tol:
-            if dist < 1.e-7:
-                # filter case where the point is already there
-                if any(watershed_workflow.utils.close(point, c) for c in line.coords):
-                    return None 
-            return nearest_p
-    return None
+    logging.info("  cutting at crossings")
+    # Note this is O(M*N) where M is number of huc segments and N is
+    # number of reaches, and could be made more efficient.
+    for tree in rivers:
+        for river_node in tree.preOrder():
+            _cut_and_snap_crossing(hucs, river_node, tol)
 
+    assert(all(river.is_consistent() for river in rivers))
+    return rivers
+    
 
-def _snap_crossing(hucs, river_node, tol=_tol):
-    """Snap a single river node"""
-    r = river_node.segment
-    logging.debug("len spine, boundary = {0},{1}".format(len(hucs.intersections), len(hucs.boundaries)))
-    for b,spine in itertools.chain(hucs.intersections.items(), hucs.boundaries.items()):
-        logging.debug("len spine seg = {0}".format(len(spine)))
-        #for b,spine in hucs.intersections.items():
+def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
+    """Helper function for cut_and_snap_crossings()"""
+    r = reach_node.segment
+
+    # first deal with crossings of the HUC exterior boundary -- in
+    # this case, the reach segment gets split in two and the external
+    # one is remoevd.
+    for b,spine in hucs.boundaries.items():
         for s,seg_handle in spine.items():
             seg = hucs.segments[seg_handle]
 
-            logging.debug("  - intersection?:")
-            logging.debug(list(r.coords))
-            logging.debug(list(seg.coords))
+            if seg.intersects(r):
+                logging.info('intersection found')
+                new_spine = watershed_workflow.utils.cut(seg, r, tol)
+                new_reach_segs = watershed_workflow.utils.cut(r, seg, tol)
+                try:
+                    assert(len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
+                    assert(len(new_spine) == 1 or len(new_spine) == 2)
+                    logging.info("  - cutting reach at external boundary of HUCs")
+
+                    if hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[0].coords[0])):
+                        if len(new_reach_segs) == 2:
+                            assert(not hucs.exterior().contains(shapely.geometry.Point(new_reach_segs[1].coords[-1])))
+                        reach_node.segment = new_reach_segs[0]
+                    else:
+                        assert(hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[1].coords[0])))
+                        reach_node.segment = new_reach_segs[1]
+
+                    hucs.segments[seg_handle] = new_spine[0]
+                    if len(new_spine) > 1:
+                        assert(len(new_spine) == 2)
+                        new_handle = hucs.segments.add(new_spine[1])
+                        spine.add(new_handle)
+
+                except AssertionError:
+                    print('Error:')
+                    reachc = np.array(reach_node.segment.coords)
+                    segc = np.array(seg.coords)
+                    plt.plot(reachc[:,0], reachc[:,1], 'k--x')
+                    plt.plot(segc[:,0], segc[:,1], 'k--+')
+
+                    print(f'Reach split into {len(new_spine)} segments')
+                    if len(new_spine) > 0:
+                        r1c = np.array(new_spine[0].coords)
+                        plt.plot(r1c[:,0], r1c[:,1], 'rx', markersize=40)
+                    if len(new_spine) > 1:
+                        r2c = np.array(new_spine[1].coords)
+                        plt.plot(r2c[:,0], r2c[:,1], 'm+', markersize=40)
+                    
+                    print(f'Reach split into {len(new_reach_segs)} segments')
+                    if len(new_reach_segs) > 0:
+                        r1c = np.array(new_reach_segs[0].coords)
+                        plt.plot(r1c[:,0], r1c[:,1], 'b+', markersize=40)
+                        inter = watershed_workflow.utils.non_point_intersection(hucs.exterior(), new_reach_segs[0])
+                        print(r1c)
+                        print(f'  r1 intersects with boundary? {inter}')
+                    if len(new_reach_segs) > 1:
+                        r2c = np.array(new_reach_segs[1].coords)
+                        plt.plot(r2c[:,0], r2c[:,1], 'cx', markersize=40)
+                        inter = watershed_workflow.utils.non_point_intersection(hucs.exterior(), new_reach_segs[1])
+                        print(f'  r2 intersects with boundary? {inter}')
+                        print(r2c)
+                        inter = hucs.exterior().intersection(new_reach_segs[1])
+                        print(f'  r2 intersection = {inter}')
+
+                    plt.show()
+                    raise RuntimeError('Problem in cut_intersection')
+                    
+                break
+
+    # now deal with crossings of the HUC interior boundary -- in this
+    # case, the reach segment is kept as one but the segment geometry
+    # is snapped to make sure the intersection is exact
+    for i,spine in hucs.intersections.items():
+        for s,seg_handle in spine.items():
+            seg = hucs.segments[seg_handle]
 
             if seg.intersects(r):
-                logging.debug("  - YES")
-                #try:
                 new_spine = watershed_workflow.utils.cut(seg, r, tol)
-                # except RuntimeError as err:
-                #     plt.figure()
-                #     watershed_workflow.plot.hucs(hucs,None,color='gray')
-                #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
-                #     plt.plot(r.xy[0], r.xy[1], 'r-x')
-                #     plt.show()
-                #     raise err
-
-                #try:
-                new_rivers = watershed_workflow.utils.cut(r, seg, tol)
-                # except RuntimeError as err:
-                #     plt.figure()
-                #     watershed_workflow.plot.hucs(hucs,None,color='gray')
-                #     plt.plot(seg.xy[0], seg.xy[1], 'b-+')
-                #     plt.plot(r.xy[0], r.xy[1], 'r-x')
-                #     plt.show()
-                #     raise err
+                new_reach_segs = watershed_workflow.utils.cut(r, seg, tol)
+                assert(len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
+                assert(len(new_spine) == 1 or len(new_spine) == 2)
+                logging.info("  - snapping reach at internal boundary of HUCs")
+                if (len(new_reach_segs) == 2):
+                    reach_node.segment = shapely.geometry.LineString(list(new_reach_segs[0].coords)+
+                                                                     list(new_reach_segs[1].coords)[1:])
+                else:
+                    reach_node.segment = new_reach_segs[0]
                 
-                river_node.segment = new_rivers[-1]
-                if len(new_rivers) > 1:
-                    assert(len(new_rivers) == 2)
-                    river_node.inject(watershed_workflow.river_tree.River(new_rivers[0]))
-
                 hucs.segments[seg_handle] = new_spine[0]
                 if len(new_spine) > 1:
                     assert(len(new_spine) == 2)
@@ -173,18 +196,11 @@ def _snap_crossing(hucs, river_node, tol=_tol):
                 break
 
             
-def snap_crossings(hucs, rivers, tol=_tol):
-    """Snaps HUC boundaries and rivers to crossings."""
-    for tree in rivers:
-        for river_node in tree.preOrder():
-            _snap_crossing(hucs, river_node, tol)
-
-            
 def snap_polygon_endpoints(hucs, rivers, tol=_tol):
     """Snaps the endpoints of HUC segments to endpoints of rivers."""
-    # make the kdTree of endpoints of all rivers
-    coords1 = np.array([r.coords[-1] for tree in rivers for r in tree.dfs()])
-    coords2 = np.array([r.coords[0] for tree in rivers for r in tree.leaves()])
+    # make the kdTree of endpoints of all reaches
+    coords1 = np.array([reach.coords[-1] for river in rivers for reach in river.dfs()])
+    coords2 = np.array([reach.coords[0] for river in rivers for reach in river.leaves()])
     coords = np.concatenate([coords1, coords2], axis=0)
 
     # limit to x,y
@@ -213,6 +229,26 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
                 logging.debug("        point -1 to river at %r"%list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
+            
+def _closest_point(point, line, tol=_tol):
+    """Determine the closest location on line to point.  If that point is
+    further than tol or already a coordinate in the line, returns
+    None.  Otherwise, return the location.
+    """
+    if watershed_workflow.utils.in_neighborhood(shapely.geometry.Point(point), line, tol):
+        logging.debug("  - in neighborhood")
+        nearest_p = watershed_workflow.utils.nearest_point(line, point)
+        dist = watershed_workflow.utils.distance(nearest_p, point)
+        logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
+        if dist < tol:
+            if dist < 1.e-7:
+                # filter case where the point is already there
+                if any(watershed_workflow.utils.close(point, c) for c in line.coords):
+                    return None 
+            return nearest_p
+    return None
+
+
 def snap_endpoints(tree, hucs, tol=_tol):
     """Snap river endpoints to huc segments and insert that point into
     the boundary.
@@ -233,7 +269,7 @@ def snap_endpoints(tree, hucs, tol=_tol):
                 altered = False
                 logging.debug("  - checking river coord: %r"%list(river.coords[0]))
                 logging.debug("  - seg coords: {0}".format(list(seg.coords)))
-                new_coord = _snap_and_cut(river.coords[0], seg, tol)
+                new_coord = _closest_point(river.coords[0], seg, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord != None:
                     logging.info("    snapped river: %r to %r"%(river.coords[0], new_coord))
@@ -267,7 +303,7 @@ def snap_endpoints(tree, hucs, tol=_tol):
                 altered = False
                 logging.debug("  - checking river coord: %r"%list(river.coords[-1]))
                 logging.debug("  - seg coords: {0}".format(list(seg.coords)))
-                new_coord = _snap_and_cut(river.coords[-1], seg, tol)
+                new_coord = _closest_point(river.coords[-1], seg, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord != None:
                     logging.info("  - snapped river: %r to %r"%(river.coords[-1], new_coord))
@@ -359,16 +395,6 @@ def snap_endpoints(tree, hucs, tol=_tol):
         insert_list[0][0].add_many(new_handles)
 
     return river
-
-
-def make_global_tree(reaches, method='geometry', tol=_tol):
-    """Constructs River objects from a list of reaches."""
-    if method == 'hydroseq':
-        return watershed_workflow.river_tree.River.construct_rivers_by_hydroseq(reaches)
-    elif method == 'geometry':
-        return watershed_workflow.river_tree.River.construct_rivers_by_geometry(reaches,tol)
-    else:
-        raise ValueError("Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
 def simplify_and_merge(reaches, tol=_tol):
@@ -543,9 +569,9 @@ def filter_small_rivers(rivers, count):
     return new_rivers
 
 
-def merge(tree, tol=_tol):
+def merge(river, tol=_tol):
     """Remove inner branches that are short, combining branchpoints as needed."""
-    for node in list(tree.preOrder()):
+    for node in list(river.preOrder()):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r"%(node.segment.length, node.segment.centroid.coords[0]))
             num_children = len(node.children)
@@ -557,9 +583,9 @@ def merge(tree, tol=_tol):
             node.remove()
             
 
-def simplify(tree, tol=_tol):
-    """Simplify, IN PLACE, all tree segments."""
-    for node in tree.preOrder():
+def simplify(river, tol=_tol):
+    """Simplify, IN PLACE, all reaches."""
+    for node in river.preOrder():
         if node.segment is not None:
             new_seg = node.segment.simplify(tol)
             assert(watershed_workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))

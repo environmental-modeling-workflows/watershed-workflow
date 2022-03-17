@@ -843,7 +843,10 @@ def simplify(hucs,
     if snap:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
         rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
-                                                     3*simplify_rivers, cut_intersections)
+                                            3*simplify_rivers, cut_intersections)
+    elif cut_intersections:
+        logging.info("Cutting crossings and removing external segments")
+        watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
     
     logging.info("")
     logging.info("Simplification Diagnostics")

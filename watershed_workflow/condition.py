@@ -178,7 +178,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     """
     if outlet_edge is None:
         # determine the outlet edge -- the lowest edge point
-        boundary_edges = m2.boundary_edges()
+        boundary_edges = m2.boundary_edges
         outlet_edge = boundary_edges[0]
         be_elev = (m2.coords[outlet_edge[0],2] + m2.coords[outlet_edge[1],2])/2.
 
@@ -341,7 +341,7 @@ def fill_pits(mesh, outlet=None, algorithm=3):
     """
     points_dict = points_from_mesh(mesh)
     if outlet is None:
-        boundary_nodes = mesh.boundary_nodes()
+        boundary_nodes = mesh.boundary_nodes
         outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes,2])]
 
     if algorithm == 1:

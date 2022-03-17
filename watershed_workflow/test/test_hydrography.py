@@ -140,14 +140,9 @@ def check2(hucs,rivers):
     assert(watershed_workflow.utils.close(poly1, shapely.geometry.Polygon([(10,-5), (20,-5), (20,5), (10,5), (10,0)])))
 
     riverlist = list(rivers[0].dfs()) # dfs, preOrdered
-    assert(len(riverlist) is 2)
+    assert(len(riverlist) is 1)
     print(riverlist[0].coords[:])
-    assert(watershed_workflow.utils.close(riverlist[0], shapely.geometry.LineString([(10,0), (15,0)])))
-    print(riverlist[1].coords[:])
-    assert(watershed_workflow.utils.close(riverlist[1], shapely.geometry.LineString([(5,0), (10,0)])))
-
-    for tree in rivers:
-        assert(tree.is_consistent())
+    assert(watershed_workflow.utils.close(riverlist[0], shapely.geometry.LineString([(5,0), (10,0), (15,0)])))
     
 
 def check2b(hucs,rivers):

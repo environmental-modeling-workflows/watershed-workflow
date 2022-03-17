@@ -271,7 +271,10 @@ def contains(s1, s2, tol=_tol):
 
 
 def cut(line, cutline, tol=1.e-5):
-    """Cuts a line at all intersections with cutline."""
+    """Cuts a line at all intersections with cutline.  If an existing
+    point in line is within tol of the cutline, do not add an additional
+    coordinate, just move that coordinate.  Otherwise, add a new
+    coordinate."""
 
     def plot():
         from matplotlib import pyplot as plt
