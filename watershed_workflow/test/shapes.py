@@ -6,26 +6,7 @@ import watershed_workflow.utils
 
 _tol = 1.e-7
 def assert_close(s1, s2, tol=_tol):
-    assert(type(s1) == type(s2))
-    if type(s1) is shapely.geometry.LineString:
-        assert(len(s1.coords) == len(s2.coords))
-        for c1, c2 in zip(s1.coords, s2.coords):
-            assert((c1[0] - c2[0])**2 + (c1[1] - c2[1])**2 <= tol**2)
-    elif type(s1) is shapely.geometry.MultiLineString:
-        assert(len(s1) == len(s2))
-        cl = watershed_workflow.utils.close(s1,s2)
-        if not cl:
-            print("not close s1:")
-            for l in s1:
-                print(list(l.coords))
-            print("not close s2:")
-            for l in s2:
-                print(list(l.coords))
-        assert(cl)
-
-    else:
-        raise NotImplementedError("Not implemented for type '%r'"%type(s1))
-
+    assert(watershed_workflow.utils.close(s1,s2,tol))
 
 # ===== river shapes ===== 
 
@@ -34,7 +15,7 @@ def y():
     points = [[(1,0), (0,0)],
               [(1,1), (1,0)],
               [(1,-1),(1,0)]]
-    return shapely.geometry.MultiLineString(points)
+    return list(shapely.geometry.MultiLineString(points).geoms)
 
 @pytest.fixture
 def y_with_extension():
@@ -42,7 +23,7 @@ def y_with_extension():
               [(1,1), (1,0)],
               [(1,-1),(1,0)],
               [(2,-1),(1,-1)]]
-    return shapely.geometry.MultiLineString(points)
+    return list(shapely.geometry.MultiLineString(points).geoms)
 
 @pytest.fixture
 def two_ys():
@@ -52,15 +33,34 @@ def two_ys():
               [(12,0), (11,0)],
               [(12,1), (12,0)],
               [(12,-1), (12,0)]]
-    return shapely.geometry.MultiLineString(points)
+    mls = list(shapely.geometry.MultiLineString(points).geoms)
+    hydroseqs = [1,2,3,4,5,6]
+    dnstream = [-1,1,1,-1,4,4]
+    for seg, hs_id, dn_hs_id in zip(mls, hydroseqs, dnstream):
+        seg.properties = {'HydrologicSequence' : hs_id,
+                          'DownstreamMainPathHydroSeq' : dn_hs_id}
+    return mls
 
 
 @pytest.fixture
-def y_with_junction():
+def braided_stream():
     points = [[(1,0), (0,0)],
-              [(1,1), (1,0)],
-              [(1,-1), (0.5,0)]]
-    return shapely.geometry.MultiLineString(points)
+              [(2,1), (1,0)],
+              [(3, 0), (2,1)],
+              [(4,0), (3,0)],
+              [(2,-1), (1,0)],
+              [(3, 0), (2,-1)]]
+    mls = list(shapely.geometry.MultiLineString(points).geoms)
+    hydroseqs = [1,2,3,6,4,5]
+    dnstream = [-1, 1, 2, 3, 1, 4]
+    upstream = [2, 3, 6, -1, 5, 6]
+    divergence = [0,0,1,0,0,2]
+    for seg, hs_id, dn, up, div in zip(mls, hydroseqs, dnstream, upstream, divergence):
+        seg.properties = {'HydrologicSequence' : hs_id,
+                          'DownstreamMainPathHydroSeq' : dn,
+                          'UpstreamMainPathHydroSeq' : up,
+                          'DivergenceCode' : div}
+    return mls
 
 
 @pytest.fixture
@@ -70,7 +70,20 @@ def rivers():
               [(12,-3), (8,-3), (5,0)],
               [(15,-3), (12,-3)],
               [(12,0), (12,-3)]]
-    return shapely.geometry.MultiLineString(points)
+    return list(shapely.geometry.MultiLineString(points).geoms)
+
+
+#
+# Note, this is not valid input for a River object, or at least may
+# not return a single river!
+#
+@pytest.fixture
+def y_with_junction():
+    points = [[(1,0), (0,0)],
+              [(1,1), (1,0)],
+              [(1,-1), (0.5,0)]]
+    return list(shapely.geometry.MultiLineString(points).geoms)
+
 
 
 # ===== polygons =====

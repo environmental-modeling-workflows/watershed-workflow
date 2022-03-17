@@ -32,6 +32,7 @@ import watershed_workflow.utils
 __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
            'get_shapes', 'get_split_form_shapes', 'find_huc',
            'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune',
+           'get_waterbodies',
            'triangulate', 'get_raster_on_shape', 'values_from_raster',
            'elevate', 'color_raster_from_shapes']
 
@@ -278,8 +279,8 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
     return crs, watershed_workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
-                digits=None, long=None, merge=False, presimplify=None,
+def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
+                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None,
                 **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
@@ -298,16 +299,17 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         HUC containing reaches.  If bounds are provided, a hint to help the
         source find the file containing the bounds.  For NHD, this is a HUC4 or
         smaller.
-    bounds : [xmin, ymin, xmax, ymax] bounds, optional
+    bounds_or_shp : [xmin, ymin, xmax, ymax] bounds or shly object, optional
         Bounding box to filter the river network.
     in_crs : crs-type, optional
         Coordinate system of the bounds.
     out_crs : crs-type, optional
         Coordinate system of the output reaches.  Default is the
         native crs of the source.
-
     digits : int, optional
         Number of digits to round coordinates to.
+    tol : float, optional
+        Tolerance used in filtering the reaches to the provided shape.
     long : float, optional
         If a reach is longer than this value it gets filtered.  Some
         NHD data has impoundments or other artifacts which appear
@@ -319,6 +321,8 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         If provided, reaches are simplified within the specified
         tolerance as soon as possible for big extents.  Units are that
         of out_crs.
+    properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
+        (Table 16 and 17 NHDPlus user guide)
     **kwargs : dict, optional
         Other arguments are passed to the file manager's get_reaches() method.
 
@@ -334,12 +338,18 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
     logging.info("Loading Hydrography")
     logging.info("-"*30)
     logging.info(f"Loading streams in HUC {huc}")
+
+    if isinstance(bounds_or_shp, tuple):
+        bounds = bounds_or_shp
+        bounds_or_shp = None
+    else:
+        bounds = bounds_or_shp.bounds
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs, **kwargs)
+    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
-
+  
     # convert to shapely
     logging.info("Converting to shapely")
     reaches = [watershed_workflow.utils.shply(reach) for reach in reaches]
@@ -351,16 +361,21 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
 
         for reach in reaches:
-            if 'catchment' in reach.properties and 'area' not in reach.properties:
-                if reach.properties['catchment'] == None:
-                    reach.properties['area'] = 0
-                else:
-                    reach.properties['catchment'] = watershed_workflow.utils.shply(reach.properties['catchment'])
-                    reach.properties['catchment'] = watershed_workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
-                    reach.properties['area'] = reach.properties['catchment'].area
+            if 'catchment' in reach.properties and reach.properties['catchment'] != None:
+                reach.properties['catchment'] = watershed_workflow.utils.shply(reach.properties['catchment'])
+                reach.properties['catchment'] = watershed_workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
     else:
         out_crs = native_crs
 
+    # filter to the shape
+    if bounds_or_shp is not None:
+        if not watershed_workflow.crs.equal(in_crs, out_crs):
+            bounds_or_shp = watershed_workflow.warp.shply(bounds_or_shp, in_crs, out_crs)
+        num_reaches = len(reaches)
+        reaches = watershed_workflow.utils.filter_to_shape(bounds_or_shp, reaches, tol)
+        count = num_reaches - len(reaches)
+        logging.info(f"Removed {count} of {num_reaches} reaches not in shape")
+        
     if presimplify != None:
         logging.info("Pre-simplifying")
         # convert to shapely and simplify
@@ -386,6 +401,96 @@ def get_reaches(source, huc, bounds=None, in_crs=None, out_crs=None,
         logging.info("... filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
         
     return out_crs, reaches
+
+
+def get_waterbodies(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None, digits=None,
+                    tol=None, prune_by_area=None, **kwargs):
+    """Get waterbodies from NHDPlus hydrography source within a given HUC and/or bounding box.
+
+    Collects waterbody datasets within a HUC and/or a bounding box.  If bounds are
+    provided, a containing HUC must still be provided to give a hint for file
+    downloads.  If bounds are not provided, then all bodies that intersect the
+    HUC are included.
+
+    If bounds is provided, crs must not be None and is the crs of the bounding box.
+
+    Parameters
+    ----------
+    source : source-type
+        Source object providing a get_hydro() method.
+    huc : str
+        HUC containing reaches.  If bounds are provided, a hint to help the
+        source find the file containing the bounds.  For NHD, this is a HUC4 or
+        smaller.
+    bounds_or_shp : [xmin, ymin, xmax, ymax] bounds or shply, optional
+        Bounding box or shapely shape to filter the river network.
+    in_crs : crs-type, optional
+        Coordinate system of the bounds.
+    out_crs : crs-type, optional
+        Coordinate system of the output reaches.  Default is the
+        native crs of the source.
+    digits : int, optional
+        Number of digits to round coordinates to.
+    tol : float, optional
+        Tolerance used in filtering the reaches to the provided shape.
+    prune_by_area : float, optional
+        If provided, remove bodies whose total area is
+        less than this tol.
+    **kwargs : dict, optional
+        Other arguments are passed to the file manager's get_waterbodies() method.
+
+    Returns
+    -------
+    out_crs : crs-type
+        Coordinate system of `out`.
+    out : list(LineString)
+        Waterbodies in the HUC and/or intersecting the bounds.
+
+    """
+    logging.info("")
+    logging.info("Loading Water Bodies")
+    logging.info("-"*30)
+    logging.info(f"Loading waterbodies in HUC {huc}")
+
+    # get the wbs
+    if not type(bounds_or_shp) is tuple:
+        bounds = bounds_or_shp.bounds
+    else:
+        bounds = bounds_or_shp
+        bounds_or_shp = None
+
+    logging.info(f"         and/or bounds {bounds}")
+    profile, bodies = source.get_waterbodies(huc, bounds, in_crs, **kwargs)
+    logging.info(f"... found {len(bodies)} waterbodies")
+  
+    # convert to shapely
+    logging.info("Converting to shapely")
+    bodies = [watershed_workflow.utils.shply(b) for b in bodies]
+        
+    # convert to destination crs
+    native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
+    if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
+        logging.info("Converting to out_crs")
+        bodies = watershed_workflow.warp.shplys(bodies, native_crs, out_crs)
+    else:
+        out_crs = native_crs
+
+    # filter to shape
+    if bounds_or_shp is not None:
+        if not watershed_workflow.crs.equal(in_crs, out_crs):
+            bounds_or_shp = watershed_workflow.warp.shply(bounds_or_shp, in_crs, out_crs)
+        num_bodies = len(bodies)
+        bodies = watershed_workflow.utils.filter_to_shape(bounds_or_shp, bodies, tol)
+        count = num_bodies - len(bodies)
+        logging.info(f"Removed {count} of {num_bodies} water bodies not in shape")
+
+    if prune_by_area is not None:
+        num_bodies = len(bodies)
+        bodies = [body for body in bodies if body.area > prune_by_area]
+        count = num_bodies - len(bodies)
+        logging.info(f"Pruned {count} of {num_bodies} water bodies")
+
+    return out_crs, bodies
 
 
 def get_raster_on_shape(source, shape, in_crs, out_crs=None,
@@ -434,7 +539,7 @@ def get_raster_on_shape(source, shape, in_crs, out_crs=None,
     if type(shape) is dict:
         shape = watershed_workflow.utils.shply(shape)
     if type(shape) is shapely.geometry.MultiPolygon:
-        shape = shapely.ops.cascaded_union(shape)
+        shape = shapely.ops.unary_union(shape)
     shape_original = shape
     shape = shape.buffer(buffer)
 
@@ -569,12 +674,10 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 #
 # functions for manipulating objects
 # -----------------------------------------------------------------------------
-def construct_rivers(hucs, reaches,
-                     filter=True,
+def construct_rivers(hucs, reaches, method='geometry',
                      ignore_small_rivers=None,
-                     tol=None,
-                     prune_by_area=0,
-                     prune_by_area_fraction=0):
+                     prune_by_area=None, prune_by_area_fraction=None,
+                     remove_diversions=False, remove_braided_divergences=False):
     """Create a river, which is a tree of reaches.
 
     Note, HUCs and rivers must be in the same crs.
@@ -585,8 +688,17 @@ def construct_rivers(hucs, reaches,
         A split-form HUC object containing all reaches.
     reaches : list(LineString)
         A list of reaches.
-    filter : bool, optional=True
-        If true, filter reaches to the boundary of hucs.
+    method : str, optional='geometry'
+        Provide the method for constructing rivers.  Valid are:
+        - 'geometry' looks at coincident coordinates
+        - 'hydroseq' Valid only for NHDPlus data, this uses the
+          NHDPlus VAA tables Hydrologic Sequence.  If using this
+          method, get_reaches() must have been called with both
+          'HydrologicSequence' and 'DownstreamMainPathHydroSeq'
+          properties requested (or properties=True).
+    ignore_small_rivers : int, optional
+        If provided, removes rivers whose number of reaches is less
+        than this value.
     prune_by_area : float, optional
         If provided, remove reaches whose total contributing area is
         less than this tol.  NOTE: only valid for reaches that include
@@ -596,75 +708,54 @@ def construct_rivers(hucs, reaches,
         a fraction of the area of hucs, is less than this tol.  NOTE:
         only valid for reaches that include a contributing area
         property (e.g. NHDPlus).
+    remove_diversions : bool, optional=False
+        If true, remove diversions (see documentation of
+        modify_rivers_remove_divergences()).
+    remove_braided_divergences : bool, optional=False
+        If true, remove braided divergences (see documentation of
+        modify_rivers_remove_divergences()).
 
     Returns
     ------- 
-    out : list(RiverTree)
-        A list of rivers, as RiverTree objects.
-
+    out : list(River)
+        A list of rivers, as River objects.
     """
     logging.info("")
     logging.info("Constructing river network")
     logging.info("-"*30)
-    if filter:
-        logging.info("Filtering reaches outside of the HUC space")
-        count = len(reaches)
-        reaches = watershed_workflow.hydrography.filter_reaches_to_shape(hucs.exterior(), reaches, tol)
-        logging.info("... filtered from {} to {} reaches.".format(count, len(reaches)))
-    if len(reaches) == 0:
-        return reaches
 
     logging.info("Generating the river tree")
-    rivers = watershed_workflow.hydrography.make_global_tree(reaches)
-    assert(len(rivers) > 0)
+    rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method)
+    logging.info(f" ... generated {len(rivers)} rivers")
 
     if ignore_small_rivers is not None:
-        logging.info("Removing rivers with fewer than {} reaches.".format(ignore_small_rivers))
-        for i in reversed(range(len(rivers))):
-            ltree = len(rivers[i])
-            if ltree < ignore_small_rivers:
-                rivers.pop(i)
-                logging.info("  ...removing river with %d reaches"%ltree)
-            else:
-                logging.info("  ...keeping river with %d reaches"%ltree)
+        rivers = watershed_workflow.hydrography.filter_small_rivers(rivers, ignore_small_rivers)
         if len(rivers) == 0:
             return rivers
 
-    if prune_by_area > 0:
-        logging.info(f"Pruning by total contributing area < {prune_by_area}")
-        count = 0
-        sufficiently_big_rivers = []
-        for river in rivers:
-            watershed_workflow.hydrography.accumulate(river)
-            if river.properties['total contributing area'] >= prune_by_area:
-                count += watershed_workflow.hydrography.prune_by_area(river, prune_by_area)
-                sufficiently_big_rivers.append(river)
-        logging.info(f"... pruned {count}")
-        rivers = sufficiently_big_rivers
+    if prune_by_area is not None:
+        rivers = watershed_workflow.hydrography.prune_by_contributing_area(rivers, prune_by_area)
+        if len(rivers) == 0:
+            return rivers
 
-    if prune_by_area_fraction > 0:
-        logging.info(f"Pruning by fractional contributing area < {prune_by_area_fraction}")
-        count = 0
-        sufficiently_big_rivers = []
-        for river in rivers:
-            watershed_workflow.hydrography.accumulate(river)
-        total_area = sum(river.properties['total contributing area'] for river in rivers)
-        for river in rivers:
-            if river.properties['total contributing area'] >= prune_by_area_fraction * total_area:
-                count += watershed_workflow.hydrography.prune_by_area_fraction(river, prune_by_area_fraction, total_area)
-                sufficiently_big_rivers.append(river)
-            else:
-                logging.info(f"... pruning river with area {river.properties['total contributing area']} of {total_area}")
-        logging.info(f"... pruned {count}")
-        rivers = sufficiently_big_rivers
+    if prune_by_area_fraction is not None:
+        rivers = watershed_workflow.hydrography.prune_by_fractional_contributing_area(
+            rivers, prune_by_area_fraction)
+        if len(rivers) == 0:
+            return rivers
         
+    if remove_diversions or remove_braided_divergences:
+        rivers = watershed_workflow.hydrography.remove_divergences(
+            rivers, remove_diversions, remove_braided_divergences)
     return rivers
 
 
 def simplify(hucs,
              rivers,
+             waterbodies=None,
              simplify_hucs=0,
              simplify_rivers=None,
+             simplify_waterbodies=None,
              prune_tol=None,
              merge_tol=None,
              snap=False,
@@ -675,8 +766,10 @@ def simplify(hucs,
     ----------
     hucs : SplitHUCs
         A split-form HUC object containing all reaches.
-    rivers : list(RiverTree)
+    rivers : list(River)
         A list of river objects.
+    waterbodies : list(shply), optional
+        A list of waterbodies.
     simplify_hucs : float, optional
         If provided, simply the hucs by moving points at most this
         many units (see also shapely.simplify).  Units are that of the
@@ -686,13 +779,17 @@ def simplify(hucs,
         many units (see also shapely.simplify).  Units are that of the
         CRS of shapes.  If not provided, use the simplify_hucs value.
         Provide 0 to make no changes to the rivers.
+    simplify_waterbodies : float, optional
+        Simplify the waterbodies.  If not provided, uses the
+        simplify_hucs value.  Provide 0 to make no changes to the
+        rivers.
     prune_tol : float, optional
         Prune leaf reaches that are smaller than this tolerance.  If
         not provided, uses simplify_rivers value.  Provide 0 to not do
         this step.
     merge_tol : float, optional
-        Merges reaches that are smaller than this tolerance their
-        downstream parent reach.  Note that if htere is a branchpoint
+        Merges reaches that are smaller than this tolerance with their
+        downstream parent reach.  Note that if there is a branchpoint
         at the downstream node of the small reach, it will get moved
         to the upstream node.  If not provided, uses simplify_rivers
         value.  Provide 0 to not do this step.
@@ -704,16 +801,24 @@ def simplify(hucs,
         boundary to occur at a coincident node by adding nodes as
         needed.
 
+    Returns
+    -------
+    rivers : list(River)
+       Snap may change the rivers, so this returns the list of updated
+       rivers.
+
     .. note: 
-        This also may modify the hucs object in-place.
+        This also may modify the hucs and waterbody objects in-place.
 
     """
     assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)
-    assert(all(type(r) is watershed_workflow.river_tree.RiverTree for r in rivers))
+    assert(all(type(r) is watershed_workflow.river_tree.River for r in rivers))
 
     if simplify_rivers is None:
         simplify_rivers = simplify_hucs
+    if simplify_waterbodies is None:
+        simplify_waterbodies = simplify_hucs
     if prune_tol is None:
         prune_tol = simplify_rivers
     if merge_tol is None:
@@ -731,10 +836,17 @@ def simplify(hucs,
         logging.info("Simplifying HUCs")
         watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
 
+    if simplify_waterbodies > 0 and waterbodies is not None:
+        for i,wb in enumerate(waterbodies):
+            waterbodies[i] = wb.simplify(simplify_waterbodies)
+
     if snap:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
         rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
-                                                     3*simplify_rivers, cut_intersections)
+                                            3*simplify_rivers, cut_intersections)
+    elif cut_intersections:
+        logging.info("Cutting crossings and removing external segments")
+        watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
     
     logging.info("")
     logging.info("Simplification Diagnostics")
@@ -757,10 +869,10 @@ def simplify(hucs,
         mins.append(np.min(dz))
     logging.info(f"  HUC min seg length: {min(mins)}")
     logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
+    return rivers
 
 
 def simplify_and_prune(hucs, reaches,
-                       filter=True,
                        simplify_hucs=None,
                        simplify_rivers=None,
                        ignore_small_rivers=None,
@@ -768,7 +880,7 @@ def simplify_and_prune(hucs, reaches,
                        prune_by_area_fraction=0,
                        snap=False, cut_intersections=False):
     """DEPRECATED: simply calls construct_rivers() and simplify()"""
-    rivers = construct_rivers(hucs, reaches, filter, ignore_small_rivers, simplify_hucs,
+    rivers = construct_rivers(hucs, reaches, ignore_small_rivers, simplify_hucs,
                               prune_by_area, prune_by_area_fraction)
     simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
@@ -876,7 +988,7 @@ def triangulate(hucs, rivers,
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
-        river_multiline = watershed_workflow.river_tree.forest_to_list(rivers)
+        river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
         distances = []
         areas = []
         needs_refine = []

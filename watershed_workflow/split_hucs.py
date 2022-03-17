@@ -2,6 +2,7 @@
 
 import logging
 import numpy as np
+import collections
 
 import shapely.geometry
 import shapely.ops
@@ -220,7 +221,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
                 list_of_shapes[j] = s2.difference(s1)
 
     # remove holes
-    union = shapely.ops.cascaded_union(list_of_shapes)
+    union = shapely.ops.unary_union(list_of_shapes)
     assert(type(union) is shapely.geometry.Polygon)
 
     # -- deal with disjoint sections separately
@@ -456,3 +457,38 @@ def find_outlets_by_elevation(hucs, crs, elev_raster, elev_raster_profile):
         i = np.argmin(mesh_points[:,2])
         outlets.append(shapely.geometry.Point(mesh_points[i,0], mesh_points[i,1]))
     hucs.polygon_outlets = outlets
+
+
+def find_outlets_by_hydroseq(hucs, river):
+    """Find outlets using the HydroSequence VAA of NHDPlus.
+
+    Finds the minimum hydroseq reach in each HUC, and intersects that
+    with the boundary to find the outlet.
+    """
+    polygons = list(hucs.polygons())
+    polygon_outlets = [None for poly in hucs.polygons()]
+
+    assert(river.is_hydroseq_consistent())
+    reaches = sorted(river.preOrder(), key=lambda r : r.properties['HydrologicSequence'])
+    first = True
+    for reach in reaches:
+        # find the which huc the upstream-most point is in
+        try:
+            i, poly = next((i,poly) for (i,poly) in enumerate(polygons) if poly is not None
+                           and poly.contains(shapely.geometry.Point(reach.segment.coords[0])))
+        except StopIteration:
+            continue
+        else:
+            # find the intersection
+            intersect = poly.exterior.intersection(reach.segment).centroid
+            if first:
+                hucs.exterior_outlet = intersect
+                first = False
+            polygon_outlets[i] = shapely.geometry.Point(intersect)
+            polygons[i] = None
+
+    hucs.polygon_outlets = polygon_outlets
+
+        
+        
+    

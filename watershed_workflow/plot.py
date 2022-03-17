@@ -168,6 +168,13 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     patches : matplotib PatchCollection
     """
     ps = list(hucs.polygons())
+
+    kwargs_scatter = dict()
+    if 'markersize' in kwargs:
+        kwargs_scatter['markersize'] = kwargs.pop('markersize')
+    if 'marker' in kwargs:
+        kwargs_scatter['marker'] = kwargs.pop('marker')        
+    
     polys = shply(ps, crs, color, ax, **kwargs)
 
     if hucs.polygon_outlets is not None and ax is not None:
@@ -177,7 +184,7 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
             s = kwargs['markersize']
         else:
             s = 100
-        ax.scatter(x, y, s=s, c=color)
+        ax.scatter(x, y, s=s, c=color, **kwargs_scatter)
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
     """Plot an itereable collection of fiona shapes.
@@ -389,8 +396,27 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
                     #     patch.set_transform(projection)
                     res.append(ax.add_patch(patch))
             else:
-                if type(color[0]) is not tuple and type(color[0]) is not np.ndarray:
-                    # likely just an array -- map using cmap
+                if type(color[0]) is tuple or type(color[0]) is np.ndarray or type(color[0]) is str:
+                    # list of colors
+                    if kwargs['facecolor'] == 'color':
+                        kwargs.pop('facecolor')
+                        face_is_edge = True
+                    else:
+                        face_is_edge = False
+
+                    res = []
+                    for c, shp in zip(color, shps):
+                        patch = descartes.PolygonPatch(shp, **kwargs)
+                        res.append(patch)
+                    res = pltc.PatchCollection(res, **kwargs)
+                    if face_is_edge:
+                        res.set_facecolor(color)
+                    else:
+                        res.set_edgecolor(color)
+                    ax.add_collection(res)
+                    
+                else:
+                    # color is an array, map out color_list
                     try:
                         cmap = kwargs.pop('cmap')
                     except KeyError:
@@ -400,33 +426,32 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
                         cmap_norm = kwargs.pop('norm')
                     except KeyError:
                         cmap_norm = None
-                        
-                    cm = watershed_workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
-                    color_tuples = np.array([cm(c) for c in color])
-                else:
-                    raise RuntimeError("color option must be an array, not a list of colors")
 
-                if kwargs['facecolor'] == 'color':
-                    kwargs.pop('facecolor')
-                    face_is_edge = True
-                else:
-                    face_is_edge = False
-                
-                res = []
-                for c, shp in zip(color_tuples, shps):
-                    if face_is_edge:
-                        patch = descartes.PolygonPatch(shp, facecolor=c, **kwargs)
+                    cm = watershed_workflow.colors.cm_mapper(min(color), max(color), cmap, cmap_norm)
+                    color_list = np.array([cm(c) for c in color])
+                    clim = [np.nanmin(color), np.nanmax(color)]
+
+                    if kwargs['facecolor'] == 'color':
+                        kwargs.pop('facecolor')
+                        face_is_edge = True
                     else:
-                        patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
-                        
-                    # if projection is not None:
-                    #     patch.set_transform(projection)
-                    res.append(patch)
-                res = pltc.PatchCollection(res, cmap=cmap, norm=cmap_norm, alpha=1.0)
-                res.set_array(color)
-                clim = [np.nanmin(color), np.nanmax(color)]
-                res.set_clim(clim)
-                ax.add_collection(res)
+                        face_is_edge = False
+                
+                    res = []
+                    for c, shp in zip(color_list, shps):
+                        if face_is_edge:
+                            patch = descartes.PolygonPatch(shp, facecolor=c, **kwargs)
+                        else:
+                            patch = descartes.PolygonPatch(shp, edgecolor=c, **kwargs)
+
+                        # if projection is not None:
+                        #     patch.set_transform(projection)
+                        res.append(patch)
+                    res = pltc.PatchCollection(res, cmap=cmap, norm=cmap_norm, alpha=1.0)
+                    res.set_array(color)
+                    if clim is not None:
+                        res.set_clim(clim)
+                    ax.add_collection(res)
         ax.autoscale()
     else:
         raise TypeError('Unknown shply type: {}'.format(type(next(iter(shps)))))
@@ -683,4 +708,5 @@ def feather_axis_limits(ax, delta=0.02):
     dy = delta[1] * (ylim[1] - ylim[0])
     ax.set_xlim((xlim[0] - dx, xlim[1] + dx))
     ax.set_ylim((ylim[0] - dy, ylim[1] + dy))
+
 

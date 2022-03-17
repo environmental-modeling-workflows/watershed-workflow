@@ -53,13 +53,13 @@ class FileManagerDaymet:
 
     .. [Daymet] https://daymet.ornl.gov
     """
-    
+
     VALID_YEARS = (1980,2020)
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
     # URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_{variable}_{year}.nc"
 
-    
+
     def __init__(self):
         #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
@@ -88,6 +88,8 @@ class FileManagerDaymet:
         -------
         filename : str
           Path to the data file.
+        bounds : [xmin,ymin,xmax,ymax]
+          Updated bounds, buffered and in the coordinate system of the data.
         """
         if year > self.VALID_YEARS[1] or year < self.VALID_YEARS[0]:
             raise ValueError("DayMet data is available from {} to {} (does not include {})".format(self.VALID_YEARS[0], self.VALID_YEARS[1], year))
@@ -118,8 +120,8 @@ class FileManagerDaymet:
 
     def download(self, varname, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.
-        
-        Note: prefer to use get_meteorology() 
+
+        Note: prefer to use get_meteorology()
 
         Parameters
         ----------
@@ -135,7 +137,7 @@ class FileManagerDaymet:
         Returns
         -------
         filename : str
-          Resulting NetCDF file.        
+          Resulting NetCDF file.
         """
         logging.info("Collecting DayMet file to tile bounds: {}".format(bounds))
 
@@ -177,4 +179,4 @@ class FileManagerDaymet:
             logging.info("  Using existing: {}".format(filename))
 
         return filename
-        
+
