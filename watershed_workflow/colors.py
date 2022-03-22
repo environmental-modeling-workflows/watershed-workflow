@@ -115,7 +115,7 @@ def gas_cmap():
 
 
 # jet-by-index
-def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
+def cm_mapper(vmin=0., vmax=1., cmap=None, norm=None, get_sm=False):
     """Provide a function that maps scalars to colors in a given colormap.
 
     Parameters
@@ -140,12 +140,17 @@ def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
             plt.plot(x, x**i, color=cm(i))
 
     """
+    if cmap is None:
+        cmap = matplotlib.cm.jet
     if norm is None:
         norm = matplotlib.colors.Normalize(vmin, vmax)
     sm = matplotlib.cm.ScalarMappable(norm, cmap)
     def mapper(value):
         return sm.to_rgba(value)
-    return mapper
+    if get_sm:
+        return mapper, sm
+    else:
+        return mapper
 
 
 def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
