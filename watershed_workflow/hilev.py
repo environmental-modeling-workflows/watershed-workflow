@@ -34,7 +34,7 @@ __all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
            'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune',
            'get_waterbodies',
            'triangulate', 'get_raster_on_shape', 'values_from_raster',
-           'elevate', 'color_raster_from_shapes']
+           'elevate', 'color_raster_from_shapes', 'color_existing_raster_from_shapes']
 
 #
 # functions for getting objects
@@ -1132,8 +1132,8 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
     return out
     
 
-def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
-                             crs, nodata=-1, raster=None, raster_profile=None):
+def color_raster_from_shapes(shapes, shapes_crs, shape_colors,
+                             raster_bounds, raster_dx, raster_crs=None, nodata=None):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas specified by bounds and pixel size, color a raster by, for
@@ -1145,53 +1145,96 @@ def color_raster_from_shapes(target_bounds, target_dx, shapes, shape_colors,
 
     Parameters
     ----------
-    target_bounds : [xmin, ymin, xmax, ymax]
-        Bounding box for the output raster, in the given CRS.
-    target_dx : float
-        Pixel size (assumed the same in both x and y).
     shapes : list(Polygon)
         Collection of shapes (likely) overlapping the canvas.
-    shapes_colors : np.array((n_shapes,), dtype)
+    shapes_crs : crs-type
+        Coordinate system of the shapes.
+    shapes_colors : iterable[]
         Color to label the interior of each polygon with.
-    crs : crs-type
-        Coordinate system of the shapes and target_bounds
-    nodata : dtype, optional
+    raster_bounds : [xmin, ymin, xmax, ymax]
+        Bounding box for the output raster, in the given CRS.
+    raster_dx : float
+        Pixel size (assumed the same in both x and y).
+    raster_crs : crs-type, optional=shapes_crs
+        Coordinate system of the raster.
+    nodata : dtype, optional={-1 (int), nan (float)}
         Value to place in pixels which intersect no shape.  Note the type of
-        this should be the same as the type of shape_colors.  Default is -1.
-    raster_profile : rasterio profile, optional
-        Profile of the corresponding raster
-    raster : numpy.ndarray, optional
-        Array into which the shapes are colored.
+        this should be the same as the type of shape_colors.
 
     Returns
     -------
     out_profile : dict
         rasterio profile of the color raster.
-    out : np.array(target_bounds, dtype)
+    out : np.array(raster_bounds, dtype)
         Raster of colors.
 
     """
     assert(len(shapes) == len(shape_colors))
-    assert(len(shapes) > 0)
+    if len(shapes) == 0:
+        raise ValueError("Cannot generate raster for empty set of shapes")
 
     logging.info('Coloring shapes onto raster:')
+
+    if not watershed_workflow.crs.equal(shapes_crs, raster_crs):
+        shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_crs)
    
-    if raster is None : 
-        dtype = np.dtype(type(shape_colors[0]))
-        raster_profile, raster = watershed_workflow.utils.create_empty_raster(target_bounds,crs,target_dx,dtype,nodata)
-    else:
-        assert(raster_profile is not None)
-        assert(shape_colors is not None)
-        assert(raster_profile['dtype'] == np.dtype(type(shape_colors[0])) )
-        dtype = raster_profile['dtype']
-    
-    logging.info('  and {} independent colors of dtype {}'.format(len(set(shape_colors)), dtype))
+    dtype = np.dtype(type(shape_colors[0]))
+
+    if nodata is None:
+        try:
+            nodata = dtype(np.nan)
+        except ValueError:
+            nodata = dtype(-1)
+
+    raster_profile, raster = watershed_workflow.utils.create_empty_raster(raster_bounds, raster_crs, raster_dx, dtype, nodata)
+    logging.info(f'  and {len(set(shape_colors))} independent colors')
 
     for p, p_id in zip(shapes, shape_colors):
-        mask = rasterio.features.geometry_mask([p,], raster.shape, raster_profile['transform'], invert=True)
-        raster[mask] = p_id
+        if not p.is_empty:
+            p_list = watershed_workflow.utils.flatten([p,])
+            mask = rasterio.features.geometry_mask(p_list, raster.shape, raster_profile['transform'], invert=True)
+            raster[mask] = p_id
     return raster_profile, raster
 
 
+def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors,
+                                      raster, raster_profile):
+    """Color in a raster by filling in a collection of shapes.
 
+    Given a canvas, find the intersection of that shape with the canvas and
+    coloring it by a provided value.  Paint by numbers.
+
+    Note, if the shapes overlap, the last shape containing a pixel gives the
+    color of that pixel.
+
+    Parameters
+    ----------
+    shapes : list(Polygon)
+        Collection of shapes (likely) overlapping the canvas.
+    shapes_crs : crs-type
+        Coordinate system of the shapes.
+    shapes_colors : iterable[]
+        Color to label the interior of each polygon with.
+    raster : np.ndarray
+        The canvas to color on.
+    raster_profile : dict
+        Rasterio style profile including at least CRS, nodata, and
+        transform.
+
+    """
+    assert(len(shapes) == len(shape_colors))
+    if len(shapes) == 0:
+        raise ValueError("Cannot generate raster for empty set of shapes")
+
+    logging.info('Coloring shapes onto raster:')
+    logging.info(f'  and {len(set(shape_colors))} independent colors')
+
+    if not watershed_workflow.crs.equal(shapes_crs, raster_profile['crs']):
+        shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_profile['crs'])
     
+    for p, p_id in zip(shapes, shape_colors):
+        if not p.is_empty:
+            p_list = watershed_workflow.utils.flatten([p,])
+            mask = rasterio.features.geometry_mask(p_list, raster.shape, raster_profile['transform'], invert=True)
+            raster[mask] = p_id
+
