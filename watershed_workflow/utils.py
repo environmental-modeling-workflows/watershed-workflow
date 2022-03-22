@@ -390,7 +390,9 @@ def nearest_point(line, point):
     """Returns the nearest coordinate on the line to point.  
 
     Note point is expected as coordinates."""
-    return shapely.ops.nearest_point(point, line)[1].coords[0]
+    if isinstance(point, tuple):
+        point = shapely.geometry.Point(point)
+    return shapely.ops.nearest_points(point, line)[1].coords[0]
 
 
 def triangle_area(vertices):
