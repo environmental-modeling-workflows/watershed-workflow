@@ -27,6 +27,13 @@ import watershed_workflow.utils
 import watershed_workflow.crs
 import watershed_workflow.colors
 
+def _is_iter(obj):
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    return True
+
 
 class PolyCollectionWithArray:
     def __init__(self, poly, arr, **kwargs):
@@ -344,6 +351,25 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             kwargs['linestyle'] = style
         if 'colors' not in kwargs:
             kwargs['colors'] = color
+
+        if _is_iter(kwargs['colors']) and \
+           len(kwargs['colors']) == len(shps) and \
+           not _is_iter(next(iter(kwargs['colors']))):
+            # colormap!
+            colors = np.array(kwargs.pop('colors'))
+
+            if 'cmap' in kwargs: cmap = kwargs.pop('cmap')
+            else: cmap = None
+
+            if 'vmin' in kwargs: vmin = kwargs.pop('vmin')
+            else: vmin = np.nanmin(colors)
+
+            if 'vmax' in kwargs: vmax = kwargs.pop('vmax')
+            else: vmax = np.nanmax(colors)
+
+            cmapper = watershed_workflow.colors.cm_mapper(vmin, vmax, cmap)
+            colors = [cmapper(c) for c in colors]
+            kwargs['colors'] = colors
         
         lines = [np.array(l.coords)[:,0:2] for l in shps]
         lc = pltc.LineCollection(lines, **kwargs)
