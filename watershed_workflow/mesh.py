@@ -71,6 +71,7 @@ class LabeledSet:
     setid : int
     entity : str
     ent_ids : list[int]
+    to_extrude : bool = False
 
     def validate(self, size, is_tuple=False):
         if is_tuple:
@@ -120,7 +121,10 @@ class Mesh2D:
         Keep this as a property for future reference.
     eps : float, optional=0.01
         A small measure of length between coords.
-    validate : bool, optional=True
+    check_handedness : bool, optional=True
+        If true, ensure all cells are oriented so that right-hand rule
+        ordering of the nodes points up.
+    validate : bool, optional=False
         If true, validate coordinates and connections
         post-construction.
 
@@ -133,10 +137,12 @@ class Mesh2D:
     labeled_sets = attr.ib(factory=list)
     crs = attr.ib(default=None)
     eps = attr.ib(default=0.001)
+    _check_handedness = attr.ib(default=True)
     _validate = attr.ib(default=False)
 
     def __attrs_post_init__(self):
-        self.check_handedness()
+        if self._check_handedness:
+            self.check_handedness()
         if self._validate:
             self.validate()
         del self._validate
@@ -1404,7 +1410,7 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
     for ind in inds:
         ent_ids = list(np.where(nlcd_colors == ind)[0])
         ls = LabeledSet(nlcd_names[ind], int(ind), 'CELL', ent_ids)
-        m2.add_labeled_set(ls)
+        m2.labeled_sets.append(ls)
 
 
 def _get_labels(polygons):
@@ -1440,13 +1446,13 @@ def add_watershed_regions(m2, polygons, labels=None):
             # will become the volume region
             setid = m2.next_available_labeled_setid()
             ls = LabeledSet(label, setid, 'CELL', part)
-            m2.add_labeled_set(ls)
+            m2.labeled_sets.append(ls)
             ls.to_extrude = True
 
             # add a second region, denoting this one as the top surface of faces
             setid2 = m2.next_available_labeled_setid()
             ls2 = LabeledSet(label+' surface', setid2, 'CELL', part)
-            m2.add_labeled_set(ls2)
+            m2.labeled_sets.append(ls2)
 
     return partitions
 
@@ -1488,14 +1494,14 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         subdomain_conn = [list(m2.conn[tri]) for tri in tris]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
         subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
-        m2h = Mesh2D(subdomain_coords, subdomain_conn, validate=False)
+        m2h = Mesh2D(subdomain_coords, subdomain_conn, check_handedness=False, validate=False)
 
         edges = [(int(e[0]), int(e[1])) for e in m2h.boundary_edges]
         ls = LabeledSet(label+' boundary', m2.next_available_labeled_setid(),
                        'FACE', edges)
         ls.to_extrude = True # this marker tells the extrusion routine
                              # to not limit it to the surface
-        m2.add_labeled_set(ls)
+        m2.labeled_sets.append(ls)
 
         # every polygon now has an outlet -- find the boundary faces near that outlet
         outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
@@ -1504,7 +1510,7 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
                         'FACE', edges)
         ls.to_extrude = True # this marker tells the extrusion routine
                              # to not limit it to the surface
-        m2.add_labeled_set(ls)
+        m2.labeled_sets.append(ls)
 
     # also write one for the full domain
     if hucs.exterior_outlet is not None:
@@ -1513,4 +1519,4 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(),
                          'FACE', edges)
         ls2.to_extrude = True
-        m2.add_labeled_set(ls2)
+        m2.labeled_sets.append(ls2)

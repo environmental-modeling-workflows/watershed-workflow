@@ -163,7 +163,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     m2 : mesh.Mesh2D object
       The mesh to condition.
     is_waterbody : np.ndarray(int, shape=ncells), optional
-      A boolean/integer mask of length m2.num_cells(), with True
+      A boolean/integer mask of length m2.num_cells, with True
       values indicating that the given cell is a part of a waterbody
       that may be a depression.  This is important for
       reservoirs/lakes/etc where bathymetry is known and pits are
@@ -189,7 +189,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
                 outlet_edge = e
     outlet_edge = m2.edge_hash(*outlet_edge)
 
-    outlet_cell = m2.edges_to_cells()[outlet_edge]
+    outlet_cell = m2.edges_to_cells[outlet_edge]
     assert(len(outlet_cell) == 1)
     outlet_cell = outlet_cell[0]
 
@@ -218,7 +218,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
         """A cell that is not yet in the waterway, but has at least one edge whose other cell is in the waterway."""
         def __init__(self, cell, edges):
             assert(type(cell) is int)
-            assert(0 <= cell < m2.num_cells())
+            assert(0 <= cell < m2.num_cells)
             assert(type(edges) is list)
             for e in edges:
                 assert(type(e) is tuple)
@@ -231,7 +231,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
 
     # masked cells are always in the boundary, allowing them to be picked up as we reach that elevation.
     if is_waterbody is not None:
-        assert(len(is_waterbody) == m2.num_cells())
+        assert(len(is_waterbody) == m2.num_cells)
         masked_cells = [BoundaryEntry(c, list()) for (c, mask) in enumerate(is_waterbody) if mask]
         boundary.update(masked_cells)
 
@@ -245,7 +245,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
             if other_e in waterway.edges: continue
 
             # find the cell on the other side of other_e
-            other_e_cells = m2.edges_to_cells()[other_e]
+            other_e_cells = m2.edges_to_cells[other_e]
             if len(other_e_cells) == 1:
                 # boundary edge, add it to the waterway
                 assert(next_be.cell == other_e_cells[0])
@@ -323,8 +323,8 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
                 other_be.edges.append(other_e)
                         
     # when this is done, all cells should be in waterway
-    assert(len(waterway.cells) == m2.num_cells())
-    assert(len(waterway.edges) == m2.num_edges())
+    assert(len(waterway.cells) == m2.num_cells)
+    assert(len(waterway.edges) == m2.num_edges)
     return
 
 

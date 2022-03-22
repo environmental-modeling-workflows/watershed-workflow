@@ -13,6 +13,8 @@ RUN python -m pip install -e .
 RUN cp watershed_workflowrc .watershed_workflowrc
 
 # run the tests
-RUN python -m pytest watershed_workflow/test/
+RUN python -m pytest watershed_workflow/
+# run the notebook example
+RUN pytest --nbmake examples/mesh_coweeta.ipynb
 
 
