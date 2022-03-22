@@ -59,6 +59,32 @@ class River(watershed_workflow.tinytree.Tree):
         for n in self.leaf_nodes():
             yield n.segment
 
+    def iter_streamlevel(self):
+        """Generator to iterate over all reachs of the same streamlevel.
+
+        streamlevel is a concept defined by NHDPlus attributes, so
+        this is only valid if the VAA was loaded.
+        """
+        yield self
+        for c in self.children:
+            if c.properties['StreamLevel'] == self.properties['StreamLevel']:
+                for r in c.iter_streamlevel():
+                    yield r
+
+    def iter_stream_children(self):
+        """Find all roots of next-level streams that flow into this reach."""
+        for r in self.iter_streamlevel():
+            for c in r.children:
+                if c.properties['StreamLevel'] > self.properties['StreamLevel']:
+                    yield c
+                    
+    def iter_stream_roots(self):
+        """Generator to iterate over all roots of streamlevels."""
+        yield self
+        for root in self.iter_stream_children():
+            for r in root.iter_stream_roots():
+                yield r
+
     def accumulate(self, to_accumulate, to_save=None, op=sum):
         """Accumulates a property across the river tree."""
         val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
