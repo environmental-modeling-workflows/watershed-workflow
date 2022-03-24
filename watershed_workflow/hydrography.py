@@ -18,6 +18,7 @@ import watershed_workflow.plot
 
 
 def snap(hucs, rivers, tol=0.1, tol_triples=None, cut_intersections=False):
+
     """Snap HUCs to rivers."""
     assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert(type(rivers) is list)

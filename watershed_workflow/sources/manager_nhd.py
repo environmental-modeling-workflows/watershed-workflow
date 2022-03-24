@@ -195,9 +195,12 @@ class _FileManagerNHD:
 
             # flags for which layers will be needed
             layer_flags=dict({'catchments': 'catchments' in properties ,'vaa': not set(properties).isdisjoint(list(layer_vaa.keys())),'erroma':not set(properties).isdisjoint(list(layer_erroma.keys()))})        
+            
             if layer_flags['catchments']:
                 layer = 'NHDPlusCatchment'
                 logging.info("  {}: opening '{}' layer '{}' for catchments in '{}'".format(self.name, filename, layer, bounds))
+                for r in reaches:
+                    r['properties']['catchment'] = None
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for catchment in fid.values():
                         reach = reach_dict.get(catchment['properties']['NHDPlusID'])                      
