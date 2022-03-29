@@ -203,7 +203,7 @@ def sort_children_by_angle(tree, reverse=False):
 
             node.children.sort(key=angle)
 
-def create_river_mesh(river, watershed=None,widths=8,junction_option='all_pentagons'):
+def create_river_mesh(river, watershed=None,widths=8, junction_treatment=True):
 
     if type(widths)== dict:
         dilation_width=np.mean(list(widths.values()))
@@ -211,15 +211,19 @@ def create_river_mesh(river, watershed=None,widths=8,junction_option='all_pentag
         dilation_width=widths
     
     # creating a polygon for river corridor by dilating the river tree
-    corr = watershed_workflow.river_tree.create_river_corridor(river, dilation_width)
+    corr = create_river_corridor(river, dilation_width)
 
     # defining special elements in the mesh
-    quads= watershed_workflow.river_tree.to_quads(river, dilation_width, watershed, corr,junction_option=junction_option)
+    elems= to_quads(river, dilation_width, watershed, corr)
 
     # setting river_widths in the river corridor polygon
-    corr_new=watershed_workflow.river_tree.set_river_width(river,corr, widths=widths)
+    corr_new= set_river_width(river,corr, widths=widths,junction_treatment=junction_treatment)
 
-    return quads, corr_new
+    # treating non-convexity at junctions
+    if junction_treatment:
+        corr_new=junction_treatment_by_nudge(river, corr_new)
+
+    return elems, corr_new
 
 
 def create_river_corridor(river, river_width):
@@ -282,7 +286,7 @@ def create_river_corridor(river, river_width):
     return corr3
 
 
-def to_quads(river, delta, huc, corr,ax=None,junction_option='all_pentagons' ):
+def to_quads(river, delta, huc, corr,ax=None):
     """Iterate over the rivers, creating quads and pentagons forming the corridor."""
     
     coords=corr.exterior.coords[:-1]
@@ -407,71 +411,20 @@ def to_quads(river, delta, huc, corr,ax=None,junction_option='all_pentagons' ):
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
     elems=[el for node in river.preOrder() for el in node.elements]
-    ## ensuring that the pentagons at the junctions are convex
-    elems=junction_treatment(elems, coords,junction_option)
-    # note that after junction_treatment1 node.elemements and m2d.conn may not be exactly same
-    i=0
-    for node in river.preOrder():
-        for j, el in enumerate(node.elements):
-            node.elements[j] = elems[i]
-            i+=1
-    assert([el for node in river.preOrder() for el in node.elements]==elems)
+    ## ensuring that the pentagons at the junctions are convex (this shifts pentagon upstream, we don't want this)
+    # elems=junction_treatment(elems, coords,junction_option)
+    # # note that after junction_treatment1 node.elemements and m2d.conn may not be exactly same
+    # i=0
+    # for node in river.preOrder():
+    #     for j, el in enumerate(node.elements):
+    #         node.elements[j] = elems[i]
+    #         i+=1
+    # assert([el for node in river.preOrder() for el in node.elements]==elems)
     return elems
 
-def junction_treatment(elems, coords,junction_option='all_pentagons'):
-    """Iterate over pentagon elements, check for convexity and treat non-convexity 
-    by either using triangle at the junction or making one of the upstream point as triangle"""
-    elem_lens=[len(elem) for elem in elems]
-    pents=np.where(np.array(elem_lens)==5)[0]
-    tri_count=0
-    for pent in pents:
-        elem=elems[pent]
-        points=[coords[i] for i in elem]
-        if junction_option=='all_tris':
-            elems[pent]=[elem[i] for i in [0,1,3,4]]
-            tri=[elem[i] for i in [1,2,3]]
-            elems.append(tri) 
-        elif junction_option=='tris_at_convex':
-            if not watershed_workflow.utils.isConvex(points):
-                elems[pent]=[elem[i] for i in [0,1,3,4]] # made the DS element quad
-                tri=[elem[i] for i in [1,2,3]] # defined traingle for the junction
-                elems.append(tri)
-        elif junction_option=='all_pentagons':
-            if not watershed_workflow.utils.isConvex(points):
-                elems[pent]=[elem[i] for i in [0,1,3,4]]
-
-                # making upstream **branch 1** as pentagon
-                logging.debug(f'attemping to create convex pentagon on branch 1')
-                pent_up=[elem[1],elem[1]+1,elem[2]-1,elem[2],elem[3]]# making one branch as pengaton
-                # check convexity
-                points_new=[coords[i] for i in pent_up]
-                if watershed_workflow.utils.isConvex(points_new):
-                    logging.debug(f'branch 1 converted into a convex pentagon')
-                    ind_to_replace=elems.index(pent_up[:-1])
-                    elems[ind_to_replace]=pent_up
-                else:
-                    logging.debug(f'pentagon in branch 1 is not convex, now trying branch 2')
-                    pent_up=[elem[2],elem[2]+1,elem[3]-1,elem[3],elem[1]]# making one branch as pengaton
-                    points_new=[coords[i] for i in pent_up]
-                    if watershed_workflow.utils.isConvex(points_new):
-                        logging.debug(f'branch 2 converted into a convex pentagon')
-                        ind_to_replace=elems.index(pent_up[:-1])
-                        elems[ind_to_replace]=pent_up
-                    else:
-                        logging.debug(f'failed to create convex polygon at the junction, adding a traingle')
-                        tri=[elem[i] for i in [1,2,3]]
-                        elems.append(tri)
-                        tri_count=+1
-        else:
-            print('junction_option not valid')
-    if tri_count>0:                    
-        print('Warning: ',tri_count," triangles introduced at junctions" )                    
-    return elems
-                    
-
-def set_river_width(river,corr, widths=8):
+def set_river_width(river,corr, widths=8, junction_treatment=None):
     corr_coords=corr.exterior.coords[:-1]
-    for node in river.preOrder():
+    for j,node in enumerate(river.preOrder()):
         order=node.properties["StreamOrder"]
 
         if type(widths)== dict:
@@ -488,18 +441,18 @@ def set_river_width(river,corr, widths=8):
                 corr_coords[elem[2]]=tuple(p2_)
 
             if len(elem)==5:
-                p1=np.array(corr_coords[elem[1]][:2]) # points of the upstream edge of the quad
+                p1=np.array(corr_coords[elem[1]][:2]) # neck of the pent
                 p2=np.array(corr_coords[elem[3]][:2])
                 [p1_, p2_]= move_to_target_separation(p1,p2,target_width)
                 corr_coords[elem[1]]=tuple(p1_)
                 corr_coords[elem[3]]=tuple(p2_)
                 
             if i==0: # this is to treat the most downstream edge which is left out so far
-                p1=np.array(corr_coords[elem[0]][:2]) # points of the upstream edge of the quad
-                p2=np.array(corr_coords[elem[3]][:2])
+                p1=np.array(corr_coords[elem[0]][:2]) # points of the upstream edge of the quad/pent
+                p2=np.array(corr_coords[elem[-1]][:2])
                 [p1_, p2_]= move_to_target_separation(p1,p2,target_width)
                 corr_coords[elem[0]]=tuple(p1_)
-                corr_coords[elem[3]]=tuple(p2_)
+                corr_coords[elem[-1]]=tuple(p2_)
 
     corr_coords_new=corr_coords+[corr_coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
@@ -524,4 +477,96 @@ def width_cal(width_dict,order):
     else: 
          width=width_dict[order]
     return width
+
+def junction_treatment_by_nudge(river, corr):
+
+    coords=corr.exterior.coords[:-1]
+
+    for j, node in enumerate(river.preOrder()):
+        for elem in node.elements:
+                if len(elem)==5: # checking and treating this pentagon
+                    points=[coords[id] for id in elem];  i=0
+                    points_orig=copy.deepcopy(points)
+                    while not watershed_workflow.utils.isConvex(points):
+                        p1, p3= [np.array(points[1]), np.array(points[3])]
+                        d=p1-p3
+                        p1_=p3+1.01*d
+                        p3_=p1-1.01*d
+                        points[1]=tuple(p1_)
+                        points[3]=tuple(p3_)
+                        i+=1
+                    logging.debug(" pent in node", j,"was adjusted", i, " times")
+                    # since we shifted both points 1 and 3 howver only one was required to be moved
+                    # we put one of them to their oroginal location to see if that was a irrelevant shift
+                    if not watershed_workflow.utils.isConvex(points_orig):
+                        points_new=copy.deepcopy(points)
+                        points_new[1]=points_orig[1]
+                        if watershed_workflow.utils.isConvex(points_new):
+                            logging.debug("Undoing nudge of 1st neck point kept the pentagon convex")
+                        else:
+                            logging.debug("Undoing nudge of 1st neck point made pentagon non-convex, trying second next point")
+                            points_new=copy.deepcopy(points)
+                            points_new[3]=points_orig[3]
+
+                        assert(watershed_workflow.utils.isConvex(points_new))
+                        
+                        # updating coords
+                        for id, point in zip(elem,points_new):
+                            coords[id]=point    
+
+    corr_coords_new=coords+[coords[0]]                     
+    return shapely.geometry.Polygon(corr_coords_new)
+                        
+
+
+#def junction_treatment_by_elem_redefine(elems, coords,junction_option='all_pentagons'): # not sure if we still need this
+#     """Iterate over pentagon elements, check for convexity and treat non-convexity 
+#     by either using triangle at the junction or making one of the upstream point as triangle"""
+#     elem_lens=[len(elem) for elem in elems]
+#     pents=np.where(np.array(elem_lens)==5)[0]
+#     tri_count=0
+#     for pent in pents:
+#         elem=elems[pent]
+#         points=[coords[i] for i in elem]
+#         if junction_option=='all_tris':
+#             elems[pent]=[elem[i] for i in [0,1,3,4]]
+#             tri=[elem[i] for i in [1,2,3]]
+#             elems.append(tri) 
+#         elif junction_option=='tris_at_convex':
+#             if not watershed_workflow.utils.isConvex(points):
+#                 elems[pent]=[elem[i] for i in [0,1,3,4]] # made the DS element quad
+#                 tri=[elem[i] for i in [1,2,3]] # defined traingle for the junction
+#                 elems.append(tri)
+#         elif junction_option=='all_pentagons':
+#             if not watershed_workflow.utils.isConvex(points):
+#                 elems[pent]=[elem[i] for i in [0,1,3,4]]
+
+#                 # making upstream **branch 1** as pentagon
+#                 logging.debug(f'attemping to create convex pentagon on branch 1')
+#                 pent_up=[elem[1],elem[1]+1,elem[2]-1,elem[2],elem[3]]# making one branch as pengaton
+#                 # check convexity
+#                 points_new=[coords[i] for i in pent_up]
+#                 if watershed_workflow.utils.isConvex(points_new):
+#                     logging.debug(f'branch 1 converted into a convex pentagon')
+#                     ind_to_replace=elems.index(pent_up[:-1])
+#                     elems[ind_to_replace]=pent_up
+#                 else:
+#                     logging.debug(f'pentagon in branch 1 is not convex, now trying branch 2')
+#                     pent_up=[elem[2],elem[2]+1,elem[3]-1,elem[3],elem[1]]# making one branch as pengaton
+#                     points_new=[coords[i] for i in pent_up]
+#                     if watershed_workflow.utils.isConvex(points_new):
+#                         logging.debug(f'branch 2 converted into a convex pentagon')
+#                         ind_to_replace=elems.index(pent_up[:-1])
+#                         elems[ind_to_replace]=pent_up
+#                     else:
+#                         logging.debug(f'failed to create convex polygon at the junction, adding a traingle')
+#                         tri=[elem[i] for i in [1,2,3]]
+#                         elems.append(tri)
+#                         tri_count=+1
+#         else:
+#             print('junction_option not valid')
+#     if tri_count>0:                    
+#         print('Warning: ',tri_count," triangles introduced at junctions" )                    
+#     return elems
+                    
 
