@@ -202,44 +202,24 @@ def sort_children_by_angle(tree, reverse=False):
                     return watershed_workflow.utils.angle(my_seg_tan, tan)
 
             node.children.sort(key=angle)
-            
-def insert_vaa_table_data(gdb, river):
-    """This functions expands the properties dictionary for river tree using VAA attrobute table"""
 
-    #creating lists of needed attributes
-    nhdID=[] # for matching with the reach NHDid
-    order=[] # stream order
-    max_elev=[] # maximum elevation in the reach
-    min_elev=[] # minimum elevation in the reach
-    with fiona.open(gdb, 'r', layer='NHDPlusFlowlineVAA') as fid:
-        for i in range(1,len(fid)-1):
-            flowline = fid[i]
-            nhdID.append(int(flowline['properties']['NHDPlusID']))
-            order.append(int(flowline['properties']['StreamOrde']))
-            max_elev.append(flowline['properties']['MaxElevSmo'])
-            min_elev.append(flowline['properties']['MinElevSmo'])
+def create_river_mesh(river, watershed=None,widths=8,junction_option='all_pentagons'):
 
-    #creating DataFrame from above created lists
-    flow_line_df= pd.DataFrame(
-        {'nhdID': nhdID,
-        'order': order,
-        'max_elev': max_elev,
-        'min_elev': min_elev
-        })
-    logging.debug("Created dataframe" %flow_line_df)
+    if type(widths)== dict:
+        dilation_width=np.mean(list(widths.values()))
+    else:
+        dilation_width=widths
     
+    # creating a polygon for river corridor by dilating the river tree
+    corr = watershed_workflow.river_tree.create_river_corridor(river, dilation_width)
 
-    #adding relevant VAA attributes to the river tree
-    logging.info('NAME: length NHDPlusID order max_elev(m) min_elev(m)')
-    logging.info('------------------------------------------------------')
-    for r in river:
-        r.properties['order']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).order)
-        r.properties['max_elev']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).max_elev)/100
-        r.properties['min_elev']=np.float64((flow_line_df.loc[flow_line_df['nhdID'] == r.properties['NHDPlusID']]).min_elev)/100
-        logging.info(f"{r.properties['GNIS_Name']} : {r.properties['NHDPlusID']} : {r.properties['order']} : {r.properties['max_elev']} : {r.properties['min_elev']} ")
-        #logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
-    return river
+    # defining special elements in the mesh
+    quads= watershed_workflow.river_tree.to_quads(river, dilation_width, watershed, corr,junction_option=junction_option)
 
+    # setting river_widths in the river corridor polygon
+    corr_new=watershed_workflow.river_tree.set_river_width(river,corr, widths=widths)
+
+    return quads, corr_new
 
 
 def create_river_corridor(river, river_width):
@@ -302,9 +282,10 @@ def create_river_corridor(river, river_width):
     return corr3
 
 
-def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' ):
+def to_quads(river, delta, huc, corr,ax=None,junction_option='all_pentagons' ):
     """Iterate over the rivers, creating quads and pentagons forming the corridor."""
     
+    coords=corr.exterior.coords[:-1]
     # number the nodes in a dfs pattern, creating empty space for elements
     for i, node in enumerate(river.preOrder()):
         node.id = i
@@ -338,7 +319,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
 
             # plot it...
             seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
             pause()
 
         elif node.touched == 1 and len(node.children) == 0:
@@ -359,7 +340,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
 
             # plot it...
             seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
 
             # also plot the conn
             for i, elem in enumerate(node.elements):
@@ -370,7 +351,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
                 else:
                     assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
-                ax.plot(cc[:,0], cc[:,1], 'g-o')
+                #ax.plot(cc[:,0], cc[:,1], 'g-o')
             pause()
             
 
@@ -389,7 +370,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
 
             # plot it...
             seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
+            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
 
             # also plot the conn
             for i,elem in enumerate(node.elements):
@@ -407,7 +388,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
                            
                            
-                ax.plot(cc[:,0], cc[:,1], 'g-o')
+                #ax.plot(cc[:,0], cc[:,1], 'g-o')
             pause()
             
             
@@ -420,7 +401,7 @@ def to_quads(river, delta, huc, coords,ax=None,junction_option='all_pentagons' )
             node.elements[-1].append(ic)
             node.touched += 1
 
-            ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
+            #ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
             pause()
 
     assert(len(coords) == (ic+1))
@@ -487,3 +468,60 @@ def junction_treatment(elems, coords,junction_option='all_pentagons'):
         print('Warning: ',tri_count," triangles introduced at junctions" )                    
     return elems
                     
+
+def set_river_width(river,corr, widths=8):
+    corr_coords=corr.exterior.coords[:-1]
+    for node in river.preOrder():
+        order=node.properties["StreamOrder"]
+
+        if type(widths)== dict:
+            target_width=width_cal(widths,order)
+        else:
+            target_width=widths
+
+        for i, elem in enumerate(node.elements): # treating the upstream edge of the element
+            if len(elem)==4:
+                p1=np.array(corr_coords[elem[1]][:2]) # points of the upstream edge of the quad
+                p2=np.array(corr_coords[elem[2]][:2])
+                [p1_, p2_]= move_to_target_separation(p1,p2,target_width)
+                corr_coords[elem[1]]=tuple(p1_)
+                corr_coords[elem[2]]=tuple(p2_)
+
+            if len(elem)==5:
+                p1=np.array(corr_coords[elem[1]][:2]) # points of the upstream edge of the quad
+                p2=np.array(corr_coords[elem[3]][:2])
+                [p1_, p2_]= move_to_target_separation(p1,p2,target_width)
+                corr_coords[elem[1]]=tuple(p1_)
+                corr_coords[elem[3]]=tuple(p2_)
+                
+            if i==0: # this is to treat the most downstream edge which is left out so far
+                p1=np.array(corr_coords[elem[0]][:2]) # points of the upstream edge of the quad
+                p2=np.array(corr_coords[elem[3]][:2])
+                [p1_, p2_]= move_to_target_separation(p1,p2,target_width)
+                corr_coords[elem[0]]=tuple(p1_)
+                corr_coords[elem[3]]=tuple(p2_)
+
+    corr_coords_new=corr_coords+[corr_coords[0]]
+    return shapely.geometry.Polygon(corr_coords_new)
+
+
+def move_to_target_separation(p1,p2, target):
+    import math
+    d_vec=p1-p2 # separation vector
+    d=np.sqrt(d_vec.dot(d_vec)) # distance
+    delta= target-d
+    p1_=p1+0.5*delta*(d_vec)/d
+    p2_=p2-0.5*delta*(d_vec)/d
+    d_=watershed_workflow.utils.distance(p1_,p2_)
+    assert(math.isclose(d_,target, rel_tol=1e-5))
+    return [p1_, p2_]
+
+def width_cal(width_dict,order):
+    if order > max(width_dict.keys()):
+        width=width_dict[max(width_dict.keys())]
+    elif order < min(width_dict.keys()):
+        width=width_dict[min(width_dict.keys())]
+    else: 
+         width=width_dict[order]
+    return width
+

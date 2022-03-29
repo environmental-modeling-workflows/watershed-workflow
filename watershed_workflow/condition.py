@@ -377,7 +377,7 @@ def fill_gaps(img_in, nodata=np.nan):
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
 
 
-def condition_river_mesh(m2, river, mode="upper"):
+def condition_river_mesh(m2, river, mode="upper", cut_off_order=0, depress_by=0):
     """ makes the bed profile of the stream smooth, removes hills and ponds
             m2: mesh2D object generated from Watershed Workflow
             river: river_tree object
@@ -390,20 +390,20 @@ def condition_river_mesh(m2, river, mode="upper"):
                     river_corr_ids.append(id)
     
     for node in river.preOrder():
-        order=node.segment.properties['order']
+        order=node.segment.properties["StreamOrder"]
         profile=get_reach_profile(node, m2)
         profile_new=condition_reach(profile, mode=mode)
 
-        if not order == 5: # if we wish to put control of river order for conditioning. 
+        if order <= cut_off_order: # if we wish to put control of river order for conditioning. 
             # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
             for i, elem in enumerate(node.elements):
                 for j in range(len(elem)):
-                    m2.coords[elem[j]][2]=profile_new[i,1]-1 # lower by 1 m
+                    m2.coords[elem[j]][2]=profile_new[i,1]-depress_by # lower by 1 m
                 
                 bank_node_ids=bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                      if node_id not in river_corr_ids:
-                        if m2.coords[node_id][2]<profile_new[i,1]:
+                        if m2.coords[node_id][2]<profile_new[i,1]-depress_by:
                                m2.coords[node_id][2]= profile_new[i,1]+0.25
 
 def get_reach_profile(node,m2):
