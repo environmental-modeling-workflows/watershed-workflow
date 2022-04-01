@@ -453,7 +453,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
 
             res = []
             for shp in shps:
-                patch = descartes.PolygonPatch(shp, **kwargs)
+                patch = descartes.PolygonPatch(shp)
 
                 # if projection is not None:
                 #     patch.set_transform(projection)
