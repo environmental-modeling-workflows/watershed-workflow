@@ -109,8 +109,9 @@ def add_river_outlet_in_huc(river_corr,hucs):
 
     huc_coords=list(huc_segment.coords)[:-1] # to avoid repeated points interferring in the river outlet adjustment
     ind=watershed_workflow.utils.closest_point(river_corr.exterior.coords[0],huc_coords)# this is the point to be eliminated from huc boundary
-    huc_coords[ind]=river_corr.exterior.coords[-2] # point on the huc boundary closest to the river outlet is replaced by one of the two points at river outlet
-    huc_coords.insert(ind+1,river_corr.exterior.coords[0]) # other point of the river outlet is inserted into the huc boundary
+    huc_coords.pop(ind)
+    huc_coords[ind-1]=river_corr.exterior.coords[-2] # point on the huc boundary closest to the river outlet is replaced by one of the two points at river outlet
+    huc_coords.insert(ind,river_corr.exterior.coords[0]) # other point of the river outlet is inserted into the huc boundary
     huc_coords.append(huc_coords[0]) # to make the polygonal loop complete
     huc_segment_new=shapely.geometry.LineString(huc_coords)
     

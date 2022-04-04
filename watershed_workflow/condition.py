@@ -376,35 +376,96 @@ def fill_gaps(img_in, nodata=np.nan):
     # interpolate the whole image
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
 
-
-def condition_river_mesh(m2, river, mode="upper", cut_off_order=0, depress_by=0):
+def condition_river_mesh2(m2, river ,poly_smooth=False, filter_mode=None,use_nhd_elev=False,cut_off_order=0,treat_banks=False ,depress_by=0):
     """ makes the bed profile of the stream smooth, removes hills and ponds
             m2: mesh2D object generated from Watershed Workflow
             river: river_tree object
     """
+    import math
+    import copy 
     river_corr_ids=[] # collecting IDs of all nodes in the river/stream
     for node in river.preOrder():
         for elem in node.elements:
             for id in elem:
                 if id not in river_corr_ids: 
                     river_corr_ids.append(id)
-    
+             
     for node in river.preOrder():
-        order=node.segment.properties["StreamOrder"]
-        profile=get_reach_profile(node, m2)
-        profile_new=condition_reach(profile, mode=mode)
+        order=node.properties["StreamOrder"]
+        if order <= cut_off_order: 
+            assert('elev_profile' in node.properties.keys())
+            
+            # get bed profile
+            stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream        dists=[math.dist(node.segment.coords[0],point) for point in node.segment.coords]
+            dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
+            elevs=node.properties['elev_profile'][::-1] # this is also reversed
+            profile=np.array([dists,elevs]).T
 
-        if order <= cut_off_order: # if we wish to put control of river order for conditioning. 
+
+            if use_nhd_elev and 'MaximumElevationSmoothed'in node.segment.properties.keys() and 'MinimumElevationSmoothed' in node.segment.properties.keys():
+                    nhd_limits=[node.segment.properties['MinimumElevationSmoothed'],node.segment.properties['MaximumElevationSmoothed']]
+            else:
+                    nhd_limits=None
+
+            if poly_smooth:
+                profile=poly_fit(profile, degree=5) # it is highly recommended to filter after this
+
+            if not filter_mode == None:
+                profile=filter_pass(profile, filtermode=filter_mode,nhd_limits=nhd_limits)
+
             # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
-            for i, elem in enumerate(node.elements):
-                for j in range(len(elem)):
-                    m2.coords[elem[j]][2]=profile_new[i,1]-depress_by # lower by 1 m
+            for i, elem in enumerate(node.elements): 
                 
-                bank_node_ids=bank_nodes_from_elem(elem, m2)
-                for node_id in bank_node_ids:
-                     if node_id not in river_corr_ids:
-                        if m2.coords[node_id][2]<profile_new[i,1]-depress_by:
-                               m2.coords[node_id][2]= profile_new[i,1]+0.25
+                if i ==0: # for the first point
+                    m2.coords[elem[0]][2]= m2.coords[elem[-1]][2]=profile[i,1]-depress_by
+                    
+                # we are assgining elevations only to the upstream points of the river elements
+                if len(elem)==3:          
+                    m2.coords[elem[1]][2]= profile[i+1,1]-depress_by
+
+                elif len(elem)==4: 
+                    m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= profile[i+1,1]-depress_by
+                    
+                elif len(elem)==5:  
+                    m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= profile[i+1,1]-depress_by
+                    
+                if treat_banks: # this needs to be rewritten
+                    bank_node_ids=bank_nodes_from_elem(elem, m2)
+                    for node_id in bank_node_ids:
+                         if node_id not in river_corr_ids:
+                            if m2.coords[node_id][2]<profile[i,1]-depress_by:
+                                   m2.coords[node_id][2]= profile[i,1]+0.25 # is 0.25m enough to raise the bank?
+
+
+
+# def condition_river_mesh(m2, river, mode="upper", cut_off_order=0, depress_by=0):
+#     """ makes the bed profile of the stream smooth, removes hills and ponds
+#             m2: mesh2D object generated from Watershed Workflow
+#             river: river_tree object
+#     """
+#     river_corr_ids=[] # collecting IDs of all nodes in the river/stream
+#     for node in river.preOrder():
+#         for elem in node.elements:
+#             for id in elem:
+#                 if id not in river_corr_ids: 
+#                     river_corr_ids.append(id)
+    
+#     for node in river.preOrder():
+#         order=node.segment.properties["StreamOrder"]
+#         profile=get_reach_profile(node, m2)
+#         profile_new=condition_reach(profile, mode=mode)
+
+#         if order <= cut_off_order: # if we wish to put control of river order for conditioning. 
+#             # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
+#             for i, elem in enumerate(node.elements):
+#                 for j in range(len(elem)):
+#                     m2.coords[elem[j]][2]=profile_new[i,1]-depress_by # lower by 1 m
+                
+#                 bank_node_ids=bank_nodes_from_elem(elem, m2)
+#                 for node_id in bank_node_ids:
+#                      if node_id not in river_corr_ids:
+#                         if m2.coords[node_id][2]<profile_new[i,1]-depress_by:
+#                                m2.coords[node_id][2]= profile_new[i,1]+0.25
 
 def get_reach_profile(node,m2):
     """ for a given node segment of a river tree, this function return the profile
@@ -434,27 +495,64 @@ def get_reach_profile(node,m2):
         profile[i,1]=centroid[2]
     return profile
         
-def condition_reach(profile, mode='upper'):
-    """performs a condiotning of the stream bed by using a high-order polynomial and pass for monotonicity enforcement
-    """
-    import copy 
-    import numpy
-    from numpy.polynomial import polynomial as poly
+# def condition_reach(profile, mode='upper'):
+#     """performs a condiotning of the stream bed by using a high-order polynomial and pass for monotonicity enforcement
+#     """
+#     import copy 
+#     import numpy
+#     from numpy.polynomial import polynomial as poly
 
+#     profile_new=copy.deepcopy(profile)
+#     if not len(profile)==1:
+#         p = poly.polyfit(profile[:,0], profile[:,1], deg=5)
+#         profile_new[:,1]=poly.polyval(profile_new[:,0],p)
+#         if  mode=='upper':
+#             for i in range(len(profile_new)-1):
+#                 if profile_new[i+1,1] < profile_new[i,1]:
+#                     profile_new[i+1,1]=profile_new[i,1]
+#         elif mode=='lower':
+#             for i in range(len(profile_new)-1, 0,-1):
+#                 if profile_new[i-1,1] > profile_new[i,1]:
+#                     profile_new[i-1,1] = profile_new[i,1]
+#     return profile_new
+ 
+
+def poly_fit(profile, degree=5):
     profile_new=copy.deepcopy(profile)
     if not len(profile)==1:
-        p = poly.polyfit(profile[:,0], profile[:,1], deg=5)
+        p = poly.polyfit(profile[:,0], profile[:,1], deg=degree)
         profile_new[:,1]=poly.polyval(profile_new[:,0],p)
-        if  mode=='upper':
+    return profile_new
+
+def filter_pass(profile, filtermode='upstream',nhd_limits=None):
+    profile_new=copy.deepcopy(profile)
+    if nhd_limits==None:
+        if filtermode=='upstream': # moving suptream
             for i in range(len(profile_new)-1):
                 if profile_new[i+1,1] < profile_new[i,1]:
                     profile_new[i+1,1]=profile_new[i,1]
-        elif mode=='lower':
+
+        elif filtermode=='downstream':
             for i in range(len(profile_new)-1, 0,-1):
                 if profile_new[i-1,1] > profile_new[i,1]:
                     profile_new[i-1,1] = profile_new[i,1]
+                    
+    elif nhd_limits is list: 
+                 
+        if filtermode=='upstream': # moving suptream
+            
+            profile_new[0,1]=nhd_limits[0]
+            for i in range(len(profile_new)-1):
+                if profile_new[i+1,1] < profile_new[i,1]:
+                    profile_new[i+1,1]=profile_new[i,1]
+            
+            profile_new[-1,1]=nhd_limits[1]
+            for i in range(len(profile_new)-1, 0,-1):
+                if profile_new[i-1,1] > profile_new[i,1]:
+                    profile_new[i-1,1] = profile_new[i,1]
+
     return profile_new
- 
+
 
 def bank_nodes_from_elem(elem, m2):
     # function yileding back id of the bank-node for a given stream-mesh element 

@@ -185,7 +185,8 @@ class _FileManagerNHD:
 
             # these dictionaries are needed to access properties from NHDPLus tables {'property alias name': 'property key/code'} 
             # Want to support more properties?? Add their alias names and codes in respective dictionaries (Table 16 and 17 NHDPlus user guide)
-            layer_vaa = dict({'StreamOrder':'StreamOrde' ,'StreamLevel':'StreamLeve' ,'HydrologicSequence': 'HydroSeq','DivergenceCode':'Divergence' , 'CatchmentAreaSqKm':'AreaSqKm' , 'TotalDrainageAreaSqKm':'TotDASqKm' })
+            layer_vaa = dict({'StreamOrder':'StreamOrde' ,'StreamLevel':'StreamLeve' ,'HydrologicSequence': 'HydroSeq','DivergenceCode':'Divergence' , 
+            'CatchmentAreaSqKm':'AreaSqKm' , 'TotalDrainageAreaSqKm':'TotDASqKm' ,'MaximumElevationSmoothed':'MaxElevSmo', 'MinimumElevationSmoothed': 'MinElevSmo'})
             layer_erroma = dict({'MeanAnnualFlow':'QAMA' ,'MeanAnnualVelocity':'VAMA' ,'MeanAnnualFlowGaugeAdj': 'QEMA'})
             
             # validation of properties
