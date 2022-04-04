@@ -30,13 +30,12 @@ import watershed_workflow
 
 def test_nrcs2():
     # single file covers it
-    coweeta_shapefile = "./data/hydrologic_units/others/Coweeta/coweeta_basin.shp"
+    coweeta_shapefile = "./examples/Coweeta/input_data/coweeta_basin.shp"
     crs, coweeta = watershed_workflow.get_split_form_shapes(coweeta_shapefile)
-    target_bounds = coweeta.exterior().bounds
 
     # get imgs
     nrcs = watershed_workflow.sources.manager_nrcs.FileManagerNRCS()
-    profile, shps, df = nrcs.get_shapes_and_properties(target_bounds,crs, force_download=True)
+    profile, shps, df = nrcs.get_shapes_and_properties(coweeta.exterior(), crs, force_download=True)
 
     # # check df
     # mukeys = set([int(s['properties']['id']) for s in shps])

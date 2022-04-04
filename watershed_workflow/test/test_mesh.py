@@ -6,11 +6,11 @@ import watershed_workflow.mesh
 from watershed_workflow.test.shapes import two_boxes
 
 def check_2D_geometry(m2):
-    assert(2 == m2.num_cells())
-    assert(7 == m2.num_edges())
-    assert(6 == m2.num_nodes())
-    assert(6 == len(m2.boundary_edges()))
-    assert(6 == len(m2.boundary_nodes()))
+    assert(2 == m2.num_cells)
+    assert(7 == m2.num_edges)
+    assert(6 == m2.num_nodes)
+    assert(6 == len(m2.boundary_edges))
+    assert(6 == len(m2.boundary_nodes))
     assert(np.allclose(np.array([5,0,0]), m2.compute_centroid(0), 1.e-6))
     assert(np.allclose(np.array([15,0,0]), m2.compute_centroid(1), 1.e-6))    
     
@@ -39,9 +39,9 @@ def test_extrude():
         np.array([0, 10, 20]), np.array([0,0,0]), width=10)
     m3 = watershed_workflow.mesh.Mesh3D.extruded_Mesh2D(
         m2, ['constant',], [5.0,], [10,], [1001,])
-    assert(20 == m3.num_cells())
-    assert(7*10+2*11 == m3.num_faces())
-    assert(6*11 == m3.num_nodes())
+    assert(20 == m3.num_cells)
+    assert(7*10+2*11 == m3.num_faces)
+    assert(6*11 == m3.num_nodes)
 
 def test_write():
     m2 = watershed_workflow.mesh.Mesh2D.from_Transect(

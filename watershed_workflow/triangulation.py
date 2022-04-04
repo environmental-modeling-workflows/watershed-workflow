@@ -130,7 +130,7 @@ def triangulate(hucs, rivers, tol=1, **kwargs):
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
         
     if rivers != None:
-        segments = segments + list(watershed_workflow.river_tree.forest_to_list(rivers))
+        segments = segments + [r for river in rivers for r in river]
 
     nodes_edges = NodesEdges(segments)
 
@@ -206,7 +206,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
             area = near_area + (distance - near_distance) / (away_distance - near_distance) * (away_area - near_area)
         return area
 
-    river_multiline = watershed_workflow.river_tree.forest_to_list(rivers)
+    river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
         bary = np.sum(np.array(vertices), axis=0)/3

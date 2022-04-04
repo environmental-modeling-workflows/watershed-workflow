@@ -12,7 +12,7 @@ import watershed_workflow
 
 def test_glhymps():
     # single file covers it
-    coweeta_shapefile = "./data/hydrologic_units/others/Coweeta/coweeta_basin.shp"
+    coweeta_shapefile = "./examples/Coweeta/input_data/coweeta_basin.shp"
     crs, coweeta = watershed_workflow.get_split_form_shapes(coweeta_shapefile)
     target_bounds = coweeta.exterior().bounds
 

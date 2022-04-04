@@ -14,6 +14,9 @@ enumerated_palettes = {
     2 : ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6',
          '#6a3d9a','#ffff99','#b15928'],
     3 : ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
+    4 : ["#399283", "#d2b48b", "#7f3a63", "#f3c5fa", "#e0079b", "#474747", "#c00018", "#2e21d0", "#5be13e",
+          "#bce091", "#ed8220", "#769d31", "#d0de20", "#cd6ec6", "#547eec", "#8bd0eb", "#333a9e", "#94721a",
+          "#d17778", "#f3c011", "#1eefc9", "#8e3703", "#02531d", "#d62df6"],
     }
 
 def enumerated_colors(count, palette=1, chain=True):
@@ -112,7 +115,7 @@ def gas_cmap():
 
 
 # jet-by-index
-def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
+def cm_mapper(vmin=0., vmax=1., cmap=None, norm=None, get_sm=False):
     """Provide a function that maps scalars to colors in a given colormap.
 
     Parameters
@@ -137,12 +140,17 @@ def cm_mapper(vmin=0., vmax=1., cmap=matplotlib.cm.jet, norm=None):
             plt.plot(x, x**i, color=cm(i))
 
     """
+    if cmap is None:
+        cmap = matplotlib.cm.jet
     if norm is None:
         norm = matplotlib.colors.Normalize(vmin, vmax)
     sm = matplotlib.cm.ScalarMappable(norm, cmap)
     def mapper(value):
         return sm.to_rgba(value)
-    return mapper
+    if get_sm:
+        return mapper, sm
+    else:
+        return mapper
 
 
 def cm_discrete(ncolors, cmap=matplotlib.cm.jet):

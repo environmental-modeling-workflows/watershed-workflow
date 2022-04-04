@@ -42,10 +42,10 @@ CREATE TABLE #AoiTable
     landunit VARCHAR(20),
     aoigeom GEOMETRY )
 ;
- 
+
 SELECT @aoiGeom = GEOMETRY::STGeomFromText('{}', 4326);
 SELECT @aoiGeomFixed = @aoiGeom.MakeValid().STUnion(@aoiGeom.STStartPoint());
-INSERT INTO #AoiTable ( landunit, aoigeom ) 
+INSERT INTO #AoiTable ( landunit, aoigeom )
 VALUES ('My Geom', @aoiGeomFixed);
 -- End of AOI geometry section
 -- #AoiSoils table contains intersected soil polygon table with geometry
@@ -73,22 +73,22 @@ INNER JOIN mapunit M ON I.mukey = M.mukey
 """
 
 
-def synthesize_data(df, rosetta_model_type=3):
+def synthesize_data(df):
     """Renames and calculates derived properties in a MUKEY-based data frame, in place"""
     # rename columns to improve readability
     rename_list = {'hzdept_r' : 'top depth [cm]',
                    'hzdepb_r' : 'bot depth [cm]',
-                   'ksat_r' : 'log Ksat [um s^-1]', 
+                   'ksat_r' : 'log Ksat [um s^-1]',
                    'sandtotal_r' : 'total sand pct [%]',
-                   'silttotal_r' : 'total silt pct [%]', 
+                   'silttotal_r' : 'total silt pct [%]',
                    'claytotal_r' : 'total clay pct [%]',
                    'dbthirdbar_r' : 'bulk density [g/cm^3]',
                    'partdensity' : 'particle density [g/cm^3]',
                    'wsatiated_r' : 'saturated water content [%]',
                    'comppct_r' : 'component pct [%]'}
-        
+
     df.rename(columns=rename_list, inplace=True)
-    
+
     # preprocess data
     df['thickness [cm]'] = df['bot depth [cm]'] - df['top depth [cm]']
     df['porosity [-]'] = 1 - df['bulk density [g/cm^3]']/df['particle density [g/cm^3]']
@@ -98,14 +98,14 @@ def synthesize_data(df, rosetta_model_type=3):
 
     # assume null porosity = saturated water content
     df.loc[pandas.isnull(df['porosity [-]']), 'porosity [-]'] = \
-        df.loc[pandas.isnull(df['porosity [-]']), 'saturated water content [%]']/100    
+        df.loc[pandas.isnull(df['porosity [-]']), 'saturated water content [%]']/100
     logging.info(f'found {len(df["mukey"].unique())} unique MUKEYs.')
 
 
-def aggregate_component_values(df, agg_var):
+def aggregate_component_values(df, agg_var=None):
     """
-    Aggregate horizon value by layer thickness to get component property. 
-    
+    Aggregate horizon value by layer thickness to get component property.
+
     Parameters
     ----------
     df_chorizon : pandas dataframe
@@ -114,12 +114,20 @@ def aggregate_component_values(df, agg_var):
       individual mukey df contains component keys
     agg_var : list
       variables to average
-    
+
     Returns
     -------
     df_comp : pandas dataframe
       aggregated component properties
     """
+    if agg_var is None:
+        agg_var = ['log Ksat [um s^-1]',
+                   'porosity [-]',
+                   'bulk density [g/cm^3]',
+                   'total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]',
+                   ]
+
+
     comp_list = ['mukey', 'cokey', 'component pct [%]', 'thickness [cm]'] + agg_var
     horizon_selected_cols = ['mukey', 'cokey', 'chkey', 'component pct [%]',
                              'thickness [cm]', 'top depth [cm]', 'bot depth [cm]',
@@ -127,7 +135,7 @@ def aggregate_component_values(df, agg_var):
 
     df_comp = pandas.DataFrame(columns=comp_list)
     cokeys = df['cokey'].unique()
-    
+
     for icokey in cokeys:
         idf_horizon = df.loc[df['cokey'] == icokey, horizon_selected_cols]
 
@@ -159,7 +167,7 @@ def aggregate_component_values(df, agg_var):
         assert(len(depth_agg_value) == len(comp_list))
         idf_comp = pandas.DataFrame(np.array(depth_agg_value).reshape(1, len(depth_agg_value)),
                                         columns=comp_list)
-            
+
         # normalize sand/silt/clay pct to make the sum(%sand, %silt, %clay)=1
         sum_soil = idf_comp.loc[:, 'total sand pct [%]':'total clay pct [%]'].sum().sum()
         if sum_soil !=100:
@@ -173,7 +181,7 @@ def aggregate_component_values(df, agg_var):
 
 def aggregate_mukey_values(df, agg_var=None):
     """Aggregate component values by component percentage to get MUKEY property.
-    
+
     Parameters
     ----------
     df : pandas dataframe
@@ -181,7 +189,7 @@ def aggregate_mukey_values(df, agg_var=None):
     agg_var : list(str), optional
       List of keys to aggregate.  Defaults to normal things from
       SSURGO.
-    
+
     Returns
     -------
     df_mukey : pandas dataframe
@@ -203,7 +211,7 @@ def aggregate_mukey_values(df, agg_var=None):
     area_agg_var = ['thickness [cm]',] + agg_var
     mukey_agg_var = ['mukey',] + area_agg_var
     df_mukey = pandas.DataFrame(columns=mukey_agg_var)
-    
+
     for imukey in df_comp['mukey'].unique()[:]:
         idf_comp = df_comp.loc[df_comp['mukey'] == imukey]
         area_agg_value = []
@@ -269,11 +277,11 @@ class FileManagerNRCS:
         self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
-        
+
     def get_shapes(self, bounds, bounds_crs, force_download=False):
         """Downloads and reads soil shapefiles.
 
-        This accepts only a bounding box.  
+        This accepts only a bounding box.
 
         Parameters
         ----------
@@ -293,7 +301,7 @@ class FileManagerNRCS:
         """
         if type(bounds) is int:
             raise TypeError('NRCS file manager only handles bounds, not indices.')
-            
+
         bounds = self.bounds(bounds, bounds_crs)
         filename = self._download(bounds, force=force_download)
 
@@ -303,7 +311,7 @@ class FileManagerNRCS:
         #         for i,c in enumerate(ring):
         #             ring[i] = c[1],c[0]
         #     return shp
-        
+
         with fiona.open(filename, 'r') as fid:
             profile = fid.profile
             #shapes = [_flip(s) for s in fid]
@@ -316,7 +324,7 @@ class FileManagerNRCS:
         logging.info('  and crs: {}'.format(watershed_workflow.crs.from_fiona(profile['crs'])))
         return profile, shapes
 
-    
+
     def download_properties(self, mukeys, filename=None, force=False):
         """Queries REST API for parameters by MUKEY."""
         if filename is None or (not os.path.exists(filename)) or force:
@@ -324,7 +332,7 @@ class FileManagerNRCS:
             logging.info(f'    to file: {filename}')
             logging.info(f'       from: {self.url_data}')
 
-            mukey_data_headers = ['saversion', 'saverest', 'areasymbol', 'areaname', 'lkey', 
+            mukey_data_headers = ['saversion', 'saverest', 'areasymbol', 'areaname', 'lkey',
                                   'musym','muname','museq','mukey','comppct_r', 'compname',
                                   'localphase','slope_r','cokey','hzdept_r','hzdepb_r','ksat_r',
                                   'sandtotal_r','claytotal_r','silttotal_r','dbthirdbar_r','partdensity',
@@ -334,7 +342,7 @@ class FileManagerNRCS:
                             str, float, int, float, float, float,
                             float, float, float, float, float,
                             float, int]
-            
+
             mukey_list_string = ','.join([f"'{k}'" for k in mukeys])
             query = _query_template_props.format(mukey_list_string)
 
@@ -367,10 +375,11 @@ class FileManagerNRCS:
             df = pandas.read_csv(filename)
         return df
 
-    
+
     def get_properties(self, mukeys, filename=None, force_download=False):
         """Download and aggregate properties for a given set of mukeys, storing raw data in filename."""
         df = self.download_properties(mukeys, filename, force_download)
+
         synthesize_data(df)
         df_agg = aggregate_mukey_values(df)
 
@@ -391,7 +400,7 @@ class FileManagerNRCS:
         df_ats.reset_index(inplace=True)
         return df_ats
 
-    
+
     def get_shapes_and_properties(self, shapes, crs, force_download=False, split_download=False):
         """Downloads and reads soil shapefiles, and aggregates SSURGO data onto MUKEYS
 
@@ -421,7 +430,7 @@ class FileManagerNRCS:
             elif len(shapes) == 4 and type(shapes[0]) is float:
                 list_of_bounds = [shapes,]
             else:
-                list_of_bounds = [shapely.ops.cascaded_union(shapes).bounds,]
+                list_of_bounds = [shapely.ops.unary_union(shapes).bounds,]
         else:
             list_of_bounds = [shapes.bounds,]
 
@@ -472,7 +481,7 @@ class FileManagerNRCS:
 
         # sort -- this just keeps everything cleaner
         unique = sorted(unique.items())
-        shapes = [shapely.ops.cascaded_union(l[1]) for l in unique]
+        shapes = [shapely.ops.unary_union(l[1]) for l in unique]
         mukeys = [l[0] for l in unique]
 
         # put the mukey on the MultiPolygon object

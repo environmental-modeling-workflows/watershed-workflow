@@ -7,7 +7,7 @@ import numpy as np
 import watershed_workflow.crs
 import watershed_workflow.hilev
 
-from source_fixtures import datadir, sources
+from source_fixtures import datadir, sources, sources_download
 
 def get_fiona(filename):
     with fiona.open(str(filename), 'r') as fid:
@@ -86,25 +86,39 @@ def test_find8_raises(datadir, sources):
     with pytest.raises(RuntimeError):
         watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601')
 
-def test_river_tree_properties(sources):
+def test_river_tree_properties(sources_download):
+    crs = watershed_workflow.crs.default_crs()
+    nhd = sources_download['hydrography']
+    _, cc = watershed_workflow.get_split_form_hucs(nhd, '060102020103', 12, crs)
+    _, reaches = watershed_workflow.get_reaches(nhd, '060102020103', cc.exterior(), crs, crs, properties=True)
+
+    rivers = watershed_workflow.construct_rivers(cc, reaches, method='hydroseq')
+    assert(len(rivers) == 1)
+    assert(rivers[0].is_consistent())
+    assert(len(rivers[0]) == 97)
+
+def test_river_tree_properties_prune(sources_download):
+    crs = watershed_workflow.crs.default_crs()
+    nhd = sources_download['hydrography']
+    _, cc = watershed_workflow.get_split_form_hucs(nhd, '060102020103', 12, crs)
+    _, reaches = watershed_workflow.get_reaches(nhd, '060102020103', cc.exterior(), crs, crs, properties=True)
+
+    rivers = watershed_workflow.construct_rivers(cc, reaches, method='hydroseq', prune_by_area_fraction=0.03)
+    assert(len(rivers) == 1)
+    assert(rivers[0].is_consistent())
+    assert(len(rivers[0]) == 27)
+
+def test_river_tree_geometry(sources):
     crs = watershed_workflow.crs.default_crs()
     nhd = sources['HUC']
     _, cc = watershed_workflow.get_split_form_hucs(nhd, '060102020103', 12, crs)
-    _, reaches = watershed_workflow.get_reaches(nhd, '060102020103',None,crs, merge=False)
+    _, reaches = watershed_workflow.get_reaches(nhd, '060102020103', cc.exterior(), crs, crs, properties=False)
 
-    rivers1 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify_hucs=50, cut_intersections=False, ignore_small_rivers=2)
-    rivers2 = watershed_workflow.simplify_and_prune(cc, reaches, filter=True, simplify_hucs=50, cut_intersections=False, ignore_small_rivers=2,
-                                          prune_by_area_fraction=0.03)
-import os
-from distutils import dir_util
-import pytest
-import fiona
-import shapely.geometry
-import numpy as np
-import watershed_workflow.crs
-import watershed_workflow.hilev
-
-from source_fixtures import datadir, sources
+    rivers = watershed_workflow.construct_rivers(cc, reaches)
+    assert(len(rivers) == 1)
+    assert(rivers[0].is_consistent())
+    assert(len(rivers[0]) == 98)
+    
 
 def get_fiona(filename):
     with fiona.open(str(filename), 'r') as fid:

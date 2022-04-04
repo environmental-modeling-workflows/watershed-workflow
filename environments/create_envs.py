@@ -21,6 +21,7 @@ PACKAGES_BASE=['python=3',
               'h5py',
               'netCDF4',
               'pytest',
+              'nbmake' 
               ]
 
 # extra packages needed in the WW env when building for a user
@@ -87,6 +88,8 @@ def get_env_prefix(env_type=None):
         return 'watershed_workflow'
     elif env_type == 'CI':
         return 'watershed_workflow_CI'
+    elif env_type == 'DEV':
+        return 'watershed_workflow_DEV'
     elif env_type == 'TOOLS':
         return 'watershed_workflow_tools'
     else:
