@@ -33,7 +33,6 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
       mixed             | boolean for mixed-element mesh
        
 
-
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
     logging.info("Triangulating...")
@@ -99,7 +98,7 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     return mesh_points, mesh_tris
 
 def add_river_outlet_in_huc(river_corr,hucs):
-    """Returns updated huc with river outlet represented"""
+    """Returns updated huc with river outlet represented"""   # This  function need more robustness, had to change it a few times for corner cases
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
         huc_segment = hucs.segments[0]
     elif type(hucs) is list:

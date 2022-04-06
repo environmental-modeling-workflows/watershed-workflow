@@ -211,16 +211,27 @@ class River(watershed_workflow.tinytree.Tree):
 
     def deep_copy(self):
         cp = copy.deepcopy(self)
-        for seg1,seg2 in zip(cp,self):
-            seg1.properties = copy.deepcopy(seg2.properties)
+        for node1,node2 in zip(cp.preOrder(),self.preOrder()):
+            node1.properties = copy.deepcopy(node2.properties)
         return cp
 
-    def shallow_copy(self):
-        cp = copy.copy(self)
-        for seg1,seg2 in zip(cp,self):
-            seg1.properties = copy.copy(seg2.properties)
-        return cp
-    
+def sort_children_by_angle(tree, reverse=False):
+    """Sorts the children of a given segment by their angle with respect to that segment."""
+    for node in tree.preOrder():
+        if len(node.children) > 1:
+            # compute tangents
+            my_seg_tan = np.array(node.segment.coords[0]) - np.array(node.segment.coords[1])
+
+            if reverse:
+                def angle(c):
+                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
+                    return -watershed_workflow.utils.angle(my_seg_tan, tan)
+            else:
+                def angle(c):
+                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
+                    return watershed_workflow.utils.angle(my_seg_tan, tan)
+
+            node.children.sort(key=angle)
 
 def create_river_mesh(river, watershed=None,widths=8, junction_treatment=True):
 
@@ -430,18 +441,17 @@ def to_quads(river, delta, huc, corr,ax=None):
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
     elems=[el for node in river.preOrder() for el in node.elements]
-    ## ensuring that the pentagons at the junctions are convex (this shifts pentagon upstream, we don't want this)
-    # elems=junction_treatment(elems, coords,junction_option)
-    # # note that after junction_treatment1 node.elemements and m2d.conn may not be exactly same
-    # i=0
-    # for node in river.preOrder():
-    #     for j, el in enumerate(node.elements):
-    #         node.elements[j] = elems[i]
-    #         i+=1
-    # assert([el for node in river.preOrder() for el in node.elements]==elems)
     return elems
 
-def set_river_width(river,corr, widths=8, junction_treatment=None):
+def set_river_width(river,corr, widths=8):
+    """this functions takes the river-corridor polygon and sets the width of the corridor based on the order 
+       dependent width dictionary
+
+       river  | river network, a watershed_workflow.river_tree.River object, this tree should have "StreamOrder" in properties
+       corr   | river corridor, a shapely.geometry.polygon.Polygon object
+       width  | dictionary {streeam_order: width}
+    """
+
     corr_coords=corr.exterior.coords[:-1]
     for j,node in enumerate(river.preOrder()):
         order=node.properties["StreamOrder"]
@@ -498,6 +508,10 @@ def width_cal(width_dict,order):
     return width
 
 def junction_treatment_by_nudge(river, corr):
+    """this functions takes the river-corridor polygon nudges to neck-points of the junction if the pentagon is non-convex
+       river  | river network, a watershed_workflow.river_tree.River object
+       corr   | river corridor, a shapely.geometry.polygon.Polygon object
+    """  
 
     coords=corr.exterior.coords[:-1]
 

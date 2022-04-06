@@ -6,7 +6,6 @@ import collections
 from turtle import fd
 import numpy as np
 import math
-#import copy
 from scipy import interpolate
 
 import shapely
@@ -14,31 +13,34 @@ import shapely.geometry
 
 import watershed_workflow.utils
 
-def DensifyTree(tree,tree_, limit=100,use_original=False, treat_collinearity=False):
-    """This function preOrder travers through the tree and density node.segments
+def DensifyTree(tree,tree_=None, limit=100, treat_collinearity=False):
+    """This function traverse in the river tree and densify node.segments
     
      Arguments:
       tree              | tree to be densified (watershed_workflow.river_tree.RiverTree)
       tree_             | original tree containing all the known points from NHDPlus (watershed_workflow.river_tree.RiverTree)
       limit             | limit of section length above which more points are added
-      collinear         | boolean to check for collinearity 
+      use_original      | boolean flag for resampling from the original to redensify
+      treat_collinearity| boolean to check and treat for collinearity 
       """
+    if tree_==None:
+        use_original=False
+
     assert (len(tree)==len(tree_))
-    k=0
+
     tree_densified=tree.deep_copy()
     for node, node_ in zip(tree_densified.preOrder(), tree_.preOrder()):
-        k+=1
         node.segment=DensifyNodeSegments(node,node_,limit=limit,use_original=use_original,treat_collinearity=treat_collinearity)
     return tree_densified
 
 
 def DensifyNodeSegments(node,node_,limit=100,use_original=False,treat_collinearity=False):
-    """This function adds equally space point in the reach-sections longer than the limit
+    """This function adds equally-spaced point in the reach-sections longer than the limit at a desired resolution
      Arguments:
       node              | node whose segment to be densified (watershed_workflow.river_tree.RiverTree)
       node_             | original node containing all the known points from NHDPlus (watershed_workflow.river_tree.RiverTree)
       limit             | limit of section length above which more points are added
-      collinear         | boolean to check for collinearity 
+      collinear         | boolean to check and treat for collinearity  
       """
       
     seg_coords=list(node.segment.coords) # coordinates of node.segment to be densified
@@ -62,7 +64,18 @@ def DensifyNodeSegments(node,node_,limit=100,use_original=False,treat_collineari
     node.segment.coords=seg_coords_densified
     return node.segment
 
-def DensifyHucs(hucs,huc_,river, use_original=False,limit_scales=None):
+def DensifyHucs(hucs,huc_,river, limit_scales=None):
+    """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
+    function where huc segment refinedment is greater for huc segments closer to the river tree
+    Arguments:
+    node              | node whose segment to be densified (watershed_workflow.river_tree.RiverTree)
+    node_             | original node containing all the known points from NHDPlus (watershed_workflow.river_tree.RiverTree)
+    limit_scales      | limit of section length above which more points are added, either a constant value or a list for step refinement [d0, l0, d1, l1]
+
+    """
+
+    if huc_==None:
+        use_original=False
 
     # first if there are multiple segments, we define outer-ring and remove close points
     huc_ring=hucs.exterior().exterior.simplify(tolerance=1)
@@ -90,9 +103,10 @@ def DensifyHucs_(coords,coords_,river,limit_scales=None):
 
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
      Arguments:
-      hucs              | hucs to be densified (watershed_workflow.split_hucs.SplitHUCs)
-      huc_              | original huc containing all the known points fromthe source (watershed_workflow.split_hucs.SplitHUCs)
-      limit             | limit of section length above which more points are added
+      coords            | coordinates of the huc segment to be densified
+      huc_              | coordinates of the huc original huc segment from which points can be resmapled
+      limit_scales      | limit of section length above which more points are added, either a constant value or a list for step refinement 
+                            [near_distance, near_length_scale, far_distance, far_length_scale]
     """
     adaptive=type(limit_scales) is list # setting up flag
     coords_densified=coords.copy() 
@@ -180,21 +194,15 @@ def CheckCollinearity(p0, p1, p2, tol=1e-6):
 
 def limit_from_river_distance(segment_ends,limit_scales,river):
     """Returns a graded refinement function based upon a distance function from rivers, for use with DensifyHucs function.
-
-    Triangle area must be smaller than near_area when the triangle
-    centroid is within near_distance from the river network.
-    Area must be smaller than away_area when the triangle
-    centroid is at least away_distance from the river network.
+    HUC segment resolution must be higher in near_distance when the HUC segment midpoint is within near_distance from the river network.
+    Length must be smaller than away_length when the HUC segment midpoint is at least away_distance from the river network.
     Area must be smaller than a linear interpolant between
-    near_area and away_area when between
-    near_distance and away_distance from the river
-    network.
     """
     near_distance, near_length, away_distance, away_length=limit_scales
     p0=shapely.geometry.Point(segment_ends[0])
     p1=shapely.geometry.Point(segment_ends[1])
     p_mid=shapely.geometry.Point([(segment_ends[0][0]+segment_ends[1][0])/2,(segment_ends[0][1]+segment_ends[1][1])/2])
-    river_multiline = watershed_workflow.river_tree.forest_to_list([river])
+    river_multiline = shapely.geometry.MultiLineString(list(river))
     distance=min(p0.distance(river_multiline),p_mid.distance(river_multiline),p1.distance(river_multiline))
 
     if distance > away_distance:

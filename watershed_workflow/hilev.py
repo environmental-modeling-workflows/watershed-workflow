@@ -221,6 +221,7 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
     # convert to shapely
     logging.info("Converting to shapely")
     shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+    #shplys=shps
     
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
