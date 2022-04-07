@@ -4,7 +4,7 @@ import os
 import shapely
 import numpy as np
 
-import watershed_workflow.conf
+import watershed_workflow.config
 import watershed_workflow.utils
 import watershed_workflow.sources.manager_nhd
 import watershed_workflow.sources.manager_nrcs
@@ -37,7 +37,7 @@ def test_nrcs2():
     nrcs = watershed_workflow.sources.manager_nrcs.FileManagerNRCS()
     profile, shps, df = nrcs.get_shapes_and_properties(coweeta.exterior(), crs, force_download=True)
 
-    # # check df
+    # check df
     # mukeys = set([int(s['properties']['id']) for s in shps])
     # assert(len(df) == len(mukeys)) # one per unique key
     # assert(set(df['mukey'].values) == mukeys) # same mukeys
