@@ -884,7 +884,7 @@ def simplify_and_prune(hucs, reaches,
                               prune_by_area, prune_by_area_fraction)
     simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
-    
+
     
 def triangulate(hucs, rivers,
                 mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,

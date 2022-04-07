@@ -408,7 +408,7 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
     """Some hydrography data seems to get some random branches, typically
     quite short, that are nearly perfectly parallel to other, longer
     branches.  Surely this is a data error -- remove them.
-    
+
     This returns rivers in a forest, not in a list.
     """
     # simplify
