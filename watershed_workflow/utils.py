@@ -15,6 +15,7 @@ import shapely.ops
 import shapely.prepared
 import shapely.affinity
 import rasterio
+
 import watershed_workflow 
 
 
@@ -297,7 +298,6 @@ def cut(line, cutline, tol=1.e-5):
         seg = shapely.geometry.LineString(coords[i:i + 2])
         #logging.debug("Intersecting seg %d"%i)
         point = seg.intersection(cutline)
-       
         if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
             #logging.debug("Cut seg no intersection")
             segcoords.append(seg.coords[-1])

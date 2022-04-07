@@ -944,7 +944,7 @@ def triangulate(hucs, rivers,
         .. note:
             This requires a hacked version of meshpy.triangle that
             supports this option.  See the patch available at
-            watershed_workflow_tpls/meshpy_triangle.patch
+            workflow_tpls/meshpy_triangle.patch
     river_region_dist: float, optional
         Create river region based on the distance from river networks. This is useful if explicit 
         representation of riverbed is desired. Default is None.

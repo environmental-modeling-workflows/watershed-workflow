@@ -502,6 +502,7 @@ class FileManagerNRCS:
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         filename = self.name_manager.file_name(*bounds)
         logging.info("Attempting to download source for target '%s'"%filename)
+        
         if not os.path.exists(filename) or force:
             logging.info('  Downloading spatial data via request:')
             logging.info(f'    to file: {filename}')
