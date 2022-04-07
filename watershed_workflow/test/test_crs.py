@@ -29,7 +29,8 @@ def epsg_harness(epsg, test_cartopy=True):
     assert(watershed_workflow.crs.equal(gold, ppcrs2))
 
     if test_cartopy:
-        ccrs = watershed_workflow.crs.from_cartopy(cartopy.crs.epsg(epsg))
+        cartopy_crs = cartopy.crs.epsg(epsg)
+        ccrs = watershed_workflow.crs.from_cartopy(cartopy_crs)
         #assert(watershed_workflow.crs.equal(gold, ccrs))
 
         

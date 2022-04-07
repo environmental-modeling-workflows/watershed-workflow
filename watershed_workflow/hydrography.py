@@ -411,7 +411,6 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
     
     This returns rivers in a forest, not in a list.
     """
-    merge_tol=10
     # simplify
     if simp_tol is not None:
         for tree in rivers:

@@ -1,4 +1,4 @@
-"""High-level routines -- these are imported into the top level `"workflow`" namespace.
+"""High-level routines -- these are imported into the top level `"watershed_workflow`" namespace.
 
 This top level module provides functionality for getting shapes and rasters
 representing watershed boundaries, river networks, digital elevation models,
@@ -220,8 +220,12 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
 
     # convert to shapely
     logging.info("Converting to shapely")
-    shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
-    #shplys=shps
+    if len(shps) == 0:
+        shplys = []
+    elif type(shps[0]) is dict:
+        shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+    else:
+        shplys = shps
     
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
@@ -676,8 +680,7 @@ def construct_rivers(hucs, reaches, method='geometry',
                      remove_diversions=False, remove_braided_divergences=False):
     """Create a river, which is a tree of reaches.
 
-    Ensures intersections are proper, snapped, simplified, etc.  Note, HUCs and
-    rivers must be in the same crs.
+    Note, HUCs and rivers must be in the same crs.
 
     Parameters
     ----------
@@ -717,10 +720,8 @@ def construct_rivers(hucs, reaches, method='geometry',
     out : list(River)
         A list of rivers, as River objects.
     """
-    tol = simplify
-    
     logging.info("")
-    logging.info("Simplifying and pruning")
+    logging.info("Constructing river network")
     logging.info("-"*30)
 
     logging.info("Generating the river tree")
@@ -883,6 +884,7 @@ def simplify_and_prune(hucs, reaches,
                               prune_by_area, prune_by_area_fraction)
     simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
+    
     
 def triangulate(hucs, rivers,
                 mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
