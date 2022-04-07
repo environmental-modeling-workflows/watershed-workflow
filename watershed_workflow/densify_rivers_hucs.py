@@ -13,7 +13,7 @@ import shapely.geometry
 
 import watershed_workflow.utils
 
-def DensifyTree(tree,tree_=None, limit=100, treat_collinearity=False):
+def DensifyTree(tree,tree_=None, use_original=False,limit=100, treat_collinearity=False):
     """This function traverse in the river tree and densify node.segments
     
      Arguments:
@@ -23,9 +23,7 @@ def DensifyTree(tree,tree_=None, limit=100, treat_collinearity=False):
       use_original      | boolean flag for resampling from the original to redensify
       treat_collinearity| boolean to check and treat for collinearity 
       """
-    if tree_==None:
-        use_original=False
-
+       
     assert (len(tree)==len(tree_))
 
     tree_densified=tree.deep_copy()
@@ -64,7 +62,7 @@ def DensifyNodeSegments(node,node_,limit=100,use_original=False,treat_collineari
     node.segment.coords=seg_coords_densified
     return node.segment
 
-def DensifyHucs(hucs,huc_,river, limit_scales=None):
+def DensifyHucs(hucs,huc_,river, use_original=False, limit_scales=None):
     """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
     function where huc segment refinedment is greater for huc segments closer to the river tree
     Arguments:
@@ -73,9 +71,6 @@ def DensifyHucs(hucs,huc_,river, limit_scales=None):
     limit_scales      | limit of section length above which more points are added, either a constant value or a list for step refinement [d0, l0, d1, l1]
 
     """
-
-    if huc_==None:
-        use_original=False
 
     # first if there are multiple segments, we define outer-ring and remove close points
     huc_ring=hucs.exterior().exterior.simplify(tolerance=1)
