@@ -20,6 +20,7 @@ import shapely
 
 import watershed_workflow.config
 import watershed_workflow.triangulation
+import watershed_workflow.triangulation_with_streams
 import watershed_workflow.warp
 import watershed_workflow.plot
 import watershed_workflow.river_tree
@@ -886,7 +887,7 @@ def simplify_and_prune(hucs, reaches,
     return rivers
 
     
-def triangulate(hucs, rivers,
+def triangulate(hucs, rivers, river_as_quads=False,
                 mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
@@ -899,7 +900,7 @@ def triangulate(hucs, rivers,
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    reaches : list(LineString)
+    rivers : list(LineString)
         A list of reaches from, e.g., get_reaches()
     mesh_rivers : bool, optional
         Include stream network in the mesh discretely.
@@ -980,11 +981,20 @@ def triangulate(hucs, rivers,
         rivers_tri = rivers
     else:
         rivers_tri = None
-    vertices, triangles = watershed_workflow.triangulation.triangulate(hucs, rivers_tri,
-                                                             tol=tol, verbose=verbose,
-                                                             refinement_func=my_refine_func,
-                                                             min_angle=refine_min_angle,
-                                                             enforce_delaunay=enforce_delaunay)
+    if river_as_quads:
+
+        assert(type(rivers)==shapely.geometry.polygon.Polygon)
+
+        vertices, triangles= watershed_workflow.triangulation_with_streams.triangulate(hucs, rivers, mixed=True , 
+                                                                tol=tol,refinement_func=my_refine_func,
+                                                                min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
+                                                                allow_boundary_steiner=False)
+    else: 
+        vertices, triangles = watershed_workflow.triangulation.triangulate(hucs, rivers_tri,
+                                                                tol=tol, verbose=verbose,
+                                                                refinement_func=my_refine_func,
+                                                                min_angle=refine_min_angle,
+                                                                enforce_delaunay=enforce_delaunay)
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
@@ -1032,6 +1042,9 @@ def triangulate(hucs, rivers,
         return vertices, triangles, areas, distances
             
     return vertices, triangles
+
+
+
 
 def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):
     """Elevate mesh_points onto the provided dem.
