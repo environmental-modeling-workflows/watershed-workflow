@@ -24,7 +24,7 @@ def orient(e):
         return None
 
     
-def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
+def triangulate(hucs, river_corr  ,tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
@@ -68,10 +68,10 @@ def triangulate(hucs, river_corr ,mixed=True ,tol=1, **kwargs):
     info.set_facets(fdata)
 
     # adding hole in the river corridor for quad elements
-    if mixed:
-        hole_point= pick_hole_point(river_corr) # a point inside the river corridor
-        assert (river_corr.contains(hole_point))
-        info.set_holes([hole_point.coords[0],])
+    logging.info("defining hole..")
+    hole_point= pick_hole_point(river_corr) # a point inside the river corridor
+    assert (river_corr.contains(hole_point))
+    info.set_holes([hole_point.coords[0],])
 
     logging.info(" triangle.build...")
 

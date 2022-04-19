@@ -887,7 +887,7 @@ def simplify_and_prune(hucs, reaches,
     return rivers
 
     
-def triangulate(hucs, rivers, river_as_quads=False,
+def triangulate(hucs, rivers, river_corr=None, river_as_quads=False,
                 mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
@@ -983,9 +983,9 @@ def triangulate(hucs, rivers, river_as_quads=False,
         rivers_tri = None
     if river_as_quads:
 
-        assert(type(rivers)==shapely.geometry.polygon.Polygon)
+        assert(type(river_corr)==shapely.geometry.polygon.Polygon)
 
-        vertices, triangles= watershed_workflow.triangulation_with_streams.triangulate(hucs, rivers, mixed=True , 
+        vertices, triangles= watershed_workflow.triangulation_with_streams.triangulate(hucs, river_corr, 
                                                                 tol=tol,refinement_func=my_refine_func,
                                                                 min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
                                                                 allow_boundary_steiner=False)
