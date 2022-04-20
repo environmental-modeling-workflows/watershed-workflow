@@ -665,7 +665,7 @@ def isConvex(points):
 def closest_point(point, points):
     points = np.asarray(points)
     dist_2 = np.sum((points - point)**2, axis=1)
-    return np.argmin(dist_2)
+    return np.argmin(dist_2), np.min(dist_2)
 
 def cluster(points, tol):
     """Given a list of points, determine a list of clusters.
