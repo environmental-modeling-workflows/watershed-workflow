@@ -459,7 +459,7 @@ def find_outlets_by_elevation(hucs, crs, elev_raster, elev_raster_profile):
     hucs.polygon_outlets = outlets
 
 
-def find_outlets_by_hydroseq(hucs, river):
+def find_outlets_by_hydroseq(hucs, river, tol=0):
     """Find outlets using the HydroSequence VAA of NHDPlus.
 
     Finds the minimum hydroseq reach in each HUC, and intersects that
@@ -468,24 +468,40 @@ def find_outlets_by_hydroseq(hucs, river):
     polygons = list(hucs.polygons())
     polygon_outlets = [None for poly in hucs.polygons()]
 
+    # iterate over the reaches, sorted by hydrosequence, looking for
+    # the first one that intersects the polygon boundary.    
     assert(river.is_hydroseq_consistent())
     reaches = sorted(river.preOrder(), key=lambda r : r.properties['HydrologicSequence'])
+    if tol > 0:
+        reaches = [r.segment.buffer(tol) for r in reaches]
+    else:
+        reaches = [r.segment for r in reaches]
     first = True
-    for reach in reaches:
-        # find the which huc the upstream-most point is in
+
+    poly_ids = [(i, poly) for (i,poly) in enumerate(polygons)]
+    for lcv, reach in enumerate(reaches):
         try:
-            i, poly = next((i,poly) for (i,poly) in enumerate(polygons) if poly is not None
-                           and poly.contains(shapely.geometry.Point(reach.segment.coords[0])))
+            j, (poly_i, poly) = next((j,(i,poly)) for (j,(i,poly)) in enumerate(poly_ids) \
+                                     if poly.intersects(reach))
         except StopIteration:
             continue
         else:
             # find the intersection
-            intersect = poly.exterior.intersection(reach.segment).centroid
+            logging.debug(f'hydroseq {lcv} is a match for polygon {poly_i}')
+            intersect = poly.exterior.intersection(reach)
+            if intersect.is_empty:
+                # find the nearest point instead
+                intersect = shapely.ops.nearest_points(poly.exterior, reach)[0]
+            else:
+                intersect = intersect.centroid
+
             if first:
                 hucs.exterior_outlet = intersect
                 first = False
-            polygon_outlets[i] = shapely.geometry.Point(intersect)
-            polygons[i] = None
+            polygon_outlets[poly_i] = intersect
+            poly_ids.pop(j)
+        if len(poly_ids) == 0:
+            break
 
     hucs.polygon_outlets = polygon_outlets
 
