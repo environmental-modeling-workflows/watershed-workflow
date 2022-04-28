@@ -16,7 +16,7 @@ import shapely.prepared
 import shapely.affinity
 import rasterio
 
-import watershed_workflow 
+import watershed_workflow.crs
 
 
 _tol = 1.e-7
@@ -425,10 +425,11 @@ def angle(v1, v2):
 
 def midpoint(p1, p2):
     """Returns the midpoint of two points"""
-    if type(p1) is tuple:
-        return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
-    else:
-        return shapely.geometry.Point(midpoint(p1.coords[0], p2.coords[0]))
+    if isinstance(p1, shapely.geometry.Point): return midpoint(p1.coords[0], p2)
+    if isinstance(p2, shapely.geometry.Point): return midpoint(p1, p2.coords[0])
+
+    return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
+    
     
 def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
@@ -598,74 +599,12 @@ def create_empty_raster(target_bounds, crs, target_dx, dtype, nodata):
                       'nodata':nodata}
     out = nodata * np.ones((height, width), dtype)
     return out_profile, out
-
-def CrossProduct(A):
-     
-    # Stores coefficient of X
-    # direction of vector A[1]A[0]
-    X1 = (A[1][0] - A[0][0])
- 
-    # Stores coefficient of Y
-    # direction of vector A[1]A[0]
-    Y1 = (A[1][1] - A[0][1])
- 
-    # Stores coefficient of X
-    # direction of vector A[2]A[0]
-    X2 = (A[2][0] - A[0][0])
- 
-    # Stores coefficient of Y
-    # direction of vector A[2]A[0]
-    Y2 = (A[2][1] - A[0][1])
- 
-    # Return cross product
-    return (X1 * Y2 - Y1 * X2)
  
 
-def isConvex(points):
-    """# Function to check if the polygon is convex polygon or not"""
-     
-    # Stores count of
-    # edges in polygon
-    N = len(points)
- 
-    # Stores direction of cross product
-    # of previous traversed edges
-    prev = 0
- 
-    # Stores direction of cross product
-    # of current traversed edges
-    curr = 0
- 
-    # Traverse the array
-    for i in range(N):
-         
-        # Stores three adjacent edges
-        # of the polygon
-        temp = [points[i], points[(i + 1) % N],
-                           points[(i + 2) % N]]
- 
-        # Update curr
-        curr = CrossProduct(temp)
- 
-        # If curr is not equal to 0
-        if (curr != 0):
-             
-            # If direction of cross product of
-            # all adjacent edges are not same
-            if (curr * prev < 0):
-                return False
-            else:
-                 
-                # Update curr
-                prev = curr
- 
-    return True
+def is_convex(points):
+    poly = shapely.geometry.Polygon(points) 
+    return poly.convex_hull.area == poly.area
 
-
-def closest_point(point, points):
-    points = np.asarray(points)
-    dist_2 = np.sum((points - point)**2, axis=1)
-    return np.argmin(dist_2), np.min(dist_2)
 
 def cluster(points, tol):
     """Given a list of points, determine a list of clusters.

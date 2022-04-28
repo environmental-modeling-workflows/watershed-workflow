@@ -887,8 +887,7 @@ def simplify_and_prune(hucs, reaches,
     return rivers
 
     
-def triangulate(hucs, rivers, river_corr=None, river_as_quads=False,
-                mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
+def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
     """Triangulates HUCs and rivers.
@@ -978,23 +977,14 @@ def triangulate(hucs, rivers, river_corr=None, river_as_quads=False,
         return any(rf(*args) for rf in refine_funcs)        
 
     if mesh_rivers:
-        rivers_tri = rivers
-    else:
-        rivers_tri = None
-    if river_as_quads:
-
-        assert(type(river_corr)==shapely.geometry.polygon.Polygon)
-
-        vertices, triangles= watershed_workflow.triangulation_with_streams.triangulate(hucs, river_corr, 
-                                                                tol=tol,refinement_func=my_refine_func,
-                                                                min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
-                                                                allow_boundary_steiner=False)
+        allow_boundary_steiner=False
     else: 
-        vertices, triangles = watershed_workflow.triangulation.triangulate(hucs, rivers_tri,
-                                                                tol=tol, verbose=verbose,
-                                                                refinement_func=my_refine_func,
-                                                                min_angle=refine_min_angle,
-                                                                enforce_delaunay=enforce_delaunay)
+        allow_boundary_steiner=True
+        
+    vertices, triangles= watershed_workflow.triangulation.triangulate(hucs, rivers, river_corrs, mesh_rivers=mesh_rivers,
+                                                                tol=tol, verbose=verbose, refinement_func=my_refine_func,
+                                                                min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
+                                                                allow_boundary_steiner=allow_boundary_steiner)
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")

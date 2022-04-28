@@ -185,8 +185,8 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     polys = shply(ps, crs, color, ax, **kwargs)
 
     if hucs.polygon_outlets is not None and ax is not None:
-        x = np.array([p.xy[0][0] for p in hucs.polygon_outlets])
-        y = np.array([p.xy[1][0] for p in hucs.polygon_outlets])
+        x = np.array([p.xy[0] for p in hucs.polygon_outlets])
+        y = np.array([p.xy[1] for p in hucs.polygon_outlets])
         if 'markersize' in kwargs:
             s = kwargs['markersize']
         else:

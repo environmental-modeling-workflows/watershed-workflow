@@ -1,7 +1,10 @@
 import numpy as np
+from np.polynomial import polynomial as poly
 import attr
 import sortedcontainers
 import logging
+import copy
+import math
 
 @attr.s
 class Point:
@@ -393,13 +396,36 @@ def fill_gaps(img_in, nodata=np.nan):
     # interpolate the whole image
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
 
-def condition_river_mesh2(m2, river ,poly_smooth=False, filter_mode=None,use_nhd_elev=False,cut_off_order=0,treat_banks=False ,depress_by=0):
-    """ makes the bed profile of the stream smooth, removes hills and ponds
-            m2: mesh2D object generated from Watershed Workflow
-            river: river_tree object
+def condition_river_mesh(m2, river, poly_smooth=False, filter_mode=None, use_nhd_elev=False, cut_off_order=0, treat_banks=False, depress_by=0):
+    """(WIP) Makes the bed profile of the stream smooth, removes hills and ponds
+
+    Parameters:
+    -----------
+    
+    m2: watershed_workflow.mesh.Mesh2D object
+        2D mesh elevated on DEMs
+    river: watershed_workflow.river_tree.River object
+        river tree with node.elements added for quads
+    poly_smooth: boolean, optional
+        flag for smoothing the profile of each reach using a polynomial fit (mainly to pass through railroads and avoid reservoirs)
+    filter_mode: "upper" or "lower", optional
+        to enforce elevation monotonocity, whether to start from upstream or downtream end of the reach
+    use_nhd_elev: boolean, optional
+        whether to enforce maximum and minimum elevation for each reach provided in NHDPlus
+    cut_off_order: int, optional
+        reached of order greater than this number will not be depressed/smoothed (yet to be decided where to put this condition)
+    treat_banks: boolean, optional
+        if the river is passing right next to the reservoir or NHDline is misplaced into the reservoir, we banks may fall into reservoir
+        this will enforce bank node is at a higher elevation than the stream bed elevation 
+    depress_by: int, optional
+        if the depression is not captured well in DEM, the river-mesh elements (streambed) is lowered by this number
+
+    Returns
+    -------
+    m2: watershed_workflow.mesh.Mesh2D object
+        a 2D mesh with conditioned stream network 
+           
     """
-    import math
-    import copy 
     river_corr_ids=[] # collecting IDs of all nodes in the river/stream
     for node in river.preOrder():
         for elem in node.elements:
@@ -409,86 +435,65 @@ def condition_river_mesh2(m2, river ,poly_smooth=False, filter_mode=None,use_nhd
              
     for node in river.preOrder():
         order=node.properties["StreamOrder"]
-        if order <= cut_off_order: 
-            assert('elev_profile' in node.properties.keys())
+        
+        assert('elev_profile' in node.properties.keys())
             
-            # get bed profile
-            stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream        dists=[math.dist(node.segment.coords[0],point) for point in node.segment.coords]
-            dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
-            elevs=node.properties['elev_profile'][::-1] # this is also reversed
-            profile=np.array([dists,elevs]).T
+        # get bed profile
+        stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream        dists=[math.dist(node.segment.coords[0],point) for point in node.segment.coords]
+        dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
+        elevs=node.properties['elev_profile'][::-1] # this is also reversed
+        profile=np.array([dists,elevs]).T
 
+        if order <=cut_off_order:    
 
-            if use_nhd_elev and 'MaximumElevationSmoothed'in node.segment.properties.keys() and 'MinimumElevationSmoothed' in node.segment.properties.keys():
-                    nhd_limits=[node.segment.properties['MinimumElevationSmoothed'],node.segment.properties['MaximumElevationSmoothed']]
+            if use_nhd_elev and 'MaximumElevationSmoothed'in node.properties.keys() and 'MinimumElevationSmoothed' in node.properties.keys():
+                    nhd_limits=[node.properties['MinimumElevationSmoothed']/100,node.properties['MaximumElevationSmoothed']/100]
             else:
                     nhd_limits=None
 
             if poly_smooth:
+                logging.info("fitting a 5th degree polynomial")
                 profile=poly_fit(profile, degree=5) # it is highly recommended to filter after this
+
+            
+            profile[:,1]=profile[:,1]-depress_by
 
             if not filter_mode == None:
                 profile=filter_pass(profile, filtermode=filter_mode,nhd_limits=nhd_limits)
 
-            # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
-            for i, elem in enumerate(node.elements): 
+        # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
+        for i, elem in enumerate(node.elements): 
+            
+            if i ==0: # for the first point
+                m2.coords[elem[0]][2]= m2.coords[elem[-1]][2]=profile[i,1]
                 
-                if i ==0: # for the first point
-                    m2.coords[elem[0]][2]= m2.coords[elem[-1]][2]=profile[i,1]-depress_by
-                    
-                # we are assgining elevations only to the upstream points of the river elements
-                if len(elem)==3:          
-                    m2.coords[elem[1]][2]= profile[i+1,1]-depress_by
+            # we are assgining elevations only to the upstream points of the river elements
+            if len(elem)==3:          
+                m2.coords[elem[1]][2]= profile[i+1,1]
 
-                elif len(elem)==4: 
-                    m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= profile[i+1,1]-depress_by
-                    
-                elif len(elem)==5:  
-                    m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= profile[i+1,1]-depress_by
-                    
-                if treat_banks: # this needs to be rewritten
-                    bank_node_ids=bank_nodes_from_elem(elem, m2)
-                    for node_id in bank_node_ids:
-                         if node_id not in river_corr_ids:
-                            if m2.coords[node_id][2]<profile[i,1]-depress_by:
-                                   m2.coords[node_id][2]= profile[i,1]+0.25 # is 0.25m enough to raise the bank?
-
-
-
-# def condition_river_mesh(m2, river, mode="upper", cut_off_order=0, depress_by=0):
-#     """ makes the bed profile of the stream smooth, removes hills and ponds
-#             m2: mesh2D object generated from Watershed Workflow
-#             river: river_tree object
-#     """
-#     river_corr_ids=[] # collecting IDs of all nodes in the river/stream
-#     for node in river.preOrder():
-#         for elem in node.elements:
-#             for id in elem:
-#                 if id not in river_corr_ids: 
-#                     river_corr_ids.append(id)
-    
-#     for node in river.preOrder():
-#         order=node.segment.properties["StreamOrder"]
-#         profile=get_reach_profile(node, m2)
-#         profile_new=condition_reach(profile, mode=mode)
-
-#         if order <= cut_off_order: # if we wish to put control of river order for conditioning. 
-#             # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
-#             for i, elem in enumerate(node.elements):
-#                 for j in range(len(elem)):
-#                     m2.coords[elem[j]][2]=profile_new[i,1]-depress_by # lower by 1 m
+            elif len(elem)==4: 
+                m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= profile[i+1,1]
                 
-#                 bank_node_ids=bank_nodes_from_elem(elem, m2)
-#                 for node_id in bank_node_ids:
-#                      if node_id not in river_corr_ids:
-#                         if m2.coords[node_id][2]<profile_new[i,1]-depress_by:
-#                                m2.coords[node_id][2]= profile_new[i,1]+0.25
+            elif len(elem)==5:  
+                m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= profile[i+1,1]
+                
+            if treat_banks: # this needs to be rewritten
+                bank_node_ids=bank_nodes_from_elem(elem, m2)
+                for node_id in bank_node_ids:
+                    if node_id not in river_corr_ids:
+                        if m2.coords[node_id][2]<min(profile[i+1,1],profile[i,1]):
+                                logging.info(f"raised node {node_id} for bank integrity") 
+                                m2.coords[node_id][2]= profile[i,1]+0.25 # is 0.25m enough to raise the bank?
+
 
 def get_reach_profile(node,m2):
     """ for a given node segment of a river tree, this function return the profile
         of the stream bed based on the centroid elevation of the quads
 
-        node: node of a river_tree object
+
+    Parameters
+    ----------
+        node: node of a watershed_workflow.river_tree.River object
         m2: mesh2D object
     """
     from math import dist
@@ -511,28 +516,7 @@ def get_reach_profile(node,m2):
         profile[i,0]=d
         profile[i,1]=centroid[2]
     return profile
-        
-# def condition_reach(profile, mode='upper'):
-#     """performs a condiotning of the stream bed by using a high-order polynomial and pass for monotonicity enforcement
-#     """
-#     import copy 
-#     import numpy
-#     from numpy.polynomial import polynomial as poly
 
-#     profile_new=copy.deepcopy(profile)
-#     if not len(profile)==1:
-#         p = poly.polyfit(profile[:,0], profile[:,1], deg=5)
-#         profile_new[:,1]=poly.polyval(profile_new[:,0],p)
-#         if  mode=='upper':
-#             for i in range(len(profile_new)-1):
-#                 if profile_new[i+1,1] < profile_new[i,1]:
-#                     profile_new[i+1,1]=profile_new[i,1]
-#         elif mode=='lower':
-#             for i in range(len(profile_new)-1, 0,-1):
-#                 if profile_new[i-1,1] > profile_new[i,1]:
-#                     profile_new[i-1,1] = profile_new[i,1]
-#     return profile_new
- 
 
 def poly_fit(profile, degree=5):
     profile_new=copy.deepcopy(profile)
@@ -542,9 +526,11 @@ def poly_fit(profile, degree=5):
     return profile_new
 
 def filter_pass(profile, filtermode='upstream',nhd_limits=None):
+    logging.info(f"filer pass with nhdlimits as {nhd_limits}")
+    
     profile_new=copy.deepcopy(profile)
     if nhd_limits==None:
-        if filtermode=='upstream': # moving suptream
+        if filtermode=='upstream': 
             for i in range(len(profile_new)-1):
                 if profile_new[i+1,1] < profile_new[i,1]:
                     profile_new[i+1,1]=profile_new[i,1]
@@ -555,21 +541,18 @@ def filter_pass(profile, filtermode='upstream',nhd_limits=None):
                     profile_new[i-1,1] = profile_new[i,1]
                     
     elif nhd_limits is list: 
-                 
-        if filtermode=='upstream': # moving suptream
             
-            profile_new[0,1]=nhd_limits[0]
-            for i in range(len(profile_new)-1):
-                if profile_new[i+1,1] < profile_new[i,1]:
-                    profile_new[i+1,1]=profile_new[i,1]
-            
-            profile_new[-1,1]=nhd_limits[1]
-            for i in range(len(profile_new)-1, 0,-1):
-                if profile_new[i-1,1] > profile_new[i,1]:
-                    profile_new[i-1,1] = profile_new[i,1]
+        profile_new[0,1]=nhd_limits[0]
+        for i in range(len(profile_new)-1):
+            if profile_new[i+1,1] < profile_new[i,1]:
+                profile_new[i+1,1]=profile_new[i,1]
+        
+        profile_new[-1,1]=nhd_limits[1]
+        for i in range(len(profile_new)-1, 0,-1):
+            if profile_new[i-1,1] > profile_new[i,1]:
+                profile_new[i-1,1] = profile_new[i,1]
 
     return profile_new
-
 
 def bank_nodes_from_elem(elem, m2):
     # function yileding back id of the bank-node for a given stream-mesh element 
@@ -579,35 +562,9 @@ def bank_nodes_from_elem(elem, m2):
     return [bank_nodes_from_edge(edge_r, elem, m2), bank_nodes_from_edge(edge_l, elem, m2)]
 
 def bank_nodes_from_edge(edge, elem, m2):
-    cell_ids=m2._edges_to_cells[edge]
+    cell_ids=m2.edges_to_cells[edge]
     cells_to_edge=[m2.conn[cell_id] for cell_id in cell_ids] 
     cells_to_edge.remove(elem)
     bank_tri=cells_to_edge[0]
     node_id=(set(bank_tri)-set(edge)).pop()
     return node_id
-
-
-# def condition_river_mesh(m2, river):
-#     for node in river.preOrder():
-#         order, min_elev, max_elev=[node.segment.properties['order'], node.segment.properties['min_elev'], node.segment.properties['max_elev']]
-#         if not order == 5: # leaving out 4th order streams
-#             n_quads=len(node.elements); # this includes traingles and pentagons
-#             elevations=np.linspace(min_elev,max_elev,n_quads+1)
-#             for i, elem in enumerate(node.elements):
-#                 if len(elem)==3:          
-#                     m2.coords[elem[0]][2]= m2.coords[elem[2]][2]= min_elev #elevations[i]
-#                     m2.coords[elem[1]][2]= min_elev #elevations[i+1]
-
-#                 elif len(elem)==4: 
-#                     m2.coords[elem[0]][2]= m2.coords[elem[3]][2]= min_elev #elevations[i]
-#                     m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= min_elev #elevations[i+1]
-#                 elif len(elem)==5:  
-                    
-#                     m2.coords[elem[0]][2]= m2.coords[elem[4]][2]= min_elev #elevations[i]
-#                     m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= min_elev #elevations[i+1]
-
-#             # conditioning of the stream bank if stream is "placed" into a pond or pit
-#             # bank_node_ids=bank_nodes_from_elem(elem, m2)
-#             # for node_id in bank_node_ids:
-#             #         if m2.coords[node_id][2]<elevations[i]:
-#             #                m2.coords[node_id][2]= elevations[i]+1.5

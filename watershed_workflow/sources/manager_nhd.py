@@ -51,6 +51,8 @@ class _FileManagerNHD:
                          'DownstreamMainPathHydroSeq' : 'DnHydroSeq',
                          'UpstreamMainPathHydroSeq' : 'UpHydroSeq',
                          'DivergenceCode' : 'Divergence',
+                         'MinimumElevationSmoothed': 'MinElevSmo',
+                         'MaximumElevationSmoothed': 'MaxElevSmo' ,
                          'CatchmentAreaSqKm' : 'AreaSqKm',
                          'TotalDrainageAreaSqKm' : 'TotDASqKm'})
     _nhdplus_eromma = dict({'MeanAnnualFlow' : 'QAMA',

@@ -1,30 +1,18 @@
 """Triangulates polygons with stream network representation"""
 import logging
-import collections
 import numpy as np
 import numpy.linalg as la
 from matplotlib import pyplot as plt
-import scipy.spatial
 import meshpy.triangle
 
 import shapely
-from shapely.geometry import LineString, MultiPoint, Point
-from shapely.ops import split
 
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 from watershed_workflow.triangulation import Nodes, NodesEdges
 
-def orient(e):
-    if e[0] > e[1]:
-        return e[1],e[0]
-    elif e[0] < e[1]:
-        return e[0],e[1]
-    else:
-        return None
-
-    
-def triangulate(hucs, river_corr  ,tol=1, **kwargs):
+  
+def triangulate(hucs, river_corrs, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Arguments:
@@ -40,15 +28,15 @@ def triangulate(hucs, river_corr  ,tol=1, **kwargs):
     logging.info("Adding river outlet in huc...")
 
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs or list or shapely.geometry.Polygon:
-        huc_segment=add_river_outlet_in_huc(river_corr,hucs) # adjusting hucs to accomodate river corridor
-        segments = [huc_segment]
+        huc_segments=add_river_outlet_in_huc(river_corrs,hucs) # adjusting hucs to accomodate river corridor
+        segments = [huc_segments]
     else:
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
         
-    if type(river_corr) is list:
-        segments = river_corr + segments
-    elif type(river_corr) is shapely.geometry.Polygon:
-        segments = [river_corr,] + segments
+    if type(river_corrs) is list:
+        segments = river_corrs + segments
+    elif type(river_corrs) is shapely.geometry.Polygon:
+        segments = [river_corrs,] + segments
     else:
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
 
@@ -69,9 +57,12 @@ def triangulate(hucs, river_corr  ,tol=1, **kwargs):
 
     # adding hole in the river corridor for quad elements
     logging.info("defining hole..")
-    hole_point= pick_hole_point(river_corr) # a point inside the river corridor
-    assert (river_corr.contains(hole_point))
-    info.set_holes([hole_point.coords[0],])
+    hole_points=[]
+    for river_corr in river_corrs:
+        hole_point=pick_hole_point(river_corr)
+        hole_points.append(hole_point) # a point inside the river corridor
+        assert (river_corr.contains(hole_point))
+    info.set_holes(hole_points)
 
     logging.info(" triangle.build...")
 
@@ -97,8 +88,9 @@ def triangulate(hucs, river_corr  ,tol=1, **kwargs):
     logging.info("  ...built: %i mesh points and %i triangles"%(len(mesh_points),len(mesh_tris)))
     return mesh_points, mesh_tris
 
+
 def add_river_outlet_in_huc(river_corr,hucs):
-    """Returns updated huc with river outlet represented"""   # This  function need more robustness, had to change it a few times for corner cases
+    """Returns updated huc with river outlet represented"""   
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
         huc_segment = hucs.segments[0]
     elif type(hucs) is list:
@@ -107,8 +99,9 @@ def add_river_outlet_in_huc(river_corr,hucs):
         huc_segment  = hucs.exterior()
 
     huc_coords=list(huc_segment.coords)[:-1] # to avoid repeated points interferring in the river outlet adjustment
-    ind, dist=watershed_workflow.utils.closest_point(river_corr.exterior.coords[0],huc_coords)
-    # if the above point is close to teh river corridor we can just eliminate it from the huc boundary
+    ind =watershed_workflow.utils.closest_point(river_corr.exterior.coords[0],huc_coords)
+    dist=watershed_workflow.utils.distance(river_corr.exterior.coords[0],huc_coords[ind])
+    # if the above point is close to the river corridor we can just eliminate it from the huc boundary
     limit= watershed_workflow.utils.distance(river_corr.exterior.coords[0], river_corr.exterior.coords[1])
     if dist<limit:
         huc_coords.pop(ind)
@@ -127,4 +120,4 @@ def pick_hole_point(poly):
     p3=list(nodes_edges_rc.nodes)[1]
     p4=list(nodes_edges_rc.nodes)[-2]
  
-    return MultiPoint([p1,p2,p3,p4]).centroid
+    return shapely.geometry.MultiPoint([p1,p2,p3,p4]).centroid
