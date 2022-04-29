@@ -427,9 +427,13 @@ def midpoint(p1, p2):
     """Returns the midpoint of two points"""
     if isinstance(p1, shapely.geometry.Point): return midpoint(p1.coords[0], p2)
     if isinstance(p2, shapely.geometry.Point): return midpoint(p1, p2.coords[0])
-
     return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
-    
+
+def closest_point_ind(point, points):
+    """Returns the index of closest point from an array of points"""
+    points = np.asarray(points)
+    dist_2 = np.sum((points - point)**2, axis=1)
+    return np.argmin(dist_2)
     
 def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""

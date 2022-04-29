@@ -121,12 +121,12 @@ def densify_hucs(huc, huc_, river, use_original=False, limit_scales=None):
     if use_original:
         if type(limit_scales)is list:
             # basic refine
-            coords_densified_basic=densify_hucs_(coords,coords_,river,limit_scales=limit_scales[-1])
+            coords_densified_basic=densify_hucs_(coords,coords_, river,limit_scales=limit_scales[-1])
             # adaptive refine
-            coords_densified=densify_hucs_(coords_densified_basic,coords_,river,limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords_densified_basic, coords_, river,limit_scales=limit_scales)
             
         else:
-            coords_densified=densify_hucs_(coords,coords_,river,limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords,coords_,river, limit_scales=limit_scales)
       
     else: # in this case original huc boundary coordinates are used for interpolation
         coords_densified=densify_hucs_(coords,coords_,river,limit_scales=limit_scales)
@@ -134,7 +134,7 @@ def densify_hucs(huc, huc_, river, use_original=False, limit_scales=None):
     return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
 
 
-def densify_hucs_(coords,coords_,river,limit_scales=None):
+def densify_hucs_(coords, coords_, river, limit_scales=None):
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
 
      Parameters:
@@ -142,7 +142,7 @@ def densify_hucs_(coords,coords_,river,limit_scales=None):
       coords: List            
         coordinates of the huc segment to be densified
       coords_: List              
-        coordinates of the huc original huc segment from which points can be resmapled
+        coordinates of the original huc segment from which points can be resmapled
       limit_scales: int or List 
         limit of section length above which more points are added, either a constant value or a list for step refinement 
         [near_distance, near_length_scale, far_distance, far_length_scale]
@@ -170,9 +170,9 @@ def densify_hucs_(coords,coords_,river,limit_scales=None):
             end_points=[coords[i],coords[i+1]]  # points betwen which more points will be added
 
             if adaptive:
-                new_points=interpolate_simple(end_points,number_new_points)
+                new_points=interpolate_simple(end_points, number_new_points)
             else:
-                new_points=interpolate_with_orig(end_points,coords_,number_new_points)
+                new_points=interpolate_with_orig(end_points, coords_, number_new_points)
                 
             coords_densified[j+1:j+1]= new_points
             j+=number_new_points        
@@ -181,7 +181,7 @@ def densify_hucs_(coords,coords_,river,limit_scales=None):
     return coords_densified
 
 
-def interpolate_with_orig(end_points,interp_data,n):
+def interpolate_with_orig(end_points, interp_data, n):
     """This function adds desired number of new points between end points a segment (huc or river)
     resampling from orinal data
 
@@ -200,17 +200,17 @@ def interpolate_with_orig(end_points,interp_data,n):
         coordinates of the densified segment
     """
 
-    inds=[watershed_workflow.utils.closest_point(point,interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
+    inds=[watershed_workflow.utils.closest_point_ind(point, interp_data) for point in end_points] # point-indices on original network slicing a section for interpolation 
     if inds[1]<inds[0]: # this is to deal with corner case of interpolation of the last segment
         inds[1]=-2    
     section_interp_data=np.array(interp_data[inds[0]:inds[1]+1]) # coordinates on section
     a=np.array(end_points); (dx,dy)=abs(a[0,:]-a[1,:])
     if dx>dy: # interpolating on x axis
-        f = interpolate.interp1d(section_interp_data[:,0],section_interp_data[:,1]) # creating interpolator 
+        f = interpolate.interp1d(section_interp_data[:,0], section_interp_data[:,1]) # creating interpolator 
         xnew=np.linspace(end_points[0][0],end_points[1][0], n+2)[1:-1] # new xs equally space between existing points
         ynew=f(xnew) # interpolated ys
     else:  # interpolating on y axis
-        f = interpolate.interp1d(section_interp_data[:,1],section_interp_data[:,0]) # creating interpolator 
+        f = interpolate.interp1d(section_interp_data[:,1], section_interp_data[:,0]) # creating interpolator 
         ynew=np.linspace(end_points[0][1],end_points[1][1], n+2)[1:-1] # new ys equally space between existing points
         xnew=f(ynew) # interpolated xs
     new_points=[(xnew[k],ynew[k]) for k in range(n)]

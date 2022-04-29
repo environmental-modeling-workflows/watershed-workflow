@@ -238,30 +238,36 @@ def create_rivers_meshes(rivers, widths=8, junction_treatment=True):
 
     elems=[]
     corrs=[]
+    gid_shift=0
     for river in rivers:
-        elems_, corr = create_river_mesh(river, widths=widths, junction_treatment=junction_treatment)
-        elems=elems+elems_
+        if len(elems)!=0:
+            gid_shift=np.max([max(map(int, elem)) for elem in elems])+1
+        elems_river, corr = create_river_mesh(river, widths=widths, junction_treatment=junction_treatment, gid_shift=gid_shift)
+        elems=elems + elems_river
         corrs=corrs+[corr,]
 
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, junction_treatment=True):
+def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
 
     if type(widths)== dict:
         dilation_width=np.mean(list(widths.values()))
     else:
         dilation_width=widths
+
     # creating a polygon for river corridor by dilating the river tree
     corr = create_river_corridor(river, dilation_width)
     # defining special elements in the mesh
-    elems= to_quads(river, corr, dilation_width)
+    elems= to_quads(river, corr, dilation_width, gid_shift=gid_shift)
+    print('for this river', elems)
     # setting river_widths in the river corridor polygon
     if type(widths)==dict:
         corr = set_width_by_order(river, corr, widths=widths)
     # treating non-convexity at junctions
     if junction_treatment:
         corr =junction_treatment_by_nudge(river, corr)
+
     return elems, corr
 
 
@@ -324,8 +330,11 @@ def create_river_corridor(river, river_width):
     corr3 = shapely.geometry.Polygon(corr3_p)
     return corr3
 
-def to_quads(river, corr, delta,ax=None):
-    """Iterate over the rivers, creating quads and pentagons forming the corridor."""
+
+def to_quads(river, corr, delta, gid_shift=0 , ax=None):
+    """Iterate over the rivers, creating quads and pentagons forming the corridor.
+    The global_id_adjustment is to keep track of node_id in elements w.r.t to global id in mesh
+    mainly relevant for multiple river"""
     
     coords=corr.exterior.coords[:-1]
     # number the nodes in a dfs pattern, creating empty space for elements
@@ -334,10 +343,6 @@ def to_quads(river, corr, delta,ax=None):
         node.elements = [list() for l in range(len(node.segment.coords)-1)]
         assert(len(node.elements) >= 1)
         node.touched = 0
-
-    import time
-    def pause():
-        time.sleep(0.)
         
     # iterate over the tree in an out-and-back-and-in-between
     # traversal, where every node appears num_children + 1 times,
@@ -362,7 +367,6 @@ def to_quads(river, corr, delta,ax=None):
             # plot it...
             seg_coords = np.array(seg_coords)
             #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
-            pause()
 
         elif node.touched == 1 and len(node.children) == 0:
             # leaf node, last time
@@ -394,8 +398,6 @@ def to_quads(river, corr, delta,ax=None):
                     assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
                 #ax.plot(cc[:,0], cc[:,1], 'g-o')
-            pause()
-            
 
         elif node.touched == len(node.children):
             logging.debug(f'  last time around! {node.touched+1}')
@@ -431,8 +433,6 @@ def to_quads(river, corr, delta,ax=None):
                            
                            
                 #ax.plot(cc[:,0], cc[:,1], 'g-o')
-            pause()
-            
             
         else:
             logging.debug(f'  middle time around! {node.touched+1}')
@@ -444,10 +444,16 @@ def to_quads(river, corr, delta,ax=None):
             node.touched += 1
 
             #ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
-            pause()
 
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
+
+    # this node is shift is needed in case of multiple rivers, to make this id consistent with global node ids in m2 mesh
+    for node in river.preOrder():
+        for i, elems in enumerate(node.elements):
+            elems_new = [node_id + gid_shift for node_id in elems]
+            node.elements[i]=elems_new
+
     elems=[el for node in river.preOrder() for el in node.elements]
     return elems
 
@@ -543,4 +549,6 @@ def junction_treatment_by_nudge(river, corr):
     corr_coords_new=coords+[coords[0]]                     
     return shapely.geometry.Polygon(corr_coords_new)
                         
+
+
 

@@ -1,5 +1,5 @@
 import numpy as np
-from np.polynomial import polynomial as poly
+from numpy.polynomial import polynomial as poly
 import attr
 import sortedcontainers
 import logging
