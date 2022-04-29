@@ -235,6 +235,23 @@ def sort_children_by_angle(tree, reverse=False):
 
 
 def create_rivers_meshes(rivers, widths=8, junction_treatment=True):
+    """Returns list of elems and river corridor polygons for a given list of river trees
+
+    Parameters:
+    -----------
+    rivers: List(watershed_workflow.river_tree.RiverTree object)
+        List of river tree along which river meshes are to be created
+    widths: Float or a dictionary {stream-order: width}
+    junction_treatment: boolean 
+        flag for enforcing convexity of the pentagons at the junctions
+    
+    Returns
+    -------
+    elems: List(List)
+        List of river elements
+    corrs: List(shapely.geometry.Polygon)
+        List of river corridor polygons
+    """
 
     elems=[]
     corrs=[]
@@ -250,7 +267,27 @@ def create_rivers_meshes(rivers, widths=8, junction_treatment=True):
 
 
 def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
+    """Returns list of elems and river corridor polygons for a given river tree
 
+    Parameters:
+    -----------
+    river: watershed_workflow.river_tree.RiverTree object)
+        river tree along which mesh is to be created
+    widths: Float or a dictionary {stream-order: width}
+    junction_treatment: boolean 
+        flag for enforcing convexity of the pentagons at the junctions
+    gid_shift: Integer
+        all the node-ids used in the element defination are shifted by
+        this number to make it consistant with the global ids in the 
+        m2 mesh, important in case of multiple rivers
+        
+    Returns
+    -------
+    elems: List(List)
+        List of river elements
+    corr: List(shapely.geometry.Polygon)
+        a river corridor polygon
+    """ 
     if type(widths)== dict:
         dilation_width=np.mean(list(widths.values()))
     else:
@@ -259,8 +296,7 @@ def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
     # creating a polygon for river corridor by dilating the river tree
     corr = create_river_corridor(river, dilation_width)
     # defining special elements in the mesh
-    elems= to_quads(river, corr, dilation_width, gid_shift=gid_shift)
-    print('for this river', elems)
+    elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift)
     # setting river_widths in the river corridor polygon
     if type(widths)==dict:
         corr = set_width_by_order(river, corr, widths=widths)
@@ -272,7 +308,21 @@ def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
 
 
 def create_river_corridor(river, river_width):
-    """Returns a polygon representing the river corridor."""
+    """Returns a polygon representing the river corridor.
+    
+    Parameters
+    ----------
+    river: watershed_workflow.river_tree.RiverTree object
+        river tree along which river corrid polygon is to be created
+    river_width: Float
+        width of the river corridor for initial dilation
+
+    Returns
+    -------
+    corr3: shapely.geometry.Polygon
+        river corridor polygon for the given river     
+    """
+
     # first sort the river so that in a search we always take paddlers right...
     sort_children_by_angle(river, True)
     delta = river_width / 2.
@@ -334,7 +384,26 @@ def create_river_corridor(river, river_width):
 def to_quads(river, corr, delta, gid_shift=0 , ax=None):
     """Iterate over the rivers, creating quads and pentagons forming the corridor.
     The global_id_adjustment is to keep track of node_id in elements w.r.t to global id in mesh
-    mainly relevant for multiple river"""
+    mainly relevant for multiple river
+
+    Parameters
+    ----------
+    rivers : watershed_workflow.river_tree.RiverTree object
+        river tree 
+    corr : shapely.geometry.Polygons
+        a river corridor polygon for the river
+    delta : Float
+        river width used for creating corr from river in function "create_river_corridor"
+    gid_shift: Integer
+        all the node-ids used in the element defination are shifted by
+        this number to make it consistant with the global ids in the 
+        m2 mesh, important in case of multiple rivers
+
+    Returns
+    -------
+    elems: List(List)
+        List of river elements
+    """
     
     coords=corr.exterior.coords[:-1]
     # number the nodes in a dfs pattern, creating empty space for elements
@@ -430,8 +499,7 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
                     assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
-                           
-                           
+                 
                 #ax.plot(cc[:,0], cc[:,1], 'g-o')
             
         else:
@@ -448,7 +516,7 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
 
-    # this node is shift is needed in case of multiple rivers, to make this id consistent with global node ids in m2 mesh
+    # this nodeid-shift is needed in case of multiple rivers, to make this id consistent with global nodeids in a m2 mesh
     for node in river.preOrder():
         for i, elems in enumerate(node.elements):
             elems_new = [node_id + gid_shift for node_id in elems]
@@ -457,13 +525,22 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
     elems=[el for node in river.preOrder() for el in node.elements]
     return elems
 
-def set_width_by_order(river,corr, widths=None):
+def set_width_by_order(river, corr, widths=None):
     """this functions takes the river-corridor polygon and sets the width of the corridor based on the order 
        dependent width dictionary
 
-       river  | river network, a watershed_workflow.river_tree.River object, this tree should have "StreamOrder" in properties
-       corr   | river corridor, a shapely.geometry.polygon.Polygon object
-       width  | dictionary {streeam_order: width}
+    Parameters
+    ----------
+    river: watershed_workflow.river_tree.RiverTree object)
+        river tree along which mesh is to be created
+    corr : shapely.geometry.Polygons
+        a river corridor polygon for the river    
+    widths: Float or a dictionary {stream-order: width}
+
+    Returns
+    -------
+    shapely.geometry.Polygon(corr_coords_new): 
+        river corridor polygon with adjusted width
     """
 
     corr_coords=corr.exterior.coords[:-1]
@@ -498,7 +575,8 @@ def set_width_by_order(river,corr, widths=None):
     return shapely.geometry.Polygon(corr_coords_new)
 
 
-def move_to_target_separation(p1,p2, target):
+def move_to_target_separation(p1, p2, target):
+    """Returns the points after moving them to a target separation from each other"""
     import math
     d_vec=p1-p2 # separation vector
     d=np.sqrt(d_vec.dot(d_vec)) # distance
@@ -506,10 +584,11 @@ def move_to_target_separation(p1,p2, target):
     p1_=p1+0.5*delta*(d_vec)/d
     p2_=p2-0.5*delta*(d_vec)/d
     d_=watershed_workflow.utils.distance(p1_,p2_)
-    assert(math.isclose(d_,target, rel_tol=1e-5))
+    assert(math.isclose(d_, target, rel_tol=1e-5))
     return [p1_, p2_]
 
-def width_cal(width_dict,order):
+def width_cal(width_dict, order):
+    """Returns the reach width based using the {order:width dictionary}"""
     if order > max(width_dict.keys()):
         width=width_dict[max(width_dict.keys())]
     elif order < min(width_dict.keys()):
@@ -520,9 +599,20 @@ def width_cal(width_dict,order):
 
 
 def junction_treatment_by_nudge(river, corr):
-    """this functions takes the river-corridor polygon nudges to neck-points of the junction if the pentagon is non-convex
-       river  | river network, a watershed_workflow.river_tree.River object
-       corr   | river corridor, a shapely.geometry.polygon.Polygon object
+    """this functions takes the river-corridor polygon, nudges the neck-points of the junction if the pentagon is non-convex 
+    until it becomes convex
+
+    Parameters
+    ----------
+    river: watershed_workflow.river_tree.RiverTree object)
+        river tree along which mesh is to be created
+    corr : shapely.geometry.Polygons
+        a river corridor polygon for the river 
+  
+    Returns
+    -------
+    shapely.geometry.Polygon(corr_coords_new): 
+        river corridor polygon with adjusted width
     """  
 
     coords=corr.exterior.coords[:-1]

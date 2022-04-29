@@ -429,6 +429,7 @@ def midpoint(p1, p2):
     if isinstance(p2, shapely.geometry.Point): return midpoint(p1, p2.coords[0])
     return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
 
+
 def closest_point_ind(point, points):
     """Returns the index of closest point from an array of points"""
     points = np.asarray(points)

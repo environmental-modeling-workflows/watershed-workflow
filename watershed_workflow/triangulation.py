@@ -110,12 +110,25 @@ class NodesEdges:
         assert(max_edge_node == len(self.nodes)-1)
 
         
-def triangulate(hucs, rivers, river_corrs, mesh_rivers=False, tol=1, **kwargs):
+def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
-    Arguments:
-      hucs              | a watershed_workflow.split_hucs.SplitHUCs instance
-      rivers            | a list of watershed_workflow.river_tree.Tree instances
+    Note, refinement of a given triangle is done if any of the provided
+    criteria is met.
+
+    Parameters
+    ----------
+    hucs : SplitHUCs
+        A split-form HUC object from, e.g., get_split_form_hucs()
+    rivers: watershed_workflow.river_tree.RiverTree object
+        river tree 
+    river_corrs : list(shapely.geometry.Polygons)
+        A list of river corridor polygons for each river
+    mesh_rivers : bool, optional
+        Include stream network in the mesh discretely
+    tol : float, optional
+        Set tolerance for minimum distance between two nodes. The unit is the same as 
+        that of the watershed's CRS. The default is 1.
 
     Additional keyword arguments include all options for meshpy.triangle.build()
     """
@@ -205,6 +218,7 @@ def refine_from_max_area(max_area):
         #     raise RuntimeError("TinyTriangle Error")
         return res
     return refine
+
 
 def refine_from_river_distance(near_distance, near_area, away_distance, away_area, rivers):
     """Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.

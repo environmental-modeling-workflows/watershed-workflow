@@ -898,10 +898,12 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    rivers : list(LineString)
-        A list of reaches from, e.g., get_reaches()
+    rivers: watershed_workflow.river_tree.RiverTree object
+        river tree 
+    river_corrs : list(shapely.geometry.Polygons)
+        A list of river corridor polygons for each river
     mesh_rivers : bool, optional
-        Include stream network in the mesh discretely.
+        Include stream network in the mesh discretely
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     stream_outlet_width : float, optional

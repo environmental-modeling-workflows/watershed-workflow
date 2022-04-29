@@ -89,7 +89,7 @@ def densify_node_segments(node,node_, use_original=False, limit=100, treat_colli
     return node.segment
 
 
-def densify_hucs(huc, huc_, river, use_original=False, limit_scales=None):
+def densify_hucs(huc, huc_, rivers, use_original=False, limit_scales=None):
     """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
     function where huc segment refinedment is greater for huc segments closer to the river tree
      
@@ -121,20 +121,20 @@ def densify_hucs(huc, huc_, river, use_original=False, limit_scales=None):
     if use_original:
         if type(limit_scales)is list:
             # basic refine
-            coords_densified_basic=densify_hucs_(coords,coords_, river,limit_scales=limit_scales[-1])
+            coords_densified_basic=densify_hucs_(coords,coords_, rivers,limit_scales=limit_scales[-1])
             # adaptive refine
-            coords_densified=densify_hucs_(coords_densified_basic, coords_, river,limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords_densified_basic, coords_, rivers,limit_scales=limit_scales)
             
         else:
-            coords_densified=densify_hucs_(coords,coords_,river, limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords,coords_,rivers, limit_scales=limit_scales)
       
     else: # in this case original huc boundary coordinates are used for interpolation
-        coords_densified=densify_hucs_(coords,coords_,river,limit_scales=limit_scales)
+        coords_densified=densify_hucs_(coords,coords_,rivers,limit_scales=limit_scales)
        
     return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
 
 
-def densify_hucs_(coords, coords_, river, limit_scales=None):
+def densify_hucs_(coords, coords_, rivers, limit_scales=None):
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
 
      Parameters:
@@ -159,7 +159,7 @@ def densify_hucs_(coords, coords_, river, limit_scales=None):
 
         # calculation of limit for a set of point
         if adaptive:
-            limit=limit_from_river_distance([coords[i],coords[i+1]],limit_scales,river)
+            limit=limit_from_river_distance([coords[i],coords[i+1]], limit_scales, rivers)
         else:
             limit=limit_scales
             
@@ -253,7 +253,7 @@ def check_collinearity(p0, p1, p2, tol=1e-6):
     return abs(x1 * y2 - x2 * y1) < tol
 
 
-def limit_from_river_distance(segment_ends,limit_scales,river):
+def limit_from_river_distance(segment_ends,limit_scales,rivers):
     """Returns a graded refinement function based upon a distance function from rivers, for use with DensifyHucs function.
     HUC segment resolution must be higher in near_distance when the HUC segment midpoint is within near_distance from the river network.
     Length must be smaller than away_length when the HUC segment midpoint is at least away_distance from the river network.
@@ -263,8 +263,8 @@ def limit_from_river_distance(segment_ends,limit_scales,river):
     p0=shapely.geometry.Point(segment_ends[0])
     p1=shapely.geometry.Point(segment_ends[1])
     p_mid=shapely.geometry.Point([(segment_ends[0][0]+segment_ends[1][0])/2,(segment_ends[0][1]+segment_ends[1][1])/2])
-    river_multiline = shapely.geometry.MultiLineString(list(river))
-    distance=min(p0.distance(river_multiline),p_mid.distance(river_multiline),p1.distance(river_multiline))
+    river_multilines = [shapely.geometry.MultiLineString(list(river)) for river in rivers]
+    distance=min([min(p0.distance(river_multiline),p_mid.distance(river_multiline),p1.distance(river_multiline)) for river_multiline in river_multilines])
 
     if distance > away_distance:
         length = away_length
