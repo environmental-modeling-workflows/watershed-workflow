@@ -1,4 +1,4 @@
-"""Manager for downloading MODIS products from the LP DAAC AppEEARS database."""
+"""Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
 
 import os,sys
 import logging
@@ -32,9 +32,9 @@ class FileManagerMODISAppEEARS:
 
     << DOCUMENT ACCESS PATTERN HERE >>
     """
-    _LOGIN_URL = "https://lpdaacsvc.cr.usgs.gov/appeears/api/login" # URL for AppEEARS rest requests
-    _TASK_URL = "https://lpdaacsvc.cr.usgs.gov/appeears/api/task"
-    _BUNDLE_URL_TEMPLATE = "https://lpdaacsvc.cr.usgs.gov/appeears/api/bundle/"
+    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login" # URL for AppEEARS rest requests
+    _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
+    _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/"
 
     _START = datetime.date(2002,7,1)
     _END = datetime.date(2020,12,30)

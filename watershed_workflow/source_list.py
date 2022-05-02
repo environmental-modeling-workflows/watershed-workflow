@@ -23,7 +23,7 @@ from watershed_workflow.sources.manager_daymet import FileManagerDaymet
 
 from watershed_workflow.sources.manager_shape import FileManagerShape
 from watershed_workflow.sources.manager_raster import FileManagerRaster
-
+from watershed_workflow.sources.manager_modis_appeears import FileManagerMODIS
 
 # available and default water boundary datasets
 huc_sources = {'NHDPlus' : FileManagerNHDPlusAccumulator(),
