@@ -10,18 +10,13 @@ import watershed_workflow.densify_rivers_hucs
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 
+
 def assert_list_same(l1, l2):
     l1 = list(l1)
     l2 = list(l2)
     assert(len(l1) == len(l2))
     for a,b in zip(l1,l2):
         assert(a == b)
-
-def elevate_open_book(points):
-    points3=np.zeros((len(points),3))
-    points3[:,:2]=points
-    points3[:,2]=9+abs(points[:,0]-200)/800+points[:,1]/500 
-    return points3
 
 
 def watershed_poly(): 
@@ -39,6 +34,7 @@ def reaches():
     reaches=[reach1, reach2, reach3, reach4]
     return reaches
 
+
 @pytest.fixture
 def watershed_rivers():
     my_hucs=[watershed_poly()]
@@ -47,54 +43,72 @@ def watershed_rivers():
     return watershed, rivers
 
 
-def test_river_meshing(watershed_rivers):
+@pytest.fixture
+def  river_small():
+    reach1=shapely.geometry.LineString([(4,10), (4.01,5.0), (4,0)])
+    reach2=shapely.geometry.LineString([(0,20), (2,15.01), (4,10)])
+    reach3=shapely.geometry.LineString([(8, 20), (6, 15.01), (4, 10)])
+    reaches=[reach1, reach2, reach3]
+    rivers=watershed_workflow.construct_rivers(hucs=None, reaches=reaches, method='geometry') 
+    return rivers[0]
+
+@pytest.fixture
+def  corr_small():
+    corr_coords=[(3.500000999997, 0.0009999980000059787), (3.5099990000009997, 5.0), (3.5001921882905838, 9.903405855207968), (1.535761764959111, 14.824304065653306),(0.0, 20.0),
+    (2.4642382350408334, 15.195695934346832), (4.0, 11.348612713124119), (5.535761764959166, 15.195695934346832), (8.0, 20.0), (6.464238235040834, 14.824304065653168),
+    (4.500192262191668, 9.90436890366601), (4.510000999999, 5.0), (4.499999000003, -0.0009999980000059787), (3.500000999997, 0.0009999980000059787)]
+    return shapely.geometry.Polygon(corr_coords)
+
+@pytest.fixture
+def watershed_small():
+    edge1=[[x, 0] for x in np.arange(0, 20, 4)]
+    edge2=[[16, y] for y in np.arange(4, 24, 4)]
+    edge3=[[x, 20] for x in np.arange(12, -4, -4)]
+    edge4=[[0, y] for y in np.arange(16, 0, -4)]
+    ws= shapely.geometry.Polygon(edge1+edge2+edge3+edge4)
+    watershed = watershed_workflow.split_hucs.SplitHUCs([ws]) 
+    return watershed
+
+
+def test_densify_rivers_hucs(watershed_rivers):
     watershed, rivers = watershed_rivers
     watershed_workflow.simplify(watershed, rivers, simplify_rivers=10, snap=False, cut_intersections=True)    
 
-    #densify watershed and river
-    watershed=watershed_workflow.densify_rivers_hucs.densify_hucs(watershed=watershed, rivers=rivers, use_original= False,limit_scales=[0,25,100,50])
+    watershed=watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed, huc_=watershed, rivers=rivers, use_original= False,limit_scales=[0,25,100,50])
     rivers=watershed_workflow.densify_rivers_hucs.densify_rivers(rivers, rivers, limit=14, use_original=False, treat_collinearity=True)
 
-    assert(58 == len(watershed.segments[0].coords))
+    assert(51 == len(watershed.segments[0].coords))
     assert(16 == len(rivers[0].segment.coords))
     assert(12 == len(rivers[1].segment.coords))
 
-    # creating river corridor and defining quads
-    quads, corrs = watershed_workflow.river_tree.create_rivers_meshes(rivers=rivers, widths=5, junction_treatment=True)
 
-    assert(74 == len(quads))
-    assert_list_same([137, 138, 139], quads[-1])
-    assert_list_same([14, 15, 55, 111, 112], quads[14])
-    assert(math.isclose(3925.0000, corrs[0].area, rel_tol=1e-4))
-    assert(math.isclose(674.9656, corrs[1].area, rel_tol=1e-4))
-    assert(128 == len(corrs[0].exterior.coords))
+def test_create_river_corridor(river_small):
 
-    # triangulating with rivers as holes
-    d0 = 12; d1 = 18; A0 = 82; A1 = 500
-    points, elems= watershed_workflow.triangulate(watershed, rivers, corrs, mesh_rivers=True,
-                                              refine_min_angle=32, refine_distance=[d0,A0,d1,A1], diagnostics=False)
+    corr=watershed_workflow.river_tree.create_river_corridor(river_small, 1)
+    
+    assert(14 == len(corr.exterior.coords))
+    assert(0 == math.dist((0.0, 20.0), corr.exterior.coords[4]))
+    assert(0 == math.dist((4.0, 11.348612713124119), corr.exterior.coords[6]))
+
+
+def test_to_quads(river_small, corr_small):
+    
+    quads = watershed_workflow.river_tree.to_quads(river_small, corr_small, 1)
+    assert(6 == len(quads))
+    assert(4 == len(quads[0]))
+    assert(5 == len(quads[1]))
+    assert(3 == len(quads[3]))
+    assert(3 == len(quads[3]))
+    assert_list_same([1, 2, 6, 10, 11], quads[1])
+    assert_list_same([7, 8, 9], quads[-1])
+
+
+def test_traingulate(watershed_small, river_small, corr_small):
+    points, elems= watershed_workflow.triangulate(watershed_small, [river_small], [corr_small], mesh_rivers=True, tol=0.1,
+                                             refine_min_angle=32, refine_distance=[2, 5, 5, 10], diagnostics=False)
     areas = np.array([watershed_workflow.utils.triangle_area(points[e]) for e in elems])
 
-    assert(703 == len(points))
-    assert(1219 == len(elems))
-    assert(math.isclose(20.711983, min(areas), rel_tol=1e-4))
-    assert(math.isclose(759.140041, max(areas), rel_tol=1e-4))
-
-    # elevate in 3d
-    points3=elevate_open_book(points)
-
-    # adding quads to elem list
-    elems_list=[elem.tolist() for elem in list(elems)]
-    for elem in quads:
-        elems_list.append(elem)
-    
-    m2 = watershed_workflow.mesh.Mesh2D(points3.copy(), elems_list)
-
-    assert(1293 == m2.num_cells)
-    assert(1995 == m2.num_edges)
-    assert(703 == m2.num_nodes)
-    assert(39 == len(m2.boundary_edges))
-    assert(39 == len(m2.boundary_nodes))
-    assert(5 == len(m2.conn[1233]))
-    assert(np.allclose(np.array([130.17369346, 359.37985407, 9.47270926]), m2.compute_centroid(0), 1.e-6))
-    assert(np.allclose(np.array([35.72548705, 16.33090195,  9.23800495]), m2.compute_centroid(1), 1.e-6))    
+    assert(44 == len(points))
+    assert(56 == len(elems))
+    assert(math.isclose(8.895187, max(areas), rel_tol=1e-4))
+    assert(math.isclose(2.655299, min(areas), rel_tol=1e-4))

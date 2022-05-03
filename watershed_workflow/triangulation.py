@@ -120,7 +120,7 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, tol=1, **kwar
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    rivers: watershed_workflow.river_tree.RiverTree object
+    rivers : watershed_workflow.river_tree.RiverTree object
         river tree 
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
@@ -309,8 +309,8 @@ def add_river_outlet_in_huc(river_corr,hucs):
     limit= watershed_workflow.utils.distance(river_corr.exterior.coords[0], river_corr.exterior.coords[1])
     if dist<limit:
         huc_coords.pop(ind)
-    huc_coords.insert(ind,river_corr.exterior.coords[0])
-    huc_coords.insert(ind,river_corr.exterior.coords[-2]) # other point of the river outlet is inserted into the huc boundary
+    huc_coords.insert(ind,river_corr.exterior.coords[-2])
+    huc_coords.insert(ind,river_corr.exterior.coords[0]) # other point of the river outlet is inserted into the huc boundary
     huc_coords.append(huc_coords[0]) # to make the polygonal loop complete
     hucs_new_poly=shapely.geometry.Polygon(huc_coords)
     return watershed_workflow.split_hucs.SplitHUCs([hucs_new_poly])

@@ -8,6 +8,7 @@ import shapely
 import watershed_workflow.utils
 
 def densify_rivers(rivers,rivers_=None, use_original=False, limit=100, treat_collinearity=False):
+    """Returns a list for densified rivers"""
     rivers=[densify_river(river, river_, use_original= use_original, limit=limit, treat_collinearity=treat_collinearity) for river, river_ in zip(rivers, rivers_)]
     return rivers
 
@@ -16,15 +17,15 @@ def densify_river(river,river_=None, use_original=False, limit=100, treat_collin
     
     Parameters:
     -----------
-      river: watershed_workflow.river_tree.RiverTree object
+    river: watershed_workflow.river_tree.RiverTree object
         river tree after simplifed (sparse points) that is to be densified 
-      river_: watershed_workflow.river_tree.RiverTree object, optional
+    river_: watershed_workflow.river_tree.RiverTree object, optional
         original tree containing all the known points from NHDPlus 
-      limit : int
+    limit : int
         limit on the section length above which more points are added
-      use_original: boolean
+    use_original: boolean
         flag for whether to resample from original river tree or just do simple interpolation
-      treat_collinearity: boolean
+    treat_collinearity: boolean
         flag for whether to enforce non-colinearity. Collinear points in the segment create problem when 
         river corridor polynomial is created 
 
@@ -49,19 +50,19 @@ def densify_node_segments(node,node_, use_original=False, limit=100, treat_colli
      
     Parameters:
      -----------
-      node: node of a watershed_workflow.river_tree.RiverTree object
+    node: node of a watershed_workflow.river_tree.RiverTree object
         node of a simplifed tree (sparse points) that is to be densified 
-      node_: nodeof a watershed_workflow.river_tree.RiverTree object, optional
+    node_: nodeof a watershed_workflow.river_tree.RiverTree object, optional
         node from the original tree containing all the known points from NHDPlus 
-      limit : int
+    limit : int
         limit on the section length above which more points are added
-      use_original: boolean
+    use_original: boolean
         flag for whether to resample from original river tree or just do simple interpolation
-      treat_collinearity: boolean
+    treat_collinearity: boolean
         flag for whether to enforce non-colinearity. Collinear points in the segment create problem when 
         river corridor polynomial is created 
 
-     Returns
+    Returns
     -------
     node.segment: node.segment of a watershed_workflow.river_tree.RiverTree object
         a densified (inplace) node.segment
@@ -128,7 +129,7 @@ def densify_hucs(huc, huc_, rivers, use_original=False, limit_scales=None):
         else:
             coords_densified=densify_hucs_(coords,coords_,rivers, limit_scales=limit_scales)
       
-    else: # in this case original huc boundary coordinates are used for interpolation
+    else: 
         coords_densified=densify_hucs_(coords,coords_,rivers,limit_scales=limit_scales)
        
     return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
@@ -153,6 +154,7 @@ def densify_hucs_(coords, coords_, rivers, limit_scales=None):
         densified coordinates of a huc segment
     """
     adaptive=type(limit_scales) is list # setting up flag
+
     coords_densified=coords.copy() 
     j=0
     for i in range(len(coords)-1):
@@ -253,7 +255,7 @@ def check_collinearity(p0, p1, p2, tol=1e-6):
     return abs(x1 * y2 - x2 * y1) < tol
 
 
-def limit_from_river_distance(segment_ends,limit_scales,rivers):
+def limit_from_river_distance(segment_ends, limit_scales, rivers):
     """Returns a graded refinement function based upon a distance function from rivers, for use with DensifyHucs function.
     HUC segment resolution must be higher in near_distance when the HUC segment midpoint is within near_distance from the river network.
     Length must be smaller than away_length when the HUC segment midpoint is at least away_distance from the river network.
