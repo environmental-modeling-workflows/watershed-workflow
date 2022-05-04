@@ -215,6 +215,7 @@ class River(watershed_workflow.tinytree.Tree):
             node1.properties = copy.deepcopy(node2.properties)
         return cp
 
+
 def sort_children_by_angle(tree, reverse=False):
     """Sorts the children of a given segment by their angle with respect to that segment."""
     for node in tree.preOrder():
@@ -222,15 +223,13 @@ def sort_children_by_angle(tree, reverse=False):
             # compute tangents
             my_seg_tan = np.array(node.segment.coords[0]) - np.array(node.segment.coords[1])
 
-            if reverse:
-                def angle(c):
-                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
-                    return -watershed_workflow.utils.angle(my_seg_tan, tan)
-            else:
-                def angle(c):
-                    tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
-                    return watershed_workflow.utils.angle(my_seg_tan, tan)
+            if reverse: sign = -1
+            else: sign = 1
 
+            def angle(c):
+                tan = np.array(c.segment.coords[-2]) - np.array(c.segment.coords[-1])
+                return sign*watershed_workflow.utils.angle(my_seg_tan, tan)
+           
             node.children.sort(key=angle)
 
 
@@ -433,9 +432,7 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
             node.touched += 1
             total_touches += 1
 
-            # plot it...
             seg_coords = np.array(seg_coords)
-            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
 
         elif node.touched == 1 and len(node.children) == 0:
             # leaf node, last time
@@ -453,11 +450,8 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
             node.touched += 1
             total_touches += 1
 
-            # plot it...
             seg_coords = np.array(seg_coords)
-            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
-
-            # also plot the conn
+        
             for i, elem in enumerate(node.elements):
                 looped_conn = elem[:]
                 looped_conn.append(elem[0])
@@ -466,7 +460,6 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
                 else:
                     assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
-                #ax.plot(cc[:,0], cc[:,1], 'g-o')
 
         elif node.touched == len(node.children):
             logging.debug(f'  last time around! {node.touched+1}')
@@ -481,11 +474,8 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
             node.touched += 1
             total_touches += 1
 
-            # plot it...
             seg_coords = np.array(seg_coords)
-            #ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^')
 
-            # also plot the conn
             for i,elem in enumerate(node.elements):
                 looped_conn = elem[:]
                 looped_conn.append(elem[0])
@@ -500,8 +490,6 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
                     assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
                  
-                #ax.plot(cc[:,0], cc[:,1], 'g-o')
-            
         else:
             logging.debug(f'  middle time around! {node.touched+1}')
             assert(node.touched < len(node.children))
@@ -510,8 +498,6 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
             # add the middle node on the last element
             node.elements[-1].append(ic)
             node.touched += 1
-
-            #ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
 
     assert(len(coords) == (ic+1))
     assert(len(river)*2 == total_touches)
@@ -630,7 +616,7 @@ def junction_treatment_by_nudge(river, corr):
                         points[1]=tuple(p1_)
                         points[3]=tuple(p3_)
                         i+=1
-                    logging.debug(" pent in node", j,"was adjusted", i, " times")
+                    logging.debug("pent in node", j, "was adjusted", i, " times")
                     assert(watershed_workflow.utils.is_convex(points))
                         # updating coords
                     for id, point in zip(elem, points):
