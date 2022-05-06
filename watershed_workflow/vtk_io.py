@@ -418,7 +418,6 @@ def write(filename,
         _write_cells(f, cells, write_binary)
 
         # write point data
-
         if point_data is not None:
             num_points = len(points)
             f.write('POINT_DATA {}\n'.format(num_points).encode('utf-8'))
