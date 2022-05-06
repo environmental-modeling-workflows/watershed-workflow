@@ -32,7 +32,7 @@ jobs:
           context: ./
           file: ./docker/ATS-User-Env.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${GITHUB_REF##*/}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           

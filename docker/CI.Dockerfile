@@ -1,7 +1,9 @@
 #
 # Stage 2 -- clone repo run
 #
-FROM ecoon/watershed_workflow-ci_env:latest AS watershed_workflow
+ARG GIT_BRANCH
+
+FROM ecoon/watershed_workflow-ci_env:${GIT_BRANCH} AS watershed_workflow
 
 WORKDIR /ww
 

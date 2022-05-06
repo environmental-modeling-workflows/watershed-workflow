@@ -43,7 +43,8 @@ jobs:
           context: ./
           file: ./docker/CI.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${GITHUB_REF##*/}
+          build-args: GIT_BRANCH=${GITHUB_REF##*/}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
