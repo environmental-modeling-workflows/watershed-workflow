@@ -32,7 +32,11 @@ import watershed_workflow.colors
 try:
     import exodus
 except Exception:
-    import exodus3 as exodus
+    try:
+        import exodus3 as exodus
+    except Exception:
+        exodus = None
+
 
 #
 # A caching decorator, like functools.cache, but works in this case?
@@ -301,7 +305,7 @@ class Mesh2D:
         ax.add_collection(gons)
         ax.autoscale_view()
 
-    def write_VTK(self, filename):
+    def write_vtk(self, filename):
         """Writes to VTK."""
         assert(all(len(c) == 3 for c in self.conn))
         watershed_workflow.vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
@@ -876,8 +880,30 @@ class Mesh3D:
             i += 1
         return i
 
+    def write_vtk(self, filename):
+        """Writes to VTK.
+
+        Note, this just writes the topology/geometry information, for
+        WEDGE type meshes (extruded triangles).  No labeled sets are
+        written.  Prefer to use write_exodus() for a fully featured
+        mesh.
+
+        """
+        assert(all(len(c) == 5 for c in self.cell_to_face_conn))
+        wedges = []
+        for c2f in self.cell_to_face_conn:
+            fup = c2f[0]
+            fdn = c2f[1]
+            assert(len(self.face_to_node_conn[fup]) == 3 and
+                   len(self.face_to_node_conn[fdn]) == 3)
+            wedges.append(self.face_to_node_conn[fup] + self.face_to_node_conn[fdn])
+        watershed_workflow.vtk_io.write(filename, self.coords, {'wedge':np.array(wedges)})
+
     def write_exodus(self, filename, face_block_mode="one block"):
         """Write the 3D mesh to ExodusII using arbitrary polyhedra spec"""
+        if exodus is None:
+            raise ImportError("The python ExodusII wrappers were not found, please see the installation documentation to install Exodus")
+        
         # Note exodus uses the term element instead of cell, so we
         # swap to that term in this method.
 
