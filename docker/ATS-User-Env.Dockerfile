@@ -7,12 +7,12 @@
 #
 # Stage 1 -- setup base CI environment
 #
+FROM ecoon/watershed_workflow:${GIT_BRANCH}
+LABEL Description="ATS layers on top of WW"
+
 ARG GIT_BRANCH
 ARG env_name=watershed_workflow
 ARG user=jovyan
-
-FROM ecoon/watershed_workflow:${GIT_BRANCH}
-LABEL Description="ATS layers on top of WW"
 
 ENV CONDA_BIN=mamba
 
