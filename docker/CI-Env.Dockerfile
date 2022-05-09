@@ -2,17 +2,22 @@
 #
 # Stage 1 -- setup base CI environment
 #
-FROM continuumio/miniconda3 AS ww_env_base_ci
+FROM condaforge/mambaforge:4.12.0-0 AS ww_env_base_ci
 LABEL Description="Base env for CI of Watershed Workflow"
 
 ARG env_name=watershed_workflow_CI
+ENV CONDA_BIN=mamba
 
 WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
 RUN mkdir environments
+
+# install a base environment with just python
+RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.10
+
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    python create_envs.py --env-name=${env_name} --env-type=CI \
-        --with-tools-env --tools-env-name=watershed_workflow_tools Linux
+    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=${env_name} \
+    --env-type=CI --with-tools-env --tools-env-name=watershed_workflow_tools Linux
 
 #
 # Stage 2 -- add in the pip
@@ -21,7 +26,7 @@ FROM ww_env_base_ci AS ww_env_pip_ci
 
 WORKDIR /ww/tmp
 COPY requirements.txt /ww/tmp/requirements.txt
-RUN conda run -n ${env_name} python -m pip install -r requirements.txt
+RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
 
 
 #
@@ -35,6 +40,7 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
+RUN apt-get install git
 RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
 
 # configure
@@ -42,13 +48,13 @@ WORKDIR /ww/tmp
 COPY docker/configure-seacas.sh /ww/tmp/configure-seacas.sh
 RUN chmod +x /ww/tmp/configure-seacas.sh
 WORKDIR /ww/tmp/seacas-build
-RUN conda run -n watershed_workflow_tools ../configure-seacas.sh
+RUN ${CONDA_BIN} run -n watershed_workflow_tools ../configure-seacas.sh
 RUN make -j install
 
 # exodus installs its wrappers in an invalid place for python...
 # -- get and save the python version
-RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py \
-       /opt/conda/envs/${env_name}/lib/python*/site-packages/
+RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py /opt/conda/envs/${env_name}/lib/python3.10/site-packages/
+ENV PYTHONPATH="/opt/conda/envs/${env_name}/lib:${PYTHONPATH}"
 
 #
 # Stage 4 -- move the whole thing to make simpler containers
@@ -56,7 +62,7 @@ RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py \
 FROM ww_env_exodus_ci AS ww_env_ci_moved
 
 # add conda-pack to the base env
-RUN conda install -n base -c conda-forge --yes --freeze-installed conda-pack 
+RUN ${CONDA_BIN} install --name base -c conda-forge --yes --freeze-installed conda-pack 
 RUN conda-pack -n ${env_name} -o /tmp/env.tar && \
     mkdir /ww_env && cd /ww_env && tar xf /tmp/env.tar && \
     rm /tmp/env.tar
