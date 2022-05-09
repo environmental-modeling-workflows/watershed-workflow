@@ -23,6 +23,6 @@ RUN python -m pytest watershed_workflow/sources/test/test_file_manager_nhdplus.p
 RUN python -m pytest watershed_workflow/sources/test/test_file_manager_shape.py
 
 # run the notebook example
-RUN pytest --nbmake examples/mesh_coweeta.ipynb
+RUN pytest --nbmake --nbmake-kernel=default examples/mesh_coweeta.ipynb
 
 
