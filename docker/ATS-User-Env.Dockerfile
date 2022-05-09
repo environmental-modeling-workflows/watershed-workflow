@@ -10,11 +10,11 @@
 ARG GIT_BRANCH
 ARG env_name=watershed_workflow
 ARG user=jovyan
-ENV CONDA_BIN=mamba
 
 FROM ecoon/watershed_workflow:${GIT_BRANCH}
 LABEL Description="ATS layers on top of WW"
 
+ENV CONDA_BIN=mamba
 
 RUN mkdir /home/${user}/ats
 WORKDIR /home/${user}/ats
