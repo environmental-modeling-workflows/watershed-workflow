@@ -344,10 +344,10 @@ def generate_nlcd_colormap(indices=None, formatted=False):
                                                 lsplit[-1]])
             nlcd_labels_fw.append(label_fw)  
 
-        labels = nlcd_labels_fw      
+        labels = nlcd_labels_fw
 
-    assert(len(indices) == len(labels))
-
+    # last is empty tick
+    labels.append('')
     return indices, cmap, norm, ticks, labels
 
 
