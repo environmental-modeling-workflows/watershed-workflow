@@ -10,6 +10,7 @@
 ARG GIT_BRANCH
 ARG env_name=watershed_workflow
 ARG user=jovyan
+ENV CONDA_BIN=mamba
 
 FROM ecoon/watershed_workflow:${GIT_BRANCH}
 LABEL Description="ATS layers on top of WW"
@@ -21,7 +22,7 @@ WORKDIR /home/${user}/ats
 # get Amanzi-ATS source and install amanzi_xml
 RUN git clone --recursive --depth=1 https://github.com/amanzi/amanzi amanzi-ats
 WORKDIR /home/${user}/ats/amanzi-ats/tools/amanzi_xml
-RUN conda run -n ${env_name} python -m pip install -e .
+RUN ${CONDA_BIN} run -n ${env_name} python -m pip install -e .
 ENV AMANZI_SRC_DIR=/home/${user}/ats/amanzi-ats
 ENV ATS_SRC_DIR=/home/${user}/ats/amanzi-ats/src/physics/ats
 
@@ -31,7 +32,7 @@ ENV PYTHONPATH=/home/${user}/ats/amanzi-ats/src/physics/ats/tools/utils
 WORKDIR /home/${user}/ats/
 RUN git clone --depth=1 https://github.com/ecoon/ats_input_spec ats_input_spec
 WORKDIR /home/${user}/ats/ats_input_spec
-RUN conda run -n ${env_name} python -m pip install -e .
+RUN ${CONDA_BIN} run -n ${env_name} python -m pip install -e .
 
 
 # leave us in the right spot
