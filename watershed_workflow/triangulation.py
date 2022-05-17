@@ -301,8 +301,10 @@ def add_river_outlet_in_huc(river_corr,hucs):
 
     huc_coords=list(huc_segment.coords)[:-1] # to avoid repeated points interferring in the river outlet adjustment
     rc_outlet_point=watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],river_corr.exterior.coords[-2])
-    nearest_huc_point=watershed_workflow.utils.nearest_point(huc_segment, rc_outlet_point)
+    ind=watershed_workflow.utils.closest_point_ind(rc_outlet_point, list(huc_segment.coords)[:-1])
+    nearest_huc_point=list(huc_segment.coords)[:-1][ind]
     dist=watershed_workflow.utils.distance(rc_outlet_point, nearest_huc_point)
+  
     ind=list(huc_segment.coords)[:-1].index(nearest_huc_point)
     
     # if the above point is close to teh river corridor we can just eliminate it from the huc boundary
