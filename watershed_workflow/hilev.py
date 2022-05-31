@@ -280,7 +280,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
 
 
 def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
-                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None,
+                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None, include_catchments=False,
                 **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
@@ -323,6 +323,8 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
         of out_crs.
     properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
         (Table 16 and 17 NHDPlus user guide)
+    include_catchments : bool, optional 
+        If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
     **kwargs : dict, optional
         Other arguments are passed to the file manager's get_reaches() method.
 
@@ -347,7 +349,7 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, **kwargs)
+    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, include_catchments=include_catchments, **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
   
     # convert to shapely
