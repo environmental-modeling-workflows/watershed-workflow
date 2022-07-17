@@ -208,10 +208,10 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
         def add(self, be):
             """Add BoundaryEntry object to the waterway"""
             logging.debug(f"adding cell {be.cell} (z = {be.z})")
-            assert(be.cell not in self.cells)
+            #assert(be.cell not in self.cells)
             self.cells.add(be.cell)
             for e in be.edges:
-                assert(e not in self.edges)
+                #assert(e not in self.edges)
                 self.edges.add(e)
             assert(be.z >= self.max_z)
             self.max_z = be.z
@@ -322,8 +322,8 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
                 boundary.add(BoundaryEntry(other_c, [other_e,]))
             else:
                 # yes, just add this edge to that entry
-                assert(other_e not in other_be.edges)
-                other_be.edges.append(other_e)
+                if other_e not in other_be.edges:
+                    other_be.edges.append(other_e)
                         
     # when this is done, all cells should be in waterway
     assert(len(waterway.cells) == m2.num_cells)
@@ -483,7 +483,7 @@ def condition_river_mesh(m2, river, poly_smooth=False, filter_mode=None, use_nhd
                     if node_id not in river_corr_ids:
                         if m2.coords[node_id][2]<min(profile[i+1,1],profile[i,1]):
                                 logging.info(f"raised node {node_id} for bank integrity") 
-                                m2.coords[node_id][2]= profile[i,1]+0.25 # is 0.25m enough to raise the bank?
+                                m2.coords[node_id][2]= 0.5*(profile[i,1]+profile[i+1,1])+0.55 # is 0.25m enough to raise the bank?
 
 
 def get_reach_profile(node,m2):

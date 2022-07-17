@@ -208,11 +208,11 @@ def interpolate_with_orig(end_points, interp_data, n):
     section_interp_data=np.array(interp_data[inds[0]:inds[1]+1]) # coordinates on section
     a=np.array(end_points); (dx,dy)=abs(a[0,:]-a[1,:])
     if dx>dy: # interpolating on x axis
-        f = interpolate.interp1d(section_interp_data[:,0], section_interp_data[:,1]) # creating interpolator 
+        f = interpolate.interp1d(section_interp_data[:,0], section_interp_data[:,1], fill_value='extrapolate') # creating interpolator 
         xnew=np.linspace(end_points[0][0],end_points[1][0], n+2)[1:-1] # new xs equally space between existing points
         ynew=f(xnew) # interpolated ys
     else:  # interpolating on y axis
-        f = interpolate.interp1d(section_interp_data[:,1], section_interp_data[:,0]) # creating interpolator 
+        f = interpolate.interp1d(section_interp_data[:,1], section_interp_data[:,0], fill_value='extrapolate') # creating interpolator 
         ynew=np.linspace(end_points[0][1],end_points[1][1], n+2)[1:-1] # new ys equally space between existing points
         xnew=f(ynew) # interpolated xs
     new_points=[(xnew[k],ynew[k]) for k in range(n)]

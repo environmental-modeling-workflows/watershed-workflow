@@ -118,7 +118,6 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
                     assert(len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
                     assert(len(new_spine) == 1 or len(new_spine) == 2)
                     logging.info("  - cutting reach at external boundary of HUCs")
-
                     if hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[0].coords[0])):
                         if len(new_reach_segs) == 2:
                             assert(not hucs.exterior().contains(shapely.geometry.Point(new_reach_segs[1].coords[-1])))

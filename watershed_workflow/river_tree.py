@@ -288,7 +288,7 @@ def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
         a river corridor polygon
     """ 
     if type(widths)== dict:
-        dilation_width=np.mean(list(widths.values()))
+        dilation_width=np.min(list(widths.values())) 
     else:
         dilation_width=widths
 
@@ -325,6 +325,7 @@ def create_river_corridor(river, river_width):
     # first sort the river so that in a search we always take paddlers right...
     sort_children_by_angle(river, True)
     delta = river_width / 2.
+    length_scale=3*delta 
 
     # buffer by the width
     mls = shapely.geometry.MultiLineString([r for r in river.dfs()])
@@ -354,9 +355,9 @@ def create_river_corridor(river, river_width):
             logging.debug(f' always keeping')
             corr3_p.append(corr2_p[i])
         else:
-            if watershed_workflow.utils.distance(corr2_p[i-1], corr2_p[i]) < 3*delta:
+            if watershed_workflow.utils.distance(corr2_p[i-1], corr2_p[i]) < length_scale:
                 # is this a triple point?
-                if watershed_workflow.utils.distance(corr2_p[i+1], corr2_p[i]) < 3*delta:
+                if watershed_workflow.utils.distance(corr2_p[i+1], corr2_p[i]) < length_scale:
                     logging.debug(' triple point!')
                     # triple point, average neighbors and skip the next point
                     corr3_p.append(watershed_workflow.utils.midpoint(corr2_p[i+1], corr2_p[i-1]))
@@ -367,7 +368,7 @@ def create_river_corridor(river, river_width):
                     corr3_p.append(watershed_workflow.utils.midpoint(corr2_p[i-1], corr2_p[i]))
             else:
                 # will the next point deal with this?
-                if watershed_workflow.utils.distance(corr2_p[i], corr2_p[i+1]) < 3*delta:
+                if watershed_workflow.utils.distance(corr2_p[i], corr2_p[i+1]) < length_scale:
                     logging.debug(' not my problem')
                     pass
                 else:
@@ -484,11 +485,12 @@ def to_quads(river, corr, delta, gid_shift=0 , ax=None):
                 else:
                     assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
+
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
+                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
                  
         else:
             logging.debug(f'  middle time around! {node.touched+1}')

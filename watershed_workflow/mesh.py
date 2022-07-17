@@ -1456,6 +1456,7 @@ def add_watershed_regions(m2, polygons, labels=None):
 
     return partitions
 
+
 def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     """Add four labeled sets to m2 for each polygon:
 
@@ -1520,3 +1521,31 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
                          'FACE', edges)
         ls2.to_extrude = True
         m2.labeled_sets.append(ls2)
+
+
+def add_river_corridor_regions(m2, corrs, labels=None):
+    """Add labeled sets to m2 for each river corridor."""
+    if labels is None:
+        labels = []
+        for i,p in enumerate(corrs):
+            label = f'river_corridor {i}'
+            labels.append(label)
+    else:
+        assert(len(labels) == len(corrs))
+
+    partitions = [list() for p in corrs]
+    for c in range(m2.num_cells):
+        cc = m2.compute_centroid(c)
+        cc = shapely.geometry.Point(cc[0], cc[1])
+        try:
+            ip = next(i for (i,p) in enumerate(corrs) if p.contains(cc))
+        except StopIteration:
+            pass
+        else:
+            partitions[ip].append(c)
+
+    for label, part in zip(labels, partitions):
+        if len(part) > 0:
+            setid2 = m2.next_available_labeled_setid()
+            ls2 = LabeledSet(label+' surface', setid2, 'CELL', part)
+            m2.labeled_sets.append(ls2)

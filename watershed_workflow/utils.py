@@ -409,6 +409,11 @@ def triangle_area(vertices):
             xy2[0] * xy1[1])
     return A
 
+def area(vertices):
+    """Area of polygons in 2D"""
+    area=shapely.geometry.Polygon(vertices).area
+    return area
+
 
 def angle(v1, v2):
     """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
