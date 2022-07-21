@@ -122,10 +122,10 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
                         if len(new_reach_segs) == 2:
                             assert(not hucs.exterior().contains(shapely.geometry.Point(new_reach_segs[1].coords[-1])))
                         reach_node.segment = new_reach_segs[0]
-                    else:
-                        assert(hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[1].coords[0])))
-                        reach_node.segment = new_reach_segs[1]
 
+                    elif len(new_reach_segs) == 2:
+                        if hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[1].coords[0])):
+                            reach_node.segment = new_reach_segs[1]
                     hucs.segments[seg_handle] = new_spine[0]
                     if len(new_spine) > 1:
                         assert(len(new_spine) == 2)
