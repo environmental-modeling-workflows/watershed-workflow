@@ -115,6 +115,20 @@ class River(watershed_workflow.tinytree.Tree):
         """
         return all(self._is_continuous(child, tol) for child in self.children) and \
             all(child.is_continuous(tol) for child in self.children)
+    
+    def _make_continuous(self, child):
+        child_coords=list(child.segment.coords)
+        child_coords[-1]=list(self.segment.coords)[0]
+        child.segment=shapely.geometry.LineString(child_coords)
+
+    def make_continuous(self, tol=_tol):
+        """Sometimes there can be small gaps between segments of river tree if river is constructed using
+        HydrologicSequence and Snap option is not used. Here we make them consistent"""
+        for node in self.preOrder():
+            for child in node.children:
+                if not node._is_continuous(child, tol):
+                    node._make_continuous(child)
+        assert(self.is_continuous())
 
     def is_hydroseq_consistent(self):
         """Confirms that hydrosequence is valid."""
@@ -327,11 +341,15 @@ def create_river_corridor(river, river_width):
     delta = river_width / 2.
     length_scale=3*delta 
 
+    # check river consistency
+    if not river.is_continuous():
+        river.make_continuous()
+
     # buffer by the width
     mls = shapely.geometry.MultiLineString([r for r in river.dfs()])
     corr = mls.buffer(delta, cap_style=shapely.geometry.CAP_STYLE.flat,
                       join_style=shapely.geometry.JOIN_STYLE.mitre)
-
+    
     # cycle the corridor points to start and end with the 1st point...
     corr_p = list(corr.exterior.coords[:-1])
     outlet_p = river.segment.coords[-1]
