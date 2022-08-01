@@ -5,6 +5,7 @@ import sortedcontainers
 import logging
 import copy
 import math
+import scipy.ndimage
 
 @attr.s
 class Point:
@@ -396,7 +397,7 @@ def fill_gaps(img_in, nodata=np.nan):
     # interpolate the whole image
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
 
-def condition_river_mesh(m2, river, poly_smooth=False, filter_mode=None, use_nhd_elev=False, cut_off_order=0, treat_banks=False, depress_by=0):
+def condition_river_mesh(m2, river, smooth=False, monotonicity=None, use_nhd_elev=False, cut_off_order=0, treat_banks=False, depress_by=0):
     """(WIP) Makes the bed profile of the stream smooth, removes hills and ponds
 
     Parameters:
@@ -436,57 +437,46 @@ def condition_river_mesh(m2, river, poly_smooth=False, filter_mode=None, use_nhd
     for node in river.preOrder():
         order=node.properties["StreamOrder"]
         
+        # get the profile from NHDPlus flowline elevation
         assert('elev_profile' in node.properties.keys())
-            
-        # get bed profile
-        stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream        dists=[math.dist(node.segment.coords[0],point) for point in node.segment.coords]
-        dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
-        elevs=node.properties['elev_profile'][::-1] # this is also reversed
-        profile=np.array([dists,elevs]).T
+        if smooth: # smooth it using gaussian filter
+            profile=smooth_profile(node)
+        else:
+            profile=get_profile(node)
+        
+        if monotonicity is not None: # ensuring monotonicity of elevation from downtream to upstream
+            profile=enforce_monotonicity(profile, monotonicity)  
 
-        if order <=cut_off_order:    
-
-            if use_nhd_elev and 'MaximumElevationSmoothed'in node.properties.keys() and 'MinimumElevationSmoothed' in node.properties.keys():
-                    nhd_limits=[node.properties['MinimumElevationSmoothed']/100,node.properties['MaximumElevationSmoothed']/100]
-            else:
-                    nhd_limits=None
-
-            if poly_smooth:
-                logging.info("fitting a 5th degree polynomial")
-                profile=poly_fit(profile, degree=5) # it is highly recommended to filter after this
-
-            
-            profile[:,1]=profile[:,1]-depress_by
-
-            if not filter_mode == None:
-                profile=filter_pass(profile, filtermode=filter_mode,nhd_limits=nhd_limits)
+        node.properties["SmoothProfile"]=profile # add the profile as propterties 
+               
+        profile[:,1]=profile[:,1]-depress_by
 
         # higher order streams might not need conditioning as river quads will sit in nicely into DEM depressions
         for i, elem in enumerate(node.elements): 
             
             if i ==0: # for the first point
-                m2.coords[elem[0]][2]= m2.coords[elem[-1]][2]=profile[i,1]
+                m2.coords[elem[0]][2] = m2.coords[elem[-1]][2] = profile[i,1]
                 
-            # we are assgining elevations only to the upstream points of the river elements
+            # we are assgining elevations to the upstream points of the river elements (quads)
             if len(elem)==3:          
-                m2.coords[elem[1]][2]= profile[i+1,1]
+                m2.coords[elem[1]][2] = profile[i+1,1]
 
             elif len(elem)==4: 
-                m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= profile[i+1,1]
+                m2.coords[elem[1]][2] = m2.coords[elem[2]][2]= profile[i+1,1]
                 
             elif len(elem)==5:  
-                m2.coords[elem[1]][2]= m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= profile[i+1,1]
+                m2.coords[elem[1]][2] = m2.coords[elem[2]][2]= m2.coords[elem[3]][2]= profile[i+1,1]
                 
             if treat_banks: # this needs to be rewritten
                 bank_node_ids=bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                     if node_id not in river_corr_ids:
-                        if m2.coords[node_id][2]<min(profile[i+1,1],profile[i,1]):
+                        if m2.coords[node_id][2] < min(profile[i+1,1], profile[i,1]):
                                 logging.info(f"raised node {node_id} for bank integrity") 
                                 m2.coords[node_id][2]= 0.5*(profile[i,1]+profile[i+1,1])+0.55 # is 0.25m enough to raise the bank?
 
 
-def get_reach_profile(node,m2):
+def get_reach_profile(node, m2):
     """ for a given node segment of a river tree, this function return the profile
         of the stream bed based on the centroid elevation of the quads
 
@@ -518,41 +508,47 @@ def get_reach_profile(node,m2):
     return profile
 
 
-def poly_fit(profile, degree=5):
-    profile_new=copy.deepcopy(profile)
-    if not len(profile)==1:
-        p = poly.polyfit(profile[:,0], profile[:,1], deg=degree)
-        profile_new[:,1]=poly.polyval(profile_new[:,0],p)
-    return profile_new
-
-def filter_pass(profile, filtermode='upstream',nhd_limits=None):
-    logging.info(f"filer pass with nhdlimits as {nhd_limits}")
+def enforce_monotonicity(profile, monotonicity='upstream'):
     
     profile_new=copy.deepcopy(profile)
-    if nhd_limits==None:
-        if filtermode=='upstream': 
-            for i in range(len(profile_new)-1):
-                if profile_new[i+1,1] < profile_new[i,1]:
-                    profile_new[i+1,1]=profile_new[i,1]
-
-        elif filtermode=='downstream':
-            for i in range(len(profile_new)-1, 0,-1):
-                if profile_new[i-1,1] > profile_new[i,1]:
-                    profile_new[i-1,1] = profile_new[i,1]
-                    
-    elif nhd_limits is list: 
-            
-        profile_new[0,1]=nhd_limits[0]
+    if monotonicity=='upstream': 
         for i in range(len(profile_new)-1):
             if profile_new[i+1,1] < profile_new[i,1]:
                 profile_new[i+1,1]=profile_new[i,1]
-        
-        profile_new[-1,1]=nhd_limits[1]
+
+    elif monotonicity=='downstream':
         for i in range(len(profile_new)-1, 0,-1):
             if profile_new[i-1,1] > profile_new[i,1]:
                 profile_new[i-1,1] = profile_new[i,1]
-
+    
     return profile_new
+
+
+
+def get_profile(node):
+    # get bed profile
+    stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream
+    dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
+    elevs=node.properties['elev_profile'][::-1] # this is also reversed
+    profile=np.array([dists,elevs]).T
+    return profile
+
+
+def smooth_profile(node):
+    
+    profile=get_profile(node)
+    
+    if node.parent is None:
+        profile[:,1]=scipy.ndimage.gaussian_filter(profile[:,1], 5, mode='nearest')     
+    else: 
+        #parent_profile=get_profile(node.parent)
+        parent_profile=node.parent.properties['SmoothProfile']
+        profile_to_smooth=np.vstack((parent_profile, profile[1:,:]))
+        profile_to_smooth[len(parent_profile):,0]=profile_to_smooth[len(parent_profile):,0]+profile_to_smooth[len(parent_profile)-1,0] # shift teh distances
+        profile_to_smooth[:,1]=scipy.ndimage.gaussian_filter(profile_to_smooth[:,1], 5, mode='nearest') # smooth filter
+        profile[:,1]=profile_to_smooth[-len(profile):,1]
+    
+    return profile
 
 def bank_nodes_from_elem(elem, m2):
     # function yileding back id of the bank-node for a given stream-mesh element 
