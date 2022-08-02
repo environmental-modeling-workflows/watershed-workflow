@@ -474,20 +474,23 @@ def prune_river_by_fractional_contributing_area(river, area_fraction, total_area
     logging.info(f'... total contributing area = {total_area}')
 
     from shapely.ops import unary_union
-        
+
+    catchments_available = 'catchment' in river.properties.keys()    
     count = 0
     for node in river.preOrder():
         if node.properties['TotalDrainageAreaSqKm'] / total_area < area_fraction:
             logging.info(f"... removing: {node.properties['TotalDrainageAreaSqKm']} of {total_area}")
             count += 1
-        
-            pruned_catchments=[]
-            for pruned_node in node.preOrder():
-                if type(pruned_node.properties['catchment'])==shapely.geometry.polygon.Polygon:
-                    pruned_catchments.append(pruned_node.properties['catchment'])
-         
-            new_parent_catchment= unary_union(pruned_catchments+[node.parent.properties['catchment']])
-            node.parent.properties['catchment']=new_parent_catchment            
+
+            if catchments_available: # accumulate catchment polygons 
+                pruned_catchments=[]
+                for pruned_node in node.preOrder():
+                    if type(pruned_node.properties['catchment'])==shapely.geometry.polygon.Polygon:
+                        pruned_catchments.append(pruned_node.properties['catchment'])
+            
+                new_parent_catchment= unary_union(pruned_catchments+[node.parent.properties['catchment']])
+                node.parent.properties['catchment']=new_parent_catchment   
+
             node.remove()
             node.clear() # this ensures we can stop removing anything upstream of this
     return count
