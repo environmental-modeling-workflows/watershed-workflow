@@ -15,6 +15,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
@@ -32,7 +37,8 @@ jobs:
           context: ./
           file: ./docker/User-Env.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow:${{ steps.extract_branch.outputs.branch }}
+          build-args: GIT_BRANCH=${{ steps.extract_branch.outputs.branch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           

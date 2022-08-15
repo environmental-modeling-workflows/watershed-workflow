@@ -348,7 +348,7 @@ class FileManagerNRCS:
 
             data = {'FORMAT' : 'JSON',
                     'QUERY' : query}
-            r = requests.post(self.url_data, data=data, verify=False)
+            r = requests.post(self.url_data, data=data)
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
@@ -512,7 +512,7 @@ class FileManagerNRCS:
             query = _query_template_shapes.format(box.wkt)
             data = {'FORMAT' : 'JSON',
                     'QUERY' : query}
-            r = requests.post(self.url_data, data=data, verify=False)
+            r = requests.post(self.url_data, data=data)
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
