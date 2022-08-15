@@ -9,6 +9,7 @@ likely not useful to users.
 import logging
 import subprocess
 import numpy as np
+import math
 import scipy.interpolate
 import shapely.geometry
 import shapely.ops
@@ -632,7 +633,7 @@ def create_empty_raster(target_bounds, crs, target_dx, dtype, nodata):
 
 def is_convex(points):
     poly = shapely.geometry.Polygon(points) 
-    return poly.convex_hull.area == poly.area
+    return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
 
 
 def cluster(points, tol):

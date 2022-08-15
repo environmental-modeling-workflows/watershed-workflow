@@ -247,7 +247,7 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
-def create_rivers_meshes(rivers, widths=8, junction_treatment=True):
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
@@ -272,14 +272,14 @@ def create_rivers_meshes(rivers, widths=8, junction_treatment=True):
     for river in rivers:
         if len(elems)!=0:
             gid_shift=np.max([max(map(int, elem)) for elem in elems])+1
-        elems_river, corr = create_river_mesh(river, widths=widths, junction_treatment=junction_treatment, gid_shift=gid_shift)
+        elems_river, corr = create_river_mesh(river, widths=widths, enforce_convexity=enforce_convexity, gid_shift=gid_shift)
         elems=elems + elems_river
         corrs=corrs+[corr,]
 
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
+def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
     """Returns list of elems and river corridor polygons for a given river tree
 
     Parameters:
@@ -314,8 +314,8 @@ def create_river_mesh(river, widths=8, junction_treatment=True, gid_shift=0):
     if type(widths)==dict:
         corr = set_width_by_order(river, corr, widths=widths)
     # treating non-convexity at junctions
-    if junction_treatment:
-        corr =junction_treatment_by_nudge(river, corr)
+    if enforce_convexity:
+        corr =convexity_enforcement(river, corr)
 
     return elems, corr
 
@@ -604,9 +604,8 @@ def width_cal(width_dict, order):
     return width
 
 
-def junction_treatment_by_nudge(river, corr):
-    """this functions takes the river-corridor polygon, nudges the neck-points of the junction if the pentagon is non-convex 
-    until it becomes convex
+def convexity_enforcement(river, corr):
+    """this functions check the river-corridor polygon for convexity, if non-convex, moves the node onto the convex hull of the polygon
 
     Parameters
     ----------
@@ -620,31 +619,24 @@ def junction_treatment_by_nudge(river, corr):
     shapely.geometry.Polygon(corr_coords_new): 
         river corridor polygon with adjusted width
     """  
-
     coords=corr.exterior.coords[:-1]
 
     for j, node in enumerate(river.preOrder()):
         for elem in node.elements:
-                if len(elem)==5: # checking and treating this pentagon
-                    points=[coords[id] for id in elem];  i=0
-                    points_orig=copy.deepcopy(points)
-                    while not watershed_workflow.utils.is_convex(points):
-                        p1, p3= [np.array(points[1]), np.array(points[3])]
-                        d=p1-p3
-                        p1_=p3+1.01*d
-                        p3_=p1-1.01*d
-                        points[1]=tuple(p1_)
-                        points[3]=tuple(p3_)
-                        i+=1
-                    logging.debug("pent in node", j, "was adjusted", i, " times")
+                if len(elem)==5 or len(elem)==6: # checking and treating this pentagon/hexagon
+                    points=[coords[id] for id in elem]
+                    if not watershed_workflow.utils.is_convex(points):
+                        from shapely.ops import nearest_points
+                        convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
+                        for i, point in enumerate(points): # replace point with closest point on convext hull
+                            p = shapely.geometry.Point(point)                           
+                            new_point = nearest_points(convex_ring, p)[0].coords[0]
+                            points[i] = new_point
+                    
                     assert(watershed_workflow.utils.is_convex(points))
                         # updating coords
                     for id, point in zip(elem, points):
                         coords[id]=point    
 
     corr_coords_new=coords+[coords[0]]                     
-    return shapely.geometry.Polygon(corr_coords_new)
-                        
-
-
-
+    return shapely.geometry.Polygon(corr_coords_new)                       
