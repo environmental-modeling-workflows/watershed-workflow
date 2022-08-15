@@ -396,10 +396,11 @@ def fill_gaps(img_in, nodata=np.nan):
 
     # interpolate the whole image
     return interp0(np.ravel(xx), np.ravel(yy)).reshape(xx.shape)
+    
 
 def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False, use_nhd_elev=False, treat_banks=False, depress_by=0):
     """Conditoning the elevations of stream-corridor elements (generally required in flat agricultural watersheds) to ensure connectivity throgh culverts, 
-    skips ponds, maintaiin monotonicity, enforce depths of contructed channels
+    skips ponds, maintaiin monotonicity, enforce depths of constructed channels
 
     Parameters:
     -----------
@@ -411,13 +412,10 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
     smooth: boolean, optional
         flag for smoothing the profile of each reach using a gaussian filter (mainly to pass through railroads and avoid reservoirs)
     use_parent: boolean, optional
-        if to use segment of parent node while smoothing (seems to be not making huge difference)
+        if to use segment of parent node while smoothing (seems to be not making a huge difference)
     lower: boolean, optional
         to lower the smoothed bed profile to match the lower points on the raw bed profile. This is useful particularly for narrow ag. dicthes
         where NHDPLus flowlines often to do not coincide with the DEM depressions hence, sream-elements intermitently fall into them
-    
-    filter_mode: "upper" or "lower", optional
-        to enforce elevation monotonocity, whether to start from upstream or downtream end of the reach
     use_nhd_elev: boolean, optional
         whether to enforce maximum and minimum elevation for each reach provided in NHDPlus
     cut_off_order: int, optional
@@ -431,8 +429,7 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
     Returns
     -------
     m2: watershed_workflow.mesh.Mesh2D object
-        a 2D mesh with conditioned stream network 
-           
+        a 2D mesh with conditioned stream network           
     """
     river_corr_ids=[] # collecting IDs of all nodes in the river/stream
     for node in river.preOrder():
@@ -445,7 +442,7 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
     # topographic gradients in the streambeds, and connectivity through culverts that pass under road and railway embankments
     if smooth:        
         for node in river.preOrder():  # reachwise smoothing 
-            smooth_profile(node, use_parent=use_parent, lower=lower) # adds smooth profile in properties
+            smooth_profile(node, use_parent=use_parent, lower=lower) # adds smooth profile in node properties
 
         network_sweep(river, depress_by=depress_by, use_nhd_elev=use_nhd_elev) # network-wide conditioning 
 
@@ -462,20 +459,24 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
             if i ==0: # for the first point
                 m2.coords[elem[0]][2] = m2.coords[elem[-1]][2] = profile[i,1]
                 
-            # we are assgining elevations to the upstream points of the river elements (quads)
+            # assgining elevations to the upstream points of each river-corridor element (quads)
             for coord_id in elem[1:-1]:
                 m2.coords[coord_id][2] = profile[i+1,1]
-                
-            if treat_banks: # this needs to be rewritten
+
+            # this to ensure that a diked channel passing over/around a pond or reservoirs
+            #  do not have bank-nodes fall into the depression  
+            if treat_banks: 
                 bank_node_ids=bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                     if node_id not in river_corr_ids:
                         if m2.coords[node_id][2] < min(profile[i+1,1], profile[i,1]):
                                 logging.info(f"raised node {node_id} for bank integrity") 
-                                m2.coords[node_id][2]= 0.5*(profile[i,1]+profile[i+1,1])+0.55 # is 0.25m enough to raise the bank?
+                                m2.coords[node_id][2]= 0.5*(profile[i,1]+profile[i+1,1])+0.55 
 
 
 def enforce_monotonicity(profile, monotonicity='upstream'):
+    """ensures that the streambed-profile elevations are monotonically 
+    decreasing or stays same as we move from upstream to downstream"""
     
     profile_new=copy.deepcopy(profile)
     if monotonicity=='upstream': 
@@ -492,16 +493,19 @@ def enforce_monotonicity(profile, monotonicity='upstream'):
 
 
 def get_profile(node):
-    # get bed profile
+    """for a given node, genereates a bedprofile using elevations on the node.segment"""
     stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream
     dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
-    elevs=node.properties['elev_profile'][::-1] # this is also reversed
+    elevs=node.properties['elev_profile'][::-1] # reversed
     profile=np.array([dists,elevs]).T
     return profile
 
 
 def smooth_profile(node, use_parent=False, lower=False):
-
+    """applies gaussian filter smoothing to the bed-profile obtained from DEM. This option becomes important in ag. watersheds when NHDPLus
+    is off the actually depression corresding to narrow agricultural ditches on the DEM. One can also include elevation profile of the parent
+    node for better continuity, although, subsequent network sweep option makes using parent profile redundant.
+    """
     profile=get_profile(node)
     profile_new=copy.deepcopy(profile)
 
@@ -511,7 +515,7 @@ def smooth_profile(node, use_parent=False, lower=False):
         else: 
             parent_profile=node.parent.properties['SmoothProfile']
             profile_to_smooth=np.vstack((parent_profile, profile_new[1:,:]))
-            profile_to_smooth[len(parent_profile):,0]=profile_to_smooth[len(parent_profile):,0]+profile_to_smooth[len(parent_profile)-1,0] # shift teh distances
+            profile_to_smooth[len(parent_profile):,0]=profile_to_smooth[len(parent_profile):,0]+profile_to_smooth[len(parent_profile)-1,0] # shift the distances
             profile_to_smooth[:,1]=scipy.ndimage.gaussian_filter(profile_to_smooth[:,1], 5, mode='nearest') # smooth filter
             profile_new[:,1]=profile_to_smooth[-len(profile):,1]
     
@@ -519,7 +523,8 @@ def smooth_profile(node, use_parent=False, lower=False):
         profile_new[:,1]=scipy.ndimage.gaussian_filter(profile[:,1], 5, mode='nearest')
 
     if lower:
-        #### lowering based on the difference between the smooth and the raw profile 
+        # NHDPlus flowlines may not fall on the DEM depression of the narrow ditch, hence the smoothed bed profile will underestimate the depression 
+        # In this step, the smoothed bed propfile is depressed by a median of one-sided difference between the raw and smoothed profile 
         diffs = profile_new[:,1]-profile[:,1]
         if any(diffs>0):
             profile_new[:,1]=profile_new[:,1]-np.median(diffs[diffs>0])
@@ -528,7 +533,9 @@ def smooth_profile(node, use_parent=False, lower=False):
 
     return profile_new
 
+
 def enforce_monotonicity(profile, filtermode='upstream'):
+    """ensures that the elevation of the stream bed elements are decreasing or staying same as we move from upstrea to downstream and vice versa"""
     
     profile_new=copy.deepcopy(profile)
     if filtermode=='upstream': 
@@ -545,7 +552,9 @@ def enforce_monotonicity(profile, filtermode='upstream'):
 
 
 def network_sweep(river, depress_by=0, use_nhd_elev=False):
-    #### sweep accross the network from the upstream end to the downstream
+    """sweeps the river network from each headwater reach (leaf node) to the watershed outlet (root node), removing aritificial obstructions in 
+    the river mesh and enforce depths of constructed channels"""
+
     for leaf in river.leaf_nodes(): #starting from one of the leaf nodes
 
         leaf.properties['SmoothProfile'][:,1]=leaf.properties['SmoothProfile'][:,1]-depress_by # providing extra depression at the upstream end
@@ -568,13 +577,18 @@ def network_sweep(river, depress_by=0, use_nhd_elev=False):
 
 
 def bank_nodes_from_elem(elem, m2):
-    # function yileding back id of the bank-node for a given stream-mesh element 
+    """for a given m2 mesh and id of river-corridor element, returns longitudnal edges of the river-corridor element""" 
+
     edge_r=list(m2.cell_edges(elem))[0]   # edge on the right as we look from the downstream direction
     edge_l=list(m2.cell_edges(elem))[2]  # edge on the left as we look from the downstream direction
     
     return [bank_nodes_from_edge(edge_r, elem, m2), bank_nodes_from_edge(edge_l, elem, m2)]
 
+
 def bank_nodes_from_edge(edge, elem, m2):
+    """for a given m2 mesh, id of river-corridor element and edge, returns bank-node id, i.e., for the triangle attached to the river-corridor, 
+    node that does not form the river corridor"""
+
     cell_ids=m2.edges_to_cells[edge]
     cells_to_edge=[m2.conn[cell_id] for cell_id in cell_ids] 
     cells_to_edge.remove(elem)
