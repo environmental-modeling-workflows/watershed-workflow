@@ -4,3 +4,4 @@ examples/Coweeta/output_data
 *.js
 watershed_workflow.egg-info/PKG-INFO
 *.txt
+.DS_Store
