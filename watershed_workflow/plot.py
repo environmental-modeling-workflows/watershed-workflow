@@ -22,7 +22,6 @@ import shapely
 import rasterio
 from mpl_toolkits.mplot3d import Axes3D
 
-
 import watershed_workflow.utils
 import watershed_workflow.crs
 import watershed_workflow.colors
@@ -185,13 +184,14 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     polys = shply(ps, crs, color, ax, **kwargs)
 
     if hucs.polygon_outlets is not None and ax is not None:
-        x = np.array([p.xy[0] for p in hucs.polygon_outlets])
-        y = np.array([p.xy[1] for p in hucs.polygon_outlets])
+        x = np.array([p.xy[0][0] for p in hucs.polygon_outlets if not watershed_workflow.utils.empty_shapely(p)])
+        y = np.array([p.xy[1][0] for p in hucs.polygon_outlets if not watershed_workflow.utils.empty_shapely(p)])
+        c = [c for (c,p) in zip(color, hucs.polygon_outlets) if not watershed_workflow.utils.empty_shapely(p)]
         if 'markersize' in kwargs:
             s = kwargs['markersize']
         else:
             s = 100
-        ax.scatter(x, y, s=s, c=color, **kwargs_scatter)
+        ax.scatter(x, y, s=s, c=c, **kwargs_scatter)
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
     """Plot an itereable collection of fiona shapes.
@@ -662,21 +662,30 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
         ax.add_feature(land)
 
-
     if state_kwargs is not None and state_kwargs is not False:
         kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
         kwargs.update(**state_kwargs)
         states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines',
-                                                     resolution, **kwargs)
-        ax.add_feature(states)
-
+                                                    resolution, **kwargs)
+        # these seem a bit broken?
+        if 'fix' in state_kwargs and state_kwargs.pop('fix'):
+            states = watershed_workflow.utils.flatten(list(states.geometries()))
+            shplys(states, watershed_workflow.crs.latlon_crs(), ax=ax, **state_kwargs)
+        else:
+            ax.add_feature(states)
+        
     if country_kwargs is not None and country_kwargs is not False:
         kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
         kwargs.update(**country_kwargs)
         country = cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land',
                                                      resolution, **kwargs)
-        ax.add_feature(country)
-        
+        # these seem a bit broken?
+        if 'fix' in country_kwargs and country_kwargs.pop('fix'):
+            country = watershed_workflow.utils.flatten(list(country.geometries()))
+            shplys(country, watershed_workflow.crs.latlon_crs(), ax=ax, **country_kwargs)
+        else:
+            ax.add_feature(country)
+
     if ocean_kwargs is not False:
         if ocean_kwargs is None:
             ocean_kwargs = dict()
@@ -687,12 +696,12 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
         ax.add_feature(ocean)
 
-    # if coastline_kwargs is not None and coastline_kwargs is not False:
-    #     kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
-    #     kwargs.update(**coastline_kwargs)
-    #     states = cartopy.feature.NaturalEarthFeature('physical', 'coastline',
-    #                                                  resolution, **kwargs)
-    #     ax.add_feature(states)
+    if coastline_kwargs is not None and coastline_kwargs is not False:
+        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs.update(**coastline_kwargs)
+        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline',
+                                                     resolution, **kwargs)
+        ax.add_feature(states)
 
         
     return 

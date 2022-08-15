@@ -209,10 +209,8 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
         def add(self, be):
             """Add BoundaryEntry object to the waterway"""
             logging.debug(f"adding cell {be.cell} (z = {be.z})")
-            #assert(be.cell not in self.cells)
             self.cells.add(be.cell)
             for e in be.edges:
-                #assert(e not in self.edges)
                 self.edges.add(e)
             assert(be.z >= self.max_z)
             self.max_z = be.z
