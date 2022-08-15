@@ -463,6 +463,25 @@ def center(objects, centering=True):
     return new_objs, centroid
     
 
+def orientation(p1, p2, p3):
+    """to find the orientation of an ordered triplet (p1,p2,p3) function returns the following values:
+      0 : Collinear points
+      1 : Clockwise points
+      2 : Counterclockwise """
+
+    val = (float(p2.y - p1.y) * (p3.x - p2.x)) - \
+           (float(p2.x - p1.x) * (p3.y - p2.y))
+    if (val > 0):  
+        # Clockwise orientation
+        return 1
+    elif (val < 0):    
+        # Counterclockwise orientation
+        return 2
+    else:    
+        # Collinear orientation
+        return 0
+
+
 def empty_shapely(shp):
     """Is shp None or empty"""
     return shp is None or shp.is_empty
