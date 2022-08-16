@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.polynomial import polynomial as poly
 import attr
 import sortedcontainers
 import logging
@@ -361,7 +360,6 @@ def fill_pits(mesh, outlet=None, algorithm=3):
 def smooth(img_in, algorithm='gaussian', **kwargs):
     """Smooths an image according to an algorithm, passing kwargs on to that algorithm."""
     if algorithm == 'gaussian':
-        import scipy.ndimage
         if 'method' not in kwargs:
             kwargs['method'] = 'nearest'
         if 'sigma' not in kwargs:
@@ -374,7 +372,6 @@ def smooth(img_in, algorithm='gaussian', **kwargs):
 
 
 def fill_gaps(img_in, nodata=np.nan):
-    import scipy.ndimage
     import scipy.interpolate
 
     if nodata is np.nan:
@@ -472,24 +469,6 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
                                 m2.coords[node_id][2]= 0.5*(profile[i,1]+profile[i+1,1])+0.55 
 
 
-def enforce_monotonicity(profile, monotonicity='upstream'):
-    """ensures that the streambed-profile elevations are monotonically 
-    decreasing or stays same as we move from upstream to downstream"""
-    
-    profile_new=copy.deepcopy(profile)
-    if monotonicity=='upstream': 
-        for i in range(len(profile_new)-1):
-            if profile_new[i+1,1] < profile_new[i,1]:
-                profile_new[i+1,1]=profile_new[i,1]
-
-    elif monotonicity=='downstream':
-        for i in range(len(profile_new)-1, 0,-1):
-            if profile_new[i-1,1] > profile_new[i,1]:
-                profile_new[i-1,1] = profile_new[i,1]
-    
-    return profile_new
-
-
 def get_profile(node):
     """for a given node, genereates a bedprofile using elevations on the node.segment"""
     stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream
@@ -532,16 +511,17 @@ def smooth_profile(node, use_parent=False, lower=False):
     return profile_new
 
 
-def enforce_monotonicity(profile, filtermode='upstream'):
-    """ensures that the elevation of the stream bed elements are decreasing or staying same as we move from upstrea to downstream and vice versa"""
+def enforce_monotonicity(profile, monotonicity='upstream'):
+    """ensures that the streambed-profile elevations are monotonically 
+    decreasing or stays same as we move from upstream to downstream and vice versa"""
     
     profile_new=copy.deepcopy(profile)
-    if filtermode=='upstream': 
+    if monotonicity=='upstream': 
         for i in range(len(profile_new)-1):
             if profile_new[i+1,1] < profile_new[i,1]:
                 profile_new[i+1,1]=profile_new[i,1]
 
-    elif filtermode=='downstream':
+    elif monotonicity=='downstream':
         for i in range(len(profile_new)-1, 0,-1):
             if profile_new[i-1,1] > profile_new[i,1]:
                 profile_new[i-1,1] = profile_new[i,1]
