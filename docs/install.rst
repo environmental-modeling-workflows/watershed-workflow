@@ -35,8 +35,7 @@ the open source library Triangle, which can be wrapped for python
 using `meshpy`.  This in turn depends upon boost python.  Optionally,
 extrusion of this 2D mesh into a 3D mesh for use in integrated
 hydrologic models requires a 3D mesh library ~~ we tend to use
-ExodusII here (though it would be straightforward to extend this to
-other packages such as VTK).  ExodusII, part of the `SEACAS
+ExodusII here, but VTK is also supported.  ExodusII, part of the `SEACAS
 <https://github.com/gsjaardema/seacas>`_ suite of tools, provides a
 python3 set of wrappers, but there is no current package, so this must
 be installed separately.  See below.  Exodus, in turn, needs
@@ -58,13 +57,14 @@ be pipelined -- you develop a notebook, then use `papermill` to use
 the notebook as a script.
 
 
-Use with Docker
+Installation with Docker
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Because of this complex set of processes, the simplest form of using
 Watershed Workflow is through the provided Docker containers.  To do
-this, simply install the Docker desktop app, then run the script
-`bin/run_ww_lab.py`:
+this, install the `Docker desktop app
+<https://www.docker.com/products/docker-desktop/>`_, then run the
+script `bin/run_ww_lab.py`:
 
 .. code-block:: console
 

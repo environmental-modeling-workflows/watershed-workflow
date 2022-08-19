@@ -326,6 +326,9 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     # when this is done, all cells should be in waterway
     assert(len(waterway.cells) == m2.num_cells)
     assert(len(waterway.edges) == m2.num_edges)
+
+    # delete the centroid info to force recalculation
+    m2.clear_geometry_cache()
     return
 
 
@@ -357,6 +360,36 @@ def fill_pits(mesh, outlet=None, algorithm=3):
     mesh.points = np.array([p.coords for p in points_dict.values()])
 
 
+def identify_local_minima(mesh):
+    """For all cells, identify if their centroid elevation is lower than
+    the elevation of all neighbors."""
+    res = np.zeros((mesh.num_cells,),)
+    for cell, conn in enumerate(mesh.conn):
+        higher = []
+        for e in mesh.cell_edges(conn):
+            # find the other cell
+            e_cells = mesh.edges_to_cells[e]
+            if len(e_cells) > 1:
+                if e_cells[0] == cell:
+                    other_cell = e_cells[1]
+                elif e_cells[1] == cell:
+                    other_cell = e_cells[0]
+                else:
+                    raise RuntimeError("Mismatch, cell not in edges_to_cells?")
+            else:
+                continue
+            if mesh.centroids[other_cell][-1] > mesh.centroids[cell][-1]:
+                higher.append(True)
+            else:
+                higher.append(False)
+                break
+        if all(higher):
+            res[cell] = 1
+
+    return res
+        
+    
+    
 def smooth(img_in, algorithm='gaussian', **kwargs):
     """Smooths an image according to an algorithm, passing kwargs on to that algorithm."""
     if algorithm == 'gaussian':
