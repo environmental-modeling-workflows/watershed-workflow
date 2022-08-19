@@ -26,9 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: valid docker tag from branch
+
+      - name: Extract branch name
         shell: bash
-        run: echo "##[set-output name=tag;]$(git rev-parse --abbrev-ref HEAD | sed 's/[^[:alnum:]\.\_\-]/-/g')"
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^[:alnum:]\.\_\-]/-/g')"
         id: extract_tag
 
       - name: Set up Docker Buildx
