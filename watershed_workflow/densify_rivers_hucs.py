@@ -1,4 +1,4 @@
-"""this code increases the resolution of river network and huc boundmary in a controlled way using original river network and huc"""
+"""this code increases the resolution of river network and huc boundary in a controlled way using original river network and huc"""
 import logging
 import numpy as np
 import math
@@ -7,19 +7,20 @@ import shapely
 
 import watershed_workflow.utils
 
-def densify_rivers(rivers,rivers_=None, use_original=False, limit=100, treat_collinearity=False):
+def densify_rivers(rivers, rivers_raw=None, use_original=False, limit=100, treat_collinearity=False):
     """Returns a list for densified rivers"""
-    rivers=[densify_river(river, river_, use_original= use_original, limit=limit, treat_collinearity=treat_collinearity) for river, river_ in zip(rivers, rivers_)]
+    rivers=[densify_river(river, river_raw, use_original= use_original, limit=limit, treat_collinearity=treat_collinearity) for river, river_raw in zip(rivers, rivers_raw)]
     return rivers
 
-def densify_river(river,river_=None, use_original=False, limit=100, treat_collinearity=False):
+
+def densify_river(river, river_raw=None, use_original=False, limit=100, treat_collinearity=False):
     """This function traverse in the river tree and densify node.segments
     
     Parameters:
     -----------
     river: watershed_workflow.river_tree.RiverTree object
         river tree after simplifed (sparse points) that is to be densified 
-    river_: watershed_workflow.river_tree.RiverTree object, optional
+    river_raw: watershed_workflow.river_tree.RiverTree object, optional
         original tree containing all the known points from NHDPlus 
     limit : int
         limit on the section length above which more points are added
@@ -36,15 +37,15 @@ def densify_river(river,river_=None, use_original=False, limit=100, treat_collin
 
     """
        
-    assert (len(river)==len(river_))
+    assert (len(river)==len(river_raw))
 
     river_densified=river.deep_copy()
-    for node, node_ in zip(river_densified.preOrder(), river_.preOrder()):
+    for node, node_ in zip(river_densified.preOrder(), river_raw.preOrder()):
         node.segment=densify_node_segments(node,node_,limit=limit,use_original=use_original,treat_collinearity=treat_collinearity)
     return river_densified
 
 
-def densify_node_segments(node,node_, use_original=False, limit=100, treat_collinearity=False):
+def densify_node_segments(node, node_raw, use_original=False, limit=100, treat_collinearity=False):
     """This function adds equally-spaced points in the reach-sections longer than the limit at a desired resolution
         potentially using original river tree
      
@@ -52,7 +53,7 @@ def densify_node_segments(node,node_, use_original=False, limit=100, treat_colli
      -----------
     node: node of a watershed_workflow.river_tree.RiverTree object
         node of a simplifed tree (sparse points) that is to be densified 
-    node_: nodeof a watershed_workflow.river_tree.RiverTree object, optional
+    node_raw: nodeof a watershed_workflow.river_tree.RiverTree object, optional
         node from the original tree containing all the known points from NHDPlus 
     limit : int
         limit on the section length above which more points are added
@@ -69,7 +70,7 @@ def densify_node_segments(node,node_, use_original=False, limit=100, treat_colli
     """
       
     seg_coords=list(node.segment.coords) # coordinates of node.segment to be densified
-    seg_coords_=list(node_.segment.coords) # coordinates of node.segment from original river network
+    seg_coords_=list(node_raw.segment.coords) # coordinates of node.segment from original river network
     seg_coords_densified=seg_coords.copy() # segment coordinates densified
     j=0
     for i in range(len(seg_coords)-1):
@@ -90,7 +91,7 @@ def densify_node_segments(node,node_, use_original=False, limit=100, treat_colli
     return node.segment
 
 
-def densify_hucs(huc, huc_, rivers, use_original=False, limit_scales=None):
+def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
     """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
     function where huc segment refinedment is greater for huc segments closer to the river tree
      
@@ -98,7 +99,7 @@ def densify_hucs(huc, huc_, rivers, use_original=False, limit_scales=None):
      -----------
       hucs: watershed_workflow.split_hucs.SplitHUCs object
         huc to be densified 
-      huc_: watershed_workflow.split_hucs.SplitHUCs object
+      huc_raw: watershed_workflow.split_hucs.SplitHUCs object
         original huc with all the known points from NHDPlus 
       river: watershed_workflow.river_tree.RiverTree object
         to check the proximity of huc and river for refinement 
@@ -117,32 +118,32 @@ def densify_hucs(huc, huc_, rivers, use_original=False, limit_scales=None):
     # first if there are multiple segments, we define outer-ring and remove close points
     #huc_ring=huc.exterior().exterior.simplify(tolerance=1)
     coords=list(huc.exterior().exterior.coords) 
-    coords_=list(huc_.exterior().exterior.coords)
+    coords_raw=list(huc_raw.exterior().exterior.coords)
    
     if use_original:
         if type(limit_scales)is list:
             # basic refine
-            coords_densified_basic=densify_hucs_(coords,coords_, rivers,limit_scales=limit_scales[-1])
+            coords_densified_basic=densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales[-1])
             # adaptive refine
-            coords_densified=densify_hucs_(coords_densified_basic, coords_, rivers,limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords_densified_basic, coords_raw, rivers, limit_scales=limit_scales)
             
         else:
-            coords_densified=densify_hucs_(coords,coords_,rivers, limit_scales=limit_scales)
+            coords_densified=densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
       
     else: 
-        coords_densified=densify_hucs_(coords,coords_,rivers,limit_scales=limit_scales)
+        coords_densified=densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
        
     return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
 
 
-def densify_hucs_(coords, coords_, rivers, limit_scales=None):
+def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
 
      Parameters:
      -----------
       coords: List            
         coordinates of the huc segment to be densified
-      coords_: List              
+      coords_raw: List              
         coordinates of the original huc segment from which points can be resmapled
       limit_scales: int or List 
         limit of section length above which more points are added, either a constant value or a list for step refinement 
@@ -161,11 +162,11 @@ def densify_hucs_(coords, coords_, rivers, limit_scales=None):
 
         # calculation of limit for a set of point
         if adaptive:
-            limit=limit_from_river_distance([coords[i],coords[i+1]], limit_scales, rivers)
+            limit=limit_from_river_distance([coords[i], coords[i+1]], limit_scales, rivers)
         else:
             limit=limit_scales
             
-        section_length=math.dist(coords[i],coords[i+1])
+        section_length=math.dist(coords[i], coords[i+1])
 
         if section_length>limit:
             number_new_points=int(section_length//limit)
@@ -174,7 +175,7 @@ def densify_hucs_(coords, coords_, rivers, limit_scales=None):
             if adaptive:
                 new_points=interpolate_simple(end_points, number_new_points)
             else:
-                new_points=interpolate_with_orig(end_points, coords_, number_new_points)
+                new_points=interpolate_with_orig(end_points, coords_raw, number_new_points)
                 
             coords_densified[j+1:j+1]= new_points
             j+=number_new_points        
@@ -219,7 +220,7 @@ def interpolate_with_orig(end_points, interp_data, n):
     return new_points
 
 
-def interpolate_simple(end_points,n):
+def interpolate_simple(end_points, n):
     """This function does not use any original data, just adds new equally spaced points based on linear interpolation"""
     xnew=np.linspace(end_points[0][0],end_points[1][0], n+2)[1:-1] # new xs equally space between existing points
     ynew=np.linspace(end_points[0][1],end_points[1][1], n+2)[1:-1] # new ys equally space between existing points

@@ -536,22 +536,16 @@ def network_sweep(river, depress_by=0, use_nhd_elev=False):
     the river mesh and enforce depths of constructed channels"""
 
     for leaf in river.leaf_nodes(): #starting from one of the leaf nodes
-
         leaf.properties['SmoothProfile'][:,1]=leaf.properties['SmoothProfile'][:,1]-depress_by # providing extra depression at the upstream end
-
         for node in leaf.pathToRoot(): # traversing from leaf node (headwater) catchment to the root node
-
             node.properties['SmoothProfile']=enforce_monotonicity(node.properties['SmoothProfile'], 'downstream') # making monotonous 
-
             junction_elevs = [sib.properties['SmoothProfile'][0,1] for sib in node.siblings()]
 
             if use_nhd_elev:
                 junction_elevs.append(node.properties['MinimumElevationSmoothed']/100)
-
             if not node.parent == None: 
                 junction_elevs.append(node.parent.properties['SmoothProfile'][-1,1])
                 node.parent.properties['SmoothProfile'][-1,1]=min(junction_elevs) # giving min junction elevation to both the siblings
-
             for sib in node.siblings(): 
                 sib.properties['SmoothProfile'][0,1]=min(junction_elevs)
 
