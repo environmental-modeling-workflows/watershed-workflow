@@ -24,5 +24,6 @@ RUN python -m pytest watershed_workflow/sources/test/test_file_manager_shape.py
 
 # run the notebook example
 RUN pytest --nbmake --nbmake-kernel=python3 examples/mesh_coweeta.ipynb
+RUN pytest --nbmake --nbmake-kernel=python3 examples/mesh_mixed_element_toy_problem.ipynb
 
 
