@@ -2,6 +2,9 @@
 import logging
 import collections
 import numpy as np
+import copy
+import fiona
+import pandas as pd
 import itertools
 from scipy.spatial import cKDTree
 
@@ -112,6 +115,20 @@ class River(watershed_workflow.tinytree.Tree):
         """
         return all(self._is_continuous(child, tol) for child in self.children) and \
             all(child.is_continuous(tol) for child in self.children)
+    
+    def _make_continuous(self, child):
+        child_coords=list(child.segment.coords)
+        child_coords[-1]=list(self.segment.coords)[0]
+        child.segment=shapely.geometry.LineString(child_coords)
+
+    def make_continuous(self, tol=_tol):
+        """Sometimes there can be small gaps between segments of river tree if river is constructed using
+        HydrologicSequence and Snap option is not used. Here we make them consistent"""
+        for node in self.preOrder():
+            for child in node.children:
+                if not node._is_continuous(child, tol):
+                    node._make_continuous(child)
+        assert(self.is_continuous())
 
     def is_hydroseq_consistent(self):
         """Confirms that hydrosequence is valid."""
@@ -206,6 +223,10 @@ class River(watershed_workflow.tinytree.Tree):
         return roots
     
 
-
+    def deep_copy(self):
+        cp = copy.deepcopy(self)
+        for node1,node2 in zip(cp.preOrder(),self.preOrder()):
+            node1.properties = copy.deepcopy(node2.properties)
+        return cp
 
 

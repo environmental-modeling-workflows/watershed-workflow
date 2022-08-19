@@ -7,6 +7,7 @@ from scipy.spatial import cKDTree
 import itertools
 import collections
 
+import shapely.ops
 import shapely.geometry
 
 import watershed_workflow.config
@@ -118,15 +119,14 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
                     assert(len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
                     assert(len(new_spine) == 1 or len(new_spine) == 2)
                     logging.info("  - cutting reach at external boundary of HUCs")
-
                     if hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[0].coords[0])):
                         if len(new_reach_segs) == 2:
                             assert(not hucs.exterior().contains(shapely.geometry.Point(new_reach_segs[1].coords[-1])))
                         reach_node.segment = new_reach_segs[0]
-                    else:
-                        assert(hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[1].coords[0])))
-                        reach_node.segment = new_reach_segs[1]
 
+                    elif len(new_reach_segs) == 2:
+                        if hucs.exterior().buffer(-tol).contains(shapely.geometry.Point(new_reach_segs[1].coords[0])):
+                            reach_node.segment = new_reach_segs[1]
                     hucs.segments[seg_handle] = new_spine[0]
                     if len(new_spine) > 1:
                         assert(len(new_spine) == 2)
@@ -473,12 +473,23 @@ def prune_river_by_fractional_contributing_area(river, area_fraction, total_area
     if total_area is None:
         total_area = river.properties['TotalDrainageAreaSqKm']
     logging.info(f'... total contributing area = {total_area}')
-        
+
+    catchments_available = 'catchment' in river.properties.keys()    
     count = 0
     for node in river.preOrder():
         if node.properties['TotalDrainageAreaSqKm'] / total_area < area_fraction:
             logging.info(f"... removing: {node.properties['TotalDrainageAreaSqKm']} of {total_area}")
             count += 1
+
+            if catchments_available: # accumulate catchment polygons 
+                pruned_catchments=[]
+                for pruned_node in node.preOrder():
+                    if type(pruned_node.properties['catchment'])==shapely.geometry.polygon.Polygon:
+                        pruned_catchments.append(pruned_node.properties['catchment'])
+            
+                new_parent_catchment= shapely.ops.unary_union(pruned_catchments+[node.parent.properties['catchment']])
+                node.parent.properties['catchment']=new_parent_catchment   
+
             node.remove()
             node.clear() # this ensures we can stop removing anything upstream of this
     return count

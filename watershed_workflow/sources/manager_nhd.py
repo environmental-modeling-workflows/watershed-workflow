@@ -51,6 +51,10 @@ class _FileManagerNHD:
                          'DownstreamMainPathHydroSeq' : 'DnHydroSeq',
                          'UpstreamMainPathHydroSeq' : 'UpHydroSeq',
                          'DivergenceCode' : 'Divergence',
+                         'MinimumElevationSmoothed': 'MinElevSmo',
+                         'MaximumElevationSmoothed': 'MaxElevSmo',
+                         'MinimumElevationRaw': 'MinElevRaw',
+                         'MaximumElevationRaw': 'MaxElevRaw',
                          'CatchmentAreaSqKm' : 'AreaSqKm',
                          'TotalDrainageAreaSqKm' : 'TotDASqKm'})
     _nhdplus_eromma = dict({'MeanAnnualFlow' : 'QAMA',
@@ -128,7 +132,7 @@ class _FileManagerNHD:
         profile['always_xy'] = True
         return profile, hus
         
-    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True, properties=None,
+    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True, properties=None, include_catchments=False, 
                   force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
@@ -160,7 +164,9 @@ class _FileManagerNHD:
           If bool is provided and the value is True, a standard
           default set of VAA and EROMMA attributes are added as
           properties.
-        
+
+        include_catchments : bool, optional 
+          If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
         force_download : bool Download
           or re-download the file if true.
 
@@ -224,7 +230,7 @@ class _FileManagerNHD:
                     raise ValueError(f'Unrecognized NHDPlus property {prop}.  If you are sure this is valid, add the alias and variable name to the nhdplus tables in FileManagerNHDPlus.')
 
             # flags for which layers will be needed
-            if 'catchment' in properties:
+            if include_catchments:
                 layer = 'NHDPlusCatchment'
                 logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for catchments in '{bounds}'")
                 for r in reaches:
