@@ -26,10 +26,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
+
+      - name: Extract docker tag name
+        shell: bash
+        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^[:alnum:]\.\_\-]/-/g')"
+        id: extract_tag
 
       - name: Set up Docker Buildx
         id: buildx
@@ -48,8 +54,8 @@ jobs:
           context: ./
           file: ./docker/CI.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ steps.extract_branch.outputs.branch }}
-          build-args: GIT_BRANCH=${{ steps.extract_branch.outputs.branch }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ steps.extract_tag.outputs.tag }}
+          build-args: CI_ENV_DOCKER_TAG=master
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
