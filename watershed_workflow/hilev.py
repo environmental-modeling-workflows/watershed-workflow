@@ -280,7 +280,7 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
 
 
 def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
-                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None,
+                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None, include_catchments=False,
                 **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
@@ -323,6 +323,8 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
         of out_crs.
     properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
         (Table 16 and 17 NHDPlus user guide)
+    include_catchments : bool, optional 
+        If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
     **kwargs : dict, optional
         Other arguments are passed to the file manager's get_reaches() method.
 
@@ -347,7 +349,7 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, **kwargs)
+    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, include_catchments=include_catchments, **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
   
     # convert to shapely
@@ -886,8 +888,7 @@ def simplify_and_prune(hucs, reaches,
     return rivers
 
     
-def triangulate(hucs, rivers,
-                mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
+def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
                 refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
                 refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
     """Triangulates HUCs and rivers.
@@ -899,10 +900,13 @@ def triangulate(hucs, rivers,
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    reaches : list(LineString)
-        A list of reaches from, e.g., get_reaches()
+    rivers: watershed_workflow.river_tree.RiverTree object
+        river tree 
+    river_corrs : list(shapely.geometry.Polygons)
+        A list of river corridor polygons for each river
     mesh_rivers : bool, optional
-        Include stream network in the mesh discretely.
+        if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
+        else - Include stream network in the mesh discretely if river and allow steiner points
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     stream_outlet_width : float, optional
@@ -976,15 +980,15 @@ def triangulate(hucs, rivers,
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)        
 
-    if mesh_rivers:
-        rivers_tri = rivers
-    else:
-        rivers_tri = None
-    vertices, triangles = watershed_workflow.triangulation.triangulate(hucs, rivers_tri,
-                                                             tol=tol, verbose=verbose,
-                                                             refinement_func=my_refine_func,
-                                                             min_angle=refine_min_angle,
-                                                             enforce_delaunay=enforce_delaunay)
+    if not river_corrs == None:
+        allow_boundary_steiner=False
+    else: 
+        allow_boundary_steiner=True
+        
+    vertices, triangles= watershed_workflow.triangulation.triangulate(hucs, rivers, river_corrs, mesh_rivers=mesh_rivers,
+                                                                tol=tol, verbose=verbose, refinement_func=my_refine_func,
+                                                                min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
+                                                                allow_boundary_steiner=allow_boundary_steiner)
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
@@ -1032,6 +1036,7 @@ def triangulate(hucs, rivers,
         return vertices, triangles, areas, distances
             
     return vertices, triangles
+
 
 def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):
     """Elevate mesh_points onto the provided dem.

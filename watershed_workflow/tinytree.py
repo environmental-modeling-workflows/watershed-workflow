@@ -256,6 +256,18 @@ class Tree(object):
                 yield j
         yield self
 
+    def prePostInBetweenOrder(self):
+        """
+            Return a list of subnodes in pre and post order, but also in between children.
+        """
+        yield self
+        for i in self.children[:]:
+            for j in i.prePostInBetweenOrder():
+                yield j
+            yield self
+        if len(self.children) == 0:
+            yield self
+        
     def _find(self, itr, *func, **kwargs):
         for i in itr:
             if kwargs:

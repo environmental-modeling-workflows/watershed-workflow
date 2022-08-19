@@ -9,6 +9,7 @@ likely not useful to users.
 import logging
 import subprocess
 import numpy as np
+import math
 import scipy.interpolate
 import shapely.geometry
 import shapely.ops
@@ -16,7 +17,7 @@ import shapely.prepared
 import shapely.affinity
 import rasterio
 
-import watershed_workflow
+import watershed_workflow.crs
 
 
 _tol = 1.e-7
@@ -409,7 +410,38 @@ def triangle_area(vertices):
             xy2[0] * xy1[1])
     return A
 
+def area(vertices):
+    """Area of polygons in 2D"""
+    area=shapely.geometry.Polygon(vertices).area
+    return area
 
+
+def angle(v1, v2):
+    """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
+    of 2 relative to 1 in a clockwise notion."""
+    x1 = v1[0]; y1 = v1[1]
+    x2 = v2[0]; y2 = v2[1]
+    mag = 180./np.pi * np.arccos((x1 * x2 + y1 * y2) / ( np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)))
+    sign =  x1*y2 - x2*y1
+    if sign < 0:
+        return -mag
+    else:
+        return mag
+
+
+def midpoint(p1, p2):
+    """Returns the midpoint of two points"""
+    if isinstance(p1, shapely.geometry.Point): return midpoint(p1.coords[0], p2)
+    if isinstance(p2, shapely.geometry.Point): return midpoint(p1, p2.coords[0])
+    return ( (p1[0] + p2[0])/2., (p1[1] + p2[1])/2. )
+
+
+def closest_point_ind(point, points):
+    """Returns the index of closest point from an array of points"""
+    points = np.asarray(points)
+    dist_2 = np.sum((points - point)**2, axis=1)
+    return np.argmin(dist_2)
+    
 def center(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
     if type(centering) is shapely.geometry.Point:
@@ -431,6 +463,25 @@ def center(objects, centering=True):
         
     return new_objs, centroid
     
+
+def orientation(p1, p2, p3):
+    """to find the orientation of an ordered triplet (p1,p2,p3) function returns the following values:
+      0 : Collinear points
+      1 : Clockwise points
+      2 : Counterclockwise """
+
+    val = (float(p2.y - p1.y) * (p3.x - p2.x)) - \
+           (float(p2.x - p1.x) * (p3.y - p2.y))
+    if (val > 0):  
+        # Clockwise orientation
+        return 1
+    elif (val < 0):    
+        # Counterclockwise orientation
+        return 2
+    else:    
+        # Collinear orientation
+        return 0
+
 
 def empty_shapely(shp):
     """Is shp None or empty"""
@@ -578,6 +629,11 @@ def create_empty_raster(target_bounds, crs, target_dx, dtype, nodata):
                       'nodata':nodata}
     out = nodata * np.ones((height, width), dtype)
     return out_profile, out
+ 
+
+def is_convex(points):
+    poly = shapely.geometry.Polygon(points) 
+    return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
 
 
 def cluster(points, tol):
