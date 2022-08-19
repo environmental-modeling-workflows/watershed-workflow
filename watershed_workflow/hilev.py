@@ -905,7 +905,7 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
     mesh_rivers : bool, optional
-        Include stream network in the mesh discretely
+        Resolve the stream-corridor valley using quad/pentagon elements
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     stream_outlet_width : float, optional
@@ -1035,8 +1035,6 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
         return vertices, triangles, areas, distances
             
     return vertices, triangles
-
-
 
 
 def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):

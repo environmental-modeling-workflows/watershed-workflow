@@ -409,17 +409,19 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
     use_parent: boolean, optional
         if to use segment of parent node while smoothing (seems to be not making a huge difference)
     lower: boolean, optional
-        to lower the smoothed bed profile to match the lower points on the raw bed profile. This is useful particularly for narrow ag. dicthes
-        where NHDPLus flowlines often to do not coincide with the DEM depressions hence, sream-elements intermitently fall into them
+        to lower the smoothed bed profile to match the lower points on the raw bed profile. This is useful particularly for narrow ag. ditches
+        where NHDPLus flowlines often to do not coincide with the DEM depressions hence, stream-elements intermitently fall into them
     use_nhd_elev: boolean, optional
         whether to enforce maximum and minimum elevation for each reach provided in NHDPlus
     cut_off_order: int, optional
-        reached of order greater than this number will not be depressed/smoothed (yet to be decided where to put this condition)
+        reaches of order greater than this number will not be depressed/smoothed (yet to be decided where to put this condition)
     treat_banks: boolean, optional
-        if the river is passing right next to the reservoir or NHDline is misplaced into the reservoir, we banks may fall into reservoir
+        if the river is passing right next to the reservoir or NHDline is misplaced into the reservoir, where banks may fall into reservoir
         this will enforce bank node is at a higher elevation than the stream bed elevation 
-    depress_by: int, optional
-        if the depression is not captured well in DEM, the river-mesh elements (streambed) is lowered by this number
+    depress_by: float, optional
+        if the depression is not captured well in DEM, the river-mesh elements (streambed) is lowered by this number, currently this step is
+        done only for headwater reaches, and the effect of propogated downstream only upto where it is needed to maintain topographic gradients 
+        on the network scale in the network sweep step
 
     Returns
     -------
@@ -433,7 +435,7 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
                 if id not in river_corr_ids: 
                     river_corr_ids.append(id)
    
-    # conditoning of stream-bed profiles to enforce typical channel depths, large-scale 
+    # conditioning of stream-bed profiles to enforce typical channel depths, large-scale 
     # topographic gradients in the streambeds, and connectivity through culverts that pass under road and railway embankments
     if smooth:        
         for node in river.preOrder():  # reachwise smoothing 
@@ -454,7 +456,7 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
             if i ==0: # for the first point
                 m2.coords[elem[0]][2] = m2.coords[elem[-1]][2] = profile[i,1]
                 
-            # assgining elevations to the upstream points of each river-corridor element (quads)
+            # assigning elevations to the upstream points of each river-corridor element (quads)
             for coord_id in elem[1:-1]:
                 m2.coords[coord_id][2] = profile[i+1,1]
 
@@ -470,7 +472,7 @@ def condition_river_mesh(m2, river, smooth=False, use_parent=False, lower=False,
 
 
 def get_profile(node):
-    """for a given node, genereates a bedprofile using elevations on the node.segment"""
+    """for a given node, generates a bedprofile using elevations on the node.segment"""
     stream_bed_coords=list(reversed(node.segment.coords)) # node that node_elems are downstream to upstream, while segment coords are upstream to downstream
     dists=[math.dist(stream_bed_coords[0],point) for point in stream_bed_coords]
     elevs=node.properties['elev_profile'][::-1] # reversed
@@ -480,7 +482,7 @@ def get_profile(node):
 
 def smooth_profile(node, use_parent=False, lower=False):
     """applies gaussian filter smoothing to the bed-profile obtained from DEM. This option becomes important in ag. watersheds when NHDPLus
-    is off the actually depression corresding to narrow agricultural ditches on the DEM. One can also include elevation profile of the parent
+    is off the actually depression corresponding to narrow agricultural ditches on the DEM. One can also include elevation profile of the parent
     node for better continuity, although, subsequent network sweep option makes using parent profile redundant.
     """
     profile=get_profile(node)

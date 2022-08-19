@@ -1,7 +1,6 @@
 """Triangulates polygons"""
 import logging
 import collections
-from typing import List
 import itertools
 import numpy as np
 import numpy.linalg as la

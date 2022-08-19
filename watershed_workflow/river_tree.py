@@ -626,11 +626,10 @@ def convexity_enforcement(river, corr):
                 if len(elem)==5 or len(elem)==6: # checking and treating this pentagon/hexagon
                     points=[coords[id] for id in elem]
                     if not watershed_workflow.utils.is_convex(points):
-                        from shapely.ops import nearest_points
                         convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
                         for i, point in enumerate(points): # replace point with closest point on convext hull
                             p = shapely.geometry.Point(point)                           
-                            new_point = nearest_points(convex_ring, p)[0].coords[0]
+                            new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
                             points[i] = new_point
                     
                     assert(watershed_workflow.utils.is_convex(points))

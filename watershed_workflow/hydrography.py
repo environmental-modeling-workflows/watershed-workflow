@@ -7,6 +7,7 @@ from scipy.spatial import cKDTree
 import itertools
 import collections
 
+import shapely.ops
 import shapely.geometry
 
 import watershed_workflow.config
@@ -473,8 +474,6 @@ def prune_river_by_fractional_contributing_area(river, area_fraction, total_area
         total_area = river.properties['TotalDrainageAreaSqKm']
     logging.info(f'... total contributing area = {total_area}')
 
-    from shapely.ops import unary_union
-
     catchments_available = 'catchment' in river.properties.keys()    
     count = 0
     for node in river.preOrder():
@@ -488,7 +487,7 @@ def prune_river_by_fractional_contributing_area(river, area_fraction, total_area
                     if type(pruned_node.properties['catchment'])==shapely.geometry.polygon.Polygon:
                         pruned_catchments.append(pruned_node.properties['catchment'])
             
-                new_parent_catchment= unary_union(pruned_catchments+[node.parent.properties['catchment']])
+                new_parent_catchment= shapely.ops.unary_union(pruned_catchments+[node.parent.properties['catchment']])
                 node.parent.properties['catchment']=new_parent_catchment   
 
             node.remove()
