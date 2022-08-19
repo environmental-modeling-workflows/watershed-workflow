@@ -2,7 +2,6 @@
 # Stage 2 -- clone repo run
 #
 ARG DOCKER_TAG
-#ARG GIT_BRANCH
 
 FROM ecoon/watershed_workflow-ci_env:${DOCKER_TAG} AS watershed_workflow
 
