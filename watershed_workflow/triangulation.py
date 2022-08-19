@@ -272,7 +272,7 @@ def integrate_river_corrs_in_huc(river_corrs, hucs):
         if hucs have polygon_outlets, w3e use them. Else we check the proximity of the outlet
         of each river corridor polygon to huc, and integrate outlet into huc if "close" enough"""
 
-    if type(hucs.polygon_outlets) == List & len(hucs.polygon_outlets) !=0:
+    if type(hucs.polygon_outlets) == list & len(hucs.polygon_outlets) !=0:
         # we find river corridor for each huc_outlet poinnt
         for huc_outlet_point, river_corr in itertools.product(hucs.polygon_outlets, river_corrs):
             rc_outlet_point=watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],river_corr.exterior.coords[-2])
@@ -312,14 +312,13 @@ def add_river_outlet_in_huc(river_corr, hucs):
         huc_coords.pop(ind)
 
     # check the orientation of the watershed boundary
-    p1, p2, p3 = [huc_coords[i]  for i in [0, len(huc_coords)//3, 2*len(huc_coords)//3]]
-    
+    p1, p2, p3 = [huc_coords[i]  for i in [0, len(huc_coords)//3, 2*len(huc_coords)//3]] 
     orientation = watershed_workflow.utils.orientation(shapely.geometry.Point(p1), shapely.geometry.Point(p2), shapely.geometry.Point(p3))
     
     if orientation == 1:
         huc_coords.insert(ind, river_corr.exterior.coords[0])
         huc_coords.insert(ind, river_corr.exterior.coords[-2]) 
-    elif orientation ==2:
+    elif orientation == 2:
         huc_coords.insert(ind, river_corr.exterior.coords[-2])
         huc_coords.insert(ind, river_corr.exterior.coords[0]) 
 

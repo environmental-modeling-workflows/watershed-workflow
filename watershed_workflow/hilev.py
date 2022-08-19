@@ -979,7 +979,7 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)        
 
-    if mesh_rivers:
+    if not river_corrs == None:
         allow_boundary_steiner=False
     else: 
         allow_boundary_steiner=True

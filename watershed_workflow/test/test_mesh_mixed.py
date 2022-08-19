@@ -8,6 +8,7 @@ import watershed_workflow.mesh
 import watershed_workflow.utils
 import watershed_workflow.densify_rivers_hucs
 import watershed_workflow.river_tree
+import watershed_workflow.create_river_mesh
 import watershed_workflow.split_hucs
 
 
@@ -74,7 +75,7 @@ def test_densify_rivers_hucs(watershed_rivers):
     watershed, rivers = watershed_rivers
     watershed_workflow.simplify(watershed, rivers, simplify_rivers=10, snap=False, cut_intersections=True)    
 
-    watershed=watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed, huc_=watershed, rivers=rivers, use_original= False,limit_scales=[0,25,100,50])
+    watershed=watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed, huc_raw=watershed, rivers=rivers, use_original= False,limit_scales=[0,25,100,50])
     rivers=watershed_workflow.densify_rivers_hucs.densify_rivers(rivers, rivers, limit=14, use_original=False, treat_collinearity=True)
 
     assert(51 == len(watershed.segments[0].coords))
@@ -84,7 +85,7 @@ def test_densify_rivers_hucs(watershed_rivers):
 
 def test_create_river_corridor(river_small):
 
-    corr=watershed_workflow.river_tree.create_river_corridor(river_small, 1)
+    corr=watershed_workflow.create_river_mesh.create_river_corridor(river_small, 1)
     
     assert(14 == len(corr.exterior.coords))
     assert(0 == math.dist((0.0, 20.0), corr.exterior.coords[4]))
@@ -93,7 +94,7 @@ def test_create_river_corridor(river_small):
 
 def test_to_quads(river_small, corr_small):
     
-    quads = watershed_workflow.river_tree.to_quads(river_small, corr_small, 1)
+    quads = watershed_workflow.create_river_mesh.to_quads(river_small, corr_small, 1)
     assert(6 == len(quads))
     assert(4 == len(quads[0]))
     assert(5 == len(quads[1]))
