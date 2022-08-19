@@ -905,7 +905,8 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
     mesh_rivers : bool, optional
-        Resolve the stream-corridor valley using quad/pentagon elements
+        if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
+        else - Include stream network in the mesh discretely if river and allow steiner points
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     stream_outlet_width : float, optional

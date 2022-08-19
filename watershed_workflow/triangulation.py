@@ -124,7 +124,8 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
     mesh_rivers : bool, optional
-        Include stream network in the mesh discretely
+        if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
+        else - Include stream network in the mesh discretely if river and allow steiner points
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit is the same as 
         that of the watershed's CRS. The default is 1.
