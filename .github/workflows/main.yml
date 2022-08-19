@@ -56,7 +56,8 @@ jobs:
           file: ./docker/CI.Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ steps.extract_tag.outputs.tag }}
-          build-args: GIT_BRANCH=${{ steps.extract_branch.outputs.branch }} DOCKER_TAG=${{ steps.extract_tag.outputs.tag }}
+          build-args: DOCKER_TAG=${{ steps.extract_tag.outputs.tag }}
+          #build-args: GIT_BRANCH=${{ steps.extract_branch.outputs.branch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
