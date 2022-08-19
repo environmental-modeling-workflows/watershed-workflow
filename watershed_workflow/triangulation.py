@@ -109,7 +109,7 @@ class NodesEdges:
         assert(max_edge_node == len(self.nodes)-1)
 
         
-def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, tol=1, **kwargs):
+def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -149,14 +149,14 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, tol=1, **kwar
         raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))
 
     if mesh_rivers:
-        if type(river_corrs) is list:
-            segments = river_corrs + segments
-        elif type(river_corrs) is shapely.geometry.Polygon:
-            segments = [river_corrs,] + segments
-        else:
-            raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))    
-    else:         
-        if rivers != None:
+        if not river_corrs == None:
+            if type(river_corrs) is list:
+                segments = river_corrs + segments
+            elif type(river_corrs) is shapely.geometry.Polygon:
+                segments = [river_corrs,] + segments
+            else:
+                raise RuntimeError("Triangulate not implemented for container of type '%r'"%type(hucs))    
+        else:         
             segments = segments + [r for river in rivers for r in river]
 
     nodes_edges = NodesEdges(segments)
