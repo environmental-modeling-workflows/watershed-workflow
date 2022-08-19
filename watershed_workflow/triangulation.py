@@ -136,7 +136,7 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
 
     logging.info("Triangulating...")
 
-    if mesh_rivers:
+    if not river_corrs == None:
         logging.info("Adding river-corridor outlet into huc boundary")
         hucs = add_river_outlet_in_huc(river_corrs[0], hucs) # adjusting hucs to accomodate river corridor
 
@@ -174,7 +174,7 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    if mesh_rivers:
+    if not river_corrs == None:
         # adding hole in the river corridor for quad elements
         logging.info("defining hole..")
         hole_points=[]
