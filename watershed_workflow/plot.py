@@ -12,7 +12,6 @@ zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.
 """
 
-
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
