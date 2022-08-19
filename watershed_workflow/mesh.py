@@ -278,7 +278,10 @@ class Mesh2D:
         return i
 
     def compute_centroid(self, c):
-        """Computes, based on coords, the centroid of a cell with ID c"""
+        """Computes, based on coords, the centroid of a cell with ID c.
+
+        Note this ALWAYS recomputes the value, not using the cache.
+        """
         points = np.array([self.coords[i] for i in self.conn[c]])
         return points.mean(axis=0)
 
@@ -288,7 +291,15 @@ class Mesh2D:
         """Calculate surface mesh centroids."""
         return np.array([self.compute_centroid(c) for c in range(self.num_cells)])
 
+    def clear_geometry_cache(self):
+        """If coordinates are changed, any computed, cached geometry must be
+        recomputed.  It is the USER's responsibility to call this
+        function if any coords are changed!
+        """
+        del self._centroids
+    
     def plot(self, color=None, ax=None):
+
         """Plot the flattened 2D mesh."""
         if color is None:
             cm = watershed_workflow.colors.cm_mapper(0,self.num_cells-1)
