@@ -8,6 +8,7 @@ import rasterio.windows
 import watershed_workflow.crs
 import logging
 
+
 @attr.s
 class FileManagerRaster:
     """A simple class for reading rasters.
@@ -19,7 +20,7 @@ class FileManagerRaster:
     """
     _filename = attr.ib(type=str)
     name = 'raster'
-    
+
     def get_raster(self, shape, crs, band=1):
         """Download and read a DEM for this shape, clipping to the shape.
         
@@ -70,34 +71,40 @@ class FileManagerRaster:
             window_profile['height'] = y1 - y0
             window_profile['width'] = x1 - x0
 
-            window = rasterio.windows.Window(col_off=x0, row_off=y0,
-                                             width=window_profile['width'], height=window_profile['height'])
+            window = rasterio.windows.Window(col_off=x0,
+                                             row_off=y0,
+                                             width=window_profile['width'],
+                                             height=window_profile['height'])
             window_profile['transform'] = rasterio.windows.transform(window, profile['transform'])
 
             raster = fid.read(band, window=window)
             if (raster.shape != (window_profile['height'], window_profile['width'])):
                 # the raster does not cover the domain!
-                assert(raster.shape[0] <= window_profile['height'])
-                assert(raster.shape[1] <= window_profile['width'])
+                assert (raster.shape[0] <= window_profile['height'])
+                assert (raster.shape[1] <= window_profile['width'])
 
                 # create a new raster and set this raster in the right place
-                raster_fullsize = window_profile['nodata'] * np.ones((window_profile['height'],
-                                                                      window_profile['width']), raster.dtype)
+                raster_fullsize = window_profile['nodata'] * np.ones(
+                    (window_profile['height'], window_profile['width']), raster.dtype)
                 if x0 < 0: x0_off = -x0
                 else: x0_off = 0
 
-                if x1 >= profile['width']: x1_off = window_profile['width'] - (x1 - profile['width'])
-                else: x1_off = window_profile['width']
-                    
+                if x1 >= profile['width']:
+                    x1_off = window_profile['width'] - (x1 - profile['width'])
+                else:
+                    x1_off = window_profile['width']
+
                 if y0 < 0: y0_off = -y0
                 else: y0_off = 0
 
-                if y1 >= profile['height']: y1_off = window_profile['height'] - (y1 - profile['height'])
-                else: y1_off = window_profile['height']
-                    
-                raster_fullsize[y0_off:y1_off,x0_off:x1_off] = raster
+                if y1 >= profile['height']:
+                    y1_off = window_profile['height'] - (y1 - profile['height'])
+                else:
+                    y1_off = window_profile['height']
+
+                raster_fullsize[y0_off:y1_off, x0_off:x1_off] = raster
                 raster = raster_fullsize
 
         if 'nodata' in window_profile and window_profile['nodata'] is not None:
-            window_profile['nodata'] = np.array([window_profile['nodata'],], dtype=raster.dtype)[0]
+            window_profile['nodata'] = np.array([window_profile['nodata'], ], dtype=raster.dtype)[0]
         return window_profile, raster

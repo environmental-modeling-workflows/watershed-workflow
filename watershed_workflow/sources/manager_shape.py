@@ -9,6 +9,7 @@ import watershed_workflow.utils
 import watershed_workflow.config
 import watershed_workflow.crs
 
+
 @attr.s
 class FileManagerShape:
     """A simple class for reading shapefiles.
@@ -20,7 +21,7 @@ class FileManagerShape:
     """
     _filename = attr.ib(type=str)
     name = 'shapefile'
-    
+
     def get_shape(self, *args, **kwargs):
         """Read the file and filter to get shapes, then ensures there is only one
         match.
@@ -41,7 +42,7 @@ class FileManagerShape:
         if len(shps) != 1:
             raise RuntimeError("Filtered shapefile contains more than one match.")
         return profile, shps[0]
-    
+
     def get_shapes(self, index_or_bounds=-1, crs=None):
         """Read the file and filter to get shapes.
 
@@ -70,7 +71,7 @@ class FileManagerShape:
 
             if index_or_bounds is None or type(index_or_bounds) is int:
                 if index_or_bounds != None and index_or_bounds >= 0:
-                    shps = [fid[index_or_bounds],]
+                    shps = [fid[index_or_bounds], ]
                 else:
                     shps = [s for s in fid]
             else:
@@ -81,11 +82,8 @@ class FileManagerShape:
                     # try to read a damaged file with only wkt
                     crs_file = watershed_workflow.crs.from_wkt(profile['crs_wkt'])
                     profile['crs'] = watershed_workflow.crs.to_fiona(crs_file)
-                    
+
                 bounds = watershed_workflow.warp.bounds(index_or_bounds, crs, crs_file)
-                shps = [s for (i,s) in fid.items(bbox=bounds)]
+                shps = [s for (i, s) in fid.items(bbox=bounds)]
 
         return profile, shps
-    
-    
-    

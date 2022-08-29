@@ -1,3 +1,15 @@
 [tool.pytest.ini_options]
 log_cli = false
 log_cli_level = "INFO"
+
+[tool.yapf]
+based_on_style = "pep8"
+arithmetic_precedence_indication = true
+coalesce_brackets = false
+disable_ending_comma_heuristic = true
+spaces_around_dict_delimiters = true
+split_before_arithmetic_operator = true
+column_limit = 100
+
+
+

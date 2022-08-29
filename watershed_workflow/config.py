@@ -5,8 +5,10 @@ import subprocess
 import configparser
 import getpass
 
+
 def home():
     return os.path.expanduser('~')
+
 
 def get_default_config():
     """Dictionary of all config option defaults.
@@ -20,17 +22,18 @@ def get_default_config():
 
     rcParams['DEFAULT']['data_directory'] = ""
     rcParams['DEFAULT']['ssl_cert'] = "True"  # note this can be True,
-                                            # False (bad
-                                            # idea/permissive) or a
-                                            # path to ssl certs,
-                                            # e.g. /etc/ssl/cert.perm
-                                            # or similar
+    # False (bad
+    # idea/permissive) or a
+    # path to ssl certs,
+    # e.g. /etc/ssl/cert.perm
+    # or similar
     rcParams['DEFAULT']['proj_network'] = "False"
 
     rcParams.add_section('AppEEARS')
     rcParams['AppEEARS']['username'] = 'NOT_PROVIDED'
     rcParams['AppEEARS']['password'] = 'NOT_PROVIDED'
     return rcParams
+
 
 def get_config():
     try:
@@ -41,9 +44,11 @@ def get_config():
     rc['DEFAULT']['data_directory'] = data_directory
 
     # paths to search for rc files
-    rc_paths = [os.path.join(home(), '.watershed_workflowrc'),
-                os.path.join(os.getcwd(), '.watershed_workflowrc'),
-                os.path.join(os.getcwd(), 'watershed_workflowrc'),]
+    rc_paths = [
+        os.path.join(home(), '.watershed_workflowrc'),
+        os.path.join(os.getcwd(), '.watershed_workflowrc'),
+        os.path.join(os.getcwd(), 'watershed_workflowrc'),
+    ]
 
     # this is a bit fragile -- it checks if the user is the docker user
     if getpass.getuser() == 'jovyan':
@@ -53,15 +58,11 @@ def get_config():
     rc.read(rc_paths)
     return rc
 
+
 def set_data_directory(path):
     """Sets the directory in which all data is stored."""
     rcParams['DEFAULT']['data_directory'] = path
 
+
 # global config
 rcParams = get_config()
-
-
-
-
-
-

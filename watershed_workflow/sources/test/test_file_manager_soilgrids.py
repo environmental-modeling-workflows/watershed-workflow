@@ -8,8 +8,8 @@ import watershed_workflow.config
 import watershed_workflow.sources.manager_soilgrids_2017 as manager_soilgrids
 import watershed_workflow.sources.manager_nhd
 
-
 bounds4_ll = np.array([-76.3955534, 36.8008194, -73.9026218, 42.4624454])
+
 
 @pytest.fixture
 def soilgrids():
@@ -25,8 +25,8 @@ def test_soilgrids(soilgrids):
     dem_prof, data = soilgrids.get_layer7(huc, watershed_workflow.crs.from_fiona(profile['crs']))
     #plt.imshow(dem)
     #plt.show()
-    
-    assert(data['bulk density [kg m^-3]'].shape == (468,488))
+
+    assert (data['bulk density [kg m^-3]'].shape == (468, 488))
 
 
 if __name__ == "__main__":

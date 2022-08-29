@@ -8,8 +8,7 @@ import watershed_workflow.config
 import watershed_workflow.sources.manager_ned
 import watershed_workflow.sources.manager_nhd
 
-    
-# these just take too long    
+# these just take too long
 # def test_ned1():
 #     # single file covers it
 #     nhd = watershed_workflow.sources.manager_nhd.FileManagerNHDPlus()
@@ -42,7 +41,8 @@ def test_ned3():
     # get imgs
     ned = watershed_workflow.sources.manager_ned.FileManagerNED('1 arc-second')
     dem_prof, dem = ned.get_raster(huc, watershed_workflow.crs.from_fiona(profile['crs']))
-    assert((537, 535) == dem.shape)
+    assert ((537, 535) == dem.shape)
+
 
 def test_ned4():
     # requires tiles
@@ -52,6 +52,4 @@ def test_ned4():
     # get imgs
     ned = watershed_workflow.sources.manager_ned.FileManagerNED('1 arc-second')
     dem_prof, dem = ned.get_raster(huc, watershed_workflow.crs.from_fiona(profile['crs']))
-    assert((3581, 3723) == dem.shape)
-
-    
+    assert ((3581, 3723) == dem.shape)
