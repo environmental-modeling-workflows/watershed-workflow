@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation and Setup &mdash; Watershed Workflow 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -43,7 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#summary-of-dependencies-and-their-usage">Summary of Dependencies and their Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#use-with-docker">Use with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-with-docker">Installation with Docker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#local-installation">Local Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#installing-exodusii-optional">Installing ExodusII (optional)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#installing-this-package">Installing this package</a></li>
@@ -107,7 +108,7 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="installation-and-setup">
+<section id="installation-and-setup">
 <h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Permalink to this headline"></a></h1>
 <p>All code in this package is pure python3, though it can be tricky to
 get all of the dependencies to coexist because of their need for GIS
@@ -123,7 +124,7 @@ configuration file is required.  This file is typically stored as
 <cite>~/.watershed_workflowrc</cite> but may also live in the working directory.
 This includes the path to the data library, along with other common
 settings.</p>
-<div class="section" id="summary-of-dependencies-and-their-usage">
+<section id="summary-of-dependencies-and-their-usage">
 <h2>Summary of Dependencies and their Usage<a class="headerlink" href="#summary-of-dependencies-and-their-usage" title="Permalink to this headline"></a></h2>
 <p>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for
 testing, <cite>pytest</cite> and <cite>dist_utils</cite>.  Standard math packages include
@@ -138,8 +139,7 @@ the open source library Triangle, which can be wrapped for python
 using <cite>meshpy</cite>.  This in turn depends upon boost python.  Optionally,
 extrusion of this 2D mesh into a 3D mesh for use in integrated
 hydrologic models requires a 3D mesh library ~~ we tend to use
-ExodusII here (though it would be straightforward to extend this to
-other packages such as VTK).  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
+ExodusII here, but VTK is also supported.  ExodusII, part of the <a class="reference external" href="https://github.com/gsjaardema/seacas">SEACAS</a> suite of tools, provides a
 python3 set of wrappers, but there is no current package, so this must
 be installed separately.  See below.  Exodus, in turn, needs
 <cite>netCDF4</cite>.</p>
@@ -156,13 +156,13 @@ safely be removed from the installation below.  If you do use
 <cite>jupyter</cite>, you should also use <cite>papermill</cite>, which allows workflows to
 be pipelined – you develop a notebook, then use <cite>papermill</cite> to use
 the notebook as a script.</p>
-</div>
-<div class="section" id="use-with-docker">
-<h2>Use with Docker<a class="headerlink" href="#use-with-docker" title="Permalink to this headline"></a></h2>
+</section>
+<section id="installation-with-docker">
+<h2>Installation with Docker<a class="headerlink" href="#installation-with-docker" title="Permalink to this headline"></a></h2>
 <p>Because of this complex set of processes, the simplest form of using
 Watershed Workflow is through the provided Docker containers.  To do
-this, simply install the Docker desktop app, then run the script
-<cite>bin/run_ww_lab.py</cite>:</p>
+this, install the <a class="reference external" href="https://www.docker.com/products/docker-desktop/">Docker desktop app</a>, then run the
+script <cite>bin/run_ww_lab.py</cite>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python bin/run_ww_lab.py /path/to/working/directory</span>
 </pre></div>
 </div>
@@ -190,8 +190,8 @@ search, in order of precedence, for:</p>
 container.</p>
 <p>An example configure file is found at <cite>watershed_workflowrc</cite> in the
 top directory of this repository.</p>
-</div>
-<div class="section" id="local-installation">
+</section>
+<section id="local-installation">
 <h2>Local Installation<a class="headerlink" href="#local-installation" title="Permalink to this headline"></a></h2>
 <p>It is recommended to use Anaconda3 as a package manager, generating a
 unique environment for use with this package, as this makes it fairly
@@ -226,7 +226,7 @@ use the watershed_workflow environment as a kernel within Jupyter.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -c &#39;import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print(&quot;SUCCESS&quot;)&#39;</span>
 </pre></div>
 </div>
-<div class="section" id="installing-exodusii-optional">
+<section id="installing-exodusii-optional">
 <h3>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Permalink to this headline"></a></h3>
 <p>Clone the package from <a class="reference external" href="https://github.com/gsjaardema/seacas">source</a></p>
 <p>Unfortunately this package does not do semantic versioned releases
@@ -246,8 +246,8 @@ PYTHONPATH and import the python wrappers:</p>
 <p>Note if you have trouble doing this for a local build, try following
 the more detailed formula in Stage 3 of the docker file,
 <cite>docker/User-Env.Dockerfile</cite>.</p>
-</div>
-<div class="section" id="installing-this-package">
+</section>
+<section id="installing-this-package">
 <h3>Installing this package<a class="headerlink" href="#installing-this-package" title="Permalink to this headline"></a></h3>
 <p>Once you’ve got this environment set up, this package and the Rosetta
 dependency are installed via:</p>
@@ -259,9 +259,9 @@ dependency are installed via:</p>
 default, installing this package via <cite>setup.py</cite> places a copy of
 <cite>watershed_workflowrc</cite> in your home directory – this can and should
 be modified.</p>
-</div>
-</div>
-<div class="section" id="run-the-test-suite">
+</section>
+</section>
+<section id="run-the-test-suite">
 <h2>Run the test suite<a class="headerlink" href="#run-the-test-suite" title="Permalink to this headline"></a></h2>
 <p>Given that you have activated your environment and successfully
 install the above, the unit tests should all pass.  They are not
@@ -275,8 +275,8 @@ library tests:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pytest watershed_workflow</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

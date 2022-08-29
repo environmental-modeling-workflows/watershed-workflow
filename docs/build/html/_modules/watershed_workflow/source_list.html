@@ -100,17 +100,19 @@
 
 
 <span class="c1"># available and default water boundary datasets</span>
-<span class="n">huc_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NHD Plus&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHDPlusAccumulator</span><span class="p">(),</span>
+<span class="n">huc_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NHDPlus&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHDPlusAccumulator</span><span class="p">(),</span>
                <span class="s1">&#39;NHD&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHD</span><span class="p">(),</span>
                <span class="s1">&#39;WBD&#39;</span> <span class="p">:</span> <span class="n">FileManagerWBD</span><span class="p">()</span>
                <span class="p">}</span>
-<span class="n">default_huc_source</span> <span class="o">=</span> <span class="s1">&#39;WBD&#39;</span>
+<span class="n">huc_sources</span><span class="p">[</span><span class="s1">&#39;NHD Plus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">huc_sources</span><span class="p">[</span><span class="s1">&#39;NHDPlus&#39;</span><span class="p">]</span> <span class="c1"># historical typo, kept for backward compatibility</span>
+<span class="n">default_huc_source</span> <span class="o">=</span> <span class="s1">&#39;NHDPlus&#39;</span>
 
 <span class="c1"># available and default hydrography datasets</span>
-<span class="n">hydrography_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NHD Plus&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHDPlus</span><span class="p">(),</span>
+<span class="n">hydrography_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NHDPlus&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHDPlus</span><span class="p">(),</span>
                        <span class="s1">&#39;NHD&#39;</span> <span class="p">:</span> <span class="n">FileManagerNHD</span><span class="p">(),</span>
                        <span class="p">}</span>
-<span class="n">default_hydrography_source</span> <span class="o">=</span> <span class="s1">&#39;NHD&#39;</span>
+<span class="n">hydrography_sources</span><span class="p">[</span><span class="s1">&#39;NHD Plus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hydrography_sources</span><span class="p">[</span><span class="s1">&#39;NHDPlus&#39;</span><span class="p">]</span> <span class="c1"># historical typo, kept for backward compatibility</span>
+<span class="n">default_hydrography_source</span> <span class="o">=</span> <span class="s1">&#39;NHDPlus&#39;</span>
 
 <span class="c1"># available and default digital elevation maps</span>
 <span class="n">dem_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NED 1/3 arc-second&#39;</span> <span class="p">:</span> <span class="n">FileManagerNED</span><span class="p">(</span><span class="s1">&#39;1/3 arc-second&#39;</span><span class="p">),</span>
@@ -135,6 +137,7 @@
 <span class="c1"># available and default meteorology</span>
 <span class="n">met_sources</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;DayMet&#39;</span> <span class="p">:</span> <span class="n">FileManagerDaymet</span><span class="p">()}</span>
 <span class="n">default_met</span> <span class="o">=</span> <span class="s1">&#39;DayMet&#39;</span>
+
 
 <div class="viewcode-block" id="get_default_sources"><a class="viewcode-back" href="../../sources.html#watershed_workflow.source_list.get_default_sources">[docs]</a><span class="k">def</span> <span class="nf">get_default_sources</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Provides a default set of data sources.</span>

@@ -127,13 +127,13 @@
 
 <span class="sd">    .. [Daymet] https://daymet.ornl.gov</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
     <span class="n">VALID_YEARS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1980</span><span class="p">,</span><span class="mi">2020</span><span class="p">)</span>
     <span class="n">VALID_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">,</span> <span class="s1">&#39;tmax&#39;</span><span class="p">,</span> <span class="s1">&#39;prcp&#39;</span><span class="p">,</span> <span class="s1">&#39;srad&#39;</span><span class="p">,</span> <span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="s1">&#39;swe&#39;</span><span class="p">,</span> <span class="s1">&#39;dayl&#39;</span><span class="p">]</span>
     <span class="c1"># URL = &quot;http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4&quot;</span>
     <span class="n">URL</span> <span class="o">=</span> <span class="s2">&quot;http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_</span><span class="si">{variable}</span><span class="s2">_</span><span class="si">{year}</span><span class="s2">.nc&quot;</span>
 
-    
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1">#self.layer_name = &#39;Daymet_{1}_{0}_{2}&#39;.format(self.layer, self.year, self.location)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;DayMet 1km&#39;</span>
@@ -162,6 +162,8 @@
 <span class="sd">        -------</span>
 <span class="sd">        filename : str</span>
 <span class="sd">          Path to the data file.</span>
+<span class="sd">        bounds : [xmin,ymin,xmax,ymax]</span>
+<span class="sd">          Updated bounds, buffered and in the coordinate system of the data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">year</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">year</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DayMet data is available from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2"> (does not include </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">year</span><span class="p">))</span>
@@ -192,8 +194,8 @@
 
     <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Download a NetCDF file covering the bounds.</span>
-<span class="sd">        </span>
-<span class="sd">        Note: prefer to use get_meteorology() </span>
+
+<span class="sd">        Note: prefer to use get_meteorology()</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -209,7 +211,7 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        filename : str</span>
-<span class="sd">          Resulting NetCDF file.        </span>
+<span class="sd">          Resulting NetCDF file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Collecting DayMet file to tile bounds: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
 
@@ -251,7 +253,7 @@
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Using existing: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">filename</span></div>
-        
+
 </pre></div>
 
            </div>

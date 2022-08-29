@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example: mesh a delineated watershed &mdash; Watershed Workflow 1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -15,8 +16,8 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -296,7 +297,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
@@ -356,7 +357,7 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<div class="section" id="Example:-mesh-a-delineated-watershed">
+<section id="Example:-mesh-a-delineated-watershed">
 <h1>Example: mesh a delineated watershed<a class="headerlink" href="#Example:-mesh-a-delineated-watershed" title="Permalink to this headline"></a></h1>
 <p>Here we mesh the <a class="reference external" href="https://www.srs.fs.usda.gov/coweeta/">Coweeta Hydrologic Laboratory</a> as an example of how to pull data in from default locations and generate a fully functional ATS mesh.</p>
 <p>This might be the worst example to use to learn how to use Watershed Workflows. But it is useful to demonstrate the breadth of problems this project was intended to solve.</p>
@@ -371,8 +372,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 </pre></div>
 </div>
 </div>
@@ -380,8 +380,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span> <span class="k">as</span> <span class="n">pcm</span>
@@ -405,15 +404,14 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<div class="section" id="Sources-and-setup">
+<section id="Sources-and-setup">
 <h2>Sources and setup<a class="headerlink" href="#Sources-and-setup" title="Permalink to this headline"></a></h2>
 <p>Next we set up the source watershed and coordinate system and all data sources for our mesh. We will use the CRS that is included in the shapefile.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># specify the input shapefile and a hint as to what HUC it is in.</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># specify the input shapefile and a hint as to what HUC it is in.</span>
 <span class="n">coweeta_shapefile</span> <span class="o">=</span> <span class="s1">&#39;Coweeta/input_data/coweeta_basin.shp&#39;</span>
 <span class="n">hint</span> <span class="o">=</span> <span class="s1">&#39;0601&#39;</span>  <span class="c1"># hint: HUC 4 containing this shape.</span>
                <span class="c1"># This is necessary to avoid downloading all HUCs to search for this shape</span>
@@ -449,8 +447,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set up a dictionary of source objects</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set up a dictionary of source objects</span>
 <span class="n">sources</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">get_default_sources</span><span class="p">()</span>
 <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">source_list</span><span class="o">.</span><span class="n">log_sources</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
 </pre></div>
@@ -473,16 +470,15 @@ div.rendered_html tbody tr:hover {
 2021-11-19 12:20:32,584 - root - INFO: meteorology: DayMet 1km
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Generate-the-surface-mesh">
+</section>
+<section id="Generate-the-surface-mesh">
 <h2>Generate the surface mesh<a class="headerlink" href="#Generate-the-surface-mesh" title="Permalink to this headline"></a></h2>
 <p>First we’ll generate the flattened, 2D triangulation, which builds on hydrography data. Then we download a digital elevation map from the National Elevation Dataset, and extrude that 2D triangulation to a 3D surface mesh based on interpolation between pixels of the DEM.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># find what HUC our shape is in</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># find what HUC our shape is in</span>
 <span class="n">huc</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">find_huc</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;HUC&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">shrink_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found Coweeta in HUC: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">huc</span><span class="p">))</span>
 </pre></div>
@@ -561,8 +557,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">rivers</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rivers</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="k">if</span> <span class="n">rivers</span><span class="p">:</span>
     <span class="c1"># download/collect the river network within that shape&#39;s bounds</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">reaches</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_reaches</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;hydrography&#39;</span><span class="p">],</span> <span class="n">huc</span><span class="p">,</span>
@@ -575,9 +570,7 @@ div.rendered_html tbody tr:hover {
 <span class="k">else</span><span class="p">:</span>
     <span class="n">rivers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">coweeta</span><span class="p">,</span> <span class="n">simplify</span><span class="p">)</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -624,8 +617,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot what we have so far -- an image of the HUC and its stream network</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot what we have so far -- an image of the HUC and its stream network</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
@@ -656,8 +648,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># form a triangulation on the shape + river network</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># form a triangulation on the shape + river network</span>
 
 <span class="c1"># triangulation refinement:</span>
 <span class="c1"># Refine triangles if their area (in m^2) is greater than A(d), where d is the</span>
@@ -715,8 +706,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># get a raster for the elevation map, based on NED</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># get a raster for the elevation map, based on NED</span>
 <span class="n">dem_profile</span><span class="p">,</span> <span class="n">dem</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;DEM&#39;</span><span class="p">],</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">)</span>
 
 <span class="c1"># elevate the triangle nodes to the dem</span>
@@ -749,8 +739,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot the resulting surface mesh</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the resulting surface mesh</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize_3d</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
 <span class="n">cax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.23</span><span class="p">,</span><span class="mf">0.18</span><span class="p">,</span><span class="mf">0.58</span><span class="p">,</span><span class="mf">0.03</span><span class="p">])</span>
@@ -764,8 +753,7 @@ div.rendered_html tbody tr:hover {
 <span class="n">ax</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">55</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -804,8 +792,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot the resulting surface mesh</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the resulting surface mesh</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="p">[</span><span class="mf">0.05</span><span class="p">,</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span><span class="mf">0.8</span><span class="p">])</span>
 <span class="c1">#ax2 = watershed_workflow.plot.get_ax(crs,fig, window=[0.65,0.05,0.3,0.5])</span>
@@ -837,8 +824,7 @@ div.rendered_html tbody tr:hover {
 <span class="nb">print</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">())</span>
 <span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;elevation [m]&#39;</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -870,8 +856,7 @@ Text(0.5, 1.0, &#39;elevation [m]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># construct the 2D mesh</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># construct the 2D mesh</span>
 <span class="n">m2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">mesh_points3</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -880,8 +865,7 @@ Text(0.5, 1.0, &#39;elevation [m]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># hydrologically condition the mesh, removing pits</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># hydrologically condition the mesh, removing pits</span>
 <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
 
 <span class="c1"># plot the change between the two meshes</span>
@@ -911,8 +895,8 @@ max diff =  6.589355426081738
 <img alt="../_images/examples_mesh_coweeta_17_1.png" src="../_images/examples_mesh_coweeta_17_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Surface-properties">
+</section>
+<section id="Surface-properties">
 <h2>Surface properties<a class="headerlink" href="#Surface-properties" title="Permalink to this headline"></a></h2>
 <p>Meshes interact with data to provide forcing, parameters, and more in the actual simulation. Specifically, we need vegetation type on the surface to provide information about transpiration and subsurface structure to provide information about water retention curves, etc.</p>
 <p>We’ll start by downloading and collecting land cover from the NLCD dataset, and generate sets for each land cover type that cover the surface. Likely these will be some combination of grass, deciduous forest, coniferous forest, and mixed.</p>
@@ -920,8 +904,7 @@ max diff =  6.589355426081738
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># download the NLCD raster</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># download the NLCD raster</span>
 <span class="n">lc_profile</span><span class="p">,</span> <span class="n">lc_raster</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">get_raster_on_shape</span><span class="p">(</span><span class="n">sources</span><span class="p">[</span><span class="s1">&#39;land cover&#39;</span><span class="p">],</span>
                                                      <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">crs</span><span class="p">)</span>
 
@@ -931,8 +914,7 @@ max diff =  6.589355426081738
 <span class="c1"># what land cover types did we get?</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found land cover dtypes: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lc</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found land cover types: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">lc</span><span class="p">)))</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -955,8 +937,7 @@ max diff =  6.589355426081738
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot the NLCD data</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the NLCD data</span>
 
 <span class="c1"># -- get the NLCD colormap which uses official NLCD colors and labels</span>
 <span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_cmap</span><span class="p">,</span> <span class="n">nlcd_norm</span><span class="p">,</span> <span class="n">nlcd_ticks</span><span class="p">,</span> <span class="n">nlcd_labels</span> <span class="o">=</span> \
@@ -1014,19 +995,18 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 <img alt="../_images/examples_mesh_coweeta_20_1.png" src="../_images/examples_mesh_coweeta_20_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Subsurface-properties">
+</section>
+<section id="Subsurface-properties">
 <h2>Subsurface properties<a class="headerlink" href="#Subsurface-properties" title="Permalink to this headline"></a></h2>
 <p>Get soil structure from SSURGO. By soil structure, here we calculate, for each formation identified in SSURGO, a soil depth, porosity, permeability, and percent sand/silt/clay (which are then handed off to Rosetta to get a van Genuchten model).</p>
 <p>Below this soil we also identify a geologic layer provided by GLHYMPS. This provides information about the deeper subsurface.</p>
-<div class="section" id="SSURGO-Soil-Properties">
+<section id="SSURGO-Soil-Properties">
 <h3>SSURGO Soil Properties<a class="headerlink" href="#SSURGO-Soil-Properties" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># download the NRCS soils data as shapes and project it onto the mesh</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># download the NRCS soils data as shapes and project it onto the mesh</span>
 
 <span class="c1"># -- download the shapes</span>
 <span class="n">target_bounds</span> <span class="o">=</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span>
@@ -1086,8 +1066,7 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">soil_survey_props</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">soil_survey_props</span>
 </pre></div>
 </div>
 </div>
@@ -1751,8 +1730,7 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot the soil mukey</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the soil mukey</span>
 <span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">generate_indexed_colormap</span><span class="p">(</span><span class="n">soil_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab20c&#39;</span><span class="p">)</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
 
@@ -1765,8 +1743,7 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1798,8 +1775,7 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># Note this is not just the soil ID, but also soil properties.</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Note this is not just the soil ID, but also soil properties.</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">soil_survey_props</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
 <span class="c1"># To demonstrate what we mean by this, plot the porosity of the soil column.</span>
@@ -1830,8 +1806,7 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;porosity (Rosetta) [-]&#39;</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1869,8 +1844,7 @@ min, max =  0.2355549116198203 0.4671095937710679
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># averaging permeability is a tricky beast.  we average in log space, check that unit conversions make sense</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># averaging permeability is a tricky beast.  we average in log space, check that unit conversions make sense</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
 <span class="n">soil_perm_nrcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">soil_color</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
 <span class="n">soil_perm_rosetta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">soil_color</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
@@ -1900,10 +1874,7 @@ min, max =  0.2355549116198203 0.4671095937710679
                                 <span class="n">vmin</span><span class="o">=</span><span class="n">pmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">pmax</span><span class="p">)</span>
 <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;log permeability (Rosetta) [m^2]&#39;</span><span class="p">)</span>
-
-
-
-</pre></div>
+<br/><br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1930,15 +1901,14 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <img alt="../_images/examples_mesh_coweeta_26_2.png" src="../_images/examples_mesh_coweeta_26_2.png" />
 </div>
 </div>
-</div>
-<div class="section" id="GLYHMPS-geologic-layer">
+</section>
+<section id="GLYHMPS-geologic-layer">
 <h3>GLYHMPS geologic layer<a class="headerlink" href="#GLYHMPS-geologic-layer" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># extract the GLYHMPS geologic structure data as shapes and project it onto the mesh</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract the GLYHMPS geologic structure data as shapes and project it onto the mesh</span>
 <span class="n">target_bounds</span> <span class="o">=</span> <span class="n">coweeta</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">bounds</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;target bounds: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_bounds</span><span class="p">))</span>
 
@@ -1962,8 +1932,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <span class="c1"># -- resample the raster to the triangles</span>
 <span class="n">geo_color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">values_from_raster</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">(),</span> <span class="n">crs</span><span class="p">,</span>
                                          <span class="n">geo_color_raster</span><span class="p">,</span> <span class="n">geo_color_profile</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1994,8 +1963,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># plot the geologic formation id</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the geologic formation id</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
 
@@ -2003,9 +1971,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
                                  <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">geo_color</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab20c&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;soil type index&#39;</span><span class="p">)</span>
 <span class="n">geo_survey_props</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2064,9 +2030,9 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <img alt="../_images/examples_mesh_coweeta_29_1.png" src="../_images/examples_mesh_coweeta_29_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Mesh-extrusion">
+</section>
+</section>
+<section id="Mesh-extrusion">
 <h2>Mesh extrusion<a class="headerlink" href="#Mesh-extrusion" title="Permalink to this headline"></a></h2>
 <p>Given the surface mesh and material IDs on both the surface and subsurface, we can extrude the surface mesh in the vertical to make a 3D mesh.</p>
 <p>First, all integer IDs in Exodus files must be unique. This includes Material IDs, side sets, etc. We create the Material ID map and data frame. This is used to standardize IDs from multiple data sources. Traditionally, ATS numbers Material IDs/Side Sets as:</p>
@@ -2080,8 +2046,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">soil_survey_props</span><span class="p">[</span><span class="s1">&#39;ats_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">soil_survey_props</span><span class="p">))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">soil_survey_props</span><span class="p">[</span><span class="s1">&#39;ats_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">soil_survey_props</span><span class="p">))</span>
 <span class="n">soil_survey_props</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;ats_id&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">geo_survey_props</span><span class="p">[</span><span class="s1">&#39;ats_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">geo_survey_props</span><span class="p">))</span>
@@ -2095,16 +2060,13 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># must choose properties for geologic media.  Here we choose one that has a similar porosity</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># must choose properties for geologic media.  Here we choose one that has a similar porosity</span>
 <span class="n">subsurface_props</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;residual saturation [-]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten alpha [Pa^-1]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten n [-]&#39;</span><span class="p">]]</span> <span class="o">=</span>  \
       <span class="n">subsurface_props</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1024</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;residual saturation [-]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten alpha [Pa^-1]&#39;</span><span class="p">,</span> <span class="s1">&#39;van Genuchten n [-]&#39;</span><span class="p">]]</span>
 
 <span class="c1"># save the properties to disk for use in generating input file</span>
 <span class="n">subsurface_props</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Coweeta&#39;</span><span class="p">,</span> <span class="s1">&#39;output_data&#39;</span><span class="p">,</span> <span class="s1">&#39;coweeta_subsurface_properties.csv&#39;</span><span class="p">))</span>
-
-
-</pre></div>
+<br/><br/></pre></div>
 </div>
 </div>
 <p>Next we extrude the DEM to create a 3D mesh.</p>
@@ -2114,8 +2076,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># Generate a dz structure for the top 2m of soil -- it appears from above that the soil thickness is uniformly 2m</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate a dz structure for the top 2m of soil -- it appears from above that the soil thickness is uniformly 2m</span>
 <span class="c1">#</span>
 <span class="c1"># here we try for 10 cells, starting at 5cm at the top and going to 50cm at the bottom of the 2m thick soil</span>
 <span class="n">dzs</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">optimize_dzs</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
@@ -2136,8 +2097,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># this looks like it would work out:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># this looks like it would work out:</span>
 <span class="n">dzs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">dzs</span><span class="p">))</span>
 </pre></div>
@@ -2155,8 +2115,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># a 2m soil thickness and a 17m depth to bedrock suggests a geologic layer of 15 - 1m cells</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># a 2m soil thickness and a 17m depth to bedrock suggests a geologic layer of 15 - 1m cells</span>
 </pre></div>
 </div>
 </div>
@@ -2164,8 +2123,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># layer extrusion</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># layer extrusion</span>
 <span class="c1"># -- data structures needed for extrusion</span>
 <span class="n">layer_types</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">layer_data</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2229,8 +2187,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># extrude</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># extrude</span>
 <span class="n">m3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span>
                                              <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
@@ -2240,8 +2197,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># add back on land cover side sets</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># add back on land cover side sets</span>
 <span class="n">surf_ss</span> <span class="o">=</span> <span class="n">m3</span><span class="o">.</span><span class="n">side_sets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nlcd_indices</span><span class="p">,</span> <span class="n">nlcd_labels</span><span class="p">):</span>
@@ -2257,8 +2213,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># save to disk</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># save to disk</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;Coweeta&#39;</span><span class="p">,</span> <span class="s1">&#39;output_data&#39;</span><span class="p">,</span> <span class="s1">&#39;coweeta_basin.exo&#39;</span><span class="p">))</span>
 <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
@@ -2314,13 +2269,12 @@ Closing exodus file: Coweeta/output_data/coweeta_basin.exo
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workflow library Concepts &mdash; Watershed Workflow 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -102,17 +103,17 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="workflow-library-concepts">
+<section id="workflow-library-concepts">
 <h1>Workflow library Concepts<a class="headerlink" href="#workflow-library-concepts" title="Permalink to this headline"></a></h1>
-<div class="section" id="package-configuration">
+<section id="package-configuration">
 <h2>Package configuration<a class="headerlink" href="#package-configuration" title="Permalink to this headline"></a></h2>
 <p>Watershed Workflow is configured through a limited set of parameters
 specified in a file <cite>“.watershed_workflowrc</cite>”, located in the current
 working directory or the user’s home directory.  An example including
 all defaults is shown in the top level directory as
 <cite>“watershed_workflowrc</cite>”.</p>
-</div>
-<div class="section" id="shapes-vs-shapely">
+</section>
+<section id="shapes-vs-shapely">
 <h2>shapes vs shapely<a class="headerlink" href="#shapes-vs-shapely" title="Permalink to this headline"></a></h2>
 <p>Watershed Workflow works with two different representations of shapes:
 fiona’s GeoJSON-like, python dictionary-based representation and
@@ -130,8 +131,8 @@ properties must be managed by the user external to the shape object.</p>
 <p>In general, Watershed Workflow does not introduce its own shape
 objects, and most of its data structures store shapely objects
 internally.</p>
-</div>
-<div class="section" id="coordinate-reference-systems-crs">
+</section>
+<section id="coordinate-reference-systems-crs">
 <h2>Coordinate Reference Systems (CRS)<a class="headerlink" href="#coordinate-reference-systems-crs" title="Permalink to this headline"></a></h2>
 <p>Coordinate Reference Systems are used to locate geographic positions.
 These define a specific map projection, transforming 3D positions on
@@ -161,8 +162,8 @@ raster’s native CRS allows interpolation without reprojection, which
 is especially useful for rasters that must be repeatedly interpolated
 (i.e. meterological data or other time-dependent datasets).</p>
 <p>See <span class="xref std std-ref">CRS</span> for detailed documentation of working with CRSs.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

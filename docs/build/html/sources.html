@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Data Sources &mdash; Watershed Workflow 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,8 +16,8 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -125,7 +126,7 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="data-sources">
+<section id="data-sources">
 <h1>Data Sources<a class="headerlink" href="#data-sources" title="Permalink to this headline"></a></h1>
 <p>Watershed Workflow stores a library of managers, which provide
 functionality to access data as if it was local.  Given appropriate
@@ -138,7 +139,7 @@ in the <span class="xref std std-ref">Package configuration</span> file.</p>
 of getting and working with default sources, and the broad classes of
 sources frequently used in workflows, and default values for these
 types of data are provide by existing managers.</p>
-<div class="section" id="module-watershed_workflow.source_list">
+<section id="module-watershed_workflow.source_list">
 <span id="source-list"></span><h2>Source List<a class="headerlink" href="#module-watershed_workflow.source_list" title="Permalink to this headline"></a></h2>
 <p>This module provides a dictionary of sources, broken out by data type, and a
 dictionary of default sources.</p>
@@ -188,8 +189,8 @@ type”, and “land cover”.</p>
 follow the API for existing implementations.  This makes it easy to
 use it with the existing high level API.  See the
 <span class="xref std std-ref">Sources API</span> for how managers are used within the API.</p>
-</div>
-<div class="section" id="watershed-boundaries-and-hydrography">
+</section>
+<section id="watershed-boundaries-and-hydrography">
 <h2>Watershed boundaries and hydrography<a class="headerlink" href="#watershed-boundaries-and-hydrography" title="Permalink to this headline"></a></h2>
 <p>Watershed boundary datasets and hydrography datasets together form the
 geographic structure of a watershed.  Watershed boundary datasets are
@@ -222,7 +223,7 @@ represented as a shape.</p>
 USGS HUC delineations and user-provided shape files.  Watershed
 boundaries read from shapefiles can use the <span class="xref std std-ref">Generic shapefiles</span>
 manager.</p>
-<div class="section" id="usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">
+<section id="usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd">
 <h3>USGS National Hydrography and Water Boundary Datasets (NHD / WBD)<a class="headerlink" href="#usgs-national-hydrography-and-water-boundary-datasets-nhd-wbd" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_nhd._FileManagerNHD">
@@ -299,7 +300,7 @@ level of the input huc.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_nhd._FileManagerNHD.get_hydro">
-<span class="sig-name descname"><span class="pre">get_hydro</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_network</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nhd.html#_FileManagerNHD.get_hydro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nhd._FileManagerNHD.get_hydro" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_hydro</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_network</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nhd.html#_FileManagerNHD.get_hydro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nhd._FileManagerNHD.get_hydro" title="Permalink to this definition"></a></dt>
 <dd><p>Get all reaches within a given HUC and/or coordinate bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -309,9 +310,26 @@ level of the input huc.</p></li>
 bounds_crs must also be provided.</p></li>
 <li><p><strong>bounds_crs</strong> (<em>CRS</em><em>, </em><em>optional</em>) – CRS of the above bounds.</p></li>
 <li><p><strong>in_network</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default), remove reaches that are not “in” the NHD network</p></li>
-<li><p><strong>include_catchments</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True (default is False) and data source is NHDPlus, attach the
-reach catchment as a property to every reach.</p></li>
-<li><p><strong>force_download</strong> (<em>bool</em>) – Download or re-download the file if true.</p></li>
+<li><p><strong>properties</strong> (<em>list</em><em>(</em><em>str</em><em>) or </em><em>bool</em><em>, </em><em>optional</em>) – <p>A list of property aliases to be added to reaches.  See
+alias names in Table 16 (NHDPlusFlowlineVAA) or 17
+(NHDPlusEROMMA) of NHDPlus User Guide).  This is only
+supported for NHDPlus.  Commonly used properties include:</p>
+<blockquote>
+<div><ul>
+<li><p>’TotalDrainageAreaKmSq’ : total drainage area</p></li>
+<li><p>’CatchmentAreaKmSq’ : differential catchment contributing area</p></li>
+<li><p>’HydrologicSequence’ : VAA sequence information</p></li>
+<li><p>’DownstreamMainPathHydroSeq’ : VAA sequence information</p></li>
+<li><p>’UpstreamMainPathHydroSeq’ : VAA sequence information</p></li>
+<li><p>’catchment’ : catchment polygon geometry</p></li>
+</ul>
+</div></blockquote>
+<p>If bool is provided and the value is True, a standard
+default set of VAA and EROMMA attributes are added as
+properties.</p>
+</p></li>
+<li><p><strong>include_catchments</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, adds catchment polygons for each reach in the river tree from ‘NHDPlusCatchment’ layer</p></li>
+<li><p><strong>force_download</strong> (<em>bool Download</em>) – or re-download the file if true.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -327,9 +345,9 @@ reach catchment as a property to every reach.</p></li>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="digital-elevation-models">
+</section>
+</section>
+<section id="digital-elevation-models">
 <h2>Digital Elevation Models<a class="headerlink" href="#digital-elevation-models" title="Permalink to this headline"></a></h2>
 <p>For any distributed, integrated hydrologic model, elevation datasets
 are critical.  These set the local spatial gradients that drive flow
@@ -344,7 +362,7 @@ interpolated.  By default, piecewise bilinear interpolation is used to
 ensure that extremely high-resolution queries do not look
 stairstepped; this improves mesh quality in meshes near the resolution
 of the underlying elevation dataset.</p>
-<div class="section" id="national-elevation-dataset">
+<section id="national-elevation-dataset">
 <h3>National Elevation Dataset<a class="headerlink" href="#national-elevation-dataset" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_ned.FileManagerNED">
@@ -402,9 +420,9 @@ currently supported by Watershed Workflow.</p>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="land-cover">
+</section>
+</section>
+<section id="land-cover">
 <h2>Land Cover<a class="headerlink" href="#land-cover" title="Permalink to this headline"></a></h2>
 <p>Land cover datasets set everything from impervious surfaces to plant
 function and therefore evaportranspiration, and are used in some
@@ -412,7 +430,7 @@ integrated hydrologic models for a wide range of processes.  Land
 cover is used to define a collection of indices on which mesh sets are
 generated and then used to generate and affect processes and process
 parameters.</p>
-<div class="section" id="national-land-cover-dataset">
+<section id="national-land-cover-dataset">
 <h3>National Land Cover Dataset<a class="headerlink" href="#national-land-cover-dataset" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_nlcd.FileManagerNLCD">
@@ -469,16 +487,16 @@ least imperviousness, maybe others?</p>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="soil-structure-and-properties">
+</section>
+</section>
+<section id="soil-structure-and-properties">
 <h2>Soil structure and properties<a class="headerlink" href="#soil-structure-and-properties" title="Permalink to this headline"></a></h2>
 <p>Soil structure and hydrologic properties (i.e. porosity, permeability,
 water retention curves) are often derived from texture
 parameterizations.  Similarly, depth to bedrock and other subsurface
 data can be essential in these types of simulations.  Often these are
 mapped into the simulation mesh.</p>
-<div class="section" id="national-resources-conservation-service-soils">
+<section id="national-resources-conservation-service-soils">
 <h3>National Resources Conservation Service Soils<a class="headerlink" href="#national-resources-conservation-service-soils" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_nrcs.FileManagerNRCS">
@@ -530,17 +548,17 @@ Survey. Available online at
 
 </dd></dl>
 
-</div>
-<div class="section" id="meteorology">
+</section>
+<section id="meteorology">
 <h3>Meteorology<a class="headerlink" href="#meteorology" title="Permalink to this headline"></a></h3>
 <p>Meteorology datasets are a work in progress.  Different codes likely
 need to write met data in very different formats, and may need
 different variables, so met data is necessarily less standardized.</p>
 <p>Currently we provide some preliminary capability here, but more is
 both on the way and needs more input to develop community consensus.</p>
-</div>
-</div>
-<div class="section" id="daymet">
+</section>
+</section>
+<section id="daymet">
 <h2>Daymet<a class="headerlink" href="#daymet" title="Permalink to this headline"></a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -618,22 +636,23 @@ covers all of North America from 1980 to present <a class="reference internal" h
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>filename</strong> – Path to the data file.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>str</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the data file.</p></li>
+<li><p><strong>bounds</strong> (<em>[xmin,ymin,xmax,ymax]</em>) – Updated bounds, buffered and in the coordinate system of the data.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 </dd></dl>
 
-</div>
-<div class="section" id="generic-files">
+</section>
+<section id="generic-files">
 <h2>Generic Files<a class="headerlink" href="#generic-files" title="Permalink to this headline"></a></h2>
 <p>We also provide readers for user-provided rasters and shapefiles for
 generic use.</p>
-<div class="section" id="generic-rasters">
+<section id="generic-rasters">
 <h3>Generic rasters<a class="headerlink" href="#generic-rasters" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_raster.FileManagerRaster">
@@ -669,8 +688,8 @@ generic use.</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="generic-shapefiles">
+</section>
+<section id="generic-shapefiles">
 <h3>Generic shapefiles<a class="headerlink" href="#generic-shapefiles" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_shape.FileManagerShape">
@@ -687,7 +706,7 @@ generic use.</p>
 match.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>get_shapes</strong><strong>(</strong><strong>)</strong><strong></strong> (<em>See that of</em>) – </p>
+<dd class="field-odd"><p><strong>get_shapes</strong><strong>(</strong><strong>)</strong><strong>.</strong> (<em>See that of</em>) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
@@ -725,9 +744,9 @@ shapes, or defaults to -1 to get them all.</p></li>
 
 </dd></dl>
 
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

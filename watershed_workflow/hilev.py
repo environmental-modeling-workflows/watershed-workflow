@@ -681,7 +681,7 @@ def construct_rivers(hucs, reaches, method='geometry',
                      prune_by_area=None, prune_by_area_fraction=None,
                      remove_diversions=False, remove_braided_divergences=False):
     """Create a river, which is a tree of reaches.
-
+    
     Note, HUCs and rivers must be in the same crs.
 
     Parameters
@@ -692,12 +692,14 @@ def construct_rivers(hucs, reaches, method='geometry',
         A list of reaches.
     method : str, optional='geometry'
         Provide the method for constructing rivers.  Valid are:
-        - 'geometry' looks at coincident coordinates
-        - 'hydroseq' Valid only for NHDPlus data, this uses the
+
+        * 'geometry' looks at coincident coordinates
+        * 'hydroseq' Valid only for NHDPlus data, this uses the
           NHDPlus VAA tables Hydrologic Sequence.  If using this
           method, get_reaches() must have been called with both
           'HydrologicSequence' and 'DownstreamMainPathHydroSeq'
           properties requested (or properties=True).
+
     ignore_small_rivers : int, optional
         If provided, removes rivers whose number of reaches is less
         than this value.
@@ -721,6 +723,7 @@ def construct_rivers(hucs, reaches, method='geometry',
     ------- 
     out : list(River)
         A list of rivers, as River objects.
+
     """
     logging.info("")
     logging.info("Constructing river network")

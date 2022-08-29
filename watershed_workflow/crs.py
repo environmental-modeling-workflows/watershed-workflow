@@ -166,7 +166,7 @@ def from_epsg(epsg):
     Parameters
     ----------
     epsg : int
-        An EPSG code. (see `https://epsg.io`_)
+        An EPSG code. (see `EPSG codes <https://epsg.io>`_)
 
     Returns
     -------
@@ -202,7 +202,7 @@ def from_cartopy(crs):
     Parameters
     ----------
     epsg : int
-        An EPSG code. (see `https://epsg.io`_)
+        An EPSG code. (see `EPSG codes <https://epsg.io>`_)
 
     Returns
     -------
