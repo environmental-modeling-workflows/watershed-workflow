@@ -321,11 +321,15 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
         If provided, reaches are simplified within the specified
         tolerance as soon as possible for big extents.  Units are that
         of out_crs.
-    properties : a list of properties to be added to reaches 'catchment' for catchment geometry, and property alias names for NHDPlusFlowlineVAA and NHDPlusEROMMA table 
-        (Table 16 and 17 NHDPlus user guide)
+    properties : list[str]
+        A list of properties to be added to reaches 'catchment' for
+        catchment geometry, and property alias names for
+        NHDPlusFlowlineVAA and NHDPlusEROMMA table (Table 16 and 17
+        NHDPlus user guide)
     include_catchments : bool, optional 
-        If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
-    **kwargs : dict, optional
+        If True, adds catchment polygons for each reach in the river
+        tree from 'NHDPlusCatchment' layer
+    kwargs : dict, optional
         Other arguments are passed to the file manager's get_reaches() method.
 
     Returns
