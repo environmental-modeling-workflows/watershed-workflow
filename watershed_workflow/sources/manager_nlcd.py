@@ -56,8 +56,8 @@ class FileManagerNLCD:
     TODO: Labels and colors for these indices should get moved here, but
     currently reside in watershed_workflow.colors.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     layer : str, optional
       Layer of interest.  Default is `"Land_Cover`", should also be one for at
       least imperviousness, maybe others?

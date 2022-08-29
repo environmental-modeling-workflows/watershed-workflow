@@ -63,9 +63,6 @@ USGS HUC delineations and user-provided shape files.  Watershed
 boundaries read from shapefiles can use the :ref:`Generic shapefiles`
 manager.
 
-USGS National Hydrography and Water Boundary Datasets (NHD / WBD)
------------------------------------------------------------------
-
 .. autoclass:: watershed_workflow.sources.manager_nhd._FileManagerNHD
       :members: get_huc, get_hucs, get_hydro
                
@@ -87,9 +84,6 @@ ensure that extremely high-resolution queries do not look
 stairstepped; this improves mesh quality in meshes near the resolution
 of the underlying elevation dataset.
 
-National Elevation Dataset
---------------------------
-
 .. autoclass:: watershed_workflow.sources.manager_ned.FileManagerNED
         :members: get_raster
 
@@ -103,9 +97,6 @@ cover is used to define a collection of indices on which mesh sets are
 generated and then used to generate and affect processes and process
 parameters.
 
-National Land Cover Dataset
----------------------------
-
 .. autoclass:: watershed_workflow.sources.manager_nlcd.FileManagerNLCD
         :members: get_raster               
 
@@ -118,14 +109,11 @@ parameterizations.  Similarly, depth to bedrock and other subsurface
 data can be essential in these types of simulations.  Often these are
 mapped into the simulation mesh.
 
-National Resources Conservation Service Soils
----------------------------------------------
-
 .. autoclass:: watershed_workflow.sources.manager_nrcs.FileManagerNRCS
         :members: get_shapes
 
 Meteorology
------------
+~~~~~~~~~~~
 
 Meteorology datasets are a work in progress.  Different codes likely
 need to write met data in very different formats, and may need
@@ -133,13 +121,6 @@ different variables, so met data is necessarily less standardized.
 
 Currently we provide some preliminary capability here, but more is
 both on the way and needs more input to develop community consensus.
-
-Daymet
-~~~~~~
-
-.. note:: **This is in progress and not complete.** Not all
-          documentation may be correct, and it is definitely a moving
-          target.  Buyer beware!
 
 .. autoclass:: watershed_workflow.sources.manager_daymet.FileManagerDaymet
         :members: get_meteorology               
@@ -150,13 +131,9 @@ Generic Files
 We also provide readers for user-provided rasters and shapefiles for
 generic use.
 
-Generic rasters
----------------
 .. autoclass:: watershed_workflow.sources.manager_raster.FileManagerRaster
         :members: get_raster               
    
-Generic shapefiles
-------------------
 .. autoclass:: watershed_workflow.sources.manager_shape.FileManagerShape
         :members: get_shape, get_shapes
 

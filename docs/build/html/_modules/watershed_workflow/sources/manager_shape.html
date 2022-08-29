@@ -1,32 +1,69 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>watershed_workflow.sources.manager_shape &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <meta charset="utf-8">
   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>watershed_workflow.sources.manager_shape &mdash; Watershed Workflow 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -34,7 +71,17 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
@@ -47,30 +94,66 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">Watershed Workflow</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
       <li>watershed_workflow.sources.manager_shape</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <h1>Source code for watershed_workflow.sources.manager_shape</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Basic manager for interacting with shapefiles.</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -83,18 +166,19 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.config</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.crs</span>
 
+
 <div class="viewcode-block" id="FileManagerShape"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_shape.FileManagerShape">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
 <span class="k">class</span> <span class="nc">FileManagerShape</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;A simple class for reading shapefiles.</span>
 
-<span class="sd">    Parameter</span>
-<span class="sd">    ---------</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
 <span class="sd">    filename : str</span>
 <span class="sd">      Path to the shapefile.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_filename</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;shapefile&#39;</span>
-    
+
 <div class="viewcode-block" id="FileManagerShape.get_shape"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_shape.FileManagerShape.get_shape">[docs]</a>    <span class="k">def</span> <span class="nf">get_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read the file and filter to get shapes, then ensures there is only one</span>
 <span class="sd">        match.</span>
@@ -115,7 +199,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shps</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Filtered shapefile contains more than one match.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">shps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
-    
+
 <div class="viewcode-block" id="FileManagerShape.get_shapes"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_shape.FileManagerShape.get_shapes">[docs]</a>    <span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read the file and filter to get shapes.</span>
 
@@ -144,7 +228,7 @@
 
             <span class="k">if</span> <span class="n">index_or_bounds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">index_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">index_or_bounds</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index_or_bounds</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fid</span><span class="p">[</span><span class="n">index_or_bounds</span><span class="p">],]</span>
+                    <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">fid</span><span class="p">[</span><span class="n">index_or_bounds</span><span class="p">],</span> <span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">fid</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
@@ -155,41 +239,50 @@
                     <span class="c1"># try to read a damaged file with only wkt</span>
                     <span class="n">crs_file</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs_wkt&#39;</span><span class="p">])</span>
                     <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_fiona</span><span class="p">(</span><span class="n">crs_file</span><span class="p">)</span>
-                    
+
                 <span class="n">bounds</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">index_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">crs_file</span><span class="p">)</span>
-                <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="n">fid</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bounds</span><span class="p">)]</span>
+                <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="n">fid</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bounds</span><span class="p">)]</span>
 
         <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">shps</span></div></div>
-    
-    
-    
 </pre></div>
 
            </div>
+           
           </div>
           <footer>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
-  </div>
+    <p>
+        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

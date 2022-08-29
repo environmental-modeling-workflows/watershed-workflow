@@ -1,32 +1,69 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>watershed_workflow.plot &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <meta charset="utf-8">
   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>watershed_workflow.plot &mdash; Watershed Workflow 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -34,7 +71,17 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
@@ -47,30 +94,66 @@
 <li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Watershed Workflow</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../index.html">Module code</a> &raquo;</li>
+        
       <li>watershed_workflow.plot</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <h1>Source code for watershed_workflow.plot</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Plotting relies on cartopy to ensure that coordinate projections are dealt</span>
 <span class="sd">with reasonably within matplotlib.  The preferred usage for plotting is similar</span>
@@ -99,6 +182,7 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.crs</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.colors</span>
 
+
 <span class="k">def</span> <span class="nf">_is_iter</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="nb">iter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
@@ -118,6 +202,7 @@
 
     <span class="k">def</span> <span class="nf">autoscale_None</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
+
 
 <div class="viewcode-block" id="get_ax"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.get_ax">[docs]</a><span class="k">def</span> <span class="nf">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axgrid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns an axis with a given projection.</span>
@@ -168,8 +253,8 @@
         <span class="k">if</span> <span class="n">axgrid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">axargs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nrow</span><span class="p">,</span> <span class="n">ncol</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">axargs</span> <span class="o">=</span> <span class="p">[</span><span class="n">axgrid</span><span class="p">,]</span>
-            
+            <span class="n">axargs</span> <span class="o">=</span> <span class="p">[</span><span class="n">axgrid</span><span class="p">,</span> <span class="p">]</span>
+
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># no crs, just get an ax -- you deal with it.</span>
             <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">)</span>
@@ -197,7 +282,8 @@
         <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ax</span></div>
-        
+
+
 <div class="viewcode-block" id="huc"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.huc">[docs]</a><span class="k">def</span> <span class="nf">huc</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot a HUC polygon.</span>
 
@@ -221,7 +307,8 @@
 <span class="sd">    -------</span>
 <span class="sd">    patches : matplotlib PatchCollection</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">shply</span><span class="p">([</span><span class="n">huc</span><span class="p">,],</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">shply</span><span class="p">([</span><span class="n">huc</span><span class="p">,</span> <span class="p">],</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="hucs"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.hucs">[docs]</a><span class="k">def</span> <span class="nf">hucs</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot a SplitHUCs object.</span>
@@ -252,19 +339,29 @@
     <span class="k">if</span> <span class="s1">&#39;markersize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">kwargs_scatter</span><span class="p">[</span><span class="s1">&#39;markersize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;markersize&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs_scatter</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;marker&#39;</span><span class="p">)</span>        
-    
+        <span class="n">kwargs_scatter</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;marker&#39;</span><span class="p">)</span>
+
     <span class="n">polys</span> <span class="o">=</span> <span class="n">shply</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)])</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)])</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="p">])</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="p">])</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="s1">&#39;markersize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;markersize&#39;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">=</span> <span class="mi">100</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_scatter</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="shapes"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shapes">[docs]</a><span class="k">def</span> <span class="nf">shapes</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot an itereable collection of fiona shapes.</span>
@@ -292,6 +389,7 @@
     <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
     <span class="n">shply</span><span class="p">(</span><span class="n">shplys</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="river"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.river">[docs]</a><span class="k">def</span> <span class="nf">river</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot an itereable collection of reaches.</span>
 
@@ -317,7 +415,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">shplys</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="rivers"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.rivers">[docs]</a><span class="k">def</span> <span class="nf">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="rivers"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.rivers">[docs]</a><span class="k">def</span> <span class="nf">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot an itereable collection of river Tree objects.</span>
 
 <span class="sd">    A wrapper for plot.shply()</span>
@@ -342,21 +441,22 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">river</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
             <span class="n">river</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
             <span class="n">river</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-            
-    
+
+
 <div class="viewcode-block" id="shply"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shply">[docs]</a><span class="k">def</span> <span class="nf">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot a single shapely object.  See shplys() for options.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">shplys</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">shplys</span><span class="p">([</span><span class="n">shp</span><span class="p">,],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">shplys</span><span class="p">([</span><span class="n">shp</span><span class="p">,</span> <span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="shplys"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shplys">[docs]</a><span class="k">def</span> <span class="nf">shplys</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot shapely objects.</span>
@@ -388,13 +488,13 @@
 <span class="sd">    col : collection of matplotlib points or lines or patches</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">descartes</span>
-    
+
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">shps</span><span class="p">,]</span>
-        
+        <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">shps</span><span class="p">,</span> <span class="p">]</span>
+
     <span class="k">if</span> <span class="s1">&#39;facecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
 
@@ -405,19 +505,18 @@
         <span class="n">projection</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">projection</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
-        
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
         <span class="c1"># plot points</span>
         <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span>
-        
-        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">])[:,</span><span class="mi">0</span><span class="p">,:]</span>
+
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">])[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
         <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            
-            
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
         <span class="c1"># plot lines</span>
         <span class="k">if</span> <span class="s1">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -443,8 +542,8 @@
             <span class="n">cmapper</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">cm_mapper</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span>
             <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmapper</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">]</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors</span>
-        
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">coords</span><span class="p">)[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
+
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">coords</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
         <span class="n">lc</span> <span class="o">=</span> <span class="n">pltc</span><span class="o">.</span><span class="n">LineCollection</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">lc</span><span class="o">.</span><span class="n">set_transform</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
@@ -454,38 +553,38 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
-        
+
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">in</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">]:</span>
         <span class="k">if</span> <span class="s1">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">style</span>
 
-        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">,</span><span class="s1">&#39;edge&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="s1">&#39;edge&#39;</span><span class="p">]:</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;facecolor&#39;</span><span class="p">)</span>
             <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">False</span>
-            
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">color_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span><span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
             <span class="n">color_len</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
         <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">or</span> <span class="n">color_len</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shps</span><span class="p">):</span>
             <span class="c1"># assume this is ONE color, and therefore can add as a multipolygon/polygon collection</span>
             <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;k&#39;</span>
-            
+
             <span class="k">if</span> <span class="s1">&#39;edgecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;edgecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
             <span class="k">if</span> <span class="n">face_is_edge</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
-            
+
             <span class="c1"># first must flatten</span>
             <span class="k">def</span> <span class="nf">listify</span><span class="p">(</span><span class="n">thing</span><span class="p">):</span>
                 <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">:</span>
                     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">thing</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="p">[</span><span class="n">thing</span><span class="p">,]</span>
+                    <span class="k">return</span> <span class="p">[</span><span class="n">thing</span><span class="p">,</span> <span class="p">]</span>
 
             <span class="n">multi_poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">([</span><span class="n">l</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">shp</span><span class="p">)])</span>
             <span class="n">patch</span> <span class="o">=</span> <span class="n">descartes</span><span class="o">.</span><span class="n">PolygonPatch</span><span class="p">(</span><span class="n">multi_poly</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -544,6 +643,7 @@
     <span class="c1">#assert res is not None</span>
     <span class="k">return</span> <span class="n">res</span></div>
 
+
 <div class="viewcode-block" id="triangulation"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.triangulation">[docs]</a><span class="k">def</span> <span class="nf">triangulation</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plots a triangulation.</span>
 
@@ -576,7 +676,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;elevation&#39;</span> <span class="ow">and</span> <span class="n">points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
         <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;gray&#39;</span>
 
@@ -590,23 +690,42 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">vmax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;vmax&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span>
-        
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Axes3D</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;elevation&#39;</span><span class="p">:</span>
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span>
             <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">get_color_extents</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>        
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                  <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                  <span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                                  <span class="n">tris</span><span class="p">,</span>
+                                  <span class="n">color</span><span class="p">,</span>
+                                  <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
+                                  <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_trisurf</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                  <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                  <span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                                  <span class="n">tris</span><span class="p">,</span>
+                                  <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;elevation&#39;</span><span class="p">:</span>
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">tripcolor</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">tripcolor</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span>
             <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">get_color_extents</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">tripcolor</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>        
-            <span class="n">col</span> <span class="o">=</span>  <span class="n">ax</span><span class="o">.</span><span class="n">triplot</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">tripcolor</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                               <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                               <span class="n">tris</span><span class="p">,</span>
+                               <span class="n">color</span><span class="p">,</span>
+                               <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
+                               <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+                               <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">triplot</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">tris</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">col</span></div>
 
 
@@ -635,9 +754,8 @@
 <span class="sd">      Collection of patches representing the triangles.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span> <span class="p">]</span>
+    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">shply</span><span class="p">(</span><span class="n">shplys</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="raster"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.raster">[docs]</a><span class="k">def</span> <span class="nf">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -668,18 +786,19 @@
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">get_ax</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
 
-    <span class="k">assert</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-    <span class="k">assert</span><span class="p">(</span><span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">profile</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">profile</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">mask</span> <span class="ow">and</span> <span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">profile</span><span class="p">:</span>
         <span class="n">nnd</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]))</span>
-        
+
     <span class="k">if</span> <span class="n">vmin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">vmax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-    <span class="n">bounds</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">array_bounds</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">])</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">array_bounds</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span>
+                                             <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">])</span>
     <span class="n">extent</span> <span class="o">=</span> <span class="p">[</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;BOUNDS: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -689,7 +808,15 @@
     <span class="sd">&quot;&quot;&quot;See raster documentation&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="basemap"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.basemap">[docs]</a><span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;50m&#39;</span><span class="p">,</span> <span class="n">land_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ocean_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">country_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coastline_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="basemap"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.basemap">[docs]</a><span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;50m&#39;</span><span class="p">,</span>
+            <span class="n">land_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">ocean_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">state_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">country_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">coastline_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Add a basemap to the axis.</span>
 
 <span class="sd">    Uses cartopy to add political and natural boundaries and shapes to the axes</span>
@@ -736,22 +863,22 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">land</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">state_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;facecolor&#39;</span><span class="p">:</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;facecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="p">}</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">state_kwargs</span><span class="p">)</span>
         <span class="n">states</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;cultural&#39;</span><span class="p">,</span> <span class="s1">&#39;admin_1_states_provinces_lines&#39;</span><span class="p">,</span>
-                                                    <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                                     <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># these seem a bit broken?</span>
         <span class="k">if</span> <span class="s1">&#39;fix&#39;</span> <span class="ow">in</span> <span class="n">state_kwargs</span> <span class="ow">and</span> <span class="n">state_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;fix&#39;</span><span class="p">):</span>
             <span class="n">states</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">geometries</span><span class="p">()))</span>
             <span class="n">shplys</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">latlon_crs</span><span class="p">(),</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">state_kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
-        
+
     <span class="k">if</span> <span class="n">country_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">country_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;facecolor&#39;</span><span class="p">:</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;facecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="p">}</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">country_kwargs</span><span class="p">)</span>
         <span class="n">country</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;cultural&#39;</span><span class="p">,</span> <span class="s1">&#39;admin_0_boundary_lines_land&#39;</span><span class="p">,</span>
-                                                     <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                                      <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># these seem a bit broken?</span>
         <span class="k">if</span> <span class="s1">&#39;fix&#39;</span> <span class="ow">in</span> <span class="n">country_kwargs</span> <span class="ow">and</span> <span class="n">country_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;fix&#39;</span><span class="p">):</span>
             <span class="n">country</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">country</span><span class="o">.</span><span class="n">geometries</span><span class="p">()))</span>
@@ -770,14 +897,13 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">ocean</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">coastline_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">coastline_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;facecolor&#39;</span><span class="p">:</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;facecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;edgecolor&#39;</span><span class="p">:</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="p">}</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">coastline_kwargs</span><span class="p">)</span>
-        <span class="n">states</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;physical&#39;</span><span class="p">,</span> <span class="s1">&#39;coastline&#39;</span><span class="p">,</span>
-                                                     <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="n">cartopy</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span><span class="s1">&#39;physical&#39;</span><span class="p">,</span> <span class="s1">&#39;coastline&#39;</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
 
-        
-    <span class="k">return</span> </div>
+    <span class="k">return</span></div>
+
 
 <div class="viewcode-block" id="feather_axis_limits"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.feather_axis_limits">[docs]</a><span class="k">def</span> <span class="nf">feather_axis_limits</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Adds a small delta to the axis limits to provide a bit of buffer.</span>
@@ -791,47 +917,57 @@
 <span class="sd">      the current plot width,height to increase by.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;feather_axis_limits expects delta argument of length 2 (dx,dy)&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
-    
+
     <span class="n">xlim</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
     <span class="n">ylim</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
     <span class="n">dx</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">dy</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx</span><span class="p">,</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span><span class="p">))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dy</span><span class="p">,</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dy</span><span class="p">))</span></div>
-
-
 </pre></div>
 
            </div>
+           
           </div>
           <footer>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
-  </div>
+    <p>
+        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

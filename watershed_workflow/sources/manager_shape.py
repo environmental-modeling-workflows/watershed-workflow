@@ -14,8 +14,8 @@ import watershed_workflow.crs
 class FileManagerShape:
     """A simple class for reading shapefiles.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     filename : str
       Path to the shapefile.
     """

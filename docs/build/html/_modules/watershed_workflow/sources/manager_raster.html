@@ -1,32 +1,69 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>watershed_workflow.sources.manager_raster &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <meta charset="utf-8">
   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>watershed_workflow.sources.manager_raster &mdash; Watershed Workflow 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -34,7 +71,17 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
@@ -47,30 +94,66 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">Watershed Workflow</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
       <li>watershed_workflow.sources.manager_raster</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <h1>Source code for watershed_workflow.sources.manager_raster</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Basic manager for interacting with raster files.</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -82,18 +165,19 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.crs</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
+
 <div class="viewcode-block" id="FileManagerRaster"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
 <span class="k">class</span> <span class="nc">FileManagerRaster</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;A simple class for reading rasters.</span>
 
-<span class="sd">    Parameter</span>
-<span class="sd">    ---------</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
 <span class="sd">    filename : str</span>
 <span class="sd">      Path to the raster file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_filename</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;raster&#39;</span>
-    
+
 <div class="viewcode-block" id="FileManagerRaster.get_raster"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster.get_raster">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Download and read a DEM for this shape, clipping to the shape.</span>
 <span class="sd">        </span>
@@ -144,64 +228,82 @@
             <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span>
             <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span>
 
-            <span class="n">window</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">col_off</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">row_off</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
-                                             <span class="n">width</span><span class="o">=</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">height</span><span class="o">=</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">col_off</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+                                             <span class="n">row_off</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
+                                             <span class="n">width</span><span class="o">=</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span>
+                                             <span class="n">height</span><span class="o">=</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
             <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">])</span>
 
             <span class="n">raster</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">band</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">])):</span>
                 <span class="c1"># the raster does not cover the domain!</span>
-                <span class="k">assert</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
-                <span class="k">assert</span><span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
 
                 <span class="c1"># create a new raster and set this raster in the right place</span>
-                <span class="n">raster_fullsize</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span>
-                                                                      <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]),</span> <span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="n">raster_fullsize</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]),</span> <span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">x0</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">x0_off</span> <span class="o">=</span> <span class="o">-</span><span class="n">x0</span>
                 <span class="k">else</span><span class="p">:</span> <span class="n">x0_off</span> <span class="o">=</span> <span class="mi">0</span>
 
-                <span class="k">if</span> <span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]:</span> <span class="n">x1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
-                <span class="k">else</span><span class="p">:</span> <span class="n">x1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
-                    
+                <span class="k">if</span> <span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]:</span>
+                    <span class="n">x1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">x1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+
                 <span class="k">if</span> <span class="n">y0</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">y0_off</span> <span class="o">=</span> <span class="o">-</span><span class="n">y0</span>
                 <span class="k">else</span><span class="p">:</span> <span class="n">y0_off</span> <span class="o">=</span> <span class="mi">0</span>
 
-                <span class="k">if</span> <span class="n">y1</span> <span class="o">&gt;=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]:</span> <span class="n">y1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
-                <span class="k">else</span><span class="p">:</span> <span class="n">y1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
-                    
-                <span class="n">raster_fullsize</span><span class="p">[</span><span class="n">y0_off</span><span class="p">:</span><span class="n">y1_off</span><span class="p">,</span><span class="n">x0_off</span><span class="p">:</span><span class="n">x1_off</span><span class="p">]</span> <span class="o">=</span> <span class="n">raster</span>
+                <span class="k">if</span> <span class="n">y1</span> <span class="o">&gt;=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]:</span>
+                    <span class="n">y1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">y1_off</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+
+                <span class="n">raster_fullsize</span><span class="p">[</span><span class="n">y0_off</span><span class="p">:</span><span class="n">y1_off</span><span class="p">,</span> <span class="n">x0_off</span><span class="p">:</span><span class="n">x1_off</span><span class="p">]</span> <span class="o">=</span> <span class="n">raster</span>
                 <span class="n">raster</span> <span class="o">=</span> <span class="n">raster_fullsize</span>
 
         <span class="k">if</span> <span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">window_profile</span> <span class="ow">and</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">],],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">],</span> <span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">window_profile</span><span class="p">,</span> <span class="n">raster</span></div></div>
 </pre></div>
 
            </div>
+           
           </div>
           <footer>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
-  </div>
+    <p>
+        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

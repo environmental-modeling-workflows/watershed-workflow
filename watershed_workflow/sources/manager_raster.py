@@ -13,8 +13,8 @@ import logging
 class FileManagerRaster:
     """A simple class for reading rasters.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     filename : str
       Path to the raster file.
     """

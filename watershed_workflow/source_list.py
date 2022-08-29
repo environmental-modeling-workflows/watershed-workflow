@@ -87,8 +87,8 @@ def get_sources(args):
     """Parsers the command line argument struct from argparse and provides an
     updated set of data sources.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     args : struct
       A python struct generated from an argparse.ArgumentParser object with
       source options set by watershed_workflow.ui.*_source_options
@@ -96,7 +96,7 @@ def get_sources(args):
     Returns
     -------
     sources : dict
-      Diectionary of defaults for each of "HUC", "hydrography", "DEM", "soil
+      Dictionary of defaults for each of "HUC", "hydrography", "DEM", "soil
       type", and "land cover".
     """
     sources = get_default_sources()
