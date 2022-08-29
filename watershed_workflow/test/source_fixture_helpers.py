@@ -23,6 +23,7 @@ import watershed_workflow.source_list
 import watershed_workflow.crs
 import watershed_workflow.utils
 
+
 def read_and_process_dump(pkl_dump_file):
     """Helper function to read, process, and save a new mock HUC file."""
 
@@ -34,7 +35,7 @@ def read_and_process_dump(pkl_dump_file):
     nhdp = watershed_workflow.source_list.FileManagerNHDPlus()
     hucs = dict()
     hydro_reqs = list()
-    for huc,v in d.items():
+    for huc, v in d.items():
         for level, _ in v.items():
             if level != 'hydro':
                 print(f'reading {huc} level {level}')
@@ -47,9 +48,9 @@ def read_and_process_dump(pkl_dump_file):
                 hydro_reqs.append(huc)
 
     # convert to shapely
-    for h,v in hucs.items():
+    for h, v in hucs.items():
         hucs[h] = watershed_workflow.utils.shply(v)
-    for h,v in hucs.items():
+    for h, v in hucs.items():
         # normalize the properties
         v.properties = dict(HUC=h)
 
@@ -64,15 +65,17 @@ def read_and_process_dump(pkl_dump_file):
         _, hydro[huc] = nhdp.get_hydro(huc, bounds, crs, include_catchments=False)
 
     # convert to shply -- and simplify, I think this should be safe!
-    for h,v in hydro.items():
+    for h, v in hydro.items():
         print(v[0].keys())
         rivers = [watershed_workflow.utils.shply(r) for r in v]
         hydro[h] = [r.simplify(50) for r in rivers]
-        
+
     # write the files
-    watershed_workflow.io.write_to_shapefile('watershed_workflow/test/fixture_data/hucs.shp', list(hucs.values()), crs)
-    for h,v in hydro.items():
-        watershed_workflow.io.write_to_shapefile(f'watershed_workflow/test/fixture_data/river_{h}.shp', v, crs)
+    watershed_workflow.io.write_to_shapefile('watershed_workflow/test/fixture_data/hucs.shp',
+                                             list(hucs.values()), crs)
+    for h, v in hydro.items():
+        watershed_workflow.io.write_to_shapefile(
+            f'watershed_workflow/test/fixture_data/river_{h}.shp', v, crs)
 
 
 if __name__ == '__main__':
@@ -80,9 +83,7 @@ if __name__ == '__main__':
     if not os.path.isdir('watershed_workflow/test/fixture_data'):
         raise RuntimeError('Run this script from the top level directory')
     if not os.path.isfile('/tmp/my.pkl'):
-        raise RuntimeError('Modify tests to write and run the tests -- see source_fixture_helpers.__doc__')
-    
+        raise RuntimeError(
+            'Modify tests to write and run the tests -- see source_fixture_helpers.__doc__')
+
     read_and_process_dump('/tmp/my.pkl')
-            
-
-

@@ -45,11 +45,11 @@ def _upper_bound(start, direction, distance, dist_func):
     # Exponential search until the distance between start and end is
     # greater than the given limit.
     length = 0.1
-    end = start + length * direction
+    end = start + length*direction
 
     while dist_func(start, end) < distance:
         length *= 2
-        end = start + length * direction
+        end = start + length*direction
 
     return end
 
@@ -83,7 +83,7 @@ def _distance_along_line(start, end, distance, dist_func, tol):
     right = end
 
     while not np.isclose(dist_func(start, right), distance, rtol=tol):
-        midpoint = (left + right) / 2
+        midpoint = (left+right) / 2
 
         # If midpoint is too close, search in second half.
         if dist_func(start, midpoint) < distance:
@@ -127,10 +127,21 @@ def _point_along_line(ax, start, distance, angle=0, tol=0.01):
     return _distance_along_line(start, end, distance, dist_func, tol)
 
 
-def scalebar(ax, location, length, metres_per_unit=1000, unit_name='km',
-              tol=0.01, angle=0, color='black', linewidth=3, text_offset=0.005,
-              ha='center', va='bottom', plot_kwargs=None, text_kwargs=None,
-              **kwargs):
+def scalebar(ax,
+             location,
+             length,
+             metres_per_unit=1000,
+             unit_name='km',
+             tol=0.01,
+             angle=0,
+             color='black',
+             linewidth=3,
+             text_offset=0.005,
+             ha='center',
+             va='bottom',
+             plot_kwargs=None,
+             text_kwargs=None,
+             **kwargs):
     """Add a scale bar to CartoPy axes.
 
     For angles between 0 and 90 the text and line may be plotted at
@@ -161,10 +172,8 @@ def scalebar(ax, location, length, metres_per_unit=1000, unit_name='km',
     if text_kwargs is None:
         text_kwargs = {}
 
-    plot_kwargs = {'linewidth': linewidth, 'color': color, **plot_kwargs,
-                   **kwargs}
-    text_kwargs = {'ha': ha, 'va': va, 'rotation': angle, 'color': color,
-                   **text_kwargs, **kwargs}
+    plot_kwargs = { 'linewidth': linewidth, 'color': color, **plot_kwargs, **kwargs }
+    text_kwargs = { 'ha': ha, 'va': va, 'rotation': angle, 'color': color, **text_kwargs, **kwargs }
 
     # Convert all units and types.
     location = np.asarray(location)  # For vector addition.
@@ -172,8 +181,7 @@ def scalebar(ax, location, length, metres_per_unit=1000, unit_name='km',
     angle_rad = angle * np.pi / 180
 
     # End-point of bar.
-    end = _point_along_line(ax, location, length_metres, angle=angle_rad,
-                            tol=tol)
+    end = _point_along_line(ax, location, length_metres, angle=angle_rad, tol=tol)
 
     # Coordinates are currently in axes coordinates, so use transAxes to
     # put into data coordinates. *zip(a, b) produces a list of x-coords,
@@ -181,11 +189,13 @@ def scalebar(ax, location, length, metres_per_unit=1000, unit_name='km',
     ax.plot(*zip(location, end), transform=ax.transAxes, **plot_kwargs)
 
     # Push text away from bar in the perpendicular direction.
-    midpoint = (location + end) / 2
+    midpoint = (location+end) / 2
     offset = text_offset * np.array([-np.sin(angle_rad), np.cos(angle_rad)])
     text_location = midpoint + offset
 
     # 'rotation' keyword argument is in text_kwargs.
-    ax.text(*text_location, f"{length} {unit_name}", rotation_mode='anchor',
-            transform=ax.transAxes, **text_kwargs)
-
+    ax.text(*text_location,
+            f"{length} {unit_name}",
+            rotation_mode='anchor',
+            transform=ax.transAxes,
+            **text_kwargs)

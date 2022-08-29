@@ -39,28 +39,32 @@ def vgm_Rosetta(data, model_type=None):
     #
     # tranpose for backward compatibility!
     if data.ndim == 1:
-        data = [list(data),]
+        data = [list(data), ]
     else:
         data = [list(entry) for entry in data.transpose()]
-    
+
     soildata = rosetta.SoilData.from_array(data)
     result_mean, result_std, codes = rosetta.rosetta(3, soildata)
     logging.info(f'  ... done')
     result_mean = np.array(result_mean)
-       
+
     # check results
     #   output log10 of VG-alpha,VG-n, and Ks
-    df = pandas.DataFrame(columns=['Rosetta residual volumetric water content [cm^3 cm^-3]',
-                                   'Rosetta saturated volumetric water content [cm^3 cm^-3]',
-                                   'Rosetta log van Genuchten alpha [cm^-1]',
-                                   'Rosetta log van Genuchten n [-]',
-                                   'Rosetta log Ksat [um s^-1]'], dtype=float)
-    df['Rosetta residual volumetric water content [cm^3 cm^-3]'] = result_mean[:,0]
-    df['Rosetta saturated volumetric water content [cm^3 cm^-3]'] = result_mean[:,1]
-    df['Rosetta log van Genuchten alpha [cm^-1]'] = result_mean[:,2]
-    df['Rosetta log van Genuchten n [-]'] = result_mean[:,3]
-    df['Rosetta log Ksat [um s^-1]'] = np.log10( (10**result_mean[:,4]) / 86400 * 1e4 ) # log cm/d --> log um/s
+    df = pandas.DataFrame(columns=[
+        'Rosetta residual volumetric water content [cm^3 cm^-3]',
+        'Rosetta saturated volumetric water content [cm^3 cm^-3]',
+        'Rosetta log van Genuchten alpha [cm^-1]', 'Rosetta log van Genuchten n [-]',
+        'Rosetta log Ksat [um s^-1]'
+    ],
+                          dtype=float)
+    df['Rosetta residual volumetric water content [cm^3 cm^-3]'] = result_mean[:, 0]
+    df['Rosetta saturated volumetric water content [cm^3 cm^-3]'] = result_mean[:, 1]
+    df['Rosetta log van Genuchten alpha [cm^-1]'] = result_mean[:, 2]
+    df['Rosetta log van Genuchten n [-]'] = result_mean[:, 3]
+    df['Rosetta log Ksat [um s^-1]'] = np.log10(
+        (10**result_mean[:, 4]) / 86400 * 1e4)  # log cm/d --> log um/s
     return df
+
 
 def vgm_from_SSURGO(df, rosetta_model=None):
     """Get van Genutchen model parameters using Rosetta v3.
@@ -82,11 +86,13 @@ def vgm_from_SSURGO(df, rosetta_model=None):
       composition (and therefore cannot calculate a VGM) will be dropped.
 
     """
-    
-    rosetta_input_header = ['total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]', 'bulk density [g/cm^3]']
+
+    rosetta_input_header = [
+        'total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]', 'bulk density [g/cm^3]'
+    ]
     df_rosetta = df.dropna(subset=rosetta_input_header)
 
-    # need to transpose the data so that the array have the shape (nvar, nsample) 
+    # need to transpose the data so that the array have the shape (nvar, nsample)
     data = df_rosetta[rosetta_input_header].values.T
     vgm = vgm_Rosetta(data, model_type=rosetta_model)
 
@@ -94,17 +100,18 @@ def vgm_from_SSURGO(df, rosetta_model=None):
     n_resp = len(vgm["Rosetta residual volumetric water content [cm^3 cm^-3]"])
     logging.info(f'  requested {n_shapes} values')
     logging.info(f'  got {n_resp} responses')
-    assert(n_shapes == n_resp)
+    assert (n_shapes == n_resp)
 
     vgm['mukey'] = df_rosetta['mukey'].values
 
     # merge back so that we do not lose data
-    assert('mukey' in df.keys())
-    assert('mukey' in df_rosetta.keys())
-    assert('mukey' in vgm.keys())
+    assert ('mukey' in df.keys())
+    assert ('mukey' in df_rosetta.keys())
+    assert ('mukey' in vgm.keys())
     merged = pandas.merge(vgm, df, how='outer', left_on='mukey', right_on='mukey')
-    assert(len(merged) == len(df))
+    assert (len(merged) == len(df))
     return merged
+
 
 def to_ATS(df):
     """Converts units from aggregated, Rosetta standard-parameters to ATS."""
@@ -121,7 +128,7 @@ def to_ATS(df):
             df_new[knew] = vals
         elif k == 'Rosetta log van Genuchten alpha [cm^-1]':
             knew = 'van Genuchten alpha [Pa^-1]'
-            vals = 10**df[k]*100/1000/10
+            vals = 10**df[k] * 100 / 1000 / 10
             df_new[knew] = vals
         elif k == 'Rosetta residual volumetric water content [cm^3 cm^-3]':
             knew = 'residual saturation [-]'
@@ -148,11 +155,12 @@ def _whiten(observations):
     whitened = whitened / np.expand_dims(std, 0)
     return whitened, (means, std)
 
+
 def _unwhiten(observations, dat):
     """This does the inverse of _whiten"""
     means, std = dat
     return observations * np.expand_dims(std, 0) + np.expand_dims(means, 0)
-    
+
 
 def cluster(rasters, nbins):
     """Given a bunch of raster bands, cluster into nbins.
@@ -161,21 +169,22 @@ def cluster(rasters, nbins):
     import scipy.cluster.vq
     if len(rasters.shape) == 2:
         rasters = np.expand_dims(rasters, -1)
-    assert(len(rasters.shape) == 3)
+    assert (len(rasters.shape) == 3)
     in_shp = rasters.shape[0:2]
     total_shp = in_shp[0] * in_shp[1]
 
     obs = np.reshape(rasters, (-1, rasters.shape[-1]))
-    obs_nonan = obs[~np.isnan(obs[:,0]),:]
-    
+    obs_nonan = obs[~np.isnan(obs[:, 0]), :]
+
     whiten_obs, whiten_dat = _whiten(obs_nonan)
     codebook, dist1 = scipy.cluster.vq.kmeans(whiten_obs, nbins)
     code, dist2 = scipy.cluster.vq.vq(whiten_obs, codebook)
     codebook = _unwhiten(codebook, whiten_dat)
 
-    codes_nan = -1 * np.ones((total_shp,), 'i')
-    codes_nan[~np.isnan(obs[:,0])] = code
-    return codebook, codes_nan.reshape(in_shp), (dist1,dist2)
+    codes_nan = -1 * np.ones((total_shp, ), 'i')
+    codes_nan[~np.isnan(obs[:, 0])] = code
+    return codebook, codes_nan.reshape(in_shp), (dist1, dist2)
+
 
 def alpha_from_permeability(perm, poro):
     """Uses the relationship from Guarracino WRR 2007 to relate van Genuchten alpha to permeability and porosity.
@@ -211,11 +220,11 @@ def get_bedrock_properties():
     """
     poro = 0.15
     perm = 1.0e-16
-    
+
     df = pandas.DataFrame()
-    df['ats_id'] = [999,]
-    df['porosity [-]'] = [poro,]
-    df['permeability [m^2]'] = [perm,]
+    df['ats_id'] = [999, ]
+    df['porosity [-]'] = [poro, ]
+    df['permeability [m^2]'] = [perm, ]
     df['van Genuchten alpha [Pa^-1]'] = alpha_from_permeability(perm, poro)
     df['van Genuchten n [-]'] = 3.0
     df['residual saturation [-]'] = 0.01
@@ -223,43 +232,50 @@ def get_bedrock_properties():
     df.set_index('ats_id', drop=True, inplace=True)
     return df
 
-def mangle_glhymps_properties(shapes, min_porosity=0.01, max_permeability=np.inf, max_vg_alpha=np.inf):
+
+def mangle_glhymps_properties(shapes,
+                              min_porosity=0.01,
+                              max_permeability=np.inf,
+                              max_vg_alpha=np.inf):
     """GLHYMPs properties need their units changed."""
-    assert(len(shapes) > 0)
+    assert (len(shapes) > 0)
     if type(shapes[0]) is dict:
         shp_props = [shp['properties'] for shp in shapes]
     else:
         shp_props = [shp.properties for shp in shapes]
-    
+
     ids = np.array([prop['OBJECTID_1'] for prop in shp_props], dtype=int)
     for prop in shp_props:
         prop['id'] = prop['OBJECTID_1']
 
     Ksat = np.array([prop['logK_Ferr_'] for prop in shp_props], dtype=float)
-    Ksat = 10**(Ksat / 100) # units = m^2, division by 100 is per GLHYMPS Readme file
+    Ksat = 10**(Ksat / 100)  # units = m^2, division by 100 is per GLHYMPS Readme file
     Ksat = np.minimum(Ksat, max_permeability)
-    Ksat_std = np.array([prop['K_stdev_x1'] for prop in shp_props], dtype=float) # standard deviation
-    Ksat_std = Ksat_std / 100 # division by 100 is per GLHYMPS readme
-    poro = np.array([prop['Porosity_x'] for prop in shp_props], dtype=float) # [-]
-    poro = poro / 100 # division by 100 is per GLHYMPS readme
-    poro = np.maximum(poro, min_porosity) # some values are 0?
+    Ksat_std = np.array([prop['K_stdev_x1'] for prop in shp_props],
+                        dtype=float)  # standard deviation
+    Ksat_std = Ksat_std / 100  # division by 100 is per GLHYMPS readme
+    poro = np.array([prop['Porosity_x'] for prop in shp_props], dtype=float)  # [-]
+    poro = poro / 100  # division by 100 is per GLHYMPS readme
+    poro = np.maximum(poro, min_porosity)  # some values are 0?
 
     #descriptions = [prop['Descriptio'] for prop in shp_props]
     # derived properties
     # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-    vg_alpha = np.minimum(watershed_workflow.soil_properties.alpha_from_permeability(Ksat, poro), max_vg_alpha)
+    vg_alpha = np.minimum(watershed_workflow.soil_properties.alpha_from_permeability(Ksat, poro),
+                          max_vg_alpha)
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
 
-    properties = pandas.DataFrame(data={'id' : ids,
-                                        'source' : 'GLHYMPS',
-                                        'permeability [m^2]' : Ksat,
-                                        'logk_stdev [-]' : Ksat_std,
-                                        'porosity [-]' : poro,
-                                        'van Genuchten alpha [Pa^-1]' : vg_alpha,
-                                        'van Genuchten n [-]' : vg_n,
-                                        'residual saturation [-]' : sr,
-                                        #'description' : descriptions,
-                                        })
+    properties = pandas.DataFrame(
+        data={
+            'id': ids,
+            'source': 'GLHYMPS',
+            'permeability [m^2]': Ksat,
+            'logk_stdev [-]': Ksat_std,
+            'porosity [-]': poro,
+            'van Genuchten alpha [Pa^-1]': vg_alpha,
+            'van Genuchten n [-]': vg_n,
+            'residual saturation [-]': sr,
+            #'description' : descriptions,
+        })
     return properties
-

@@ -25,20 +25,21 @@ import watershed_workflow.plot
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
-import watershed_workflow.sources.utils 
+import watershed_workflow.sources.utils
 import watershed_workflow.sources.manager_shape
 import watershed_workflow.utils
 
-__all__ = ['get_huc', 'get_hucs', 'get_split_form_hucs',
-           'get_shapes', 'get_split_form_shapes', 'find_huc',
-           'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune',
-           'get_waterbodies',
-           'triangulate', 'get_raster_on_shape', 'values_from_raster',
-           'elevate', 'color_raster_from_shapes', 'color_existing_raster_from_shapes']
+__all__ = [
+    'get_huc', 'get_hucs', 'get_split_form_hucs', 'get_shapes', 'get_split_form_shapes', 'find_huc',
+    'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune', 'get_waterbodies',
+    'triangulate', 'get_raster_on_shape', 'values_from_raster', 'elevate',
+    'color_raster_from_shapes', 'color_existing_raster_from_shapes'
+]
 
 #
 # functions for getting objects
 # -----------------------------------------------------------------------------
+
 
 def get_huc(source, huc, out_crs=None, digits=None):
     """Get a HUC shape object from a given code.
@@ -66,11 +67,11 @@ def get_huc(source, huc, out_crs=None, digits=None):
 
     logging.info("")
     logging.info(f"Loading HUC {huc}")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     out_crs, hu_shapes = get_hucs(source, huc, len(huc), out_crs, digits)
     logging.info(f"... found {len(hu_shapes)}")
-    assert(len(hu_shapes) == 1)
+    assert (len(hu_shapes) == 1)
     return out_crs, hu_shapes[0]
 
 
@@ -105,13 +106,13 @@ def get_hucs(source, huc, level, out_crs=None, digits=None):
 
     logging.info("")
     logging.info(f"Loading level {level} HUCs in {huc}")
-    logging.info("-"*30)
-    
+    logging.info("-" * 30)
+
     profile, hus = source.get_hucs(huc, level)
     logging.info("... found {} HUCs".format(len(hus)))
     for hu in hus:
-        logging.info('  -- {}'.format(watershed_workflow.sources.utils.get_code(hu,level)))
-    
+        logging.info('  -- {}'.format(watershed_workflow.sources.utils.get_code(hu, level)))
+
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
@@ -165,7 +166,13 @@ def get_split_form_hucs(source, huc, level=None, out_crs=None, digits=None):
     return out_crs, watershed_workflow.split_hucs.SplitHUCs(hu_shapes)
 
 
-def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=None, properties=False, **kwargs):
+def get_shapes(source,
+               index_or_bounds=None,
+               in_crs=None,
+               out_crs=None,
+               digits=None,
+               properties=False,
+               **kwargs):
     """Read a shapefile.
 
     If index_or_bounds is a bounding box, in_crs must not be None and is the crs
@@ -204,16 +211,17 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
     """
     logging.info("")
     logging.info("Loading shapes")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     # load shapefile
     if type(source) is str:
         source_filename = source
-        logging.info(f"Loading file: '{source}'")      
+        logging.info(f"Loading file: '{source}'")
         source = watershed_workflow.sources.manager_shape.FileManagerShape(source)
 
     if properties:
-        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs, **kwargs)
+        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs,
+                                                                    **kwargs)
     else:
         profile, shps = source.get_shapes(index_or_bounds, in_crs, **kwargs)
     logging.info(f"... found {len(shps)} shapes")
@@ -226,7 +234,7 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
     else:
         shplys = shps
-    
+
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
@@ -234,7 +242,7 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         shplys = watershed_workflow.warp.shplys(shplys, native_crs, out_crs)
     else:
         out_crs = native_crs
-        
+
     # round
     if digits != None:
         logging.info("Rounding coordinates")
@@ -244,6 +252,7 @@ def get_shapes(source, index_or_bounds=None, in_crs=None, out_crs=None, digits=N
         return out_crs, shplys, out_props
     else:
         return out_crs, shplys
+
 
 def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None, digits=None):
     """Read a shapefile.
@@ -279,8 +288,18 @@ def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None,
     return crs, watershed_workflow.split_hucs.SplitHUCs(shapes)
 
 
-def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
-                digits=None, tol=None, long=None, merge=False, presimplify=None, properties=None, include_catchments=False,
+def get_reaches(source,
+                huc,
+                bounds_or_shp=None,
+                in_crs=None,
+                out_crs=None,
+                digits=None,
+                tol=None,
+                long=None,
+                merge=False,
+                presimplify=None,
+                properties=None,
+                include_catchments=False,
                 **kwargs):
     """Get reaches from hydrography source within a given HUC and/or bounding box.
 
@@ -342,7 +361,7 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
     """
     logging.info("")
     logging.info("Loading Hydrography")
-    logging.info("-"*30)
+    logging.info("-" * 30)
     logging.info(f"Loading streams in HUC {huc}")
 
     if isinstance(bounds_or_shp, tuple):
@@ -353,13 +372,18 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
     logging.info(f"         and/or bounds {bounds}")
 
     # get the reaches
-    profile, reaches = source.get_hydro(huc, bounds, in_crs, properties=properties, include_catchments=include_catchments, **kwargs)
+    profile, reaches = source.get_hydro(huc,
+                                        bounds,
+                                        in_crs,
+                                        properties=properties,
+                                        include_catchments=include_catchments,
+                                        **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
-  
+
     # convert to shapely
     logging.info("Converting to shapely")
     reaches = [watershed_workflow.utils.shply(reach) for reach in reaches]
-        
+
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
@@ -368,8 +392,10 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
 
         for reach in reaches:
             if 'catchment' in reach.properties and reach.properties['catchment'] != None:
-                reach.properties['catchment'] = watershed_workflow.utils.shply(reach.properties['catchment'])
-                reach.properties['catchment'] = watershed_workflow.warp.shply(reach.properties['catchment'], native_crs, out_crs)
+                reach.properties['catchment'] = watershed_workflow.utils.shply(
+                    reach.properties['catchment'])
+                reach.properties['catchment'] = watershed_workflow.warp.shply(
+                    reach.properties['catchment'], native_crs, out_crs)
     else:
         out_crs = native_crs
 
@@ -381,7 +407,7 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
         reaches = watershed_workflow.utils.filter_to_shape(bounds_or_shp, reaches, tol)
         count = num_reaches - len(reaches)
         logging.info(f"Removed {count} of {num_reaches} reaches not in shape")
-        
+
     if presimplify != None:
         logging.info("Pre-simplifying")
         # convert to shapely and simplify
@@ -393,7 +419,7 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
     if merge:
         logging.info("Merging (warning: this loses properties)")
         reaches = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches)))
-        
+
     # round
     if digits != None:
         logging.info("Rounding coordinates")
@@ -404,13 +430,21 @@ def get_reaches(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None,
         logging.info(f"Filtering extra-long reaches")
         n_r = len(reaches_s)
         reaches_s = [reach for reach in reaches_s if reach.length < long]
-        logging.info("... filtered {} of {} due to length criteria {}".format(n_r - len(reaches_s), n_r, long))
-        
+        logging.info("... filtered {} of {} due to length criteria {}".format(
+            n_r - len(reaches_s), n_r, long))
+
     return out_crs, reaches
 
 
-def get_waterbodies(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None, digits=None,
-                    tol=None, prune_by_area=None, **kwargs):
+def get_waterbodies(source,
+                    huc,
+                    bounds_or_shp=None,
+                    in_crs=None,
+                    out_crs=None,
+                    digits=None,
+                    tol=None,
+                    prune_by_area=None,
+                    **kwargs):
     """Get waterbodies from NHDPlus hydrography source within a given HUC and/or bounding box.
 
     Collects waterbody datasets within a HUC and/or a bounding box.  If bounds are
@@ -455,7 +489,7 @@ def get_waterbodies(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None, 
     """
     logging.info("")
     logging.info("Loading Water Bodies")
-    logging.info("-"*30)
+    logging.info("-" * 30)
     logging.info(f"Loading waterbodies in HUC {huc}")
 
     # get the wbs
@@ -468,11 +502,11 @@ def get_waterbodies(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None, 
     logging.info(f"         and/or bounds {bounds}")
     profile, bodies = source.get_waterbodies(huc, bounds, in_crs, **kwargs)
     logging.info(f"... found {len(bodies)} waterbodies")
-  
+
     # convert to shapely
     logging.info("Converting to shapely")
     bodies = [watershed_workflow.utils.shply(b) for b in bodies]
-        
+
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
@@ -499,8 +533,14 @@ def get_waterbodies(source, huc, bounds_or_shp=None, in_crs=None, out_crs=None, 
     return out_crs, bodies
 
 
-def get_raster_on_shape(source, shape, in_crs, out_crs=None,
-                        buffer=0, mask=False, nodata=None, **kwargs):
+def get_raster_on_shape(source,
+                        shape,
+                        in_crs,
+                        out_crs=None,
+                        buffer=0,
+                        mask=False,
+                        nodata=None,
+                        **kwargs):
     """Collects a raster that covers the requested shape.
 
     Parameters
@@ -535,7 +575,7 @@ def get_raster_on_shape(source, shape, in_crs, out_crs=None,
     """
     logging.info("")
     logging.info("Loading Raster")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     # load file
     if type(source) is str:
@@ -559,37 +599,40 @@ def get_raster_on_shape(source, shape, in_crs, out_crs=None,
         profile, raster = watershed_workflow.warp.raster(profile, raster, out_crs)
 
     out_crs = watershed_workflow.crs.from_rasterio(profile['crs'])
-    
+
     if mask:
         # mask the raster
         logging.info("Masking to shape")
         if out_crs != in_crs:
             shape = watershed_workflow.warp.shply(shape, in_crs, out_crs)
         logging.info("  shape bounds: {}".format(shape.bounds))
-        mask = rasterio.features.geometry_mask([shape,], raster.shape,
-                                               profile['transform'], invert=True)
+        mask = rasterio.features.geometry_mask([shape, ],
+                                               raster.shape,
+                                               profile['transform'],
+                                               invert=True)
         if nodata is None:
             if profile['nodata'] is None:
                 try:
                     # surely there is a better way to see if dtype can handle nan?
-                    nodata = np.array([np.nan,], dtype=np.dtype(profile['dtype']))[0]
+                    nodata = np.array([np.nan, ], dtype=np.dtype(profile['dtype']))[0]
                 except:
                     # surely there is a better way to get -1 as dtype?
-                    nodata = np.array([-1,], dtype=np.dtype(profile['dtype']))[0]
+                    nodata = np.array([-1, ], dtype=np.dtype(profile['dtype']))[0]
                     profile['nodata'] = nodata
                 else:
                     profile['nodata'] = nodata
             else:
                 nodata = profile['nodata']
-            
+
         logging.info(f"  casting mask of dtype: {profile['dtype']} to: {nodata}")
         raster[~mask] = nodata
 
     transform = profile['transform']
-    x0 = transform * (0,0)
+    x0 = transform * (0, 0)
     x1 = transform * (profile['width'], profile['height'])
     logging.info("... got raster bounds: {}".format((x0[0], x0[1], x1[0], x1[1])))
     return profile, raster
+
 
 #
 # functions for relating objects
@@ -631,31 +674,31 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 
     def _find_huc(source, shply, crs, hint):
         """Searches in hint to find shp."""
-        logging.debug('searching: %s'%hint)
+        logging.debug('searching: %s' % hint)
         hint_level = len(hint)
         search_level = hint_level + 2
         if search_level > source.lowest_level:
             return hint
 
         _, subhus = get_hucs(source, hint, search_level, crs)
-        
+
         for subhu in subhus:
             inhuc = _in_huc(shply, subhu)
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
                 hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
-                logging.debug('  subhuc: %s contains'%hname)
+                logging.debug('  subhuc: %s contains' % hname)
                 return _find_huc(source, shply, crs, hname)
             elif inhuc == 1:
                 hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
-                logging.debug('  subhuc: %s partially contains'%hname)
+                logging.debug('  subhuc: %s partially contains' % hname)
                 # partially contained in try_huc, return this
                 return hint
             else:
                 hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
-                logging.debug('  subhuc: %s does not contain'%hname)
-        assert(False)
+                logging.debug('  subhuc: %s does not contain' % hname)
+        assert (False)
 
     if type(shape) is shapely.geometry.Polygon:
         shply = shape
@@ -663,8 +706,8 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
         shply = watershed_workflow.utils.shply(shape)
 
     # must shrink the poly a bit in case it is close to or on a boundary
-    radius = np.sqrt(shply.area/np.pi)
-    shply_s = shply.buffer(-shrink_factor*radius)
+    radius = np.sqrt(shply.area / np.pi)
+    shply_s = shply.buffer(-shrink_factor * radius)
 
     hint = watershed_workflow.sources.utils.huc_str(hint)
 
@@ -680,10 +723,14 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 #
 # functions for manipulating objects
 # -----------------------------------------------------------------------------
-def construct_rivers(hucs, reaches, method='geometry',
+def construct_rivers(hucs,
+                     reaches,
+                     method='geometry',
                      ignore_small_rivers=None,
-                     prune_by_area=None, prune_by_area_fraction=None,
-                     remove_diversions=False, remove_braided_divergences=False):
+                     prune_by_area=None,
+                     prune_by_area_fraction=None,
+                     remove_diversions=False,
+                     remove_braided_divergences=False):
     """Create a river, which is a tree of reaches.
     
     Note, HUCs and rivers must be in the same crs.
@@ -731,7 +778,7 @@ def construct_rivers(hucs, reaches, method='geometry',
     """
     logging.info("")
     logging.info("Constructing river network")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     logging.info("Generating the river tree")
     rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method)
@@ -752,10 +799,10 @@ def construct_rivers(hucs, reaches, method='geometry',
             rivers, prune_by_area_fraction)
         if len(rivers) == 0:
             return rivers
-        
+
     if remove_diversions or remove_braided_divergences:
-        rivers = watershed_workflow.hydrography.remove_divergences(
-            rivers, remove_diversions, remove_braided_divergences)
+        rivers = watershed_workflow.hydrography.remove_divergences(rivers, remove_diversions,
+                                                                   remove_braided_divergences)
     return rivers
 
 
@@ -820,9 +867,9 @@ def simplify(hucs,
         This also may modify the hucs and waterbody objects in-place.
 
     """
-    assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
-    assert(type(rivers) is list)
-    assert(all(type(r) is watershed_workflow.river_tree.River for r in rivers))
+    assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
+    assert (type(rivers) is list)
+    assert (all(type(r) is watershed_workflow.river_tree.River for r in rivers))
 
     if simplify_rivers is None:
         simplify_rivers = simplify_hucs
@@ -832,11 +879,11 @@ def simplify(hucs,
         prune_tol = simplify_rivers
     if merge_tol is None:
         merge_tol = simplify_rivers
-    
+
     logging.info("")
     logging.info("Simplifying")
-    logging.info("-"*30)
-            
+    logging.info("-" * 30)
+
     if simplify_rivers > 0:
         logging.info("Simplifying rivers")
         watershed_workflow.hydrography.cleanup(rivers, simplify_rivers, prune_tol, merge_tol)
@@ -846,20 +893,20 @@ def simplify(hucs,
         watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
 
     if simplify_waterbodies > 0 and waterbodies is not None:
-        for i,wb in enumerate(waterbodies):
+        for i, wb in enumerate(waterbodies):
             waterbodies[i] = wb.simplify(simplify_waterbodies)
 
     if snap:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
         rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
-                                            3*simplify_rivers, cut_intersections)
+                                                     3 * simplify_rivers, cut_intersections)
     elif cut_intersections:
         logging.info("Cutting crossings and removing external segments")
         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
-    
+
     logging.info("")
     logging.info("Simplification Diagnostics")
-    logging.info("-"*30)
+    logging.info("-" * 30)
     if len(rivers) != 0:
         mins = []
         for river in rivers:
@@ -881,23 +928,36 @@ def simplify(hucs,
     return rivers
 
 
-def simplify_and_prune(hucs, reaches,
+def simplify_and_prune(hucs,
+                       reaches,
                        simplify_hucs=None,
                        simplify_rivers=None,
                        ignore_small_rivers=None,
                        prune_by_area=0,
                        prune_by_area_fraction=0,
-                       snap=False, cut_intersections=False):
+                       snap=False,
+                       cut_intersections=False):
     """DEPRECATED: simply calls construct_rivers() and simplify()"""
-    rivers = construct_rivers(hucs, reaches, ignore_small_rivers, simplify_hucs,
-                              prune_by_area, prune_by_area_fraction)
+    rivers = construct_rivers(hucs, reaches, ignore_small_rivers, simplify_hucs, prune_by_area,
+                              prune_by_area_fraction)
     simplify(hucs, rivers, simplify_hucs, simplify_rivers, snap, cut_intersections)
     return rivers
 
-    
-def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=True, stream_outlet_width=None, verbosity=1, tol=1,
-                refine_max_area=None, refine_distance=None, refine_max_edge_length=None,
-                refine_min_angle=None, enforce_delaunay=False, river_region_dist=None):
+
+def triangulate(hucs,
+                rivers,
+                river_corrs=None,
+                mesh_rivers=False,
+                diagnostics=True,
+                stream_outlet_width=None,
+                verbosity=1,
+                tol=1,
+                refine_max_area=None,
+                refine_distance=None,
+                refine_max_edge_length=None,
+                refine_min_angle=None,
+                enforce_delaunay=False,
+                river_region_dist=None):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -972,30 +1032,40 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
 
     """
     verbose = verbosity > 2
-    
+
     logging.info("")
     logging.info("Meshing")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     refine_funcs = []
     if refine_max_area != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_from_max_area(refine_max_area))
     if refine_distance != None:
-        refine_funcs.append(watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
+        refine_funcs.append(
+            watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
     if refine_max_edge_length != None:
-        refine_funcs.append(watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
+        refine_funcs.append(
+            watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
+
     def my_refine_func(*args):
-        return any(rf(*args) for rf in refine_funcs)        
+        return any(rf(*args) for rf in refine_funcs)
 
     if not river_corrs == None:
-        allow_boundary_steiner=False
-    else: 
-        allow_boundary_steiner=True
-        
-    vertices, triangles= watershed_workflow.triangulation.triangulate(hucs, rivers, river_corrs, mesh_rivers=mesh_rivers,
-                                                                tol=tol, verbose=verbose, refinement_func=my_refine_func,
-                                                                min_angle=refine_min_angle, enforce_delaunay=enforce_delaunay,
-                                                                allow_boundary_steiner=allow_boundary_steiner)
+        allow_boundary_steiner = False
+    else:
+        allow_boundary_steiner = True
+
+    vertices, triangles = watershed_workflow.triangulation.triangulate(
+        hucs,
+        rivers,
+        river_corrs,
+        mesh_rivers=mesh_rivers,
+        tol=tol,
+        verbose=verbose,
+        refinement_func=my_refine_func,
+        min_angle=refine_min_angle,
+        enforce_delaunay=enforce_delaunay,
+        allow_boundary_steiner=allow_boundary_steiner)
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
@@ -1005,7 +1075,7 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
         needs_refine = []
         for tri in triangles:
             verts = vertices[tri]
-            bary = np.sum(np.array(verts), axis=0)/3
+            bary = np.sum(np.array(verts), axis=0) / 3
             bary_p = shapely.geometry.Point(bary[0], bary[1])
             distances.append(bary_p.distance(river_multiline))
             areas.append(watershed_workflow.utils.triangle_area(verts))
@@ -1022,7 +1092,7 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
             plt.xlabel("distance from river of triangle centroids [m]")
             plt.ylabel("count [-]")
             plt.subplot(122)
-            plt.scatter(distances, areas,c=needs_refine,marker='x')
+            plt.scatter(distances, areas, c=needs_refine, marker='x')
             plt.xlabel("distance [m]")
             plt.ylabel("triangle area [m^2]")
 
@@ -1031,17 +1101,25 @@ def triangulate(hucs, rivers, river_corrs=None, mesh_rivers=False, diagnostics=T
             river_tris = triangles[river_idx]
 
             plt.figure()
-            plt.tripcolor(vertices[:,0], vertices[:,1], triangles, 
-                            facecolors= np.array([0]*len(triangles)), 
-                            cmap = None, edgecolors = 'w', linewidth=0.01)
-            plt.tripcolor(vertices[:,0], vertices[:,1], river_tris, 
-                            facecolors= np.array([1]*len(river_tris)), 
-                            cmap = 'jet', edgecolors = 'w', linewidth=0.1)
+            plt.tripcolor(vertices[:, 0],
+                          vertices[:, 1],
+                          triangles,
+                          facecolors=np.array([0] * len(triangles)),
+                          cmap=None,
+                          edgecolors='w',
+                          linewidth=0.01)
+            plt.tripcolor(vertices[:, 0],
+                          vertices[:, 1],
+                          river_tris,
+                          facecolors=np.array([1] * len(river_tris)),
+                          cmap='jet',
+                          edgecolors='w',
+                          linewidth=0.1)
             plt.title("river region")
-      
+
             return vertices, triangles, areas, distances, river_idx
         return vertices, triangles, areas, distances
-            
+
     return vertices, triangles
 
 
@@ -1071,15 +1149,15 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
     """
     logging.info("")
     logging.info("Elevating Triangulation to DEM")
-    logging.info("-"*30)
+    logging.info("-" * 30)
 
     # index the i,j of the points, pick the elevations
     elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile, algorithm)
 
     # create the 3D points
-    out = np.zeros((len(mesh_points),3),'d')
-    out[:,0:2] = mesh_points
-    out[:,2] = elev
+    out = np.zeros((len(mesh_points), 3), 'd')
+    out[:, 0:2] = mesh_points
+    out[:, 2] = elev
     return out
 
 
@@ -1108,44 +1186,52 @@ def values_from_raster(points, points_crs, raster, raster_profile, algorithm='ne
 
     """
     raster_crs = watershed_workflow.crs.from_rasterio(raster_profile['crs'])
-    points_raster_crs = np.array(watershed_workflow.warp.xy(points[:,0], points[:,1], points_crs, raster_crs)).transpose()
+    points_raster_crs = np.array(
+        watershed_workflow.warp.xy(points[:, 0], points[:, 1], points_crs, raster_crs)).transpose()
     if algorithm == 'nearest':
-        out = raster[rasterio.transform.rowcol(raster_profile['transform'], points_raster_crs[:,0], points_raster_crs[:,1])]
+        out = raster[rasterio.transform.rowcol(raster_profile['transform'], points_raster_crs[:, 0],
+                                               points_raster_crs[:, 1])]
     elif algorithm == 'piecewise bilinear':
         eps = 1.e-10
-        
+
         # get the index of the point
         invtransform = ~raster_profile['transform']
-        mybox = np.zeros((2,2),'d')
-        out = np.zeros((len(points),),'d')
-        for k,xy in enumerate(points_raster_crs):
+        mybox = np.zeros((2, 2), 'd')
+        out = np.zeros((len(points), ), 'd')
+        for k, xy in enumerate(points_raster_crs):
             xy = tuple(xy)
-            j,i = invtransform * xy
+            j, i = invtransform * xy
 
             # center on pixel
             i -= 0.5
             j -= 0.5
-            
-            i = max(eps, min(raster_profile['height']-1-eps, i))
-            j = max(eps, min(raster_profile['width']-1-eps, j))
 
-            mybox[0,0] = raster[math.floor(i), math.floor(j)]
-            mybox[0,1] = raster[math.floor(i), math.ceil(j)]
-            mybox[1,0] = raster[math.ceil(i), math.floor(j)]
-            mybox[1,1] = raster[math.ceil(i), math.ceil(j)]
-            ii = i%1
-            jj = j%1
+            i = max(eps, min(raster_profile['height'] - 1 - eps, i))
+            j = max(eps, min(raster_profile['width'] - 1 - eps, j))
 
-            up = mybox[0,0] + jj * (mybox[0,1] - mybox[0,0])
-            dn = mybox[1,0] + jj * (mybox[1,1] - mybox[1,0])
-            out[k] = up + (dn - up) * ii
+            mybox[0, 0] = raster[math.floor(i), math.floor(j)]
+            mybox[0, 1] = raster[math.floor(i), math.ceil(j)]
+            mybox[1, 0] = raster[math.ceil(i), math.floor(j)]
+            mybox[1, 1] = raster[math.ceil(i), math.ceil(j)]
+            ii = i % 1
+            jj = j % 1
+
+            up = mybox[0, 0] + jj * (mybox[0, 1] - mybox[0, 0])
+            dn = mybox[1, 0] + jj * (mybox[1, 1] - mybox[1, 0])
+            out[k] = up + (dn-up) * ii
     else:
-        raise ValueError(f'Invalid algorithm "{algorithm}", valid are "nearest" and "piecewise bilinear"')
+        raise ValueError(
+            f'Invalid algorithm "{algorithm}", valid are "nearest" and "piecewise bilinear"')
     return out
-    
 
-def color_raster_from_shapes(shapes, shapes_crs, shape_colors,
-                             raster_bounds, raster_dx, raster_crs=None, nodata=None):
+
+def color_raster_from_shapes(shapes,
+                             shapes_crs,
+                             shape_colors,
+                             raster_bounds,
+                             raster_dx,
+                             raster_crs=None,
+                             nodata=None):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas specified by bounds and pixel size, color a raster by, for
@@ -1181,7 +1267,7 @@ def color_raster_from_shapes(shapes, shapes_crs, shape_colors,
         Raster of colors.
 
     """
-    assert(len(shapes) == len(shape_colors))
+    assert (len(shapes) == len(shape_colors))
     if len(shapes) == 0:
         raise ValueError("Cannot generate raster for empty set of shapes")
 
@@ -1189,7 +1275,7 @@ def color_raster_from_shapes(shapes, shapes_crs, shape_colors,
 
     if not watershed_workflow.crs.equal(shapes_crs, raster_crs):
         shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_crs)
-   
+
     dtype = np.dtype(type(shape_colors[0]))
 
     if nodata is None:
@@ -1198,19 +1284,22 @@ def color_raster_from_shapes(shapes, shapes_crs, shape_colors,
         except ValueError:
             nodata = dtype(-1)
 
-    raster_profile, raster = watershed_workflow.utils.create_empty_raster(raster_bounds, raster_crs, raster_dx, dtype, nodata)
+    raster_profile, raster = watershed_workflow.utils.create_empty_raster(
+        raster_bounds, raster_crs, raster_dx, dtype, nodata)
     logging.info(f'  and {len(set(shape_colors))} independent colors')
 
     for p, p_id in zip(shapes, shape_colors):
         if not p.is_empty:
-            p_list = watershed_workflow.utils.flatten([p,])
-            mask = rasterio.features.geometry_mask(p_list, raster.shape, raster_profile['transform'], invert=True)
+            p_list = watershed_workflow.utils.flatten([p, ])
+            mask = rasterio.features.geometry_mask(p_list,
+                                                   raster.shape,
+                                                   raster_profile['transform'],
+                                                   invert=True)
             raster[mask] = p_id
     return raster_profile, raster
 
 
-def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors,
-                                      raster, raster_profile):
+def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors, raster, raster_profile):
     """Color in a raster by filling in a collection of shapes.
 
     Given a canvas, find the intersection of that shape with the canvas and
@@ -1234,7 +1323,7 @@ def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors,
         transform.
 
     """
-    assert(len(shapes) == len(shape_colors))
+    assert (len(shapes) == len(shape_colors))
     if len(shapes) == 0:
         raise ValueError("Cannot generate raster for empty set of shapes")
 
@@ -1243,10 +1332,12 @@ def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors,
 
     if not watershed_workflow.crs.equal(shapes_crs, raster_profile['crs']):
         shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_profile['crs'])
-    
+
     for p, p_id in zip(shapes, shape_colors):
         if not p.is_empty:
-            p_list = watershed_workflow.utils.flatten([p,])
-            mask = rasterio.features.geometry_mask(p_list, raster.shape, raster_profile['transform'], invert=True)
+            p_list = watershed_workflow.utils.flatten([p, ])
+            mask = rasterio.features.geometry_mask(p_list,
+                                                   raster.shape,
+                                                   raster_profile['transform'],
+                                                   invert=True)
             raster[mask] = p_id
-

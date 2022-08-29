@@ -37,11 +37,14 @@ from pyproj.crs import CRS
 from pyproj.crs import CRSError
 
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 def is_native(crs):
     """Is this crs in the native format?"""
     return type(crs) == type(to_proj(crs))
+
 
 def from_proj(crs):
     """Converts a Proj CRS to the workflow CRS standard.
@@ -102,10 +105,11 @@ def from_fiona(crs):
     #     logging.warning('Old-style datum WGS84, moving to ellipse')
     #     crs['ellps'] = crs.pop('datum')
     if 'init' in crs and crs['init'].startswith('epsg:'):
-        epsg,code = crs['init'].split(':')
+        epsg, code = crs['init'].split(':')
         return CRS.from_epsg(code)
     else:
         return CRS.from_dict(crs)
+
 
 def to_fiona(crs):
     """Converts a workflow CRS to a fiona CRS.
@@ -122,6 +126,7 @@ def to_fiona(crs):
 
     """
     return crs.to_dict()
+
 
 def from_rasterio(crs):
     """Converts from rasterio CRS to the workflow CRS standard.
@@ -143,6 +148,7 @@ def from_rasterio(crs):
     except Exception:
         return CRS.from_user_input(crs)
 
+
 def to_rasterio(crs):
     """Converts a workflow CRS to a fiona CRS.
 
@@ -160,6 +166,7 @@ def to_rasterio(crs):
     import rasterio.crs
     return rasterio.crs.CRS.from_user_input(crs)
 
+
 def from_epsg(epsg):
     """Converts from an EPSG code to a workflow CRS.
 
@@ -175,6 +182,7 @@ def from_epsg(epsg):
 
     """
     return CRS.from_epsg(epsg)
+
 
 def to_epsg(crs):
     """Attempts to conver to an EPSG code.
@@ -195,7 +203,8 @@ def to_epsg(crs):
         return code
     else:
         raise ValueError('Cannot convert CRS to EPSG code.')
-        
+
+
 def from_cartopy(crs):
     """Converts a cartopy CRS to a workflow CRS.
 
@@ -212,6 +221,7 @@ def from_cartopy(crs):
     """
     return crs
     #return CRS.from_dict(crs.proj4_params)
+
 
 def to_cartopy(crs):
     """Converts a workflow CRS to a cartopy.crs.Projection.
@@ -237,19 +247,16 @@ def to_cartopy(crs):
     # if 'zone' in srs:
     #     print(f'found a zone: it is {srs["zone"]} of type {type(srs["zone"])}')
 
-    km_proj = {'lon_0': 'central_longitude',
-               'lat_0': 'central_latitude',
-               'x_0': 'false_easting',
-               'y_0': 'false_northing',
-               'k': 'scale_factor',
-               'zone': 'zone',
-               }
-    km_globe = {'a': 'semimajor_axis',
-                'b': 'semiminor_axis',
-                }
-    km_std = {'lat_1': 'lat_1',
-              'lat_2': 'lat_2',
-              }
+    km_proj = {
+        'lon_0': 'central_longitude',
+        'lat_0': 'central_latitude',
+        'x_0': 'false_easting',
+        'y_0': 'false_northing',
+        'k': 'scale_factor',
+        'zone': 'zone',
+    }
+    km_globe = { 'a': 'semimajor_axis', 'b': 'semiminor_axis', }
+    km_std = { 'lat_1': 'lat_1', 'lat_2': 'lat_2', }
     kw_proj = dict()
     kw_globe = dict()
     kw_std = dict()
@@ -303,17 +310,21 @@ def to_cartopy(crs):
 
     return cl(**kw_proj)
 
+
 def from_string(string):
     """Returns a CRS from a proj string"""
     return CRS.from_string(string)
+
 
 def from_wkt(string):
     """Returns a CRS from a WKT string specification"""
     return CRS.from_wkt(string)
 
+
 def to_wkt(crs):
     """Returns the WKT string of a CRS."""
     return crs.to_wkt()
+
 
 def default_crs():
     """Returns a default CRS that is functionally useful for North America.
@@ -340,6 +351,7 @@ def default_alaska_crs():
     """
     return from_epsg(3338)
 
+
 def daymet_crs():
     """Returns the CRS used by DayMet files, but in m, not km.
 
@@ -351,7 +363,10 @@ def daymet_crs():
     """
     # old proj: return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
     # new proj...
-    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs')
+    return from_string(
+        '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
+    )
+
 
 def daymet_crs_native():
     """Returns the CRS used by DayMet files natively, in km, not in m.
@@ -362,7 +377,10 @@ def daymet_crs_native():
         The DayMet CRS.  The user should not care what this is.
 
     """
-    return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs')
+    return from_string(
+        '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs'
+    )
+
 
 def latlon_crs():
     """Returns the default latitude-longitude CRS.
@@ -374,7 +392,8 @@ def latlon_crs():
         you do, don't use the default!) but it is EPSG:4269.
     """
     return from_epsg(4269)
-    
+
+
 def equal(crs1, crs2):
     """Tries to guess at the equality of two CRS objects.
 
@@ -395,4 +414,3 @@ def equal(crs1, crs2):
 
     """
     return crs1 == crs2
-    

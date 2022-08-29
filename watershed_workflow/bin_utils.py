@@ -1,5 +1,5 @@
 """Collection of common functionality across multiple scripts in bin."""
-import os,sys
+import os, sys
 from matplotlib import pyplot as plt
 import logging
 import rasterio.transform
@@ -14,9 +14,14 @@ import watershed_workflow.config
 import watershed_workflow.utils
 
 
-def plot_with_triangulation(args, hucs, rivers, triangulation,
-                            shape_color='k', river_color='white',
-                            fig=None, ax=None):
+def plot_with_triangulation(args,
+                            hucs,
+                            rivers,
+                            triangulation,
+                            shape_color='k',
+                            river_color='white',
+                            fig=None,
+                            ax=None):
     logging.info('Plotting')
     logging.info('--------')
 
@@ -25,11 +30,15 @@ def plot_with_triangulation(args, hucs, rivers, triangulation,
         fig = plt.figure(figsize=args.figsize)
     if ax is None:
         ax = watershed_workflow.plot.get_ax(args.projection, fig=fig)
-        
+
     if triangulation is not None:
         mesh_points3, mesh_tris = triangulation
-        mp = watershed_workflow.plot.triangulation(mesh_points3, mesh_tris, args.projection,
-                                         color='elevation', ax=ax, linewidth=0)
+        mp = watershed_workflow.plot.triangulation(mesh_points3,
+                                                   mesh_tris,
+                                                   args.projection,
+                                                   color='elevation',
+                                                   ax=ax,
+                                                   linewidth=0)
         #fig.colorbar(mp, orientation="horizontal", pad=0.1)
     if rivers is not None:
         watershed_workflow.plot.rivers(rivers, args.projection, river_color, ax, linewidth=0.5)
@@ -39,11 +48,21 @@ def plot_with_triangulation(args, hucs, rivers, triangulation,
 
     ax.set_aspect('equal', 'datalim')
     return fig, ax
-    
-def plot_with_dem(args, hucs, reaches, dem, profile,
-                  shape_color='k', river_color='white',
-                  cb=True, cb_label='elevation [m]', vmin=None, vmax=None,
-                  fig=None, ax=None):
+
+
+def plot_with_dem(args,
+                  hucs,
+                  reaches,
+                  dem,
+                  profile,
+                  shape_color='k',
+                  river_color='white',
+                  cb=True,
+                  cb_label='elevation [m]',
+                  vmin=None,
+                  vmax=None,
+                  fig=None,
+                  ax=None):
 
     logging.info('Plotting')
     logging.info('--------')
@@ -77,16 +96,21 @@ def plot_with_dem(args, hucs, reaches, dem, profile,
             else:
                 raise ValueError('Option: --pad-fraction must be of length 1, 2, or 4')
 
-            args.extent = [args.extent[0] - dxm, args.extent[1] - dym,
-                           args.extent[2] + dxp, args.extent[3] + dyp]
+            args.extent = [
+                args.extent[0] - dxm, args.extent[1] - dym, args.extent[2] + dxp,
+                args.extent[3] + dyp
+            ]
 
     logging.info('plot extent: {}'.format(args.extent))
-            
+
     # continents
     if args.basemap:
-        watershed_workflow.plot.basemap(args.projection, ax=ax, resolution=args.basemap_resolution,
-                              land_kwargs={'zorder':0}, ocean_kwargs={'zorder':2})
-        
+        watershed_workflow.plot.basemap(args.projection,
+                                        ax=ax,
+                                        resolution=args.basemap_resolution,
+                                        land_kwargs={ 'zorder': 0 },
+                                        ocean_kwargs={ 'zorder': 2 })
+
     # plot the raster
     # -- pad the raster to have the same extent
     if dem is not None:
@@ -99,7 +123,12 @@ def plot_with_dem(args, hucs, reaches, dem, profile,
 
     # plot HUCs and reaches on top
     if reaches is not None:
-        watershed_workflow.plot.river(reaches, args.projection, river_color, ax, linewidth=0.5, zorder=3)
+        watershed_workflow.plot.river(reaches,
+                                      args.projection,
+                                      river_color,
+                                      ax,
+                                      linewidth=0.5,
+                                      zorder=3)
 
     if hucs is not None:
         watershed_workflow.plot.hucs(hucs, args.projection, shape_color, ax, linewidth=.7, zorder=4)
@@ -110,34 +139,31 @@ def plot_with_dem(args, hucs, reaches, dem, profile,
     ax.set_title(args.title)
     return fig, ax
 
-        
+
 def save(args, triangulation):
     mesh_points3, mesh_tris = triangulation
     if hasattr(args, 'HUC'):
-        metadata_lines = ['Mesh of HUC: %s'%args.HUC,
-                          '',
-                          '  coordinate system = epsg:{}'.format(args.projection),
-                         ]
+        metadata_lines = [
+            'Mesh of HUC: %s' % args.HUC, '',
+            '  coordinate system = epsg:{}'.format(args.projection),
+        ]
     else:
-        metadata_lines = ['Mesh of shape: %s'%args.input_file,
-                          '',
-                          '  coordinate system = epsg:{}'.format(args.projection),
-                         ]
+        metadata_lines = [
+            'Mesh of shape: %s' % args.input_file, '',
+            '  coordinate system = epsg:{}'.format(args.projection),
+        ]
 
-    metadata_lines.extend(['',
-                           'Mesh generated by workflow mesh_hucs.py script.',
-                           '',
-                           watershed_workflow.__version__,
-                           '',
-                           'with calling sequence:',
-                           '  '+' '.join(sys.argv)])
+    metadata_lines.extend([
+        '', 'Mesh generated by workflow mesh_hucs.py script.', '', watershed_workflow.__version__,
+        '', 'with calling sequence:', '  ' + ' '.join(sys.argv)
+    ])
 
     logging.info("")
     logging.info("File I/O")
-    logging.info("-"*30)
-    logging.info("Saving mesh: %s"%args.output_file)
-    watershed_workflow.vtk_io.write(args.output_file, mesh_points3, {'triangle':mesh_tris})
+    logging.info("-" * 30)
+    logging.info("Saving mesh: %s" % args.output_file)
+    watershed_workflow.vtk_io.write(args.output_file, mesh_points3, { 'triangle': mesh_tris })
 
-    logging.info("Saving README: %s"%args.output_file+'.readme') 
-    with open(args.output_file+'.readme','w') as fid:
+    logging.info("Saving README: %s" % args.output_file + '.readme')
+    with open(args.output_file + '.readme', 'w') as fid:
         fid.write('\n'.join(metadata_lines))

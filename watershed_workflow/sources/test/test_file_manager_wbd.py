@@ -26,34 +26,49 @@ def wbd():
 
 def test_wbd_url(wbd):
     url = wbd._url('02')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_02_HU2_GDB.zip' == url)
+    assert (
+        'https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_02_HU2_GDB.zip'
+        == url)
+
 
 def test_wbd_url2(wbd):
     url = wbd._url('06')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_06_HU2_GDB.zip' == url)
+    assert (
+        'https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_06_HU2_GDB.zip'
+        == url)
+
 
 def test_wbd_url3(wbd):
     url = wbd._url('14')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_14_HU2_GDB.zip' == url)
+    assert (
+        'https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_14_HU2_GDB.zip'
+        == url)
+
 
 def test_wbd_url4(wbd):
     url = wbd._url('19')
-    assert('https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_19_HU2_GDB.zip' == url)
-    
+    assert (
+        'https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/WBD/HU2/GDB/WBD_19_HU2_GDB.zip'
+        == url)
+
+
 def test_wbd_url_fail(wbd):
     with pytest.raises(ValueError):
-        url = wbd._url('99') # this huc is not a real huc
+        url = wbd._url('99')  # this huc is not a real huc
+
 
 def test_wbd_download(wbd):
     # download
     hfile = wbd._download('02', force=True)
-    assert(hfile == wbd.name_manager.file_name('02'))
-    
+    assert (hfile == wbd.name_manager.file_name('02'))
+
+
 def test_wbd_get(wbd):
     # download
     profile, huc = wbd.get_huc('02040101')
     bounds = watershed_workflow.utils.shply(huc['geometry']).bounds
-    assert(np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
+    assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
+
 
 # hydro tests
 def test_wbd_get_hydro(wbd):
@@ -62,5 +77,3 @@ def test_wbd_get_hydro(wbd):
 
     with pytest.raises(RuntimeError):
         profile, huc = wbd.get_hydro(bounds, profile['crs'], '020401010101')
-        
-

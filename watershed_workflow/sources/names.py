@@ -4,6 +4,7 @@ import attr
 import sys, os
 import watershed_workflow.config
 
+
 @attr.s
 class Names:
     """File system meta data for downloading a file."""
@@ -14,8 +15,9 @@ class Names:
     raw_template = attr.ib(type=str, default=None)
 
     def data_dir(self):
-        return os.path.join(watershed_workflow.config.rcParams['DEFAULT']['data_directory'], self.base_folder)
-    
+        return os.path.join(watershed_workflow.config.rcParams['DEFAULT']['data_directory'],
+                            self.base_folder)
+
     def folder_name(self, *args, **kwargs):
         if self.folder_template is None:
             return os.path.join(self.data_dir())
@@ -29,7 +31,7 @@ class Names:
             else:
                 self.raw_template = os.path.join(self.folder_template, 'raw')
         return os.path.join(self.data_dir(), self.raw_template.format(*args, **kwargs))
-    
+
     def file_name_base(self, *args, **kwargs):
         return self.file_template.format(*args, **kwargs)
 

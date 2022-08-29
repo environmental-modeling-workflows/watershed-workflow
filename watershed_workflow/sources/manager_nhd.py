@@ -12,6 +12,7 @@ import watershed_workflow.sources.names
 import watershed_workflow.utils
 import watershed_workflow.warp
 
+
 @attr.s
 class _FileManagerNHD:
     """Manager for interacting with USGS National Hydrography Datasets.
@@ -45,23 +46,26 @@ class _FileManagerNHD:
     name_manager = attr.ib()
     #name_manager_shp = attr.ib()
 
-    _nhdplus_vaa = dict({'StreamOrder' : 'StreamOrde',
-                         'StreamLevel' : 'StreamLeve' ,
-                         'HydrologicSequence' : 'HydroSeq',
-                         'DownstreamMainPathHydroSeq' : 'DnHydroSeq',
-                         'UpstreamMainPathHydroSeq' : 'UpHydroSeq',
-                         'DivergenceCode' : 'Divergence',
-                         'MinimumElevationSmoothed': 'MinElevSmo',
-                         'MaximumElevationSmoothed': 'MaxElevSmo',
-                         'MinimumElevationRaw': 'MinElevRaw',
-                         'MaximumElevationRaw': 'MaxElevRaw',
-                         'CatchmentAreaSqKm' : 'AreaSqKm',
-                         'TotalDrainageAreaSqKm' : 'TotDASqKm'})
-    _nhdplus_eromma = dict({'MeanAnnualFlow' : 'QAMA',
-                            'MeanAnnualVelocity' : 'VAMA',
-                            'MeanAnnualFlowGaugeAdj': 'QEMA'})
+    _nhdplus_vaa = dict({
+        'StreamOrder': 'StreamOrde',
+        'StreamLevel': 'StreamLeve',
+        'HydrologicSequence': 'HydroSeq',
+        'DownstreamMainPathHydroSeq': 'DnHydroSeq',
+        'UpstreamMainPathHydroSeq': 'UpHydroSeq',
+        'DivergenceCode': 'Divergence',
+        'MinimumElevationSmoothed': 'MinElevSmo',
+        'MaximumElevationSmoothed': 'MaxElevSmo',
+        'MinimumElevationRaw': 'MinElevRaw',
+        'MaximumElevationRaw': 'MaxElevRaw',
+        'CatchmentAreaSqKm': 'AreaSqKm',
+        'TotalDrainageAreaSqKm': 'TotDASqKm'
+    })
+    _nhdplus_eromma = dict({
+        'MeanAnnualFlow': 'QAMA',
+        'MeanAnnualVelocity': 'VAMA',
+        'MeanAnnualFlowGaugeAdj': 'QEMA'
+    })
 
-    
     def get_huc(self, huc, force_download=False):
         """Get the specified HUC in its native CRS.
 
@@ -78,10 +82,10 @@ class _FileManagerNHD:
           Fiona shape object representing the hydrologic unit.
 
         Note this finds and downloads files as needed.
-        """        
+        """
         huc = source_utils.huc_str(huc)
         profile, hus = self.get_hucs(huc, len(huc), force_download)
-        assert(len(hus) == 1)
+        assert (len(hus) == 1)
         return profile, hus[0]
 
     def get_hucs(self, huc, level, force_download=False):
@@ -105,34 +109,44 @@ class _FileManagerNHD:
           List of fiona shape objects representing the hydrologic units.
 
         Note this finds and downloads files as needed.
-        """        
+        """
         huc = source_utils.huc_str(huc)
         huc_level = len(huc)
 
         # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
         if self.lowest_level < level:
-            raise ValueError("{}: files include HUs at max level {}.".format(self.name, self.lowest_level))
+            raise ValueError("{}: files include HUs at max level {}.".format(
+                self.name, self.lowest_level))
         if level < huc_level:
-            raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(self.name, level, huc_level))
+            raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(
+                self.name, level, huc_level))
         if huc_level < self.file_level:
-            raise ValueError("{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level.".format(self.name, self.file_level))
+            raise ValueError(
+                "{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level."
+                .format(self.name, self.file_level))
 
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('Using HUC file "{}"'.format(filename))
-        
 
         # read the file
         layer = 'WBDHU{}'.format(level)
-        logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(self.name, filename, layer, huc))
+        logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(
+            self.name, filename, layer, huc))
 
         with fiona.open(filename, mode='r', layer=layer) as fid:
-            hus = [hu for hu in fid if source_utils.get_code(hu,level).startswith(huc)]
+            hus = [hu for hu in fid if source_utils.get_code(hu, level).startswith(huc)]
             profile = fid.profile
         profile['always_xy'] = True
         return profile, hus
-        
-    def get_hydro(self, huc, bounds=None, bounds_crs=None, in_network=True, properties=None, include_catchments=False, 
+
+    def get_hydro(self,
+                  huc,
+                  bounds=None,
+                  bounds_crs=None,
+                  in_network=True,
+                  properties=None,
+                  include_catchments=False,
                   force_download=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
@@ -182,10 +196,10 @@ class _FileManagerNHD:
         """
         if properties is True:
             properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys())
-        
+
         if 'WBD' in self.name:
             raise RuntimeError(f'{self.name}: does not provide hydrographic data.')
-        
+
         huc = source_utils.huc_str(huc)
         hint_level = len(huc)
 
@@ -195,55 +209,69 @@ class _FileManagerNHD:
             profile, hu = self.get_huc(huc)
             bounds = watershed_workflow.utils.bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
-        
+
         # error checking on the levels, require file_level <= huc_level <= lowest_level
         if hint_level < self.file_level:
-            raise ValueError(f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level.")
-        
+            raise ValueError(
+                f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level."
+            )
+
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('  Using Hydrography file "{}"'.format(filename))
-        
-        # find and open the hydrography layer        
+
+        # find and open the hydrography layer
         filename = self.name_manager.file_name(huc[0:self.file_level])
         layer = 'NHDFlowline'
-        logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
+        logging.info(
+            f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
-            bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
-            reaches = [r for (i,r) in fid.items(bbox=bounds)]
+            bounds = watershed_workflow.warp.bounds(
+                bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
+            reaches = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(reaches)} in bounds.")
 
         # filter not in network
         if 'NHDPlus' in self.name and in_network:
             logging.info("  Filtering reaches not in-network")
-            reaches = [r for r in reaches if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1]
+            reaches = [
+                r for r in reaches
+                if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1
+            ]
 
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name and properties != None:
-            reach_dict = dict((r['properties']['NHDPlusID'],r) for r in reaches)
+            reach_dict = dict((r['properties']['NHDPlusID'], r) for r in reaches)
 
             # validation of properties
-            valid_props = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys()) + ['catchment',]
+            valid_props = list(self._nhdplus_vaa.keys()) + list(
+                self._nhdplus_eromma.keys()) + ['catchment', ]
             for prop in properties:
                 if prop not in valid_props:
-                    raise ValueError(f'Unrecognized NHDPlus property {prop}.  If you are sure this is valid, add the alias and variable name to the nhdplus tables in FileManagerNHDPlus.')
+                    raise ValueError(
+                        f'Unrecognized NHDPlus property {prop}.  If you are sure this is valid, add the alias and variable name to the nhdplus tables in FileManagerNHDPlus.'
+                    )
 
             # flags for which layers will be needed
             if include_catchments:
                 layer = 'NHDPlusCatchment'
-                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for catchments in '{bounds}'")
+                logging.info(
+                    f"  {self.name}: opening '{filename}' layer '{layer}' for catchments in '{bounds}'"
+                )
                 for r in reaches:
                     r['properties']['catchment'] = None
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for catchment in fid.values():
-                        reach = reach_dict.get(catchment['properties']['NHDPlusID'])                      
+                        reach = reach_dict.get(catchment['properties']['NHDPlusID'])
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
             if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusFlowlineVAA'
-                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'")
+                logging.info(
+                    f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'"
+                )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
@@ -255,7 +283,9 @@ class _FileManagerNHD:
 
             if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusEROMMA'
-                logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'")
+                logging.info(
+                    f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'"
+                )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['NHDPlusID'])
@@ -264,7 +294,7 @@ class _FileManagerNHD:
                                 if prop in list(self._nhdplus_eromma.keys()):
                                     prop_code = self._nhdplus_eromma[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
-          
+
         return profile, reaches
 
     def get_waterbodies(self, huc, bounds=None, bounds_crs=None, force_download=False):
@@ -292,10 +322,10 @@ class _FileManagerNHD:
         Note this finds and downloads files as needed.
 
         """
-        
+
         if 'NHDPlus' not in self.name:
             raise RuntimeError(f'{self.name}: does not provide water body data.')
-        
+
         huc = source_utils.huc_str(huc)
         hint_level = len(huc)
 
@@ -305,28 +335,31 @@ class _FileManagerNHD:
             profile, hu = self.get_huc(huc)
             bounds = watershed_workflow.utils.bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
-        
+
         # error checking on the levels, require file_level <= huc_level <= lowest_level
         if hint_level < self.file_level:
-            raise ValueError(f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level.")
-        
+            raise ValueError(
+                f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level."
+            )
+
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('  Using Hydrography file "{}"'.format(filename))
-        
-        # find and open the waterbody layer        
+
+        # find and open the waterbody layer
         filename = self.name_manager.file_name(huc[0:self.file_level])
         layer = 'NHDWaterbody'
-        logging.info(f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
+        logging.info(
+            f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
         with fiona.open(filename, mode='r', layer=layer) as fid:
             profile = fid.profile
-            bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
-            bodies = [r for (i,r) in fid.items(bbox=bounds)]
+            bounds = watershed_workflow.warp.bounds(
+                bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
+            bodies = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(bodies)} in bounds.")
 
         return profile, bodies
 
-    
     def _url(self, hucstr):
         """Use the USGS REST API to find the URL to download a file for a given huc.
 
@@ -343,36 +376,40 @@ class _FileManagerNHD:
         rest_url = 'https://tnmaccess.nationalmap.gov/api/v1/products'
         hucstr = hucstr[0:self.file_level]
 
-        def attempt(params):        
+        def attempt(params):
             r = requests.get(rest_url, params=params)
             logging.info(f'  REST URL: {r.url}')
             try:
                 r.raise_for_status()
             except Exception as e:
                 logging.error(e)
-                return 1,e
-                
+                return 1, e
+
             json = r.json()
             #logging.debug(json)
 
-            matches = [(m,self._valid_url(i, m, hucstr)) for (i,m) in enumerate(json['items'])]
-            logging.debug(f'     found {len(matches)} matches') 
-            matches_f = list(filter( lambda tup : tup[1], matches ))
-            logging.debug(f'     found {len(matches_f)} valid matches') 
+            matches = [(m, self._valid_url(i, m, hucstr)) for (i, m) in enumerate(json['items'])]
+            logging.debug(f'     found {len(matches)} matches')
+            matches_f = list(filter(lambda tup: tup[1], matches))
+            logging.debug(f'     found {len(matches_f)} valid matches')
             if len(matches_f) == 0:
-                logging.error('{}: no matches for HUC {} ({})'.format(self.name, hucstr, len(matches)))
+                logging.error('{}: no matches for HUC {} ({})'.format(self.name, hucstr,
+                                                                      len(matches)))
                 return 1, '{}: not able to find HUC {}'.format(self.name, hucstr)
             if len(matches_f) > 1:
-                logging.error('{}: too many matches for HUC {} ({})'.format(self.name, hucstr, len(matches)))
-                for (m,url) in matches_f:
+                logging.error('{}: too many matches for HUC {} ({})'.format(
+                    self.name, hucstr, len(matches)))
+                for (m, url) in matches_f:
                     logging.error(' {}\n   {}'.format(m['title'], url))
                 return 1, '{}: too many matches for HUC {}'.format(self.name, hucstr)
             return 0, matches_f[0][1]
 
         # cheaper if it works, may not work in alaska?
-        a1 = attempt({'datasets' : self.name,
-                      'polyType' : 'huc{}'.format(self.file_level),
-                      'polyCode' : hucstr})
+        a1 = attempt({
+            'datasets': self.name,
+            'polyType': 'huc{}'.format(self.file_level),
+            'polyCode': hucstr
+        })
         if not a1[0]:
             logging.debug('  REST query with polyCode... SUCCESS')
             logging.debug(f'  REST query: {a1[1]}')
@@ -382,9 +419,7 @@ class _FileManagerNHD:
 
         # may find via huc4?
         if (self.file_level >= 4):
-            a2 = attempt({'datasets' : self.name,
-                          'polyType' : 'huc4',
-                          'polyCode' : hucstr[0:4]})
+            a2 = attempt({ 'datasets': self.name, 'polyType': 'huc4', 'polyCode': hucstr[0:4] })
             if not a2[0]:
                 logging.debug('  REST query with polyCode... SUCCESS')
                 logging.debug(f'  REST query: {a2[1]}')
@@ -478,47 +513,45 @@ class _FileManagerNHD:
 
             downloadfile = os.path.join(work_folder, url.split("/")[-1])
             if not os.path.exists(downloadfile) or force:
-                logging.info("Attempting to download source for target '%s'"%filename)
+                logging.info("Attempting to download source for target '%s'" % filename)
                 source_utils.download(url, downloadfile, force)
-                
+
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?
             gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
-            assert(len(gdb_files) == 1)
+            assert (len(gdb_files) == 1)
 
             if os.path.exists(filename):
                 shutil.rmtree(filename)
             source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
 
         if not os.path.exists(filename):
-            raise RuntimeError("Cannot find or download file for source target '%s'"%filename)
+            raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
         return filename
-    
-    
+
+
 class FileManagerNHDPlus(_FileManagerNHD):
     def __init__(self):
         name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
-        super().__init__(name, 4, 12,
-                         watershed_workflow.sources.names.Names(name, 'hydrography',
-                                                                'NHDPlus_H_{}_GDB',
-                                                                'NHDPlus_H_{}.gdb'))
+        super().__init__(
+            name, 4, 12,
+            watershed_workflow.sources.names.Names(name, 'hydrography', 'NHDPlus_H_{}_GDB',
+                                                   'NHDPlus_H_{}.gdb'))
 
-        
+
 class FileManagerNHD(_FileManagerNHD):
     def __init__(self):
         name = 'National Hydrography Dataset (NHD)'
-        super().__init__(name, 8, 12,
-                         watershed_workflow.sources.names.Names(name, 'hydrography',
-                                                                'NHD_H_{}_GDB',
-                                                                'NHD_H_{}.gdb'))
+        super().__init__(
+            name, 8, 12,
+            watershed_workflow.sources.names.Names(name, 'hydrography', 'NHD_H_{}_GDB',
+                                                   'NHD_H_{}.gdb'))
 
 
 class FileManagerWBD(_FileManagerNHD):
     def __init__(self):
         name = 'National Watershed Boundary Dataset (WBD)'
-        super().__init__(name, 2, 12,
-                         watershed_workflow.sources.names.Names(name, 'hydrography',
-                                                      'WBD_{}_GDB',
-                                                      'WBD_{}.gdb'))    
-    
+        super().__init__(
+            name, 2, 12,
+            watershed_workflow.sources.names.Names(name, 'hydrography', 'WBD_{}_GDB', 'WBD_{}.gdb'))
