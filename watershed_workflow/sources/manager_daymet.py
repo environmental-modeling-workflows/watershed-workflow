@@ -54,7 +54,7 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    VALID_YEARS = (1980, 2020)
+    VALID_YEARS = (1980, 2021)
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
     # URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_{variable}_{year}.nc"
