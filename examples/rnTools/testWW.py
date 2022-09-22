@@ -69,4 +69,4 @@ node = river_tmp.preOrder().list()
  
 river_tmp.getRoot()
 
-
+watershed_workflow.simplify()
