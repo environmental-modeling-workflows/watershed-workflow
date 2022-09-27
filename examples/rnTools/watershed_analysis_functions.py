@@ -6,6 +6,7 @@ import shapely
 import logging
 import pandas
 import copy
+from scipy import integrate
 
 import watershed_workflow
 import watershed_workflow.source_list
@@ -78,11 +79,10 @@ def get_RN_WB(huc,
                                                                       treat_collinearity=True)
     return watershed, river[0]
 
-def get_WightedWidthFunction(river):
+def get_WightedWidthFunction(river, n_bins_wf = 100, weight_field= None):
 
     """This function estimates the weighted width function for a given river network (RN) 
     and a scalar field within the watershed.
-    Then, it resamples the RN to improve the width function analysis.
      
     Parameters:
     -----------
@@ -91,11 +91,21 @@ def get_WightedWidthFunction(river):
         within the watershed is used. The RN is 
     watershed : watershed_workflow.split_hucs.SplitHUCs
         Watershed boundary.
+    n_bins_wf : int
+        Number of bins for the width function
 
     Returns:
     -------
-
-
+    d_to_outlet : numpy.ndarray
+        Distances to the outlet for each point within the discretized version of the RN
+    weights : numpy.ndarray
+        Weights used to calculate the width function 
+    width_function : dict
+        The width function as a pdf
+    river : watershed_workflow.river_tree.River
+        River tree with the new variables for each node: 
+        (1)'LenthToOutlet': Distance to outlet from downstream node, and 
+        (2)'SegmentLenth': length of the node segment. 
     """ 
     n_nodes = river.count() # number of nodes within the RN
     d_to_outlet = np.array([])
@@ -121,24 +131,25 @@ def get_WightedWidthFunction(river):
 
         d = np.concatenate(([0],np.cumsum(np.linalg.norm([xy_coor[0,1:]-xy_coor[0,:-1],xy_coor[1,1:]-xy_coor[1,:-1]],axis =0))))    
         d_to_outlet = np.concatenate((d_to_outlet, node.properties['LenthToOutlet'] + (d[-1] - d) )) 
-            
-    return d_to_outlet, river
-
-    # n_nodes = river.count() # number of nodes within the RN
-    # d_to_outlet = np.array([])
-
-    
-
-    # for node in river.preOrder(): # Move along the nodes   
-    #     length_to_outlet = 0 
-    #     for node_on_path in node.pathToRoot(): # flow from node root
-    #         length_to_outlet +=  node_on_path.segment.length
         
-    #     xy_coor = np.array(node.segment.xy)
-    #     d = np.cumsum(np.linalg.norm([xy_coor[0,1:]-xy_coor[0,:-1],xy_coor[1,1:]-xy_coor[1,:-1]],axis =0))    
-    #     node.properties['LenthToOutlet'] = length_to_outlet - d[-1] # Distance from the downstream node of the segment
-    #     d_to_outlet = np.concatenate((d_to_outlet, length_to_outlet - (d[-1] - d))) 
+        if weight_field == None:
+            weights = np.ones_like(d_to_outlet)
+
+        n_bins = 100
+        bin_size = np.ceil(np.max(d_to_outlet)/n_bins)
+        bins_edges = np.arange(n_bins+1)*bin_size
+        bin_center = (bins_edges[1:]+bins_edges[:-1])/2
+
+        histogram_data, _ = np.histogram(d_to_outlet, bins=bins_edges, weights=weights)
+        x_wf = np.concatenate(([bins_edges[0]], bin_center, [bins_edges[-1]]))
+        y_wf = np.concatenate(([0], histogram_data, [0]))
+
+        area_wf = np.trapz(y=y_wf, x=x_wf)
+        y_wf = y_wf/area_wf
+        y_wf_cum = integrate.cumtrapz(y_wf,x_wf,initial=0)
+        width_function = {'distance':x_wf, 'pdf':y_wf, 'cdf':y_wf_cum}
             
+    return d_to_outlet, weights, width_function, river 
 
 
 

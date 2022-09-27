@@ -1,4 +1,5 @@
 # Genral packages to import ----------------------------------------------
+from distutils.command.install_egg_info import to_filename
 import os,sys
 import numpy as np
 from matplotlib import pyplot as plt
@@ -8,6 +9,10 @@ import logging
 import pandas
 import copy
 import time
+from scipy import integrate
+import pickle
+import rasterio
+import fiona
 pandas.options.display.max_columns = None
 
 # watershed_workflow packages and modules to import ----------------------------------------------
@@ -20,31 +25,56 @@ import watershed_workflow.mesh
 import watershed_workflow.split_hucs
 import watershed_workflow.create_river_mesh
 import watershed_workflow.densify_rivers_hucs
+import watershed_workflow.daymet
 
 # Change working directory and import watershed analysis functions ---------------
 os.chdir('/Users/8n8/Documents/myRepos/watershed-workflow/examples/rnTools')
 from watershed_analysis_functions import *
 
-# Basic information for the coordinate reference system and data sources for watershed_workflow -------------
 
-## Coordinate reference system
-crs = watershed_workflow.crs.daymet_crs()
-## Dictionary of source objects
-sources = watershed_workflow.source_list.get_default_sources()
-sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHD Plus']
-sources['HUC'] = watershed_workflow.source_list.huc_sources['NHD Plus']
-sources['DEM'] = watershed_workflow.source_list.dem_sources['NED 1/3 arc-second']
-watershed_workflow.source_list.log_sources(sources)
 
 # Test the watershed analysis routines
 
 huc = '060102070302' # This is the huc 12-digit Hydrologic Unit for East Fork Poplar Creek
+toRead_Preprocessed = True
 
-## Get the river network and watershed boundary
-# get the start time
-st = time.time()
-watershed, river = get_RN_WB(huc = huc, crs=crs, sources = sources)
-print('Execution time:', time.time() - st, 'seconds')
+# Get the river network and watershed boundary
+
+if (not toRead_Preprocessed):
+
+    # Basic information for the coordinate reference system and data sources for watershed_workflow -------------
+
+    ## Coordinate reference system
+    crs = watershed_workflow.crs.daymet_crs()
+    ## Dictionary of source objects
+    sources = watershed_workflow.source_list.get_default_sources()
+    sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHD Plus']
+    sources['HUC'] = watershed_workflow.source_list.huc_sources['NHD Plus']
+    sources['DEM'] = watershed_workflow.source_list.dem_sources['NED 1/3 arc-second']
+    watershed_workflow.source_list.log_sources(sources)
+
+    # get the start time
+    st = time.time()
+    watershed, river = get_RN_WB(huc = huc, crs=crs, sources = sources)
+    print('Execution time:', time.time() - st, 'seconds')
+
+    rn_wb = {'watershed':watershed, 'river':river, 'huc':huc,
+            'crs':crs, 'sources':sources}
+
+    # Save watershed and river information in a pickle file
+    pickle_name = './results/rn_wb_huc_'+ huc + '.pickle'
+    with open(pickle_name, 'wb') as handle:
+        pickle.dump(rn_wb, handle, protocol=pickle.HIGHEST_PROTOCOL)
+else:
+    pickle_name = './results/rn_wb_huc_'+ huc + '.pickle'
+    with open(pickle_name, 'rb') as handle:
+        rn_wb = pickle.load(handle)
+
+    watershed = rn_wb['watershed']
+    river = rn_wb['river']
+    huc = rn_wb['huc']
+    crs = rn_wb['crs']
+    sources = rn_wb['sources']
 
 ## Plot network
 # Plot the main river
@@ -58,32 +88,38 @@ for node in river.preOrder():
 #plt.show()
 fig.savefig('./results/RN.pdf',bbox_inches='tight')
 
-#my_watershed = get_WightedWidthFunction(hucs=hucs)
+# Get width function ------------------------------------------------
+d_to_outlet, weights, width_function, river_lto = get_WightedWidthFunction(river)
 
-d_to_outlet, river_lto = get_WightedWidthFunction(river)
 
-weights = np.ones_like(d_to_outlet)
-n_bins = 100
-bin_size = np.ceil(np.max(d_to_outlet)/n_bins)
-bins_edges = np.arange(n_bins+1)*bin_size
-bin_center = (bins_edges[1:]+bins_edges[:-1])/2
+fig, axs = plt.subplots(2,1,figsize=[5,10])
+axs[0].plot(width_function['distance'],width_function['pdf'])
+axs[0].set(xlabel='Distance to the outlet (m)', ylabel=r'Width Function (m$^{-1}$)')
 
-histogram_data, _ = np.histogram(d_to_outlet, bins=bins_edges, weights=weights)
-x_wf = np.concatenate(([bins_edges[0]], bin_center, [bins_edges[-1]]))
-y_wf = np.concatenate(([0], histogram_data, [0]))
+axs[1].plot(width_function['distance'],width_function['cdf'])
+axs[1].set(xlabel='Distance to the outlet (m)', ylabel=r'Cumulative Width Function (-)')
+fig.savefig('./results/WidthFunction.pdf',bbox_inches='tight')
+#plt.show()
 
-area_wf = np.trapz(y=y_wf, x=x_wf)
-y_wf = y_wf/area_wf
+# Get daymet data ----------------------------------------------------
+
+
+
+## returned raw data has dim(nband, ncol, nrow)
+startdate = "1-2021"
+enddate = "365-2021"
+bounds = watershed.exterior()
+raw, x, y = watershed_workflow.daymet.collectDaymet(bounds, crs=crs, 
+                                                    start=startdate, end=enddate)
+
+new_x, new_y, new_extent, new_dat, daymet_profile = \
+        watershed_workflow.daymet.reproj_Daymet(x, y, raw, dst_crs=crs)
 
 fig, axs = plt.subplots(1,1,figsize=[10,10])
-axs.plot(x_wf,y_wf)
-plt.xlabel('Distance to the outlet (m)')
-fig.savefig('./results/WidthFunction.pdf',bbox_inches='tight')
-
-
-
-
-#plt.show()
+xb,yb = bounds.exterior.xy
+axs.plot(xb,yb)
+axs.plot(x,y,'.r')
+plt.show()
 
 river
 print('Done!')
