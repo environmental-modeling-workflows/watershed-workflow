@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm as pcm
 import shapely
+from shapely import Point
 import logging
 import pandas
 import copy
@@ -30,6 +31,7 @@ import watershed_workflow.daymet
 # Change working directory and import watershed analysis functions ---------------
 os.chdir('/Users/8n8/Documents/myRepos/watershed-workflow/examples/rnTools')
 from watershed_analysis_functions import *
+from daymet_watershed_analysis_functions import *
 
 
 
@@ -109,20 +111,38 @@ fig.savefig('./results/WidthFunction.pdf',bbox_inches='tight')
 startdate = "1-2021"
 enddate = "365-2021"
 bounds = watershed.exterior()
-raw, x, y = watershed_workflow.daymet.collectDaymet(bounds, crs=crs, 
+
+# Download Daymet data
+daymet_data_raw, x_raw, y_raw = watershed_workflow.daymet.collectDaymet(bounds, crs=crs, 
                                                     start=startdate, end=enddate)
 
-new_x, new_y, new_extent, new_dat, daymet_profile = \
-        watershed_workflow.daymet.reproj_Daymet(x, y, raw, dst_crs=crs)
+# Reproject Daymet data to the watershed CRS
+x_daymet, y_daymet, extent, daymet_data, daymet_profile = \
+        watershed_workflow.daymet.reproj_Daymet(x_raw, y_raw, daymet_data_raw, dst_crs=crs)
 
+nday, nrow, ncol = daymet_data['prcp'].shape
+
+# Get (i,j)s of the Daymet pixels with data within the watershed
+i_grid, j_grid, idx_grid, x_grid, y_grid = \
+    get_Pixels_Inside_Watershed(x_daymet, y_daymet, watershed)
+
+ivar = 'prcp'
+idx_time = np.arange(nday)
+
+plt.figure()
+plt.bar(idx_time,vals)
+plt.show()
 fig, axs = plt.subplots(1,1,figsize=[10,10])
 xb,yb = bounds.exterior.xy
-axs.plot(xb,yb)
-axs.plot(x,y,'.r')
+axs.plot(xb,yb,'-k')
+axs.plot(x_grid,y_grid,'.r')
+axs.plot(x_grid[idx_grid],y_grid[idx_grid],'.b')
 plt.show()
 
 river
 print('Done!')
+
+
 
 # import os,sys
 # import numpy as np
