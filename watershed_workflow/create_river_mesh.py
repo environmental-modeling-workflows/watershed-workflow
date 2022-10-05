@@ -85,18 +85,15 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
     corr: List(shapely.geometry.Polygon)
         a river corridor polygon
     """
-    if type(widths) == dict:
-        dilation_width = np.min(list(widths.values()))
-    else:
-        dilation_width = widths
+
+    dilation_width = 2 # 2m as initial dilation width should be good enough #np.min(list(widths.values()))
 
     # creating a polygon for river corridor by dilating the river tree
     corr = create_river_corridor(river, dilation_width)
     # defining special elements in the mesh
     elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift)
     # setting river_widths in the river corridor polygon
-    if type(widths) == dict:
-        corr = set_width_by_order(river, corr, widths=widths)
+    corr = set_width_by_order(river, corr, widths=widths)
     # treating non-convexity at junctions
     if enforce_convexity:
         corr = convexity_enforcement(river, corr)
@@ -104,15 +101,15 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
     return elems, corr
 
 
-def create_river_corridor(river, river_width):
+def create_river_corridor(river, delta):
     """Returns a polygon representing the river corridor.
     
     Parameters
     ----------
     river: watershed_workflow.river_tree.RiverTree object
         river tree along which river corrid polygon is to be created
-    river_width: Float
-        width of the river corridor for initial dilation
+    delta: Float
+        for initial dilation, distance between stream-centerline and edge of corridor
 
     Returns
     -------
@@ -122,8 +119,18 @@ def create_river_corridor(river, river_width):
 
     # first sort the river so that in a search we always take paddlers right...
     sort_children_by_angle(river, True)
-    delta = river_width / 2.
-    length_scale = 3 * delta
+
+    # find smallest lengthscale as threshold to identify double and triple points
+
+    mins = []
+    for line in river.dfs():
+        coords = np.array(line.coords[:])
+        dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+        mins.append(np.min(dz))
+    logging.info(f"  river min seg length: {min(mins)}")
+       
+    length_scale = min(mins) # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
+    print('length_scale', length_scale)
 
     # check river consistency
     if not river.is_continuous():
@@ -297,8 +304,8 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
+                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
 
         else:
             logging.debug(f'  middle time around! {node.touched+1}')
@@ -322,7 +329,7 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
     return elems
 
 
-def set_width_by_order(river, corr, widths=None):
+def set_width_by_order(river, corr, widths=8):
     """this functions takes the river-corridor polygon and sets the width of the corridor based on the order 
        dependent width dictionary
 
@@ -344,7 +351,11 @@ def set_width_by_order(river, corr, widths=None):
     for j, node in enumerate(river.preOrder()):
 
         order = node.properties["StreamOrder"]
-        target_width = width_cal(widths, order)
+
+        if type(widths) == dict:
+            target_width = width_cal(widths, order)
+        else:
+            target_width= widths
 
         for i, elem in enumerate(node.elements):  # treating the upstream edge of the element
             if len(elem) == 4:
@@ -360,6 +371,19 @@ def set_width_by_order(river, corr, widths=None):
                 [p1_, p2_] = move_to_target_separation(p1, p2, target_width)
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[3]] = tuple(p2_)
+
+            if len(elem)==6:
+                p1=np.array(corr_coords[elem[2]][:2]) # neck of the hex
+                p2=np.array(corr_coords[elem[3]][:2])
+                [p1_, p2_]= move_to_target_separation(p1, p2, target_width)
+                corr_coords[elem[2]]=tuple(p1_)
+                corr_coords[elem[3]]=tuple(p2_)
+
+                p1=np.array(corr_coords[elem[1]][:2]) # neck of the hex
+                p2=np.array(corr_coords[elem[4]][:2])
+                [p1_, p2_]= move_to_target_separation(p1, p2, target_width)
+                corr_coords[elem[1]]=tuple(p1_)
+                corr_coords[elem[4]]=tuple(p2_)
 
             if i == 0:  # this is to treat the most downstream edge which is left out so far
                 p1 = np.array(
