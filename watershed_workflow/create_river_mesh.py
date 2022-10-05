@@ -63,7 +63,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
+def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=8):
     """Returns list of elems and river corridor polygons for a given river tree
 
     Parameters:
@@ -77,7 +77,10 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
         all the node-ids used in the element defination are shifted by
         this number to make it consistant with the global ids in the 
         m2 mesh, important in case of multiple rivers
-        
+    dilation_width: Integer
+        this is used for initial buffering of river tree into river corridor polygon. 
+        for typical watershed 8m default should work well, however, for smaller domains, setting smaller
+        initial dilation_width might be desirable (much smaller than expected quad element length)    
     Returns
     -------
     elems: List(List)
@@ -86,14 +89,12 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
         a river corridor polygon
     """
 
-    dilation_width = 2 # 2m as initial dilation width should be good enough #np.min(list(widths.values()))
-
     # creating a polygon for river corridor by dilating the river tree
     corr = create_river_corridor(river, dilation_width)
     # defining special elements in the mesh
     elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift)
     # setting river_widths in the river corridor polygon
-    corr = set_width_by_order(river, corr, widths=widths)
+    corr = set_width_by_order(river, corr, widths=widths, dilation_width = dilation_width)
     # treating non-convexity at junctions
     if enforce_convexity:
         corr = convexity_enforcement(river, corr)
@@ -101,7 +102,7 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0):
     return elems, corr
 
 
-def create_river_corridor(river, delta):
+def create_river_corridor(river, width):
     """Returns a polygon representing the river corridor.
     
     Parameters
@@ -119,9 +120,9 @@ def create_river_corridor(river, delta):
 
     # first sort the river so that in a search we always take paddlers right...
     sort_children_by_angle(river, True)
+    delta=width/2
 
     # find smallest lengthscale as threshold to identify double and triple points
-
     mins = []
     for line in river.dfs():
         coords = np.array(line.coords[:])
@@ -129,8 +130,7 @@ def create_river_corridor(river, delta):
         mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
        
-    length_scale = min(mins) # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
-    print('length_scale', length_scale)
+    length_scale = max(2.1*delta, min(mins) - 2*delta) # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
 
     # check river consistency
     if not river.is_continuous():
@@ -194,7 +194,7 @@ def create_river_corridor(river, delta):
     return corr3
 
 
-def to_quads(river, corr, delta, gid_shift=0, ax=None):
+def to_quads(river, corr, width, gid_shift=0, ax=None):
     """Iterate over the rivers, creating quads and pentagons forming the corridor.
     The global_id_adjustment is to keep track of node_id in elements w.r.t to global id in mesh
     mainly relevant for multiple river
@@ -217,7 +217,7 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
     elems: List(List)
         List of river elements
     """
-
+    delta = width/2
     coords = corr.exterior.coords[:-1]
     # number the nodes in a dfs pattern, creating empty space for elements
     for i, node in enumerate(river.preOrder()):
@@ -304,8 +304,8 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 5*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 5*delta))
+                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
 
         else:
             logging.debug(f'  middle time around! {node.touched+1}')
@@ -319,7 +319,7 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
     assert (len(coords) == (ic + 1))
     assert (len(river) * 2 == total_touches)
 
-    # this nodeid-shift is needed in case of multiple rivers, to make this id consistent with global nodeids in a m2 mesh
+    # this nodeid-shift is needed in case of multiple rivers, to make this id consistent with global node ids in a m2 mesh
     for node in river.preOrder():
         for i, elems in enumerate(node.elements):
             elems_new = [node_id + gid_shift for node_id in elems]
@@ -329,7 +329,7 @@ def to_quads(river, corr, delta, gid_shift=0, ax=None):
     return elems
 
 
-def set_width_by_order(river, corr, widths=8):
+def set_width_by_order(river, corr, widths=8, dilation_width=8):
     """this functions takes the river-corridor polygon and sets the width of the corridor based on the order 
        dependent width dictionary
 
@@ -350,10 +350,10 @@ def set_width_by_order(river, corr, widths=8):
     corr_coords = corr.exterior.coords[:-1]
     for j, node in enumerate(river.preOrder()):
 
-        order = node.properties["StreamOrder"]
-
         if type(widths) == dict:
+            order = node.properties["StreamOrder"]
             target_width = width_cal(widths, order)
+           
         else:
             target_width= widths
 
@@ -361,27 +361,27 @@ def set_width_by_order(river, corr, widths=8):
             if len(elem) == 4:
                 p1 = np.array(corr_coords[elem[1]][:2])  # points of the upstream edge of the quad
                 p2 = np.array(corr_coords[elem[2]][:2])
-                [p1_, p2_] = move_to_target_separation(p1, p2, target_width)
+                [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[2]] = tuple(p2_)
 
             if len(elem) == 5:
                 p1 = np.array(corr_coords[elem[1]][:2])  # neck of the pent
                 p2 = np.array(corr_coords[elem[3]][:2])
-                [p1_, p2_] = move_to_target_separation(p1, p2, target_width)
+                [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[3]] = tuple(p2_)
 
             if len(elem)==6:
                 p1=np.array(corr_coords[elem[2]][:2]) # neck of the hex
                 p2=np.array(corr_coords[elem[3]][:2])
-                [p1_, p2_]= move_to_target_separation(p1, p2, target_width)
+                [p1_, p2_]= move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
                 corr_coords[elem[2]]=tuple(p1_)
                 corr_coords[elem[3]]=tuple(p2_)
 
                 p1=np.array(corr_coords[elem[1]][:2]) # neck of the hex
                 p2=np.array(corr_coords[elem[4]][:2])
-                [p1_, p2_]= move_to_target_separation(p1, p2, target_width)
+                [p1_, p2_]= move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
                 corr_coords[elem[1]]=tuple(p1_)
                 corr_coords[elem[4]]=tuple(p2_)
 
@@ -389,7 +389,7 @@ def set_width_by_order(river, corr, widths=8):
                 p1 = np.array(
                     corr_coords[elem[0]][:2])  # points of the upstream edge of the quad/pent
                 p2 = np.array(corr_coords[elem[-1]][:2])
-                [p1_, p2_] = move_to_target_separation(p1, p2, target_width)
+                [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
                 corr_coords[elem[0]] = tuple(p1_)
                 corr_coords[elem[-1]] = tuple(p2_)
 
@@ -397,11 +397,12 @@ def set_width_by_order(river, corr, widths=8):
     return shapely.geometry.Polygon(corr_coords_new)
 
 
-def move_to_target_separation(p1, p2, target):
+def move_to_target_separation(p1, p2, target, dilation_width=8):
     """Returns the points after moving them to a target separation from each other"""
     import math
     d_vec = p1 - p2  # separation vector
-    d = np.sqrt(d_vec.dot(d_vec))  # distance
+    d = np.sqrt(d_vec.dot(d_vec))  # distance 
+    target = target * min(d/dilation_width, 1.2) # this scales for angled joints (not exactly calculated but should be good enough)
     delta = target - d
     p1_ = p1 + 0.5 * delta * (d_vec) / d
     p2_ = p2 - 0.5 * delta * (d_vec) / d
@@ -450,7 +451,9 @@ def convexity_enforcement(river, corr):
                         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
                         points[i] = new_point
 
-                assert (watershed_workflow.utils.is_convex(points))
+                assert(watershed_workflow.utils.is_convex(points))
+              
+
                 # updating coords
                 for id, point in zip(elem, points):
                     coords[id] = point
