@@ -48,7 +48,7 @@ def get_RN_WB(huc,
 
     #  Read the watershed boundary ----------------------------------------
 
-    _, ws = watershed_workflow.get_huc(sources['HUC'], huc, crs)
+    profile_ws, ws = watershed_workflow.get_huc(sources['HUC'], huc, crs)
     watershed = watershed_workflow.split_hucs.SplitHUCs([ws])
 
     # Read the river reaches ------------------------------------------------
@@ -57,7 +57,7 @@ def get_RN_WB(huc,
 
     ignore_small_rivers = False
     prune_by_area_fraction = False
-    _, reaches = watershed_workflow.get_reaches(sources['hydrography'], huc, 
+    profile_reaches, reaches = watershed_workflow.get_reaches(sources['hydrography'], huc, 
                                                 watershed.exterior(), crs, crs,
                                                 in_network=True, properties=True, 
                                                 include_catchments=True)
@@ -67,6 +67,8 @@ def get_RN_WB(huc,
                                                 prune_by_area_fraction=prune_by_area_fraction,
                                                 remove_diversions=True,
                                                 remove_braided_divergences=True)
+
+    watershed_workflow.get_shapes
 
     ## Select the largest river within the watershed
 

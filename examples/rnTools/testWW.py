@@ -51,6 +51,7 @@ if (not toRead_Preprocessed):
     ## Dictionary of source objects
     sources = watershed_workflow.source_list.get_default_sources()
     sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHD Plus']
+    #sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHD']
     sources['HUC'] = watershed_workflow.source_list.huc_sources['NHD Plus']
     sources['DEM'] = watershed_workflow.source_list.dem_sources['NED 1/3 arc-second']
     watershed_workflow.source_list.log_sources(sources)
@@ -108,7 +109,7 @@ fig.savefig('./results/WidthFunction.pdf',bbox_inches='tight')
 
 
 ## returned raw data has dim(nband, ncol, nrow)
-startdate = "1-2021"
+startdate = "1-2011"
 enddate = "365-2021"
 bounds = watershed.exterior()
 
@@ -130,8 +131,10 @@ ivar = 'prcp'
 idx_time = np.arange(nday)
 
 plt.figure()
-plt.bar(idx_time,vals)
+plt.bar(idx_time,time_total)
 plt.show()
+
+
 fig, axs = plt.subplots(1,1,figsize=[10,10])
 xb,yb = bounds.exterior.xy
 axs.plot(xb,yb,'-k')

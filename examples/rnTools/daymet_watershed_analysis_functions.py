@@ -53,6 +53,19 @@ def get_Pixels_Inside_Watershed(x_daymet, y_daymet, watershed):
     y_grid = np.reshape(Y_grid,(n_pixels,1))
     xy_grid = np.concatenate((x_grid,y_grid),axis=1)
     watershed_poly = watershed.polygon(0)
+
+##################
+    mask = rasterio.features.geometry_mask([watershed_poly, ],
+                                            (daymet_profile['width'],daymet_profile['height']),
+                                            daymet_profile['transform'],
+                                            invert=True)
+
+
+    inside = np.where(mask)     
+    daymet_data[ivar][:][np.where(mask)]
+
+#######################
+
     inside = [watershed_poly.contains(Point(theCoords)) for theCoords in xy_grid]
     i_grid, j_grid = np.where(np.reshape(inside,X_grid.shape))
     idx_grid = np.where(inside)
@@ -62,8 +75,47 @@ def get_Pixels_Inside_Watershed(x_daymet, y_daymet, watershed):
 def get_Statistics_Daymet(daymet_data, i_grid, j_grid, idx_time, ivar):
 #'tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl'
 
-    vals = daymet_data[ivar][idx_time, i_grid[0], j_grid[0]]
+    nday, nrow, ncol = daymet_data['prcp'].shape
+    vals = np.nan*np.ones((idx_time.size,i_grid.size))
+    for pos in range(i_grid.size):
+        vals[:,pos] = daymet_data[ivar][idx_time, i_grid[pos], j_grid[pos]]
 
+
+    nday, nrow, ncol = daymet_data['prcp'].shape
+    # One image integrated over time
+     
+    grid_total = np.sum(daymet_data[ivar], axis=0)
+    grid_mean = np.mean(daymet_data[ivar], axis=0)
+    grid_median = np.median(daymet_data[ivar], axis=0)
+    grid_std = np.std(daymet_data[ivar], axis=0)
+
+    time_slices = np.reshape(daymet_data[ivar],(nday,nrow*ncol)) # Each row contains all the pixels of a day
+
+    time_total = np.sum(time_slices, axis=1) # Total within the grid for one day
+
+
+[print(theInd[0]) for theInd in zip(i_grid, j_grid)]
+
+tmp.reshape(nday,nrow*ncol)
+    
+    tmp = np.array(
+        [[[1,  1, 1],
+        [1, 1,   1]],
+
+       [[2, 2, 2],
+        [2, 2, 2]],
+
+       [[3,  3, 3],
+        [ 3,  3, 3]],
+
+       [[4,   4, 4],
+        [4, 4,  4]]])
+
+tmp.transpose(1,2,0).reshape(nrow*ncol,nday)
+
+tmp.reshape(nday,nrow*ncol)
+
+    np.std(daymet_data[ivar][idx_time, 0, 0])
 
 
 
