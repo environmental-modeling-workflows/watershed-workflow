@@ -14,7 +14,7 @@ import watershed_workflow.warp
 
 
 @attr.s
-class _FileManagerNHD:
+class _FileManagerNHDPlusV21:
     """Manager for interacting with USGS National Hydrography Datasets.
 
     Note that this includes NHD, NHDPlus, and WBD -- this class should not
@@ -531,7 +531,7 @@ class _FileManagerNHD:
         return filename
 
 
-class FileManagerNHDPlus(_FileManagerNHD):
+class FileManagerNHDPlus(_FileManagerNHDPlusV21):
     def __init__(self):
         name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
         super().__init__(
@@ -540,7 +540,7 @@ class FileManagerNHDPlus(_FileManagerNHD):
                                                    'NHDPlus_H_{}.gdb'))
 
 
-class FileManagerNHD(_FileManagerNHD):
+class FileManagerNHD(_FileManagerNHDPlusV21):
     def __init__(self):
         name = 'National Hydrography Dataset (NHD)'
         super().__init__(
@@ -549,7 +549,7 @@ class FileManagerNHD(_FileManagerNHD):
                                                    'NHD_H_{}.gdb'))
 
 
-class FileManagerWBD(_FileManagerNHD):
+class FileManagerWBD(_FileManagerNHDPlusV21):
     def __init__(self):
         name = 'National Watershed Boundary Dataset (WBD)'
         super().__init__(
