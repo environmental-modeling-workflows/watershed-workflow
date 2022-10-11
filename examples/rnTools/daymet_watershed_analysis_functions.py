@@ -94,28 +94,28 @@ def get_Statistics_Daymet(daymet_data, i_grid, j_grid, idx_time, ivar):
     time_total = np.sum(time_slices, axis=1) # Total within the grid for one day
 
 
-[print(theInd[0]) for theInd in zip(i_grid, j_grid)]
+# [print(theInd[0]) for theInd in zip(i_grid, j_grid)]
 
-tmp.reshape(nday,nrow*ncol)
+# tmp.reshape(nday,nrow*ncol)
     
-    tmp = np.array(
-        [[[1,  1, 1],
-        [1, 1,   1]],
+#     tmp = np.array(
+#         [[[1,  1, 1],
+#         [1, 1,   1]],
 
-       [[2, 2, 2],
-        [2, 2, 2]],
+#        [[2, 2, 2],
+#         [2, 2, 2]],
 
-       [[3,  3, 3],
-        [ 3,  3, 3]],
+#        [[3,  3, 3],
+#         [ 3,  3, 3]],
 
-       [[4,   4, 4],
-        [4, 4,  4]]])
+#        [[4,   4, 4],
+#         [4, 4,  4]]])
 
-tmp.transpose(1,2,0).reshape(nrow*ncol,nday)
+# tmp.transpose(1,2,0).reshape(nrow*ncol,nday)
 
-tmp.reshape(nday,nrow*ncol)
+# tmp.reshape(nday,nrow*ncol)
 
-    np.std(daymet_data[ivar][idx_time, 0, 0])
+#     np.std(daymet_data[ivar][idx_time, 0, 0])
 
 
 
