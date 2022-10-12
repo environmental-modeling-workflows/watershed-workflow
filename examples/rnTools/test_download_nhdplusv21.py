@@ -5,7 +5,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm as pcm
 import shapely
-from shapely import Point
 import logging
 import pandas
 import copy
@@ -15,6 +14,11 @@ import pickle
 import rasterio
 import fiona
 pandas.options.display.max_columns = None
+
+import requests
+import py7zr
+import urllib
+import ssl
 
 # watershed_workflow packages and modules to import ----------------------------------------------
 import watershed_workflow
@@ -63,31 +67,40 @@ plt.show()
 
 # Step 1: Get the bounds from the HUC
 watersheds_shapely = list(watershed.polygons())
-watersheds_shapely[0].bounds
-
 bounds = watersheds_shapely[0].bounds
 bounds_crs = profile_ws 
 
+'''
+NHDPlusV2 data is distributed by the major "Drainage Areas" of the United States.
+Within a Drainage Area, the NHDPlusV2 data components are packaged into compressed 
+files either by Vector Processing Unit (VPU) or Raster Processing Unit (RPU).
+In NHDPlusV2, the processing units are referred to as “Vector Processing Unit (VPU)” for
+vector data and “Raster Processing Unit (RPU)” for raster data. RPUs are used for the raster 
+components (elevation, flow direction and flow accumulation grids) and the VPUs are used 
+for all vector feature classes and all tables. 
+'''
 
+# Global data provided by NHDPlusV2
+# https://www.epa.gov/waterdata/nhdplus-global-data
 
-path_NHDPlusGlobalData = "/Users/8n8/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/ornl/01_projects/01_active/IDEAS/data/gis_data/nhd_plusv21/NHDPlusGlobalData"
-filename_boundary_units_NHDPlusV21 = "BoundaryUnit.shp"
+path_BoundaryUnitsNHDPlusV21 = "/Users/8n8/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/ornl/01_projects/01_active/IDEAS/data/gis_data/nhd_plusv21/NHDPlusGlobalData"
+filename_BoundaryUnitsNHDPlusV21 = "BoundaryUnit.shp"
 
-downloadfile = os.path.join(path_NHDPlusGlobalData, filename_boundary_units_NHDPlusV21)
-
-# boundary_units = fiona.open(downloadfile)
-
+downloadfile = os.path.join(path_BoundaryUnitsNHDPlusV21, filename_BoundaryUnitsNHDPlusV21)
 with fiona.open(downloadfile) as fid:
-    boundary_units_crs = watershed_workflow.crs.from_fiona(fid.profile['crs'])
-
+    # Get the CRS for the Boundary Units
+    BoundaryUnits_crs = watershed_workflow.crs.from_fiona(fid.profile['crs'])
+    # Project the watershed boundary to the CRS for the Boundary Units
     bounds = watershed_workflow.warp.bounds(
-        bounds, bounds_crs, boundary_units_crs)
-    bu = [r for (i, r) in fid.items(bbox=bounds)]
+        bounds, bounds_crs, BoundaryUnits_crs) 
+    # Get the boundary Units that intersect with the watershed 
+    BUs = [r for (i, r) in fid.items(bbox=bounds)]
 
+# Consolidate information from the selected Boundary Units
 UnitType = []
 UnitID = []
 DrainageID = []
-for pp in bu:
+for pp in BUs:
     UnitType.append(pp['properties']['UnitType'])    
     UnitID.append(pp['properties']['UnitID']) 
     DrainageID.append(pp['properties']['DrainageID'])
@@ -96,45 +109,84 @@ UnitType = np.array(UnitType)
 UnitID = np.array(UnitID)
 DrainageID = np.array(DrainageID)
 
-# Find RPUs and VPUs
-dID_vpu_rpu = []
-dID_unique = np.unique(DrainageID)
-for dd in dID_unique:
+# Find tuples of Drainage Areas, VPUs, and RPUs
+daID_vpu_rpu = [] # list of lists with the Drainage Areas, VPUs, and RPUs
+daID_unique = np.unique(DrainageID)
+
+for dd in daID_unique:
 
     vpu_unique = np.unique(UnitID[np.argwhere((UnitType == 'VPU') & (DrainageID == dd))])
     
     for vv in vpu_unique:
-        dID_vpu_rpu += [[dd, vv, UnitID[ii]] for ii in range(len(UnitType)) if (('RPU' in UnitType[ii]) & (vv[0:2] in UnitID[ii]))]
+        daID_vpu_rpu += [[dd, vv, UnitID[ii]] for ii in range(len(UnitType)) \
+            if (('RPU' in UnitType[ii]) & (vv[0:2] in UnitID[ii]))]
+
+# File names to download
 
 
-
-## Identify the unique VPUs
-
-
-
-# idx_rpu = UnitType.index('RPU')
-# idx_vpu = UnitType.index('VPU')
-kk =0
 component_name = ['']
+version_component = ['']
 
-"NHDPlusV21_" + dID_vpu_rpu[kk][0] + "_" + dID_vpu_rpu[kk][1] + "_" + component_name + "_02"
-"NHDPlusV21_" + dID_vpu_rpu[kk][0] + "_" + dID_vpu_rpu[kk][1] + "_" + dID_vpu_rpu[kk][2] + "_" + component_name + "_02"
+for kk, vars in enumerate(daID_vpu_rpu):
+# "NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + component_name + "_" + version_component
+# "NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + vars[2] + "_" + component_name + "_" + version_component
+
+# Create folder named:
+folder_name = "NHDPlus" + dID_vpu_rpu[kk][1]
+
+# RPU components
+"NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + vars[2] + "_" + component_name + "_" + version_component
+    # CatSeed_02 -- 01, 02 
+    # FdrFac_02 -- 01, 03, 
+    # FdrNull_02 -- 01, 03
+    # HydroDem_02 -- 01, 02
+    # NEDSnapshot_03 -- 01, 03
+
+# VPU-Wide components
+"NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + component_name + "_" + version_component
+    # EROMExtension_07 -- 05, 06, 07, 11, 
+    # NHDPlusAttributes_10 -- 07, 09, 10, 14, 
+    # NHDPlusBurnComponents_05 -- 02, 03, 05, 07, 
+    # NHDPlusCatchment_02 -- 01, 05
+    # NHDSnapshotFGDB_07 -- 04, 06, 07, 08, 09 
+    # NHDSnapshot_07 -- 04, 06, 07, 08, 09
+    # VPUAttributeExtension_05 -- 03, 04, 05, 07
+    # VogelExtension_02 -- 01, 04, 06
+    # WBDSnapshot_04 -- 03, 04, 06
 
 
-"NHDPlusV21_" + dID_vpu_rpu[kk][0] + "_" + dID_vpu_rpu[kk][1] + "_" + dID_vpu_rpu[kk][2] + "_" + component_name + "_02"
-# CatSeed_02.7z(6.4 MB)
-# FdrFac_02.7z(172.6 MB)
-# FdrNull_02.7z(53.5 MB)
-# HydroDem_02.7z(339.4 MB)
-# NEDSnapshot_03.7z(456.2 MB)
 
-"NHDPlusV21_" + dID_vpu_rpu[kk][0] + "_" + dID_vpu_rpu[kk][1] + "_" + component_name + "_02"
-# EROMExtension_07.7z(127.2 MB)
-# NHDPlusAttributes_10.7z(25.4 MB)
-# NHDPlusBurnComponents_05.7z(71.4 MB)
-# NHDPlusCatchment_02.7z(347.1 MB)
-# NHDSnapshotFGDB_07.7z(89.6 MB)
-# NHDSnapshot_07.7z(161.1 MB)
-# VPUAttributeExtension_05.7z(134.9 MB)
-# VogelExtension_02.7z(1.4 MB)
-# WBDSnapshot_04.7z(53.3 MB)
+theURL = 'https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/NHDPlusMS/NHDPlus06/NHDPlusV21_MS_06_NHDPlusAttributes_10.7z'
+# Download the data behind the URL
+response = requests.get(theURL)
+status_code = response.status_code # A status code of 200 means it was accepted
+
+
+theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
+req = urllib.request.Request(theURL)
+gcontext = ssl.SSLContext()  # To bypass the certificate issues "urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate in certificate chain (_ssl.c:997)>"
+html = str(urllib.request.urlopen(req, context=gcontext).read())
+html.find('NHDPlusAttributes')
+html[28728-10:28728+10]
+
+
+
+
+pathDataOut = '/Users/8n8/Downloads/testDownloadNHDPlusV2'
+filename_out = os.path.join(pathDataOut, theURL.split('/')[-1])
+open(filename_out, "wb").write(response.content)
+
+# Unzip file
+with py7zr.SevenZipFile(filename_out, 'r') as archive:
+    archive.extractall(path=pathDataOut)
+
+
+
+        # cwd = os.getcwd()
+        # try:
+        #     os.chdir(to_location)
+        #     libarchive.extract_file(filename)
+
+# https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/NHDPlusMS/NHDPlus10U/NHDPlusV21_MS_10U_EROMExtension_07.7z
+# https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/NHDPlusGB/NHDPlusV21_GB_16_EROMExtension_04.7z
+# https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/NHDPlusGB/NHDPlusV21_GB_16_EROMExtension_04.7z
