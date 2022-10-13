@@ -22,6 +22,16 @@ def densify_rivers(rivers,
                       treat_collinearity=treat_collinearity)
         for river, river_raw in zip(rivers, rivers_raw)
     ]
+
+    mins = []
+    for river in rivers:
+        for line in river.dfs():
+            coords = np.array(line.coords[:])
+            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+            mins.append(np.min(dz))
+    logging.info(f"  river min seg length: {min(mins)}")
+    logging.info(f"  river median seg length: {np.median(np.array(mins))}")
+
     return rivers
 
 
@@ -48,11 +58,18 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
         a densified river tree
 
     """
-
-    assert (len(river) == len(river_raw))
+    
+    #assert (len(river) == len(river_raw))
 
     river_densified = river.deep_copy()
-    for node, node_ in zip(river_densified.preOrder(), river_raw.preOrder()):
+    i=0
+    for node in river_densified.preOrder():
+
+        while not node.properties['NHDPlusID'] == list(river_raw.preOrder())[i].properties['NHDPlusID']:
+            i = i+1 
+            
+        node_ = list(river_raw.preOrder())[i]
+        i = i+1
         node.segment = densify_node_segments(node,
                                              node_,
                                              limit=limit,
