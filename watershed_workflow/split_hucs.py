@@ -225,8 +225,17 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
 
             s2 = s2.buffer(abs_tol)
             if watershed_workflow.utils.intersects(s1, s2):
-                s2 = s2.difference(s1)
-                list_of_shapes[j] = s2.difference(s1)
+                inter = s1.intersection(s2)
+                if isinstance(inter, shapely.geometry.Polygon):
+                    if not s2.within(s1):
+                    # diff = s2.difference(s1)
+                        diff = s2.difference(s1) # will return empty shape if s2 is within s1!
+                    else:
+                        diff = s1.difference(s2)
+                    s2 = diff
+                # list_of_shapes[j] = s2.difference(s1)
+                    logging.info(f"s1: shapes[{i}] intersect s2: shapes[{j}]")
+                    list_of_shapes[j] = s2
 
     # remove holes
     union = shapely.ops.unary_union(list_of_shapes)
