@@ -337,7 +337,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     assert (len(waterway.edges) == m2.num_edges)
 
     # delete the centroid info to force recalculation
-    m2.clear_geometry_cache()
+    # m2.clear_geometry_cache()
     return
 
 
