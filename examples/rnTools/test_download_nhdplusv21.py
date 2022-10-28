@@ -38,7 +38,7 @@ from watershed_analysis_functions import *
 from daymet_watershed_analysis_functions import *
 
 # Test the watershed analysis routines
-
+# hucs = "[14020001, 14020002, 14020003, 14020004, 14020005, 14020006, ] # Gunnison
 huc = '060102070302' # This is the huc 12-digit Hydrologic Unit for East Fork Poplar Creek
 
 # Basic information for the coordinate reference system and data sources for watershed_workflow -------------
@@ -70,6 +70,8 @@ watersheds_shapely = list(watershed.polygons())
 bounds = watersheds_shapely[0].bounds
 bounds_crs = profile_ws 
 
+# Step 2: Get the boundary Units that intersect with the watershed  
+
 '''
 NHDPlusV2 data is distributed by the major "Drainage Areas" of the United States.
 Within a Drainage Area, the NHDPlusV2 data components are packaged into compressed 
@@ -86,8 +88,8 @@ for all vector feature classes and all tables.
 path_BoundaryUnitsNHDPlusV21 = "/Users/8n8/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/ornl/01_projects/01_active/IDEAS/data/gis_data/nhd_plusv21/NHDPlusGlobalData"
 filename_BoundaryUnitsNHDPlusV21 = "BoundaryUnit.shp"
 
-downloadfile = os.path.join(path_BoundaryUnitsNHDPlusV21, filename_BoundaryUnitsNHDPlusV21)
-with fiona.open(downloadfile) as fid:
+BUfile = os.path.join(path_BoundaryUnitsNHDPlusV21, filename_BoundaryUnitsNHDPlusV21)
+with fiona.open(BUfile) as fid:
     # Get the CRS for the Boundary Units
     BoundaryUnits_crs = watershed_workflow.crs.from_fiona(fid.profile['crs'])
     # Project the watershed boundary to the CRS for the Boundary Units
@@ -132,7 +134,7 @@ for kk, vars in enumerate(daID_vpu_rpu):
 # "NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + vars[2] + "_" + component_name + "_" + version_component
 
 # Create folder named:
-folder_name = "NHDPlus" + dID_vpu_rpu[kk][1]
+folder_name = "NHDPlus" + daID_vpu_rpu[kk][1]
 
 # RPU components
 "NHDPlusV21_" + vars[0] + "_" + vars[1] + "_" + vars[2] + "_" + component_name + "_" + version_component
@@ -163,15 +165,38 @@ status_code = response.status_code # A status code of 200 means it was accepted
 
 
 theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
+
+r = requests.get(theURL, verify=False) # I am not adding a certificate verification (i.e., verify=False). This is NOT good practice!
+r.raise_for_status()
+htmltext_for_data = r.json()
+htmltext_for_data.find('NHDPlusAttributes')
+
+
 req = urllib.request.Request(theURL)
 gcontext = ssl.SSLContext()  # To bypass the certificate issues "urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate in certificate chain (_ssl.c:997)>"
-html = str(urllib.request.urlopen(req, context=gcontext).read())
+html = urllib.request.urlopen(req, context=gcontext).read() #str(
+
 html.find('NHDPlusAttributes')
 html[28728-10:28728+10]
 
+import urllib.request
+
+req = urllib.request.Request(theURL) # a Request object that specifies the URL you want to fetch
+gcontext = ssl.SSLContext() # a ssl.SSLContext instance describing the various SSL options
+with urllib.request.urlopen(req, context=gcontext) as response:
+    html = response.read().decode("utf8")
+
+mystr.find('NHDPlusAttributes')
 
 
 
+
+'''
+Note about certificates: 
+gcontext = ssl.SSLContext()  # Is used to bypass the certificate issues "urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate in certificate chain (_ssl.c:997)>" This is NOT a good practice, and we need a better way to do this without the risks involved witht eh gcontext selected. 
+'''
+
+####################
 pathDataOut = '/Users/8n8/Downloads/testDownloadNHDPlusV2'
 filename_out = os.path.join(pathDataOut, theURL.split('/')[-1])
 open(filename_out, "wb").write(response.content)
