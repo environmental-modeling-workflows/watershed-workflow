@@ -173,13 +173,18 @@ from requests_html import HTMLSession
 
 theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
 session = HTMLSession()
-r = session.get(theURL,verify=False)
+response = session.get(theURL,verify=False)
+response.raise_for_status()
+status_code = response.status_code # A status code of 200 means it was accepted
+print("Status code:" + str(status_code))
 
-all_links = r.html.links
-all_links = r.absolute_links
+all_links = response.html.links
+all_links = response.absolute_links
 all_links
 
-
+html = response.html
+for html in r.html:
+    print(html)
 
 theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
 
