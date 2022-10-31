@@ -160,8 +160,25 @@ folder_name = "NHDPlus" + daID_vpu_rpu[kk][1]
 
 theURL = 'https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/NHDPlusMS/NHDPlus06/NHDPlusV21_MS_06_NHDPlusAttributes_10.7z'
 # Download the data behind the URL
-response = requests.get(theURL)
+theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
+response = requests.get(theURL, verify=False) # I am not adding a certificate verification (i.e., verify=False). This is NOT good practice!
 status_code = response.status_code # A status code of 200 means it was accepted
+response.raise_for_status()
+print("Status code:" + str(status_code))
+
+response.json()
+response.content.decode
+
+from requests_html import HTMLSession
+
+theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
+session = HTMLSession()
+r = session.get(theURL,verify=False)
+
+all_links = r.html.links
+all_links = r.absolute_links
+all_links
+
 
 
 theURL = 'https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06'
