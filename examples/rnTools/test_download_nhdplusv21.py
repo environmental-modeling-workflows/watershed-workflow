@@ -2,8 +2,6 @@
 from bs4 import BeautifulSoup
 import urllib.request
 from requests_html import HTMLSession
-from daymet_watershed_analysis_functions import *
-from watershed_analysis_functions import *
 import watershed_workflow.daymet
 import watershed_workflow.densify_rivers_hucs
 import watershed_workflow.create_river_mesh
@@ -33,7 +31,6 @@ from scipy import integrate
 import pickle
 import rasterio
 import fiona
-pandas.options.display.max_columns = None
 
 # watershed_workflow packages and modules to import ----------------------------------------------
 import watershed_workflow
@@ -56,9 +53,18 @@ from functions_NHDPlusV2_io import *
 
 # General variables and paths for the NHDPlus information
 
+## Component names for the NHDPlus V2 datasets
+componentnames_vpu_wide_all = ["EROMExtension", "NHDPlusAttributes", "NHDPlusBurnComponents", "NHDPlusCatchment" \
+, "NHDSnapshotFGDB", "NHDSnapshot", "VPUAttributeExtension", "VogelExtension", "WBDSnapshot"]
+
+componentnames_rpu_wide_all = ["CatSeed", "FdrFac", "FdrNull", "FilledAreas", "HydroDem", "NEDSnapshot"]
+
+componentnames_vpu_wide_main = ["EROMExtension", "NHDPlusCatchment", "NHDPlusAttributes", "NHDSnapshot", "VPUAttributeExtension", "WBDSnapshot"]
+componentnames_rpu_wide_main = ["NEDSnapshot"]
+
 ## Global data provided by NHDPlusV2
 ## https://www.epa.gov/waterdata/nhdplus-global-data
-path_BoundaryUnitsNHDPlusV21 = "/Users/8n8/Library/CloudStorage/OneDrive-OakRidgeNationalLaboratory/ornl/01_projects/01_active/IDEAS/data/gis_data/nhd_plusv21/NHDPlusGlobalData"
+path_BoundaryUnitsNHDPlusV21 = "/Users/8n8/Dropbox/myworkfiles_ornl/01_projects/01_active/IDEAS/data/gis_data/nhd_plusv21/NHDPlusGlobalData/"
 filename_BoundaryUnitsNHDPlusV21 = "BoundaryUnit.shp"
 
 BoundaryUnitFile = os.path.join(path_BoundaryUnitsNHDPlusV21,filename_BoundaryUnitsNHDPlusV21)
@@ -66,8 +72,8 @@ BoundaryUnitFile = os.path.join(path_BoundaryUnitsNHDPlusV21,filename_BoundaryUn
 
 
 # Test the watershed analysis routines
-# hucs = "[14020001, 14020002, 14020003, 14020004, 14020005, 14020006, ] # Gunnison
-huc = '060102070302'  # This is the huc 12-digit Hydrologic Unit for East Fork Poplar Creek
+hucs = ['14020001', '14020002', '14020003', '14020004', '14020005', '14020006'] # Gunnison
+#huc = '060102070302'  # This is the huc 12-digit Hydrologic Unit for East Fork Poplar Creek
 
 # Basic information for the coordinate reference system and data sources for watershed_workflow -------------
 
@@ -82,20 +88,32 @@ watershed_workflow.source_list.log_sources(sources)
 
 #  Read the watershed boundary ----------------------------------------
 
-profile_ws, ws = watershed_workflow.get_huc(sources['HUC'], huc, crs)
-watershed = watershed_workflow.split_hucs.SplitHUCs([ws])
+# profile_ws, ws = watershed_workflow.get_huc(sources['HUC'], hucs, crs)
+# watershed = watershed_workflow.split_hucs.SplitHUCs([ws])
 
-fig, axs = plt.subplots(1, 1, figsize=[10, 10])
-watershed_workflow.plot.hucs(watershed, crs, 'k', axs)
-plt.show()
-
+##
+my_hucs = []
+my_hucs_profile = []
+for huc in hucs:
+    profile_ws, ws = watershed_workflow.get_huc(sources['HUC'], huc, crs)
+    my_hucs.append(ws)
+    my_hucs_profile.append(profile_ws)
+    
+watershed = watershed_workflow.split_hucs.SplitHUCs(my_hucs) # This is a collection of subwatersheds
 
 ##################
 
 # Step 1: Get the bounds from the HUC
-watersheds_shapely = list(watershed.polygons())
-bounds = watersheds_shapely[0].bounds 
-bounds_crs = profile_ws
+bounds = watershed.exterior().bounds # (minx, miny, maxx, maxy)
+bounds_crs = my_hucs_profile[0]
+
+##
+fig_size_x = 10
+fig_size_y = fig_size_x*((bounds[3]-bounds[1])/(bounds[2]-bounds[0])) 
+fig, axs = plt.subplots(1, 1, figsize=[fig_size_x, fig_size_y])
+watershed_workflow.plot.hucs(watershed, crs, 'k', axs)
+watershed_workflow.plot.shply(watershed.exterior(), crs, 'r', axs)
+plt.show()
 
 # Step 2: Get the boundary Units that intersect with the watershed
 
@@ -109,18 +127,21 @@ components (elevation, flow direction and flow accumulation grids) and the VPUs 
 for all vector feature classes and all tables. 
 '''
 
-daID_vpu_rpu = get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile)
-
+daID_vpu_rpu = get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile, enforce_VPUs=hucs)
+print('Tiles needed: ' )
+print(daID_vpu_rpu)
+print('------------------------------')
 # Step 3: Get the URLs for the sites to download the data
 
 URLs = get_URLs_VPU(daID_vpu_rpu)
+data_links = get_NHDPlusV2_URLs_from_EPA_url(URLs[0], verify=False)
+component_url = get_NHDPlusV2_component_url(data_links, componentnames_main)
 
 
-data_links = get_NHDPlusV2_URLs_from_EPA_url(url, verify=False)
-component_url = get_NHDPlusV2_component_url(data_links, componentnames)
 
 
 
+## To download file https://www.codingem.com/python-download-file-from-url/
 
 
 
