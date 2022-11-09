@@ -2,12 +2,11 @@
 # your Anaconda environment's installation, but this is set by default
 # on conda activate.
 
-CC=/usr/bin/gcc
-CXX=/usr/bin/g++
-FC=/opt/homebrew/bin/gfortran
+#CC=`which gcc`
+#CXX=`which g++`  # `which g++` for Linux
+#FC=`which gfortran`
 
-SEACAS_SRC_DIR=${SEACAS_DIR}
-#/src/seacas
+SEACAS_SRC_DIR=${SEACAS_DIR}/src/seacas
 
 echo "Building SEACAS:"
 echo " at: ${SEACAS_DIR}"
@@ -38,3 +37,5 @@ cmake \
     -D HDF5_ROOT:PATH=${CONDA_PREFIX} \
     -D HDF5_NO_SYSTEM_PATHS=ON \
 ${SEACAS_SRC_DIR}
+
+
