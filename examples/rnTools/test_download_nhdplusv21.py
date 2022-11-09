@@ -43,6 +43,7 @@ import watershed_workflow.split_hucs
 import watershed_workflow.create_river_mesh
 import watershed_workflow.densify_rivers_hucs
 import watershed_workflow.daymet
+import watershed_workflow.sources.utils as source_utils
 
 # Change working directory and import watershed analysis functions ---------------
 os.chdir('/Users/8n8/Documents/myRepos/watershed-workflow/examples/rnTools')
@@ -131,11 +132,34 @@ daID_vpu_rpu = get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile, enforc
 print('Tiles needed: ' )
 print(daID_vpu_rpu)
 print('------------------------------')
+
 # Step 3: Get the URLs for the sites to download the data
 
 URLs = get_URLs_VPU(daID_vpu_rpu)
-data_links = get_NHDPlusV2_URLs_from_EPA_url(URLs[0], verify=False)
-component_url = get_NHDPlusV2_component_url(data_links, componentnames_main)
+
+data_dir = '/Users/8n8/Downloads/testDownloadNHDPlusV2/dowloaded_datasets'
+
+# for each URL 
+kk = 0
+for kk in range(daID_vpu_rpu):
+    data_links = get_NHDPlusV2_URLs_from_EPA_url(URLs[kk], verify=False)
+    url_vpu_wide = get_NHDPlusV2_component_url(data_links, componentnames_vpu_wide_main)
+    url_rpu_wide = get_NHDPlusV2_component_url(data_links, componentnames_rpu_wide_main)
+    daID, vpu, rpu = daID_vpu_rpu[kk]
+# Step 4: Download the data
+
+    cc = 0
+    url = url_vpu_wide[cc]
+    component_name = componentnames_vpu_wide_main[cc]
+
+
+
+
+
+
+
+
+
 
 
 

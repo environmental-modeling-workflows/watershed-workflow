@@ -2,7 +2,11 @@ from requests_html import HTMLSession
 import fiona
 import os
 import watershed_workflow
+import watershed_workflow.sources.utils as source_utils
 import numpy as np
+import logging
+import shutil
+import py7zr
 
 def get_NHDPlusV2_URLs_from_EPA_url(url, verify=True):
 
@@ -75,6 +79,7 @@ def get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile, enforce_VPUs = []
     return daID_vpu_rpu
 
 def get_URLs_VPU(daID_vpu_rpu):
+
     vpu_info = {"01": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northeast-data-vector-processing-unit-01", "vpu_name": "Northeast"},
     "02": {"url_name": "https://www.epa.gov/waterdata/nhdplus-mid-atlantic-data-vector-processing-unit-02", "vpu_name": "Mid Atlantic"},
     "03N": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-north-data-vector-processing-unit-03n", "vpu_name": "South Atlantic North"},
@@ -103,3 +108,50 @@ def get_URLs_VPU(daID_vpu_rpu):
     "22M": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northern-mariana-islands-data-vector-processing-unit-22m", "vpu_name": "Northern Mariana Islands"}}
 
     return [vpu_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]
+
+
+def download_NHDPlusV2_datasets(component_name, url, data_dir, vpu, force=False):
+    """Find and download data from a given HUC.
+
+    Parameters
+    ----------
+    hucstr : str
+        The USGS Hydrologic Unit Code
+    force : bool, optional
+        If true, re-download even if a file already exists.
+
+    Returns
+    -------
+    filename : str
+        The path to the resulting downloaded dataset.
+    """
+    # check directory structure
+    download_folder = os.path.join(data_dir,'hydrography',('NHDPlus'+str(vpu)),component_name)
+    path_raw = os.path.join(download_folder,'raw')
+    path_unziped = os.path.join(download_folder,'unziped')
+
+    os.makedirs(download_folder, exist_ok=True)
+    os.makedirs(path_raw, exist_ok=True)
+    os.makedirs(path_unziped, exist_ok=True)
+
+    filename = os.path.join(path_raw,url.split("/")[-1])
+    if not os.path.exists(filename) or force:
+
+        logging.info("Attempting to download source for target '%s'" % filename)
+        source_utils.download(url, filename, force)
+
+        # Unzip file
+        with py7zr.SevenZipFile(filename, 'r') as archive:
+            archive.extractall(path=path_unziped)
+
+        # hope we can find it?
+        gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
+        assert (len(gdb_files) == 1)
+
+        if os.path.exists(filename):
+            shutil.rmtree(filename)
+        source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
+
+    if not os.path.exists(filename):
+        raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
+    return filename
