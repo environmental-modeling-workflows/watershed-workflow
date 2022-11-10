@@ -269,15 +269,12 @@ def daymetToATS(dat, smooth=False, smooth_filter=False, nyears=None):
     mean_air_temp_c = (dat['tmin'] + dat['tmax']) / 2.0
     precip_ms = dat['prcp'] / 1.e3 / 86400.  # mm/day --> m/s
 
-    # Sat vap. press o/water Dingman D-7 (Bolton, 1980)
-    sat_vp_Pa = 611.2 * np.exp(17.67 * mean_air_temp_c / (mean_air_temp_c+243.5))
-
     time = np.arange(0, dat[list(dat.keys())[0]].shape[0], 1) * 86400.
 
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl'] / 86400  # Wm2
-    dout['relative humidity [-]'] = np.minimum(1.0, dat['vp'] / sat_vp_Pa)  # -
+    dout['vapor pressure air [Pa]'] = dat['vp'] # Pa
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
     dout['time [s]'] = time
