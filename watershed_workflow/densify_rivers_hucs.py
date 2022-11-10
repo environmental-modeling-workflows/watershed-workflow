@@ -62,14 +62,16 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
     #assert (len(river) == len(river_raw))
 
     river_densified = river.deep_copy()
-    i=0
-    for node in river_densified.preOrder():
+    NHD_ids_raw = []
+    for node in river_raw.preOrder():
+        NHD_ids_raw.append(node.properties['NHDPlusID'])
 
-        while not node.properties['NHDPlusID'] == list(river_raw.preOrder())[i].properties['NHDPlusID']:
-            i = i+1 
-            
-        node_ = list(river_raw.preOrder())[i]
-        i = i+1
+    for node in river_densified.preOrder():
+    
+        node_index_in_raw = NHD_ids_raw.index(node.properties['NHDPlusID'])
+  
+        node_ = list(river_raw.preOrder())[node_index_in_raw]
+       
         node.segment = densify_node_segments(node,
                                              node_,
                                              limit=limit,

@@ -63,7 +63,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=8):
+def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=2):
     """Returns list of elems and river corridor polygons for a given river tree
 
     Parameters:
@@ -130,8 +130,8 @@ def create_river_corridor(river, width):
         mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
        
-    length_scale = max(2.1*delta, min(mins) - 2*delta) # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
-
+    length_scale = max(2.1*delta, min(mins) - 2*delta) -20# is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
+    print('length_scale ', length_scale )
     # check river consistency
     if not river.is_continuous():
         river.make_continuous()
@@ -304,8 +304,12 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
+                    if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 15*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 15*delta)):
+                           print(c, node.segment.coords[len(node.segment.coords)-(i+1)], node.segment.coords[len(node.segment.coords)-(i+2)])
+                           assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 15*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 15*delta))
+
 
         else:
             logging.debug(f'  middle time around! {node.touched+1}')
