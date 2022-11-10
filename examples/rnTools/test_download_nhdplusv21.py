@@ -148,13 +148,24 @@ for kk in range(daID_vpu_rpu):
     daID, vpu, rpu = daID_vpu_rpu[kk]
 # Step 4: Download the data
 
-    cc = 0
+    cc = 1
     url = url_vpu_wide[cc]
     component_name = componentnames_vpu_wide_main[cc]
+    filename = download_NHDPlusV2_datasets(component_name = component_name, url = url, data_dir = data_dir, vpu = vpu)
 
-
-
-
+    filenames = []
+    for cc in range(len(componentnames_vpu_wide_main)):    
+        url = url_vpu_wide[cc]
+        component_name = componentnames_vpu_wide_main[cc]
+        filenames.append(
+            download_NHDPlusV2_datasets(url, data_dir, vpu, force=False)
+        )
+    for cc in range(len(componentnames_rpu_wide_main)):    
+        url = url_rpu_wide[cc]
+        component_name = componentnames_rpu_wide_main[cc]
+        filenames.append(
+            download_NHDPlusV2_datasets(url, data_dir, vpu, force=False)
+        )
 
 
 

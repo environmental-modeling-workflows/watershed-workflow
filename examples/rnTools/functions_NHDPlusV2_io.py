@@ -7,6 +7,7 @@ import numpy as np
 import logging
 import shutil
 import py7zr
+import re
 
 def get_NHDPlusV2_URLs_from_EPA_url(url, verify=True):
 
@@ -110,26 +111,30 @@ def get_URLs_VPU(daID_vpu_rpu):
     return [vpu_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]
 
 
-def download_NHDPlusV2_datasets(component_name, url, data_dir, vpu, force=False):
+def download_NHDPlusV2_datasets(url, data_dir, vpu, force=False):
     """Find and download data from a given HUC.
 
     Parameters
     ----------
-    hucstr : str
-        The USGS Hydrologic Unit Code
+    url : str
+        URL for the dataset
+    data_dir : str 
+        General path where all the datasets are stored
+    vpu : str
+        Vector Processing Unit fot the dataset    
     force : bool, optional
         If true, re-download even if a file already exists.
 
     Returns
     -------
-    filename : str
+    download_folder : str
         The path to the resulting downloaded dataset.
     """
     # check directory structure
-    download_folder = os.path.join(data_dir,'hydrography',('NHDPlus'+str(vpu)),component_name)
+    download_folder = os.path.join(data_dir,'hydrography',('NHDPlus'+str(vpu)))
     path_raw = os.path.join(download_folder,'raw')
     path_unziped = os.path.join(download_folder,'unziped')
-
+    
     os.makedirs(download_folder, exist_ok=True)
     os.makedirs(path_raw, exist_ok=True)
     os.makedirs(path_unziped, exist_ok=True)
@@ -139,19 +144,46 @@ def download_NHDPlusV2_datasets(component_name, url, data_dir, vpu, force=False)
 
         logging.info("Attempting to download source for target '%s'" % filename)
         source_utils.download(url, filename, force)
-
         # Unzip file
-        with py7zr.SevenZipFile(filename, 'r') as archive:
-            archive.extractall(path=path_unziped)
+        with py7zr.SevenZipFile(filename, 'r') as zip:
+            targets = zip.getnames()
+            zip.extract(path=path_unziped, targets=targets)
+        
+        nested_targets = [tt for tt in targets if len(tt.split('/')) >= 3] 
+        path_from = os.path.join(path_unziped,'/'.join(nested_targets[0].split('/')[0:3]))
 
-        # hope we can find it?
-        gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
-        assert (len(gdb_files) == 1)
+        shutil.move(path_from,download_folder)
+        shutil.rmtree(path_unziped)
 
-        if os.path.exists(filename):
-            shutil.rmtree(filename)
-        source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
+        return os.path.join(download_folder, path_from.split('/')[-1])
 
-    if not os.path.exists(filename):
-        raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
-    return filename
+    # download_folder = os.path.join(data_dir,'hydrography',('NHDPlus'+str(vpu)),component_name)
+    # path_raw = os.path.join(download_folder,'raw')
+    # path_unziped = os.path.join(download_folder,'unziped')
+
+    # os.makedirs(download_folder, exist_ok=True)
+    # os.makedirs(path_raw, exist_ok=True)
+    # os.makedirs(path_unziped, exist_ok=True)
+
+    # filename = os.path.join(path_raw,url.split("/")[-1])
+    # if not os.path.exists(filename) or force:
+
+    #     logging.info("Attempting to download source for target '%s'" % filename)
+    #     source_utils.download(url, filename, force)
+
+    #     # Unzip file
+    #     with py7zr.SevenZipFile(filename, 'r') as zip:
+    #         targets = zip.getnames()
+    #         zip.extract(path=path_unziped, targets=targets)
+
+    #     nested_targets = [tt for tt in targets if len(tt.split('/')) >= 3] 
+    #     path_from = os.path.join(path_unziped,'/'.join(nested_targets[0].split('/')[0:3]))
+
+    #     shutil.move(path_from,download_folder)
+
+    #     allfiles = [tt for tt in targets if os.path.isfile(os.path.join(path_unziped,tt))]
+    #     alldirs = [tt for tt in targets if os.path.isdir(os.path.join(path_unziped,tt))]
+
+    #     _ = [shutil.move(os.path.join(path_unziped,ff), os.path.join(download_folder,ff.split('/')[-1])) for ff in allfiles]
+    #     shutil.rmtree(path_unziped)
+#     return download_folder
