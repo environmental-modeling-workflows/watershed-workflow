@@ -56,8 +56,7 @@ class FileManagerDaymet:
 
     VALID_YEARS = (1980, 2021)
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
-    # URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
-    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_{variable}_{year}.nc"
+    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
 
     def __init__(self):
         #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)

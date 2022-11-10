@@ -1,14 +1,14 @@
 # Watershed Workflow
-[![Docs](https://img.shields.io/badge/docs-link-blue?style=for-the-badge)](https://ecoon.github.io/watershed-workflow/build/html/index.html)
-[![Release](https://img.shields.io/github/v/release/ecoon/watershed-workflow?display_name=release&style=for-the-badge)](https://github.com/ecoon/watershed-workflow/releases/tag/watershed-workflow-1.1.0)
+[![Docs](https://img.shields.io/badge/docs-link-blue?style=for-the-badge)](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/index.html)
+[![Release](https://img.shields.io/github/v/release/environmental-modeling-workflows/watershed-workflow?display_name=release&style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/releases/tag/watershed-workflow-1.1.0)
 
-[![Build Status](https://img.shields.io/github/workflow/status/ecoon/watershed-workflow/CI%20to%20Docker%20Hub?label=tests&style=for-the-badge)](https://github.com/ecoon/watershed-workflow/actions)
-[![Issues](https://img.shields.io/github/issues/ecoon/watershed-workflow?style=for-the-badge)](https://github.com/ecoon/watershed-workflow/issues)
-[![Issues](https://img.shields.io/github/issues-pr/ecoon/watershed-workflow?style=for-the-badge)](https://github.com/ecoon/watershed-workflow/pulls)
+[![Build Status](https://img.shields.io/github/workflow/status/environmental-modeling-workflows/watershed-workflow/CI%20to%20Docker%20Hub?label=tests&style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/actions)
+[![Issues](https://img.shields.io/github/issues/environmental-modeling-workflows/watershed-workflow?style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/issues)
+[![Issues](https://img.shields.io/github/issues-pr/environmental-modeling-workflows/watershed-workflow?style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/pulls)
 
-![sample image](https://ecoon.github.io/watershed-workflow/build/html/_images/watershed_workflow.png "Example output of the Coweeta Hydrologic Lab watersheds across scales.")
+![sample image](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/_images/watershed_workflow.png "Example output of the Coweeta Hydrologic Lab watersheds across scales.")
 
-[Please prefer to see our documentation.](https://ecoon.github.io/watershed-workflow/build/html/index.html)
+[Please prefer to see our documentation.](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/index.html)
 
 Watershed Workflow is a python-based, open source chain of tools for generating meshes and other data inputs for hyper-resolution hydrology, anywhere in the (conterminous + Alaska?) US.  
 
@@ -31,12 +31,12 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 ## Installation
 
-[Visit our Installation documentation.](https://ecoon.github.io/watershed-workflow/build/html/install.html)
+[Visit our Installation documentation.](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/install.html)
 
 ## For more...
 
-* [See the documentation](https://ecoon.github.io/watershed-workflow)
-* [See a gallery of data product images (work in progress)](https://ecoon.github.io/watershed-workflow/build/html/gallery.html)
+* [See the documentation](https://environmental-modeling-workflows.github.io/watershed-workflow)
+* [See a gallery of data product images (work in progress)](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/gallery.html)
 
 ## Funding, attribution, etc
 
