@@ -7,7 +7,24 @@ import numpy as np
 import logging
 import shutil
 import py7zr
-import re
+# import re
+
+def get_watershed_boundaries(hucs, sources, crs):
+
+    #  Read the watershed boundary ----------------------------------------
+    my_hucs = []
+    my_hucs_profile = []
+    for huc in hucs:
+        profile_ws, ws = watershed_workflow.get_huc(sources['HUC'], huc, crs)
+        my_hucs.append(ws)
+        my_hucs_profile.append(profile_ws)
+    watershed = watershed_workflow.split_hucs.SplitHUCs(my_hucs) # This is a collection of subwatersheds
+
+    # Get the bounds from the HUC ----------------------------------------
+    bounds = watershed.exterior().bounds # (minx, miny, maxx, maxy)
+    bounds_crs = my_hucs_profile[0]
+
+    return watershed, bounds, bounds_crs
 
 def get_NHDPlusV2_URLs_from_EPA_url(url, verify=True):
 
@@ -28,10 +45,20 @@ def get_NHDPlusV2_component_url(data_links, componentnames):
 def get_url_NHD_dataset(data_links, nhd_name):
     return [match for match in data_links if nhd_name in match]
 
-def get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile, enforce_VPUs = []):
+def get_BoundaryUnit_Info(bounds, bounds_crs, BoundaryUnitFile, enforce_VPUs = []):
     # bounds =  watershed bounds -- Returns a (minx, miny, maxx, maxy) tuple (float values) that bounds the object.
     # bounds_crs = CRS for the watershed bounds 
     # enforce_VPUs = list with the huc names
+
+    '''
+    NHDPlusV2 data is distributed by the major "Drainage Areas" of the United States.
+    Within a Drainage Area, the NHDPlusV2 data components are packaged into compressed 
+    files either by Vector Processing Unit (VPU) or Raster Processing Unit (RPU).
+    In NHDPlusV2, the processing units are referred to as “Vector Processing Unit (VPU)” for
+    vector data and “Raster Processing Unit (RPU)” for raster data. RPUs are used for the raster 
+    components (elevation, flow direction and flow accumulation grids) and the VPUs are used 
+    for all vector feature classes and all tables. 
+    '''
 
     with fiona.open(BoundaryUnitFile) as fid:
         # Get the CRS for the Boundary Units
@@ -111,7 +138,47 @@ def get_URLs_VPU(daID_vpu_rpu):
     return [vpu_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]
 
 
-def download_NHDPlusV2_datasets(url, data_dir, vpu, force=False):
+def download_NHDPlusV2_datasets(data_dir, componentnames_vpu_wide, componentnames_rpu_wide, \
+    bounds, bounds_crs, BoundaryUnitFile, enforce_VPUs = [], force=False):
+
+    # Get the boundary Units that intersect with the watershed
+
+    daID_vpu_rpu = get_BoundaryUnit_Info(bounds, bounds_crs,BoundaryUnitFile, enforce_VPUs=enforce_VPUs)
+    
+    print('Tiles needed: ' )
+    print(daID_vpu_rpu)
+    print('------------------------------')
+    
+    # Get the base URLs
+    URLs = get_URLs_VPU(daID_vpu_rpu)
+
+    # for each URL 
+    for kk in range(len(daID_vpu_rpu)):
+
+        data_links = get_NHDPlusV2_URLs_from_EPA_url(URLs[kk], verify=False)
+        url_vpu_wide = get_NHDPlusV2_component_url(data_links, componentnames_vpu_wide)
+        url_rpu_wide = get_NHDPlusV2_component_url(data_links, componentnames_rpu_wide)
+        daID, vpu, rpu = daID_vpu_rpu[kk]
+        
+        # Download the data
+
+        filenames = []
+        for cc in range(len(componentnames_vpu_wide)):    
+            url = url_vpu_wide[cc]
+            filenames.append(
+                download_NHDPlusV2_datasets_component(url, data_dir, vpu, force=force)
+            )
+        for cc in range(len(componentnames_rpu_wide)):    
+            url = url_rpu_wide[cc]
+            filenames.append(
+                download_NHDPlusV2_datasets_component(url, data_dir, vpu, force=force)
+            )
+    return daID_vpu_rpu, filenames 
+
+
+
+def download_NHDPlusV2_datasets_component(url, data_dir, vpu, force=False):
+
     """Find and download data from a given HUC.
 
     Parameters
