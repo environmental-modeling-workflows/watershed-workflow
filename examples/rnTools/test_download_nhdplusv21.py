@@ -92,12 +92,12 @@ watershed_workflow.source_list.log_sources(sources)
 
 watershed, bounds, bounds_crs = get_watershed_boundaries(hucs, sources, crs)
 
-fig_size_x = 10
-fig_size_y = fig_size_x*((bounds[3]-bounds[1])/(bounds[2]-bounds[0])) 
-fig, axs = plt.subplots(1, 1, figsize=[fig_size_x, fig_size_y])
-watershed_workflow.plot.hucs(watershed, crs, 'k', axs)
-watershed_workflow.plot.shply(watershed.exterior(), crs, 'r', axs)
-plt.show()
+# fig_size_x = 10
+# fig_size_y = fig_size_x*((bounds[3]-bounds[1])/(bounds[2]-bounds[0])) 
+# fig, axs = plt.subplots(1, 1, figsize=[fig_size_x, fig_size_y])
+# watershed_workflow.plot.hucs(watershed, crs, 'k', axs)
+# watershed_workflow.plot.shply(watershed.exterior(), crs, 'r', axs)
+# plt.show()
 
 # Step 2: Download data  ----------------------------------------
 data_dir = '/Users/8n8/Downloads/testDownloadNHDPlusV2/dowloaded_datasets'
@@ -110,6 +110,193 @@ daID_vpu_rpu, filenames = download_NHDPlusV2_datasets(
                         BoundaryUnitFile = BoundaryUnitFile, 
                         enforce_VPUs = hucs, 
                         force=False)
+
+# Load the information into a WW tree
+
+_nhdplus_vaa = dict({
+    'StreamOrder': 'StreamOrde',
+    'StreamLevel': 'StreamLeve',
+    'HydrologicSequence': 'Hydroseq',
+    'DownstreamMainPathHydroSeq': 'DnHydroseq',
+    'UpstreamMainPathHydroSeq': 'UpHydroseq',
+    'DivergenceCode': 'Divergence',
+    'CatchmentAreaSqKm': 'AreaSqKM',
+    'TotalDrainageAreaSqKm': 'TotDASqKM',
+    'FromNode': 'FromNode',
+    'ToNode': 'ToNode'
+})
+
+_nhdplus_elevslope = dict({
+    'MinimumElevationSmoothed': 'MINELEVSMO',
+    'MaximumElevationSmoothed': 'MAXELEVSMO',
+    'MinimumElevationRaw': 'MINELEVRAW',
+    'MaximumElevationRaw': 'MAXELEVRAW',
+    'Slope': 'SLOPE',
+})
+
+
+_nhdplus_eromma = dict({
+    'MeanAnnualFlow': 'Q0001E',
+    'MeanAnnualVelocity': 'V0001E',
+    'MeanAnnualIncrementalFlow': 'Qincr0001E',
+    'MeanAnnualFlowGaugeAdj': 'Q0001E'
+})
+
+# in_network : bool, optional
+#     If True (default), remove reaches that are not "in" the NHD network
+
+in_network = True
+properties = list(_nhdplus_vaa.keys()) + list(_nhdplus_elevslope.keys()) + list(_nhdplus_eromma.keys())
+include_catchments=False
+
+# Step 1: find and open the hydrography layer
+
+path_nhdsnapshot = [pp for pp in filenames if "NHDSnapshot" in pp][0]
+layer = 'NHDFlowline'
+filename = os.path.join(path_nhdsnapshot,'Hydrography',layer+'.shp')
+
+logging.info(
+    f"Opening '{filename}' for streams in '{bounds}'")
+with fiona.open(filename, mode='r') as fid:
+    profile = fid.profile
+    bounds = watershed_workflow.warp.bounds(
+        bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
+    reaches = [r for (i, r) in fid.items(bbox=bounds)]
+    logging.info(f"Found total of {len(reaches)} in bounds.")
+
+# Step 2: filter not in network --> Unlike NHD Plus HR, we use 'FLOWDIR' to identify these features
+if in_network:
+    logging.info("  Filtering reaches not in-network")
+    reaches = [
+        r for r in reaches
+        if ('FLOWDIR' in r['properties']) and not ('Uninitialized' in r['properties']['FLOWDIR'])
+    ]
+
+
+
+'''
+For NHDPlus HR: InNetwork = “Yes” means that the reach is part of the networked NHD flowlines. In NHDPlus HR, some networked flowlines were intentionally removed from the set of features used for catchment generation. Examples included pipelines, elevated canals, headwater flowlines that conflicted with the WBD, and some other limited data conditions. 
+
+For NHD Plus V2: there is not attribute InNetwork. We can use the FlowDir feature. In general, all the InNetwork = 0 would also have 
+FlowDir = 0
+
+NHDFlowline Features with "Known Flow" vs. Features with “Unknown
+Flow”
+There are approximately three million NHDFlowline features in NHDPlusV2. Most, but not all of these features have a known flow direction. Flow direction information is contained in the attribute “FlowDir” in the NHDFlowline feature class attribute table. FlowDir can have the values “With Digitized” (known flow direction) or “Uninitialized” (unknown flow direction). The features having unknown flow direction are primarily: isolated stream segments, canal/ditches, and some channels inside braided networks. The features with known flow direction are the subset of the NHDFlowline feature class which makeup the NHDPlusV2 surface water network. The “Plus” part of NHDPlusV2 is constructed for the flowlines with known flow direction. Catchments and associated catchment area attributes are only populated in NHDPlusV2 features with known flow direction. When using NHDPlusV2, it is useful to symbolize the NHDFlowline feature class using the FlowDir attribute. This helps eliminate displaying of features considered to be in the NHDPlusV2 surface water network. In Figure 12:, the dark blue lines indicate NHDFlowline features with known flow direction and, consequently, are included in the “plus” part of NHDPlusV2. The cyan lines are NHDFlowline features with unknown flow direction and, consequently, are not part of the “Plus” portion of NHDPlusV2.
+'''
+
+# Step 3: associate catchment areas with the reaches if NHDPlus
+if properties != None:
+    reach_dict = dict((r['properties']['ComID'], r) for r in reaches) # The ComID is the key for this dictionary
+
+    # validation of properties
+    valid_props = list(_nhdplus_vaa.keys()) + list(
+        _nhdplus_eromma.keys()) + ['catchment', ]
+
+    if include_catchments:
+        path_nhdcatchment = [pp for pp in filenames if "NHDPlusCatchment" in pp][0]
+        layer = 'Catchment'
+        filename = os.path.join(path_nhdcatchment,layer+'.shp')
+
+        f"Opening '{filename}' for catchments in '{bounds}'")
+        for r in reaches:
+            r['properties']['catchment'] = None
+        
+        with fiona.open(filename, mode='r') as fid:
+            for catchment in fid.values():
+                reach = reach_dict.get(catchment['properties']['FEATUREID'])
+                if reach is not None:
+                    reach['properties']['catchment'] = catchment
+
+        # VAA 
+
+        if len(set(_nhdplus_vaa.keys()).intersection(set(properties))) > 0:
+            
+            path_nhdattributes = [pp for pp in filenames if "NHDPlusAttributes" in pp][0]
+            layer = 'PlusFlowlineVAA'
+            filename = os.path.join(path_nhdattributes,layer+'.dbf')
+
+            logging.info(
+                f"Opening '{filename}' for river network properties in '{bounds}'"
+            )
+            with fiona.open(filename, mode='r') as fid:
+                for flowline in fid.values():
+                    reach = reach_dict.get(flowline['properties']['ComID'])
+                    if reach is not None:
+                        for prop in properties:
+                            if prop in list(_nhdplus_vaa.keys()):
+                                prop_code = _nhdplus_vaa[prop]
+                                reach['properties'][prop] = flowline['properties'][prop_code]
+
+        # Elevslope 
+
+        if len(set(_nhdplus_elevslope.keys()).intersection(set(properties))) > 0:
+            
+            path_nhdattributes = [pp for pp in filenames if "NHDPlusAttributes" in pp][0]
+            layer = 'elevslope'
+            filename = os.path.join(path_nhdattributes,layer+'.dbf')
+
+            logging.info(
+                f"Opening '{filename}' for river network properties in '{bounds}'"
+            )
+            with fiona.open(filename, mode='r') as fid:
+                for flowline in fid.values():
+                    reach = reach_dict.get(flowline['properties']['COMID'])
+                    if reach is not None:
+                        for prop in properties:
+                            if prop in list(_nhdplus_elevslope.keys()):
+                                prop_code = _nhdplus_elevslope[prop]
+                                reach['properties'][prop] = flowline['properties'][prop_code]
+
+        # EROM 
+
+        if len(set(_nhdplus_eromma.keys()).intersection(set(properties))) > 0:
+            
+            path_nhderom = [pp for pp in filenames if "EROMExtension" in pp][0]
+            name_files = os.listdir(path_nhderom)
+
+            layer = [pp for pp in name_files if "EROM_MA" in pp][0].split('.DBF')[0]
+            filename = os.path.join(path_nhderom,layer+'.DBF')
+
+            logging.info(
+                f"Opening '{filename}' for river network properties in '{bounds}'"
+            )
+            with fiona.open(filename, mode='r') as fid:
+                for flowline in fid.values():
+                    reach = reach_dict.get(flowline['properties']['ComID'])
+                    if reach is not None:
+                        for prop in properties:
+                            if prop in list(_nhdplus_eromma.keys()):
+                                prop_code = _nhdplus_eromma[prop]
+                                reach['properties'][prop] = flowline['properties'][prop_code]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # url_vpu_wide = get_NHDPlusV2_component_url("https://www.epa.gov/waterdata/nhdplus-upper-colorado-data-vector-processing-unit-14", componentnames_vpu_wide_all)
 

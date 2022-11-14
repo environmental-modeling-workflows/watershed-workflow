@@ -207,7 +207,7 @@ def download_NHDPlusV2_datasets_component(url, data_dir, vpu, force=False):
     os.makedirs(path_unziped, exist_ok=True)
 
     filename = os.path.join(path_raw,url.split("/")[-1])
-    if not os.path.exists(filename) or force:
+    if (not os.path.exists(filename)) or force:
 
         logging.info("Attempting to download source for target '%s'" % filename)
         source_utils.download(url, filename, force)
@@ -222,7 +222,18 @@ def download_NHDPlusV2_datasets_component(url, data_dir, vpu, force=False):
         shutil.move(path_from,download_folder)
         shutil.rmtree(path_unziped)
 
-        return os.path.join(download_folder, path_from.split('/')[-1])
+    else:
+        shutil.rmtree(path_unziped)
+        logging.info("Source for target '%s' already exist" % filename)
+        with py7zr.SevenZipFile(filename, 'r') as zip:
+            targets = zip.getnames()
+        
+        nested_targets = [tt for tt in targets if len(tt.split('/')) >= 3] 
+        path_from = os.path.join(path_unziped,'/'.join(nested_targets[0].split('/')[0:3]))
+
+    return os.path.join(download_folder, path_from.split('/')[-1])    
+
+    
 
     # download_folder = os.path.join(data_dir,'hydrography',('NHDPlus'+str(vpu)),component_name)
     # path_raw = os.path.join(download_folder,'raw')
