@@ -20,8 +20,8 @@ class _FileManagerNHD:
     Note that this includes NHD, NHDPlus, and WBD -- this class should not
     be used directly but instead use one of the derived classes:
 
-    * `manager_nhd.FileManagerNHD`
-    * `manager_nhd.FileManagerNHDPlus`
+    * `manager_nhd.FileManagerNHD` (Hi Res)
+    * `manager_nhd.FileManagerNHDPlus` (Hi Res)
     * `manager_nhd.FileManagerWBD`
 
     Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
@@ -44,7 +44,6 @@ class _FileManagerNHD:
     file_level = attr.ib(type=int)
     lowest_level = attr.ib(type=int)
     name_manager = attr.ib()
-    #name_manager_shp = attr.ib()
 
     _nhdplus_vaa = dict({
         'StreamOrder': 'StreamOrde',

@@ -12,6 +12,11 @@ import urllib.request
 import watershed_workflow.utils
 import watershed_workflow.config
 
+# register 7z zip/unzip
+from py7zr import pack_7zarchive, unpack_7zarchive
+shutil.register_archive_format('7zip', pack_7zarchive, description='7zip archive')
+shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
+
 
 def get_code(fiona_or_shply_obj, level):
     """Gets the huc string from a HUC shape."""
@@ -110,45 +115,8 @@ def unzip(filename, to_location, format=None):
     logging.info(f'Unzipping: "{filename}"')
     logging.info(f'       to: "{to_location}"')
 
-    if format is None:
-        if filename.endswith('.zip'):
-            format = 'zip'
-        elif filename.endswith('.gz'):
-            format = 'zip'
-        elif filename.endswith('.7z'):
-            format = '7z'
-        elif filename.endswith('.bz2'):
-            format = 'bz2'
-        else:
-            raise RuntimeError(f'Cannot detect the zip format of file: {filename}')
-    logging.info(f'   as fmt: "{format}"')
-
-    if format == 'zip':
-        import zipfile
-        try:
-            with zipfile.ZipFile(filename, 'r') as zip_ref:
-                zip_ref.extractall(to_location)
-        except zipfile.BadZipFile as err:
-            logging.error('Failed to unzip: "{}"'.format(filename))
-            logging.error(
-                'Likely this is the result of a previous job failing, partial download, internet connection issues, or other failed download.  Try removing the file, which will result in it being re-downloaded.'
-            )
-            raise err
-    elif format == '7z':
-        import libarchive
-        cwd = os.getcwd()
-        try:
-            os.chdir(to_location)
-            libarchive.extract_file(filename)
-        except Exception as err:
-            os.chdir(cwd)
-            raise err
-        else:
-            os.chdir(cwd)
-
-    else:
-        raise NotImplementedError('Unzipping file of format {format} is not yet implemented.')
-
+    import shutil
+    shutil.unpack_archive(filename, to_location, format)
     return to_location
 
 

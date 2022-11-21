@@ -5,67 +5,143 @@ import shapely
 import attr
 import requests
 import shutil
+import numpy as np
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
 import watershed_workflow.sources.names
-import watershed_workflow.utils
 import watershed_workflow.warp
+import watershed_workflow.utils
 
 
-@attr.s
-class _FileManagerNHDPlusV21:
-    """Manager for interacting with USGS National Hydrography Datasets.
+class FileManagerNHDPlusV21:
+    """Manager for interacting with USGS National Hydrography v2.1, from EPA.
 
-    Note that this includes NHD, NHDPlus, and WBD -- this class should not
-    be used directly but instead use one of the derived classes:
+    This works using the EPA's website...
 
-    * `manager_nhd.FileManagerNHD`
-    * `manager_nhd.FileManagerNHDPlus`
-    * `manager_nhd.FileManagerWBD`
-
-    Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
-    National Hydrography Dataset (NHD), USGS and EPA datasets available at
-    multiple resolutions to represent United States watersheds, including
-    Alaska [NHD]_.  Also used is the NHD Plus dataset, an augmented dataset
-    built on watershed boundaries and elevation products.  By default, the
-    1:100,000 High Resolution datasets are used.  Data is discovered through
-    The National Map's [TNM]_ REST API, which allows querying for data files
-    organized by HUC and resolution via HTTP POST requests, providing
-    direct-download URLs.  Files are downloaded on first request, unzipped, and
-    stored in the data library for future use.  Currently, files are indexed by
-    2-digit (WBD), 4-digit (NHD Plus HR) and 8-digit (NHD) HUCs.
-
-    .. [NHD] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
-    .. [TNM] https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf
+    .. [EPA] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
 
     """
-    name = attr.ib(type=str)
-    file_level = attr.ib(type=int)
-    lowest_level = attr.ib(type=int)
-    name_manager = attr.ib()
-    #name_manager_shp = attr.ib()
+    def __init__(self):
+        self.name = 'NHD Plus Medium Res v2.1 (EPA)'
+        self.name_manager = watershed_workflow.sources.names.Names(self.name, 'hydrography',
+                                                                   'NHDPlusV21_{}_{}', 'NHDPlusV21_{}_{}_{}_{}_{}')
+        self.boundary_unit_file = self._get_v21_boundary_unit_file()
+        self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
+
+    # variables needed from attribute files
+    _componentnames_vpu_wide_all = ["EROMExtension", "NHDPlusAttributes",
+                                   "NHDPlusBurnComponents", "NHDPlusCatchment",
+                                   "NHDSnapshotFGDB", "NHDSnapshot",
+                                   "VPUAttributeExtension", "VogelExtension",
+                                   "WBDSnapshot"]
+
+    _componentnames_rpu_wide_all = ["CatSeed", "FdrFac", "FdrNull",
+                                   "FilledAreas", "HydroDem", "NEDSnapshot"]
+
+    _componentnames_vpu_wide_main = ["EROMExtension", "NHDPlusCatchment",
+                                    "NHDPlusAttributes", "NHDSnapshot",
+                                    "VPUAttributeExtension", "WBDSnapshot"]
+
+    _componentnames_rpu_wide_main = ["NEDSnapshot"]
 
     _nhdplus_vaa = dict({
         'StreamOrder': 'StreamOrde',
         'StreamLevel': 'StreamLeve',
-        'HydrologicSequence': 'HydroSeq',
-        'DownstreamMainPathHydroSeq': 'DnHydroSeq',
-        'UpstreamMainPathHydroSeq': 'UpHydroSeq',
+        'HydrologicSequence': 'Hydroseq',
+        'DownstreamMainPathHydroSeq': 'DnHydroseq',
+        'UpstreamMainPathHydroSeq': 'UpHydroseq',
         'DivergenceCode': 'Divergence',
-        'MinimumElevationSmoothed': 'MinElevSmo',
-        'MaximumElevationSmoothed': 'MaxElevSmo',
-        'MinimumElevationRaw': 'MinElevRaw',
-        'MaximumElevationRaw': 'MaxElevRaw',
-        'CatchmentAreaSqKm': 'AreaSqKm',
-        'TotalDrainageAreaSqKm': 'TotDASqKm'
-    })
-    _nhdplus_eromma = dict({
-        'MeanAnnualFlow': 'QAMA',
-        'MeanAnnualVelocity': 'VAMA',
-        'MeanAnnualFlowGaugeAdj': 'QEMA'
+        'CatchmentAreaSqKm': 'AreaSqKM',
+        'TotalDrainageAreaSqKm': 'TotDASqKM',
+        'FromNode': 'FromNode',
+        'ToNode': 'ToNode'
     })
 
+    _nhdplus_elevslope = dict({
+        'MinimumElevationSmoothed': 'MINELEVSMO',
+        'MaximumElevationSmoothed': 'MAXELEVSMO',
+        'MinimumElevationRaw': 'MINELEVRAW',
+        'MaximumElevationRaw': 'MAXELEVRAW',
+        'Slope': 'SLOPE',
+    })
+
+    _nhdplus_eromma = dict({
+        'MeanAnnualFlow': 'Q0001E',
+        'MeanAnnualVelocity': 'V0001E',
+        'MeanAnnualIncrementalFlow': 'Qincr0001E',
+        'MeanAnnualFlowGaugeAdj': 'Q0001E'
+    })
+
+
+    def _get_v21_boundary_unit_file(self):
+        """This just downloads the NHD v2.1 Boundary Unit file, which contains
+        VPUs, RPUs, and Drainage Area IDs."""
+        loc = os.path.join(self.name_manager.data_dir(), 'NHDPlusV21_BoundaryUnit')
+        final_loc = os.path.join(loc, 'NHDPlusGlobalData', 'BoundaryUnit.shp')
+
+        if not os.path.isfile(final_loc):
+            # download and unzip
+            url = 'https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/GlobalData/NHDPlusV21_NHDPlusGlobalData_03.7z'
+            source_utils.download(url, loc+'.7z', force=False)
+            source_utils.unzip(loc+'.7z', loc)
+            assert(os.path.isfile(final_loc))
+        return final_loc
+
+
+    def _get_v21_boundary_units(self, huc):
+        """Given a list of HUCs, figure out which VPU and HRU and DAID we are in."""
+        wbd_profile, wbd_huc = self.wbd.get_huc(huc)
+        huc_bounds = watershed_workflow.utils.bounds(wbd_huc)
+
+        with fiona.open(self.boundary_unit_file, 'r') as fid:
+            # Get the CRS for the Boundary Units
+            BoundaryUnits_crs = watershed_workflow.crs.from_fiona(fid.profile['crs'])
+
+            # Project the watershed boundary to the CRS for the Boundary Units
+            bounds = watershed_workflow.warp.bounds(
+                huc_bounds, wbd_profile['crs'], BoundaryUnits_crs)
+
+            # Get the boundary Units that intersect with the watershed
+            BUs = [r for (i, r) in fid.items(bbox=bounds)]
+
+        # Consolidate information from the selected Boundary Units
+        UnitType = []
+        UnitID = []
+        DrainageID = []
+        for pp in BUs:
+            UnitType.append(pp['properties']['UnitType'])
+            UnitID.append(pp['properties']['UnitID'])
+            DrainageID.append(pp['properties']['DrainageID'])
+
+        UnitType = np.array(UnitType)
+        UnitID = np.array(UnitID)
+        DrainageID = np.array(DrainageID)
+
+        # Find tuples of Drainage Areas, VPUs, and RPUs
+        daID_vpu_rpu = []  # list of lists with the Drainage Areas, VPUs, and RPUs
+        daID_unique = np.unique(DrainageID)
+
+        for dd in daID_unique:
+            vpu_unique = np.unique(
+                UnitID[np.argwhere((UnitType == 'VPU') & (DrainageID == dd))])
+
+            for vv in vpu_unique:
+                daID_vpu_rpu += [[dd, vv, UnitID[ii]] for ii in range(len(UnitType))
+                                if (('RPU' in UnitType[ii]) & (vv[0:2] in UnitID[ii]))]
+
+        if enforce_VPUs:
+            print("--------- Enforcing VPUs ---------")
+            enforce_VPUs = np.unique([tt[0:2] for tt in enforce_VPUs])
+            toKeep = np.zeros((1,len(daID_vpu_rpu)), dtype=bool)
+            for vpu in enforce_VPUs:
+                print(vpu)
+                toKeep += [vpu in vv[1] for vv in daID_vpu_rpu]
+            daID_vpu_rpu = [i for (i, v) in zip(daID_vpu_rpu, toKeep[0]) if v]
+
+        return daID_vpu_rpu
+
+    
     def get_huc(self, huc, force_download=False):
         """Get the specified HUC in its native CRS.
 
@@ -113,32 +189,36 @@ class _FileManagerNHDPlusV21:
         huc = source_utils.huc_str(huc)
         huc_level = len(huc)
 
-        # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
-        if self.lowest_level < level:
-            raise ValueError("{}: files include HUs at max level {}.".format(
-                self.name, self.lowest_level))
-        if level < huc_level:
-            raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(
-                self.name, level, huc_level))
-        if huc_level < self.file_level:
-            raise ValueError(
-                "{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level."
-                .format(self.name, self.file_level))
+        # get the vpu and hru info
+        daID_vpu_rpu = self._get_v21_boundary_units(huc)
+        return daID_vpu_rpu
 
-        # download the file
-        filename = self._download(huc[0:self.file_level], force=force_download)
-        logging.info('Using HUC file "{}"'.format(filename))
+        # # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
+        # if self.lowest_level < level:
+        #     raise ValueError("{}: files include HUs at max level {}.".format(
+        #         self.name, self.lowest_level))
+        # if level < huc_level:
+        #     raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(
+        #         self.name, level, huc_level))
+        # if huc_level < self.file_level:
+        #     raise ValueError(
+        #         "{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level."
+        #         .format(self.name, self.file_level))
 
-        # read the file
-        layer = 'WBDHU{}'.format(level)
-        logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(
-            self.name, filename, layer, huc))
+        # # download the file
+        # filename = self._download(huc[0:self.file_level], force=force_download)
+        # logging.info('Using HUC file "{}"'.format(filename))
 
-        with fiona.open(filename, mode='r', layer=layer) as fid:
-            hus = [hu for hu in fid if source_utils.get_code(hu, level).startswith(huc)]
-            profile = fid.profile
-        profile['always_xy'] = True
-        return profile, hus
+        # # read the file
+        # layer = 'WBDHU{}'.format(level)
+        # logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(
+        #     self.name, filename, layer, huc))
+
+        # with fiona.open(filename, mode='r', layer=layer) as fid:
+        #     hus = [hu for hu in fid if source_utils.get_code(hu, level).startswith(huc)]
+        #     profile = fid.profile
+        # profile['always_xy'] = True
+        # return profile, hus
 
     def get_hydro(self,
                   huc,
@@ -530,28 +610,3 @@ class _FileManagerNHDPlusV21:
             raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
         return filename
 
-
-class FileManagerNHDPlus(_FileManagerNHDPlusV21):
-    def __init__(self):
-        name = 'National Hydrography Dataset Plus High Resolution (NHDPlus HR)'
-        super().__init__(
-            name, 4, 12,
-            watershed_workflow.sources.names.Names(name, 'hydrography', 'NHDPlus_H_{}_GDB',
-                                                   'NHDPlus_H_{}.gdb'))
-
-
-class FileManagerNHD(_FileManagerNHDPlusV21):
-    def __init__(self):
-        name = 'National Hydrography Dataset (NHD)'
-        super().__init__(
-            name, 8, 12,
-            watershed_workflow.sources.names.Names(name, 'hydrography', 'NHD_H_{}_GDB',
-                                                   'NHD_H_{}.gdb'))
-
-
-class FileManagerWBD(_FileManagerNHDPlusV21):
-    def __init__(self):
-        name = 'National Watershed Boundary Dataset (WBD)'
-        super().__init__(
-            name, 2, 12,
-            watershed_workflow.sources.names.Names(name, 'hydrography', 'WBD_{}_GDB', 'WBD_{}.gdb'))
