@@ -6,6 +6,7 @@ import attr
 import requests
 import shutil
 import numpy as np
+from requests_html import HTMLSession
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
@@ -23,11 +24,31 @@ class FileManagerNHDPlusV21:
 
     """
     def __init__(self):
+        """The name manager will use the following nomenclature:
+
+        1) For 'folder_template'
+            NHDPlusV21_<dd>_<VPUid>_componentname_<vv>
+        2) For 'file_template'
+            NHDPlusV21_<dd>_<VPUid>_<RPUid>_<componentname>_<vv>
+        
+        where 
+            dd = the drainage area identifier
+
+            VPUid = the VPU identifier
+            
+            RPUid = the RPU identifier
+            
+            componentname = the name of the NHDPlusV2 component contained in the file
+            
+            vv = the data content version, 01, 02, ... for the component
+        """
         self.name = 'NHD Plus Medium Res v2.1 (EPA)'
         self.name_manager = watershed_workflow.sources.names.Names(self.name, 'hydrography',
-                                                                   'NHDPlusV21_{}_{}', 'NHDPlusV21_{}_{}_{}_{}_{}')
+                                                                   'NHDPlusV21_{}_{}', 'NHDPlusV21_{}_{}_{}_{}_{}')        
         self.boundary_unit_file = self._get_v21_boundary_unit_file()
         self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
+        self._componentnames_vpu_wide = self._componentnames_vpu_wide_main
+        self._componentnames_rpu_wide = self._componentnames_rpu_wide_main
 
     # variables needed from attribute files
     _componentnames_vpu_wide_all = ["EROMExtension", "NHDPlusAttributes",
@@ -73,7 +94,35 @@ class FileManagerNHDPlusV21:
         'MeanAnnualFlowGaugeAdj': 'Q0001E'
     })
 
-
+    _vpu_name_url_info = dict({
+        "01": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northeast-data-vector-processing-unit-01", "vpu_name": "Northeast"},
+        "02": {"url_name": "https://www.epa.gov/waterdata/nhdplus-mid-atlantic-data-vector-processing-unit-02", "vpu_name": "Mid Atlantic"},
+        "03N": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-north-data-vector-processing-unit-03n", "vpu_name": "South Atlantic North"},
+        "03S": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-south-data-vector-processing-unit-03s", "vpu_name": "South Atlantic South"},
+        "03W": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-west-data-vector-processing-unit-03w", "vpu_name": "South Atlantic West"},
+        "04": {"url_name": "https://www.epa.gov/waterdata/nhdplus-great-lakes-data-vector-processing-unit-04", "vpu_name": "Great Lakes"},
+        "05": {"url_name": "https://www.epa.gov/waterdata/nhdplus-ohio-data-vector-processing-unit-05", "vpu_name": "Ohio"},
+        "06": {"url_name": "https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06", "vpu_name": "Tennessee"},
+        "07": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-mississippi-data-vector-processing-unit-07", "vpu_name": "Upper Mississippi"},
+        "08": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-mississippi-data-vector-processing-unit-08", "vpu_name": "Lower Mississippi"},
+        "09": {"url_name": "https://www.epa.gov/waterdata/nhdplus-souris-red-rainy-data-vector-processing-unit-09", "vpu_name": "Souris-Red-Rainy"},
+        "10U": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-missouri-data-vector-processing-unit-10u", "vpu_name": "Upper Missouri"},
+        "10L": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-missouri-data-vector-processing-unit-10l", "vpu_name": "Lower Missouri"},
+        "11": {"url_name": "https://www.epa.gov/waterdata/nhdplus-ark-red-white-data-vector-processing-unit-11", "vpu_name": "Ark-Red-White"},
+        "12": {"url_name": "https://www.epa.gov/waterdata/nhdplus-texas-data-vector-processing-unit-12", "vpu_name": "Texas"},
+        "13": {"url_name": "https://www.epa.gov/waterdata/nhdplus-rio-grande-data-vector-processing-unit-13", "vpu_name": "Rio Grande"},
+        "14": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-colorado-data-vector-processing-unit-14", "vpu_name": "Upper Colorado"},
+        "15": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-colorado-data-vector-processing-unit-15", "vpu_name": "Lower Colorado"},
+        "16": {"url_name": "https://www.epa.gov/waterdata/nhdplus-great-basin-data-vector-processing-unit-16", "vpu_name": "Great Basin"},
+        "17": {"url_name": "https://www.epa.gov/waterdata/nhdplus-pacific-northwest-data-vector-processing-unit-17", "vpu_name": "Pacific Northwest"},
+        "18": {"url_name": "https://www.epa.gov/waterdata/nhdplus-california-data-vector-processing-unit-18", "vpu_name": "California"},
+        "20": {"url_name": "https://www.epa.gov/waterdata/nhdplus-hawaii-data-vector-processing-unit-20", "vpu_name": "Hawaii"},
+        "21": {"url_name": "https://www.epa.gov/waterdata/nhdplus-puerto-rico-us-virgin-islands-data-vector-processing-unit-21", "vpu_name": "Puerto Rico/U.S. Virgin Islands"},
+        "22A": {"url_name": "https://www.epa.gov/waterdata/nhdplus-american-samoa-data-vector-processing-unit-22a", "vpu_name": "American Samoa"},
+        "22G": {"url_name": "https://www.epa.gov/waterdata/nhdplus-guam-data-vector-processing-unit-22g", "vpu_name": "Guam"},
+        "22M": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northern-mariana-islands-data-vector-processing-unit-22m", "vpu_name": "Northern Mariana Islands"}
+    })
+    
     def _get_v21_boundary_unit_file(self):
         """This just downloads the NHD v2.1 Boundary Unit file, which contains
         VPUs, RPUs, and Drainage Area IDs."""
@@ -89,7 +138,7 @@ class FileManagerNHDPlusV21:
         return final_loc
 
 
-    def _get_v21_boundary_units(self, huc):
+    def _get_v21_boundary_units(self, huc, enforce_VPUs = True):
         """Given a list of HUCs, figure out which VPU and HRU and DAID we are in."""
         wbd_profile, wbd_huc = self.wbd.get_huc(huc)
         huc_bounds = watershed_workflow.utils.bounds(wbd_huc)
@@ -132,7 +181,11 @@ class FileManagerNHDPlusV21:
 
         if enforce_VPUs:
             print("--------- Enforcing VPUs ---------")
-            enforce_VPUs = np.unique([tt[0:2] for tt in enforce_VPUs])
+            if isinstance(huc, str):
+                enforce_VPUs = np.array([huc[0:2]])
+            else: 
+                enforce_VPUs = np.unique([tt[0:2] for tt in huc])
+
             toKeep = np.zeros((1,len(daID_vpu_rpu)), dtype=bool)
             for vpu in enforce_VPUs:
                 print(vpu)
@@ -141,14 +194,47 @@ class FileManagerNHDPlusV21:
 
         return daID_vpu_rpu
 
-    
-    def get_huc(self, huc, force_download=False):
+    def _get_v21_urls(self, daID_vpu_rpu):
+        # Get the base URLs
+        base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]        
+        for idx, b_url in enumerate(base_URLs):
+            data_links = self._get_v21_data_url_from_base_url(b_url, verify=False)
+            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_vpu_wide]
+            url_rpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_rpu_wide]
+            daID, vpu, rpu = daID_vpu_rpu[idx]
+            vv_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_vpu_wide]
+            cc_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_vpu_wide]
+            vv_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_rpu_wide]
+            cc_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_rpu_wide]
+            # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
+            # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
+            # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
+    def _get_v21_data_url_from_base_url(self, url, verify=True):
+
+        with HTMLSession() as session:
+            response = session.get(url, verify=verify)
+            response.raise_for_status()
+            status_code = response.status_code  # A status code of 200 means it was accepted
+            print("Status code:" + str(status_code))
+            html = response.html
+            html.render()
+            all_links = html.absolute_links
+        return [ll for ll in list(all_links) if ".7z" in ll]
+
+    def _get_v21_url_NHD_dataset(self, data_links, nhd_name):
+        return [match for match in data_links if nhd_name in match]
+
+    def get_huc(self, huc, force_download=False, enforce_VPUs = True):
         """Get the specified HUC in its native CRS.
 
         Parameters
         ----------
         huc : int or str
           The USGS Hydrologic Unit Code
+        enforce_VPUs : bool
+            Enforces the download to the VPU that mathces the level 2 hydrologic unit from huc 
+            (i.e., first two digits of huc) and not all the VPUs intersecting the rectangle that
+            encloses the huc polygon 
 
         Returns
         -------
@@ -160,11 +246,12 @@ class FileManagerNHDPlusV21:
         Note this finds and downloads files as needed.
         """
         huc = source_utils.huc_str(huc)
-        profile, hus = self.get_hucs(huc, len(huc), force_download)
-        assert (len(hus) == 1)
-        return profile, hus[0]
+        profile, hus = self.get_hucs(huc, len(huc), force_download, enforce_VPUs)
+        # assert (len(hus) == 1)
+        # return profile, hus[0]
+        return profile, hus
 
-    def get_hucs(self, huc, level, force_download=False):
+    def get_hucs(self, huc, level, force_download=False, enforce_VPUs = True):
         """Get all sub-catchments of a given HUC level within a given HUC.
 
         Parameters
@@ -189,9 +276,11 @@ class FileManagerNHDPlusV21:
         huc = source_utils.huc_str(huc)
         huc_level = len(huc)
 
-        # get the vpu and hru info
-        daID_vpu_rpu = self._get_v21_boundary_units(huc)
-        return daID_vpu_rpu
+        # get drainage area ID, vpu, and rpu info
+        daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+
+
+        return None, daID_vpu_rpu
 
         # # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
         # if self.lowest_level < level:
