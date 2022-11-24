@@ -126,6 +126,8 @@ class FileManagerNHDPlusV21:
     def _get_v21_boundary_unit_file(self):
         """This just downloads the NHD v2.1 Boundary Unit file, which contains
         VPUs, RPUs, and Drainage Area IDs."""
+        # check directory structure
+        os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         loc = os.path.join(self.name_manager.data_dir(), 'NHDPlusV21_BoundaryUnit')
         final_loc = os.path.join(loc, 'NHDPlusGlobalData', 'BoundaryUnit.shp')
 
