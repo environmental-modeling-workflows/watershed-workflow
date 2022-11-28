@@ -7,6 +7,7 @@ import requests
 import shutil
 import numpy as np
 from requests_html import HTMLSession
+import pandas as pd
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
@@ -198,19 +199,61 @@ class FileManagerNHDPlusV21:
 
     def _get_v21_urls(self, daID_vpu_rpu):
         # Get the base URLs
-        base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]        
+        base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu] 
+        base_URLs = np.unique(base_URLs).tolist()
+
+        # Check for url verification of certificates?  
+        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
+        logging.info('       cert: "%s"' % verify)
+        if verify == "True":
+            verify = True
+        elif verify == "False":
+            verify = False
+        
+        my_url = []
+        my_daID = []
+        my_vpu = []
+        my_rpu = []
+        my_componentname = []
+        my_dataversion = []
+
         for idx, b_url in enumerate(base_URLs):
-            data_links = self._get_v21_data_url_from_base_url(b_url, verify=False)
-            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_vpu_wide]
-            url_rpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_rpu_wide]
+
             daID, vpu, rpu = daID_vpu_rpu[idx]
+
+            data_links = self._get_v21_data_url_from_base_url(b_url, verify=verify)
+
+            # VPU-wide
+            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_vpu_wide]
             vv_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_vpu_wide]
             cc_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_vpu_wide]
+            
+            my_url += url_vpu_wide
+            my_dataversion += vv_vpu
+            my_componentname += cc_vpu 
+            my_daID += [daID]*len(url_vpu_wide)
+            my_vpu += [vpu]*len(url_vpu_wide)
+            my_rpu += [vpu]*len(url_vpu_wide)
+
+            # VPU-wide
+            url_rpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_rpu_wide]
             vv_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_rpu_wide]
             cc_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_rpu_wide]
-            # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
-            # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
-            # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
+
+            my_url += url_rpu_wide
+            my_dataversion += vv_rpu
+            my_componentname += cc_rpu 
+            my_daID += [daID]*len(url_rpu_wide)
+            my_vpu += [vpu]*len(url_rpu_wide)
+            my_rpu += [rpu]*len(url_rpu_wide)
+
+        url_data_info_df = pd.DataFrame(list(zip(my_componentname, my_daID, my_vpu, my_rpu,
+                my_dataversion, my_url)),
+                columns =['component_name', 'drainage_area_ID', 'vpu', 'rpu', 
+                'data_version', 'data_url'])
+        
+        return url_data_info_df
+     
     def _get_v21_data_url_from_base_url(self, url, verify=True):
 
         with HTMLSession() as session:
@@ -279,10 +322,69 @@ class FileManagerNHDPlusV21:
         huc_level = len(huc)
 
         # get drainage area ID, vpu, and rpu info
-        daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+        self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+        self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
+
+        # Download the WBD for the NHD Plus V2 dataset
+        idx = self._url_data_info_df.index[self._url_data_info_df['component_name'] == 'WBDSnapshot'].tolist()[0]
+        url_wbd = self._url_data_info_df['data_url'][idx]
+        daID = self._url_data_info_df['drainage_area_ID'][idx]
+        vpu = self._url_data_info_df['vpu'][idx]
+        rpu = self._url_data_info_df['rpu'][idx]
+        cc = self._url_data_info_df['component_name'][idx]
+        vv = self._url_data_info_df['data_version'][idx]
+
+        my_wbd_folder_name = self.name_manager.folder_name(daID, vpu)
+        my_wbd_file_name = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
+        
+        # check directory structure
+        os.makedirs(my_wbd_folder_name, exist_ok=True)
+        os.makedirs(my_wbd_file_name, exist_ok=True)
+        os.makedirs(os.path.join(my_wbd_file_name,'raw'), exist_ok=True)
+        
+
+        loc = my_wbd_file_name
+        final_loc = os.path.join(loc, 'WBD_Subwatershed.shp')
+
+        if not os.path.isfile(final_loc):
+            # download and unzip
+            location_7z = os.path.join(loc, 'raw')
+            location_unzip = os.path.join(location_7z, 'unzipped')
+            os.makedirs(location_unzip, exist_ok=True)
+            source_utils.download(url_wbd, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
+            source_utils.unzip(os.path.join(location_7z, loc.split('/')[-1]+'.7z'), location_unzip)
+
+            # Get the directory tree for the files unzipped
+
+            my_dirnames = []
+            # my_filenames = []
+            for root, dirs, files in os.walk(location_unzip, topdown=True):
+                # for name in files:
+                #     my_filenames.append(os.path.join(root, name))
+                for name in dirs:
+                    my_dirnames.append(os.path.join(root, name))
+
+            dir_shps = my_dirnames[-1]
+            files_to_move = os.listdir(dir_shps)
+            [source_utils.move(os.path.join(dir_shps, ff),loc) for ff in files_to_move]
+            shutil.rmtree(location_unzip)
+            assert(os.path.isfile(final_loc))
+
+        # read the file
+        with fiona.open(final_loc, mode='r') as fid:
+            hus = [hu for hu in fid if hu['properties']['HUC_12'].startswith(huc)]
+            profile = fid.profile
+        profile['always_xy'] = True
+            # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
+            # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
+            # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
+        return profile, hus
 
 
-        return None, daID_vpu_rpu
+
+
+
+
 
         # # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
         # if self.lowest_level < level:
@@ -310,6 +412,7 @@ class FileManagerNHDPlusV21:
         #     profile = fid.profile
         # profile['always_xy'] = True
         # return profile, hus
+    
 
     def get_hydro(self,
                   huc,
