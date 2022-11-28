@@ -375,6 +375,7 @@ class FileManagerNHDPlusV21:
             hus = [hu for hu in fid if hu['properties']['HUC_12'].startswith(huc)]
             profile = fid.profile
         profile['always_xy'] = True
+        self._path_wbd_shp = final_loc
             # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
             # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
             # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
@@ -469,7 +470,7 @@ class FileManagerNHDPlusV21:
 
         """
         if properties is True:
-            properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys())
+            properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_elevslope.keys()) + list(self._nhdplus_eromma.keys())
 
         if 'WBD' in self.name:
             raise RuntimeError(f'{self.name}: does not provide hydrographic data.')
