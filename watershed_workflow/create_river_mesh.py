@@ -63,7 +63,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=2):
+def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=4):
     """Returns list of elems and river corridor polygons for a given river tree
 
     Parameters:
@@ -119,6 +119,9 @@ def create_river_corridor(river, width):
     """
 
     # first sort the river so that in a search we always take paddlers right...
+    # check river consistency
+    if not river.is_continuous():
+        river.make_continuous()
     sort_children_by_angle(river, True)
     delta=width/2
 
@@ -130,11 +133,8 @@ def create_river_corridor(river, width):
         mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
        
-    length_scale = max(2.1*delta, min(mins) - 2*delta) -20# is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
+    length_scale = max(2.1*delta, min(mins) - 2*delta) -28 # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
     print('length_scale ', length_scale )
-    # check river consistency
-    if not river.is_continuous():
-        river.make_continuous()
 
     # buffer by the width
     mls = shapely.geometry.MultiLineString([r for r in river.dfs()])
@@ -218,7 +218,12 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
         List of river elements
     """
     delta = width/2
+    print(15*delta)
     coords = corr.exterior.coords[:-1]
+
+    import time
+    def pause():
+        time.sleep(0.)
     # number the nodes in a dfs pattern, creating empty space for elements
     for i, node in enumerate(river.preOrder()):
         node.id = i
@@ -249,6 +254,8 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             total_touches += 1
 
             seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^', markersize=10)
+            pause()
 
         elif node.touched == 1 and len(node.children) == 0:
             # leaf node, last time
@@ -266,16 +273,22 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
             total_touches += 1
 
+          # plot it...
             seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'g^',markersize=10)
 
+            # also plot the conn
             for i, elem in enumerate(node.elements):
                 looped_conn = elem[:]
                 looped_conn.append(elem[0])
-                if i == len(node.elements) - 1:
-                    assert (len(looped_conn) == 4)
+                if i == len(node.elements)-1:
+                    assert(len(looped_conn) == 4)
                 else:
-                    assert (len(looped_conn) == 5)
+                    assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
+                ax.plot(cc[:,0], cc[:,1], 'g-o')
+            pause()
+            
 
         elif node.touched == len(node.children):
             logging.debug(f'  last time around! {node.touched+1}')
@@ -290,28 +303,33 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
             total_touches += 1
 
+            #plot it...
             seg_coords = np.array(seg_coords)
+            ax.plot(seg_coords[:,0], seg_coords[:,1], 'b^',markersize=10)
 
-            for i, elem in enumerate(node.elements):
+            # also plot the conn
+            for i,elem in enumerate(node.elements):
                 looped_conn = elem[:]
                 looped_conn.append(elem[0])
-                if i == len(node.elements) - 1:
-                    assert (len(looped_conn) == (node.touched + 3))
+                if i == len(node.elements)-1:
+                    assert(len(looped_conn) == (node.touched+3))
                 else:
-                    assert (len(looped_conn) == 5)
+                    assert(len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
 
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 15*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 15*delta)):
+                    if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta)):
                            print(c, node.segment.coords[len(node.segment.coords)-(i+1)], node.segment.coords[len(node.segment.coords)-(i+2)])
-                           assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 15*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 15*delta))
+                           assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
+                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta))
+                ax.plot(cc[:,0], cc[:,1], 'g-o')
 
+            pause()
 
-        else:
+        else: # adding the junction point 
             logging.debug(f'  middle time around! {node.touched+1}')
             assert (node.touched < len(node.children))
             # touched in between children
@@ -320,6 +338,10 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.elements[-1].append(ic)
             node.touched += 1
 
+            ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
+            pause()
+
+    print(ic)
     assert (len(coords) == (ic + 1))
     assert (len(river) * 2 == total_touches)
 
@@ -455,7 +477,7 @@ def convexity_enforcement(river, corr):
                         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
                         points[i] = new_point
 
-                assert(watershed_workflow.utils.is_convex(points))
+                #assert(watershed_workflow.utils.is_convex(points))
               
 
                 # updating coords
