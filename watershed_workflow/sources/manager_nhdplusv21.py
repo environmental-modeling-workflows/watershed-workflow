@@ -8,6 +8,11 @@ import shutil
 import numpy as np
 from requests_html import HTMLSession
 import pandas as pd
+from shapely.ops import cascaded_union
+from shapely.geometry import shape
+from shapely.geometry import mapping
+import copy
+import collections
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
@@ -50,7 +55,11 @@ class FileManagerNHDPlusV21:
         self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
         self._componentnames_vpu_wide = self._componentnames_vpu_wide_main
         self._componentnames_rpu_wide = self._componentnames_rpu_wide_main
-
+    
+    """NHDPlus V2 is organized by VPUs that generally correspond to HUCs of level 2."""
+    lowest_level = 12  # This is the finest level reported by NHDPlus V21
+    highest_level = 2  # This is the coarsest level reported in NHDPlus V21 (each VPU ~ HUC level 2)
+    file_level = 2 # NHDPlus V21 provides HUC level 12 information only
     # variables needed from attribute files
     _componentnames_vpu_wide_all = ["EROMExtension", "NHDPlusAttributes",
                                    "NHDPlusBurnComponents", "NHDPlusCatchment",
@@ -291,10 +300,9 @@ class FileManagerNHDPlusV21:
         Note this finds and downloads files as needed.
         """
         huc = source_utils.huc_str(huc)
-        profile, hus = self.get_hucs(huc, len(huc), force_download, enforce_VPUs)
-        # assert (len(hus) == 1)
-        # return profile, hus[0]
-        return profile, hus
+        profile, hu = self.get_hucs(huc, len(huc), force_download, enforce_VPUs)
+        assert (len(hu) == 1)
+        return profile, hu[0]
 
     def get_hucs(self, huc, level, force_download=False, enforce_VPUs = True):
         """Get all sub-catchments of a given HUC level within a given HUC.
@@ -320,6 +328,18 @@ class FileManagerNHDPlusV21:
         """
         huc = source_utils.huc_str(huc)
         huc_level = len(huc)
+
+        # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
+        if self.lowest_level < level:
+            raise ValueError("{}: files include HUs at max level {}.".format(
+                self.name, self.lowest_level))
+        if level < huc_level:
+            raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(
+                self.name, level, huc_level))
+        if huc_level < self.file_level:
+            raise ValueError(
+                "{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level."
+                .format(self.name, self.file_level))
 
         # get drainage area ID, vpu, and rpu info
         self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
@@ -376,12 +396,52 @@ class FileManagerNHDPlusV21:
             profile = fid.profile
         profile['always_xy'] = True
         self._path_wbd_shp = final_loc
+
+        # Check the need for hus aggregarion
+
+        if level == 12:
+            logging.info('Returning all the HUCs of level {} inside the HUC of level {}'.format(level,huc_level))
+
+        if level < 12:
+
+            logging.info('Aggregating from HUCs of level {} to HUC of level {}'.format(self.lowest_level,level))
+
+            #huc_at_level = np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
+            huc_at_level_unique = np.unique(
+                np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
+                )
+
+            new_hus = []
+            for idx, hu_level in enumerate(huc_at_level_unique):
+
+                hus_subset = [hu for hu in hus if hu['properties']['HUC_12'].startswith(hu_level)]
+
+                geoms = [shape(feature['geometry']) for feature in hus_subset]
+                new_poly_shply = cascaded_union(geoms)
+
+                new_poly_fiona = copy.deepcopy(hus_subset[0])
+                new_poly_fiona.keys()
+                
+                new_poly_fiona['id'] = idx
+                new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID',idx),('HUC',hu_level)])
+                new_poly_fiona['geometry'] = mapping(new_poly_shply)
+                new_hus.append(new_poly_fiona)
+                # # Quick plot for verification purposes
+                # import matplotlib.pyplot as plt
+
+                # fig, ax = plt.subplots()
+                # [ax.plot(*gg.exterior.xy) for gg in geoms]
+                # ax.plot(*new_poly_shply.exterior.xy, c='k')
+                # ax.plot(*shape(new_poly_fiona['geometry']).exterior.xy, c = 'r')
+
+            hus = copy.deepcopy(new_hus)
+            profile['schema']['properties'] = hus[0]['properties']
+            profile['schema']['geometry'] = hus[0]['geometry']
+            
             # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
             # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
             # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
         return profile, hus
-
-
 
 
 

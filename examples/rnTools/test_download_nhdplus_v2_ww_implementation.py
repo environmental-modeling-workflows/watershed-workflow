@@ -6,7 +6,7 @@ import watershed_workflow.sources.manager_nhdplusv21
 
 
 fm = watershed_workflow.sources.manager_nhdplusv21.FileManagerNHDPlusV21() # File manager
-# profile,huc = fm.get_huc('14010001') # <--- this currently does not work
+profile,huc = fm.get_huc('14010001') # <--- this currently does not work
 
 profile, reaches = fm.get_hydro(
                   '14010001',
