@@ -416,7 +416,8 @@ class FileManagerNHDPlusV21:
 
                 hus_subset = [hu for hu in hus if hu['properties']['HUC_12'].startswith(hu_level)]
 
-                geoms = [shape(feature['geometry']) for feature in hus_subset]
+                geoms = [watershed_workflow.utils.shply(feature) for feature in hus_subset]
+                # geoms = [shape(feature['geometry']) for feature in hus_subset]
                 new_poly_shply = cascaded_union(geoms)
 
                 new_poly_fiona = copy.deepcopy(hus_subset[0])
@@ -437,7 +438,7 @@ class FileManagerNHDPlusV21:
             hus = copy.deepcopy(new_hus)
             profile['schema']['properties'] = hus[0]['properties']
             profile['schema']['geometry'] = hus[0]['geometry']
-            
+
             # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
             # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
             # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
@@ -835,6 +836,57 @@ class FileManagerNHDPlusV21:
         filename : str
           The path to the resulting downloaded dataset.
         """
+
+        ## New stuff
+        
+        # check directory structure
+
+        for row in self._url_data_info_df.itertuples(index = True):
+            daID = getattr(row,'drainage_area_ID')
+            vpu = getattr(row,'vpu')
+            rpu = getattr(row,'rpu')
+            cc = getattr(row,'component_name')
+            vv = getattr(row,'data_version')  
+            print (daID,getattr(row, "rpu"), getattr(row, "vpu"))
+
+            my_folder_name = self.name_manager.folder_name(daID, vpu)
+            my_file_name = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
+
+            os.makedirs(my_folder_name, exist_ok=True)
+            os.makedirs(my_file_name, exist_ok=True)
+            os.makedirs(os.path.join(my_file_name,'raw'), exist_ok=True)
+
+            loc = my_file_name
+            # final_loc = os.path.join(loc, 'WBD_Subwatershed.shp')
+
+            if not self._check_V21_downloaded(my_file_name) or force:
+                # download and unzip
+                location_7z = os.path.join(loc, 'raw')
+                location_unzip = os.path.join(location_7z, 'unzipped')
+                os.makedirs(location_unzip, exist_ok=True)
+                source_utils.download(url_wbd, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
+                source_utils.unzip(os.path.join(location_7z, loc.split('/')[-1]+'.7z'), location_unzip)
+
+                # Get the directory tree for the files unzipped
+
+                my_dirnames = []
+                # my_filenames = []
+                for root, dirs, files in os.walk(location_unzip, topdown=True):
+                    # for name in files:
+                    #     my_filenames.append(os.path.join(root, name))
+                    for name in dirs:
+                        my_dirnames.append(os.path.join(root, name))
+
+                dir_shps = my_dirnames[-1]
+                files_to_move = os.listdir(dir_shps)
+                [source_utils.move(os.path.join(dir_shps, ff),loc) for ff in files_to_move]
+                shutil.rmtree(location_unzip)
+                assert(os.path.isfile(final_loc))
+
+
+
+
+
         # check directory structure
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         os.makedirs(self.name_manager.folder_name(hucstr), exist_ok=True)
@@ -865,3 +917,12 @@ class FileManagerNHDPlusV21:
             raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
         return filename
 
+    # def _get_files(self, path):
+    #     return [file for file in  os.listdir(path) if os.path.isfile(os.path.join(path, file))]
+
+    def _check_V21_downloaded(self, path):
+        files = os.listdir(path)
+        if (len(files)==1) and (files[0] == 'raw'):
+            return False
+        else:
+            return True
