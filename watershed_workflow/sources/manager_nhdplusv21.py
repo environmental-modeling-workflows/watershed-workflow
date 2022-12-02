@@ -233,7 +233,7 @@ class FileManagerNHDPlusV21:
             data_links = self._get_v21_data_url_from_base_url(b_url, verify=verify)
 
             # VPU-wide
-            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_vpu_wide]
+            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc+'_')[0] for cc  in self._componentnames_vpu_wide]
             vv_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_vpu_wide]
             cc_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_vpu_wide]
             
@@ -244,7 +244,7 @@ class FileManagerNHDPlusV21:
             my_vpu += [vpu]*len(url_vpu_wide)
             my_rpu += [vpu]*len(url_vpu_wide)
 
-            # VPU-wide
+            # RPU-wide
             url_rpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_rpu_wide]
             vv_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_rpu_wide]
             cc_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_rpu_wide]
@@ -277,6 +277,13 @@ class FileManagerNHDPlusV21:
 
     def _get_v21_url_NHD_dataset(self, data_links, nhd_name):
         return [match for match in data_links if nhd_name in match]
+
+    def _check_V21_downloaded(self, path):
+        files = os.listdir(path)
+        if (len(files)==1) and (files[0] == 'raw'):
+            return False
+        else:
+            return True
 
     def get_huc(self, huc, force_download=False, enforce_VPUs = True):
         """Get the specified HUC in its native CRS.
@@ -439,9 +446,6 @@ class FileManagerNHDPlusV21:
             profile['schema']['properties'] = hus[0]['properties']
             profile['schema']['geometry'] = hus[0]['geometry']
 
-            # self.name_manager.data_dir() # For example '/Users/8n8/Documents/data_research/hydrography'
-            # self.name_manager.folder_name(daID, vpu) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14'
-            # self.name_manager.file_name(daID, vpu, rpu, cc_vpu[0], vv_vpu[0]) # For example '/Users/8n8/Documents/data_research/hydrography/NHDPlusV21_CO_14/NHDPlusV21_CO_14_14b_EROMExtension_05'
         return profile, hus
 
 
@@ -557,32 +561,47 @@ class FileManagerNHDPlusV21:
         logging.info('  Using Hydrography file "{}"'.format(filename))
 
         # find and open the hydrography layer
-        filename = self.name_manager.file_name(huc[0:self.file_level])
+
+        filename = os.path.join(
+            self._url_data_info_df['data_local_path'][
+            self._url_data_info_df['component_name'] == 'NHDSnapshot'].values[0],
+            'Hydrography')
         layer = 'NHDFlowline'
         logging.info(
             f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
-        with fiona.open(filename, mode='r', layer=layer) as fid:
+        with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(
                 bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
             reaches = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(reaches)} in bounds.")
 
-        # filter not in network
-        if 'NHDPlus' in self.name and in_network:
+        # filter not in network:
+        # Unlike NHD Plus HR, we use 'FLOWDIR' to identify these features
+        if in_network:
             logging.info("  Filtering reaches not in-network")
             reaches = [
                 r for r in reaches
-                if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1
+                if ('FLOWDIR' in r['properties']) and not ('Uninitialized' in r['properties']['FLOWDIR'])
             ]
+        '''
+        For NHDPlus HR: InNetwork = “Yes” means that the reach is part of the networked NHD flowlines. In NHDPlus HR, some networked flowlines were intentionally removed from the set of features used for catchment generation. Examples included pipelines, elevated canals, headwater flowlines that conflicted with the WBD, and some other limited data conditions. 
 
+        For NHD Plus V2: there is not attribute InNetwork. We can use the FlowDir feature. In general, all the InNetwork = 0 would also have 
+        FlowDir = 0
+
+        NHDFlowline Features with "Known Flow" vs. Features with “Unknown
+        Flow”
+        There are approximately three million NHDFlowline features in NHDPlusV2. Most, but not all of these features have a known flow direction. Flow direction information is contained in the attribute “FlowDir” in the NHDFlowline feature class attribute table. FlowDir can have the values “With Digitized” (known flow direction) or “Uninitialized” (unknown flow direction). The features having unknown flow direction are primarily: isolated stream segments, canal/ditches, and some channels inside braided networks. The features with known flow direction are the subset of the NHDFlowline feature class which makeup the NHDPlusV2 surface water network. The “Plus” part of NHDPlusV2 is constructed for the flowlines with known flow direction. Catchments and associated catchment area attributes are only populated in NHDPlusV2 features with known flow direction. When using NHDPlusV2, it is useful to symbolize the NHDFlowline feature class using the FlowDir attribute. This helps eliminate displaying of features considered to be in the NHDPlusV2 surface water network. In Figure 12:, the dark blue lines indicate NHDFlowline features with known flow direction and, consequently, are included in the “plus” part of NHDPlusV2. The cyan lines are NHDFlowline features with unknown flow direction and, consequently, are not part of the “Plus” portion of NHDPlusV2.
+        '''
         # associate catchment areas with the reaches if NHDPlus
-        if 'Plus' in self.name and properties != None:
-            reach_dict = dict((r['properties']['NHDPlusID'], r) for r in reaches)
+        if properties != None:
+            reach_dict = dict((r['properties']['ComID'], r) for r in reaches) # The ComID is the key for this dictionary
 
             # validation of properties
             valid_props = list(self._nhdplus_vaa.keys()) + list(
-                self._nhdplus_eromma.keys()) + ['catchment', ]
+                self._nhdplus_eromma.keys()) + list(
+                    self._nhdplus_elevslope.keys()) + ['catchment', ]
             for prop in properties:
                 if prop not in valid_props:
                     raise ValueError(
@@ -591,40 +610,78 @@ class FileManagerNHDPlusV21:
 
             # flags for which layers will be needed
             if include_catchments:
-                layer = 'NHDPlusCatchment'
+                filename = self._url_data_info_df['data_local_path'][
+                    self._url_data_info_df['component_name'] == 'NHDPlusCatchment'].values[0]
+                layer = 'Catchment'
                 logging.info(
                     f"  {self.name}: opening '{filename}' layer '{layer}' for catchments in '{bounds}'"
                 )
                 for r in reaches:
                     r['properties']['catchment'] = None
-                with fiona.open(filename, mode='r', layer=layer) as fid:
+                with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
                     for catchment in fid.values():
-                        reach = reach_dict.get(catchment['properties']['NHDPlusID'])
+                        reach = reach_dict.get(catchment['properties']['FEATUREID'])
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
+            # VAA 
             if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
-                layer = 'NHDPlusFlowlineVAA'
+
+                path_file = self._url_data_info_df['data_local_path'][
+                    self._url_data_info_df['component_name'] == 'NHDPlusAttributes'].values[0]
+                layer = 'PlusFlowlineVAA'
+                filename = os.path.join(path_file,layer+'.dbf')
+
                 logging.info(
-                    f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'"
+                    f"Opening '{filename}' for river network properties in '{bounds}'"
                 )
-                with fiona.open(filename, mode='r', layer=layer) as fid:
+                with fiona.open(filename, mode='r') as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(flowline['properties']['NHDPlusID'])
+                        reach = reach_dict.get(flowline['properties']['ComID'])
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_vaa.keys()):
                                     prop_code = self._nhdplus_vaa[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
-            if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
-                layer = 'NHDPlusEROMMA'
+            # Elevslope 
+
+            if len(set(self._nhdplus_elevslope.keys()).intersection(set(properties))) > 0:
+                
+                path_file = self._url_data_info_df['data_local_path'][
+                    self._url_data_info_df['component_name'] == 'NHDPlusAttributes'].values[0]
+                layer = 'elevslope'
+                filename = os.path.join(path_file,layer+'.dbf')
+
                 logging.info(
-                    f"  {self.name}: opening '{filename}' layer '{layer}' for river network properties in '{bounds}'"
+                    f"Opening '{filename}' for river network properties in '{bounds}'"
                 )
-                with fiona.open(filename, mode='r', layer=layer) as fid:
+                with fiona.open(filename, mode='r') as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(flowline['properties']['NHDPlusID'])
+                        reach = reach_dict.get(flowline['properties']['COMID'])
+                        if reach is not None:
+                            for prop in properties:
+                                if prop in list(self._nhdplus_elevslope.keys()):
+                                    prop_code = self._nhdplus_elevslope[prop]
+                                    reach['properties'][prop] = flowline['properties'][prop_code]
+
+            # EROM 
+
+            if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
+                
+                path_file = self._url_data_info_df['data_local_path'][
+                    self._url_data_info_df['component_name'] == 'EROMExtension'].values[0]                
+                name_files = os.listdir(path_file)
+
+                layer = [pp for pp in name_files if "EROM_MA" in pp][0].split('.DBF')[0]
+                filename = os.path.join(path_file,layer+'.DBF')
+
+                logging.info(
+                    f"Opening '{filename}' for river network properties in '{bounds}'"
+                )
+                with fiona.open(filename, mode='r') as fid:
+                    for flowline in fid.values():
+                        reach = reach_dict.get(flowline['properties']['ComID'])
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_eromma.keys()):
@@ -837,34 +894,29 @@ class FileManagerNHDPlusV21:
           The path to the resulting downloaded dataset.
         """
 
-        ## New stuff
-        
         # check directory structure
-
+        loc_data = []
         for row in self._url_data_info_df.itertuples(index = True):
             daID = getattr(row,'drainage_area_ID')
             vpu = getattr(row,'vpu')
             rpu = getattr(row,'rpu')
             cc = getattr(row,'component_name')
             vv = getattr(row,'data_version')  
-            print (daID,getattr(row, "rpu"), getattr(row, "vpu"))
+            url = getattr(row,'data_url')
 
-            my_folder_name = self.name_manager.folder_name(daID, vpu)
-            my_file_name = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
+            loc_root = self.name_manager.folder_name(daID, vpu)
+            loc = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
+            loc_data.append(loc)
+            os.makedirs(loc_root, exist_ok=True)
+            os.makedirs(loc, exist_ok=True)
+            os.makedirs(os.path.join(loc,'raw'), exist_ok=True)
 
-            os.makedirs(my_folder_name, exist_ok=True)
-            os.makedirs(my_file_name, exist_ok=True)
-            os.makedirs(os.path.join(my_file_name,'raw'), exist_ok=True)
-
-            loc = my_file_name
-            # final_loc = os.path.join(loc, 'WBD_Subwatershed.shp')
-
-            if not self._check_V21_downloaded(my_file_name) or force:
+            if not self._check_V21_downloaded(loc) or force:
                 # download and unzip
                 location_7z = os.path.join(loc, 'raw')
                 location_unzip = os.path.join(location_7z, 'unzipped')
                 os.makedirs(location_unzip, exist_ok=True)
-                source_utils.download(url_wbd, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
+                source_utils.download(url, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
                 source_utils.unzip(os.path.join(location_7z, loc.split('/')[-1]+'.7z'), location_unzip)
 
                 # Get the directory tree for the files unzipped
@@ -877,52 +929,12 @@ class FileManagerNHDPlusV21:
                     for name in dirs:
                         my_dirnames.append(os.path.join(root, name))
 
-                dir_shps = my_dirnames[-1]
-                files_to_move = os.listdir(dir_shps)
-                [source_utils.move(os.path.join(dir_shps, ff),loc) for ff in files_to_move]
+                dir_data = my_dirnames[2]
+                files_to_move = os.listdir(dir_data)
+                [source_utils.move(os.path.join(dir_data, ff),loc) for ff in files_to_move]
                 shutil.rmtree(location_unzip)
-                assert(os.path.isfile(final_loc))
+                assert(self._check_V21_downloaded(loc))
 
 
+        self._url_data_info_df['data_local_path'] = loc_data
 
-
-
-        # check directory structure
-        os.makedirs(self.name_manager.data_dir(), exist_ok=True)
-        os.makedirs(self.name_manager.folder_name(hucstr), exist_ok=True)
-
-        work_folder = self.name_manager.raw_folder_name(hucstr)
-        os.makedirs(work_folder, exist_ok=True)
-
-        filename = self.name_manager.file_name(hucstr)
-        if not os.path.exists(filename) or force:
-            url = self._url(hucstr)
-
-            downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            if not os.path.exists(downloadfile) or force:
-                logging.info("Attempting to download source for target '%s'" % filename)
-                source_utils.download(url, downloadfile, force)
-
-            source_utils.unzip(downloadfile, work_folder)
-
-            # hope we can find it?
-            gdb_files = [f for f in os.listdir(work_folder) if f.endswith('.gdb')]
-            assert (len(gdb_files) == 1)
-
-            if os.path.exists(filename):
-                shutil.rmtree(filename)
-            source_utils.move(os.path.join(work_folder, gdb_files[0]), filename)
-
-        if not os.path.exists(filename):
-            raise RuntimeError("Cannot find or download file for source target '%s'" % filename)
-        return filename
-
-    # def _get_files(self, path):
-    #     return [file for file in  os.listdir(path) if os.path.isfile(os.path.join(path, file))]
-
-    def _check_V21_downloaded(self, path):
-        files = os.listdir(path)
-        if (len(files)==1) and (files[0] == 'raw'):
-            return False
-        else:
-            return True
