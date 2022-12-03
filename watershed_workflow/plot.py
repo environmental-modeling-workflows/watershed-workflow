@@ -12,7 +12,6 @@ zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.
 """
 
-
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
@@ -25,6 +24,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import watershed_workflow.utils
 import watershed_workflow.crs
 import watershed_workflow.colors
+
 
 def _is_iter(obj):
     try:
@@ -45,6 +45,7 @@ class PolyCollectionWithArray:
 
     def autoscale_None(self):
         pass
+
 
 def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **kwargs):
     """Returns an axis with a given projection.
@@ -95,8 +96,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
         if axgrid is None:
             axargs = [nrow, ncol, index]
         else:
-            axargs = [axgrid,]
-            
+            axargs = [axgrid, ]
+
         if crs is None:
             # no crs, just get an ax -- you deal with it.
             ax = fig.add_subplot(*axargs)
@@ -124,7 +125,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
         return fig, ax
     else:
         return ax
-        
+
+
 def huc(huc, crs, color='k', ax=None, **kwargs):
     """Plot a HUC polygon.
 
@@ -148,7 +150,8 @@ def huc(huc, crs, color='k', ax=None, **kwargs):
     -------
     patches : matplotlib PatchCollection
     """
-    return shply([huc,], crs, color, ax, **kwargs)
+    return shply([huc, ], crs, color, ax, **kwargs)
+
 
 def hucs(hucs, crs, color='k', ax=None, **kwargs):
     """Plot a SplitHUCs object.
@@ -179,19 +182,29 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     if 'markersize' in kwargs:
         kwargs_scatter['markersize'] = kwargs.pop('markersize')
     if 'marker' in kwargs:
-        kwargs_scatter['marker'] = kwargs.pop('marker')        
-    
+        kwargs_scatter['marker'] = kwargs.pop('marker')
+
     polys = shply(ps, crs, color, ax, **kwargs)
 
     if hucs.polygon_outlets is not None and ax is not None:
-        x = np.array([p.xy[0][0] for p in hucs.polygon_outlets if not watershed_workflow.utils.empty_shapely(p)])
-        y = np.array([p.xy[1][0] for p in hucs.polygon_outlets if not watershed_workflow.utils.empty_shapely(p)])
-        c = [c for (c,p) in zip(color, hucs.polygon_outlets) if not watershed_workflow.utils.empty_shapely(p)]
+        x = np.array([
+            p.xy[0][0] for p in hucs.polygon_outlets
+            if not watershed_workflow.utils.empty_shapely(p)
+        ])
+        y = np.array([
+            p.xy[1][0] for p in hucs.polygon_outlets
+            if not watershed_workflow.utils.empty_shapely(p)
+        ])
+        c = [
+            c for (c, p) in zip(color, hucs.polygon_outlets)
+            if not watershed_workflow.utils.empty_shapely(p)
+        ]
         if 'markersize' in kwargs:
             s = kwargs['markersize']
         else:
             s = 100
         ax.scatter(x, y, s=s, c=c, **kwargs_scatter)
+
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
     """Plot an itereable collection of fiona shapes.
@@ -219,6 +232,7 @@ def shapes(shps, crs, color='k', ax=None, **kwargs):
     shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
     shply(shplys, crs, color, ax, **kwargs)
 
+
 def river(river, crs, color='b', ax=None, **kwargs):
     """Plot an itereable collection of reaches.
 
@@ -244,7 +258,8 @@ def river(river, crs, color='b', ax=None, **kwargs):
     """
     shplys(river, crs, color, ax, **kwargs)
 
-def rivers(rivers, crs, color='b', ax=None,  **kwargs):
+
+def rivers(rivers, crs, color='b', ax=None, **kwargs):
     """Plot an itereable collection of river Tree objects.
 
     A wrapper for plot.shply()
@@ -269,21 +284,22 @@ def rivers(rivers, crs, color='b', ax=None,  **kwargs):
     """
     if type(rivers) is shapely.geometry.MultiLineString:
         return river(rivers, crs, color, ax, **kwargs)
-    
+
     if type(color) is not str and len(color) == len(rivers):
         for r, c in zip(rivers, color):
             river(r, crs, c, ax, **kwargs)
     else:
         for r in rivers:
             river(r, crs, color, ax, **kwargs)
-            
-    
+
+
 def shply(shp, *args, **kwargs):
     """Plot a single shapely object.  See shplys() for options."""
     if type(shp) is list:
         return shplys(shp, *args, **kwargs)
     else:
-        return shplys([shp,], *args, **kwargs)
+        return shplys([shp, ], *args, **kwargs)
+
 
 def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     """Plot shapely objects.
@@ -315,13 +331,13 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     col : collection of matplotlib points or lines or patches
     """
     import descartes
-    
+
     try:
         if len(shps) == 0:
             return
     except TypeError:
-        shps = [shps,]
-        
+        shps = [shps, ]
+
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
 
@@ -332,19 +348,18 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
         projection = None
     else:
         projection = watershed_workflow.crs.to_cartopy(crs)
-        
+
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
         if 'marker' not in kwargs:
             kwargs['marker'] = 'o'
-        
-        points = np.array([p.coords for p in shps])[:,0,:]
+
+        points = np.array([p.coords for p in shps])[:, 0, :]
         if projection is None:
-            res = ax.scatter(points[:,0], points[:,1], c=color, **kwargs)
+            res = ax.scatter(points[:, 0], points[:, 1], c=color, **kwargs)
         else:
-            res = ax.scatter(points[:,0], points[:,1], c=color, transform=projection, **kwargs)
-            
-            
+            res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **kwargs)
+
     elif type(next(iter(shps))) is shapely.geometry.LineString:
         # plot lines
         if 'linestyle' not in kwargs:
@@ -370,8 +385,8 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             cmapper = watershed_workflow.colors.cm_mapper(vmin, vmax, cmap)
             colors = [cmapper(c) for c in colors]
             kwargs['colors'] = colors
-        
-        lines = [np.array(l.coords)[:,0:2] for l in shps]
+
+        lines = [np.array(l.coords)[:, 0:2] for l in shps]
         lc = pltc.LineCollection(lines, **kwargs)
         if projection is not None:
             lc.set_transform(projection)
@@ -381,38 +396,38 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
         else:
             res = ax.add_collection(lc)
             ax.autoscale()
-        
+
     elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if 'linestyle' not in kwargs:
             kwargs['linestyle'] = style
 
-        if kwargs['facecolor'] in ['color','edge']:
+        if kwargs['facecolor'] in ['color', 'edge']:
             kwargs.pop('facecolor')
             face_is_edge = True
         else:
             face_is_edge = False
-            
+
         try:
             color_len = len(color)
-        except (AttributeError,TypeError):
+        except (AttributeError, TypeError):
             color_len = -1
 
         if color is None or type(color) is str or color_len != len(shps):
             # assume this is ONE color, and therefore can add as a multipolygon/polygon collection
             if color is None:
                 color = 'k'
-            
+
             if 'edgecolor' not in kwargs:
                 kwargs['edgecolor'] = color
             if face_is_edge:
                 kwargs['facecolor'] = color
-            
+
             # first must flatten
             def listify(thing):
                 if type(thing) is shapely.geometry.MultiPolygon:
                     return list(thing.geoms)
                 else:
-                    return [thing,]
+                    return [thing, ]
 
             multi_poly = shapely.geometry.MultiPolygon([l for shp in shps for l in listify(shp)])
             patch = descartes.PolygonPatch(multi_poly, **kwargs)
@@ -471,6 +486,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     #assert res is not None
     return res
 
+
 def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
     """Plots a triangulation.
 
@@ -503,7 +519,7 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
     """
     if ax is None:
         fig, ax = get_ax(crs)
-    
+
     if type(color) is str and color == 'elevation' and points.shape[1] != 3:
         color = 'gray'
 
@@ -517,23 +533,42 @@ def triangulation(points, tris, crs, color='gray', ax=None, **kwargs):
         else:
             vmax = kwargs.pop('vmax')
         return vmin, vmax
-        
+
     if type(ax) is Axes3D:
         if type(color) is str and color == 'elevation':
-            col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, points[:,2], **kwargs)
+            col = ax.plot_trisurf(points[:, 0], points[:, 1], points[:, 2], tris, points[:, 2],
+                                  **kwargs)
         elif type(color) != str:
             vmin, vmax = get_color_extents(color)
-            col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, color, vmin=vmin, vmax=vmax, **kwargs)
-        else:        
-            col =  ax.plot_trisurf(points[:,0], points[:,1], points[:,2], tris, color=color, **kwargs)
+            col = ax.plot_trisurf(points[:, 0],
+                                  points[:, 1],
+                                  points[:, 2],
+                                  tris,
+                                  color,
+                                  vmin=vmin,
+                                  vmax=vmax,
+                                  **kwargs)
+        else:
+            col = ax.plot_trisurf(points[:, 0],
+                                  points[:, 1],
+                                  points[:, 2],
+                                  tris,
+                                  color=color,
+                                  **kwargs)
     else:
         if type(color) is str and color == 'elevation':
-            col =  ax.tripcolor(points[:,0], points[:,1], tris, points[:,2], **kwargs)
+            col = ax.tripcolor(points[:, 0], points[:, 1], tris, points[:, 2], **kwargs)
         elif type(color) != str:
             vmin, vmax = get_color_extents(color)
-            col =  ax.tripcolor(points[:,0], points[:,1], tris, color, vmin=vmin, vmax=vmax, **kwargs)
-        else:        
-            col =  ax.triplot(points[:,0], points[:,1], tris, color=color, **kwargs)
+            col = ax.tripcolor(points[:, 0],
+                               points[:, 1],
+                               tris,
+                               color,
+                               vmin=vmin,
+                               vmax=vmax,
+                               **kwargs)
+        else:
+            col = ax.triplot(points[:, 0], points[:, 1], tris, color=color, **kwargs)
     return col
 
 
@@ -562,9 +597,8 @@ def mesh(m2, crs, color='gray', ax=None, **kwargs):
       Collection of patches representing the triangles.
 
     """
-    shplys = [ shapely.geometry.Polygon(m2.coords[c,:]) for c in m2.conn ]
+    shplys = [shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn]
     return shply(shplys, crs, color, ax, **kwargs)
-
 
 
 def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
@@ -595,18 +629,19 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
     if ax is None:
         fig, ax = get_ax(profile['crs'])
 
-    assert(mask)
-    assert('nodata' in profile)
+    assert (mask)
+    assert ('nodata' in profile)
     if mask and 'nodata' in profile:
         nnd = len(np.where(data == profile['nodata'])[0])
         data = np.ma.array(data, mask=(data == profile['nodata']))
-        
+
     if vmin is None:
         vmin = np.nanmin(data)
     if vmax is None:
         vmax = np.nanmax(data)
 
-    bounds = rasterio.transform.array_bounds(profile['height'], profile['width'], profile['transform'])
+    bounds = rasterio.transform.array_bounds(profile['height'], profile['width'],
+                                             profile['transform'])
     extent = [bounds[0], bounds[2], bounds[1], bounds[3]]
     logging.info('BOUNDS: {}'.format(bounds))
     return ax.imshow(data, origin='upper', extent=extent, vmin=vmin, vmax=vmax, **kwargs)
@@ -616,7 +651,15 @@ def dem(profile, data, ax=None, vmin=None, vmax=None, **kwargs):
     """See raster documentation"""
     return raster(profile, data, ax, vmin, vmax, **kwargs)
 
-def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=None, state_kwargs=None, country_kwargs=None, coastline_kwargs=None):
+
+def basemap(crs=None,
+            ax=None,
+            resolution='50m',
+            land_kwargs=None,
+            ocean_kwargs=None,
+            state_kwargs=None,
+            country_kwargs=None,
+            coastline_kwargs=None):
     """Add a basemap to the axis.
 
     Uses cartopy to add political and natural boundaries and shapes to the axes
@@ -663,22 +706,22 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         ax.add_feature(land)
 
     if state_kwargs is not None and state_kwargs is not False:
-        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
         kwargs.update(**state_kwargs)
         states = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines',
-                                                    resolution, **kwargs)
+                                                     resolution, **kwargs)
         # these seem a bit broken?
         if 'fix' in state_kwargs and state_kwargs.pop('fix'):
             states = watershed_workflow.utils.flatten(list(states.geometries()))
             shplys(states, watershed_workflow.crs.latlon_crs(), ax=ax, **state_kwargs)
         else:
             ax.add_feature(states)
-        
+
     if country_kwargs is not None and country_kwargs is not False:
-        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
         kwargs.update(**country_kwargs)
         country = cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land',
-                                                     resolution, **kwargs)
+                                                      resolution, **kwargs)
         # these seem a bit broken?
         if 'fix' in country_kwargs and country_kwargs.pop('fix'):
             country = watershed_workflow.utils.flatten(list(country.geometries()))
@@ -697,14 +740,13 @@ def basemap(crs=None, ax=None, resolution='50m', land_kwargs=None, ocean_kwargs=
         ax.add_feature(ocean)
 
     if coastline_kwargs is not None and coastline_kwargs is not False:
-        kwargs = {'facecolor':'none', 'edgecolor':'k', 'linewidth':0.5}
+        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
         kwargs.update(**coastline_kwargs)
-        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline',
-                                                     resolution, **kwargs)
+        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline', resolution, **kwargs)
         ax.add_feature(states)
 
-        
-    return 
+    return
+
 
 def feather_axis_limits(ax, delta=0.02):
     """Adds a small delta to the axis limits to provide a bit of buffer.
@@ -718,17 +760,15 @@ def feather_axis_limits(ax, delta=0.02):
       the current plot width,height to increase by.
     """
     try:
-        assert(len(delta) == 2)
+        assert (len(delta) == 2)
     except AssertionError:
         raise RuntimeError("feather_axis_limits expects delta argument of length 2 (dx,dy)")
     except ValueError:
         delta = (delta, delta)
-    
+
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     dx = delta[0] * (xlim[1] - xlim[0])
     dy = delta[1] * (ylim[1] - ylim[0])
     ax.set_xlim((xlim[0] - dx, xlim[1] + dx))
     ax.set_ylim((ylim[0] - dy, ylim[1] + dy))
-
-

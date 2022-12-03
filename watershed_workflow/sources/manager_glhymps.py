@@ -1,5 +1,5 @@
 """Manager for interacting with GLHYMPS v2.0 dataset."""
-import os,sys
+import os, sys
 import logging
 import numpy as np
 import pandas
@@ -9,7 +9,7 @@ import watershed_workflow.sources.names
 import watershed_workflow.soil_properties
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
-urls = {'GLHYMPS version 2.0' : 'https://doi.org/10.5683/SP2/TTJNIU'}
+urls = { 'GLHYMPS version 2.0': 'https://doi.org/10.5683/SP2/TTJNIU'}
 
 
 class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerShape):
@@ -35,9 +35,8 @@ class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerSha
     def __init__(self, filename=None):
         if filename is None:
             self.name = 'GLHYMPS version 2.0'
-            self.names = watershed_workflow.sources.names.Names(self.name,
-                                                      os.path.join('soil_structure','GLHYMPS'),
-                                                      '', 'GLHYMPS.shp')
+            self.names = watershed_workflow.sources.names.Names(
+                self.name, os.path.join('soil_structure', 'GLHYMPS'), '', 'GLHYMPS.shp')
             super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
         else:
             self.name = filename

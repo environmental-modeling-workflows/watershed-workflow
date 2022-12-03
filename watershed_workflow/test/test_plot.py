@@ -12,18 +12,10 @@ import watershed_workflow.warp
 import watershed_workflow.config
 import pickle
 
-crss = [(None, None),
-        (4269, None),
-        (5070, None),
-        (4269, 4269),
-        (5070, 4269),
-        (5070, 5070),
-        (4269, 5070),
-        (26913, 5070)]
+crss = [(None, None), (4269, None), (5070, None), (4269, 4269), (5070, 4269), (5070, 5070),
+        (4269, 5070), (26913, 5070)]
 
-crss_ak = [(3338, 3338),
-           (5070, 3338),
-           (4269, 3338)]
+crss_ak = [(3338, 3338), (5070, 3338), (4269, 3338)]
 
 show = False
 new_gold = False
@@ -32,11 +24,14 @@ fig = None
 if not show:
     fig = plt.figure()
 
-
 import collections
+
+
 def default_dict():
     return collections.defaultdict(default_dict)
-pickle_file_name = os.path.join('watershed_workflow','test', 'test_plot_gold.pickle')
+
+
+pickle_file_name = os.path.join('watershed_workflow', 'test', 'test_plot_gold.pickle')
 
 if new_gold:
     gold = default_dict()
@@ -46,48 +41,66 @@ else:
         gold = pickle.load(fid)
 
 
-
 def point():
     return shapely.geometry.Point(-90, 38)
 
+
 def point_ak():
     return shapely.geometry.Point(-147, 65)
-    
+
+
 def shift(p, t):
     return shapely.geometry.Point(p.xy[0][0] + t[0], p.xy[1][0] + t[1])
+
 
 @pytest.fixture
 def points():
     def _points(p):
-        ps = [
-            p,
-            shift(p, (2,0)),
-            shift(p, (1,1)),              
-            ]
+        ps = [p, shift(p, (2, 0)), shift(p, (1, 1)), ]
         return ps
+
     return _points
+
 
 @pytest.fixture
 def lines():
     def _lines(p):
         ls = [
-            shapely.geometry.LineString([p, shift(p,(0,1)), shift(p,(0,2))]),
-            shapely.geometry.LineString([p, shift(p,(1,0)), shift(p,(2,0))]),
-            shapely.geometry.LineString([p, shift(p,(1,1)), shift(p,(2,2))]),
+            shapely.geometry.LineString([p, shift(p, (0, 1)), shift(p, (0, 2))]),
+            shapely.geometry.LineString([p, shift(p, (1, 0)), shift(p, (2, 0))]),
+            shapely.geometry.LineString([p, shift(p, (1, 1)), shift(p, (2, 2))]),
         ]
         return ls
+
     return _lines
-    
+
+
 @pytest.fixture
 def polygons():
     def _polygons(p):
         polys = [
-            shapely.geometry.Polygon([[p.x, p.y] for p in [ p, shift(p, (-1,0)), shift(p, (-1,-1)), shift(p, (0,-1)), p]]),
-            shapely.geometry.Polygon([[p.x, p.y] for p in [ p, shift(p,  (1,0)), shift(p, (1,-1)), shift(p, (0,-1)), p]]),
-            shapely.geometry.Polygon([[p.x, p.y] for p in [ p, shift(p, (-1,1)), shift(p, (0,2)), shift(p, (1,1)), p]]),
+            shapely.geometry.Polygon([[
+                p.x, p.y
+            ] for p in [p, shift(p, (
+                -1,
+                0)), shift(p, (-1,
+                               -1)), shift(p, (0, -1)), p]]),
+            shapely.geometry.Polygon([[
+                p.x, p.y
+            ] for p in [p, shift(p, (
+                1,
+                0)), shift(p, (1,
+                               -1)), shift(p, (0, -1)), p]]),
+            shapely.geometry.Polygon([[
+                p.x, p.y
+            ] for p in [p, shift(p, (
+                -1, 1)), shift(p, (0,
+                                   2)), shift(p, (1, 1)), p]]),
         ]
         return polys
-    return _polygons    
+
+    return _polygons
+
 
 def run_test(start_p, obj_gen, epsg_data, epsg_ax):
     print("Running test from {} to {}".format(epsg_data, epsg_ax))
@@ -104,7 +117,8 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
 
     if epsg_data is not None:
         crs = watershed_workflow.crs.from_epsg(epsg_data)
-        objs = watershed_workflow.warp.shplys(obj_gen(start_p), watershed_workflow.crs.latlon_crs(), crs)
+        objs = watershed_workflow.warp.shplys(obj_gen(start_p), watershed_workflow.crs.latlon_crs(),
+                                              crs)
     else:
         epsg_data = 'None'
         crs = None
@@ -113,19 +127,20 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
 
     if new_gold:
         if hasattr(res, 'get_paths'):
-            for i,p in enumerate(res.get_paths()):
+            for i, p in enumerate(res.get_paths()):
                 gold[str(start_p)][obj_gen.__name__][epsg_data][i] = p.vertices
         else:
             gold[str(start_p)][obj_gen.__name__][epsg_data] = res.get_path().vertices
-            
+
         with open(pickle_file_name, 'wb') as fid:
             pickle.dump(gold, fid)
     elif check_gold:
         if hasattr(res, 'get_paths'):
-            for i,p in enumerate(res.get_paths()):
+            for i, p in enumerate(res.get_paths()):
                 npt.assert_allclose(gold[str(start_p)][obj_gen.__name__][epsg_data][i], p.vertices)
         else:
-            npt.assert_allclose(gold[str(start_p)][obj_gen.__name__][epsg_data], res.get_path().vertices)
+            npt.assert_allclose(gold[str(start_p)][obj_gen.__name__][epsg_data],
+                                res.get_path().vertices)
 
     if not show:
         fig.clear()
@@ -138,23 +153,17 @@ def test_points(points):
         run_test(point(), points, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), points, epsg_data, epsg_ax)
-    
+
+
 def test_lines(lines):
     for epsg_data, epsg_ax in crss:
         run_test(point(), lines, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), lines, epsg_data, epsg_ax)
 
+
 def test_polygons(polygons):
     for epsg_data, epsg_ax in crss:
         run_test(point(), polygons, epsg_data, epsg_ax)
     for epsg_data, epsg_ax in crss_ak:
         run_test(point_ak(), polygons, epsg_data, epsg_ax)
-
-
-    
-
-
-
-
-    

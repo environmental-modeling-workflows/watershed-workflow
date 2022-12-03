@@ -1,7 +1,7 @@
 """A script to help (re-)generate conda environments for Watershed Workflow."""
 
 # packages required for running WW
-PACKAGES_BASE=['python=3',
+PACKAGES_BASE=['python=3.10',
               'numpy',
               'matplotlib',
               'scipy',
@@ -67,8 +67,10 @@ PACKAGES_TOOLS=['cmake',
 
 # channels needed to find these packages
 CHANNELS=['conda-forge',
-          'defaults',
+#          'defaults',
           ]
+
+PACKAGE_MANAGER = 'conda'
 
 
 import datetime
@@ -143,7 +145,10 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
         env_name = get_env_name(get_env_prefix(env_type))
 
 
-    result = subprocess.run(['conda','env','export','--no-builds','-n',env_name],
+    args = ['env', 'export',]
+    if PACKAGE_MANAGER == 'conda':
+        args.append('--no-builds')
+    result = subprocess.run([PACKAGE_MANAGER,]+args+['--name',env_name],
                             check=True, capture_output=True)
 
     # try to strip matches that break OSX dependent code...
@@ -160,7 +165,7 @@ def create_env_local(env_type, os_name, packages, env_name=None):
         env_name = get_env_name(env_prefix)
 
     # build up the conda env create command
-    cmd = ['conda', 'create', '--yes', '-n', env_name]
+    cmd = [PACKAGE_MANAGER, 'create', '--yes', '--name', env_name]
     for channel in CHANNELS:
         cmd.append('-c')
         cmd.append(channel)
@@ -196,10 +201,14 @@ if __name__ == '__main__':
     parser.add_argument('--with-tools-env', action='store_true', help='Build an environment for compiling things.')
     parser.add_argument('--tools-env-name', default=None, type=str, help='Name for the tools environment.')
     parser.add_argument('--dump-only', action='store_true', help='Only write the .yml file')
+    parser.add_argument('--manager', default='conda', type=str,
+                        help='Package manager, one of conda, mamba, or micromamba')
     parser.add_argument('OS', type=str, choices=['OSX', 'Linux'],
                         help='Operating system flag for filename, likely OSX or Linux')
     args = parser.parse_args()
 
+    PACKAGE_MANAGER = args.manager
+    
     if args.env_type == 'STANDARD':
         args.env_type = None
     if not args.without_ww_env:

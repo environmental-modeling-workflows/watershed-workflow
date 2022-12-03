@@ -26,19 +26,21 @@ def get_code(fiona_or_shply_obj, level):
     except KeyError:
         return prop[key.lower()]
 
+
 def huc_str(huc):
     """Converts a huc int or string to a standard-format huc string."""
     if type(huc) is str:
-        if len(huc)%2 == 1:
-            huc = "0"+huc
+        if len(huc) % 2 == 1:
+            huc = "0" + huc
     elif type(huc) is int:
         digits = math.ceil(math.log10(huc))
         if digits % 2 == 1:
             digits += 1
-        huc = ("%%0%ii"%digits)%huc
+        huc = ("%%0%ii"%digits) % huc
     else:
-        raise RuntimeError("Cannot convert type %r to huc"%type(huc))
+        raise RuntimeError("Cannot convert type %r to huc" % type(huc))
     return huc
+
 
 def download(url, location, force=False):
     """Download a file from a URL to a location.  If force, clobber whatever is there."""
@@ -46,15 +48,15 @@ def download(url, location, force=False):
         os.remove(location)
 
     if not os.path.isfile(location):
-        logging.info('Downloading: "%s"'%url)
-        logging.info('         to: "%s"'%location)
+        logging.info('Downloading: "%s"' % url)
+        logging.info('         to: "%s"' % location)
         verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
-        logging.info('       cert: "%s"'%verify)
+        logging.info('       cert: "%s"' % verify)
         if verify == "True":
             verify = True
         elif verify == "False":
             verify = False
-            
+
         # with requests.get(url, stream=True, verify=verify) as r:
         #     r.raise_for_status()
         #     with open(location, 'wb') as f:
@@ -74,16 +76,16 @@ def download_progress_bar(url, location, force=False):
 
     If force, clobber whatever is there.
     """
-    from tqdm.autonotebook import tqdm 
+    from tqdm.autonotebook import tqdm
 
     if os.path.isfile(location) and force:
         os.remove(location)
 
     if not os.path.isfile(location):
-        logging.info('Downloading: "%s"'%url)
-        logging.info('         to: "%s"'%location)
+        logging.info('Downloading: "%s"' % url)
+        logging.info('         to: "%s"' % location)
         verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
-        logging.info('       cert: "%s"'%verify)
+        logging.info('       cert: "%s"' % verify)
         if verify == "True":
             verify = True
         elif verify == "False":
@@ -120,7 +122,7 @@ def unzip(filename, to_location, format=None):
         else:
             raise RuntimeError(f'Cannot detect the zip format of file: {filename}')
     logging.info(f'   as fmt: "{format}"')
-        
+
     if format == 'zip':
         import zipfile
         try:
@@ -128,7 +130,9 @@ def unzip(filename, to_location, format=None):
                 zip_ref.extractall(to_location)
         except zipfile.BadZipFile as err:
             logging.error('Failed to unzip: "{}"'.format(filename))
-            logging.error('Likely this is the result of a previous job failing, partial download, internet connection issues, or other failed download.  Try removing the file, which will result in it being re-downloaded.')
+            logging.error(
+                'Likely this is the result of a previous job failing, partial download, internet connection issues, or other failed download.  Try removing the file, which will result in it being re-downloaded.'
+            )
             raise err
     elif format == '7z':
         import libarchive
@@ -144,12 +148,12 @@ def unzip(filename, to_location, format=None):
 
     else:
         raise NotImplementedError('Unzipping file of format {format} is not yet implemented.')
-        
-        
+
     return to_location
+
 
 def move(filename, to_location):
     """Move a file to a folder."""
-    logging.info('Moving: "%s"'%filename)
-    logging.info('    to: "%s"'%to_location)
+    logging.info('Moving: "%s"' % filename)
+    logging.info('    to: "%s"' % to_location)
     shutil.move(filename, to_location)

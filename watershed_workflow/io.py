@@ -1,16 +1,32 @@
 """I/O Utilities"""
 
 import fiona
+import rasterio
 import shapely.geometry
 import collections
 
 import watershed_workflow.crs
 
-# write the shapefile
+
+def write_to_raster(filename, profile, array):
+    """Write a numpy array to raster file."""
+    assert (len(array.shape) >= 2 and len(array.shape) <= 3)
+    if len(array.shape) == 2:
+        array = array.reshape((1, ) + array.shape)
+
+    profile = profile.copy()
+    profile.update(count=array.shape[2], compress='lzw')
+
+    with rasterio.open(filename, 'w', **profile) as fout:
+        for i in range(array.shape[0]):
+            fout.write(array[i, :, :], i + 1)
+
+
 def write_to_shapefile(filename, shps, crs, extra_properties=None):
+    """Write a collection of shapes to a file using fiona"""
     if len(shps) == 0:
         return
-    
+
     # set up the schema
     schema = dict()
     if type(shps[0]) is shapely.geometry.Polygon:
@@ -45,9 +61,10 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
         for key, val in item_properties.items():
             register_type(key, type(val))
 
-    with fiona.open(filename, 'w', 
-                    driver='ESRI Shapefile', 
-                    crs=watershed_workflow.crs.to_fiona(crs), 
+    with fiona.open(filename,
+                    'w',
+                    driver='ESRI Shapefile',
+                    crs=watershed_workflow.crs.to_fiona(crs),
                     crs_wkt=watershed_workflow.crs.to_wkt(crs),
                     schema=schema) as c:
         for shp in shps:
@@ -56,12 +73,9 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
                 props.update(shp.properties)
             except AttributeError:
                 pass
-            
+
             for key in list(props.keys()):
                 if key not in schema['properties']:
                     props.pop(key)
-                  
-            c.write({'geometry': shapely.geometry.mapping(shp),
-                     'properties': props })
 
-        
+            c.write({ 'geometry': shapely.geometry.mapping(shp), 'properties': props })

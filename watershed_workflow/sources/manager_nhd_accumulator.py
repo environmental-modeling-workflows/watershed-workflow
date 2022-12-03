@@ -1,9 +1,11 @@
 import watershed_workflow.sources.manager_nhd as nhd
 import watershed_workflow.sources.utils as source_utils
 
+
 class FileManagerNHDPlusAccumulator:
     """NHDPlus is organized by HUC4s, but sometimes we need them on 2s."""
-    lowest_level = 2 # we can accumulate to anything!
+    lowest_level = 2  # we can accumulate to anything!
+
     def __init__(self):
         self.nhd_plus = nhd.FileManagerNHDPlus()
         self.wbd = nhd.FileManagerWBD()
@@ -29,8 +31,7 @@ class FileManagerNHDPlusAccumulator:
                 elif 'huc4' in hu['properties']:
                     prof, subhucs = self.nhd_plus.get_hucs(hu['properties']['huc4'], level)
                 else:
-                    raise RuntimeError(f'Cannot find HUC4 property name in HUC properties for {huc}')
+                    raise RuntimeError(
+                        f'Cannot find HUC4 property name in HUC properties for {huc}')
                 contained.extend(subhucs)
             return prof, contained
-
-                

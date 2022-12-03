@@ -32,7 +32,11 @@ import watershed_workflow.colors
 try:
     import exodus
 except Exception:
-    import exodus3 as exodus
+    try:
+        import exodus3 as exodus
+    except Exception:
+        exodus = None
+
 
 #
 # A caching decorator, like functools.cache, but works in this case?
@@ -42,55 +46,56 @@ except Exception:
 def cache(func):
     @functools.wraps(func)
     def cache_func(self):
-        cname = '_'+func.__name__
+        cname = '_' + func.__name__
         if not hasattr(self, cname):
             self.__setattr__(cname, func(self))
         return self.__getattribute__(cname)
+
     return cache_func
-    
-    
+
+
 @attr.define
 class SideSet:
     """A collection of faces in cells."""
-    name : str
-    setid : int
-    cell_list : list[int]
-    side_list : list[int]
+    name: str
+    setid: int
+    cell_list: list[int]
+    side_list: list[int]
 
     def validate(self, cell_faces):
         ncells = len(cell_faces)
-        for c,s in zip(self.cell_list, self.side_list):
-            assert(0 <= c < ncells)
-            assert(0 <= s < len(cell_faces[c]))
+        for c, s in zip(self.cell_list, self.side_list):
+            assert (0 <= c < ncells)
+            assert (0 <= s < len(cell_faces[c]))
 
 
 @attr.define
 class LabeledSet:
     """A generic collection of entities."""
-    name : str
-    setid : int
-    entity : str
-    ent_ids : list[int]
-    to_extrude : bool = False
+    name: str
+    setid: int
+    entity: str
+    ent_ids: list[int]
+    to_extrude: bool = False
 
     def validate(self, size, is_tuple=False):
         if is_tuple:
             # edges
             self.ent_ids = [(int(e[0]), int(e[1])) for e in self.ent_ids]
             for e in self.ent_ids:
-                assert(-1 < e[0] < size)
-                assert(-1 < e[1] < size)
+                assert (-1 < e[0] < size)
+                assert (-1 < e[1] < size)
         else:
             self.ent_ids = [int(i) for i in self.ent_ids]
             for i in self.ent_ids:
-                assert(-1 < i < size)
+                assert (-1 < i < size)
 
 
 @attr.define
 class _ExtrusionHelper:
     """Helper class for extruding 2D --> 3D"""
-    ncells_tall : int
-    ncells_2D : list[int]
+    ncells_tall: int
+    ncells_2D: list[int]
 
     def col_to_id(self, column, z_cell):
         """Maps 2D cell ID and index in the vertical to a 3D cell ID"""
@@ -98,7 +103,7 @@ class _ExtrusionHelper:
 
     def node_to_id(self, node, z_node):
         """Maps 2D node ID and index in the vertical to a 3D node ID"""
-        return z_node + node * (self.ncells_tall+1)
+        return z_node + node * (self.ncells_tall + 1)
 
     def edge_to_id(self, edge, z_cell):
         """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face"""
@@ -150,7 +155,7 @@ class Mesh2D:
     @property
     def conn(self):
         """Note that conn is immutable because changing this breaks all the
-        other properties, which may be cached.  To change topology, one must construct a new mesh!"""        
+        other properties, which may be cached.  To change topology, one must construct a new mesh!"""
         return self._conn
 
     @property
@@ -174,50 +179,51 @@ class Mesh2D:
         return self.edges_to_cells.keys()
 
     @staticmethod
-    def edge_hash(i,j):
+    def edge_hash(i, j):
         """Hashes edges in a direction-independent way."""
-        return tuple(sorted((i,j)))
+        return tuple(sorted((i, j)))
 
     @property
     @cache
     def edge_counts(self):
         items = self.edges_to_cells.items()
-        return dict((e,len(v)) for (e,v) in items)
+        return dict((e, len(v)) for (e, v) in items)
 
     @property
     @cache
     def edges_to_cells(self):
         e2c = collections.defaultdict(list)
-        for i,c in enumerate(self.conn):
+        for i, c in enumerate(self.conn):
             for e in self.cell_edges(c):
                 e2c[e].append(i)
         return e2c
 
     def cell_edges(self, conn):
         for i in range(len(conn)):
-            yield self.edge_hash(conn[i], conn[(i+1)%len(conn)])
+            yield self.edge_hash(conn[i], conn[(i+1) % len(conn)])
 
     @property
     @cache
     def boundary_edges(self):
         """Return edges in the boundary of the mesh, ordered around the boundary."""
-        be = sorted([k for (k,count) in self.edge_counts.items() if count == 1], key=lambda a : a[0])
+        be = sorted([k for (k, count) in self.edge_counts.items() if count == 1],
+                    key=lambda a: a[0])
         seed = be.pop(0)
-        be_ordered = [seed,]
+        be_ordered = [seed, ]
 
         done = False
         while not done:
             try:
-                new_e = next( e for e in be if e[0] == be_ordered[-1][1])
+                new_e = next(e for e in be if e[0] == be_ordered[-1][1])
                 be.remove(new_e)
             except StopIteration:
-                new_e = next( e for e in be if e[1] == be_ordered[-1][1])
+                new_e = next(e for e in be if e[1] == be_ordered[-1][1])
                 be.remove(new_e)
                 new_e = tuple(reversed(new_e))
 
             be_ordered.append(new_e)
             done = len(be) == 0
-        assert(be_ordered[-1][-1] == be_ordered[0][0])
+        assert (be_ordered[-1][-1] == be_ordered[0][0])
         return be_ordered
 
     @property
@@ -244,23 +250,23 @@ class Mesh2D:
 
     def validate(self):
         # validate coords
-        assert(isinstance(self.coords, np.ndarray))
-        assert(len(self.coords.shape) == 2)
-        assert(self.coords.shape[1] in [2,3])
+        assert (isinstance(self.coords, np.ndarray))
+        assert (len(self.coords.shape) == 2)
+        assert (self.coords.shape[1] in [2, 3])
 
         # validate conn
-        assert(min(c for conn in self.conn for c in conn) >= 0)
-        assert(max(c for conn in self.conn for c in conn) < self.coords.shape[0])
+        assert (min(c for conn in self.conn for c in conn) >= 0)
+        assert (max(c for conn in self.conn for c in conn) < self.coords.shape[0])
 
         # validate labeled_sets
-        assert(len(set(ls.setid for ls in self.labeled_sets)) == len(self.labeled_sets))
+        assert (len(set(ls.setid for ls in self.labeled_sets)) == len(self.labeled_sets))
 
         for ls in self.labeled_sets:
             is_tuple = False
             if ls.entity == 'CELL':
-               size = self.num_cells
+                size = self.num_cells
             elif ls.entity == 'FACE':
-                size = self.num_nodes # note there are no faces, edges are tuples of nodes
+                size = self.num_nodes  # note there are no faces, edges are tuples of nodes
                 is_tuple = True
             elif ls.entity == 'NODE':
                 size = self.num_nodes
@@ -274,7 +280,10 @@ class Mesh2D:
         return i
 
     def compute_centroid(self, c):
-        """Computes, based on coords, the centroid of a cell with ID c"""
+        """Computes, based on coords, the centroid of a cell with ID c.
+
+        Note this ALWAYS recomputes the value, not using the cache.
+        """
         points = np.array([self.coords[i] for i in self.conn[c]])
         return points.mean(axis=0)
 
@@ -284,45 +293,50 @@ class Mesh2D:
         """Calculate surface mesh centroids."""
         return np.array([self.compute_centroid(c) for c in range(self.num_cells)])
 
+    def clear_geometry_cache(self):
+        """If coordinates are changed, any computed, cached geometry must be
+        recomputed.  It is the USER's responsibility to call this
+        function if any coords are changed!
+        """
+        del self._centroids
+
     def plot(self, color=None, ax=None):
         """Plot the flattened 2D mesh."""
         if color is None:
-            cm = watershed_workflow.colors.cm_mapper(0,self.num_cells-1)
+            cm = watershed_workflow.colors.cm_mapper(0, self.num_cells - 1)
             colors = [cm(i) for i in range(self.num_cells)]
         else:
             colors = color
 
-        verts = [[self.coords[i,0:2] for i in f] for f in self.conn]
+        verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
         from matplotlib import collections
         gons = collections.PolyCollection(verts, facecolors=colors)
         from matplotlib import pyplot as plt
         if ax is None:
-            fig,ax = plt.subplots(1,1)
+            fig, ax = plt.subplots(1, 1)
         ax.add_collection(gons)
         ax.autoscale_view()
 
-    def write_VTK(self, filename):
+    def write_vtk(self, filename):
         """Writes to VTK."""
-        assert(all(len(c) == 3 for c in self.conn))
-        watershed_workflow.vtk_io.write(filename, self.coords, {'triangle':np.array(self.conn)})
+        assert (all(len(c) == 3 for c in self.conn))
+        watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
 
     def transform(self, mat=None, shift=None):
         """Transform a 2D mesh"""
         if mat is None:
-            mat = np.array([[1,0,0],
-                            [0,1,0],
-                            [0,0,1]])
+            mat = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if shift is None:
-            shift = np.array([0,0,0])
+            shift = np.array([0, 0, 0])
 
         new_coords = []
         for c in self.coords:
-            assert(c.shape == (3,))
-            tc = mat @ c + shift
-            assert(tc.shape == (3,))
+            assert (c.shape == (3, ))
+            tc = mat@c + shift
+            assert (tc.shape == (3, ))
             new_coords.append(tc)
         new_coords = np.array(new_coords)
-        assert(new_coords.shape == self.coords.shape)
+        assert (new_coords.shape == self.coords.shape)
         self.coords = new_coords
 
         # toss geometry cache
@@ -340,7 +354,7 @@ class Mesh2D:
     @classmethod
     def read_VTK_Unstructured(cls, filename):
         """Constructor from an unstructured VTK file."""
-        with open(filename,'rb') as fid:
+        with open(filename, 'rb') as fid:
             points_found = False
             polygons_found = False
             while True:
@@ -358,7 +372,7 @@ class Mesh2D:
 
                 if section == 'POINTS':
                     ncoords = int(split[1])
-                    points = np.fromfile(fid, count=ncoords*3, sep=' ', dtype='d')
+                    points = np.fromfile(fid, count=ncoords * 3, sep=' ', dtype='d')
                     points = points.reshape(ncoords, 3)
                     points_found = True
 
@@ -372,20 +386,20 @@ class Mesh2D:
                     idx = 0
                     for i in range(ncells):
                         n_in_gon = data[idx]
-                        gon = list(data[idx+1:idx+1+n_in_gon])
+                        gon = list(data[idx + 1:idx + 1 + n_in_gon])
 
                         # check handedness -- need normals to point up!
                         cross = []
                         for i in range(len(gon)):
-                            if i == len(gon)-1:
+                            if i == len(gon) - 1:
                                 ip = 0
                                 ipp = 1
-                            elif i == len(gon)-2:
-                                ip = i+1
+                            elif i == len(gon) - 2:
+                                ip = i + 1
                                 ipp = 0
                             else:
-                                ip = i+1
-                                ipp = i+2
+                                ip = i + 1
+                                ipp = i + 2
                             d2 = points[gon[ipp]] - points[gon[ip]]
                             d1 = points[gon[i]] - points[gon[ip]]
                             cross.append(np.cross(d2, d1))
@@ -395,7 +409,7 @@ class Mesh2D:
                         gons.append(gon)
 
                         idx += n_in_gon + 1
-                    assert(idx == n_to_read)
+                    assert (idx == n_to_read)
                     polygons_found = True
 
         if not points_found:
@@ -408,12 +422,14 @@ class Mesh2D:
     def read_VTK_Simplices(cls, filename):
         """Constructor from an structured VTK file.
         """
-        with open(filename,'rb') as fid:
+        with open(filename, 'rb') as fid:
             data = watershed_workflow.vtk_io.read_buffer(fid)
 
         points = data[0]
         if len(data[1]) != 1:
-            raise RuntimeError("Simplex VTK file is readable by vtk_io but not by meshing_ats.  Includes: %r"%data[1].keys())
+            raise RuntimeError(
+                "Simplex VTK file is readable by vtk_io but not by meshing_ats.  Includes: %r"
+                % data[1].keys())
 
         gons = next(v for v in data[1].values())
         gons = gons.tolist()
@@ -422,15 +438,15 @@ class Mesh2D:
         for gon in gons:
             cross = []
             for i in range(len(gon)):
-                if i == len(gon)-1:
+                if i == len(gon) - 1:
                     ip = 0
                     ipp = 1
-                elif i == len(gon)-2:
-                    ip = i+1
+                elif i == len(gon) - 2:
+                    ip = i + 1
                     ipp = 0
                 else:
-                    ip = i+1
-                    ipp = i+2
+                    ip = i + 1
+                    ipp = i + 2
                 d2 = points[gon[ipp]] - points[gon[ip]]
                 d1 = points[gon[i]] - points[gon[ip]]
                 cross.append(np.cross(d2, d1))
@@ -445,32 +461,31 @@ class Mesh2D:
         # coordinates
         if (type(width) is list or type(width) is np.ndarray):
             variable_width = True
-            y = np.array([0,1])
+            y = np.array([0, 1])
         else:
             variable_width = False
-            y = np.array([-width/2,width/2])
+            y = np.array([-width / 2, width / 2])
 
         Xc, Yc = np.meshgrid(x, y)
         if variable_width:
-            assert(Yc.shape[0] == 2)
-            assert(len(width) == Yc.shape[1])
-            assert(min(width) > 0.)
-            Yc[0,:] = -width/2.
-            Yc[1,:] = width/2.
+            assert (Yc.shape[0] == 2)
+            assert (len(width) == Yc.shape[1])
+            assert (min(width) > 0.)
+            Yc[0, :] = -width / 2.
+            Yc[1, :] = width / 2.
 
         Xc = Xc.flatten()
         Yc = Yc.flatten()
-        Zc = np.concatenate([z,z])
+        Zc = np.concatenate([z, z])
 
         # connectivity
-        nsurf_cells = len(x)-1
+        nsurf_cells = len(x) - 1
         conn = []
         for i in range(nsurf_cells):
-            conn.append([i, i+1, nsurf_cells + i + 2, nsurf_cells + i + 1])
+            conn.append([i, i + 1, nsurf_cells + i + 2, nsurf_cells + i + 1])
 
         points = np.array([Xc, Yc, Zc])
         return cls(points.transpose(), conn, **kwargs)
-
 
     def to_dual(self):
         """Creates a 2D surface mesh from a primal 2D triangular surface mesh.
@@ -504,16 +519,15 @@ class Mesh2D:
         logging.info("Constructing Mesh2D as dual of a triangulation.")
         logging.info("-- confirming triangulation (note, not checking delaunay, buyer beware)")
         for c in self.conn:
-            assert(len(c) == 3) # check all triangles
+            assert (len(c) == 3)  # check all triangles
 
-        def circumcenter(p1,p2,p3):
-            d = 2 * (p1[0] * (p2[1] - p3[1]) + p2[0] *
-                     (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1]))
+        def circumcenter(p1, p2, p3):
+            d = 2 * (p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1]))
 
-            xv = ((p1[0]**2 + p1[1]**2) * (p2[1] - p3[1]) + (p2[0]**2 + p2[1]**2)
-                  * (p3[1] - p1[1]) + (p3[0]**2 + p3[1]**2) * (p1[1] - p2[1])) / d
-            yv = ((p1[0]**2 + p1[1]**2) * (p3[0] - p2[0]) + (p2[0]**2 + p2[1]**2)
-                  * (p1[0] - p3[0]) + (p3[0]**2 + p3[1]**2) * (p2[0] - p1[0])) / d
+            xv = ((p1[0]**2 + p1[1]**2) * (p2[1] - p3[1]) + (p2[0]**2 + p2[1]**2) *
+                  (p3[1] - p1[1]) + (p3[0]**2 + p3[1]**2) * (p1[1] - p2[1])) / d
+            yv = ((p1[0]**2 + p1[1]**2) * (p3[0] - p2[0]) + (p2[0]**2 + p2[1]**2) *
+                  (p1[0] - p3[0]) + (p3[0]**2 + p3[1]**2) * (p2[0] - p1[0])) / d
             return (xv, yv)
 
         # dual nodes are given by:
@@ -524,12 +538,12 @@ class Mesh2D:
         # dual cells are given by:
         # - primal cell nodes (modulo the boundary)
 
-        coords = self.coords[:,0:2]
+        coords = self.coords[:, 0:2]
         logging.info("-- computing primary boundary edges")
         boundary_edges = self.boundary_edges
-        n_dual_nodes = len(self.conn) + 2*len(boundary_edges)
+        n_dual_nodes = len(self.conn) + 2 * len(boundary_edges)
         logging.info("     n_primal_cell = {}, n_boundary_edges = {}, n_dual_nodes = "
-                    "{}".format(len(self.conn), len(boundary_edges), n_dual_nodes))
+                     "{}".format(len(self.conn), len(boundary_edges), n_dual_nodes))
 
         # create space to populate dual coordinates
         dual_nodes = np.zeros((n_dual_nodes, 2), 'd')
@@ -582,7 +596,7 @@ class Mesh2D:
 
             # stick in the next midpoint node, add to my_cell
             next_midp_n = i_dual_node
-            next_midp = (coords[e[0]][:] + coords[e[1]][:])/2.
+            next_midp = (coords[e[0]][:] + coords[e[1]][:]) / 2.
             dual_nodes[i_dual_node][:] = next_midp
             i_dual_node += 1
             my_cell.append(next_midp_n)
@@ -595,7 +609,7 @@ class Mesh2D:
             prev_midp_n = next_midp_n
 
         # patch up the first cell added
-        assert(dual_cells[first_cell_added][-3] == -1)
+        assert (dual_cells[first_cell_added][-3] == -1)
         dual_cells[first_cell_added][-3] = prev_midp_n
 
         logging.info("    added {} boundary nodes".format(len(boundary_edges)))
@@ -610,7 +624,7 @@ class Mesh2D:
         #
         # Order those nodes, and collect a list of coincident nodes for removal.
         logging.info("-- Finding duplicates and ordering conn_cell_to_node")
-        nodes_to_kill = dict() # coincident nodes (key = node to remove, val = coincident node)
+        nodes_to_kill = dict()  # coincident nodes (key = node to remove, val = coincident node)
         for i in range(len(dual_cells)):
             c = dual_cells[i]
 
@@ -618,12 +632,13 @@ class Mesh2D:
                 # check for duplicate nodes
                 to_pop = []
                 for k in range(len(c)):
-                    for j in range(k+1, len(c)):
+                    for j in range(k + 1, len(c)):
                         if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
                             logging.info("    found dup on boundary cell {} = {}".format(i, c))
-                            logging.info("        indices = {}, {}".format(k,j))
-                            logging.info("        nodes = {}, {}".format(c[k],c[j]))
-                            logging.info("        coords = {}, {}".format(dual_nodes[c[k]], dual_nodes[c[j]]))
+                            logging.info("        indices = {}, {}".format(k, j))
+                            logging.info("        nodes = {}, {}".format(c[k], c[j]))
+                            logging.info("        coords = {}, {}".format(
+                                dual_nodes[c[k]], dual_nodes[c[j]]))
 
                             if c[k] in nodes_to_kill:
                                 assert c[j] == nodes_to_kill[c[k]]
@@ -634,7 +649,7 @@ class Mesh2D:
                                 assert j < len(c) - 3
                                 to_pop.append(j)
                             else:
-                                assert k < len(c)-3
+                                assert k < len(c) - 3
                                 nodes_to_kill[c[k]] = c[j]
                                 to_pop.append(k)
 
@@ -644,13 +659,16 @@ class Mesh2D:
 
                 # may not be convex -- triangulate
                 c_orig = c[:]
-                c0 = c[-1] # the primal node
-                cup = c[-2] # boundary midpoint, one direction
-                cdn = c[-3] # boundary midpoint, the other direction
+                c0 = c[-1]  # the primal node
+                cup = c[-2]  # boundary midpoint, one direction
+                cdn = c[-3]  # boundary midpoint, the other direction
 
                 # order the nodes (minus the primal node) clockwise around the primal node
                 cell_coords = np.array([dual_nodes[cj] for cj in c[:-1]]) - dual_nodes[c0]
-                angle = np.array([np.arctan2(cell_coords[j,1], cell_coords[j,0]) for j in range(len(cell_coords))])
+                angle = np.array([
+                    np.arctan2(cell_coords[j, 1], cell_coords[j, 0])
+                    for j in range(len(cell_coords))
+                ])
                 order = np.argsort(angle)
                 c = [c[j] for j in order]
 
@@ -660,9 +678,9 @@ class Mesh2D:
                 up_i = c.index(cup)
                 dn_i = c.index(cdn)
 
-                if dn_i == (up_i + 1)%len(c):
+                if dn_i == (up_i+1) % len(c):
                     cn = c[dn_i:] + c[0:dn_i]
-                elif up_i == (dn_i + 1)%len(c):
+                elif up_i == (dn_i+1) % len(c):
                     cn = c[up_i:] + c[0:up_i]
                 else:
                     # I screwed up... debug me!
@@ -672,21 +690,34 @@ class Mesh2D:
 
                     cc_sorted = np.array([cell_coords[k] for k in order]) + dual_nodes[c0]
                     cb_sorted = np.array([dual_nodes[cdn], dual_nodes[c], dual_nodes[cup]])
-                    ax.plot(cc_sorted[:,0], cc_sorted[:,1], 'k-x')
-                    ax.scatter(dual_nodes[c0,0], dual_nodes[c0,1], color='r')
-                    ax.scatter(dual_nodes[cup,0], dual_nodes[cup,1], color='m')
-                    ax.scatter(dual_nodes[cdn,0], dual_nodes[cdn,1], color='b')
+                    ax.plot(cc_sorted[:, 0], cc_sorted[:, 1], 'k-x')
+                    ax.scatter(dual_nodes[c0, 0], dual_nodes[c0, 1], color='r')
+                    ax.scatter(dual_nodes[cup, 0], dual_nodes[cup, 1], color='m')
+                    ax.scatter(dual_nodes[cdn, 0], dual_nodes[cdn, 1], color='b')
                     plt.show()
 
                     fig = plt.figure(figsize=figsize)
                     ax = watershed_workflow.plot.get_ax(crs, fig)
 
-                    mp = watershed_workflow.plot.triangulation(mesh_points3, mesh_tris, crs, ax=ax,
-                                         color='elevation', edgecolor='white', linewidth=0.4)
+                    mp = watershed_workflow.plot.triangulation(mesh_points3,
+                                                               mesh_tris,
+                                                               crs,
+                                                               ax=ax,
+                                                               color='elevation',
+                                                               edgecolor='white',
+                                                               linewidth=0.4)
                     cbar = fig.colorbar(mp, orientation="horizontal", pad=0.05)
                     #watershed_workflow.plot.hucs(shapes, crs, ax=ax, color='k', linewidth=1)
-                    watershed_workflow.plot.shply([shapely.geometry.LineString(cc_sorted),], crs, ax=ax, color='red', linewidth=1)
-                    watershed_workflow.plot.shply([shapely.geometry.LineString(cb_sorted),], crs, ax=ax, color='blue', linewidth=1)
+                    watershed_workflow.plot.shply([shapely.geometry.LineString(cc_sorted), ],
+                                                  crs,
+                                                  ax=ax,
+                                                  color='red',
+                                                  linewidth=1)
+                    watershed_workflow.plot.shply([shapely.geometry.LineString(cb_sorted), ],
+                                                  crs,
+                                                  ax=ax,
+                                                  color='blue',
+                                                  linewidth=1)
                     ax.set_aspect('equal', 'datalim')
 
                     raise RuntimeError('uh oh borked geom')
@@ -694,23 +725,24 @@ class Mesh2D:
                 # triangulate the truncated dual polygon, always including the
                 # primal node to guarantee all triangles exist and partition
                 # the polygon.
-                for k in range(len(cn)-1):
+                for k in range(len(cn) - 1):
                     if k == 0:
-                        dual_cells[i] = [c0, cn[k+1], cn[k]]
+                        dual_cells[i] = [c0, cn[k + 1], cn[k]]
                     else:
-                        dual_cells.append([c0, cn[k+1], cn[k]])
+                        dual_cells.append([c0, cn[k + 1], cn[k]])
                         dual_from_primal_mapping.append(i)
 
             else:
                 # NOT a boundary polygon.  Simply order and check for duplicate nodes.
                 to_pop = []
                 for k in range(len(c)):
-                    for j in range(k+1, len(c)):
+                    for j in range(k + 1, len(c)):
                         if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
                             logging.info("    found dup on interior cell {} = {}".format(i, c))
-                            logging.info("        indices = {}, {}".format(k,j))
-                            logging.info("        nodes = {}, {}".format(c[k],c[j]))
-                            logging.info("        coords = {}, {}".format(dual_nodes[c[k]], dual_nodes[c[j]]))
+                            logging.info("        indices = {}, {}".format(k, j))
+                            logging.info("        nodes = {}, {}".format(c[k], c[j]))
+                            logging.info("        coords = {}, {}".format(
+                                dual_nodes[c[k]], dual_nodes[c[j]]))
 
                             if c[k] in nodes_to_kill:
                                 assert c[j] == nodes_to_kill[c[k]]
@@ -728,7 +760,10 @@ class Mesh2D:
 
                 # order around the primal node (now dual cell centroid)
                 cell_coords = np.array([dual_nodes[j] for j in c]) - coords[i]
-                angle = np.array([np.arctan2(cell_coords[j,1], cell_coords[j,0]) for j in range(len(cell_coords))])
+                angle = np.array([
+                    np.arctan2(cell_coords[j, 1], cell_coords[j, 0])
+                    for j in range(len(cell_coords))
+                ])
                 order = np.argsort(angle)
                 dual_cells[i] = [c[j] for j in order]
 
@@ -748,7 +783,7 @@ class Mesh2D:
                 i += 1
         for j in nodes_to_kill.keys():
             compression_map[j] = compression_map[nodes_to_kill[j]]
-        assert(compression_map.min() >= 0)
+        assert (compression_map.min() >= 0)
 
         # -- delete the nodes
         to_kill = sorted(list(nodes_to_kill.keys()))
@@ -757,11 +792,11 @@ class Mesh2D:
         for c in dual_cells:
             for j in range(len(c)):
                 c[j] = compression_map[c[j]]
-            assert(min(c) >= 0)
+            assert (min(c) >= 0)
 
         return dual_nodes, dual_cells, np.array(dual_from_primal_mapping)
 
-    
+
 @attr.define(slots=False)
 class Mesh3D:
     """A 3D mesh class.
@@ -798,7 +833,7 @@ class Mesh3D:
     crs = attr.ib(default=None)
     eps = attr.ib(default=0.001)
     _validate = attr.ib(default=False)
-                     
+
     def __attrs_post_init__(self):
         if self._validate:
             self.validate()
@@ -815,7 +850,7 @@ class Mesh3D:
     @property
     def material_ids_list(self):
         return sorted(list(set(self.material_ids)))
-    
+
     @property
     def dim(self):
         return self.coords.shape[1]
@@ -831,42 +866,42 @@ class Mesh3D:
     @property
     def num_faces(self):
         return len(self.face_to_node_conn)
-        
-    
+
     def validate(self):
         """Checks the validity of the mesh, or throws an AssertionError."""
         # validate coords
-        assert(isinstance(self.coords, np.ndarray))
-        assert(len(self.coords.shape) == 2)
-        assert(self.coords.shape[1] == 3)
+        assert (isinstance(self.coords, np.ndarray))
+        assert (len(self.coords.shape) == 2)
+        assert (self.coords.shape[1] == 3)
 
         # validate conn
-        assert(min(c for conn in self.face_to_node_conn for c in conn) >= 0)
-        assert(max(c for conn in self.face_to_node_conn for c in conn) < len(self.coords))
+        assert (min(c for conn in self.face_to_node_conn for c in conn) >= 0)
+        assert (max(c for conn in self.face_to_node_conn for c in conn) < len(self.coords))
 
-        assert(min(c for conn in self.cell_to_face_conn for c in conn) >= 0)
-        assert(max(c for conn in self.cell_to_face_conn for c in conn) < len(self.face_to_node_conn))
+        assert (min(c for conn in self.cell_to_face_conn for c in conn) >= 0)
+        assert (max(c for conn in self.cell_to_face_conn
+                    for c in conn) < len(self.face_to_node_conn))
 
         # validate labeled_sets and side sets
         ls_ss_ids = [ls.setid for ls in self.labeled_sets] + \
             [ss.setid for ss in self.side_sets]
-        assert(len(set(ls_ss_ids)) == len(ls_ss_ids))
+        assert (len(set(ls_ss_ids)) == len(ls_ss_ids))
 
         for ls in self.labeled_sets:
             if ls.entity == 'CELL':
-               size = self.num_cells
+                size = self.num_cells
             elif ls.entity == 'NODE':
                 size = self.num_nodes
             else:
-                assert(False) # no face or edge sets
+                assert (False)  # no face or edge sets
             ls.validate(size, False)
 
         for ss in self.side_sets:
             ss.validate(self.cell_to_face_conn)
 
         # validate material ids
-        assert(self.material_ids is not None)
-        assert(len(self.material_ids) == len(self.cell_to_face_conn))
+        assert (self.material_ids is not None)
+        assert (len(self.material_ids) == len(self.cell_to_face_conn))
 
     def next_available_labeled_setid(self):
         """Returns next available LS id."""
@@ -876,8 +911,31 @@ class Mesh3D:
             i += 1
         return i
 
+    def write_vtk(self, filename):
+        """Writes to VTK.
+
+        Note, this just writes the topology/geometry information, for
+        WEDGE type meshes (extruded triangles).  No labeled sets are
+        written.  Prefer to use write_exodus() for a fully featured
+        mesh.
+
+        """
+        assert (all(len(c) == 5 for c in self.cell_to_face_conn))
+        wedges = []
+        for c2f in self.cell_to_face_conn:
+            fup = c2f[0]
+            fdn = c2f[1]
+            assert (len(self.face_to_node_conn[fup]) == 3 and len(self.face_to_node_conn[fdn]) == 3)
+            wedges.append(self.face_to_node_conn[fup] + self.face_to_node_conn[fdn])
+        watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
+
     def write_exodus(self, filename, face_block_mode="one block"):
         """Write the 3D mesh to ExodusII using arbitrary polyhedra spec"""
+        if exodus is None:
+            raise ImportError(
+                "The python ExodusII wrappers were not found, please see the installation documentation to install Exodus"
+            )
+
         # Note exodus uses the term element instead of cell, so we
         # swap to that term in this method.
 
@@ -892,14 +950,16 @@ class Mesh3D:
         # -- first pass, form all element blocks and make the map from old-to-new
         new_to_old_elems = []
         elem_blks = []
-        for i_m,m_id in enumerate(self.material_ids_list):
+        for i_m, m_id in enumerate(self.material_ids_list):
             # split out elems of this material, save new_to_old map
-            elems_tuple = [(i,c) for (i,c) in enumerate(self.cell_to_face_conn) if self.material_ids[i] == m_id]
-            new_to_old_elems.extend([i for (i,c) in elems_tuple])
-            elems = [c for (i,c) in elems_tuple]
+            elems_tuple = [(i, c) for (i, c) in enumerate(self.cell_to_face_conn)
+                           if self.material_ids[i] == m_id]
+            new_to_old_elems.extend([i for (i, c) in elems_tuple])
+            elems = [c for (i, c) in elems_tuple]
             elem_blks.append(elems)
 
-        old_to_new_elems = sorted([(old,i) for (i,old) in enumerate(new_to_old_elems)], key=lambda a: a[0])
+        old_to_new_elems = sorted([(old, i) for (i, old) in enumerate(new_to_old_elems)],
+                                  key=lambda a: a[0])
 
         # -- deal with faces, form all face blocks and make the map from old-to-new
         face_blks = []
@@ -908,9 +968,9 @@ class Mesh3D:
             face_blks.append(self.face_to_node_conn)
 
         elif face_block_mode == "n blocks, not duplicated":
-            used_faces = np.zeros((len(self.face_to_node_conn),),'bool')
+            used_faces = np.zeros((len(self.face_to_node_conn), ), 'bool')
             new_to_old_faces = []
-            for i_m,m_id in enumerate(self.material_ids_list):
+            for i_m, m_id in enumerate(self.material_ids_list):
                 # split out faces of this material, save new_to_old map
                 def used(f):
                     result = used_faces[f]
@@ -918,20 +978,24 @@ class Mesh3D:
                     return result
 
                 elem_blk = elem_blks[i_m]
-                faces_tuple = [(f,self.face_to_node_conn[f]) for c in elem_blk for (j,f) in enumerate(c) if not used(f)]
-                new_to_old_faces.extend([j for (j,f) in faces_tuple])
-                faces = [f for (j,f) in faces_tuple]
+                faces_tuple = [(f, self.face_to_node_conn[f]) for c in elem_blk
+                               for (j, f) in enumerate(c) if not used(f)]
+                new_to_old_faces.extend([j for (j, f) in faces_tuple])
+                faces = [f for (j, f) in faces_tuple]
                 face_blks.append(faces)
 
             # get the renumbering in the elems
-            old_to_new_faces = sorted([(old,j) for (j,old) in enumerate(new_to_old_faces)], key=lambda a: a[0])
-            elem_blks = [[[old_to_new_faces[f][1] for f in c] for c in elem_blk] for elem_blk in elem_blks]
+            old_to_new_faces = sorted([(old, j) for (j, old) in enumerate(new_to_old_faces)],
+                                      key=lambda a: a[0])
+            elem_blks = [[[old_to_new_faces[f][1] for f in c] for c in elem_blk]
+                         for elem_blk in elem_blks]
 
         elif face_block_mode == "n blocks, duplicated":
             elem_blks_new = []
             offset = 0
             for i_m, m_id in enumerate(self.material_ids_list):
-                used_faces = np.zeros((len(self.face_to_node_conn),),'bool')
+                used_faces = np.zeros((len(self.face_to_node_conn), ), 'bool')
+
                 def used(f):
                     result = used_faces[f]
                     used_faces[f] = True
@@ -939,26 +1003,28 @@ class Mesh3D:
 
                 elem_blk = elem_blks[i_m]
 
-                tuple_old_f = [(f,self.face_to_node_conn[f]) for c in elem_blk for f in c if not used(f)]
-                tuple_new_old_f = [(new,old,f) for (new,(old,f)) in enumerate(tuple_old_f)]
+                tuple_old_f = [(f, self.face_to_node_conn[f]) for c in elem_blk for f in c
+                               if not used(f)]
+                tuple_new_old_f = [(new, old, f) for (new, (old, f)) in enumerate(tuple_old_f)]
 
-                old_to_new_blk = np.zeros((len(self.face_to_node_conn),),'i')-1
-                for new,old,f in tuple_new_old_f:
+                old_to_new_blk = np.zeros((len(self.face_to_node_conn), ), 'i') - 1
+                for new, old, f in tuple_new_old_f:
                     old_to_new_blk[old] = new + offset
 
                 elem_blk_new = [[old_to_new_blk[f] for f in c] for c in elem_blk]
                 #offset = offset + len(ftuple_new)
 
                 elem_blks_new.append(elem_blk_new)
-                face_blks.append([f for i,j,f in tuple_new_old_f])
+                face_blks.append([f for i, j, f in tuple_new_old_f])
             elem_blks = elem_blks_new
         elif face_block_mode == "one block, repeated":
             # no reordering of faces needed, just repeat
             for eblock in elem_blks:
                 face_blks.append(self.face_to_node_conn)
         else:
-            raise RuntimeError("Invalid face_block_mode: '%s', valid='one block', 'n blocks, duplicated', 'n blocks, not duplicated'"%face_block_mode)
-
+            raise RuntimeError(
+                "Invalid face_block_mode: '%s', valid='one block', 'n blocks, duplicated', 'n blocks, not duplicated'"
+                % face_block_mode)
 
         # open the mesh file
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
@@ -973,20 +1039,21 @@ class Mesh3D:
                                    num_elem=num_elems,
                                    num_elem_blk=len(elem_blks),
                                    num_side_sets=len(self.side_sets),
-                                   num_elem_sets=sum(1 for ls in self.labeled_sets if ls.entity == 'CELL'),
+                                   num_elem_sets=sum(1 for ls in self.labeled_sets
+                                                     if ls.entity == 'CELL'),
                                    )
         e = exodus.exodus(filename, mode='w', array_type='numpy', init_params=ep)
 
         # put the coordinates
         e.put_coord_names(['coordX', 'coordY', 'coordZ'])
-        e.put_coords(self.coords[:,0], self.coords[:,1], self.coords[:,2])
+        e.put_coords(self.coords[:, 0], self.coords[:, 1], self.coords[:, 2])
 
         # put the face blocks
         for i_blk, face_blk in enumerate(face_blks):
             face_raveled = [n for f in face_blk for n in f]
-            e.put_polyhedra_face_blk(i_blk+1, len(face_blk), len(face_raveled), 0)
-            e.put_node_count_per_face(i_blk+1, np.array([len(f) for f in face_blk]))
-            e.put_face_node_conn(i_blk+1, np.array(face_raveled)+1)
+            e.put_polyhedra_face_blk(i_blk + 1, len(face_blk), len(face_raveled), 0)
+            e.put_node_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
+            e.put_face_node_conn(i_blk + 1, np.array(face_raveled) + 1)
 
         # put the elem blocks
         assert len(elem_blks) == len(self.material_ids_list)
@@ -994,21 +1061,22 @@ class Mesh3D:
             elems_raveled = [f for c in elem_blk for f in c]
 
             e.put_polyhedra_elem_blk(m_id, len(elem_blk), len(elems_raveled), 0)
-            e.put_elem_blk_name(m_id, 'MATERIAL_ID_%d'%m_id)
+            e.put_elem_blk_name(m_id, 'MATERIAL_ID_%d' % m_id)
             e.put_face_count_per_polyhedra(m_id, np.array([len(c) for c in elem_blk]))
-            e.put_elem_face_conn(m_id, np.array(elems_raveled)+1)
+            e.put_elem_face_conn(m_id, np.array(elems_raveled) + 1)
 
         # add sidesets
         for ss in self.side_sets:
             logging.info(f'adding side set: {ss.setid}')
             for elem in ss.cell_list:
                 assert old_to_new_elems[elem][0] == elem
-            new_elem_list = sorted([(old_to_new_elems[elem][1],side) for (elem,side) in zip(ss.cell_list, ss.side_list)])
+            new_elem_list = sorted([(old_to_new_elems[elem][1], side)
+                                    for (elem, side) in zip(ss.cell_list, ss.side_list)])
             e.put_side_set_params(ss.setid, len(ss.cell_list), 0)
             e.put_side_set_name(ss.setid, ss.name)
             e.put_side_set(ss.setid,
-                           np.array([e_id for (e_id, side) in new_elem_list])+1,
-                           np.array([side for (e_id, side) in new_elem_list])+1)
+                           np.array([e_id for (e_id, side) in new_elem_list]) + 1,
+                           np.array([side for (e_id, side) in new_elem_list]) + 1)
 
         # add labeled sets
         for ls in self.labeled_sets:
@@ -1017,13 +1085,12 @@ class Mesh3D:
                 new_elem_list = sorted([old_to_new_elems[elem][1] for elem in ls.ent_ids])
                 e.put_elem_set_params(ls.setid, len(new_elem_list), None)
                 e.put_elem_set_name(ls.setid, ls.name)
-                e.put_elem_set(ls.setid, np.array(new_elem_list)+1)
+                e.put_elem_set(ls.setid, np.array(new_elem_list) + 1)
             else:
                 warnings.warning(f'Cannot write labeled set of type {ls.entity}')
 
         # finish and close
         e.close()
-
 
     @staticmethod
     def summarize_extrusion(layer_types, layer_data, ncells_per_layer, mat_ids, surface_cell_id=0):
@@ -1035,21 +1102,20 @@ class Mesh3D:
         """
         count = 0
         logging.info("Cell summary:")
-        logging.info("-"*60)
+        logging.info("-" * 60)
         logging.info("l_id\t| c_id\t|mat_id\t| dz\t\t| z_top")
-        logging.info("-"*60)
+        logging.info("-" * 60)
         rep_z = 0.
-        for i,thick in enumerate(layer_data):
+        for i, thick in enumerate(layer_data):
             for j in range(ncells_per_layer[i]):
                 try:
                     mat_id = mat_ids[i][surface_cell_id]
                 except TypeError:
                     mat_id = mat_ids[i]
-                logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f"%(i,
-                             count,mat_id,thick/ncells_per_layer[i], rep_z))
+                logging.info(" %02i \t| %02i \t| %4i \t| %10.6f \t| %10.6f" %
+                             (i, count, mat_id, thick / ncells_per_layer[i], rep_z))
                 count += 1
-                rep_z += thick/ncells_per_layer[i]
-
+                rep_z += thick / ncells_per_layer[i]
 
     @classmethod
     def extruded_Mesh2D(cls, mesh2D, layer_types, layer_data, ncells_per_layer, mat_ids):
@@ -1094,30 +1160,30 @@ class Mesh3D:
 
         if is_list(layer_types):
             if not is_list(layer_data):
-                layer_data = [layer_data,]*len(layer_types)
+                layer_data = [layer_data, ] * len(layer_types)
             else:
                 assert len(layer_data) == len(layer_types)
 
             if not is_list(ncells_per_layer):
-                ncells_per_layer = [ncells_per_layer,]*len(layer_types)
+                ncells_per_layer = [ncells_per_layer, ] * len(layer_types)
             else:
                 assert len(ncells_per_layer) == len(layer_types)
 
         elif is_list(layer_data):
-            layer_types = [layer_types,]*len(layer_data)
+            layer_types = [layer_types, ] * len(layer_data)
 
             if not is_list(ncells_per_layer):
-                ncells_per_layer = [ncells_per_layer,]*len(layer_data)
+                ncells_per_layer = [ncells_per_layer, ] * len(layer_data)
             else:
                 assert len(ncells_per_layer) == len(layer_data)
 
         elif is_list(ncells_per_layer):
-            layer_type = [layer_type,]*len(ncells_per_layer)
-            layer_data = [layer_data,]*len(ncells_per_layer)
+            layer_type = [layer_type, ] * len(ncells_per_layer)
+            layer_data = [layer_data, ] * len(ncells_per_layer)
         else:
-            layer_type = [layer_type,]
-            layer_data = [layer_data,]
-            ncells_per_layer = [ncells_per_layer,]
+            layer_type = [layer_type, ]
+            layer_data = [layer_data, ]
+            ncells_per_layer = [ncells_per_layer, ]
 
         # helper data and functions for mapping indices from 2D to 3D
         # ------------------------------------------------------------------
@@ -1133,32 +1199,33 @@ class Mesh3D:
         np_mat_ids = np.array(mat_ids, dtype=int)
         if np_mat_ids.size == np.size(np_mat_ids, 0):
             if np_mat_ids.size == 1:
-                np_mat_ids = np.full((len(ncells_per_layer), mesh2D.num_cells), mat_ids[0], dtype=int)
+                np_mat_ids = np.full((len(ncells_per_layer), mesh2D.num_cells),
+                                     mat_ids[0],
+                                     dtype=int)
             else:
                 np_mat_ids = np.empty((len(ncells_per_layer), mesh2D.num_cells), dtype=int)
                 for ilay in range(len(ncells_per_layer)):
                     np_mat_ids[ilay, :] = np.full(mesh2D.num_cells, mat_ids[ilay], dtype=int)
 
-
         # create coordinates
         # ---------------------------------
-        coords = np.zeros((mesh2D.coords.shape[0],ncells_tall+1, 3),'d')
-        coords[:,:,0:2] = np.expand_dims(mesh2D.coords[:,0:2],1)
+        coords = np.zeros((mesh2D.coords.shape[0], ncells_tall + 1, 3), 'd')
+        coords[:, :, 0:2] = np.expand_dims(mesh2D.coords[:, 0:2], 1)
 
         if mesh2D.dim == 3:
-            coords[:,0,2] = mesh2D.coords[:,2]
+            coords[:, 0, 2] = mesh2D.coords[:, 2]
         # else the surface is at 0 depth
 
         cell_layer_start = 0
         for layer_type, layer_datum, ncells in zip(layer_types, layer_data, ncells_per_layer):
             if layer_type.lower() == 'constant':
                 dz = float(layer_datum) / ncells
-                for i in range(1,ncells+1):
-                    coords[:,cell_layer_start+i,2] = coords[:,cell_layer_start,2] - i * dz
+                for i in range(1, ncells + 1):
+                    coords[:, cell_layer_start + i, 2] = coords[:, cell_layer_start, 2] - i*dz
 
             else:
                 # allocate an array of coordinates for the bottom of the layer
-                layer_bottom = np.zeros((mesh2D.coords.shape[0],),'d')
+                layer_bottom = np.zeros((mesh2D.coords.shape[0], ), 'd')
 
                 if layer_type.lower() == 'snapped':
                     # layer bottom is uniform
@@ -1167,25 +1234,34 @@ class Mesh3D:
                 elif layer_type.lower() == 'function':
                     # layer thickness is given by a function evaluation of x,y
                     for node_col in range(mesh2D.coords.shape[0]):
-                        layer_bottom[node_col] = coords[node_col,cell_layer_start,2] - layer_datum(coords[node_col,0,0], coords[node_col,0,1])
+                        layer_bottom[node_col] = coords[node_col, cell_layer_start,
+                                                        2] - layer_datum(
+                                                            coords[node_col, 0, 0], coords[node_col,
+                                                                                           0, 1])
 
                 elif layer_type.lower() == 'node':
                     # layer bottom specifically provided through thickness
-                    layer_bottom[:] = coords[:,cell_layer_start,2] - layer_datum
+                    layer_bottom[:] = coords[:, cell_layer_start, 2] - layer_datum
 
                 elif layer_type.lower() == 'cell':
                     # interpolate cell thicknesses to node thicknesses
                     import scipy.interpolate
                     centroids = mesh2D.centroids
-                    interp = scipy.interpolate.interp2d(centroids[:,0], centroids[:,1], layer_datum, kind='linear')
-                    layer_bottom[:] = coords[:,cell_layer_start,2] - interp(mesh2D.coords[:,0], mesh2D.coords[:,1])
+                    interp = scipy.interpolate.interp2d(centroids[:, 0],
+                                                        centroids[:, 1],
+                                                        layer_datum,
+                                                        kind='linear')
+                    layer_bottom[:] = coords[:, cell_layer_start, 2] - interp(
+                        mesh2D.coords[:, 0], mesh2D.coords[:, 1])
 
                 else:
-                    raise RuntimeError("Unrecognized layer_type '%s'"%layer_type)
+                    raise RuntimeError("Unrecognized layer_type '%s'" % layer_type)
 
                 # linspace from bottom of previous layer to bottom of this layer
                 for node_col in range(mesh2D.coords.shape[0]):
-                    coords[node_col,cell_layer_start:cell_layer_start+ncells+1,2] = np.linspace(coords[node_col,cell_layer_start,2], layer_bottom[node_col], ncells+1)
+                    coords[node_col, cell_layer_start:cell_layer_start + ncells + 1,
+                           2] = np.linspace(coords[node_col, cell_layer_start, 2],
+                                            layer_bottom[node_col], ncells + 1)
 
             cell_layer_start = cell_layer_start + ncells
 
@@ -1198,7 +1274,7 @@ class Mesh3D:
         # -- loop over the columns, adding the horizontal faces
         for col in range(mesh2D.num_cells):
             nodes_2 = mesh2D.conn[col]
-            surface.append(eh.col_to_id(col,0))
+            surface.append(eh.col_to_id(col, 0))
             for z_face in range(ncells_tall + 1):
                 i_f = len(faces)
                 f = [eh.node_to_id(n, z_face) for n in nodes_2]
@@ -1206,10 +1282,10 @@ class Mesh3D:
                 if z_face != ncells_tall:
                     cells[eh.col_to_id(col, z_face)].append(i_f)
                 if z_face != 0:
-                    cells[eh.col_to_id(col, z_face-1)].append(i_f)
+                    cells[eh.col_to_id(col, z_face - 1)].append(i_f)
 
                 faces.append(f)
-            bottom.append(eh.col_to_id(col,ncells_tall-1))
+            bottom.append(eh.col_to_id(col, ncells_tall - 1))
 
         # -- loop over the columns, adding the vertical faces
         added = dict()
@@ -1218,7 +1294,7 @@ class Mesh3D:
         for col in range(mesh2D.num_cells):
             nodes_2 = mesh2D.conn[col]
             for i in range(len(nodes_2)):
-                edge = mesh2D.edge_hash(nodes_2[i], nodes_2[(i+1)%len(nodes_2)])
+                edge = mesh2D.edge_hash(nodes_2[i], nodes_2[(i+1) % len(nodes_2)])
                 try:
                     i_e = added[edge]
                 except KeyError:
@@ -1229,10 +1305,12 @@ class Mesh3D:
                     for z_face in range(ncells_tall):
                         i_f = len(faces)
                         assert i_f == eh.edge_to_id(i_e, z_face)
-                        f = [eh.node_to_id(edge[0], z_face),
-                             eh.node_to_id(edge[1], z_face),
-                             eh.node_to_id(edge[1], z_face+1),
-                             eh.node_to_id(edge[0], z_face+1)]
+                        f = [
+                            eh.node_to_id(edge[0], z_face),
+                            eh.node_to_id(edge[1], z_face),
+                            eh.node_to_id(edge[1], z_face + 1),
+                            eh.node_to_id(edge[0], z_face + 1)
+                        ]
                         faces.append(f)
                         face_cell = eh.col_to_id(col, z_face)
                         cells[face_cell].append(i_f)
@@ -1240,14 +1318,13 @@ class Mesh3D:
                         # check if this is an external
                         if mesh2D.edge_counts[edge] == 1:
                             vertical_side_cells.append(face_cell)
-                            vertical_side_indices.append(len(cells[face_cell])-1)
+                            vertical_side_indices.append(len(cells[face_cell]) - 1)
 
                 else:
                     # faces already added from previous column
                     for z_face in range(ncells_tall):
                         i_f = eh.edge_to_id(i_e, z_face)
                         cells[eh.col_to_id(col, z_face)].append(i_f)
-
 
         # Do some idiot checking
         # -- check we got the expected number of faces
@@ -1261,24 +1338,24 @@ class Mesh3D:
         assert len(bottom) == mesh2D.num_cells
 
         # -- len of vertical sides sideset is number of external edges * number of cells, no pinchouts here
-        num_sides = ncells_tall * sum(1 for e,c in mesh2D.edge_counts.items() if c == 1)
+        num_sides = ncells_tall * sum(1 for e, c in mesh2D.edge_counts.items() if c == 1)
         assert num_sides == len(vertical_side_cells)
         assert num_sides == len(vertical_side_indices)
 
         # make the material ids
-        material_ids = np.zeros((len(cells),),'i')
+        material_ids = np.zeros((len(cells), ), 'i')
         for col in range(mesh2D.num_cells):
             z_cell = 0
             for ilay in range(len(ncells_per_layer)):
                 ncells = ncells_per_layer[ilay]
-                for i in range(z_cell, z_cell+ncells):
+                for i in range(z_cell, z_cell + ncells):
                     material_ids[eh.col_to_id(col, i)] = np_mat_ids[ilay, col]
                 z_cell = z_cell + ncells
 
         # make the side sets
         side_sets = []
-        side_sets.append(SideSet("bottom", 1, bottom, [1,]*len(bottom)))
-        side_sets.append(SideSet("surface", 2, surface, [0,]*len(surface)))
+        side_sets.append(SideSet("bottom", 1, bottom, [1, ] * len(bottom)))
+        side_sets.append(SideSet("surface", 2, surface, [0, ] * len(surface)))
         side_sets.append(SideSet("external_sides", 3, vertical_side_cells, vertical_side_indices))
 
         labeled_sets = []
@@ -1286,11 +1363,11 @@ class Mesh3D:
             if ls.entity == 'CELL':
                 if hasattr(ls, 'to_extrude') and ls.to_extrude:
                     # top surface cells, to become columns of cells
-                    elem_list = [eh.col_to_id(c,j) for j in range(ncells_tall) for c in ls.ent_ids]
+                    elem_list = [eh.col_to_id(c, j) for j in range(ncells_tall) for c in ls.ent_ids]
                     labeled_sets.append(LabeledSet(ls.name, ls.setid, 'CELL', elem_list))
                 else:
                     # top surface cells, to become side sets
-                    elem_list = [eh.col_to_id(c,0) for c in ls.ent_ids]
+                    elem_list = [eh.col_to_id(c, 0) for c in ls.ent_ids]
                     side_list = [0 for c in ls.ent_ids]
                     side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
             elif ls.entity == 'FACE':
@@ -1299,25 +1376,35 @@ class Mesh3D:
                 outlet_ids_names = []
 
                 # given a 2D edge, find the 2D cell it touches
-                col_ids = [mesh2D.edges_to_cells[mesh2D.edge_hash(e[0],e[1])][0]
-                           for e in ls.ent_ids]
+                col_ids = [
+                    mesh2D.edges_to_cells[mesh2D.edge_hash(e[0], e[1])][0] for e in ls.ent_ids
+                ]
                 if hasattr(ls, 'to_extrude') and ls.to_extrude:
                     elem_list = [eh.col_to_id(c, i) for c in col_ids for i in range(ncells_tall)]
-                    face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], i)
-                                 for e in ls.ent_ids for i in range(ncells_tall)]
-                    side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
+                    face_list = [
+                        eh.edge_to_id(added[mesh2D.edge_hash(e[0], e[1])], i) for e in ls.ent_ids
+                        for i in range(ncells_tall)
+                    ]
+                    side_list = [cells[c].index(f) for (f, c) in zip(face_list, elem_list)]
                 else:
                     elem_list = [eh.col_to_id(c, 0) for c in col_ids]
-                    face_list = [eh.edge_to_id(added[mesh2D.edge_hash(e[0],e[1])], 0)
-                                 for e in ls.ent_ids]
-                    side_list = [cells[c].index(f) for (f,c) in zip(face_list,elem_list)]
+                    face_list = [
+                        eh.edge_to_id(added[mesh2D.edge_hash(e[0], e[1])], 0) for e in ls.ent_ids
+                    ]
+                    side_list = [cells[c].index(f) for (f, c) in zip(face_list, elem_list)]
                 side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
 
         # reshape coords
         coords = coords.reshape(nnodes_total, 3)
 
         # instantiate the mesh
-        m3 = cls(coords, faces, cells, material_ids=material_ids, side_sets=side_sets, labeled_sets=labeled_sets, crs=mesh2D.crs)
+        m3 = cls(coords,
+                 faces,
+                 cells,
+                 material_ids=material_ids,
+                 side_sets=side_sets,
+                 labeled_sets=labeled_sets,
+                 crs=mesh2D.crs)
         return m3
 
 
@@ -1344,9 +1431,8 @@ def telescope_factor(ncells, dz, layer_dz):
        The telescoping factor.
     """
     if ncells * dz > layer_dz:
-        raise ValueError(("Cannot telescope {} cells of thickness at least {} "+
-                          "and reach a layer of thickness {}"
-                         ).format(ncells, dz, layer_dz))
+        raise ValueError(("Cannot telescope {} cells of thickness at least {} "
+                          + "and reach a layer of thickness {}").format(ncells, dz, layer_dz))
 
     def seq(r):
         calc_layer_dz = 0
@@ -1357,24 +1443,37 @@ def telescope_factor(ncells, dz, layer_dz):
 
         #print('tried: {} got: {}'.format(r, calc_layer_dz))
         return layer_dz - calc_layer_dz
-    res = scipy.optimize.root_scalar(seq, method='bisect', bracket=[1.0001,2], maxiter=1000)
-    logging.info("Converged?: ratio = {}, layer z (target = {}) = {}".format(res.root, layer_dz, seq(res.root)))
+
+    res = scipy.optimize.root_scalar(seq, method='bisect', bracket=[1.0001, 2], maxiter=1000)
+    logging.info("Converged?: ratio = {}, layer z (target = {}) = {}".format(
+        res.root, layer_dz, seq(res.root)))
     return res.root
 
 
-def optimize_dzs(dz_begin, dz_end, thickness, num_cells, p_thickness=1000, p_dz=10000, p_increasing=1000, p_smooth=10, tol=1):
+def optimize_dzs(dz_begin,
+                 dz_end,
+                 thickness,
+                 num_cells,
+                 p_thickness=1000,
+                 p_dz=10000,
+                 p_increasing=1000,
+                 p_smooth=10,
+                 tol=1):
     """Tries to optimize dzs"""
     pad_thickness = thickness + dz_begin + dz_end
 
     def penalty_thickness(dzs):
         return abs(pad_thickness - dzs.sum())
+
     def penalty_dz(dzs):
         return dz_end / dz_begin * abs(dzs[0] - dz_begin) + abs(dzs[-1] - dz_end)
+
     def penalty_increasing(dzs):
         return np.maximum(0., dzs[0:-1] - dzs[1:]).sum()
+
     def penalty_smooth(dzs):
         growth_factor = dzs[1:] / dzs[0:-1]
-        return np.abs(2*growth_factor[1:-1] - growth_factor[0:-2] - growth_factor[2:]).sum()
+        return np.abs(2 * growth_factor[1:-1] - growth_factor[0:-2] - growth_factor[2:]).sum()
 
     def penalty(dzs):
         return p_thickness * penalty_thickness(dzs) \
@@ -1382,8 +1481,8 @@ def optimize_dzs(dz_begin, dz_end, thickness, num_cells, p_thickness=1000, p_dz=
             + p_increasing * penalty_increasing(dzs) \
             + p_smooth * penalty_smooth(dzs)
 
-    x0 = (dz_begin + dz_end) / 2. * np.ones((num_cells,),'d')
-    bounds = [(dz_begin, dz_end),]*num_cells
+    x0 = (dz_begin+dz_end) / 2. * np.ones((num_cells, ), 'd')
+    bounds = [(dz_begin, dz_end), ] * num_cells
     res = scipy.optimize.minimize(penalty, x0, bounds=bounds)
 
     dzs = res.x.copy()[1:-1]
@@ -1397,11 +1496,9 @@ def optimize_dzs(dz_begin, dz_end, thickness, num_cells, p_thickness=1000, p_dz=
     return dzs, res
 
 
-
 def transform_rotation(radians):
-    return np.array([[ np.cos(radians), np.sin(radians), 0],
-                     [-np.sin(radians), np.cos(radians), 0],
-                     [               0,               0, 1]])
+    return np.array([[np.cos(radians), np.sin(radians), 0], [-np.sin(radians),
+                                                             np.cos(radians), 0], [0, 0, 1]])
 
 
 def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
@@ -1415,7 +1512,7 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
 
 def _get_labels(polygons):
     labels = []
-    for i,p in enumerate(polygons):
+    for i, p in enumerate(polygons):
         label = f'watershed {i}'
         labels.append(label)
     return labels
@@ -1427,14 +1524,14 @@ def add_watershed_regions(m2, polygons, labels=None):
     if labels is None:
         labels = _get_labels(polygons)
     else:
-        assert(len(labels) == len(polygons))
+        assert (len(labels) == len(polygons))
 
     partitions = [list() for p in polygons]
     for c in range(m2.num_cells):
         cc = m2.compute_centroid(c)
         cc = shapely.geometry.Point(cc[0], cc[1])
         try:
-            ip = next(i for (i,p) in enumerate(polygons) if p.contains(cc))
+            ip = next(i for (i, p) in enumerate(polygons) if p.contains(cc))
         except StopIteration:
             pass
         else:
@@ -1451,10 +1548,11 @@ def add_watershed_regions(m2, polygons, labels=None):
 
             # add a second region, denoting this one as the top surface of faces
             setid2 = m2.next_available_labeled_setid()
-            ls2 = LabeledSet(label+' surface', setid2, 'CELL', part)
+            ls2 = LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
     return partitions
+
 
 def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     """Add four labeled sets to m2 for each polygon:
@@ -1469,7 +1567,7 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     if labels is None:
         labels = _get_labels(polygons)
     else:
-        assert(len(labels) == len(polygons))
+        assert (len(labels) == len(polygons))
 
     if outlet_width is None:
         outlet_width = 300
@@ -1486,7 +1584,7 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     def inside_ball(outlet, edge):
         n1 = m2.coords[edge[0]]
         n2 = m2.coords[edge[1]]
-        c = (n1 + n2)/2.
+        c = (n1+n2) / 2.
         close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
         return close
 
@@ -1497,26 +1595,51 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         m2h = Mesh2D(subdomain_coords, subdomain_conn, check_handedness=False, validate=False)
 
         edges = [(int(e[0]), int(e[1])) for e in m2h.boundary_edges]
-        ls = LabeledSet(label+' boundary', m2.next_available_labeled_setid(),
-                       'FACE', edges)
-        ls.to_extrude = True # this marker tells the extrusion routine
-                             # to not limit it to the surface
+        ls = LabeledSet(label + ' boundary', m2.next_available_labeled_setid(), 'FACE', edges)
+        ls.to_extrude = True  # this marker tells the extrusion routine
+        # to not limit it to the surface
         m2.labeled_sets.append(ls)
 
         # every polygon now has an outlet -- find the boundary faces near that outlet
         outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-        ls = LabeledSet(label+' outlet', m2.next_available_labeled_setid(),
-                        'FACE', edges)
-        ls.to_extrude = True # this marker tells the extrusion routine
-                             # to not limit it to the surface
+        ls = LabeledSet(label + ' outlet', m2.next_available_labeled_setid(), 'FACE', edges)
+        ls.to_extrude = True  # this marker tells the extrusion routine
+        # to not limit it to the surface
         m2.labeled_sets.append(ls)
 
     # also write one for the full domain
     if hucs.exterior_outlet is not None:
         outlet_faces = [e for e in m2.boundary_edges if inside_ball(hucs.exterior_outlet, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-        ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(),
-                         'FACE', edges)
+        ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(), 'FACE', edges)
         ls2.to_extrude = True
         m2.labeled_sets.append(ls2)
+
+
+def add_river_corridor_regions(m2, corrs, labels=None):
+    """Add labeled sets to m2 for each river corridor."""
+    if labels is None:
+        labels = []
+        for i, p in enumerate(corrs):
+            label = f'river_corridor {i}'
+            labels.append(label)
+    else:
+        assert (len(labels) == len(corrs))
+
+    partitions = [list() for p in corrs]
+    for c in range(m2.num_cells):
+        cc = m2.compute_centroid(c)
+        cc = shapely.geometry.Point(cc[0], cc[1])
+        try:
+            ip = next(i for (i, p) in enumerate(corrs) if p.contains(cc))
+        except StopIteration:
+            pass
+        else:
+            partitions[ip].append(c)
+
+    for label, part in zip(labels, partitions):
+        if len(part) > 0:
+            setid2 = m2.next_available_labeled_setid()
+            ls2 = LabeledSet(label + ' surface', setid2, 'CELL', part)
+            m2.labeled_sets.append(ls2)

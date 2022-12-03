@@ -2,6 +2,9 @@
 import logging
 import collections
 import numpy as np
+import copy
+import fiona
+import pandas as pd
 import itertools
 from scipy.spatial import cKDTree
 
@@ -11,8 +14,8 @@ import shapely.ops
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 
-
 _tol = 1.e-7
+
 
 class River(watershed_workflow.tinytree.Tree):
     """A tree node data structure"""
@@ -37,9 +40,9 @@ class River(watershed_workflow.tinytree.Tree):
     def addChild(self, segment):
         """Append a child (upstream) reach to this reach."""
         if type(segment) is River:
-            super(River,self).addChild(segment)
+            super(River, self).addChild(segment)
         else:
-            super(River,self).addChild(type(self)(segment))
+            super(River, self).addChild(type(self)(segment))
         return self.children[-1]
 
     def dfs(self):
@@ -77,7 +80,7 @@ class River(watershed_workflow.tinytree.Tree):
             for c in r.children:
                 if c.properties['StreamLevel'] > self.properties['StreamLevel']:
                     yield c
-                    
+
     def iter_stream_roots(self):
         """Generator to iterate over all roots of streamlevels."""
         yield self
@@ -92,7 +95,7 @@ class River(watershed_workflow.tinytree.Tree):
         if to_save is not None:
             self.properties[to_save] = val
         return val
-            
+
     def __len__(self):
         """Number of total reaches in the river."""
         return sum(1 for i in self.dfs())
@@ -103,7 +106,7 @@ class River(watershed_workflow.tinytree.Tree):
     def _is_continuous(self, child, tol=_tol):
         """Is a given child continuous with self.."""
         return watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol)
-    
+
     def is_continuous(self, tol=_tol):
         """Checks geometric continuity of the river.
 
@@ -113,12 +116,26 @@ class River(watershed_workflow.tinytree.Tree):
         return all(self._is_continuous(child, tol) for child in self.children) and \
             all(child.is_continuous(tol) for child in self.children)
 
+    def _make_continuous(self, child):
+        child_coords = list(child.segment.coords)
+        child_coords[-1] = list(self.segment.coords)[0]
+        child.segment = shapely.geometry.LineString(child_coords)
+
+    def make_continuous(self, tol=_tol):
+        """Sometimes there can be small gaps between segments of river tree if river is constructed using
+        HydrologicSequence and Snap option is not used. Here we make them consistent"""
+        for node in self.preOrder():
+            for child in node.children:
+                if not node._is_continuous(child, tol):
+                    node._make_continuous(child)
+        assert (self.is_continuous())
+
     def is_hydroseq_consistent(self):
         """Confirms that hydrosequence is valid."""
         if len(self.children) == 0:
             return True
-        
-        self.children = sorted(self.children, key=lambda c : c.properties['HydrologicSequence'])
+
+        self.children = sorted(self.children, key=lambda c: c.properties['HydrologicSequence'])
         return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
             all(child.is_hydroseq_consistent() for child in self.children)
 
@@ -157,12 +174,12 @@ class River(watershed_workflow.tinytree.Tree):
         rivers = []
         divergence = []
         divergence_matches = []
-        for j,n in enumerate(nodes):
+        for j, n in enumerate(nodes):
             # find the closest beginpoint the this node's endpoint
             closest = kdtree.query_ball_point(n.segment.coords[-1], tol)
             if len(closest) > 1:
                 logging.debug("Bad multi segment:")
-                logging.debug(" connected to %d: %r"%(j,list(n.segment.coords[-1])))
+                logging.debug(" connected to %d: %r" % (j, list(n.segment.coords[-1])))
                 divergence.append(j)
                 divergence_matches.append(closest)
 
@@ -170,23 +187,25 @@ class River(watershed_workflow.tinytree.Tree):
                 my_tan = np.array(n.segment.coords[-1]) - np.array(n.segment.coords[-2])
                 my_tan = my_tan / np.linalg.norm(my_tan)
 
-                other_tans = [np.array(reaches[c].coords[1]) - np.array(reaches[c].coords[0]) for c in closest]
-                other_tans = [ot/np.linalg.norm(ot) for ot in other_tans]
-                dots = [np.inner(ot,my_tan) for ot in other_tans]
-                for i,c in enumerate(closest):
-                    logging.debug("  %d: %r --> %r with dot product = %g"%(c,coords[c],reaches[c].coords[-1], dots[i]))
+                other_tans = [
+                    np.array(reaches[c].coords[1]) - np.array(reaches[c].coords[0]) for c in closest
+                ]
+                other_tans = [ot / np.linalg.norm(ot) for ot in other_tans]
+                dots = [np.inner(ot, my_tan) for ot in other_tans]
+                for i, c in enumerate(closest):
+                    logging.debug("  %d: %r --> %r with dot product = %g" %
+                                  (c, coords[c], reaches[c].coords[-1], dots[i]))
                 c = closest[np.argmax(dots)]
                 nodes[c].addChild(n)
 
             elif len(closest) == 0:
                 rivers.append(n)
             else:
-                assert(len(closest) == 1)
+                assert (len(closest) == 1)
                 nodes[closest[0]].addChild(n)
 
-        assert(len(rivers) > 0)
+        assert (len(rivers) > 0)
         return rivers
-
 
     @classmethod
     def construct_rivers_by_hydroseq(cls, segments):
@@ -204,8 +223,9 @@ class River(watershed_workflow.tinytree.Tree):
             except KeyError:
                 roots.append(node)
         return roots
-    
 
-
-
-
+    def deep_copy(self):
+        cp = copy.deepcopy(self)
+        for node1, node2 in zip(cp.preOrder(), self.preOrder()):
+            node1.properties = copy.deepcopy(node2.properties)
+        return cp

@@ -12,7 +12,6 @@ class FileManagerMockNHDPlusSave(watershed_workflow.source_list.FileManagerNHDPl
 
     See watershed_workflow/test/source_fixtures_helpers.py
     """
-    
     def get_hucs(self, huc, level, *args, **kwargs):
         # note, do this first, in case it errors
         result = super(FileManagerMockNHDPlusSave, self).get_hucs(huc, level, *args, **kwargs)
@@ -20,10 +19,10 @@ class FileManagerMockNHDPlusSave(watershed_workflow.source_list.FileManagerNHDPl
         with open('/tmp/log.txt', 'a') as fid:
             fid.write(f'writing {huc} level {level}\n')
         try:
-            with open('/tmp/my.pkl','rb') as fid:
+            with open('/tmp/my.pkl', 'rb') as fid:
                 d = pickle.load(fid)
         except FileNotFoundError:
-            d = dict()        
+            d = dict()
 
         if huc not in d:
             d[huc] = dict()
@@ -40,19 +39,20 @@ class FileManagerMockNHDPlusSave(watershed_workflow.source_list.FileManagerNHDPl
         with open('/tmp/log.txt', 'a') as fid:
             fid.write(f'writing {huc} hydro\n')
         try:
-            with open('/tmp/my.pkl','rb') as fid:
+            with open('/tmp/my.pkl', 'rb') as fid:
                 d = pickle.load(fid)
         except FileNotFoundError:
-            d = dict()        
+            d = dict()
 
         if huc not in d:
             d[huc] = dict()
         d[huc]['hydro'] = True
- 
+
         with open('/tmp/my.pkl', 'wb') as fid:
             pickle.dump(d, fid)
 
         return result
+
 
 class FileManagerMockNHDPlusRestore:
     """A second mock class that restores the files created using the above save.
@@ -61,15 +61,18 @@ class FileManagerMockNHDPlusRestore:
     """
     lowest_level = 12
     name = 'FileManagerMockNHDPlusRestore'
-    
+
     def __init__(self, dirname):
         self._dirname = dirname
         with fiona.open(os.path.join(dirname, 'hucs.shp'), 'r') as fid:
             self._profile = fid.profile
             self._hucs = list(fid)
-    
+
     def get_hucs(self, huc, level, *args, **kwargs):
-        this_hucs = [h for h in self._hucs if len(h['properties']['HUC']) == level and h['properties']['HUC'].startswith(huc)]
+        this_hucs = [
+            h for h in self._hucs
+            if len(h['properties']['HUC']) == level and h['properties']['HUC'].startswith(huc)
+        ]
         for h in this_hucs:
             h['properties'][f'huc{level}'] = h['properties']['HUC']
 
@@ -82,7 +85,7 @@ class FileManagerMockNHDPlusRestore:
             profile = fid.profile
             reaches = list(fid)
         return profile, reaches
-    
+
 
 @pytest.fixture
 def sources(tmpdir, request):
@@ -91,9 +94,11 @@ def sources(tmpdir, request):
     shared_test_data = os.path.join(test_dir, 'fixture_data')
     sources = dict()
     #sources['HUC'] = FileManagerMockNHDPlusSave()
-    sources['HUC'] = FileManagerMockNHDPlusRestore(os.path.join('watershed_workflow', 'test', 'fixture_data'))
+    sources['HUC'] = FileManagerMockNHDPlusRestore(
+        os.path.join('watershed_workflow', 'test', 'fixture_data'))
     sources['hydrography'] = sources['HUC']
     return sources
+
 
 @pytest.fixture
 def datadir(tmpdir, request):
@@ -108,12 +113,7 @@ def datadir(tmpdir, request):
         dir_util.copy_tree(test_dir, str(tmpdir))
     return tmpdir
 
+
 @pytest.fixture
 def sources_download(request):
     return watershed_workflow.source_list.get_default_sources()
-
-
-
-
-
-

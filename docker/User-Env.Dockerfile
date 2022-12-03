@@ -10,6 +10,7 @@ LABEL Description="Base env for CI of Watershed Workflow"
 
 ARG env_name=watershed_workflow
 ARG user=jovyan
+ENV CONDA_BIN=mamba
 
 USER ${user}
 
@@ -27,7 +28,7 @@ RUN mkdir /home/${user}/environments
 #         --with-user-env --user-env-name=default Linux
 
 # # dump the environments to disk so they can be recovered if desired
-# RUN conda env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
+# RUN ${CONDA_BIN} env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
 
 #
 # New approach, use the current environment.yml
@@ -35,22 +36,22 @@ RUN mkdir /home/${user}/environments
 # -- creates env: watershed_workflow
 COPY environments/environment-Linux.yml /home/${user}/environments
 RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
-    conda env create -f /home/${user}/environments/environment-Linux.yml
+    ${CONDA_BIN} env create -f /home/${user}/environments/environment-Linux.yml
 
 # -- creates env: watershed_workflow_tools
 COPY environments/environment-TOOLS-Linux.yml /home/${user}/environments
 RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
-    conda env create -f /home/${user}/environments/environment-TOOLS-Linux.yml
+    ${CONDA_BIN} env create -f /home/${user}/environments/environment-TOOLS-Linux.yml
 
 # shouldn't need default?
 # -- creates env: default
 #COPY environments/environment-USER-Linux.yml /home/${user}/environments
 #RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
-#    conda env create -f /home/${user}/environments/environment-USER-Linux.yml
+#    ${CONDA_BIN} env create -f /home/${user}/environments/environment-USER-Linux.yml
 
 # install the kernel on base's jupyterlab
 USER root
-RUN conda run -n ${env_name} python -m ipykernel install \
+RUN ${CONDA_BIN} run -n ${env_name} python -m ipykernel install \
         --name watershed_workflow --display-name "Python3 (watershed_workflow)"
 USER ${user}
 
@@ -61,7 +62,7 @@ FROM ww_env_base_user AS ww_env_pip_user
 
 WORKDIR /home/${user}/tmp
 COPY requirements.txt /home/${user}/tmp/requirements.txt
-RUN conda run -n ${env_name} python -m pip install -r requirements.txt
+RUN ${CONDA_BIN} run -n ${env_name} python -m pip install -r requirements.txt
 
 
 #
@@ -85,12 +86,12 @@ WORKDIR /home/${user}/tmp
 COPY --chown=${user}:${user} docker/configure-seacas.sh /home/${user}/tmp/configure-seacas.sh
 RUN chmod +x  /home/${user}/tmp/configure-seacas.sh
 WORKDIR /home/${user}/tmp/seacas-build
-RUN conda run -n watershed_workflow_tools ../configure-seacas.sh
+RUN ${CONDA_BIN} run -n watershed_workflow_tools ../configure-seacas.sh
 RUN make -j install
 
 # exodus installs its wrappers in an invalid place for python...
 RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py \
-       /opt/conda/envs/${env_name}/lib/python*/site-packages/
+       /opt/conda/envs/${env_name}/lib/python3.10/site-packages/
 
 
 # clean up
@@ -108,10 +109,10 @@ WORKDIR /home/${user}/watershed_workflow
 
 # copy over source code
 COPY  --chown=${user}:${user} . /home/${user}/watershed_workflow
-RUN conda run -n watershed_workflow python -m pip install -e .
+RUN ${CONDA_BIN} run -n watershed_workflow python -m pip install -e .
 
 # run the tests
-RUN conda run -n watershed_workflow python -m pytest watershed_workflow/test/
+RUN ${CONDA_BIN} run -n watershed_workflow python -m pytest watershed_workflow/test/
 
 # Set up the workspace.
 #

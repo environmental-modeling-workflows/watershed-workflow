@@ -1,6 +1,6 @@
 """Manager for interacting with DayMet datasets."""
 
-import os,sys
+import os, sys
 import logging
 import numpy as np
 import pyproj
@@ -54,19 +54,25 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    VALID_YEARS = (1980,2020)
+    VALID_YEARS = (1980, 2021)
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
-    # URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4"
-    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_{variable}_{year}.nc"
-
+    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
 
     def __init__(self):
         #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
-        self.names = watershed_workflow.sources.names.Names(self.name, 'meteorology', 'daymet', 'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
+        self.names = watershed_workflow.sources.names.Names(
+            self.name, 'meteorology', 'daymet',
+            'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
         #self.native_crs = pyproj.Proj4("")
 
-    def get_meteorology(self, varname, year, polygon_or_bounds, crs, force_download=False, buffer=0.01):
+    def get_meteorology(self,
+                        varname,
+                        year,
+                        polygon_or_bounds,
+                        crs,
+                        force_download=False,
+                        buffer=0.01):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -92,9 +98,11 @@ class FileManagerDaymet:
           Updated bounds, buffered and in the coordinate system of the data.
         """
         if year > self.VALID_YEARS[1] or year < self.VALID_YEARS[0]:
-            raise ValueError("DayMet data is available from {} to {} (does not include {})".format(self.VALID_YEARS[0], self.VALID_YEARS[1], year))
+            raise ValueError("DayMet data is available from {} to {} (does not include {})".format(
+                self.VALID_YEARS[0], self.VALID_YEARS[1], year))
         if varname not in self.VALID_VARIABLES:
-            raise ValueError("DayMet data supports variables: {} (not {})".format(', '.join(self.VALID_VARIABLES), varname))
+            raise ValueError("DayMet data supports variables: {} (not {})".format(
+                ', '.join(self.VALID_VARIABLES), varname))
 
         if type(polygon_or_bounds) is dict:
             # fiona shape object, convert to shapely to get a copy
@@ -103,18 +111,20 @@ class FileManagerDaymet:
         # convert and get a bounds
         if type(polygon_or_bounds) is list or type(polygon_or_bounds) is tuple:
             # bounds
-            bounds = watershed_workflow.warp.bounds(polygon_or_bounds, crs, watershed_workflow.crs.latlon_crs())
+            bounds = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
+                                                    watershed_workflow.crs.latlon_crs())
         else:
             # polygon
-            bounds = watershed_workflow.warp.shply(polygon_or_bounds, crs, watershed_workflow.crs.latlon_crs()).bounds
+            bounds = watershed_workflow.warp.shply(polygon_or_bounds, crs,
+                                                   watershed_workflow.crs.latlon_crs()).bounds
 
         # feather the bounds
         # get the bounds and download
         feather_bounds = list(bounds[:])
-        feather_bounds[0] = np.round(feather_bounds[0],4) - buffer
-        feather_bounds[1] = np.round(feather_bounds[1],4) - buffer
-        feather_bounds[2] = np.round(feather_bounds[2],4) + buffer
-        feather_bounds[3] = np.round(feather_bounds[3],4) + buffer
+        feather_bounds[0] = np.round(feather_bounds[0], 4) - buffer
+        feather_bounds[1] = np.round(feather_bounds[1], 4) - buffer
+        feather_bounds[2] = np.round(feather_bounds[2], 4) + buffer
+        feather_bounds[3] = np.round(feather_bounds[3], 4) + buffer
         fname = self.download(varname, year, feather_bounds, force=force_download)
         return fname, feather_bounds
 
@@ -146,30 +156,27 @@ class FileManagerDaymet:
 
         # get the target filename
         bounds = [f"{b:.4f}" for b in bounds]
-        filename = self.names.file_name(var = varname, year=year, north=bounds[3], east=bounds[2], west=bounds[0], south=bounds[1])
+        filename = self.names.file_name(var=varname,
+                                        year=year,
+                                        north=bounds[3],
+                                        east=bounds[2],
+                                        west=bounds[0],
+                                        south=bounds[1])
 
         if (not os.path.exists(filename)) or force:
-            url_dict = {'year':str(year),
-                        'variable':varname}
+            url_dict = { 'year': str(year), 'variable': varname }
             url = self.URL.format(**url_dict)
             logging.info("  Downloading: {}".format(url))
             logging.info("      to file: {}".format(filename))
 
-            request_params = [('var', 'lat'),
-                          ('var', 'lon'),
-                          ('var', varname),
-                          ('west', bounds[0]),
-                          ('south', bounds[1]),
-                          ('east', bounds[2]),
-                          ('north', bounds[3]),
-                          ('horizStride', '1'),
-                          ('time_start', '{}-01-01T12:00:00Z'.format(year)),
-                          ('time_end', '{}-12-31T12:00:00Z'.format(year)),
-                          ('timeStride', '1'),
-                          ('accept', 'netcdf')
-                          ]
+            request_params = [('var', 'lat'), ('var', 'lon'), ('var', varname), ('west', bounds[0]),
+                              ('south', bounds[1]), ('east', bounds[2]), ('north', bounds[3]),
+                              ('horizStride', '1'),
+                              ('time_start', '{}-01-01T12:00:00Z'.format(year)),
+                              ('time_end', '{}-12-31T12:00:00Z'.format(year)), ('timeStride', '1'),
+                              ('accept', 'netcdf')]
 
-            r = requests.get(url,params=request_params)
+            r = requests.get(url, params=request_params)
             r.raise_for_status()
 
             with open(filename, 'wb') as fid:
@@ -179,4 +186,3 @@ class FileManagerDaymet:
             logging.info("  Using existing: {}".format(filename))
 
         return filename
-

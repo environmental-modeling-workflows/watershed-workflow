@@ -20,48 +20,51 @@ from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
 from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
 from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
 from watershed_workflow.sources.manager_daymet import FileManagerDaymet
+from watershed_workflow.sources.manager_modis_appeears import FileManagerMODIS
 
 from watershed_workflow.sources.manager_shape import FileManagerShape
 from watershed_workflow.sources.manager_raster import FileManagerRaster
-from watershed_workflow.sources.manager_modis_appeears import FileManagerMODIS
+
 
 # available and default water boundary datasets
-huc_sources = {'NHDPlus' : FileManagerNHDPlusAccumulator(),
-               'NHD' : FileManagerNHD(),
-               'WBD' : FileManagerWBD()
-               }
-huc_sources['NHD Plus'] = huc_sources['NHDPlus'] # historical typo, kept for backward compatibility
+huc_sources = {
+    'NHDPlus': FileManagerNHDPlusAccumulator(),
+    'NHD': FileManagerNHD(),
+    'WBD': FileManagerWBD()
+}
+huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for backward compatibility
 default_huc_source = 'NHDPlus'
 
 # available and default hydrography datasets
-hydrography_sources = {'NHDPlus' : FileManagerNHDPlus(),
-                       'NHD' : FileManagerNHD(),
-                       }
-hydrography_sources['NHD Plus'] = hydrography_sources['NHDPlus'] # historical typo, kept for backward compatibility
+hydrography_sources = { 'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
+hydrography_sources['NHD Plus'] = hydrography_sources[
+    'NHDPlus']  # historical typo, kept for backward compatibility
 default_hydrography_source = 'NHDPlus'
 
 # available and default digital elevation maps
-dem_sources = {'NED 1/3 arc-second' : FileManagerNED('1/3 arc-second'),
-               'NED 1 arc-second' : FileManagerNED('1 arc-second'),
-               }
+dem_sources = {
+    'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
+    'NED 1 arc-second': FileManagerNED('1 arc-second'),
+}
 default_dem_source = 'NED 1 arc-second'
 
 # available and default soil survey datasets
-structure_sources = {'NRCS SSURGO' : FileManagerNRCS(),
-                     'GLHYMPS' : FileManagerGLHYMPS(),
-                     'SoilGrids2017' : FileManagerSoilGrids2017(),
-                     }
+structure_sources = {
+    'NRCS SSURGO': FileManagerNRCS(),
+    'GLHYMPS': FileManagerGLHYMPS(),
+    'SoilGrids2017': FileManagerSoilGrids2017(),
+}
 default_structure_source = 'NRCS SSURGO'
 
 # available and default land cover
-land_cover_sources = {'NLCD (L48)' : FileManagerNLCD(layer='Land_Cover', location='L48'),
-                      'NLCD (AK)' : FileManagerNLCD(layer='Land_Cover', location='AK')
-                      }
+land_cover_sources = {
+    'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
+    'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK')
+}
 default_land_cover = 'NLCD (L48)'
 
-
 # available and default meteorology
-met_sources = {'DayMet' : FileManagerDaymet()}
+met_sources = { 'DayMet': FileManagerDaymet() }
 default_met = 'DayMet'
 
 
@@ -86,8 +89,8 @@ def get_sources(args):
     """Parsers the command line argument struct from argparse and provides an
     updated set of data sources.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     args : struct
       A python struct generated from an argparse.ArgumentParser object with
       source options set by watershed_workflow.ui.*_source_options
@@ -95,7 +98,7 @@ def get_sources(args):
     Returns
     -------
     sources : dict
-      Diectionary of defaults for each of "HUC", "hydrography", "DEM", "soil
+      Dictionary of defaults for each of "HUC", "hydrography", "DEM", "soil
       type", and "land cover".
     """
     sources = get_default_sources()
@@ -127,7 +130,6 @@ def get_sources(args):
     else:
         sources['soil type'] = soil_sources[source_soil]
 
-
     try:
         land_cover = args.land_cover
     except AttributeError:
@@ -141,8 +143,9 @@ def get_sources(args):
         pass
     else:
         sources['meteorology'] = met_sources[met]
-        
+
     return sources
+
 
 def log_sources(sources):
     """Pretty print source dictionary to log."""
@@ -153,5 +156,3 @@ def log_sources(sources):
             logging.info('{}: {}'.format(stype, s.name))
         else:
             logging.info('{}: None'.format(stype))
-
-            

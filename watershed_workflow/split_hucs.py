@@ -9,6 +9,7 @@ import shapely.ops
 
 import watershed_workflow.utils
 
+
 class HandledCollection:
     """A collection of of objects and handles for those objects."""
     def __init__(self, objs=None):
@@ -26,7 +27,7 @@ class HandledCollection:
     def __setitem__(self, key, val):
         """Set an object"""
         self._store[key] = val
-    
+
     def add(self, value):
         """Adds a object, returning a handle to that object"""
         self._store[self._key] = value
@@ -37,7 +38,7 @@ class HandledCollection:
     def add_many(self, values):
         """Add many objects, returning a list of handles."""
         return [self.add(v) for v in values]
-    
+
     def pop(self, key):
         """Removes a handle and its object."""
         return self._store.pop(key)
@@ -58,11 +59,12 @@ class HandledCollection:
     def keys(self):
         for it in self._store.keys():
             yield it
-        
+
     def items(self):
         for it in self._store.items():
             yield it
-            
+
+
 class SplitHUCs:
     """Class for dealing with the multiple interacting views of HUCs
 
@@ -80,16 +82,20 @@ class SplitHUCs:
                         | intersections -- which together form the polygon.
 
     """
-    def __init__(self, shapes, abs_tol=0., rel_tol=1.e-5,
-                 exterior_outlet=None, polygon_outlets=None):
+    def __init__(self,
+                 shapes,
+                 abs_tol=0.,
+                 rel_tol=1.e-5,
+                 exterior_outlet=None,
+                 polygon_outlets=None):
         # all shapes are stored as a collection of collections of segments
-        self.segments = HandledCollection() # stores segments
+        self.segments = HandledCollection()  # stores segments
 
         # Intersect and split the HUCs into unique segments.  Every
         # segment in segments is referenced exactly once in either boundaries
         # or intersections.
-        self.boundaries = HandledCollection() # stores handles into segments
-        self.intersections = HandledCollection() # stores handles into segments
+        self.boundaries = HandledCollection()  # stores handles into segments
+        self.intersections = HandledCollection()  # stores handles into segments
 
         # save the property dictionaries to give back upon request
         self.properties = []
@@ -114,19 +120,20 @@ class SplitHUCs:
         uniques, intersections = intersect_and_split(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
-        for i,u in enumerate(uniques):
+        for i, u in enumerate(uniques):
             if watershed_workflow.utils.empty_shapely(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
                 handle = self.segments.add(u)
-                bhandle = self.boundaries.add(HandledCollection([handle,]))
+                bhandle = self.boundaries.add(HandledCollection([handle, ]))
                 boundary_gon[i].add(bhandle)
             elif type(u) is shapely.geometry.MultiLineString:
                 handles = self.segments.add_many(u)
-                bhandles = self.boundaries.add_many([HandledCollection([h,]) for h in handles])
+                bhandles = self.boundaries.add_many([HandledCollection([h, ]) for h in handles])
                 boundary_gon[i].add_many(bhandles)
             else:
-                raise RuntimeError("Uniques from intersect_and_split is not None, LineString, or MultiLineString?")
+                raise RuntimeError(
+                    "Uniques from intersect_and_split is not None, LineString, or MultiLineString?")
 
         intersection_gon = [HandledCollection() for i in range(len(shapes))]
         for i in range(len(shapes)):
@@ -137,21 +144,22 @@ class SplitHUCs:
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
                     handle = self.segments.add(inter)
-                    ihandle = self.intersections.add(HandledCollection([handle,]))
+                    ihandle = self.intersections.add(HandledCollection([handle, ]))
                     intersection_gon[i].add(ihandle)
                     intersection_gon[j].add(ihandle)
                 elif type(inter) is shapely.geometry.MultiLineString:
                     handles = self.segments.add_many(list(inter))
-                    ihandles = self.intersections.add_many([HandledCollection([h,]) for h in handles])
+                    ihandles = self.intersections.add_many(
+                        [HandledCollection([h, ]) for h in handles])
                     intersection_gon[i].add_many(ihandles)
                     intersection_gon[j].add_many(ihandles)
                 else:
-                    raise RuntimeError("Intersections from intersect_and_split is not None, LineString, or MultiLineString?")
+                    raise RuntimeError(
+                        "Intersections from intersect_and_split is not None, LineString, or MultiLineString?"
+                    )
 
         # the list of shapes, each entry in the list is a tuple
-        self.gons = [(u,i) for u,i in zip(boundary_gon, intersection_gon)]
-
-        
+        self.gons = [(u, i) for u, i in zip(boundary_gon, intersection_gon)]
 
     def polygon(self, i):
         """Construct polygon i and return a copy."""
@@ -166,7 +174,7 @@ class SplitHUCs:
                 segs.append(self.segments[s])
 
         ml = shapely.ops.linemerge(segs)
-        assert(type(ml) is shapely.geometry.LineString)
+        assert (type(ml) is shapely.geometry.LineString)
         poly = shapely.geometry.Polygon(ml)
         poly.properties = self.properties[i]
         return poly
@@ -201,7 +209,7 @@ class SplitHUCs:
 
 def simplify(hucs, tol=0.1):
     """Simplify, IN PLACE, all segments in the polygon representation."""
-    for i,seg in hucs.segments.items():
+    for i, seg in hucs.segments.items():
         hucs.segments[i] = seg.simplify(tol)
 
 
@@ -211,7 +219,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
     underlaps -- here we try to account for wiggles."""
     # deal with overlaps
     for i in range(len(list_of_shapes)):
-        for j in range(i+1,len(list_of_shapes)):
+        for j in range(i + 1, len(list_of_shapes)):
             s1 = list_of_shapes[i]
             s2 = list_of_shapes[j]
 
@@ -222,11 +230,11 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
 
     # remove holes
     union = shapely.ops.unary_union(list_of_shapes)
-    assert(type(union) is shapely.geometry.Polygon)
+    assert (type(union) is shapely.geometry.Polygon)
 
     # -- deal with disjoint sections separately
     if type(union) is shapely.geometry.Polygon:
-        union = [union,]
+        union = [union, ]
 
     for part in union:
         # find all holes
@@ -235,7 +243,7 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
             if hole.area < abs_tol or hole.area < rel_tol * part.area:
                 # give it to someone, anyone, doesn't matter who
                 logging.info("Found a little hole: area = {}".format(hole.area))
-                for i,poly in enumerate(list_of_shapes):
+                for i, poly in enumerate(list_of_shapes):
                     if watershed_workflow.utils.non_point_intersection(poly, hole):
                         logging.info('touches {}'.format(i))
                         poly = poly.union(hole)
@@ -243,9 +251,10 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
                         break
             else:
                 logging.info("Found a big hole: area = {}".format(hole.area))
-                
+
     return list_of_shapes
-        
+
+
 def intersect_and_split(list_of_shapes):
     """Given a list of shapes which share boundaries (i.e. they partition
     some space), return a compilation of their segments.
@@ -264,14 +273,15 @@ def intersect_and_split(list_of_shapes):
 
     for i, s1 in enumerate(list_of_shapes):
         for j, s2 in enumerate(list_of_shapes):
-            if i != j and watershed_workflow.utils.non_point_intersection(s1,s2):
+            if i != j and watershed_workflow.utils.non_point_intersection(s1, s2):
                 inter = s1.intersection(s2)
 
                 if type(inter) is shapely.geometry.MultiLineString:
                     inter = shapely.ops.linemerge(inter)
 
                 if type(inter) is not shapely.geometry.LineString:
-                    logging.info('Hopefully hole in HUC intersection: ({},{}) = {}'.format(i,j,type(inter)))
+                    logging.info('Hopefully hole in HUC intersection: ({},{}) = {}'.format(
+                        i, j, type(inter)))
 
                 if type(inter) is not shapely.geometry.LineString and \
                    type(inter) is not shapely.geometry.MultiLineString:
@@ -282,18 +292,17 @@ def intersect_and_split(list_of_shapes):
                     diff = shapely.ops.linemerge(diff)
                 uniques[i] = diff
 
-
                 # only save once!
                 if i > j:
                     intersections[i][j] = inter
 
     # merge uniques, as we have a bunch of segments.
-    for i,u in enumerate(uniques):
+    for i, u in enumerate(uniques):
         if type(u) is shapely.geometry.MultiLineString:
             uniques[i] = shapely.ops.linemerge(uniques[i])
 
-    uniques_r = [None,]*len(uniques)
-    for i,u in enumerate(uniques):
+    uniques_r = [None, ] * len(uniques)
+    for i, u in enumerate(uniques):
         if not watershed_workflow.utils.empty_shapely(u):
             uniques_r[i] = u
     return uniques_r, intersections
@@ -318,13 +327,14 @@ def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
             my_crossing_centroids.append([crossing.centroid.xy[0][0], crossing.centroid.xy[1][0]])
         my_crossing_centroids = np.array(my_crossing_centroids)
         if len(my_crossing_centroids) > 1:
-            clusters, cluster_centroids = watershed_workflow.utils.cluster(my_crossing_centroids, tol)
+            clusters, cluster_centroids = watershed_workflow.utils.cluster(
+                my_crossing_centroids, tol)
         else:
             cluster_centroids = my_crossing_centroids
         poly_crossings.append(cluster_centroids)
 
     logging.info("Crossings by Polygon:")
-    for i,c in enumerate(poly_crossings):
+    for i, c in enumerate(poly_crossings):
         logging.info(f'  Polygon {i}')
         for p in c:
             logging.info(f'    crossing: {p}')
@@ -352,10 +362,10 @@ def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
     # assert equivalent
     for pi, clusters in poly_cluster_indices.items():
         for ci in clusters:
-            assert(pi in cluster_poly_indices[ci])
+            assert (pi in cluster_poly_indices[ci])
     for ci, polys in cluster_poly_indices.items():
         for pi in polys:
-            assert(ci in poly_cluster_indices[pi])
+            assert (ci in poly_cluster_indices[pi])
 
     # create a tree, recursively finding all polygons with only
     # one crossing -- this must be an outlet -- then removing it
@@ -380,10 +390,10 @@ def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
                 cluster_id = clusters[0]
                 new_outlets[pi] = cluster_id
                 cluster_poly_indices[cluster_id].remove(pi)
-                logging.info(f' poly outlet {pi} : {cluster_id}, {crossings_clusters_centroids[cluster_id]}')
+                logging.info(
+                    f' poly outlet {pi} : {cluster_id}, {crossings_clusters_centroids[cluster_id]}')
                 last_outlet = cluster_id
                 last_outlet_poly = pi
-
 
         # look for clusters with only one poly -- this must be an inlet
         to_remove = []
@@ -400,17 +410,17 @@ def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
         if debug_plot and len(new_outlets) > 0:
             fig, ax = watershed_workflow.plot.get_ax(None)
             watershed_workflow.plot.shplys(polygons, None, color='k', ax=ax)
-            watershed_workflow.plot.rivers([river,], None, color='b', ax=ax)
+            watershed_workflow.plot.rivers([river, ], None, color='b', ax=ax)
             for pi, ci in outlets.items():
                 outlet = crossings_clusters_centroids[ci]
-                ax.scatter([outlet[0],], [outlet[1],], s=100, c='b', marker='o')
+                ax.scatter([outlet[0], ], [outlet[1], ], s=100, c='b', marker='o')
             for pi, ci in new_outlets.items():
                 outlet = crossings_clusters_centroids[ci]
-                ax.scatter([outlet[0],], [outlet[1],], s=100, c='r', marker='o')
+                ax.scatter([outlet[0], ], [outlet[1], ], s=100, c='r', marker='o')
             for ci in range(len(crossings_clusters_centroids)):
                 if ci not in outlets.values() and ci not in new_outlets.values():
                     crossing = crossings_clusters_centroids[ci]
-                    ax.scatter([crossing[0],], [crossing[1],], s=100, c='k', marker='o')
+                    ax.scatter([crossing[0], ], [crossing[1], ], s=100, c='k', marker='o')
             from matplotlib import pyplot as plt
             ax.set_title(f'Outlets after iteration {itercount}')
             plt.show()
@@ -419,7 +429,9 @@ def find_outlets_by_crossings(hucs, river, tol=None, debug_plot=False):
         itercount += 1
         done = itercount > 50 or len(outlets) == len(polygons) or len(new_outlets) == 0
 
-    logging.info(f'last outlet is {last_outlet} in polygon {last_outlet_poly} at {crossings_clusters_centroids[last_outlet]}')
+    logging.info(
+        f'last outlet is {last_outlet} in polygon {last_outlet_poly} at {crossings_clusters_centroids[last_outlet]}'
+    )
 
     # create the output
     outlet_locs = {}
@@ -445,17 +457,17 @@ def find_outlets_by_elevation(hucs, crs, elev_raster, elev_raster_profile):
     """Find outlets by the minimum elevation on the boundary."""
     import watershed_workflow
     exterior = hucs.exterior().exterior
-    mesh_points = np.array([exterior.coords])[0,:,:]
+    mesh_points = np.array([exterior.coords])[0, :, :]
     mesh_points = watershed_workflow.elevate(mesh_points, crs, elev_raster, elev_raster_profile)
-    i = np.argmin(mesh_points[:,2])
-    hucs.exterior_outlet = shapely.geometry.Point(mesh_points[i,0], mesh_points[i,1])
+    i = np.argmin(mesh_points[:, 2])
+    hucs.exterior_outlet = shapely.geometry.Point(mesh_points[i, 0], mesh_points[i, 1])
 
     outlets = []
     for poly in hucs.polygons():
-        mesh_points = np.array([poly.exterior.coords])[0,:,:]
+        mesh_points = np.array([poly.exterior.coords])[0, :, :]
         mesh_points = watershed_workflow.elevate(mesh_points, crs, elev_raster, elev_raster_profile)
-        i = np.argmin(mesh_points[:,2])
-        outlets.append(shapely.geometry.Point(mesh_points[i,0], mesh_points[i,1]))
+        i = np.argmin(mesh_points[:, 2])
+        outlets.append(shapely.geometry.Point(mesh_points[i, 0], mesh_points[i, 1]))
     hucs.polygon_outlets = outlets
 
 
@@ -469,16 +481,16 @@ def find_outlets_by_hydroseq(hucs, river, tol=0):
     polygon_outlets = [None for poly in hucs.polygons()]
 
     # iterate over the reaches, sorted by hydrosequence, looking for
-    # the first one that intersects the polygon boundary.    
-    assert(river.is_hydroseq_consistent())
-    reaches = sorted(river.preOrder(), key=lambda r : r.properties['HydrologicSequence'])
+    # the first one that intersects the polygon boundary.
+    assert (river.is_hydroseq_consistent())
+    reaches = sorted(river.preOrder(), key=lambda r: r.properties['HydrologicSequence'])
     if tol > 0:
         reaches = [r.segment.buffer(tol) for r in reaches]
     else:
         reaches = [r.segment for r in reaches]
     first = True
 
-    poly_ids = [(i, poly) for (i,poly) in enumerate(polygons)]
+    poly_ids = [(i, poly) for (i, poly) in enumerate(polygons)]
     for lcv, reach in enumerate(reaches):
         try:
             j, (poly_i, poly) = next((j,(i,poly)) for (j,(i,poly)) in enumerate(poly_ids) \
@@ -504,7 +516,3 @@ def find_outlets_by_hydroseq(hucs, river, tol=0):
             break
 
     hucs.polygon_outlets = polygon_outlets
-
-        
-        
-    

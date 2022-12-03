@@ -1,32 +1,69 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>watershed_workflow.crs &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <meta charset="utf-8">
   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>watershed_workflow.crs &mdash; Watershed Workflow 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../index.html" class="icon icon-home"> Watershed Workflow
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -34,7 +71,17 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
@@ -47,30 +94,66 @@
 <li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Watershed Workflow</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../index.html">Module code</a> &raquo;</li>
+        
       <li>watershed_workflow.crs</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <h1>Source code for watershed_workflow.crs</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Coordinate Reference System conversions.</span>
 
@@ -111,11 +194,14 @@
 <span class="kn">from</span> <span class="nn">pyproj.crs</span> <span class="kn">import</span> <span class="n">CRSError</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="is_native"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.is_native">[docs]</a><span class="k">def</span> <span class="nf">is_native</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Is this crs in the native format?&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span></div>
+
 
 <div class="viewcode-block" id="from_proj"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_proj">[docs]</a><span class="k">def</span> <span class="nf">from_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a Proj CRS to the workflow CRS standard.</span>
@@ -176,10 +262,11 @@
     <span class="c1">#     logging.warning(&#39;Old-style datum WGS84, moving to ellipse&#39;)</span>
     <span class="c1">#     crs[&#39;ellps&#39;] = crs.pop(&#39;datum&#39;)</span>
     <span class="k">if</span> <span class="s1">&#39;init&#39;</span> <span class="ow">in</span> <span class="n">crs</span> <span class="ow">and</span> <span class="n">crs</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;epsg:&#39;</span><span class="p">):</span>
-        <span class="n">epsg</span><span class="p">,</span><span class="n">code</span> <span class="o">=</span> <span class="n">crs</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+        <span class="n">epsg</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">crs</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="to_fiona"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.to_fiona">[docs]</a><span class="k">def</span> <span class="nf">to_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
@@ -196,6 +283,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="from_rasterio"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_rasterio">[docs]</a><span class="k">def</span> <span class="nf">from_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts from rasterio CRS to the workflow CRS standard.</span>
@@ -217,6 +305,7 @@
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="to_rasterio"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.to_rasterio">[docs]</a><span class="k">def</span> <span class="nf">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
 
@@ -234,13 +323,14 @@
     <span class="kn">import</span> <span class="nn">rasterio.crs</span>
     <span class="k">return</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="from_epsg"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_epsg">[docs]</a><span class="k">def</span> <span class="nf">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts from an EPSG code to a workflow CRS.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    epsg : int</span>
-<span class="sd">        An EPSG code. (see `https://epsg.io`_)</span>
+<span class="sd">        An EPSG code. (see `EPSG codes &lt;https://epsg.io&gt;`_)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -249,6 +339,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="to_epsg"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.to_epsg">[docs]</a><span class="k">def</span> <span class="nf">to_epsg</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Attempts to conver to an EPSG code.</span>
@@ -269,14 +360,15 @@
         <span class="k">return</span> <span class="n">code</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot convert CRS to EPSG code.&#39;</span><span class="p">)</span></div>
-        
+
+
 <div class="viewcode-block" id="from_cartopy"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_cartopy">[docs]</a><span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a cartopy CRS to a workflow CRS.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    epsg : int</span>
-<span class="sd">        An EPSG code. (see `https://epsg.io`_)</span>
+<span class="sd">        An EPSG code. (see `EPSG codes &lt;https://epsg.io&gt;`_)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -286,6 +378,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs</span></div>
     <span class="c1">#return CRS.from_dict(crs.proj4_params)</span>
+
 
 <div class="viewcode-block" id="to_cartopy"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.to_cartopy">[docs]</a><span class="k">def</span> <span class="nf">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a cartopy.crs.Projection.</span>
@@ -311,19 +404,16 @@
     <span class="c1"># if &#39;zone&#39; in srs:</span>
     <span class="c1">#     print(f&#39;found a zone: it is {srs[&quot;zone&quot;]} of type {type(srs[&quot;zone&quot;])}&#39;)</span>
 
-    <span class="n">km_proj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lon_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_longitude&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;lat_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_latitude&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;x_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_easting&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;y_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_northing&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="s1">&#39;scale_factor&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;zone&#39;</span><span class="p">:</span> <span class="s1">&#39;zone&#39;</span><span class="p">,</span>
-               <span class="p">}</span>
-    <span class="n">km_globe</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;semimajor_axis&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;semiminor_axis&#39;</span><span class="p">,</span>
-                <span class="p">}</span>
-    <span class="n">km_std</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lat_1&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">,</span>
-              <span class="s1">&#39;lat_2&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">,</span>
-              <span class="p">}</span>
+    <span class="n">km_proj</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;lon_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_longitude&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lat_0&#39;</span><span class="p">:</span> <span class="s1">&#39;central_latitude&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;x_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_easting&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;y_0&#39;</span><span class="p">:</span> <span class="s1">&#39;false_northing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="s1">&#39;scale_factor&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;zone&#39;</span><span class="p">:</span> <span class="s1">&#39;zone&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">km_globe</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;semimajor_axis&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;semiminor_axis&#39;</span><span class="p">,</span> <span class="p">}</span>
+    <span class="n">km_std</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">:</span> <span class="s1">&#39;lat_2&#39;</span><span class="p">,</span> <span class="p">}</span>
     <span class="n">kw_proj</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="n">kw_globe</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="n">kw_std</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
@@ -377,17 +467,21 @@
 
     <span class="k">return</span> <span class="n">cl</span><span class="p">(</span><span class="o">**</span><span class="n">kw_proj</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="from_string"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_string">[docs]</a><span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a CRS from a proj string&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="from_wkt"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.from_wkt">[docs]</a><span class="k">def</span> <span class="nf">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a CRS from a WKT string specification&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="to_wkt"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.to_wkt">[docs]</a><span class="k">def</span> <span class="nf">to_wkt</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the WKT string of a CRS.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="default_crs"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.default_crs">[docs]</a><span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for North America.</span>
@@ -414,6 +508,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">3338</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="daymet_crs"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.daymet_crs">[docs]</a><span class="k">def</span> <span class="nf">daymet_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns the CRS used by DayMet files, but in m, not km.</span>
 
@@ -425,7 +520,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># old proj: return from_string(&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs &#39;)</span>
     <span class="c1"># new proj...</span>
-    <span class="k">return</span> <span class="n">from_string</span><span class="p">(</span><span class="s1">&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs&#39;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">from_string</span><span class="p">(</span>
+        <span class="s1">&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs&#39;</span>
+    <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="daymet_crs_native"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.daymet_crs_native">[docs]</a><span class="k">def</span> <span class="nf">daymet_crs_native</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns the CRS used by DayMet files natively, in km, not in m.</span>
@@ -436,7 +534,10 @@
 <span class="sd">        The DayMet CRS.  The user should not care what this is.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">from_string</span><span class="p">(</span><span class="s1">&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs&#39;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">from_string</span><span class="p">(</span>
+        <span class="s1">&#39;+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs&#39;</span>
+    <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="latlon_crs"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.latlon_crs">[docs]</a><span class="k">def</span> <span class="nf">latlon_crs</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns the default latitude-longitude CRS.</span>
@@ -448,7 +549,8 @@
 <span class="sd">        you do, don&#39;t use the default!) but it is EPSG:4269.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">4269</span><span class="p">)</span></div>
-    
+
+
 <div class="viewcode-block" id="equal"><a class="viewcode-back" href="../../api.html#watershed_workflow.crs.equal">[docs]</a><span class="k">def</span> <span class="nf">equal</span><span class="p">(</span><span class="n">crs1</span><span class="p">,</span> <span class="n">crs2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Tries to guess at the equality of two CRS objects.</span>
 
@@ -469,34 +571,45 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs1</span> <span class="o">==</span> <span class="n">crs2</span></div>
-    
 </pre></div>
 
            </div>
+           
           </div>
           <footer>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
-  </div>
+    <p>
+        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
