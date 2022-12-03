@@ -1,5 +1,4 @@
-#name: watershed_workflow_DEV-2021-11-10
-name: watershed_workflow_Dev
+name: watershed_workflow_DEV-2021-11-10
 channels:
   - conda-forge
   - defaults
