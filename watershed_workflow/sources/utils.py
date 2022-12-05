@@ -42,8 +42,11 @@ def huc_str(huc):
     return huc
 
 
-def download(url, location, force=False):
-    """Download a file from a URL to a location.  If force, clobber whatever is there."""
+def download(url, location, force=False, **kwargs):
+    """Download a file from a URL to a location.  If force, clobber whatever is there.
+
+    Note that kwargs are supplied to the requests call.
+    """
     if os.path.isfile(location) and force:
         os.remove(location)
 
@@ -63,7 +66,7 @@ def download(url, location, force=False):
         #         for chunk in r.iter_content(chunk_size=128):
         #             f.write(chunk)
 
-        with requests.get(url, stream=True, verify=verify) as r:
+        with requests.get(url, stream=True, verify=verify, **kwargs) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)

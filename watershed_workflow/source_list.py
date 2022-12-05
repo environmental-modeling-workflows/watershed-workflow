@@ -20,7 +20,7 @@ from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
 from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
 from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
 from watershed_workflow.sources.manager_daymet import FileManagerDaymet
-from watershed_workflow.sources.manager_modis_appeears import FileManagerMODIS
+from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAppEEARS
 
 from watershed_workflow.sources.manager_shape import FileManagerShape
 from watershed_workflow.sources.manager_raster import FileManagerRaster
@@ -59,9 +59,16 @@ default_structure_source = 'NRCS SSURGO'
 # available and default land cover
 land_cover_sources = {
     'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
-    'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK')
+    'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK'),
+    'MODIS': FileManagerMODISAppEEARS()
 }
 default_land_cover = 'NLCD (L48)'
+
+lai_sources = {
+    'MODIS': FileManagerMODISAppEEARS()    
+}
+default_lai = 'MODIS'
+
 
 # available and default meteorology
 met_sources = { 'DayMet': FileManagerDaymet() }
@@ -80,6 +87,7 @@ def get_default_sources():
     sources['soil structure'] = structure_sources['NRCS SSURGO']
     sources['geologic structure'] = structure_sources['GLHYMPS']
     sources['land cover'] = land_cover_sources[default_land_cover]
+    sources['lai'] = lai_sources[default_lai]
     sources['soil thickness'] = None
     sources['meteorology'] = met_sources[default_met]
     return sources

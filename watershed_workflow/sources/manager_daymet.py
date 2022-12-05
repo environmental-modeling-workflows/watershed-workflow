@@ -36,7 +36,7 @@ class FileManagerDaymet:
           - :math:`mm / day`
           - Total daily precipitation
         * - tmin, tmax
-          - :math:`^\circ C`
+          - :math:`^\\circ C`
           - Min/max daily air temperature
         * - srad
           - :math:`W / m^2`
