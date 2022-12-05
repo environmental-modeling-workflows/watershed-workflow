@@ -447,39 +447,7 @@ class FileManagerNHDPlusV21:
             profile['schema']['geometry'] = hus[0]['geometry']
 
         return profile, hus
-
-
-
-
-
-        # # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
-        # if self.lowest_level < level:
-        #     raise ValueError("{}: files include HUs at max level {}.".format(
-        #         self.name, self.lowest_level))
-        # if level < huc_level:
-        #     raise ValueError("{}: cannot ask for HUs at level {} contained in {}.".format(
-        #         self.name, level, huc_level))
-        # if huc_level < self.file_level:
-        #     raise ValueError(
-        #         "{}: files are organized at HUC level {}, so cannot ask for a larger HUC than that level."
-        #         .format(self.name, self.file_level))
-
-        # # download the file
-        # filename = self._download(huc[0:self.file_level], force=force_download)
-        # logging.info('Using HUC file "{}"'.format(filename))
-
-        # # read the file
-        # layer = 'WBDHU{}'.format(level)
-        # logging.debug("{}: opening '{}' layer '{}' for HUCs in '{}'".format(
-        #     self.name, filename, layer, huc))
-
-        # with fiona.open(filename, mode='r', layer=layer) as fid:
-        #     hus = [hu for hu in fid if source_utils.get_code(hu, level).startswith(huc)]
-        #     profile = fid.profile
-        # profile['always_xy'] = True
-        # return profile, hus
     
-
     def get_hydro(self,
                   huc,
                   bounds=None,
