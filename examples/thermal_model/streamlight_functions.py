@@ -46,13 +46,13 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
     Note this finds and downloads files as needed.
     """
 
-    # For test -----------------------------
-    doy = 200
-    hour = 12
-    tz_offset = 0
-    lat = 35.9925
-    lon = -79.0460
-    #-----------------------------------------
+    # # For test -----------------------------
+    # doy = 200
+    # hour = 12
+    # tz_offset = 0
+    # lat = 35.9925
+    # lon = -79.0460
+    # #-----------------------------------------
 
     jdate = (doy - 1) + (hour / 24) # numerical day (Julian date)
 
