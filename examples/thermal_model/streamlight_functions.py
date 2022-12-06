@@ -13,6 +13,68 @@ Savoy, P., & Harvey, J. W. (2021). Predicting light regime controls on primary
     e2020GL092149. https://doi.org/10.1029/2020GL092149
 '''
 
+def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, x_LAD=1): 
+    """This function combines the SHADE2 model (Li et al. 2012) 
+    and Campbell & Norman (1998) radiative transfer model. 
+
+    Parameters
+    ----------
+    lat : float
+        Latitude [decimal degrees].
+    lon : float
+        Longitude [decimal degrees].        
+    channel_azimuth : float
+        Channel azimuth [decimal degrees].
+    bottom_width: float
+        Channel width at the water-sediment interface [m].
+    bank_height: float
+        Bank height [m].
+    bank_slope: float
+        Bank slope [-].
+    water_depth: float
+        Water depth [m].        
+    tree_height: float
+        Tree height [m].
+    overhang: float
+        Effectively max canopy radius [m].
+    overhang_height: float
+        Height of the maximum canopy overhang (height at max canopy radius) [m].
+    doy : int
+        Day of the year.
+    hour: int
+        Hour of the day.
+    tz_offset: int
+        Time zone offset.        
+    x_LAD: float
+        Leaf angle distribution, default = 1 [-].
+
+    Returns
+    -------
+    PAR_surface : float
+        predicted light at the stream surface [umol m-2 s-1].      
+    """
+    # -------------------------------------------------------------
+    # Defining solar geometry
+    # -------------------------------------------------------------
+
+    solar_dec, solar_altitude, sza, solar_azimuth_ini = solar_geo_calc(
+        doy, hour, tz_offset, lat, lon)
+
+    ## Generate a logical index of night and day. Night = SZA > 90
+    day_index = sza <= (np.pi * 0.5)
+    night_index = sza > (np.pi * 0.5)    
+
+    # -------------------------------------------------------------
+    # Predicting transmission of light through the canopy
+    # -------------------------------------------------------------
+
+    driver_file[day_index, "PAR_bc"] <- RT_CN_1998(
+      driver_file = driver_file[day_index, ],
+      solar_geo = solar_geo[day_index, ],
+      x_LAD = x_LAD
+    )
+
+
 def solar_geo_calc(doy, hour, tz_offset, lat, lon):
     """This function calculates solar declination, altitude,
     zenith angle, and an initial estimate of azimuth. This initial estimate
@@ -25,25 +87,23 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
         Day of the year.
     hour: int
         Hour of the day.
-    tz_offset: int
+    tz_offset: float
         Time zone offset.
-    lat : int
-        Latitude in decimal degrees.
-    lon : int
-        Longitude in decimal degrees.        
+    lat : float
+        Latitude [decimal degrees].
+    lon : float
+        Longitude [decimal degrees].        
 
     Returns
     -------
-    solar_dec : int
+    solar_dec : float
         Solar declination.
-    solar_altitude : int
+    solar_altitude : float
         Altitude.
-    sza : int
-        Solar zenith angle.
-    solar_azimuth_ini : int
-        Initial estimate of azimuth.        
-
-    Note this finds and downloads files as needed.
+    sza : float
+        Solar zenith angle [decimal degrees].
+    solar_azimuth_ini : float
+        Initial estimate of azimuth [decimal degrees].        
     """
 
     # # For test -----------------------------
