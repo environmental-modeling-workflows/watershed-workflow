@@ -14,7 +14,7 @@ Savoy, P., & Harvey, J. W. (2021). Predicting light regime controls on primary
     e2020GL092149. https://doi.org/10.1029/2020GL092149
 '''
 
-def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, x_LAD=1): 
+def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, sw_inc, lai, x_LAD=1): 
     """This function combines the SHADE2 model (Li et al. 2012) 
     and Campbell & Norman (1998) radiative transfer model. 
 
@@ -45,7 +45,11 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
     hour: int
         Hour of the day.
     tz_offset: int
-        Time zone offset.        
+        Time zone offset.    
+    sw_inc : float
+        Total incoming shortwave radiation [W m-2].  
+    lai: float
+        Leaf are index [-].               
     x_LAD: float
         Leaf angle distribution, default = 1 [-].
 
@@ -61,19 +65,19 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
     solar_dec, solar_altitude, sza, solar_azimuth_ini = solar_geo_calc(
         doy, hour, tz_offset, lat, lon)
 
-    ## Generate a logical index of night and day. Night = SZA > 90
-    day_index = sza <= (np.pi * 0.5)
-    night_index = sza > (np.pi * 0.5)    
-
     # -------------------------------------------------------------
     # Predicting transmission of light through the canopy
     # -------------------------------------------------------------
 
-    # driver_file[day_index, "PAR_bc"] <- RT_CN_1998(
-    #   driver_file = driver_file[day_index, ],
-    #   solar_geo = solar_geo[day_index, ],
-    #   x_LAD = x_LAD
-    # )
+    par_bc = rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD)
+
+    #-------------------------------------------------
+    #Running the SHADE2 model
+    #-------------------------------------------------
+
+
+
+
 
 
 def solar_geo_calc(doy, hour, tz_offset, lat, lon):
@@ -181,6 +185,9 @@ def rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD):
     # Following Spitters et al. (1986)
     #-------------------------------------------------
     
+    ## Generate a logical index of night and day. Night = SZA > 90
+    is_night = sza > (np.pi * 0.5)  
+
     ## Calculate the extra-terrestrial irradiance (Spitters et al. (1986) Eq. 1)
     # I.e., global incoming shortwave radiation [W m-2]]
     Qo = 1370 * np.sin(solar_altitude) * (1 + 0.033 * np.cos(np.deg2rad(360 * doy / 365)))
@@ -233,6 +240,9 @@ def rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD):
     diff_trans = I_od * np.exp(-np.sqrt(0.8) * kd * lai)
 
     # Get the total light transmitted through the canopy
+
+    beam_trans[is_night] = 0
+    diff_trans[is_night] = 0
     transmitted = beam_trans + diff_trans
     ppfd = transmitted * 1/0.235 #Convert from W m-2 to umol m-2 s-1
 
@@ -316,4 +326,172 @@ def dt_calc(lai,x_LAD=1):
     #Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
     
 
-    return 2 * sum(integ_func(angle_seq, d_sza, x_LAD, lai))
+    return (2 * sum(integ_func(angle_seq, d_sza, x_LAD, lai)))
+
+
+def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_azimuth, solar_altitude, sw_inc, lai, x_LAD=1):
+    """SHADE2 model from Li et al. (2012) Modeled riparian stream shading:
+    Agreement with field measurements and sensitivity to riparian conditions
+
+    Parameters
+    ----------
+    lat : float
+        Latitude [decimal degrees].
+    lon : float
+        Longitude [decimal degrees].        
+    channel_azimuth : float
+        Channel azimuth [decimal degrees].
+    bottom_width: float
+        Channel width at the water-sediment interface [m].
+    bank_height: float
+        Bank height [m].
+    bank_slope: float
+        Bank slope [-].
+    water_depth: float
+        Water depth [m].        
+    tree_height: float
+        Tree height [m].
+    overhang: float
+        Effectively max canopy radius [m].
+    overhang_height: float
+        Height of the maximum canopy overhang (height at max canopy radius) [m].
+    doy : int
+        Day of the year.
+    hour: int
+        Hour of the day.
+    tz_offset: int
+        Time zone offset. 
+    solar_altitude : float
+        Altitude.
+    solar_azimuth_ini : float
+        Initial estimate of azimuth [decimal degrees].            
+    sw_inc : float
+        Total incoming shortwave radiation [W m-2].  
+    lai: float
+        Leaf are index [-].               
+    x_LAD: float
+        Leaf angle distribution, default = 1 [-].
+
+    Returns
+    -------
+    perc_shade_veg : float
+        Percent of the wetted width shaded by vegetation [%].   
+    perc_shade_bank : float
+        Percent of the wetted width shaded by the bank [%].            
+    """
+    #-------------------------------------------------
+    #Defining solar geometry
+    #-------------------------------------------------
+#     SHD_solar_geo <- solar_c(
+#       driver_file = driver,
+#       solar_geo = solar,
+#       Lat = Lat,
+#       Lon = Lon
+#     ) #PS 2019
+
+    #-------------------------------------------------
+    # Taking the difference between the sun and stream azimuth (sun-stream)
+    #-------------------------------------------------
+
+    ## This must be handled correctly to determine if the shadow falls towards the river
+    ## [sin(delta)>0] or towards the bank
+    ## Eastern shading
+    delta_prime = solar_azimuth - (channel_azimuth * np.pi / 180)
+    delta_prime[delta_prime < 0] = np.pi + np.abs(delta_prime[delta_prime < 0] ) % (2 * np.pi) #PS 2019
+    delta_east = delta_prime % (2 * np.pi)
+
+    ## Western shading
+    if (delta_east < np.pi):
+        delta_west = delta_east + np.pi
+    else:
+        delta_west = delta_east - np.pi
+
+    #-------------------------------------------------
+    # Doing some housekeeping related to bankfull and wetted widths
+    #-------------------------------------------------
+    
+    ## Calculate bankfull width
+    bankfull_width = bottom_width + ((bank_height/bank_slope)*2)
+
+    ## Not sure what to do here, setting water_depth > bank_height, = bank_height
+    water_depth[water_depth > bank_height] = bank_height
+
+    ## Calculate wetted width
+    water_width = bottom_width + water_depth*(1/bank_slope + 1/bank_slope)
+
+    ## Not sure what to do here, setting widths > bankfull, = bankfull
+    water_width[water_width > bankfull_width] <- bankfull_width
+
+#   #-------------------------------------------------
+#   #Calculate the length of shading for each bank
+#   #-------------------------------------------------
+#     #Calculating shade from the "eastern" bank
+#       eastern_shade_length <- matrix(ncol = 2,
+#         shade_calc(
+#           delta = delta_east,
+#           solar_altitude = solar_altitude,
+#           bottom_width = bottom_width,
+#           BH = BH,
+#           BS = BS,
+#           WL = WL,
+#           TH = TH,
+#           overhang = overhang,
+#           overhang_height = overhang_height
+#         )
+#       )
+
+#       east_bank_shade_length <- eastern_shade_length[, 1]
+#       east_veg_shade_length <- eastern_shade_length[, 2] #- eastern_shade[, 1] #PS 7/9/2018
+
+#     #Calculating shade from the "western" bank
+#       western_shade_length <- matrix(ncol = 2,
+#         shade_calc(
+#           delta = delta_west,
+#           solar_altitude = solar_altitude,
+#           bottom_width = bottom_width,
+#           BH = BH,
+#           BS = BS,
+#           WL = WL,
+#           TH = TH,
+#           overhang = overhang,
+#           overhang_height = overhang_height
+#         )
+#       )
+
+#         west_bank_shade_length <- western_shade_length[, 1]
+#         west_veg_shade_length <- western_shade_length[, 2] #- western_shade[, 1] #PS 7/9/2018
+
+#   #-------------------------------------------------
+#   #Calculate the total length of bank shading
+#   #-------------------------------------------------
+#     #Calculate the total length of bank shading
+#       total_bank_shade_length <- east_bank_shade_length + west_bank_shade_length
+
+#     #Generate a logical index where the length of bank shading is longer than wetted width
+#       reset_bank_max_index <- total_bank_shade_length > water_width
+
+#     #If total bank shade length is longer than wetted width, set to wetted width
+#       total_bank_shade_length[reset_bank_max_index] <- water_width #PS 2021
+
+#   #-------------------------------------------------
+#   #Calculate the total length of vegetation shading
+#   #-------------------------------------------------
+#     #Calculate the total length of vegetation shading
+#       total_veg_shade_length <- east_veg_shade_length + west_veg_shade_length
+
+#     #Generate a logical index where the length of vegetation shading is longer than wetted width
+#       reset_veg_max_index <- total_veg_shade_length > water_width
+
+#     #If total vegetation shade length is longer than wetted width, set to wetted width
+#       total_veg_shade_length[total_veg_shade_length > water_width] <- water_width #PS 2021
+
+#   #-------------------------------------------------
+#   #Calculating the percentage of water that is shaded
+#   #-------------------------------------------------
+#     perc_shade_bank <- (total_bank_shade_length) / water_width
+#       perc_shade_bank[perc_shade_bank > 1] <- 1
+
+#     perc_shade_veg <- (total_veg_shade_length - total_bank_shade_length) / water_width
+#       perc_shade_veg[perc_shade_veg > 1] <- 1
+
+    return perc_shade_veg, perc_shade_bank
