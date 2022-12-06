@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 '''The following functions are a python implementation 
 of the code StreamLight (https://github.com/psavoy/StreamLight).
@@ -147,7 +148,7 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
 
     return solar_dec, solar_altitude, sza, solar_azimuth_ini
 
-def RT_CN_1998(doy, sza, solar_altitude, sw_inc, x_LAD, lai):
+def rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD):
     """This function calculates below canopy PAR. Main references are
     1. Campbell & Norman (1998) An introduction to Environmental biophysics (abbr C&N (1998))
     2. Spitters et al. (1986) Separating the diffuse and direct component of global
@@ -164,18 +165,15 @@ def RT_CN_1998(doy, sza, solar_altitude, sw_inc, x_LAD, lai):
     sza : float
         Solar zenith angle [decimal degrees].       
     sw_inc : float
-        Total incoming shortwave radiation [W m-2]. 
-    x_LAD: float
-        Leaf angle distribution [-].   
+        Total incoming shortwave radiation [W m-2].  
     lai: float
         Leaf are index [-].   
+    x_LAD: float
+        Leaf angle distribution [-].      
     Returns
     -------
-    solar_dec : float
-        Solar declination.
-
-    solar_azimuth_ini : float
-        Initial estimate of azimuth [decimal degrees].        
+    ppfd : float
+        Total PPFD transmitted through the canopy [umol m-2 s-1].       
     """
 
     #-------------------------------------------------
@@ -193,7 +191,7 @@ def RT_CN_1998(doy, sza, solar_altitude, sw_inc, x_LAD, lai):
     R = 0.847 - (1.61 * np.sin(solar_altitude)) + (1.04 * np.sin(solar_altitude) * np.sin(solar_altitude))
     K = (1.47 - R) / 1.66
 
-    frac_diff = np.array([diffuse_calc(at, R, K) for at in atm_trns])
+    frac_diff = np.array([diffuse_calc(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
 
     ## Partition into diffuse and beam radiation
     rad_diff = frac_diff * sw_inc # Diffuse radiation [W m-2]
@@ -266,9 +264,9 @@ def diffuse_calc(atm_trns, R, K):
     """
     fdiffuse = 1.0
 
-    if (atm_trns > 0.22) and (atm_trns <= 0.35):
+    if ((atm_trns > 0.22) and (atm_trns <= 0.35)):
         fdiffuse = 1.0-(6.4 * (atm_trns - 0.22)*(atm_trns - 0.22))
-    elif (atm_trns > 0.35) and (atm_trns <= K):
+    elif ((atm_trns > 0.35) and (atm_trns <= K)):
         fdiffuse = 1.47 - (1.66 * atm_trns)
     elif (atm_trns > K):
         fdiffuse = R
