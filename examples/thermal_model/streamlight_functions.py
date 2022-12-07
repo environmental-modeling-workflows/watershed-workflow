@@ -329,7 +329,7 @@ def dt_calc(lai,x_LAD=1):
     return (2 * sum(integ_func(angle_seq, d_sza, x_LAD, lai)))
 
 
-def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_azimuth, solar_altitude, sw_inc, lai, x_LAD=1):
+def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini, solar_altitude, sw_inc, lai, x_LAD=1):
     """SHADE2 model from Li et al. (2012) Modeled riparian stream shading:
     Agreement with field measurements and sensitivity to riparian conditions
 
@@ -361,10 +361,12 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
         Hour of the day.
     tz_offset: int
         Time zone offset. 
-    solar_altitude : float
-        Altitude.
+    solar_dec_ini : float
+        Solar declination (initial estimate).
     solar_azimuth_ini : float
-        Initial estimate of azimuth [decimal degrees].            
+        Initial estimate of azimuth [decimal degrees].   
+    solar_altitude : float
+        Altitude.         
     sw_inc : float
         Total incoming shortwave radiation [W m-2].  
     lai: float
@@ -380,15 +382,10 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
         Percent of the wetted width shaded by the bank [%].            
     """
     #-------------------------------------------------
-    #Defining solar geometry
+    # Defining solar geometry
     #-------------------------------------------------
-#     SHD_solar_geo <- solar_c(
-#       driver_file = driver,
-#       solar_geo = solar,
-#       Lat = Lat,
-#       Lon = Lon
-#     ) #PS 2019
 
+    solar_azimuth = solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini)
     #-------------------------------------------------
     # Taking the difference between the sun and stream azimuth (sun-stream)
     #-------------------------------------------------
@@ -500,7 +497,9 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     return perc_shade_veg, perc_shade_bank
 
 
-def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_altitude_ini, sza_ini, solar_azimuth_ini):
+def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini):
+    '''Calculates solar geometry for use in the SHADE2 model
+    '''
 
     # Initialize the adjusted azimuth
     solar_azimuth = np.nan*np.ones_like(solar_azimuth_ini)
@@ -511,10 +510,10 @@ def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_altitude_ini, s
     lat_greater = np.deg2rad(lat) > solar_dec_ini
 
     # Add a small amount of time (1 minute) and recalculate azimuth
-    azimuth_tmp = azimuth_adj(lat, lon, doy[lat_greater], hour[lat_greater], tz_offset[lat_greater])
+    azimuth_tmp = azimuth_adj(lat, lon, doy, hour, tz_offset)
 
     # Generate a logical index where azimuth_tmp is greater than the initial estimate
-    az_tmp_greater = azimuth_tmp > solar_azimuth_ini[lat_greater]
+    az_tmp_greater = azimuth_tmp > solar_azimuth_ini
 
     # Generate a logical index where both Lat > solar_dec & azimuth_tmp > azimuth
     add_az = lat_greater and az_tmp_greater
@@ -526,9 +525,7 @@ def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_altitude_ini, s
     # When Latitude is < solar declination all angles are 90 - azimuth
     solar_azimuth[not lat_greater] =  (np.pi / 2) - solar_azimuth_ini[not lat_greater]
 
-#   return(geo_initial[, c("solar_altitude", "solar_azimuth")])
-
-# } #End solar_c function
+    return solar_azimuth
 
 def azimuth_adj(lat, lon, doy, hour, tz_offset):
     '''Helper function for determining the correct solar azimuth
@@ -539,3 +536,68 @@ def azimuth_adj(lat, lon, doy, hour, tz_offset):
     # Add a minute to the hour
     _, _, _, solar_azimuth_adj = solar_geo_calc(doy, hour + (1 / 60 / 24), tz_offset, lat, lon)
     return solar_azimuth_adj
+
+
+def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height):
+    '''Calculating the percent of the wetted width shaded by banks and vegetation
+    '''
+
+    #-------------------------------------------------
+    # Doing some housekeeping related to bankfull and wetted widths
+    # This is redundant from SHADE2.R, but leaving here for now while testing
+    #-------------------------------------------------
+    
+    # Calculate bankfull width
+    bankfull_width = bottom_width + ((bank_height/bank_slope)*2)
+
+    # Setting water_depth > bank_height, = bank_height
+    water_depth[water_depth > bank_height] = bank_height
+
+    #Calculate wetted width
+    water_width = bottom_width + water_depth*(1/bank_slope + 1/bank_slope)
+
+    #Setting widths > bankfull, = bankfull
+    water_width[water_width > bankfull_width] = bankfull_width
+
+#   #-------------------------------------------------
+#   #Calculating the shading produced by the bank
+#   #-------------------------------------------------
+#     #Calculating the length of the shadow perpendicular to the bank produced by the bank
+#       bank_shadow_length <- (1 / tan(solar_altitude)) * (BH - WL) * sin(delta)
+
+#     #Finding the amount of exposed bank in the horizontal direction
+#       exposed_bank <- (BH - WL) / BS
+#         #if(BH - WL <= 0 | BS == 0) exposed_bank <- 0 #P.S. , commented this out because
+#         #I think I assumed that this couldn't be negative even if its confusing to be so
+
+#     #Finding how much shade falls on the surface of the water
+#       stream_shade_bank <- bank_shadow_length - exposed_bank
+#       stream_shade_bank[stream_shade_bank < 0] <- 0
+
+#   #-------------------------------------------------
+#   #Calculating the shading produced by the Vegetation
+#   #-------------------------------------------------
+#     #From top of the tree
+#       stream_shade_top <- (1 / tan(solar_altitude)) * (TH + BH - WL) * sin(delta) - exposed_bank
+#         stream_shade_top[stream_shade_top < 0] <- 0
+
+#     #From the overhang
+#       stream_shade_overhang <- (1 / tan(solar_altitude)) * (overhang_height + BH - WL)*
+#         sin(delta) + overhang - exposed_bank
+#         stream_shade_overhang[stream_shade_overhang < 0] <- 0
+
+#     #Selecting the maximum and minimum
+#       veg_shade_bound <- matrix(ncol = 2, c(stream_shade_top, stream_shade_overhang))
+
+#     #Get max(shade from top, shade from overhang)
+#     #Note, here I take a departure from the r_shade matlab code. For some reason the code
+#     #Takes the maximum - min shadow length, but in the paper text it clearly states max
+#     #See pg 14 Li et al. (2012)
+#       stream_shade_veg_max <- apply(veg_shade_bound, 1, FUN = max)
+
+#       #If the maximum shadow length is longer than the wetted width, set to width
+#         stream_shade_veg_max[stream_shade_veg_max > water_width] <- water_width
+
+#   return(c(stream_shade_bank, stream_shade_veg_max)) #PS 2021
+
+# } #End shade_calc function    
