@@ -589,17 +589,18 @@ def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, wat
     stream_shade_overhang[stream_shade_overhang < 0] = 0
 
     #Selecting the maximum and minimum
-    veg_shade_bound = matrix(ncol = 2, c(stream_shade_top, stream_shade_overhang))
+    stream_shade_top.reshape((1,len(stream_shade_top)))
+    stream_shade_overhang.reshape((1,len(stream_shade_overhang)))
 
-#     #Get max(shade from top, shade from overhang)
-#     #Note, here I take a departure from the r_shade matlab code. For some reason the code
-#     #Takes the maximum - min shadow length, but in the paper text it clearly states max
-#     #See pg 14 Li et al. (2012)
-#       stream_shade_veg_max <- apply(veg_shade_bound, 1, FUN = max)
+    # Get max(shade from top, shade from overhang)
+    # Note from PS: "here I take a departure from the r_shade matlab code. For some reason the code
+    # Takes the maximum - min shadow length, but in the paper text it clearly states max
+    # See pg 14 Li et al. (2012)"
 
-#       #If the maximum shadow length is longer than the wetted width, set to width
-#         stream_shade_veg_max[stream_shade_veg_max > water_width] <- water_width
+    veg_shade_bound = np.column_stack((stream_shade_top, stream_shade_overhang))
+    stream_shade_veg_max = np.amax(veg_shade_bound, axis = 0)
 
-#   return(c(stream_shade_bank, stream_shade_veg_max)) #PS 2021
+    # If the maximum shadow length is longer than the wetted width, set to width
+    stream_shade_veg_max[stream_shade_veg_max > water_width] = water_width
 
-# } #End shade_calc function    
+    return stream_shade_bank, stream_shade_veg_max
