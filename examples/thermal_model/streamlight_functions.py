@@ -559,35 +559,37 @@ def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, wat
     #Setting widths > bankfull, = bankfull
     water_width[water_width > bankfull_width] = bankfull_width
 
-#   #-------------------------------------------------
-#   #Calculating the shading produced by the bank
-#   #-------------------------------------------------
-#     #Calculating the length of the shadow perpendicular to the bank produced by the bank
-#       bank_shadow_length <- (1 / tan(solar_altitude)) * (BH - WL) * sin(delta)
+    #-------------------------------------------------
+    # Calculating the shading produced by the bank
+    #-------------------------------------------------
 
-#     #Finding the amount of exposed bank in the horizontal direction
-#       exposed_bank <- (BH - WL) / BS
-#         #if(BH - WL <= 0 | BS == 0) exposed_bank <- 0 #P.S. , commented this out because
-#         #I think I assumed that this couldn't be negative even if its confusing to be so
+    # Calculating the length of the shadow perpendicular to the bank produced by the bank
+    bank_shadow_length = (1 / np.tan(solar_altitude)) * (bank_height - water_depth) * np.sin(delta)
 
-#     #Finding how much shade falls on the surface of the water
-#       stream_shade_bank <- bank_shadow_length - exposed_bank
-#       stream_shade_bank[stream_shade_bank < 0] <- 0
+    # Finding the amount of exposed bank in the horizontal direction
+    exposed_bank = (bank_height - water_depth) / bank_slope
 
-#   #-------------------------------------------------
-#   #Calculating the shading produced by the Vegetation
-#   #-------------------------------------------------
-#     #From top of the tree
-#       stream_shade_top <- (1 / tan(solar_altitude)) * (TH + BH - WL) * sin(delta) - exposed_bank
-#         stream_shade_top[stream_shade_top < 0] <- 0
+    # From PS: if(BH - WL <= 0 | BS == 0) exposed_bank <- 0 #P.S. , commented this out because
+    # I think I assumed that this couldn't be negative even if its confusing to be so
 
-#     #From the overhang
-#       stream_shade_overhang <- (1 / tan(solar_altitude)) * (overhang_height + BH - WL)*
-#         sin(delta) + overhang - exposed_bank
-#         stream_shade_overhang[stream_shade_overhang < 0] <- 0
+    # Finding how much shade falls on the surface of the water
+    stream_shade_bank = bank_shadow_length - exposed_bank
+    stream_shade_bank[stream_shade_bank < 0] = 0
 
-#     #Selecting the maximum and minimum
-#       veg_shade_bound <- matrix(ncol = 2, c(stream_shade_top, stream_shade_overhang))
+    #-------------------------------------------------
+    #Calculating the shading produced by the Vegetation
+    #-------------------------------------------------
+
+    #From top of the tree
+    stream_shade_top = (1 / np.tan(solar_altitude)) * (tree_height + bank_height - water_depth) * np.sin(delta) - exposed_bank
+    stream_shade_top[stream_shade_top < 0] = 0
+
+    #From the overhang
+    stream_shade_overhang =(1 / np.tan(solar_altitude)) * (overhang_height + bank_height - water_depth)* np.sin(delta) + overhang - exposed_bank
+    stream_shade_overhang[stream_shade_overhang < 0] = 0
+
+    #Selecting the maximum and minimum
+    veg_shade_bound = matrix(ncol = 2, c(stream_shade_top, stream_shade_overhang))
 
 #     #Get max(shade from top, shade from overhang)
 #     #Note, here I take a departure from the r_shade matlab code. For some reason the code
