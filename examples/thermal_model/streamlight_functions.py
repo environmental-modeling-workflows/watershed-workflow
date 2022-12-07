@@ -424,40 +424,11 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     #-------------------------------------------------
     
     ## Calculating shade from the "eastern" bank
-    # eastern_shade_length <- matrix(ncol = 2,
-    # shade_calc(
-    #     delta = delta_east,
-    #     solar_altitude = solar_altitude,
-    #     bottom_width = bottom_width,
-    #     BH = BH,
-    #     BS = BS,
-    #     WL = WL,
-    #     TH = TH,
-    #     overhang = overhang,
-    #     overhang_height = overhang_height
-    # )
-    # )
 
-    # east_bank_shade_length <- eastern_shade_length[, 1]
-    # east_veg_shade_length <- eastern_shade_length[, 2] #- eastern_shade[, 1] #PS 7/9/2018
+    east_bank_shade_length, east_veg_shade_length = shade_calc(delta_east, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
 
     # ## Calculating shade from the "western" bank
-    # western_shade_length <- matrix(ncol = 2,
-    # shade_calc(
-    #     delta = delta_west,
-    #     solar_altitude = solar_altitude,
-    #     bottom_width = bottom_width,
-    #     BH = BH,
-    #     BS = BS,
-    #     WL = WL,
-    #     TH = TH,
-    #     overhang = overhang,
-    #     overhang_height = overhang_height
-    # )
-    # )
-
-    # west_bank_shade_length <- western_shade_length[, 1]
-    # west_veg_shade_length <- western_shade_length[, 2] #- western_shade[, 1] #PS 7/9/2018
+    west_bank_shade_length, west_veg_shade_length = shade_calc(delta_west, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
 
     #-------------------------------------------------
     # Calculate the total length of bank shading
@@ -488,6 +459,7 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     #-------------------------------------------------
     #Calculating the percentage of water that is shaded
     #-------------------------------------------------
+    
     perc_shade_bank = (total_bank_shade_length) / water_width
     perc_shade_bank[perc_shade_bank > 1] = 1
 
