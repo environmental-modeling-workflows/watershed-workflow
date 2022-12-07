@@ -101,14 +101,14 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
 
     Returns
     -------
-    solar_dec : float
-        Solar declination.
+    solar_dec_ini : float
+        Solar declination (initial estimate).
     solar_altitude : float
-        Altitude.
+        Altitude (initial estimate).
     sza : float
-        Solar zenith angle [decimal degrees].
+        Solar zenith angle (initial estimate) [decimal degrees].
     solar_azimuth_ini : float
-        Initial estimate of azimuth [decimal degrees].        
+        Initial estimate of azimuth (initial estimate) [decimal degrees].        
     """
 
     # # For test -----------------------------
@@ -124,7 +124,7 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
     # Defining solar geometry
     
     ## Solar declination
-    solar_dec = 23.45 * ((np.pi) / 180) * np.sin(((2 * np.pi) * (jdate + 284)) / 365.25)
+    solar_dec_ini = 23.45 * ((np.pi) / 180) * np.sin(((2 * np.pi) * (jdate + 284)) / 365.25)
 
     ## Calculating true solar time
     ### Mean solar time
@@ -139,18 +139,18 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
 
     ### This is an adjustment from the Li (2006) code which deals with negative solar altitudes
 
-    sin_solar_altitude = (np.sin(solar_dec) * np.sin(np.deg2rad(lat)) - np.cos(solar_dec) * \
+    sin_solar_altitude = (np.sin(solar_dec_ini) * np.sin(np.deg2rad(lat)) - np.cos(solar_dec_ini) * \
         np.cos(np.deg2rad(lat)) * np.cos(2 * np.pi * tst))
 
-    solar_altitude = np.arcsin(sin_solar_altitude)
+    solar_altitude_ini = np.arcsin(sin_solar_altitude)
 
     # Solar zenith angle
-    sza = 0.5 * np.pi - solar_altitude
+    sza_ini = 0.5 * np.pi - solar_altitude_ini
 
     # Initial estimate of the solar azimuth 
-    solar_azimuth_ini = np.arccos((np.cos(solar_dec) * np.sin(2 * np.pi * tst)) / np.cos(solar_altitude))
+    solar_azimuth_ini = np.arccos((np.cos(solar_dec_ini) * np.sin(2 * np.pi * tst)) / np.cos(solar_altitude_ini))
 
-    return solar_dec, solar_altitude, sza, solar_azimuth_ini
+    return solar_dec_ini, solar_altitude_ini, sza_ini, solar_azimuth_ini
 
 def rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD):
     """This function calculates below canopy PAR. Main references are
@@ -422,76 +422,120 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     ## Not sure what to do here, setting widths > bankfull, = bankfull
     water_width[water_width > bankfull_width] <- bankfull_width
 
-#   #-------------------------------------------------
-#   #Calculate the length of shading for each bank
-#   #-------------------------------------------------
-#     #Calculating shade from the "eastern" bank
-#       eastern_shade_length <- matrix(ncol = 2,
-#         shade_calc(
-#           delta = delta_east,
-#           solar_altitude = solar_altitude,
-#           bottom_width = bottom_width,
-#           BH = BH,
-#           BS = BS,
-#           WL = WL,
-#           TH = TH,
-#           overhang = overhang,
-#           overhang_height = overhang_height
-#         )
-#       )
+    #-------------------------------------------------
+    # Calculate the length of shading for each bank
+    #-------------------------------------------------
+    
+    ## Calculating shade from the "eastern" bank
+    # eastern_shade_length <- matrix(ncol = 2,
+    # shade_calc(
+    #     delta = delta_east,
+    #     solar_altitude = solar_altitude,
+    #     bottom_width = bottom_width,
+    #     BH = BH,
+    #     BS = BS,
+    #     WL = WL,
+    #     TH = TH,
+    #     overhang = overhang,
+    #     overhang_height = overhang_height
+    # )
+    # )
 
-#       east_bank_shade_length <- eastern_shade_length[, 1]
-#       east_veg_shade_length <- eastern_shade_length[, 2] #- eastern_shade[, 1] #PS 7/9/2018
+    # east_bank_shade_length <- eastern_shade_length[, 1]
+    # east_veg_shade_length <- eastern_shade_length[, 2] #- eastern_shade[, 1] #PS 7/9/2018
 
-#     #Calculating shade from the "western" bank
-#       western_shade_length <- matrix(ncol = 2,
-#         shade_calc(
-#           delta = delta_west,
-#           solar_altitude = solar_altitude,
-#           bottom_width = bottom_width,
-#           BH = BH,
-#           BS = BS,
-#           WL = WL,
-#           TH = TH,
-#           overhang = overhang,
-#           overhang_height = overhang_height
-#         )
-#       )
+    # ## Calculating shade from the "western" bank
+    # western_shade_length <- matrix(ncol = 2,
+    # shade_calc(
+    #     delta = delta_west,
+    #     solar_altitude = solar_altitude,
+    #     bottom_width = bottom_width,
+    #     BH = BH,
+    #     BS = BS,
+    #     WL = WL,
+    #     TH = TH,
+    #     overhang = overhang,
+    #     overhang_height = overhang_height
+    # )
+    # )
 
-#         west_bank_shade_length <- western_shade_length[, 1]
-#         west_veg_shade_length <- western_shade_length[, 2] #- western_shade[, 1] #PS 7/9/2018
+    # west_bank_shade_length <- western_shade_length[, 1]
+    # west_veg_shade_length <- western_shade_length[, 2] #- western_shade[, 1] #PS 7/9/2018
 
-#   #-------------------------------------------------
-#   #Calculate the total length of bank shading
-#   #-------------------------------------------------
-#     #Calculate the total length of bank shading
-#       total_bank_shade_length <- east_bank_shade_length + west_bank_shade_length
+    #-------------------------------------------------
+    # Calculate the total length of bank shading
+    #-------------------------------------------------
+    
+    ## Calculate the total length of bank shading
+    total_bank_shade_length = east_bank_shade_length + west_bank_shade_length
 
-#     #Generate a logical index where the length of bank shading is longer than wetted width
-#       reset_bank_max_index <- total_bank_shade_length > water_width
+    #Generate a logical index where the length of bank shading is longer than wetted width
+    reset_bank_max_index = total_bank_shade_length > water_width
 
-#     #If total bank shade length is longer than wetted width, set to wetted width
-#       total_bank_shade_length[reset_bank_max_index] <- water_width #PS 2021
+    ## If total bank shade length is longer than wetted width, set to wetted width
+    total_bank_shade_length[reset_bank_max_index] = water_width #PS 2021
 
-#   #-------------------------------------------------
-#   #Calculate the total length of vegetation shading
-#   #-------------------------------------------------
-#     #Calculate the total length of vegetation shading
-#       total_veg_shade_length <- east_veg_shade_length + west_veg_shade_length
+    #-------------------------------------------------
+    # Calculate the total length of vegetation shading
+    #-------------------------------------------------
 
-#     #Generate a logical index where the length of vegetation shading is longer than wetted width
-#       reset_veg_max_index <- total_veg_shade_length > water_width
+    ## Calculate the total length of vegetation shading
+    total_veg_shade_length = east_veg_shade_length + west_veg_shade_length
 
-#     #If total vegetation shade length is longer than wetted width, set to wetted width
-#       total_veg_shade_length[total_veg_shade_length > water_width] <- water_width #PS 2021
+    ## Generate a logical index where the length of vegetation shading is longer than wetted width
+    reset_veg_max_index = total_veg_shade_length > water_width
 
-#   #-------------------------------------------------
-#   #Calculating the percentage of water that is shaded
-#   #-------------------------------------------------
-#     perc_shade_bank <- (total_bank_shade_length) / water_width
-#       perc_shade_bank[perc_shade_bank > 1] <- 1
+    ## If total vegetation shade length is longer than wetted width, set to wetted width
+    total_veg_shade_length[total_veg_shade_length > water_width] = water_width #PS 2021
 
-#     perc_shade_veg <- (total_veg_shade_length - total_bank_shade_length) / water_width
-#       perc_shade_veg[perc_shade_veg > 1] <- 1
+    #-------------------------------------------------
+    #Calculating the percentage of water that is shaded
+    #-------------------------------------------------
+    perc_shade_bank = (total_bank_shade_length) / water_width
+    perc_shade_bank[perc_shade_bank > 1] = 1
+
+    perc_shade_veg = (total_veg_shade_length - total_bank_shade_length) / water_width
+    perc_shade_veg[perc_shade_veg > 1] = 1
 
     return perc_shade_veg, perc_shade_bank
+
+
+def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_altitude_ini, sza_ini, solar_azimuth_ini):
+
+    # Initialize the adjusted azimuth
+    solar_azimuth = np.nan*np.ones_like(solar_azimuth_ini)
+
+    # When latitude is > solar declination additional considerations are required to
+    # determine the correct azimuth
+    # Generate a logical index where latitude is greater than solar declination
+    lat_greater = np.deg2rad(lat) > solar_dec_ini
+
+    # Add a small amount of time (1 minute) and recalculate azimuth
+    azimuth_tmp = azimuth_adj(lat, lon, doy[lat_greater], hour[lat_greater], tz_offset[lat_greater])
+
+    # Generate a logical index where azimuth_tmp is greater than the initial estimate
+    az_tmp_greater = azimuth_tmp > solar_azimuth_ini[lat_greater]
+
+    # Generate a logical index where both Lat > solar_dec & azimuth_tmp > azimuth
+    add_az = lat_greater and az_tmp_greater
+    solar_azimuth[add_az] =  (np.pi / 2) + solar_azimuth_ini[add_az]
+
+    sub_az = lat_greater and (not az_tmp_greater)
+    solar_azimuth[sub_az] =  (np.pi / 2) - solar_azimuth_ini[sub_az]
+
+    # When Latitude is < solar declination all angles are 90 - azimuth
+    solar_azimuth[not lat_greater] =  (np.pi / 2) - solar_azimuth_ini[not lat_greater]
+
+#   return(geo_initial[, c("solar_altitude", "solar_azimuth")])
+
+# } #End solar_c function
+
+def azimuth_adj(lat, lon, doy, hour, tz_offset):
+    '''Helper function for determining the correct solar azimuth
+    This function feeds into the solar_c function and is used to
+    help determine the correct solar azimuth for locations where latitude is
+    greater than the solar declination angle.'''
+
+    # Add a minute to the hour
+    _, _, _, solar_azimuth_adj = solar_geo_calc(doy, hour + (1 / 60 / 24), tz_offset, lat, lon)
+    return solar_azimuth_adj
