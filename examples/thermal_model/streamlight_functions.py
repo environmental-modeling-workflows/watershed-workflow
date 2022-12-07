@@ -103,7 +103,7 @@ def solar_geo_calc(doy, hour, tz_offset, lat, lon):
     -------
     solar_dec_ini : float
         Solar declination (initial estimate).
-    solar_altitude : float
+    solar_altitude_ini : float
         Altitude (initial estimate).
     sza : float
         Solar zenith angle (initial estimate) [decimal degrees].
@@ -499,6 +499,29 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
 
 def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini):
     '''Calculates solar geometry for use in the SHADE2 model
+
+    Parameters
+    ----------
+    lat : float
+        Latitude [decimal degrees].
+    lon : float
+        Longitude [decimal degrees].  
+    doy : int
+        Day of the year.
+    hour: int
+        Hour of the day.
+    tz_offset: float
+        Time zone offset.   
+    solar_dec_ini : float
+        Solar declination (initial estimate).
+    solar_azimuth_ini : float
+        Initial estimate of azimuth (initial estimate) [decimal degrees].  
+
+    Returns
+    -------
+
+    solar_azimuth : float
+        Corrected estimate of azimuth (initial estimate) [decimal degrees].
     '''
 
     # Initialize the adjusted azimuth
@@ -540,6 +563,34 @@ def azimuth_adj(lat, lon, doy, hour, tz_offset):
 
 def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height):
     '''Calculating the percent of the wetted width shaded by banks and vegetation
+
+    Parameters
+    ----------
+    delta : float
+        Difference between the sun and stream azimuth (sun-stream)[decimal degrees].
+    solar_altitude : float
+        Altitude.    
+    bottom_width: float
+        Channel width at the water-sediment interface [m].
+    bank_height: float
+        Bank height [m].
+    bank_slope: float
+        Bank slope [-].
+    water_depth: float
+        Water depth [m].        
+    tree_height: float
+        Tree height [m].
+    overhang: float
+        Effectively max canopy radius [m].
+    overhang_height: float
+        Height of the maximum canopy overhang (height at max canopy radius) [m].
+
+    Returns
+    -------
+    stream_shade_bank : float
+        Wetted width shaded by the bank [m].   
+    stream_shade_veg_max : float
+        Wetted width shaded by the vegetation [m].       
     '''
 
     #-------------------------------------------------
