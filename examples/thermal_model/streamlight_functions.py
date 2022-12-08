@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import copy
 
 '''The following functions are a python implementation 
 of the code StreamLight (https://github.com/psavoy/StreamLight).
@@ -62,19 +63,20 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
     # Defining solar geometry
     # -------------------------------------------------------------
 
-    solar_dec, solar_altitude, sza, solar_azimuth_ini = solar_geo_calc(
+    solar_dec_ini, solar_altitude_ini, sza_ini, solar_azimuth_ini = solar_geo_calc(
         doy, hour, tz_offset, lat, lon)
 
     # -------------------------------------------------------------
     # Predicting transmission of light through the canopy
     # -------------------------------------------------------------
 
-    par_bc = rt_cn_1998(doy, sza, solar_altitude, sw_inc, lai, x_LAD)
+    par_bc = rt_cn_1998(doy, sza_ini, solar_altitude_ini, sw_inc, lai, x_LAD)
 
     #-------------------------------------------------
     #Running the SHADE2 model
     #-------------------------------------------------
 
+    perc_shade_veg, perc_shade_bank = shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini, solar_altitude_ini, sw_inc, lai, x_LAD)
 
 
 
@@ -329,7 +331,7 @@ def dt_calc(lai,x_LAD=1):
     return (2 * sum(integ_func(angle_seq, d_sza, x_LAD, lai)))
 
 
-def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini, solar_altitude, sw_inc, lai, x_LAD=1):
+def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini, solar_altitude_ini, sw_inc, lai, x_LAD=1):
     """SHADE2 model from Li et al. (2012) Modeled riparian stream shading:
     Agreement with field measurements and sensitivity to riparian conditions
 
@@ -365,8 +367,8 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
         Solar declination (initial estimate).
     solar_azimuth_ini : float
         Initial estimate of azimuth [decimal degrees].   
-    solar_altitude : float
-        Altitude.         
+    solar_altitude_ini : float
+        Initial estimate of solar altitude.         
     sw_inc : float
         Total incoming shortwave radiation [W m-2].  
     lai: float
@@ -398,10 +400,9 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     delta_east = delta_prime % (2 * np.pi)
 
     ## Western shading
-    if (delta_east < np.pi):
-        delta_west = delta_east + np.pi
-    else:
-        delta_west = delta_east - np.pi
+
+    delta_west = copy.deepcopy(delta_east) + np.pi
+    delta_west[delta_east >= np.pi] = delta_east[delta_east >= np.pi] - np.pi
 
     #-------------------------------------------------
     # Doing some housekeeping related to bankfull and wetted widths
@@ -411,13 +412,15 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     bankfull_width = bottom_width + ((bank_height/bank_slope)*2)
 
     ## Not sure what to do here, setting water_depth > bank_height, = bank_height
-    water_depth[water_depth > bank_height] = bank_height
+    if water_depth > bank_height:
+        water_depth = bank_height
 
     ## Calculate wetted width
     water_width = bottom_width + water_depth*(1/bank_slope + 1/bank_slope)
 
     ## Not sure what to do here, setting widths > bankfull, = bankfull
-    water_width[water_width > bankfull_width] <- bankfull_width
+    if water_width > bankfull_width:
+        water_width = bankfull_width
 
     #-------------------------------------------------
     # Calculate the length of shading for each bank
@@ -425,10 +428,10 @@ def shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_
     
     ## Calculating shade from the "eastern" bank
 
-    east_bank_shade_length, east_veg_shade_length = shade_calc(delta_east, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
+    east_bank_shade_length, east_veg_shade_length = shade_calc(delta_east, solar_altitude_ini, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
 
     # ## Calculating shade from the "western" bank
-    west_bank_shade_length, west_veg_shade_length = shade_calc(delta_west, solar_altitude, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
+    west_bank_shade_length, west_veg_shade_length = shade_calc(delta_west, solar_altitude_ini, bottom_width, bank_height, bank_slope, water_depth, tree_height, overhang, overhang_height)
 
     #-------------------------------------------------
     # Calculate the total length of bank shading
@@ -511,14 +514,14 @@ def solar_c(lat, lon, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini):
     az_tmp_greater = azimuth_tmp > solar_azimuth_ini
 
     # Generate a logical index where both Lat > solar_dec & azimuth_tmp > azimuth
-    add_az = lat_greater and az_tmp_greater
+    add_az = np.logical_and(lat_greater, az_tmp_greater)
     solar_azimuth[add_az] =  (np.pi / 2) + solar_azimuth_ini[add_az]
 
-    sub_az = lat_greater and (not az_tmp_greater)
+    sub_az = np.logical_and(lat_greater, np.logical_not(az_tmp_greater))
     solar_azimuth[sub_az] =  (np.pi / 2) - solar_azimuth_ini[sub_az]
 
     # When Latitude is < solar declination all angles are 90 - azimuth
-    solar_azimuth[not lat_greater] =  (np.pi / 2) - solar_azimuth_ini[not lat_greater]
+    solar_azimuth[np.logical_not(lat_greater)] =  (np.pi / 2) - solar_azimuth_ini[np.logical_not(lat_greater)]
 
     return solar_azimuth
 
@@ -574,13 +577,15 @@ def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, wat
     bankfull_width = bottom_width + ((bank_height/bank_slope)*2)
 
     # Setting water_depth > bank_height, = bank_height
-    water_depth[water_depth > bank_height] = bank_height
+    if water_depth > bank_height:
+        water_depth = bank_height
 
     #Calculate wetted width
     water_width = bottom_width + water_depth*(1/bank_slope + 1/bank_slope)
 
     #Setting widths > bankfull, = bankfull
-    water_width[water_width > bankfull_width] = bankfull_width
+    if water_width > bankfull_width:
+        water_width = bankfull_width
 
     #-------------------------------------------------
     # Calculating the shading produced by the bank
@@ -621,7 +626,7 @@ def shade_calc(delta, solar_altitude, bottom_width, bank_height, bank_slope, wat
     # See pg 14 Li et al. (2012)"
 
     veg_shade_bound = np.column_stack((stream_shade_top, stream_shade_overhang))
-    stream_shade_veg_max = np.amax(veg_shade_bound, axis = 0)
+    stream_shade_veg_max = np.amax(veg_shade_bound, axis = 1)
 
     # If the maximum shadow length is longer than the wetted width, set to width
     stream_shade_veg_max[stream_shade_veg_max > water_width] = water_width
