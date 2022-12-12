@@ -66,14 +66,14 @@ def test_wbd_download(wbd):
 def test_wbd_get(wbd):
     # download
     profile, huc = wbd.get_huc('02040101')
-    bounds = watershed_workflow.utils.shply(huc['geometry']).bounds
+    bounds = watershed_workflow.utils.create_shply(huc['geometry']).bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 
 # hydro tests
 def test_wbd_get_hydro(wbd):
     profile, huc = wbd.get_huc('020401010101')
-    bounds = watershed_workflow.utils.shply(huc['geometry']).bounds
+    bounds = watershed_workflow.utils.create_shply(huc['geometry']).bounds
 
     with pytest.raises(RuntimeError):
         profile, huc = wbd.get_hydro(bounds, profile['crs'], '020401010101')

@@ -73,7 +73,7 @@ def test_nhd_download(nhd):
 def test_nhd_get(nhd):
     # download
     profile, huc = nhd.get_huc('06010202')
-    bounds = watershed_workflow.utils.shply(huc['geometry']).bounds
+    bounds = watershed_workflow.utils.create_shply(huc['geometry']).bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 

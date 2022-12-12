@@ -134,14 +134,14 @@ class FileManagerNLCD:
         """
         # get shape as a shapely, single Polygon
         if type(shply) is dict:
-            shply = watershed_workflow.utils.shply(shply['geometry'])
+            shply = watershed_workflow.utils.create_shply(shply['geometry'])
         if type(shply) is shapely.geometry.MultiPolygon:
             shply = shapely.ops.unary_union(shply)
 
         # download (or hopefully don't) the file
         filename, nlcd_profile = self._download()
 
-        logging.info('CRS: {}'.format(nlcd_profile['crs']))
+        logging.debug('CRS: {}'.format(nlcd_profile['crs']))
 
         # warp to crs
         shply = watershed_workflow.warp.shply(
@@ -150,13 +150,13 @@ class FileManagerNLCD:
         # load raster
         with rasterio.open(filename, 'r') as fid:
             profile = fid.profile
-            out_image, out_transform = rasterio.mask.mask(fid, [shply, ], crop=True)
+            out_image, out_transform = rasterio.mask.mask(fid, [shply, ], crop=True, nodata=0)
 
         profile.update({
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform
-        })
+            "height" : out_image.shape[1],
+            "width" : out_image.shape[2],
+            "transform" : out_transform,
+            "nodata" : 0 })
 
         assert (len(out_image.shape) == 3)
         return profile, out_image[0, :, :]

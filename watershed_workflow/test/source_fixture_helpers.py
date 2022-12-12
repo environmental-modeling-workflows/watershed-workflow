@@ -49,7 +49,7 @@ def read_and_process_dump(pkl_dump_file):
 
     # convert to shapely
     for h, v in hucs.items():
-        hucs[h] = watershed_workflow.utils.shply(v)
+        hucs[h] = watershed_workflow.utils.create_shply(v)
     for h, v in hucs.items():
         # normalize the properties
         v.properties = dict(HUC=h)
@@ -67,7 +67,7 @@ def read_and_process_dump(pkl_dump_file):
     # convert to shply -- and simplify, I think this should be safe!
     for h, v in hydro.items():
         print(v[0].keys())
-        rivers = [watershed_workflow.utils.shply(r) for r in v]
+        rivers = [watershed_workflow.utils.create_shply(r) for r in v]
         hydro[h] = [r.simplify(50) for r in rivers]
 
     # write the files

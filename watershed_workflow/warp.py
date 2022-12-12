@@ -115,11 +115,11 @@ def shape(feature, old_crs, new_crs):
 def raster(src_profile,
            src_array,
            dst_crs=None,
-           resolution=None,
+           dst_resolution=None,
            dst_height=None,
            dst_width=None,
            resampling_method=rasterio.warp.Resampling.nearest):
-    """Warp a raster from src_profile to dst_crs, or resample resolution."""
+    """Warp a raster from src_profile to dst_profile, or resample resolution."""
     if watershed_workflow.crs.is_native(src_profile['crs']):
         src_crs = src_profile['crs']
         src_crs_rio = watershed_workflow.crs.to_rasterio(src_crs)
@@ -127,14 +127,14 @@ def raster(src_profile,
         src_crs_rio = src_profile['crs']
         src_crs = watershed_workflow.crs.from_rasterio(src_crs_rio)
 
-    if resolution is None and dst_height is None and dst_width is None and \
+    if dst_resolution is None and dst_height is None and dst_width is None and \
        (dst_crs is None or watershed_workflow.crs.equal(dst_crs, src_crs)):
         # nothing to do
         return src_profile, src_array
 
-    if resolution is None and dst_height is None:
+    if dst_resolution is None and dst_height is None:
         dst_height = src_profile['height']
-    if resolution is None and dst_width is None:
+    if dst_resolution is None and dst_width is None:
         dst_width = src_profile['width']
 
     if dst_crs is None:
@@ -153,7 +153,7 @@ def raster(src_profile,
         src_profile['width'],
         src_profile['height'],
         *src_bounds,
-        resolution=resolution,
+        resolution=dst_resolution,
         dst_height=dst_height,
         dst_width=dst_width)
 

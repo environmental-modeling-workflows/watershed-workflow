@@ -38,11 +38,16 @@ class FileManagerMODISAppEEARS:
 
     .. [MODIS] << insert link here >>
     
-    Currently the variables supported here include LAI and estimated ET.
+    Currently the variables supported here include LAI and estimated
+    ET.  
+
+    All data returned includes a time variable, which is in units of
+    [days past Jan 1, 2000, 0:00:00.
 
     Note this is implemented based on the API documentation here:
 
        https://appeears.earthdatacloud.nasa.gov/api/?python#introduction
+
     """
     _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login" # URL for AppEEARS rest requests
     _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
@@ -113,19 +118,19 @@ class FileManagerMODISAppEEARS:
         return filename
 
     def _clean_date(self, date):
-        # test input: date
+        """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         if date < self._START:
-            date = self._START
+            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
-            date = self._END
+            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date.strftime('%m-%d-%Y')
 
     def _clean_bounds(self, polygon_or_bounds, crs):
-        """Compute bounds in the needed CRS"""
+        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
         if type(polygon_or_bounds) is dict:
-            polygon_or_bounds = watershed_workflow.utils.shply(polygon_or_bounds)
+            polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
         if type(polygon_or_bounds) is shapely.geometry.Polygon:
             bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
                                                       watershed_workflow.crs.latlon_crs()).bounds
@@ -324,15 +329,15 @@ class FileManagerMODISAppEEARS:
         else:
             return False
 
-    def _open(self, task):
-        """Open all files for a task, returning the data in the order of variables requested in the task."""
+    def _read_data(self, task):
+        """Read all files for a task, returning the data in the order of variables requested in the task."""
         data = []
         for var in task.variables:
-            prof, d = self._open_file(task.filenames[var], var)
-            data.append(d)
-        return prof, data
+            res = self._read_file(task.filenames[var], var)
+            data.append(res)
+        return data
 
-    def _open_file(self, filename, variable):
+    def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         profile = dict()
         with netCDF4.Dataset(filename, 'r') as nc:
@@ -340,7 +345,6 @@ class FileManagerMODISAppEEARS:
             profile['width'] = nc.dimensions['lon'].size
             profile['height'] = nc.dimensions['lat'].size
             profile['count'] = nc.dimensions['time'].size
-            profile['nodata'] = np.nan
 
             # this assumes it is a fixed dx and dy, which should be
             # pretty good for not-too-big domains.
@@ -349,21 +353,41 @@ class FileManagerMODISAppEEARS:
             profile['dx'] = (lon[1:] - lon[:-1]).mean()
             profile['dy'] = (lat[1:] - lat[:-1]).mean()
             profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
-            # do we need to make an affine transform?
+            profile['transform'] = watershed_workflow.utils.create_transform(lon[0],lat[0],
+                                                                             lon[1],lat[1],
+                                                                             profile['dx'],
+                                                                             profile['dy'])
 
             varname = self._PRODUCTS[variable]['layer']
             profile['layer'] = varname
-            data = nc.variables[varname][:].filled(np.nan)
-        return profile, data
 
-    def get_data(self,
-                 polygon_or_bounds,
-                 crs,
-                 start=None,
-                 end=None,
-                 variables=None,
-                 force_download=False,
-                 task=None):
+            times = nc.variables['time'][:].filled(-1)
+            time_origin = datetime.date(2000, 1, 1)
+            times = np.array([time_origin + datetime.timedelta(days=t) for t in times])
+
+            data = nc.variables[varname][:]
+            if np.issubdtype(data.dtype, np.integer):
+                profile['nodata'] = -1
+                profile['dtype'] = data.dtype
+                data = data.filled(-1)
+            elif np.issubdtype(data.dtype, np.floating):
+                profile['nodata'] = np.nan
+                profile['dtype'] = data.dtype
+                data = data.filled(np.nan)
+            else:
+                profile['nodata'] = data.fill_value
+                profile['dtype'] = data.dtype
+                data = data.filled()
+        return profile, times, data
+
+    def get_raster(self,
+                   polygon_or_bounds,
+                   crs,
+                   start=None,
+                   end=None,
+                   variables=None,
+                   force_download=False,
+                   task=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -395,10 +419,11 @@ class FileManagerMODISAppEEARS:
         
         Returns
         -------
-        (data, profile) : (np.ndarray of shape [NX,NY,NT], dict)
+        list : [(profile, times, data),]
           If the file already exists or the download is successful,
-          returns the 3D array of data and a dictionary containing
-          metadata including bounds, affine transform, CRS, etc.
+          returns a list of (profile, 1D times array, 3D data array
+          [NTIMES,NX,NY]), one for each variable.  Times array is an
+          array of datetime objects of length NTIMES.
 
         OR
 
@@ -436,12 +461,12 @@ class FileManagerMODISAppEEARS:
                     for filename in filenames:
                         os.path.remove(filename)
                 else:
-                    return self._open(task)
+                    return self._read_data(task)
 
         if len(task.task_id) == 0:
             # create the task
             task = self._construct_request(bounds, start, end, variables)
 
         if self._download(task):
-            return self._open(task)
+            return self._read_data(task)
         return task

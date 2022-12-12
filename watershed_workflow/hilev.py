@@ -129,7 +129,7 @@ def get_hucs(source, huc, level, out_crs=None, digits=None):
 
     # convert to shapely
     logging.info("Converting to shapely")
-    hu_shapes = [watershed_workflow.utils.shply(hu) for hu in hus]
+    hu_shapes = [watershed_workflow.utils.create_shply(hu) for hu in hus]
     return out_crs, hu_shapes
 
 
@@ -231,7 +231,7 @@ def get_shapes(source,
     if len(shps) == 0:
         shplys = []
     elif type(shps[0]) is dict:
-        shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+        shplys = [watershed_workflow.utils.create_shply(shp) for shp in shps]
     else:
         shplys = shps
 
@@ -382,7 +382,7 @@ def get_reaches(source,
 
     # convert to shapely
     logging.info("Converting to shapely")
-    reaches = [watershed_workflow.utils.shply(reach) for reach in reaches]
+    reaches = [watershed_workflow.utils.create_shply(reach) for reach in reaches]
 
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
@@ -392,7 +392,7 @@ def get_reaches(source,
 
         for reach in reaches:
             if 'catchment' in reach.properties and reach.properties['catchment'] != None:
-                reach.properties['catchment'] = watershed_workflow.utils.shply(
+                reach.properties['catchment'] = watershed_workflow.utils.create_shply(
                     reach.properties['catchment'])
                 reach.properties['catchment'] = watershed_workflow.warp.shply(
                     reach.properties['catchment'], native_crs, out_crs)
@@ -505,7 +505,7 @@ def get_waterbodies(source,
 
     # convert to shapely
     logging.info("Converting to shapely")
-    bodies = [watershed_workflow.utils.shply(b) for b in bodies]
+    bodies = [watershed_workflow.utils.create_shply(b) for b in bodies]
 
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
@@ -583,7 +583,7 @@ def get_raster_on_shape(source,
         source = watershed_workflow.sources.manager_raster.FileManagerRaster(source)
 
     if type(shape) is dict:
-        shape = watershed_workflow.utils.shply(shape)
+        shape = watershed_workflow.utils.create_shply(shape)
     if type(shape) is shapely.geometry.MultiPolygon:
         shape = shapely.ops.unary_union(shape)
     shape_original = shape
@@ -703,7 +703,7 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
     if type(shape) is shapely.geometry.Polygon:
         shply = shape
     else:
-        shply = watershed_workflow.utils.shply(shape)
+        shply = watershed_workflow.utils.create_shply(shape)
 
     # must shrink the poly a bit in case it is close to or on a boundary
     radius = np.sqrt(shply.area / np.pi)

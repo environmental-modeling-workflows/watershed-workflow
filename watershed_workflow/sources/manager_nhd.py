@@ -207,7 +207,7 @@ class _FileManagerNHD:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level
@@ -333,7 +333,7 @@ class _FileManagerNHD:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level

@@ -90,7 +90,7 @@ class FileManagerNED:
         rasterio profile), not the shape's CRS.
         """
         if type(shape) is dict:
-            shape = watershed_workflow.utils.shply(shape)
+            shape = watershed_workflow.utils.create_shply(shape)
 
         # warp to my crs
         shply = watershed_workflow.warp.shply(shape, crs, self.crs)

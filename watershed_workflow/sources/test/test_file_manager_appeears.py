@@ -15,7 +15,7 @@ def test_shape1():
     ms = watershed_workflow.sources.manager_shape.FileManagerShape(
         os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_basin.shp'))
     profile, shape = ms.get_shape()
-    shply = watershed_workflow.utils.shply(shape['geometry'])
+    shply = watershed_workflow.utils.create_shply(shape['geometry'])
 
     app = watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS()
 
@@ -39,7 +39,7 @@ def test_shape2():
     ms = watershed_workflow.sources.manager_shape.FileManagerShape(
         os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_basin.shp'))
     profile, shape = ms.get_shape()
-    shply = watershed_workflow.utils.shply(shape['geometry'])
+    shply = watershed_workflow.utils.create_shply(shape['geometry'])
 
     app = watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS()
 

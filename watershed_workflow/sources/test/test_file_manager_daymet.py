@@ -15,7 +15,7 @@ def test_daymet1():
     # single file covers it
     nhd = watershed_workflow.sources.manager_nhd.FileManagerNHDPlus()
     hprofile, huc = nhd.get_huc('020401010101')
-    hucly = watershed_workflow.utils.shply(huc['geometry'])
+    hucly = watershed_workflow.utils.create_shply(huc['geometry'])
     native_crs = watershed_workflow.crs.from_fiona(hprofile['crs'])
 
     # get imgs

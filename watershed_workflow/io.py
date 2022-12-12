@@ -79,3 +79,5 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
                     props.pop(key)
 
             c.write({ 'geometry': shapely.geometry.mapping(shp), 'properties': props })
+
+

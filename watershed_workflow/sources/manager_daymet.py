@@ -7,12 +7,23 @@ import pyproj
 import requests
 import requests.exceptions
 import shapely.geometry
+import datetime
+import netCDF4
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
 import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
+
+def _previous_month():
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month - 1
+    if month == 0:
+        year = year - 1
+        month = 12
+    return datetime.date(year, month, 1) - datetime.timedelta(days=1)
 
 
 class FileManagerDaymet:
@@ -54,88 +65,35 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    VALID_YEARS = (1980, 2021)
+    _START = datetime.date(1980,1,1)
+    _END = _previous_month()
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
+    DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
 
     def __init__(self):
-        #self.layer_name = 'Daymet_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'DayMet 1km'
         self.names = watershed_workflow.sources.names.Names(
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
-        #self.native_crs = pyproj.Proj4("")
 
-    def get_meteorology(self,
-                        varname,
-                        year,
-                        polygon_or_bounds,
-                        crs,
-                        force_download=False,
-                        buffer=0.01):
-        """Gets file for a single year and single variable.
 
-        Parameters
-        ----------
-        varname : str
-          Name the variable, see table in the class documentation.
-        year : int
-          A year in the valid range (currently 1980-2018)
-        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
-          Collect a file that covers this shape or bounds.
-        crs : CRS object
-          Coordinate system of the above polygon_or_bounds
-        force_download : bool
-          Download or re-download the file if true.
-        buffer, float
-          buffer used for watershed shape (in degree)
+    def _read_var(self, fname, var):
+        with netCDF4.Dataset(fname, 'r') as nc:
+            x = nc.variables['x'][:] * 1000.  # km to m; raw netCDF file has km unit
+            y = nc.variables['y'][:] * 1000.  # km to m
+            time = nc.variables['time'][:]
+            assert (len(time) == 365)
+            val = nc.variables[var][:]
+        return x, y, val
 
-        Returns
-        -------
-        filename : str
-          Path to the data file.
-        bounds : [xmin,ymin,xmax,ymax]
-          Updated bounds, buffered and in the coordinate system of the data.
-        """
-        if year > self.VALID_YEARS[1] or year < self.VALID_YEARS[0]:
-            raise ValueError("DayMet data is available from {} to {} (does not include {})".format(
-                self.VALID_YEARS[0], self.VALID_YEARS[1], year))
-        if varname not in self.VALID_VARIABLES:
-            raise ValueError("DayMet data supports variables: {} (not {})".format(
-                ', '.join(self.VALID_VARIABLES), varname))
-
-        if type(polygon_or_bounds) is dict:
-            # fiona shape object, convert to shapely to get a copy
-            polygon_or_bounds = watershed_workflow.utils.shply(polygon_or_bounds)
-
-        # convert and get a bounds
-        if type(polygon_or_bounds) is list or type(polygon_or_bounds) is tuple:
-            # bounds
-            bounds = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
-                                                    watershed_workflow.crs.latlon_crs())
-        else:
-            # polygon
-            bounds = watershed_workflow.warp.shply(polygon_or_bounds, crs,
-                                                   watershed_workflow.crs.latlon_crs()).bounds
-
-        # feather the bounds
-        # get the bounds and download
-        feather_bounds = list(bounds[:])
-        feather_bounds[0] = np.round(feather_bounds[0], 4) - buffer
-        feather_bounds[1] = np.round(feather_bounds[1], 4) - buffer
-        feather_bounds[2] = np.round(feather_bounds[2], 4) + buffer
-        feather_bounds[3] = np.round(feather_bounds[3], 4) + buffer
-        fname = self.download(varname, year, feather_bounds, force=force_download)
-        return fname, feather_bounds
-
-    def download(self, varname, year, bounds, force=False):
+    
+    def _download(self, var, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.
 
-        Note: prefer to use get_meteorology()
-
         Parameters
         ----------
-        varname : str
+        var : str
           Name the variable, see table in the class documentation.
         year : int
           A year in the valid range (currently 1980-2018)
@@ -156,7 +114,7 @@ class FileManagerDaymet:
 
         # get the target filename
         bounds = [f"{b:.4f}" for b in bounds]
-        filename = self.names.file_name(var=varname,
+        filename = self.names.file_name(var=var,
                                         year=year,
                                         north=bounds[3],
                                         east=bounds[2],
@@ -164,12 +122,12 @@ class FileManagerDaymet:
                                         south=bounds[1])
 
         if (not os.path.exists(filename)) or force:
-            url_dict = { 'year': str(year), 'variable': varname }
+            url_dict = { 'year': str(year), 'variable': var }
             url = self.URL.format(**url_dict)
             logging.info("  Downloading: {}".format(url))
             logging.info("      to file: {}".format(filename))
 
-            request_params = [('var', 'lat'), ('var', 'lon'), ('var', varname), ('west', bounds[0]),
+            request_params = [('var', 'lat'), ('var', 'lon'), ('var', var), ('west', bounds[0]),
                               ('south', bounds[1]), ('east', bounds[2]), ('north', bounds[3]),
                               ('horizStride', '1'),
                               ('time_start', '{}-01-01T12:00:00Z'.format(year)),
@@ -186,3 +144,144 @@ class FileManagerDaymet:
             logging.info("  Using existing: {}".format(filename))
 
         return filename
+
+    def _clean_date(self, date):
+        """Returns a string of the format needed for use in the filename and request."""
+        if type(date) is str:
+            date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        if date < self._START:
+            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
+        if date > self._END:
+            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
+        return date.year
+
+
+    def _clean_bounds(self, polygon_or_bounds, crs):
+        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
+        if type(polygon_or_bounds) is dict:
+            polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
+        if type(polygon_or_bounds) is shapely.geometry.Polygon:
+            bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
+                                                      watershed_workflow.crs.latlon_crs()).bounds
+        else:
+            bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
+                                                       watershed_workflow.crs.latlon_crs())
+
+        buffer = 0.01
+        feather_bounds = list(bounds_ll[:])
+        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
+        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
+        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
+        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
+        return feather_bounds
+
+
+    def _open_files(self, filenames, var, start, end):
+        """Opens and loads the files, making a single array."""
+        # NOTE: this probably needs to be refactored to not load the whole thing into memory?
+        nyears = len(filenames)
+        data = None        
+        for i,fname in enumerate(filenames):
+            x, y, v = self._read_var(fname, var)  # returned v.shape(nband, nrow, ncol)
+            if data is None:
+                data = np.zeros((nyears*365, len(x), len(y)), 'd')
+
+            # stuff in the right spot
+            data[i*365:(i+1)*365,:,:] = v
+
+        # times is a range
+        origin = datetime.date(start.year, 1, 1)
+        times = np.array([origin + datetime.timedelta(days=i) for i in range(365*nyears)])
+
+        # trim to start, end
+        i_start = (start - origin).days
+        i_end = (end - datetime.date(end.year+1, 1, 1)).days
+        times = times[i_start:i_end]
+        data = data[i_start:i_end]
+
+        # profile
+        profile = dict()
+        profile['crs'] = watershed_workflow.crs.daymet_crs()
+        profile['width'] = len(x)
+        profile['height'] = len(y)
+        profile['count'] = len(times)
+        profile['dx'] = (x[1:] - x[:-1]).mean()
+        profile['dy'] = (y[1:] - y[:-1]).mean()
+        profile['driver'] = 'h5' # hint that this was not a real raster
+        profile['transform'] = watershed_workflow.utils.create_transform(x[0], y[0],
+                                                                         x[1], y[1],
+                                                                         profile['dx'],
+                                                                         profile['dy'])
+        return profile, times, data        
+        
+    
+    def get_raster(self,
+                   polygon_or_bounds,
+                   crs,
+                   start=None,
+                   end=None,
+                   variables=None,
+                   force_download=False):
+        """Gets file for a single year and single variable.
+
+        Parameters
+        ----------
+        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
+          Collect a file that covers this shape or bounds.
+        crs : CRS object
+          Coordinate system of the above polygon_or_bounds
+        start : str or datetime.date object, optional
+          Date for the beginning of the data, in YYYY-MM-DD. Valid is
+          >= 2002-07-01.
+        end : str or datetime.date object, optional
+          Date for the end of the data, in YYYY-MM-DD. Valid is
+          < the current month (DayMet updates monthly.)
+        variables : str or list, optional
+          Name the variables to download, see table in the class
+          documentation for valid.  Default is [prcp,tmin,tmax,vp,srad].
+        force_download : bool
+          Download or re-download the file if true.
+
+        Returns
+        -------
+        list : [(profile, times, data),]
+          Returns a list of tuples, one per variable. Data is an array
+          of shape [NTIMES,NX,NY], while times is an array of datetime
+          objects of length NTIMES.
+
+        """
+        if start is None:
+            start = self._START
+        start_year = self._clean_date(start)
+        
+        if end is None:
+            end = self._END
+        end_year = self._clean_date(end)
+        if start_year > end_year:
+            raise RuntimeError(f"Provided start year {start_year} is after provided end year {end_year}")
+
+        if variables is None:
+            variables = self.DEFAULT_VARIABLES
+        for var in variables:
+            if var not in self.VALID_VARIABLES:
+                raise ValueError("DayMet data supports variables: {} (not {})".format(
+                    ', '.join(self.VALID_VARIABLES), var))
+
+        # clean bounds
+        bounds = self._clean_bounds(polygon_or_bounds, crs)
+
+        # download files
+        filenames = []
+        for var in variables:
+            filename_var = []
+            for year in range(start_year, end_year+1):
+                fname = self._download(var, year, bounds, force=force_download)
+                filename_var.append(fname)
+            filenames.append(filename_var)
+
+        # open files
+        res = []
+        for fnames, var in zip(filenames, variables):
+            res.append(self._open_files(fnames, var, start, end))
+        return res
+

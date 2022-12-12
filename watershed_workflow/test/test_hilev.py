@@ -17,7 +17,7 @@ def get_fiona(filename):
 
     crs = watershed_workflow.crs.latlon_crs()
     watershed_workflow.warp.shape(shp, watershed_workflow.crs.from_fiona(profile['crs']), crs)
-    shply = watershed_workflow.utils.shply(shp)
+    shply = watershed_workflow.utils.create_shply(shp)
     assert (type(shply) == shapely.geometry.Polygon)
     return crs, shply
 
