@@ -61,7 +61,10 @@ class FileManagerMODISAppEEARS:
     contribute (the developers of this package are not security
     experts!)
 
-    .. [MODIS] << insert link here >>
+    To enter the username and password, register for a login in the
+    AppEEARs data portal at:
+
+    .. [AppEEARs](https://appeears.earthdatacloud.nasa.gov/)
     
     Currently the variables supported here include LAI and estimated
     ET.  
@@ -366,6 +369,7 @@ class FileManagerMODISAppEEARS:
     def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         profile = dict()
+        logging.info(f'... reading {variable} from {filename}')
         with netCDF4.Dataset(filename, 'r') as nc:
             profile['crs'] = watershed_workflow.crs.from_epsg(nc.variables['crs'].epsg_code)
             profile['width'] = nc.dimensions['lon'].size
