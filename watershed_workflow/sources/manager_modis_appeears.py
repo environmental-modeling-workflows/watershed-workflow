@@ -493,6 +493,8 @@ class FileManagerMODISAppEEARS:
             task = Task('', variables, filenames=dict((v,self._filename(bounds, start, end, v)) for v in variables))
 
             # check for existing file
+            for filename in task.filenames.values():
+                logging.info(f'... searching for: {filename}')
             if all(os.path.isfile(filename) for filename in task.filenames.values()):
                 if force_download:
                     for filename in task.filenames:
