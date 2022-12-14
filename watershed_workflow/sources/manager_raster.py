@@ -44,7 +44,7 @@ class FileManagerRaster:
         rasterio profile), not the shape's CRS.
         """
         if type(shape) is dict:
-            shape = watershed_workflow.utils.shply(shape)
+            shape = watershed_workflow.utils.create_shply(shape)
 
         with rasterio.open(self._filename, 'r') as fid:
             profile = fid.profile

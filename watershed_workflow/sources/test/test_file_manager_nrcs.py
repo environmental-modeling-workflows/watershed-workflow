@@ -14,7 +14,7 @@ import watershed_workflow
 #     # single file covers it
 #     nhd = watershed_workflow.sources.manager_nhd.FileManagerNHDPlus()
 #     hprofile, huc = nhd.get_huc('020401010101')
-#     hucly = watershed_workflow.utils.shply(huc['geometry'])
+#     hucly = watershed_workflow.utils.create_shply(huc['geometry'])
 
 #     # get imgs
 #     nrcs = watershed_workflow.sources.manager_nrcs.FileManagerNRCS()

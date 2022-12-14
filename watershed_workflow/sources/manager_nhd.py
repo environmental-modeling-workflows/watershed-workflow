@@ -207,7 +207,7 @@ class _FileManagerNHD:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level
@@ -333,7 +333,7 @@ class _FileManagerNHD:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level
@@ -385,7 +385,11 @@ class _FileManagerNHD:
                 logging.error(e)
                 return 1, e
 
-            json = r.json()
+            try:
+                json = r.json()
+            except Exception as e:
+                logging.error(e)
+                return 1, e
             #logging.debug(json)
 
             matches = [(m, self._valid_url(i, m, hucstr)) for (i, m) in enumerate(json['items'])]

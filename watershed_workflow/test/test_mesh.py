@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import warnings
 
 import watershed_workflow.mesh
 
@@ -59,9 +60,13 @@ def test_write():
     import os
     if os.path.isfile('./mesh.exo'):
         os.remove('./mesh.exo')
-    m3.write_exodus('./mesh.exo')
-    assert (os.path.isfile('./mesh.exo'))
+    try:
+        m3.write_exodus('./mesh.exo')
+    except ImportError:
+        warnings.warn('ExodusII is not enabled with this python.')
+    else:
+        assert (os.path.isfile('./mesh.exo'))
 
-    import netCDF4
-    with netCDF4.Dataset('./mesh.exo', 'r') as fid:
-        assert (20 == fid.dimensions['num_elem'].size)
+        import netCDF4
+        with netCDF4.Dataset('./mesh.exo', 'r') as fid:
+            assert (20 == fid.dimensions['num_elem'].size)
