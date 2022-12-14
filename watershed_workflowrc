@@ -6,7 +6,6 @@
 # use across the machine.  This directory defaults to:
 #
 # data_directory : ${WATERSHED_WORKFLOW_DIR}/data
-data_directory : ./examples/Coweeta/input_data
 
 # We rely extensively on downloaded files, which are certified via the
 # SSL library.  Sometimes certificates are tricky, and if your
