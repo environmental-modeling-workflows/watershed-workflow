@@ -9,12 +9,14 @@ import requests.exceptions
 import shapely.geometry
 import datetime
 import netCDF4
+import rasterio.transform
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
 import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
+import watershed_workflow.datasets
 
 def _previous_month():
     now = datetime.datetime.now()
@@ -23,7 +25,7 @@ def _previous_month():
     if month == 0:
         year = year - 1
         month = 12
-    return datetime.date(year, month, 1) - datetime.timedelta(days=1)
+    return datetime.date(year, month, 1)
 
 
 class FileManagerDaymet:
@@ -153,7 +155,7 @@ class FileManagerDaymet:
             raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
-        return date.year
+        return date
 
 
     def _clean_bounds(self, polygon_or_bounds, crs):
@@ -184,7 +186,8 @@ class FileManagerDaymet:
         for i,fname in enumerate(filenames):
             x, y, v = self._read_var(fname, var)  # returned v.shape(nband, nrow, ncol)
             if data is None:
-                data = np.zeros((nyears*365, len(x), len(y)), 'd')
+                # note nrows, ncols ordering
+                data = np.zeros((nyears*365, len(y), len(x)), 'd')
 
             # stuff in the right spot
             data[i*365:(i+1)*365,:,:] = v
@@ -195,7 +198,7 @@ class FileManagerDaymet:
 
         # trim to start, end
         i_start = (start - origin).days
-        i_end = (end - datetime.date(end.year+1, 1, 1)).days
+        i_end = i_start + (end - start).days
         times = times[i_start:i_end]
         data = data[i_start:i_end]
 
@@ -205,23 +208,26 @@ class FileManagerDaymet:
         profile['width'] = len(x)
         profile['height'] = len(y)
         profile['count'] = len(times)
-        profile['dx'] = (x[1:] - x[:-1]).mean()
-        profile['dy'] = (y[1:] - y[:-1]).mean()
+        profile['dx'] = (x[1:] - x[:-1]).mean() # convert to m
+        profile['dy'] = (y[1:] - y[:-1]).mean() # convert to m
+        profile['resolution'] = (profile['dx'], -profile['dy'])
         profile['driver'] = 'h5' # hint that this was not a real raster
-        profile['transform'] = watershed_workflow.utils.create_transform(x[0], y[0],
-                                                                         x[1], y[1],
-                                                                         profile['dx'],
-                                                                         profile['dy'])
-        return profile, times, data        
+
+        profile['transform'] = rasterio.transform.from_bounds(x[0], y[-1],
+                                                              x[-1], y[0],
+                                                              profile['width'],
+                                                              profile['height'])
+        profile['nodata'] = -9999
+        return watershed_workflow.datasets.Data(profile, times, data)        
         
     
-    def get_raster(self,
-                   polygon_or_bounds,
-                   crs,
-                   start=None,
-                   end=None,
-                   variables=None,
-                   force_download=False):
+    def get_data(self,
+                 polygon_or_bounds,
+                 crs,
+                 start=None,
+                 end=None,
+                 variables=None,
+                 force_download=False):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -244,19 +250,24 @@ class FileManagerDaymet:
 
         Returns
         -------
-        list : [(profile, times, data),]
-          Returns a list of tuples, one per variable. Data is an array
-          of shape [NTIMES,NX,NY], while times is an array of datetime
-          objects of length NTIMES.
+        profile : dict
+          Metadata including spatial info, as for a raster.
+        times : np.array((NTIMES,), dtype=datetime.date)
+          Array of date objects.
+        data : dict{ str : np.ndarray((NTIMES, NX, NY), float)
+          Dictionary with keys of variables and values storing the
+          actual data.
 
         """
         if start is None:
             start = self._START
-        start_year = self._clean_date(start)
+        start = self._clean_date(start)
+        start_year = start.year
         
         if end is None:
             end = self._END
-        end_year = self._clean_date(end)
+        end = self._clean_date(end)
+        end_year = (end - datetime.timedelta(days=1)).year
         if start_year > end_year:
             raise RuntimeError(f"Provided start year {start_year} is after provided end year {end_year}")
 
@@ -280,8 +291,8 @@ class FileManagerDaymet:
             filenames.append(filename_var)
 
         # open files
-        res = []
+        s = watershed_workflow.datasets.State()
         for fnames, var in zip(filenames, variables):
-            res.append(self._open_files(fnames, var, start, end))
-        return res
+            s[var] = self._open_files(fnames, var, start, end)
+        return s
 

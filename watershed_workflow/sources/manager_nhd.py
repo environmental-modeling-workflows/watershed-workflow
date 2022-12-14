@@ -385,7 +385,11 @@ class _FileManagerNHD:
                 logging.error(e)
                 return 1, e
 
-            json = r.json()
+            try:
+                json = r.json()
+            except Exception as e:
+                logging.error(e)
+                return 1, e
             #logging.debug(json)
 
             matches = [(m, self._valid_url(i, m, hucstr)) for (i, m) in enumerate(json['items'])]

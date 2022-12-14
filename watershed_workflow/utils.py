@@ -89,36 +89,70 @@ def create_bounds(f):
     return min(x), min(y), max(x), max(y)
 
 
-def create_empty_raster(target_bounds, crs, target_dx, dtype, nodata):
-    """Generates a profile and a nodata-filled 2D array."""
-    target_x0 = np.round(target_bounds[0] - target_dx/2)
-    target_y1 = np.round(target_bounds[3] + target_dx/2)
-    width = int(np.ceil((target_bounds[2] + target_dx/2 - target_x0) / target_dx))
-    height = int(np.ceil((target_y1 - target_bounds[1] - target_dx/2) / target_dx))
+def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, count=1):
+    """Creates a profile for a raster.
 
-    out_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
+    Parameters
+    ----------
+    bounds : [x_min, y_min, x_max, y_max]
+      Bounding box for the raster.
+    crs : CRS object
+      Target coordinate system.
+    resolution : tuple or float
+      Pixel width, in units of the crs.  If a tuple, (dx,dy).  If a
+      float, then dx = dy.
+    dtype : optional
+      If provided, sets the data type.
+    nodata : dtype, optional
+      If provided, sets the nodata value.
+    count : int, optional
 
-    logging.info('  target_bounds = {}'.format(target_bounds))
-    logging.info('  out_bounds = {}'.format(out_bounds))
-    logging.info('  pixel_size = {}'.format(target_dx))
-    logging.info('  width = {}, height = {}'.format(width, height))
+    Note that dx/dy are always used.  The bounds are adjusted to make
+    them an even multiple of dx/dy.
 
-    transform = rasterio.transform.from_origin(target_x0, target_y1, target_dx, target_dx)
+
+    Returns
+    -------
+    dict 
+      Dictionary profile, including a transform and all other needed
+      metadata to create a raster.
+
+    """
+    try:
+        dx, dy = resolution
+    except TypeError:
+        dx = resolution
+        dy = resolution
+
+    if dtype is None and nodata is not None:
+        dytpe = type(nodata)
+        
+    x0 = np.round(bounds[0] - dx/2)
+    y1 = np.round(bounds[3] + dx/2)
+    width = int(np.ceil((bounds[2] + dx/2 - x0) / dx))
+    height = int(np.ceil((y1 - bounds[1] - dx/2) / dx))
+
+    out_bounds = [x0, y1 - dy * height, x0 + dx * width, y1]
+    transform = rasterio.transform.from_origin(x0, y1, dx, dx)
 
     out_profile = {
         'height': height,
         'width': width,
-        'count': 1,
+        'count': count,
         'dtype': dtype,
-        'crs': watershed_workflow.crs.to_rasterio(crs),
+        'crs': crs,
         'transform': transform,
         'nodata': nodata
     }
-    out = nodata * np.ones((height, width), dtype)
-    return out_profile, out
+    return out_profile
 
 
-create_transform = rasterio.transform.from_bounds
+def create_empty_raster(bounds, crs, resolution, nodata, count=1):
+    """Generates a profile and a nodata-filled array."""
+    profile = create_raster_profile(bounds, crs, resolution, nodata=nodata, count=count)
+    out = profile['nodata'] * np.ones((profile['count'], profile['height'], profile['width']), profile['dtype'])
+    return profile, out
+
 
 #
 # Generic routines for manipulating shapes and rasters
@@ -298,8 +332,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
     return data
 
 
-def interpolate_raster_in_time(times, data, start, end, dt=None, **kwargs):
-    """Interpolate time-dependent raster data from times to daily data in the range start, end.
+def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
+    """Interpolate time-dependent data from times to daily data in the range start, end.
 
     Parameters
     ----------
@@ -339,7 +373,7 @@ def interpolate_raster_in_time(times, data, start, end, dt=None, **kwargs):
     new_rel_origin = np.arange(start_rel_origin, start_rel_origin + new_count)
     new_data = interp(new_rel_origin)
     return new_times, new_data
-    
+
     
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.

@@ -6,18 +6,16 @@ import logging
 import watershed_workflow.warp
 import watershed_workflow.plot
 
-def compute_time_series(lai_raster, lc_raster, times=None):
+def compute_time_series(lai, lc):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
 
     Parameters
     ----------
-    lai_raster : numpy.ma.MaskedArray[NX,NY,NTIMES]
-       Array of LAI.
-    lc_raster : numpy.ma.MaskedArray[NX,NY]
-       Array of land cover.
-    times : list(datetime)[NTIMES]
-       Array of times, in [datetime], of the lai_raster.
+    lai : datasets.Data
+      The LAI data.
+    lc : datasets.Data
+      The LULC data.
        
     Returns
     -------
@@ -25,18 +23,15 @@ def compute_time_series(lai_raster, lc_raster, times=None):
        LAI time series dataframe with rows as time and columns as land
        type.
     """
-    unique_lc = list(np.unique(lc_raster))
-    try:
-        unique_lc.remove(lc_raster.fill_value)
-    except ValueError:
-        pass    
+    unique_lc = list(np.unique(lc.data))
+    try: unique_lc.remove(lc.profile['nodata'])
+    except ValueError: pass    
 
     df = pd.DataFrame()
-    if times is not None:
-        df['time [datetime]'] = times
+    df['time [datetime]'] = lai.times
 
     for lc in unique_lc:
-        time_series = [lai_raster[i,:,:][np.where(lc_raster == lc)].mean() for i in range(lai_raster.shape[0])]
+        time_series = [lai.data[i,:,:][np.where(lc.data == lc)].mean() for i in range(len(lai.times))]
         df[f'{lc}'] = time_series
     return df
 
@@ -68,6 +63,8 @@ def compute_crosswalk_correlation(modis_profile, modis_lc,
        Maps keys of MODIS indices into NLCD indices.
 
     """
+    assert(len(modis_lc.shape) == 2)
+    assert(len(nlcd_lc.shape) == 2)
     if warp:
         modis_profile, modis_lc = watershed_workflow.warp.raster(modis_profile, modis_lc,
                                                                  dst_crs=nlcd_profile['crs'],

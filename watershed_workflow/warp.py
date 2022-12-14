@@ -189,3 +189,23 @@ def raster(src_profile,
                             resampling=resampling_method)
 
     return dst_profile, dst_array
+
+
+def dataset_collection(dataset, **kwargs):
+    """Warp a dataset collection.  Note this works in place!"""
+    new_dataset = None
+    for k, v in dataset.items():
+        new_profile, new_vals = raster(v.profile, v.data, **kwargs)
+        if new_dataset is None:
+            new_dataset = watershed_workflow.datasets.Dataset(new_profile, v.times)
+        new_dataset[k] = watershed_workflow.datasets.Data(new_profile, v.times, new_vals)
+    return new_dataset
+
+
+def state(state, **kwargs):
+    """Warp a state."""
+    new_state = watershed_workflow.datasets.State()
+    for col in state.collections:
+        new_col = dataset_collection(col, **kwargs)
+        new_state.collections.append(new_col)
+    return new_state

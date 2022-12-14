@@ -9,12 +9,37 @@ import shapely
 import numpy as np
 import netCDF4
 import attrs
+import rasterio.transform
 
 import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.crs
+import watershed_workflow.datasets
+
+colors = {
+        -1:  ('Unclassified', (0.00000000000,  0.00000000000,  0.00000000000)),
+        0: ('Open Water', (0.27843137255,  0.41960784314,  0.62745098039)),
+        1: ('Evergreen Needleleaf Forests', (0.10980392157,  0.38823529412,  0.18823529412)),
+        2: ('Evergreen Broadleaf Forests', (0.10980392157,  0.38823529412,  0.18823529412)),
+        3: ('Deciduous Needleleaf Forests', (0.40784313726,  0.66666666667,  0.38823529412)),
+        4: ('Deciduous Broadleaf Forests', (0.40784313726,  0.66666666667,  0.38823529412)),
+        5: ('Mixed Forests', (0.70980392157,  0.78823529412,  0.55686274510)),
+        6: ('Closed Shrublands', (0.80000000000,  0.72941176471,  0.48627450980)),
+        7: ('Open Shrublands', (0.80000000000,  0.72941176471,  0.48627450980)),
+        8: ('Woody Savannas', (0.40784313726,  0.66666666667,  0.38823529412)),
+        9: ('Savannas', (0.70980392157,  0.78823529412,  0.55686274510)),
+        10: ('Grasslands', (0.88627450980,  0.88627450980,  0.75686274510)),
+        11: ('Permanent Wetlands', (0.43921568628,  0.63921568628,  0.72941176471)),
+        12: ('Croplands', (0.66666666667,  0.43921568628,  0.15686274510)),
+        13: ('Urban and Built up lands', (0.86666666667,  0.78823529412,  0.78823529412)),
+        14: ('Cropland Natural Vegetation Mosaics', (0.66666666667,  0.43921568628,  0.15686274510)),
+        15: ('Permanent Snow and Ice', (0.81960784314,  0.86666666667,  0.97647058824)),
+        16: ('Barren Land', (0.69803921569,  0.67843137255,  0.63921568628)),
+        17: ('Water Bodies', (0.27843137255,  0.41960784314,  0.62745098039)),
+    }
+
 
 @attrs.define
 class Task:
@@ -55,7 +80,7 @@ class FileManagerMODISAppEEARS:
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
 
     _START = datetime.date(2002, 7, 1)
-    _END = datetime.date(2020, 12, 30)
+    _END = datetime.date(2021, 1, 1)
 
     _PRODUCTS = {
         'LAI': {
@@ -329,13 +354,14 @@ class FileManagerMODISAppEEARS:
         else:
             return False
 
+
     def _read_data(self, task):
         """Read all files for a task, returning the data in the order of variables requested in the task."""
-        data = []
+        s = watershed_workflow.datasets.State()
         for var in task.variables:
-            res = self._read_file(task.filenames[var], var)
-            data.append(res)
-        return data
+            s[var] = self._read_file(task.filenames[var], var)
+        return s
+
 
     def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
@@ -352,18 +378,21 @@ class FileManagerMODISAppEEARS:
             lon = nc.variables['lon'][:]
             profile['dx'] = (lon[1:] - lon[:-1]).mean()
             profile['dy'] = (lat[1:] - lat[:-1]).mean()
+            profile['resolution'] = (profile['dx'], -profile['dy'])
+            profile['height'] = len(lat)
+            profile['width'] = len(lon)
             profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
-            profile['transform'] = watershed_workflow.utils.create_transform(lon[0],lat[0],
-                                                                             lon[1],lat[1],
-                                                                             profile['dx'],
-                                                                             profile['dy'])
-
+            profile['transform'] = rasterio.transform.from_bounds(lon[0], lat[-1],
+                                                                  lon[-1], lat[0],
+                                                                  profile['width'],
+                                                                  profile['height'])
+            profile['nodata'] = -9999
             varname = self._PRODUCTS[variable]['layer']
             profile['layer'] = varname
 
             times = nc.variables['time'][:].filled(-1)
             time_origin = datetime.date(2000, 1, 1)
-            times = np.array([time_origin + datetime.timedelta(days=t) for t in times])
+            times = np.array([time_origin + datetime.timedelta(days=int(t)) for t in times])
 
             data = nc.variables[varname][:]
             if np.issubdtype(data.dtype, np.integer):
@@ -378,16 +407,16 @@ class FileManagerMODISAppEEARS:
                 profile['nodata'] = data.fill_value
                 profile['dtype'] = data.dtype
                 data = data.filled()
-        return profile, times, data
+        return watershed_workflow.datasets.Data(profile, times, data)
 
-    def get_raster(self,
-                   polygon_or_bounds,
-                   crs,
-                   start=None,
-                   end=None,
-                   variables=None,
-                   force_download=False,
-                   task=None):
+    def get_data(self,
+                 polygon_or_bounds=None,
+                 crs=None,
+                 start=None,
+                 end=None,
+                 variables=None,
+                 force_download=False,
+                 task=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -419,11 +448,12 @@ class FileManagerMODISAppEEARS:
         
         Returns
         -------
-        list : [(profile, times, data),]
-          If the file already exists or the download is successful,
-          returns a list of (profile, 1D times array, 3D data array
-          [NTIMES,NX,NY]), one for each variable.  Times array is an
-          array of datetime objects of length NTIMES.
+        dict : { variable : (profile, times, data) }
+          Returns a dictionary of (variable, data) pairs. For each
+          variable, profile is a dictionary of standard raster profile
+          information, times is an array of datetime objects of length
+          NTIMES, and data is an array of shape (NTIMES, NX, NY) storing
+          the actual values.
 
         OR
 
@@ -433,6 +463,9 @@ class FileManagerMODISAppEEARS:
 
         """
         if task is None:
+            if polygon_or_bounds is None or crs is None:
+                raise RuntimeError('Must provide either polgyon_or_bounds and crs or task arguments.')
+            
             # clean the variables list
             if variables is None:
                 variables = ['LAI', 'LULC']
@@ -458,8 +491,11 @@ class FileManagerMODISAppEEARS:
             # check for existing file
             if all(os.path.isfile(filename) for filename in task.filenames.values()):
                 if force_download:
-                    for filename in filenames:
-                        os.path.remove(filename)
+                    for filename in task.filenames:
+                        try:
+                            os.remove(filename)
+                        except FileNotFoundError:
+                            pass
                 else:
                     return self._read_data(task)
 
@@ -470,3 +506,23 @@ class FileManagerMODISAppEEARS:
         if self._download(task):
             return self._read_data(task)
         return task
+
+    def wait(self, task, interval=120, tries=100):
+        """Blocking -- waits for a task to end."""
+        count = 0
+        success = False
+        res = task
+        while count < tries and not success:
+            res = self.get_data(task=res)
+            if isinstance(res, watershed_workflow.datasets.State):
+                success = True
+                break
+            else:
+                time.sleep(interval)
+                count += 1
+        
+        if success:
+            return res
+        else:
+            raise RuntimeError(f'Unable to get data after {interval*tries} seconds.')
+        

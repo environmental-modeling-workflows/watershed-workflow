@@ -8,6 +8,7 @@ import numpy as np
 import shapely
 import math
 import urllib.request
+import attr
 
 import watershed_workflow.utils
 import watershed_workflow.config
