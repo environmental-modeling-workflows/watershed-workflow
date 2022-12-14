@@ -16,14 +16,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
+        run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
 
       - name: Extract docker tag name
-        shell: bash
-        run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^[:alnum:]\.\_\-]/-/g')"
         id: extract_tag
+        run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         id: buildx
@@ -42,8 +40,8 @@ jobs:
           context: ./
           file: ./docker/ATS-User-Env.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ steps.extract_tag.outputs.tag }}
-          build-args: DOCKER_TAG=${{ steps.extract_tag.outputs.tag }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}
+          build-args: DOCKER_TAG=${{ env.BRANCH_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
