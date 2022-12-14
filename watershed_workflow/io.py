@@ -99,9 +99,11 @@ def write_dataset_to_hdf5(filename, dataset, attributes, time0=None):
     # construct the x,y,t arrays
     transform = profile['transform']
     if not transform.is_rectilinear:
-        raise ValueError('Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.')
-    x = np.array([(transform * (i,0))[0] for i in range(profile['width'])])
-    y = np.array([(transform * (0,j))[0] for j in range(profile['height'])])
+        raise ValueError(
+            'Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.'
+        )
+    x = np.array([(transform * (i, 0))[0] for i in range(profile['width'])])
+    y = np.array([(transform * (0, j))[0] for j in range(profile['height'])])
 
     if time0 is None:
         time0 = times[0]
@@ -157,5 +159,3 @@ def write_timeseries_to_hdf5(filename, ts, attributes=None, time0=None):
         if attributes is not None:
             for key, val in attributes.items():
                 fid.attrs[key] = val
-        
-                             

@@ -2,20 +2,21 @@ import attr
 import numpy as np
 import collections.abc
 
+
 @attr.define
 class Data:
     """Simple struct for storing time-dependent rasters"""
-    profile : dict
-    times : np.ndarray = attr.field(converter=np.array)
-    data : np.ndarray = attr.field(converter=np.array)
+    profile: dict
+    times: np.ndarray = attr.field(converter=np.array)
+    data: np.ndarray = attr.field(converter=np.array)
 
 
 @attr.define
 class Dataset(collections.abc.MutableMapping):
     """Stores a collection of datasets with shared times and profile."""
-    profile : dict
-    times : np.ndarray
-    data : dict = attr.Factory(dict)
+    profile: dict
+    times: np.ndarray
+    data: dict = attr.Factory(dict)
 
     def __getitem__(self, key):
         return Data(self.profile, self.times, self.data[key])
@@ -41,7 +42,7 @@ class Dataset(collections.abc.MutableMapping):
     def can_contain(self, dset):
         return (dset.profile == self.profile) and (dset.times == self.times).all()
 
-    
+
 class State(collections.abc.MutableMapping):
     """This is a multi-key dictionary.
 
@@ -55,7 +56,7 @@ class State(collections.abc.MutableMapping):
     """
     def __init__(self):
         self.collections = []
-    
+
     def __getitem__(self, key):
         for col in self.collections:
             if key in col:
@@ -69,8 +70,8 @@ class State(collections.abc.MutableMapping):
                 if col.can_contain(val):
                     col[key] = val
                     return
-            self.collections.append(Dataset(val.profile, val.times, {key : val.data}))
-        
+            self.collections.append(Dataset(val.profile, val.times, { key: val.data }))
+
     def __delitem__(self, key):
         for col in self.collections:
             if key in col:
@@ -84,7 +85,3 @@ class State(collections.abc.MutableMapping):
 
     def __len__(self):
         return sum(len(col) for col in self.collections)
-
-
-
-

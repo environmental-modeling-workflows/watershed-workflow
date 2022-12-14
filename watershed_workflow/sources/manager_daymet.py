@@ -18,6 +18,7 @@ import watershed_workflow.warp
 import watershed_workflow.sources.names
 import watershed_workflow.datasets
 
+
 def _previous_month():
     now = datetime.datetime.now()
     year = now.year
@@ -67,7 +68,7 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    _START = datetime.date(1980,1,1)
+    _START = datetime.date(1980, 1, 1)
     _END = _previous_month()
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
     DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
@@ -79,7 +80,6 @@ class FileManagerDaymet:
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
-
     def _read_var(self, fname, var):
         with netCDF4.Dataset(fname, 'r') as nc:
             x = nc.variables['x'][:] * 1000.  # km to m; raw netCDF file has km unit
@@ -89,7 +89,6 @@ class FileManagerDaymet:
             val = nc.variables[var][:]
         return x, y, val
 
-    
     def _download(self, var, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.
 
@@ -157,7 +156,6 @@ class FileManagerDaymet:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date
 
-
     def _clean_bounds(self, polygon_or_bounds, crs):
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
         if type(polygon_or_bounds) is dict:
@@ -177,24 +175,23 @@ class FileManagerDaymet:
         feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
         return feather_bounds
 
-
     def _open_files(self, filenames, var, start, end):
         """Opens and loads the files, making a single array."""
         # NOTE: this probably needs to be refactored to not load the whole thing into memory?
         nyears = len(filenames)
-        data = None        
-        for i,fname in enumerate(filenames):
+        data = None
+        for i, fname in enumerate(filenames):
             x, y, v = self._read_var(fname, var)  # returned v.shape(nband, nrow, ncol)
             if data is None:
                 # note nrows, ncols ordering
-                data = np.zeros((nyears*365, len(y), len(x)), 'd')
+                data = np.zeros((nyears * 365, len(y), len(x)), 'd')
 
             # stuff in the right spot
-            data[i*365:(i+1)*365,:,:] = v
+            data[i * 365:(i+1) * 365, :, :] = v
 
         # times is a range
         origin = datetime.date(start.year, 1, 1)
-        times = np.array([origin + datetime.timedelta(days=i) for i in range(365*nyears)])
+        times = np.array([origin + datetime.timedelta(days=i) for i in range(365 * nyears)])
 
         # trim to start, end
         i_start = (start - origin).days
@@ -208,19 +205,16 @@ class FileManagerDaymet:
         profile['width'] = len(x)
         profile['height'] = len(y)
         profile['count'] = len(times)
-        profile['dx'] = (x[1:] - x[:-1]).mean() # convert to m
-        profile['dy'] = (y[1:] - y[:-1]).mean() # convert to m
+        profile['dx'] = (x[1:] - x[:-1]).mean()  # convert to m
+        profile['dy'] = (y[1:] - y[:-1]).mean()  # convert to m
         profile['resolution'] = (profile['dx'], -profile['dy'])
-        profile['driver'] = 'h5' # hint that this was not a real raster
+        profile['driver'] = 'h5'  # hint that this was not a real raster
 
-        profile['transform'] = rasterio.transform.from_bounds(x[0], y[-1],
-                                                              x[-1], y[0],
-                                                              profile['width'],
-                                                              profile['height'])
+        profile['transform'] = rasterio.transform.from_bounds(x[0], y[-1], x[-1], y[0],
+                                                              profile['width'], profile['height'])
         profile['nodata'] = -9999
-        return watershed_workflow.datasets.Data(profile, times, data)        
-        
-    
+        return watershed_workflow.datasets.Data(profile, times, data)
+
     def get_data(self,
                  polygon_or_bounds,
                  crs,
@@ -263,13 +257,14 @@ class FileManagerDaymet:
             start = self._START
         start = self._clean_date(start)
         start_year = start.year
-        
+
         if end is None:
             end = self._END
         end = self._clean_date(end)
         end_year = (end - datetime.timedelta(days=1)).year
         if start_year > end_year:
-            raise RuntimeError(f"Provided start year {start_year} is after provided end year {end_year}")
+            raise RuntimeError(
+                f"Provided start year {start_year} is after provided end year {end_year}")
 
         if variables is None:
             variables = self.DEFAULT_VARIABLES
@@ -285,7 +280,7 @@ class FileManagerDaymet:
         filenames = []
         for var in variables:
             filename_var = []
-            for year in range(start_year, end_year+1):
+            for year in range(start_year, end_year + 1):
                 fname = self._download(var, year, bounds, force=force_download)
                 filename_var.append(fname)
             filenames.append(filename_var)
@@ -295,4 +290,3 @@ class FileManagerDaymet:
         for fnames, var in zip(filenames, variables):
             s[var] = self._open_files(fnames, var, start, end)
         return s
-

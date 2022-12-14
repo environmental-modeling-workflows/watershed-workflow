@@ -19,37 +19,37 @@ import watershed_workflow.crs
 import watershed_workflow.datasets
 
 colors = {
-        -1:  ('Unclassified', (0.00000000000,  0.00000000000,  0.00000000000)),
-        0: ('Open Water', (0.27843137255,  0.41960784314,  0.62745098039)),
-        1: ('Evergreen Needleleaf Forests', (0.10980392157,  0.38823529412,  0.18823529412)),
-        2: ('Evergreen Broadleaf Forests', (0.10980392157,  0.38823529412,  0.18823529412)),
-        3: ('Deciduous Needleleaf Forests', (0.40784313726,  0.66666666667,  0.38823529412)),
-        4: ('Deciduous Broadleaf Forests', (0.40784313726,  0.66666666667,  0.38823529412)),
-        5: ('Mixed Forests', (0.70980392157,  0.78823529412,  0.55686274510)),
-        6: ('Closed Shrublands', (0.80000000000,  0.72941176471,  0.48627450980)),
-        7: ('Open Shrublands', (0.80000000000,  0.72941176471,  0.48627450980)),
-        8: ('Woody Savannas', (0.40784313726,  0.66666666667,  0.38823529412)),
-        9: ('Savannas', (0.70980392157,  0.78823529412,  0.55686274510)),
-        10: ('Grasslands', (0.88627450980,  0.88627450980,  0.75686274510)),
-        11: ('Permanent Wetlands', (0.43921568628,  0.63921568628,  0.72941176471)),
-        12: ('Croplands', (0.66666666667,  0.43921568628,  0.15686274510)),
-        13: ('Urban and Built up lands', (0.86666666667,  0.78823529412,  0.78823529412)),
-        14: ('Cropland Natural Vegetation Mosaics', (0.66666666667,  0.43921568628,  0.15686274510)),
-        15: ('Permanent Snow and Ice', (0.81960784314,  0.86666666667,  0.97647058824)),
-        16: ('Barren Land', (0.69803921569,  0.67843137255,  0.63921568628)),
-        17: ('Water Bodies', (0.27843137255,  0.41960784314,  0.62745098039)),
-    }
+    -1: ('Unclassified', (0.00000000000, 0.00000000000, 0.00000000000)),
+    0: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
+    1: ('Evergreen Needleleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
+    2: ('Evergreen Broadleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
+    3: ('Deciduous Needleleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
+    4: ('Deciduous Broadleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
+    5: ('Mixed Forests', (0.70980392157, 0.78823529412, 0.55686274510)),
+    6: ('Closed Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
+    7: ('Open Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
+    8: ('Woody Savannas', (0.40784313726, 0.66666666667, 0.38823529412)),
+    9: ('Savannas', (0.70980392157, 0.78823529412, 0.55686274510)),
+    10: ('Grasslands', (0.88627450980, 0.88627450980, 0.75686274510)),
+    11: ('Permanent Wetlands', (0.43921568628, 0.63921568628, 0.72941176471)),
+    12: ('Croplands', (0.66666666667, 0.43921568628, 0.15686274510)),
+    13: ('Urban and Built up lands', (0.86666666667, 0.78823529412, 0.78823529412)),
+    14: ('Cropland Natural Vegetation Mosaics', (0.66666666667, 0.43921568628, 0.15686274510)),
+    15: ('Permanent Snow and Ice', (0.81960784314, 0.86666666667, 0.97647058824)),
+    16: ('Barren Land', (0.69803921569, 0.67843137255, 0.63921568628)),
+    17: ('Water Bodies', (0.27843137255, 0.41960784314, 0.62745098039)),
+}
 
 
 @attrs.define
 class Task:
-    task_id : str
-    variables : list
-    filenames : dict = attrs.Factory(dict)
-    urls : dict = attrs.Factory(dict)
-    shas : dict = attrs.Factory(dict)
+    task_id: str
+    variables: list
+    filenames: dict = attrs.Factory(dict)
+    urls: dict = attrs.Factory(dict)
+    shas: dict = attrs.Factory(dict)
 
-    
+
 class FileManagerMODISAppEEARS:
     """MODIS data through the AppEEARS data portal.
 
@@ -77,7 +77,7 @@ class FileManagerMODISAppEEARS:
        https://appeears.earthdatacloud.nasa.gov/api/?python#introduction
 
     """
-    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login" # URL for AppEEARS rest requests
+    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"  # URL for AppEEARS rest requests
     _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
     _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
@@ -248,7 +248,10 @@ class FileManagerMODISAppEEARS:
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
         r.raise_for_status()
 
-        task = Task(r.json()['task_id'], variables, filenames=dict((v,self._filename(bounds_ll, start, end, v)) for v in variables))
+        task = Task(r.json()['task_id'],
+                    variables,
+                    filenames=dict(
+                        (v, self._filename(bounds_ll, start, end, v)) for v in variables))
         self.tasks.append(task)
         logging.info(f'Requesting dataset on {bounds_ll} response task_id {task.task_id}')
         return task
@@ -259,13 +262,13 @@ class FileManagerMODISAppEEARS:
         Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
         """
         if self.login_token is None:
-            self.login_token = self._authenticate()        
+            self.login_token = self._authenticate()
         if task is None:
             task = self.tasks[0]
 
         logging.info(f'Checking status of task: {task.task_id}')
         r = requests.get(self._STATUS_URL,
-                         headers={'Authorization': 'Bearer {0}'.format(self.login_token)})
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
         try:
             r.raise_for_status()
         except requests.HTTPError:
@@ -289,13 +292,13 @@ class FileManagerMODISAppEEARS:
 
     def _check_bundle_url(self, task=None):
         if self.login_token is None:
-            self.login_token = self._authenticate()        
+            self.login_token = self._authenticate()
         if task is None:
             task = self.tasks[0]
 
         logging.info(f'Checking for bundle of task: {task.task_id}')
-        r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id), 
-                         headers={'Authorization': 'Bearer {0}'.format(self.login_token)})
+        r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
         try:
             r.raise_for_status()
         except requests.HTTPError:
@@ -313,16 +316,17 @@ class FileManagerMODISAppEEARS:
                 for entry in r.json()['files']:
                     if entry['file_name'].startswith(product):
                         logging.info(f'... bundle found {entry["file_name"]}')
-                        assert(entry['file_name'].endswith('.nc'))
-                        task.urls[var] = self._BUNDLE_URL_TEMPLATE.format(task.task_id)+'/'+entry['file_id']
+                        assert (entry['file_name'].endswith('.nc'))
+                        task.urls[var] = self._BUNDLE_URL_TEMPLATE.format(
+                            task.task_id) + '/' + entry['file_id']
                         found = True
-                assert(found)
+                assert (found)
             return True
 
     def is_ready(self, task=None):
         """Actually knowing if it is ready is a bit tricky because Appeears does not appear to be saving its status after it is complete."""
         status = self._check_status(task)
-        if status != False: # note this matches True or UNKNOWN
+        if status != False:  # note this matches True or UNKNOWN
             return self._check_bundle_url(task)
         else:
             return status
@@ -344,19 +348,19 @@ class FileManagerMODISAppEEARS:
             ready = True
 
         if ready:
-            assert(len(task.filenames) == len(task.urls))
-            assert(len(task.variables) == len(task.urls))
+            assert (len(task.filenames) == len(task.urls))
+            assert (len(task.variables) == len(task.urls))
             for var in task.variables:
                 url = task.urls[var]
                 filename = task.filenames[var]
                 logging.info("  Downloading: {}".format(url))
                 logging.info("      to file: {}".format(filename))
-                good = source_utils.download(url, filename, headers={ 'Authorization': f'Bearer {self.login_token}'})
-                assert(good)
+                good = source_utils.download(
+                    url, filename, headers={ 'Authorization': f'Bearer {self.login_token}'})
+                assert (good)
             return True
         else:
             return False
-
 
     def _read_data(self, task):
         """Read all files for a task, returning the data in the order of variables requested in the task."""
@@ -364,7 +368,6 @@ class FileManagerMODISAppEEARS:
         for var in task.variables:
             s[var] = self._read_file(task.filenames[var], var)
         return s
-
 
     def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
@@ -386,8 +389,7 @@ class FileManagerMODISAppEEARS:
             profile['height'] = len(lat)
             profile['width'] = len(lon)
             profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
-            profile['transform'] = rasterio.transform.from_bounds(lon[0], lat[-1],
-                                                                  lon[-1], lat[0],
+            profile['transform'] = rasterio.transform.from_bounds(lon[0], lat[-1], lon[-1], lat[0],
                                                                   profile['width'],
                                                                   profile['height'])
             profile['nodata'] = -9999
@@ -468,8 +470,9 @@ class FileManagerMODISAppEEARS:
         """
         if task is None:
             if polygon_or_bounds is None or crs is None:
-                raise RuntimeError('Must provide either polgyon_or_bounds and crs or task arguments.')
-            
+                raise RuntimeError(
+                    'Must provide either polgyon_or_bounds and crs or task arguments.')
+
             # clean the variables list
             if variables is None:
                 variables = ['LAI', 'LULC']
@@ -490,7 +493,10 @@ class FileManagerMODISAppEEARS:
             end = self._clean_date(end)
 
             # create a task
-            task = Task('', variables, filenames=dict((v,self._filename(bounds, start, end, v)) for v in variables))
+            task = Task('',
+                        variables,
+                        filenames=dict(
+                            (v, self._filename(bounds, start, end, v)) for v in variables))
 
             # check for existing file
             for filename in task.filenames.values():
@@ -526,9 +532,8 @@ class FileManagerMODISAppEEARS:
             else:
                 time.sleep(interval)
                 count += 1
-        
+
         if success:
             return res
         else:
             raise RuntimeError(f'Unable to get data after {interval*tries} seconds.')
-        

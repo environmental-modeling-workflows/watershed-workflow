@@ -153,10 +153,11 @@ class FileManagerNLCD:
             out_image, out_transform = rasterio.mask.mask(fid, [shply, ], crop=True, nodata=0)
 
         profile.update({
-            "height" : out_image.shape[1],
-            "width" : out_image.shape[2],
-            "transform" : out_transform,
-            "nodata" : 0 })
+            "height": out_image.shape[1],
+            "width": out_image.shape[2],
+            "transform": out_transform,
+            "nodata": 0
+        })
 
         assert (len(out_image.shape) == 3)
         return profile, out_image[0, :, :]

@@ -22,6 +22,7 @@ import watershed_workflow.crs
 
 _tol = 1.e-7
 
+
 #
 # Constructors
 #
@@ -126,13 +127,13 @@ def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, coun
 
     if dtype is None and nodata is not None:
         dytpe = type(nodata)
-        
+
     x0 = np.round(bounds[0] - dx/2)
     y1 = np.round(bounds[3] + dx/2)
     width = int(np.ceil((bounds[2] + dx/2 - x0) / dx))
     height = int(np.ceil((y1 - bounds[1] - dx/2) / dx))
 
-    out_bounds = [x0, y1 - dy * height, x0 + dx * width, y1]
+    out_bounds = [x0, y1 - dy*height, x0 + dx*width, y1]
     transform = rasterio.transform.from_origin(x0, y1, dx, dx)
 
     out_profile = {
@@ -150,7 +151,8 @@ def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, coun
 def create_empty_raster(bounds, crs, resolution, nodata, count=1):
     """Generates a profile and a nodata-filled array."""
     profile = create_raster_profile(bounds, crs, resolution, nodata=nodata, count=count)
-    out = profile['nodata'] * np.ones((profile['count'], profile['height'], profile['width']), profile['dtype'])
+    out = profile['nodata'] * np.ones(
+        (profile['count'], profile['height'], profile['width']), profile['dtype'])
     return profile, out
 
 
@@ -171,8 +173,10 @@ def round_shapes(list_of_things, digits):
 
 def round_shplys(list_of_things, digits):
     """Rounds coordinates in things or shapes to a given digits."""
-    return [shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0)
-            for thing in list_of_things]
+    return [
+        shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0)
+        for thing in list_of_things
+    ]
 
 
 def remove_third_dimension(geom):
@@ -314,17 +318,14 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
     """
     nyears = data.shape[0] // 365
 
-    data = data[0:nyears*365,:,:].reshape(nyears, 365, data.shape[1], data.shape[2])
+    data = data[0:nyears * 365, :, :].reshape(nyears, 365, data.shape[1], data.shape[2])
     data = data.mean(axis=0)
 
     if filter:
-        defaults = {'window' : 61,
-                    'poly_order' : 2,
-                    'axis' : 0,
-                    'mode' : 'wrap'}
-        for k,v in defaults:
-            kwargs.setdefault(k,v)
-            
+        defaults = { 'window': 61, 'poly_order': 2, 'axis': 0, 'mode': 'wrap'}
+        for k, v in defaults:
+            kwargs.setdefault(k, v)
+
         data = scipy.signal.savgol_filter(data, **kwargs)
 
     if output_nyears != 1:
@@ -362,19 +363,19 @@ def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
 
     if dt is None:
         dt = datetime.timedelta(days=1)
-    x = np.array([(t - origin)/dt for t in times])
+    x = np.array([(t-origin) / dt for t in times])
     interp = scipy.interpolate.interp1d(x, data, axis=0, assume_sorted=True, **kwargs)
 
     new_origin = start
-    new_count = np.ceil((end - start) / dt)
-    new_times = np.array([new_origin + i * dt for i in range(new_count+1)])
+    new_count = np.ceil((end-start) / dt)
+    new_times = np.array([new_origin + i*dt for i in range(new_count + 1)])
 
-    start_rel_origin = (start - origin) / dt
+    start_rel_origin = (start-origin) / dt
     new_rel_origin = np.arange(start_rel_origin, start_rel_origin + new_count)
     new_data = interp(new_rel_origin)
     return new_times, new_data
 
-    
+
 def generate_rings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
 
@@ -433,6 +434,7 @@ def generate_coords(obj):
 #
 # Geometry
 #
+
 
 def close(s1, s2, tol=_tol):
     """Are two shapely shapes topologically equivalent and geometrically close?
@@ -833,5 +835,3 @@ def cluster(points, tol):
     indices = hcluster.fclusterdata(points, tol, criterion='distance')
     centroids = [points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())]
     return indices - 1, centroids
-
-

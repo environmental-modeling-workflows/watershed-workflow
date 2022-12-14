@@ -25,7 +25,6 @@ from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAp
 from watershed_workflow.sources.manager_shape import FileManagerShape
 from watershed_workflow.sources.manager_raster import FileManagerRaster
 
-
 # available and default water boundary datasets
 huc_sources = {
     'NHDPlus': FileManagerNHDPlusAccumulator(),
@@ -64,11 +63,8 @@ land_cover_sources = {
 }
 default_land_cover = 'NLCD (L48)'
 
-lai_sources = {
-    'MODIS': FileManagerMODISAppEEARS()    
-}
+lai_sources = { 'MODIS': FileManagerMODISAppEEARS() }
 default_lai = 'MODIS'
-
 
 # available and default meteorology
 met_sources = { 'DayMet': FileManagerDaymet() }

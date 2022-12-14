@@ -316,6 +316,7 @@ indices for each triangle (tri_{label_lower}):
 
 """
 
+
 def _indexed_colormap(label, all_colors):
     def _generate_colormap(indices=None, formatted=False):
         if indices is None:
@@ -352,16 +353,20 @@ def _indexed_colormap(label, all_colors):
         # last is empty tick
         labels.append('')
         return indices, cmap, norm, ticks, labels
-    
+
     doc = _doc_template.format(label=label, label_lower=label.lower())
     _generate_colormap.__doc__ = doc
     return _generate_colormap
-    
+
+
 import watershed_workflow.sources.manager_nlcd
+
 generate_nlcd_colormap = _indexed_colormap('NLCD', watershed_workflow.sources.manager_nlcd.colors)
 
 import watershed_workflow.sources.manager_modis_appeears
-generate_modis_colormap = _indexed_colormap('MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
+
+generate_modis_colormap = _indexed_colormap(
+    'MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
 
 
 def colorbar_index(ncolors, cmap, labels=None, **kwargs):

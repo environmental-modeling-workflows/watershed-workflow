@@ -20,14 +20,15 @@ def test_daymet1():
 
     # get imgs
     daymet = watershed_workflow.sources.manager_daymet.FileManagerDaymet()
-    state = daymet.get_data(hucly, native_crs,
-                            '1999-1-1', '1999-2-1', ['prcp'],
+    state = daymet.get_data(hucly,
+                            native_crs,
+                            '1999-1-1',
+                            '1999-2-1', ['prcp'],
                             force_download=True)
 
     prcp = state['prcp']
-    assert(watershed_workflow.crs.equal(watershed_workflow.crs.daymet_crs(),
-                                        prcp.profile['crs']))
-    assert(prcp.data.shape == (31,19,17))
-    assert(prcp.profile['height'] == 19)
-    assert(prcp.profile['width'] == 17)
-    assert(len(prcp.times) == 31)
+    assert (watershed_workflow.crs.equal(watershed_workflow.crs.daymet_crs(), prcp.profile['crs']))
+    assert (prcp.data.shape == (31, 19, 17))
+    assert (prcp.profile['height'] == 19)
+    assert (prcp.profile['width'] == 17)
+    assert (len(prcp.times) == 31)

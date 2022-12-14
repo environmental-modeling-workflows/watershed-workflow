@@ -54,14 +54,13 @@ def test_shape2():
     count = 0
     success = False
     res = app.get_data(shply, profile['crs'], start=START, end=END)
-    assert(len(res) == 2)
-    assert(len(res.collections) == 2)
+    assert (len(res) == 2)
+    assert (len(res.collections) == 2)
 
     lc = res['LULC']
-    assert(lc.data.shape == (1,17,20))
+    assert (lc.data.shape == (1, 17, 20))
     lai = res['LAI']
-    assert(lai.data.shape == (16,17,20))
-    assert(lai.profile['height'] == 17)
-    assert(lai.profile['width'] == 20)
-    assert(len(lai.times) == 16)
-
+    assert (lai.data.shape == (16, 17, 20))
+    assert (lai.profile['height'] == 17)
+    assert (lai.profile['width'] == 20)
+    assert (len(lai.times) == 16)

@@ -43,13 +43,11 @@ def daymet_to_daily_averages(dat):
 
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
-    dout['incoming shortwave radiation [W m^-2]'] = dat.data['srad'] * dat.data['dayl'] / 86400  # Wm2
-    dout['vapor pressure air [Pa]'] = dat.data['vp'] # Pa
+    dout['incoming shortwave radiation [W m^-2]'] = dat.data['srad'] * dat.data[
+        'dayl'] / 86400  # Wm2
+    dout['vapor pressure air [Pa]'] = dat.data['vp']  # Pa
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
 
     logging.debug(f"output dout shape: {dout.data['incoming shortwave radiation [W m^-2]'].shape}")
     return dout
-
-
-

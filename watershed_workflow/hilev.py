@@ -1286,8 +1286,8 @@ def color_raster_from_shapes(shapes,
 
     raster_profile, raster = watershed_workflow.utils.create_empty_raster(
         raster_bounds, raster_crs, raster_dx, nodata)
-    assert(len(raster.shape) == 3 and raster.shape[0] == 1)
-    raster = raster[0,:,:]
+    assert (len(raster.shape) == 3 and raster.shape[0] == 1)
+    raster = raster[0, :, :]
     logging.info(f'  of shape: {raster.shape}')
     logging.info(f'  and {len(set(shape_colors))} independent colors')
 
