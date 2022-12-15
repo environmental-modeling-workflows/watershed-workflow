@@ -1,5 +1,6 @@
 """A module for working with multi-polys, a MultiLine that together forms a Polygon"""
 
+from configparser import RawConfigParser
 import logging
 import numpy as np
 import collections
@@ -174,7 +175,18 @@ class SplitHUCs:
                 segs.append(self.segments[s])
 
         ml = shapely.ops.linemerge(segs)
-        assert (type(ml) is shapely.geometry.LineString)
+
+        if type(ml) is shapely.geometry.MultiLineString:
+            logging.debug("the lines may not be contiguous, try to make a new simple\
+                line using the line coordinates.")
+            # Put the sub-line coordinates into a list of sublists
+            coords = [list(line.coords) for line in ml]
+            # Flatten the list of sublists and use it to make a new line
+            newline = shapely.geometry.LineString([i for sublist in coords for i in sublist])
+            assert type(newline) is shapely.geometry.LineString
+            ml = newline
+
+        assert type(ml) is shapely.geometry.LineString, f"type shape is {type(ml)}"
         poly = shapely.geometry.Polygon(ml)
         poly.properties = self.properties[i]
         return poly
@@ -213,6 +225,7 @@ def simplify(hucs, tol=0.1):
         hucs.segments[i] = seg.simplify(tol)
 
 
+
 def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
     """Given a list of shapes which mostly share boundaries, make sure they
     partition the space.  Often HUC boundaries have minor overlaps and
@@ -225,9 +238,40 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
 
             s2 = s2.buffer(abs_tol)
             if watershed_workflow.utils.intersects(s1, s2):
-                s2 = s2.difference(s1)
-                list_of_shapes[j] = s2.difference(s1)
+                inter = s1.intersection(s2)
+                
+                if isinstance(inter, shapely.geometry.Polygon):
+                    logging.debug(f"s1: shapes[{i}], s={s1.area} intersects s2: shapes[{j}], s={s2.area}")
+                    logging.debug(f"the intersected area is: {inter.area}")
+                    if s2.within(s1):
+                        # s2 inside s1
+                        diff = s1.difference(s2) 
+                        list_of_shapes[i] = s2
+                    elif s1.within(s2):
+                        # s1 inside s2
+                        diff = s2.difference(s1)
+                    else:
+                        # polygons overlap, this occurs when the smaller polygon 
+                        # has minor overlap with the larger polygon
+                        list_of_shapes[i] = inter
+                        diff = s1.symmetric_difference(s2)
+                    assert diff.area > 1.0, f"the differenced area {diff.area} <=1 maybe too small! Double check the two polygons."
+                    s2 = diff
+                    
+                    # a multipolygon may occur when two shapes have minor overlap 
+                    # in different place (usually two polygons); try to choose the largest polygon 
+                    if isinstance(s2, shapely.geometry.MultiPolygon):
+                        shps = [s for s in s2]
+                        shps_area = [s.area for s in s2]
+                        max_area = max(shps_area)
+                        max_idx = shps_area.index(max_area)
+                        logging.debug(f"tiny polygon (s={min(shps_area)}) is discarded.")
+                        s2 = shps[max_idx]
 
+                    assert isinstance(s2, shapely.geometry.Polygon)
+                    logging.debug(f"differenced area s2 is: {s2.area}")
+                    list_of_shapes[j] = s2
+   
     # remove holes
     union = shapely.ops.unary_union(list_of_shapes)
     assert (type(union) is shapely.geometry.Polygon)
@@ -285,7 +329,9 @@ def intersect_and_split(list_of_shapes):
 
                 if type(inter) is not shapely.geometry.LineString and \
                    type(inter) is not shapely.geometry.MultiLineString:
-                    raise RuntimeError('things are breaking...')
+                    raise RuntimeError(f'things are breaking...the type of intersection b/w shapes[{i}]\
+                    and shapes[{j}] is {type(inter)}; and it is neither line or multiline shapely object. \
+                    Double check the shapes!')
 
                 diff = uniques[i].difference(s2)
                 if type(diff) is shapely.geometry.MultiLineString:

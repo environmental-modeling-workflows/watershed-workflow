@@ -67,7 +67,6 @@ class FileManagerDaymet:
 
     .. [Daymet] https://daymet.ornl.gov
     """
-
     _START = datetime.date(1980, 1, 1)
     _END = _previous_month()
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
