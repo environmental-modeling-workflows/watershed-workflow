@@ -122,7 +122,7 @@ class SplitHUCs:
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
         for i, u in enumerate(uniques):
-            if watershed_workflow.utils.empty_shapely(u):
+            if watershed_workflow.utils.is_empty_shapely(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
                 handle = self.segments.add(u)
@@ -140,7 +140,7 @@ class SplitHUCs:
         for i in range(len(shapes)):
             for j in range(len(shapes)):
                 inter = intersections[i][j]
-                if watershed_workflow.utils.empty_shapely(inter):
+                if watershed_workflow.utils.is_empty_shapely(inter):
                     pass
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
@@ -349,7 +349,7 @@ def intersect_and_split(list_of_shapes):
 
     uniques_r = [None, ] * len(uniques)
     for i, u in enumerate(uniques):
-        if not watershed_workflow.utils.empty_shapely(u):
+        if not watershed_workflow.utils.is_empty_shapely(u):
             uniques_r[i] = u
     return uniques_r, intersections
 

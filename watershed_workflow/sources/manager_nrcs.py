@@ -474,7 +474,7 @@ class FileManagerNRCS:
 
         # merge the shapes into multipolygons, converting to shapely in the process
         for mukey in unique:
-            unique[mukey] = [watershed_workflow.utils.shply(s) for s in unique[mukey]]
+            unique[mukey] = [watershed_workflow.utils.create_shply(s) for s in unique[mukey]]
 
         # sort -- this just keeps everything cleaner
         unique = sorted(unique.items())

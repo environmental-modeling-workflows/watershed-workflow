@@ -218,7 +218,7 @@ def get_bedrock_properties():
     dataframe with your own numbers, but it helps to have the
     structure correct.
     """
-    poro = 0.15
+    poro = 0.05
     perm = 1.0e-16
 
     df = pandas.DataFrame()
