@@ -364,7 +364,9 @@ def get_reaches(source,
     logging.info("-" * 30)
     logging.info(f"Loading streams in HUC {huc}")
 
-    if isinstance(bounds_or_shp, tuple):
+    if bounds_or_shp is None:
+        bounds = None
+    elif isinstance(bounds_or_shp, tuple):
         bounds = bounds_or_shp
         bounds_or_shp = None
     else:

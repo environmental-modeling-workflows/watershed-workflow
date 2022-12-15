@@ -42,7 +42,7 @@ def set_up_docker_config(workdir, data_library):
 
     return data_library
     
-def start_docker(data_library, workdir, port, pull='missing', tag='latest', for_ats=False):
+def start_docker(data_library, workdir, port, pull='missing', tag='master', for_ats=False):
     if for_ats:
         repo = 'watershed_workflow-ats'
     else:
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument('--data-library', type=str, default=None, help='Location of data library.')
     parser.add_argument('-p', '--port', type=int, default='8888', help='Port to open for jupyterlab.')
     parser.add_argument('--pull', action='store_true', help='Pull latest changes from dockerhub')
-    parser.add_argument('-t', '--tag', type=str, default='latest',
+    parser.add_argument('-t', '--tag', type=str, default='master',
                         help='Tag of the watershed_workflow container.')
     parser.add_argument('WORKDIR', type=str, help='Where to store output files.')
     args = parser.parse_args()
