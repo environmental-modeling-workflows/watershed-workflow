@@ -189,15 +189,15 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     if hucs.polygon_outlets is not None and ax is not None:
         x = np.array([
             p.xy[0][0] for p in hucs.polygon_outlets
-            if not watershed_workflow.utils.empty_shapely(p)
+            if not watershed_workflow.utils.is_empty_shapely(p)
         ])
         y = np.array([
             p.xy[1][0] for p in hucs.polygon_outlets
-            if not watershed_workflow.utils.empty_shapely(p)
+            if not watershed_workflow.utils.is_empty_shapely(p)
         ])
         c = [
             c for (c, p) in zip(color, hucs.polygon_outlets)
-            if not watershed_workflow.utils.empty_shapely(p)
+            if not watershed_workflow.utils.is_empty_shapely(p)
         ]
         if 'markersize' in kwargs:
             s = kwargs['markersize']
@@ -229,7 +229,7 @@ def shapes(shps, crs, color='k', ax=None, **kwargs):
     -------
     patches : matplotib PatchCollection
     """
-    shplys = [watershed_workflow.utils.shply(shp) for shp in shps]
+    shplys = [watershed_workflow.utils.create_shply(shp) for shp in shps]
     shply(shplys, crs, color, ax, **kwargs)
 
 

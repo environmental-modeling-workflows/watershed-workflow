@@ -1,9 +1,13 @@
 """I/O Utilities"""
 
+import os
+import numpy as np
 import fiona
 import rasterio
 import shapely.geometry
 import collections
+import logging
+import h5py
 
 import watershed_workflow.crs
 
@@ -79,3 +83,79 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
                     props.pop(key)
 
             c.write({ 'geometry': shapely.geometry.mapping(shp), 'properties': props })
+
+
+def write_dataset_to_hdf5(filename, dataset, attributes, time0=None):
+    """Writes a DatasetCollection and attributes to an HDF5 file."""
+    try:
+        os.remove(filename)
+    except FileNotFoundError:
+        pass
+
+    keys = list(dataset.keys())
+    profile = dataset.profile
+    times = dataset.times
+
+    # construct the x,y,t arrays
+    transform = profile['transform']
+    if not transform.is_rectilinear:
+        raise ValueError(
+            'Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.'
+        )
+    x = np.array([(transform * (i, 0))[0] for i in range(profile['width'])])
+    y = np.array([(transform * (0, j))[0] for j in range(profile['height'])])
+
+    if time0 is None:
+        time0 = times[0]
+    times = np.array([(t - time0).total_seconds() for t in times])
+
+    logging.info('Writing HDF5 file: {}'.format(filename))
+    with h5py.File(filename, 'w') as fid:
+        fid.create_dataset('time [s]', data=times)
+
+        # make y increasing order
+        rev_y = y[::-1]
+        fid.create_dataset('y [m]', data=rev_y)
+        fid.create_dataset('x [m]', data=x)
+
+        for key in keys:
+            # dat has shape (nband, nrow, ncol)
+            assert (dataset.data[key].shape[0] == times.shape[0])
+            assert (dataset.data[key].shape[1] == y.shape[0])
+            assert (dataset.data[key].shape[2] == x.shape[0])
+
+            grp = fid.create_group(key)
+            for i in range(len(times)):
+                idat = dataset.data[key][i, :, :]
+                # flip rows to match the order of y
+                rev_idat = np.flip(idat, axis=0)
+                grp.create_dataset(str(i), data=rev_idat)
+
+        if attributes is not None:
+            for key, val in attributes.items():
+                fid.attrs[key] = val
+
+
+def write_timeseries_to_hdf5(filename, ts, attributes=None, time0=None):
+    """Writes a time series and attributes to an HDF5 file."""
+    try:
+        os.remove(filename)
+    except FileNotFoundError:
+        pass
+
+    keys = list(ts.keys())
+    keys.remove('time [datetime]')
+    times = ts['time [datetime]']
+    if time0 is None:
+        time0 = times[0]
+    times = np.array([(t - time0).total_seconds() for t in times])
+
+    logging.info('Writing HDF5 file: {}'.format(filename))
+    with h5py.File(filename, 'w') as fid:
+        fid.create_dataset('time [s]', data=times)
+
+        for key in keys:
+            fid.create_dataset(key, data=ts[key][:])
+        if attributes is not None:
+            for key, val in attributes.items():
+                fid.attrs[key] = val
