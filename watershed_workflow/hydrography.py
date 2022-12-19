@@ -445,7 +445,7 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
     # prune short leaf branches and merge short interior reaches
     for tree in rivers:
         if merge_tol is not None:
-            merge(tree, merge_tol)
+            merge_2(tree, merge_tol)
         if merge_tol != prune_tol and prune_tol is not None:
             prune_by_segment_length(tree, prune_tol)
 
@@ -615,8 +615,9 @@ def filter_small_rivers(rivers, count):
     return new_rivers
 
 
-def merge(river, tol=_tol):
-    """Remove inner branches that are short, combining branchpoints as needed."""
+def merge_old(river, tol=_tol):
+    """Remove inner branches that are short, combining branchpoints as needed. This function
+    extend the children segments; concern: can cause acute angle between the merging rivers)"""
     for node in list(river.preOrder()):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
@@ -627,6 +628,27 @@ def merge(river, tol=_tol):
                                                             + [node.parent.segment.coords[0], ])
                 if 'area' in child.properties and 'area' in node.properties:
                     child.properties['area'] += node.properties['area'] / num_children
+                node.parent.addChild(child)
+            node.remove()
+
+
+def merge(river, tol=_tol):
+    """Remove inner branches that are short, combining branchpoints as needed. This function
+    merge the "short" segment into the parent segment"""
+    for node in list(river.preOrder()):
+        if node.segment.length < tol and node.parent is not None:
+            logging.info("  ...cleaned inner segment of length %g at centroid %r" %
+                         (node.segment.length, node.segment.centroid.coords[0]))
+            num_siblings = len(list(node.siblings()))
+            node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
+                                                            + node.parent.segment.coords[:])
+            if num_siblings !=0:
+                for sibling in node.siblings():
+                    sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
+                                                            + [node.segment.coords[0], ])
+            if 'area' in node.properties and 'area' in node.parent.properties:
+                node.parent.properties['area'] += node.properties['area'] 
+            for child in node.children:
                 node.parent.addChild(child)
             node.remove()
 

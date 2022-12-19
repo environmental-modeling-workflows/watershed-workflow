@@ -1147,9 +1147,9 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
         Array of triangle vertices, including a z-dimension.
 
     """
-    logging.info("")
-    logging.info("Elevating Triangulation to DEM")
-    logging.info("-" * 30)
+    # logging.info("")
+    # logging.info("Elevating Triangulation to DEM")
+    # logging.info("-" * 30)
 
     # index the i,j of the points, pick the elevations
     elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile, algorithm)

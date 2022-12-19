@@ -254,8 +254,9 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             total_touches += 1
 
             seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^', markersize=10)
-            pause()
+            if ax != None: 
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^', markersize=10)
+                pause()
 
         elif node.touched == 1 and len(node.children) == 0:
             # leaf node, last time
@@ -273,21 +274,22 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
             total_touches += 1
 
-          # plot it...
-            seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'g^',markersize=10)
+            if ax != None:           
+            # plot it...
+                seg_coords = np.array(seg_coords)
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'g^',markersize=10)
 
-            # also plot the conn
-            for i, elem in enumerate(node.elements):
-                looped_conn = elem[:]
-                looped_conn.append(elem[0])
-                if i == len(node.elements)-1:
-                    assert(len(looped_conn) == 4)
-                else:
-                    assert(len(looped_conn) == 5)
-                cc = np.array([coords[n] for n in looped_conn])
-                ax.plot(cc[:,0], cc[:,1], 'g-o')
-            pause()
+                # also plot the conn
+                for i, elem in enumerate(node.elements):
+                    looped_conn = elem[:]
+                    looped_conn.append(elem[0])
+                    if i == len(node.elements)-1:
+                        assert(len(looped_conn) == 4)
+                    else:
+                        assert(len(looped_conn) == 5)
+                    cc = np.array([coords[n] for n in looped_conn])
+                    ax.plot(cc[:,0], cc[:,1], 'g-o')
+                pause()
             
 
         elif node.touched == len(node.children):
@@ -303,9 +305,10 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
             total_touches += 1
 
-            #plot it...
-            seg_coords = np.array(seg_coords)
-            ax.plot(seg_coords[:,0], seg_coords[:,1], 'b^',markersize=10)
+            if ax != None: 
+                #plot it...
+                seg_coords = np.array(seg_coords)
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'b^',markersize=10)
 
             # also plot the conn
             for i,elem in enumerate(node.elements):
@@ -325,7 +328,8 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                            print(c, node.segment.coords[len(node.segment.coords)-(i+1)], node.segment.coords[len(node.segment.coords)-(i+2)])
                            assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta))
-                ax.plot(cc[:,0], cc[:,1], 'g-o')
+                if ax != None: 
+                    ax.plot(cc[:,0], cc[:,1], 'g-o')
 
             pause()
 
@@ -338,10 +342,11 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.elements[-1].append(ic)
             node.touched += 1
 
-            ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
-            pause()
+            if ax != None: 
+                ax.scatter([coords[ic][0],], [coords[ic][1],], c='m', marker='^')
+                pause()
 
-    print(ic)
+    #print(ic)
     assert (len(coords) == (ic + 1))
     assert (len(river) * 2 == total_touches)
 

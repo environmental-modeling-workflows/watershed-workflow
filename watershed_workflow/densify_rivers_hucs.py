@@ -59,24 +59,29 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
 
     """
     
-    #assert (len(river) == len(river_raw))
-
     river_densified = river.deep_copy()
-    NHD_ids_raw = []
-    for node in river_raw.preOrder():
-        NHD_ids_raw.append(node.properties['NHDPlusID'])
 
-    for node in river_densified.preOrder():
-    
-        node_index_in_raw = NHD_ids_raw.index(node.properties['NHDPlusID'])
+    if 'NHDPlusID' in river.properties.keys():
   
-        node_ = list(river_raw.preOrder())[node_index_in_raw]
-       
+        NHD_ids_raw = []
+        for node in river_raw.preOrder():
+            NHD_ids_raw.append(node.properties['NHDPlusID'])
+    else:
+         assert (len(river) == len(river_raw))
+
+    for j, node in enumerate(river_densified.preOrder()):
+
+        if 'NHDPlusID' in river.properties.keys():
+            node_index_in_raw = NHD_ids_raw.index(node.properties['NHDPlusID'])
+            node_ = list(river_raw.preOrder())[node_index_in_raw]
+        else:
+            node_ = list(river_raw.preOrder())[j]
+    
         node.segment = densify_node_segments(node,
-                                             node_,
-                                             limit=limit,
-                                             use_original=use_original,
-                                             treat_collinearity=treat_collinearity)
+                                            node_,
+                                            limit=limit,
+                                            use_original=use_original,
+                                            treat_collinearity=treat_collinearity)
     return river_densified
 
 
