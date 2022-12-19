@@ -133,7 +133,7 @@ def create_river_corridor(river, width):
         mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
        
-    length_scale = max(2.1*delta, min(mins) - 2*delta) -28 # is 0.75 good enough? Currently this same for the whole river, should we change it reachwise?
+    length_scale = max(2.1*delta, min(mins) - 2*delta) # Currently this same for the whole river, should we change it reachwise?
     print('length_scale ', length_scale )
 
     # buffer by the width

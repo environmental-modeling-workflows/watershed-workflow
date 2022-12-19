@@ -445,7 +445,7 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
     # prune short leaf branches and merge short interior reaches
     for tree in rivers:
         if merge_tol is not None:
-            merge_2(tree, merge_tol)
+            merge(tree, merge_tol)
         if merge_tol != prune_tol and prune_tol is not None:
             prune_by_segment_length(tree, prune_tol)
 
