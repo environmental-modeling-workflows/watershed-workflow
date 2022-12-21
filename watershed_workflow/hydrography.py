@@ -641,7 +641,7 @@ def merge(river, tol=_tol):
                          (node.segment.length, node.segment.centroid.coords[0]))
             num_siblings = len(list(node.siblings()))
             node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
-                                                            + node.parent.segment.coords[:])
+                                                            + node.parent.segment.coords[1:])
             if num_siblings !=0:
                 for sibling in node.siblings():
                     sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
