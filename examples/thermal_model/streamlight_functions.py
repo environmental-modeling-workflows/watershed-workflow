@@ -56,7 +56,7 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
 
     Returns
     -------
-    PAR_surface : float
+    par_surface : float
         predicted light at the stream surface [umol m-2 s-1].      
     """
     # -------------------------------------------------------------
@@ -73,13 +73,22 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
     par_bc = rt_cn_1998(doy, sza_ini, solar_altitude_ini, sw_inc, lai, x_LAD)
 
     #-------------------------------------------------
-    #Running the SHADE2 model
+    # Running the SHADE2 model
     #-------------------------------------------------
 
     perc_shade_veg, perc_shade_bank = shade2(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,water_depth,tree_height,overhang,overhang_height, doy, hour, tz_offset, solar_dec_ini, solar_azimuth_ini, solar_altitude_ini, sw_inc, lai, x_LAD)
 
+    #-------------------------------------------------
+    # Calculating the weighted mean of light reaching the stream surface
+    #-------------------------------------------------
+    #Calculating weighted mean of irradiance at the stream surface
+    par_surface = (par_bc * perc_shade_veg) + (sw_inc * (1 - (perc_shade_veg + perc_shade_bank)))
 
+    ## Generate a logical index of night and day. Night = SZA > 90
+    is_night = sza_ini > (np.pi * 0.5)  
+    par_surface[is_night] = 0
 
+    return par_surface
 
 
 def solar_geo_calc(doy, hour, tz_offset, lat, lon):
