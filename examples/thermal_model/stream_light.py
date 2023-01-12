@@ -221,7 +221,7 @@ class StreamLight:
         R = 0.847 - (1.61 * np.sin(self.salar_angles['solar_altitude'])) + (1.04 * np.sin(self.salar_angles['solar_altitude']) * np.sin(self.salar_angles['solar_altitude']))
         K = (1.47 - R) / 1.66
 
-        frac_diff = np.array([diffuse_calc(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
+        frac_diff = np.array([_diffuse_calc(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
 
         ## Partition into diffuse and beam radiation
         rad_diff = frac_diff * self.energy_drivers['sw_inc'] # Diffuse radiation [W m-2]
@@ -254,7 +254,7 @@ class StreamLight:
         #-------------------------------------------------
 
         # Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
-        tau_d = np.array([dt_calc(ll,x_LAD=1) for ll in self.energy_drivers['lai']])
+        tau_d = np.array([_dt_calc(ll,x_LAD=1) for ll in self.energy_drivers['lai']])
 
         # Extinction coefficient for black leaves in diffuse radiation
         kd = -np.log(tau_d) / self.energy_drivers['lai']
@@ -276,4 +276,83 @@ class StreamLight:
 
 
 
+    def _diffuse_calc(atm_trns, R, K):
+        """Spitters et al. (1986) Eqs. 20a-20d
+        
+            So = Extra-terrestrial irradiance on a plane parallel to the earth surface [J m-2 s-1]
+        
+            Sdf = Diffuse flux global radiation [J m-2 s-1]
+        
+            Sg = Global radiation (total irradiance at the earth surface) [J m-2 s-1]
+        
+            atm_trns = Sg/So
+        
+            fdiffuse = Sdf/Sg
+
+        Parameters
+        ----------
+        atm_trns : float
+            Atmospheric transmission [-].  
+        R, K : float
+            Parameters in the regression of diffuse share on transmission [-].  
+        Returns
+        -------
+        fdiffuse : float
+            Fraction diffused [-].    
+        """
+        fdiffuse = 1.0
+
+        if ((atm_trns > 0.22) and (atm_trns <= 0.35)):
+            fdiffuse = 1.0-(6.4 * (atm_trns - 0.22)*(atm_trns - 0.22))
+        elif ((atm_trns > 0.35) and (atm_trns <= K)):
+            fdiffuse = 1.47 - (1.66 * atm_trns)
+        elif (atm_trns > K):
+            fdiffuse = R
+        return fdiffuse
+
+
+    def _integ_func(angle, d_sza, x_LAD, lai):
+        '''Function to calculate the integral in Eq. 4 of Savoy et al. (2021)
+        
+        Parameters
+        ----------
+        angle : float
+            solar zenith angle [decimal degrees].
+        d_sza : float
+            differential of solar zenith angle [decimal degrees].       
+        x_LAD: float
+            Leaf angle distribution [-].   
+        lai: float
+            Leaf are index [-].  
+
+        Returns
+        -------
+
+        '''
+        return np.exp(-(np.sqrt((x_LAD**2) + (np.tan(angle))**2)/(x_LAD + (1.774 * \
+        ((x_LAD + 1.182)**(-0.733))))) * lai) * np.sin(angle) * np.cos(angle) * d_sza
+
+    def _dt_calc(lai,x_LAD=1):
+        '''Function to calculate the diffuse transmission coefficient
+        
+        Parameters
+        ----------
+        lai: float
+            Leaf are index [-].  
+        x_LAD: float
+            Leaf angle distribution [-].  
+        Returns
+        -------
+
+        '''    
+        # Create a sequence of angles to integrate over
+        angle_seq = np.deg2rad(np.arange(0,90))
+
+        # Numerical integration
+        d_sza = (np.pi / 2) / len(angle_seq)
+
+        #Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
+        
+
+        return (2 * sum(_integ_func(angle_seq, d_sza, x_LAD, lai)))
 
