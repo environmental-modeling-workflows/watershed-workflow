@@ -87,7 +87,6 @@ def stream_light(lat, lon, channel_azimuth, bottom_width,bank_height,bank_slope,
     ## Generate a logical index of night and day. Night = SZA > 90
     is_night = sza_ini > (np.pi * 0.5)  
     par_surface[is_night] = 0
-
     return par_surface
 
 
