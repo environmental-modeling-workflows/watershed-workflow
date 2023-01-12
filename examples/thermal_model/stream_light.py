@@ -105,7 +105,7 @@ class StreamLight:
         self.energy_drivers['sw_inc'] = sw_inc
         self.energy_drivers['lai'] = lai
 
-    def get_salar_angles(self):
+    def get_solar_angles(self):
         """This function calculates solar declination, altitude,
         zenith angle, and an initial estimate of azimuth. This initial estimate
         of solar azimuth is passed to the solar_c function where it is adjusted
@@ -209,16 +209,16 @@ class StreamLight:
         #-------------------------------------------------
         
         ## Generate a logical index of night and day. Night = SZA > 90
-        is_night = self.salar_angles['sza'] > (np.pi * 0.5)  
+        is_night = self.solar_angles['sza'] > (np.pi * 0.5)  
 
         ## Calculate the extra-terrestrial irradiance (Spitters et al. (1986) Eq. 1)
         # I.e., global incoming shortwave radiation [W m-2]]
-        Qo = 1370 * np.sin(self.salar_angles['solar_altitude']) * (1 + 0.033 * np.cos(np.deg2rad(360 * self.energy_drivers['doy'] / 365)))
+        Qo = 1370 * np.sin(self.solar_angles['solar_altitude']) * (1 + 0.033 * np.cos(np.deg2rad(360 * self.energy_drivers['doy'] / 365)))
 
         ## The relationship between fraction diffuse and atmospheric transmission
             # Spitters et al. (1986) appendix
         atm_trns = self.energy_drivers['sw_inc'] / Qo
-        R = 0.847 - (1.61 * np.sin(self.salar_angles['solar_altitude'])) + (1.04 * np.sin(self.salar_angles['solar_altitude']) * np.sin(self.salar_angles['solar_altitude']))
+        R = 0.847 - (1.61 * np.sin(self.solar_angles['solar_altitude'])) + (1.04 * np.sin(self.solar_angles['solar_altitude']) * np.sin(self.solar_angles['solar_altitude']))
         K = (1.47 - R) / 1.66
 
         frac_diff = np.array([_diffuse_calc(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
@@ -240,7 +240,7 @@ class StreamLight:
         ## Calculate the ratio of projected area to hemi-surface area for an ellipsoid
         ## C&N (1998) Eq. 15.4 sensu Campbell (1986)
 
-        kbe = np.sqrt((self.channel_properties['x_LAD']**2) + (np.tan(self.salar_angles['sza']))**2)/(self.channel_properties['x_LAD'] + (1.774 * ((self.channel_properties['x_LAD'] + 1.182)**(-0.733))))
+        kbe = np.sqrt((self.channel_properties['x_LAD']**2) + (np.tan(self.solar_angles['sza']))**2)/(self.channel_properties['x_LAD'] + (1.774 * ((self.channel_properties['x_LAD'] + 1.182)**(-0.733))))
 
         # Fraction of incident beam radiation penetrating the canopy
         # C&N (1998) Eq. 15.1 and leaf absorptivity as 0.8 (C&N (1998) pg. 255) as per Camp
@@ -276,7 +276,7 @@ class StreamLight:
 
 
 
-    def _diffuse_calc(atm_trns, R, K):
+    def _diffuse_calc(self,atm_trns, R, K):
         """Spitters et al. (1986) Eqs. 20a-20d
         
             So = Extra-terrestrial irradiance on a plane parallel to the earth surface [J m-2 s-1]
@@ -311,7 +311,7 @@ class StreamLight:
         return fdiffuse
 
 
-    def _integ_func(angle, d_sza, x_LAD, lai):
+    def _integ_func(self,angle, d_sza, x_LAD, lai):
         '''Function to calculate the integral in Eq. 4 of Savoy et al. (2021)
         
         Parameters
@@ -332,7 +332,7 @@ class StreamLight:
         return np.exp(-(np.sqrt((x_LAD**2) + (np.tan(angle))**2)/(x_LAD + (1.774 * \
         ((x_LAD + 1.182)**(-0.733))))) * lai) * np.sin(angle) * np.cos(angle) * d_sza
 
-    def _dt_calc(lai,x_LAD=1):
+    def _dt_calc(self,lai,x_LAD=1):
         '''Function to calculate the diffuse transmission coefficient
         
         Parameters
@@ -354,5 +354,5 @@ class StreamLight:
         #Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
         
 
-        return (2 * sum(_integ_func(angle_seq, d_sza, x_LAD, lai)))
+        return (2 * sum(self._integ_func(angle_seq, d_sza, x_LAD, lai)))
 
