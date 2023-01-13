@@ -1,6 +1,10 @@
 import numpy as np
-import itertools
+#import itertools
 import copy
+import pandas as pd
+import os
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt 
 
 class StreamLight:
     """This class is a Python implementation 
@@ -36,13 +40,14 @@ class StreamLight:
 
         # Solar Angles
         self.solar_angles = dict.fromkeys([
-            'solar_dec', 'solar_altitude', 'sza', 'solar_azimuth'
+            'solar_dec', 'solar_altitude', 'sza', 'solar_azimuth', 'solar_azimuth_shade2'
         ])
 
         # Energy response
         self.energy_response = dict.fromkeys([
+            'rad_diff_PAR','rad_beam_PAR','rad_diff','rad_beam',
             'diff_trans_PAR', 'beam_trans_PAR', 'total_trans_PAR', 
-            'diff_trans', 'beam_trans', 'total_trans', 'ppfd', 
+            'diff_trans', 'beam_trans', 'total_trans', 'total_trans_PAR_ppfd', 
             'par_surface_original', 'energy_diff_surface_PAR', 
             'energy_beam_surface_PAR', 'energy_total_surface_PAR', 
             'energy_diff_surface', 'energy_beam_surface', 
@@ -51,9 +56,10 @@ class StreamLight:
 
         
 
+
         # Shading response
         self.shading_response = dict.fromkeys([
-            'perc_shade_veg', 'perc_shade_bank'
+            'fraction_shade_veg', 'fraction_shade_bank'
         ])
 
 
@@ -218,6 +224,15 @@ class StreamLight:
             Leaf angle distribution [-].      
         Returns
         -------
+
+        rad_diff_PAR : float
+            Diffusive PAR incoming shortwave radiation [W m-2].
+        rad_beam_PAR : float
+            Beam PAR incoming shortwave radiation [W m-2].
+        rad_diff : float
+            Diffusive incoming shortwave radiation [W m-2].
+        rad_beam : float
+            Beam incoming shortwave radiation [W m-2].
         diff_trans_PAR : float
             Diffuse PAR energy transmitted through the canopy [W m-2].
         beam_trans_PAR : float
@@ -230,7 +245,7 @@ class StreamLight:
             Beam energy transmitted through the canopy [W m-2].
         total_trans : float
             Total energy transmitted through the canopy [W m-2].
-        ppfd : float
+        total_trans_PAR_ppfd : float
             Total PPFD transmitted through the canopy [umol m-2 s-1]. The StreamLight model estimates photosynthetically active radiation (PAR), which relates to the conversion of solar energy by autotrophs via photosynthesis. Estimates are expressed in terms of the quanta of light in PAR (umol m-2 s-1), otherwise referred to as the photosynthetic photon flux density (PPFD).    
         """
         #-------------------------------------------------
@@ -303,13 +318,17 @@ class StreamLight:
         transmitted = beam_trans + diff_trans
         ppfd = transmitted * 1/0.235 #Convert from W m-2 to umol m-2 s-1
 
+        self.energy_response['rad_diff_PAR'] = rad_diff*0.5
+        self.energy_response['rad_beam_PAR'] = rad_beam*0.5
+        self.energy_response['rad_diff'] = rad_diff
+        self.energy_response['rad_beam'] = rad_beam
         self.energy_response['diff_trans_PAR'] = diff_trans
         self.energy_response['beam_trans_PAR'] = beam_trans
         self.energy_response['total_trans_PAR'] = transmitted
         self.energy_response['diff_trans'] = diff_trans/0.5
         self.energy_response['beam_trans'] = beam_trans/0.5
         self.energy_response['total_trans'] = transmitted/0.5
-        self.energy_response['ppfd'] = ppfd
+        self.energy_response['total_trans_PAR_ppfd'] = ppfd
 
     def _diffuse_calc(self,atm_trns, R, K):
         """Spitters et al. (1986) Eqs. 20a-20d
@@ -439,9 +458,9 @@ class StreamLight:
 
         Returns
         -------
-        perc_shade_veg : float
+        fraction_shade_veg : float
             Percent of the wetted width shaded by vegetation [%].   
-        perc_shade_bank : float
+        fraction_shade_bank : float
             Percent of the wetted width shaded by the bank [%].            
         """
 
@@ -452,7 +471,7 @@ class StreamLight:
         ## This must be handled correctly to determine if the shadow falls towards the river
         ## [sin(delta)>0] or towards the bank
         ## Eastern shading
-        delta_prime = self.solar_angles['solar_azimuth'] - (self.channel_properties['channel_azimuth'] * np.pi / 180)
+        delta_prime = self.solar_angles['solar_azimuth_shade2'] - (self.channel_properties['channel_azimuth'] * np.pi / 180)
         delta_prime[delta_prime < 0] = np.pi + np.abs(delta_prime[delta_prime < 0] ) % (2 * np.pi) #PS 2019
         delta_east = delta_prime % (2 * np.pi)
 
@@ -475,8 +494,10 @@ class StreamLight:
         water_width = self.channel_properties['bottom_width'] + self.channel_properties['water_depth']*(1/self.channel_properties['bank_slope'] + 1/self.channel_properties['bank_slope'])
 
         ## Not sure what to do here, setting widths > bankfull, = bankfull
-        if self.channel_properties['water_width'] > self.channel_properties['bankfull_width']:
-            self.channel_properties['water_width'] = self.channel_properties['bankfull_width']
+        if water_width > self.channel_properties['bankfull_width']:
+            water_width = self.channel_properties['bankfull_width']
+
+        self.channel_properties['water_width'] = water_width
 
         #-------------------------------------------------
         # Calculate the length of shading for each bank
@@ -497,10 +518,10 @@ class StreamLight:
         total_bank_shade_length = east_bank_shade_length + west_bank_shade_length
 
         #Generate a logical index where the length of bank shading is longer than wetted width
-        reset_bank_max_index = total_bank_shade_length > self.channel_properties['water_width']
+        reset_bank_max_index = total_bank_shade_length > water_width
 
         ## If total bank shade length is longer than wetted width, set to wetted width
-        total_bank_shade_length[reset_bank_max_index] = self.channel_properties['water_width'] #PS 2021
+        total_bank_shade_length[reset_bank_max_index] = water_width #PS 2021
 
         #-------------------------------------------------
         # Calculate the total length of vegetation shading
@@ -510,23 +531,25 @@ class StreamLight:
         total_veg_shade_length = east_veg_shade_length + west_veg_shade_length
 
         ## Generate a logical index where the length of vegetation shading is longer than wetted width
-        reset_veg_max_index = total_veg_shade_length > self.channel_properties['water_width']
+        reset_veg_max_index = total_veg_shade_length > water_width
 
         ## If total vegetation shade length is longer than wetted width, set to wetted width
-        total_veg_shade_length[total_veg_shade_length > self.channel_properties['water_width']] = self.channel_properties['water_width'] #PS 2021
+        total_veg_shade_length[total_veg_shade_length > water_width] = water_width #PS 2021
 
         #-------------------------------------------------
         #Calculating the percentage of water that is shaded
         #-------------------------------------------------
         
-        perc_shade_bank = (total_bank_shade_length) / self.channel_properties['water_width']
-        perc_shade_bank[perc_shade_bank > 1] = 1
+        fraction_shade_bank = (total_bank_shade_length) / water_width
+        fraction_shade_bank[fraction_shade_bank > 1] = 1
 
-        perc_shade_veg = (total_veg_shade_length - total_bank_shade_length) / self.channel_properties['water_width']
-        perc_shade_veg[perc_shade_veg > 1] = 1
+        fraction_shade_veg = (total_veg_shade_length - total_bank_shade_length) / water_width
+        fraction_shade_veg[fraction_shade_veg > 1] = 1
 
-        self.shading_response['perc_shade_veg'] = perc_shade_veg
-        self.shading_response['perc_shade_bank'] = perc_shade_bank
+        
+
+        self.shading_response['fraction_shade_veg'] = fraction_shade_veg
+        self.shading_response['fraction_shade_bank'] = fraction_shade_bank
 
 
     def _correct_solar_azimuth(self):
@@ -585,7 +608,7 @@ class StreamLight:
         # When Latitude is < solar declination all angles are 90 - azimuth
         solar_azimuth[np.logical_not(lat_greater)] =  (np.pi / 2) - self.solar_angles['solar_azimuth'][np.logical_not(lat_greater)]
 
-        self.solar_angles['solar_azimuth'] = solar_azimuth
+        self.solar_angles['solar_azimuth_shade2'] = solar_azimuth
 
 
     def _shade_calc(self,delta):
@@ -673,29 +696,31 @@ class StreamLight:
         #-------------------------------------------------
         #Calculating weighted mean of irradiance at the stream surface
 
-        # From Savoy's code. This is incorrect
-        par_surface_original = (self.energy_response['ppfd'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        # From Savoy's code
+        #par_surface_original = (self.energy_response['total_trans_PAR_ppfd'] * self.shading_response['fraction_shade_veg']) + (self.energy_drivers['sw_inc']* 2.114 * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
         # Corrected estimates
 
-        energy_diff_surface_PAR = (self.energy_response['diff_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_diff_surface_PAR = (self.energy_response['diff_trans_PAR'] * self.shading_response['fraction_shade_veg']) + (self.energy_response['rad_diff_PAR'] * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_beam_surface_PAR = (self.energy_response['beam_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_beam_surface_PAR = (self.energy_response['beam_trans_PAR'] * self.shading_response['fraction_shade_veg']) + (self.energy_response['rad_beam_PAR'] * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_total_surface_PAR = (self.energy_response['total_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_total_surface_PAR = (self.energy_response['total_trans_PAR'] * self.shading_response['fraction_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_diff_surface = (self.energy_response['diff_trans'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_diff_surface = (self.energy_response['diff_trans'] * self.shading_response['fraction_shade_veg']) + (self.energy_response['rad_diff'] * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_beam_surface = (self.energy_response['beam_trans'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_beam_surface = (self.energy_response['beam_trans'] * self.shading_response['fraction_shade_veg']) + (self.energy_response['rad_beam'] * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_total_surface = (self.energy_response['total_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        energy_total_surface = (self.energy_response['total_trans'] * self.shading_response['fraction_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
 
-        energy_total_surface_PAR_ppfd = energy_total_surface_PAR * (1/0.235)
+        #energy_total_surface_PAR_ppfd = energy_total_surface_PAR * (1/0.235)
+        energy_total_surface_PAR_ppfd = (self.energy_response['total_trans_PAR_ppfd'] * self.shading_response['fraction_shade_veg']) + (self.energy_drivers['sw_inc']* 2.114 * (1 - (self.shading_response['fraction_shade_veg'] + self.shading_response['fraction_shade_bank'])))
+
         
         ## Generate a logical index of night and day. Night = SZA > 90
         is_night = self.solar_angles['sza'] > (np.pi * 0.5) 
 
-        par_surface_original[is_night] = 0
+        #par_surface_original[is_night] = 0
         energy_diff_surface_PAR[is_night] = 0
         energy_beam_surface_PAR[is_night] = 0
         energy_total_surface_PAR[is_night] = 0
@@ -704,7 +729,7 @@ class StreamLight:
         energy_total_surface[is_night] = 0
         energy_total_surface_PAR_ppfd[is_night] = 0
 
-        self.energy_response['par_surface_original'] = par_surface_original
+        #self.energy_response['par_surface_original'] = par_surface_original
         self.energy_response['energy_diff_surface_PAR'] = energy_diff_surface_PAR
         self.energy_response['energy_beam_surface_PAR'] = energy_beam_surface_PAR
         self.energy_response['energy_total_surface_PAR'] = energy_total_surface_PAR
@@ -714,7 +739,128 @@ class StreamLight:
         self.energy_response['energy_total_surface_PAR_ppfd'] = energy_total_surface_PAR_ppfd
 
 
+    def run_streamlight(self):
+        self.get_solar_angles()
+        self.get_radiative_transfer_estimates_cn_1998()
+        self.get_riparian_stream_shading()
+        self.get_energy_stream()
 
+    def test_streamlight(self, path_data_test = None, plot_scatter = False):
+        
+
+
+        # Test scenario from StreamLight implementation in R -------------------------
+        
+        ## Path to the results from a test simulation
+        if(path_data_test is None):
+            path_data_test = './data_test_streamlight/'      
+
+        ## Channel characteristics 
+        lat = 35.9925
+        lon = -79.0460
+        channel_azimuth = 330
+        bottom_width = 18.9
+        bank_height = 0.1
+        bank_slope = 100
+        water_depth = 0.05
+        tree_height = 23
+        overhang = 2.3
+        overhang_height = 0.1*tree_height
+        x_LAD = 1
+
+        ## Files with the drivers and results
+        input_data_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_streamlight.csv'))
+        # input_data_test_streamlight_df.head()
+        results_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'results_test_streamlight.csv'))
+        # results_test_streamlight_df.head()
+        test_solar_geo_calc_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_solar_geo_calc.csv'))
+        # test_solar_geo_calc_df.head()
+        test_rt_cn_1998_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_RT_CN_1998.csv'))
+        # test_rt_cn_1998_df.head()
+        test_shade2_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_SHADE2.csv'))
+        # test_shade2_df.head()
+        test_stream_light_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_stream_light.csv'))
+        # test_stream_light_df.head()
+        # Drivers for test simulation
+
+        # Extract information from test drivers
+        doy = input_data_test_streamlight_df['DOY'].values
+        hour = input_data_test_streamlight_df['Hour'].values
+        tz_offset = input_data_test_streamlight_df['offset'].values
+        sw_inc = input_data_test_streamlight_df['SW_inc'].values
+        lai = input_data_test_streamlight_df['LAI'].values
+
+        # Run pyton implementation of StreamLight
+
+        ## Channel characteristics 
+        self.set_channel_properties(lat = lat,lon = lon,channel_azimuth = channel_azimuth,bottom_width = bottom_width, bank_height = bank_height, bank_slope = bank_slope, water_depth = water_depth,
+        tree_height = tree_height, overhang = overhang, overhang_height = overhang_height, x_LAD = x_LAD)
+
+        # Energy drivers
+        self.set_energy_drivers(doy = doy, hour = hour, tz_offset = tz_offset, sw_inc = sw_inc, lai = lai)
+
+        # Run StreamLight
+        self.run_streamlight()
+
+        # Compare solutions
+
+        relative_tolerance = 1e-05
+        absolute_tolerance = 1e-08
+
+        print("PASSED solar_dec") if np.allclose(self.solar_angles['solar_dec'], test_solar_geo_calc_df['solar_dec'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED solar_dec") 
+
+        print("PASSED solar_altitude") if np.allclose(self.solar_angles['solar_altitude'], test_solar_geo_calc_df['solar_altitude'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED solar_altitude") 
+
+        print("PASSED sza") if np.allclose(self.solar_angles['sza'], test_solar_geo_calc_df['SZA'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED sza") 
+
+        print("PASSED solar_azimuth") if np.allclose(self.solar_angles['solar_azimuth'], test_solar_geo_calc_df['solar_azimuth2'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED solar_azimuth")
+
+        print("PASSED ppfd") if np.allclose(self.energy_response['total_trans_PAR_ppfd'], test_rt_cn_1998_df['PAR_bc'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED ppfd")
+
+        print("PASSED fraction_shade_veg") if np.allclose(self.shading_response['fraction_shade_veg'], test_shade2_df['veg_shade'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED fraction_shade_veg")
+
+        print("PASSED fraction_shade_bank") if np.allclose(self.shading_response['fraction_shade_bank'], test_shade2_df['bank_shade'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED fraction_shade_bank")
+
+        print("PASSED energy_total_surface_PAR_ppfd") if np.allclose(self.energy_response['energy_total_surface_PAR_ppfd'], test_stream_light_df['PAR_surface'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True) else print("FAILED energy_total_surface_PAR_ppfd")
+
+        if plot_scatter:
+            fig, ax = plt.subplots(4,2, figsize=(8,14))
+            ax = ax.flatten()
+
+            self.plot_comparison(self.solar_angles['solar_dec'], test_solar_geo_calc_df['solar_dec'].values,'solar_dec',ax[0])
+
+            self.plot_comparison(self.solar_angles['solar_altitude'], test_solar_geo_calc_df['solar_altitude'].values,'solar_altitude',ax[1])
+
+
+            self.plot_comparison(self.solar_angles['sza'], test_solar_geo_calc_df['SZA'].values,'sza',ax[2])
+
+            self.plot_comparison(self.solar_angles['solar_azimuth'], test_solar_geo_calc_df['solar_azimuth2'].values,'solar_azimuth',ax[3])
+
+            self.plot_comparison(self.energy_response['total_trans_PAR_ppfd'], test_rt_cn_1998_df['PAR_bc'].values,'total_trans_PAR_ppfd',ax[4])
+
+            self.plot_comparison(self.shading_response['fraction_shade_veg'], test_shade2_df['veg_shade'].values,'fraction_shade_veg',ax[5])
+
+            self.plot_comparison(self.shading_response['fraction_shade_bank'], test_shade2_df['bank_shade'].values,'fraction_shade_bank',ax[6])
+
+            self.plot_comparison(self.energy_response['energy_total_surface_PAR_ppfd'], test_stream_light_df['PAR_surface'].values,'energy_total_surface_PAR_ppfd',ax[7])
+
+            plt.tight_layout()#(pad=0.4, w_pad=0.5, h_pad=1.0)
+            plt.savefig(os.path.join(path_data_test,"test_StreamLight.pdf"), transparent=True)
+            plt.savefig(os.path.join(path_data_test,"test_StreamLight.png"), dpi=300, transparent=True)
+
+    def plot_comparison(self, var_estimate, var_reference, var_name, ax):
+        rmse_solar_dec = mean_squared_error(var_reference,var_estimate, squared=False)
+        ax.plot(var_reference,var_reference,'-k', lw = 0.5)
+        ax.scatter(var_reference,var_estimate, c = 'red', alpha=.1, s=2)
+        ax.set_aspect('equal')
+        the_title = '{vname}, (RMSE = {vrmse:.0e})'
+        ax.set_title(the_title.format(vname=var_name,vrmse=rmse_solar_dec), loc='left')
+        ax.set_xlabel('From StreamLight in R')
+        ax.set_ylabel('From StreamLight in Python')
+
+
+    def __str__(self):
+        return f"StreamLight Object"
 
 
 
