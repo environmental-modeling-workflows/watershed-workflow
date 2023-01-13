@@ -42,8 +42,14 @@ class StreamLight:
         # Energy response
         self.energy_response = dict.fromkeys([
             'diff_trans_PAR', 'beam_trans_PAR', 'total_trans_PAR', 
-            'diff_trans', 'beam_trans', 'total_trans', 'ppfd'
+            'diff_trans', 'beam_trans', 'total_trans', 'ppfd', 
+            'par_surface_original', 'energy_diff_surface_PAR', 
+            'energy_beam_surface_PAR', 'energy_total_surface_PAR', 
+            'energy_diff_surface', 'energy_beam_surface', 
+            'energy_total_surface', 'energy_total_surface_PAR_ppfd'
         ])
+
+        
 
         # Shading response
         self.shading_response = dict.fromkeys([
@@ -670,13 +676,47 @@ class StreamLight:
         # From Savoy's code. This is incorrect
         par_surface_original = (self.energy_response['ppfd'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
 
-        par_surface = (self.energy_response['ppfd'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1/0.235) * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+        # Corrected estimates
 
+        energy_diff_surface_PAR = (self.energy_response['diff_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_beam_surface_PAR = (self.energy_response['beam_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_total_surface_PAR = (self.energy_response['total_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc']* 0.5 * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_diff_surface = (self.energy_response['diff_trans'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_beam_surface = (self.energy_response['beam_trans'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_total_surface = (self.energy_response['total_trans_PAR'] * self.shading_response['perc_shade_veg']) + (self.energy_drivers['sw_inc'] * (1 - (self.shading_response['perc_shade_veg'] + self.shading_response['perc_shade_bank'])))
+
+        energy_total_surface_PAR_ppfd = energy_total_surface_PAR * (1/0.235)
+        
         ## Generate a logical index of night and day. Night = SZA > 90
         is_night = self.solar_angles['sza'] > (np.pi * 0.5) 
 
         par_surface_original[is_night] = 0
-        par_surface[is_night] = 0
+        energy_diff_surface_PAR[is_night] = 0
+        energy_beam_surface_PAR[is_night] = 0
+        energy_total_surface_PAR[is_night] = 0
+        energy_diff_surface[is_night] = 0
+        energy_beam_surface[is_night] = 0
+        energy_total_surface[is_night] = 0
+        energy_total_surface_PAR_ppfd[is_night] = 0
+
+        self.energy_response['par_surface_original'] = par_surface_original
+        self.energy_response['energy_diff_surface_PAR'] = energy_diff_surface_PAR
+        self.energy_response['energy_beam_surface_PAR'] = energy_beam_surface_PAR
+        self.energy_response['energy_total_surface_PAR'] = energy_total_surface_PAR
+        self.energy_response['energy_diff_surface'] = energy_diff_surface
+        self.energy_response['energy_beam_surface'] = energy_beam_surface
+        self.energy_response['energy_total_surface'] = energy_total_surface
+        self.energy_response['energy_total_surface_PAR_ppfd'] = energy_total_surface_PAR_ppfd
+
+
+
+
+
 
 
 
