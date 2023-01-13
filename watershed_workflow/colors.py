@@ -268,90 +268,105 @@ def generate_indexed_colormap(indices, cmap=None):
     labels = [str(i) for i in indices]
     return indices, cmap, norm, ticks, labels
 
+_doc_template = \
+"""Generates a colormap and labels for imaging with the {label} colors.
 
-def generate_nlcd_colormap(indices=None, formatted=False):
-    """Generates a colormap and labels for imaging with the NLCD colors.
+Parameters
+----------
+indices : iterable(int), optional
+    Collection of {label} indices that will be used in this colormap.
+    If None (default), uses all {label} indices.
 
-    Parameters
-    ----------
-    indices : iterable(int), optional
-        Collection of NLCD indices that will be used in this colormap.
-        If None (default), uses all NLCD indices.
+Returns
+-------
+indices_out : list(int)
+    The unique, sorted list of indices found.
+cmap : cmap-type
+    A segmented map for use with plots.
+norm : BoundaryNorm
+    A norm for use in `plot_trisurf()` or other plotting methods
+    to ensure correct {label} colors.
+ticks : list(int)
+    A list of tick locations for the requested indices.  For use
+    with `set_ticks()`.
+labels : list(str)
+    A list of labels associated with the ticks.  For use with
+    `set_{{x,y}}ticklabels()`.
+formatted: bool, 
+    To make the labels formatted nicely (i.e. add newline in long label names)
 
-    Returns
-    -------
-    indices_out : list(int)
-        The unique, sorted list of indices found.
-    cmap : cmap-type
-        A segmented map for use with plots.
-    norm : BoundaryNorm
-        A norm for use in `plot_trisurf()` or other plotting methods
-        to ensure correct NLCD colors.
-    ticks : list(int)
-        A list of tick locations for the requested indices.  For use
-        with `set_ticks()`.
-    labels : list(str)
-        A list of labels associated with the ticks.  For use with
-        `set_{x,y}ticklabels()`.
-    formatted: bool, 
-        To make the labels formatted nicely (i.e. add newline in long label names)
+Example
+-------
 
-    Example
-    -------
+Plot a triangulation given a set of {label} colors on those triangles.
 
-    Plot a triangulation given a set of NLCD colors on those triangles.
+Given a triangluation `mesh_points, mesh_tris` and {label} color
+indices for each triangle (tri_{label_lower}):
 
-    Given a triangluation `mesh_points, mesh_tris` and NLCD color
-    indices for each triangle, `tri_nlcd`:
+.. code-block:: 
 
-    .. code-block:: 
+    indices, cmap, norm, ticks, labels = generate_{label_lower}_colormap(set(tri_{label_lower}))
 
-        indices, cmap, norm, ticks, labels = generate_nlcd_colormap(set(tri_nlcd))
+    mp = ax.plot_trisurf(mesh_points[:,0], mesh_points[:,1], mesh_points[:,2], 
+            triangles=mesh_tris, color=tri_{label_lower}, 
+            cmap=cmap, norm=norm)
+    cb = fig.colorbar(mp, orientation='horizontal')
+    cb.set_ticks(ticks)
+    cb.ax.set_xticklabels(labels, rotation=45)
 
-        mp = ax.plot_trisurf(mesh_points[:,0], mesh_points[:,1], mesh_points[:,2], 
-                triangles=mesh_tris, color=tri_nlcd, 
-                cmap=cmap, norm=norm)
-        cb = fig.colorbar(mp, orientation='horizontal')
-        cb.set_ticks(ticks)
-        cb.ax.set_xticklabels(labels, rotation=45)
+"""
 
-    """
-    from watershed_workflow.sources.manager_nlcd import colors as all_colors
 
-    if indices is None:
-        indices = list(all_colors.keys())
+def _indexed_colormap(label, all_colors):
+    def _generate_colormap(indices=None, formatted=False):
+        if indices is None:
+            indices = list(all_colors.keys())
 
-    indices = sorted(set(indices))
+        indices = sorted(set(indices))
 
-    values = [all_colors[k][1] for k in indices]
-    cmap = matplotlib.colors.ListedColormap(values)
-    ticks = indices + [indices[-1] + 1, ]
-    norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
-    labels = [all_colors[k][0] for k in indices]
+        values = [all_colors[k][1] for k in indices]
+        cmap = matplotlib.colors.ListedColormap(values)
+        ticks = indices + [indices[-1] + 1, ]
+        norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
+        labels = [all_colors[k][0] for k in indices]
 
-    if formatted:
-        nlcd_labels_fw = []
-        for label in labels:
-            label_fw = label
-            if len(label) > 15:
-                if ' ' in label:
-                    lsplit = label.split()
-                    if len(lsplit) == 2:
-                        label_fw = '\n'.join(lsplit)
-                    elif len(lsplit) == 4:
-                        label_fw = '\n'.join([' '.join(lsplit[0:2]), ' '.join(lsplit[2:])])
-                    elif len(lsplit) == 3:
-                        if len(lsplit[0]) > len(lsplit[-1]):
-                            label_fw = '\n'.join([lsplit[0], ' '.join(lsplit[1:])])
-                        else:
-                            label_fw = '\n'.join([' '.join(lsplit[:-1]), lsplit[-1]])
-            nlcd_labels_fw.append(label_fw)
+        if formatted:
+            nlcd_labels_fw = []
+            for label in labels:
+                label_fw = label
+                if len(label) > 15:
+                    if ' ' in label:
+                        lsplit = label.split()
+                        if len(lsplit) == 2:
+                            label_fw = '\n'.join(lsplit)
+                        elif len(lsplit) == 4:
+                            label_fw = '\n'.join([' '.join(lsplit[0:2]), ' '.join(lsplit[2:])])
+                        elif len(lsplit) == 3:
+                            if len(lsplit[0]) > len(lsplit[-1]):
+                                label_fw = '\n'.join([lsplit[0], ' '.join(lsplit[1:])])
+                            else:
+                                label_fw = '\n'.join([' '.join(lsplit[:-1]), lsplit[-1]])
+                nlcd_labels_fw.append(label_fw)
 
-        labels = nlcd_labels_fw
+            labels = nlcd_labels_fw
 
-    # last is empty tick
-    labels.append('')
-    return indices, cmap, norm, ticks, labels
+        # last is empty tick
+        labels.append('')
+        return indices, cmap, norm, ticks, labels
+
+    doc = _doc_template.format(label=label, label_lower=label.lower())
+    _generate_colormap.__doc__ = doc
+    return _generate_colormap
+
+
+import watershed_workflow.sources.manager_nlcd
+
+generate_nlcd_colormap = _indexed_colormap('NLCD', watershed_workflow.sources.manager_nlcd.colors)
+
+import watershed_workflow.sources.manager_modis_appeears
+
+generate_modis_colormap = _indexed_colormap(
+    'MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
 
 
 def colorbar_index(ncolors, cmap, labels=None, **kwargs):

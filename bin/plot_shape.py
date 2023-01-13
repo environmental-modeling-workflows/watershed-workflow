@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # plot
     fig, ax = watershed_workflow.bin_utils.plot_with_dem(args, shapes, reaches, dem, dem_profile, river_color='white')
-    watershed_workflow.plot.shply([huc,], args.projection, color='k', ax=ax)
+    # watershed_workflow.plot.shply([huc,], args.projection, color='k', ax=ax)
 
     logging.info("SUCESS")
     if args.output_filename is not None:

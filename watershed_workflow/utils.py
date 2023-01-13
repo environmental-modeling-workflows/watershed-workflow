@@ -16,10 +16,364 @@ import shapely.ops
 import shapely.prepared
 import shapely.affinity
 import rasterio
+import rasterio.transform
 
 import watershed_workflow.crs
 
 _tol = 1.e-7
+
+
+#
+# Constructors
+#
+def create_shply(shape, properties=None, flip=False):
+    """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
+
+    Note this collapses objects -- for instance, fiona MultiPolygons of length
+    1 are turned into shapely Polygons.
+
+    Parameters
+    ----------
+    shape : fiona shape
+      Fiona shape to convert to shapely.
+    properties : dict, optional
+      A dictionary of parameters to associate with the object.  Defaults to
+      shape['properties'] if it exists, None otherwise.
+    flip : bool, optional
+      Flip x,y coordinates while making the translation.  This helps if files
+      provide lat-long ordered coordinates (note that is y,x) as opposed to
+      long-lat (x,y).  Default is False.
+
+    Returns
+    -------
+    thing : shapely shape
+    """
+    if 'geometry' in shape:
+        if properties is None:
+            if 'properties' in shape:
+                properties = shape['properties']
+            else:
+                properties = dict()
+        shape = shape['geometry']
+
+    try:
+        thing = shapely.geometry.shape(shape)
+        if type(thing) is shapely.geometry.MultiPoint and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
+        elif type(thing) is shapely.geometry.MultiLineString and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
+        elif type(thing) is shapely.geometry.MultiPolygon and len(thing.geoms) == 1:
+            thing = thing.geoms[0]
+
+        # first check for latlon instead of lonlat
+        if flip:
+            thing = shapely.ops.transform(lambda x, y: (y, x), thing)
+
+        thing.properties = properties
+        thing_2D = remove_third_dimension(thing)
+        thing_2D.properties = thing.properties
+        return thing_2D
+
+    except ValueError:
+        raise ValueError(
+            'Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
+
+
+def create_bounds(f):
+    """General bounding box for fiona and shapely types."""
+    # fiona type
+    x, y = zip(*list(generate_coords(f)))
+    # except TypeError:
+    #     # shapely type
+    #     return f.bounds
+    # else:
+    return min(x), min(y), max(x), max(y)
+
+
+def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, count=1):
+    """Creates a profile for a raster.
+
+    Parameters
+    ----------
+    bounds : [x_min, y_min, x_max, y_max]
+      Bounding box for the raster.
+    crs : CRS object
+      Target coordinate system.
+    resolution : tuple or float
+      Pixel width, in units of the crs.  If a tuple, (dx,dy).  If a
+      float, then dx = dy.
+    dtype : optional
+      If provided, sets the data type.
+    nodata : dtype, optional
+      If provided, sets the nodata value.
+    count : int, optional
+
+    Note that dx/dy are always used.  The bounds are adjusted to make
+    them an even multiple of dx/dy.
+
+
+    Returns
+    -------
+    dict 
+      Dictionary profile, including a transform and all other needed
+      metadata to create a raster.
+
+    """
+    try:
+        dx, dy = resolution
+    except TypeError:
+        dx = resolution
+        dy = resolution
+
+    if dtype is None and nodata is not None:
+        dytpe = type(nodata)
+
+    x0 = np.round(bounds[0] - dx/2)
+    y1 = np.round(bounds[3] + dx/2)
+    width = int(np.ceil((bounds[2] + dx/2 - x0) / dx))
+    height = int(np.ceil((y1 - bounds[1] - dx/2) / dx))
+
+    out_bounds = [x0, y1 - dy*height, x0 + dx*width, y1]
+    transform = rasterio.transform.from_origin(x0, y1, dx, dx)
+
+    out_profile = {
+        'height': height,
+        'width': width,
+        'count': count,
+        'dtype': dtype,
+        'crs': crs,
+        'transform': transform,
+        'nodata': nodata
+    }
+    return out_profile
+
+
+def create_empty_raster(bounds, crs, resolution, nodata, count=1):
+    """Generates a profile and a nodata-filled array."""
+    profile = create_raster_profile(bounds, crs, resolution, nodata=nodata, count=count)
+    out = profile['nodata'] * np.ones(
+        (profile['count'], profile['height'], profile['width']), profile['dtype'])
+    return profile, out
+
+
+#
+# Generic routines for manipulating shapes and rasters
+#
+def is_empty_shapely(shp):
+    """Is shp None or empty"""
+    return shp is None or shp.is_empty
+
+
+def round_shapes(list_of_things, digits):
+    """Rounds coordinates in things or shapes to a given digits."""
+    for shp in list_of_things:
+        for ring in generate_rings(shp):
+            ring[:] = list(np.array(ring).round(digits))
+
+
+def round_shplys(list_of_things, digits):
+    """Rounds coordinates in things or shapes to a given digits."""
+    return [
+        shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0)
+        for thing in list_of_things
+    ]
+
+
+def remove_third_dimension(geom):
+    """Removes the third dimension of a shapely object."""
+    if geom.is_empty:
+        return geom
+
+    if isinstance(geom, shapely.geometry.Polygon):
+        exterior = geom.exterior
+        new_exterior = remove_third_dimension(exterior)
+        interiors = geom.interiors
+        new_interiors = []
+        for int in interiors:
+            new_interiors.append(remove_third_dimension(int))
+        return shapely.geometry.Polygon(new_exterior, new_interiors)
+
+    elif isinstance(geom, shapely.geometry.LinearRing):
+        return shapely.geometry.LinearRing([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.LineString):
+        return shapely.geometry.LineString([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.Point):
+        return shapely.geometry.Point([xy[0:2] for xy in list(geom.coords)])
+
+    elif isinstance(geom, shapely.geometry.MultiPoint):
+        points = list(geom.geoms)
+        new_points = []
+        for point in points:
+            new_points.append(remove_third_dimension(point))
+
+        return shapely.geometry.MultiPoint(new_points)
+
+    elif isinstance(geom, shapely.geometry.MultiLineString):
+        lines = list(geom.geoms)
+        new_lines = []
+        for line in lines:
+            new_lines.append(remove_third_dimension(line))
+
+        return shapely.geometry.MultiLineString(new_lines)
+
+    elif isinstance(geom, shapely.geometry.MultiPolygon):
+        pols = list(geom.geoms)
+
+        new_pols = []
+        for pol in pols:
+            new_pols.append(remove_third_dimension(pol))
+
+        return shapely.geometry.MultiPolygon(new_pols)
+
+    elif isinstance(geom, shapely.geometry.GeometryCollection):
+        geoms = list(geom.geoms)
+
+        new_geoms = []
+        for geom in geoms:
+            new_geoms.append(remove_third_dimension(geom))
+
+        return shapely.geometry.GeometryCollection(new_geoms)
+
+    else:
+        raise RuntimeError("Currently this type of geometry is not supported: {}".format(
+            type(geom)))
+
+
+def flatten(list_of_shps):
+    """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""
+    new_list = []
+    for shp in list_of_shps:
+        if isinstance(shp, shapely.geometry.MultiLineString) or \
+           isinstance(shp, shapely.geometry.MultiPoint) or \
+           isinstance(shp, shapely.geometry.MultiPolygon):
+            new_list.extend(list(shp.geoms))
+        else:
+            new_list.append(shp)
+    return new_list
+
+
+def impute_holes2D(arr, nodata=np.nan, method='cubic'):
+    """Very simple imputation algorithm to interpolate values for missing data in rasters.
+
+    Note, this may throw if there is a hole on the boundary?
+
+    Parameters
+    ----------
+    arr : np.ndarray
+      2D array, with missing data.
+    nodata : optional = np.nan
+      Value to treat as a hole to fill.
+    method : str, optional = 'cubic'
+      Algorithm to use (see scipy.interpolate.griddata).  Likely
+      'cubic', 'linear', or 'nearest'.
+
+    Returns
+    -------
+    np.ndarray
+      New array with no values of nodata.
+
+    """
+    if nodata is np.nan:
+        mask = np.isnan(arr)
+    else:
+        mask = (arr == nodata)
+
+    x = np.arange(0, arr.shape[1])
+    y = np.arange(0, arr.shape[0])
+    xx, yy = np.meshgrid(x, y)
+
+    #get only the valid values
+    x1 = xx[~mask]
+    y1 = yy[~mask]
+    newarr = arr[~mask]
+
+    res = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='cubic')
+    return res
+
+
+def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
+    """Averages and smooths to form a "typical" year.
+
+    Parameters
+    ----------
+    data : np.ndarray[NTIMES, NX, NY]
+      Data to smooth.  Note this data will be truncated
+      floor(NTIMES/365).
+    output_nyears : int, optional
+      Number of years to repeat the output.  Default is 1.
+    filter : bool, optional
+      If true, filters the data using a Sav-Gol filter from Scipy
+
+    All other parameters are passed to the filter.  See
+    scipy.signal.savgol_filter, but sane default values are used if
+    these are not provided.
+
+    Returns
+    -------
+    np.ndarray[365*output_nyears, NX, NY]
+      The smoothed data.
+
+    """
+    nyears = data.shape[0] // 365
+
+    data = data[0:nyears * 365, :, :].reshape(nyears, 365, data.shape[1], data.shape[2])
+    data = data.mean(axis=0)
+
+    if filter:
+        defaults = { 'window': 61, 'poly_order': 2, 'axis': 0, 'mode': 'wrap'}
+        for k, v in defaults:
+            kwargs.setdefault(k, v)
+
+        data = scipy.signal.savgol_filter(data, **kwargs)
+
+    if output_nyears != 1:
+        data = np.tile(data, (nyears, 1, 1))
+    return data
+
+
+def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
+    """Interpolate time-dependent data from times to daily data in the range start, end.
+
+    Parameters
+    ----------
+    times : np.array([NTIMES,], dtype=datetime.datetime)
+      The list of times, as a date or time.
+    data : np.ndarray([NTIMES, NX, NY])
+      Data to interpolate
+    start, end : datetime.date
+      Dates to begin and end (inclusive) the daily data range.
+    dt : datetime.timedelta, optional
+      Delta to interpolate to.  Defaults to 1 day.
+    
+    All other parameters are passed to scipy.interpolate.interp1d.  Of
+    use particularly is 'kind' which can be 'linear' (default) or
+    'quadratic', 'cubic' or others.
+
+    Returns
+    -------
+    new_times : np.1darray([end-start+1,], dtype=datetime.date)
+      Times interpolated, as datetime.date objects.
+    new_data : np.ndarray([end-start+1, NX,NY])
+      The data interpolated.
+
+    """
+    origin = times[0]
+
+    if dt is None:
+        dt = datetime.timedelta(days=1)
+    x = np.array([(t-origin) / dt for t in times])
+    interp = scipy.interpolate.interp1d(x, data, axis=0, assume_sorted=True, **kwargs)
+
+    new_origin = start
+    new_count = np.ceil((end-start) / dt)
+    new_times = np.array([new_origin + i*dt for i in range(new_count + 1)])
+
+    start_rel_origin = (start-origin) / dt
+    new_rel_origin = np.arange(start_rel_origin, start_rel_origin + new_count)
+    new_data = interp(new_rel_origin)
+    return new_times, new_data
 
 
 def generate_rings(obj):
@@ -77,83 +431,9 @@ def generate_coords(obj):
                 yield c
 
 
-def bounds(f):
-    """General bounding box for fiona and shapely types."""
-    # fiona type
-    x, y = zip(*list(generate_coords(f)))
-    # except TypeError:
-    #     # shapely type
-    #     return f.bounds
-    # else:
-    return min(x), min(y), max(x), max(y)
-
-
-def shply(shape, properties=None, flip=False):
-    """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
-
-    Note this collapses objects -- for instance, fiona MultiPolygons of length
-    1 are turned into shapely Polygons.
-
-    Parameters
-    ----------
-    shape : fiona shape
-      Fiona shape to convert to shapely.
-    properties : dict, optional
-      A dictionary of parameters to associate with the object.  Defaults to
-      shape['properties'] if it exists, None otherwise.
-    flip : bool, optional
-      Flip x,y coordinates while making the translation.  This helps if files
-      provide lat-long ordered coordinates (note that is y,x) as opposed to
-      long-lat (x,y).  Default is False.
-
-    Returns
-    -------
-    thing : shapely shape
-    """
-    if 'geometry' in shape:
-        if properties is None:
-            if 'properties' in shape:
-                properties = shape['properties']
-            else:
-                properties = dict()
-        shape = shape['geometry']
-
-    try:
-        thing = shapely.geometry.shape(shape)
-        if type(thing) is shapely.geometry.MultiPoint and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-        elif type(thing) is shapely.geometry.MultiLineString and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-        elif type(thing) is shapely.geometry.MultiPolygon and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-
-        # first check for latlon instead of lonlat
-        if flip:
-            thing = shapely.ops.transform(lambda x, y: (y, x), thing)
-
-        thing.properties = properties
-        thing_2D = remove_third_dimension(thing)
-        thing_2D.properties = thing.properties
-        return thing_2D
-
-    except ValueError:
-        raise ValueError(
-            'Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
-
-
-def round_shapes(list_of_things, digits):
-    """Rounds coordinates in things or shapes to a given digits."""
-    for shp in list_of_things:
-        for ring in generate_rings(shp):
-            ring[:] = list(np.array(ring).round(digits))
-
-
-def round_shplys(list_of_things, digits):
-    """Rounds coordinates in things or shapes to a given digits."""
-    return [
-        shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0)
-        for thing in list_of_things
-    ]
+#
+# Geometry
+#
 
 
 def close(s1, s2, tol=_tol):
@@ -495,11 +775,6 @@ def orientation(p1, p2, p3):
         return 0
 
 
-def empty_shapely(shp):
-    """Is shp None or empty"""
-    return shp is None or shp.is_empty
-
-
 def intersects(shp1, shp2):
     """Checks whether an intersection exists.
     
@@ -507,7 +782,7 @@ def intersects(shp1, shp2):
     the same... we avoid using shapely.intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not empty_shapely(inter)
+    return not is_empty_shapely(inter)
 
 
 def non_point_intersection(shp1, shp2):
@@ -517,7 +792,7 @@ def non_point_intersection(shp1, shp2):
     the same... we avoid using intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not (empty_shapely(inter) or isinstance(inter, shapely.geometry.Point))
+    return not (is_empty_shapely(inter) or isinstance(inter, shapely.geometry.Point))
 
 
 def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):
@@ -542,110 +817,6 @@ def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):
     return [s for s in to_filter if op(s)]
 
 
-def flatten(list_of_shps):
-    """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""
-    new_list = []
-    for shp in list_of_shps:
-        if isinstance(shp, shapely.geometry.MultiLineString) or \
-           isinstance(shp, shapely.geometry.MultiPoint) or \
-           isinstance(shp, shapely.geometry.MultiPolygon):
-            new_list.extend(list(shp.geoms))
-        else:
-            new_list.append(shp)
-    return new_list
-
-
-def remove_third_dimension(geom):
-    """Removes the third dimension of a shapely object."""
-    if geom.is_empty:
-        return geom
-
-    if isinstance(geom, shapely.geometry.Polygon):
-        exterior = geom.exterior
-        new_exterior = remove_third_dimension(exterior)
-        interiors = geom.interiors
-        new_interiors = []
-        for int in interiors:
-            new_interiors.append(remove_third_dimension(int))
-        return shapely.geometry.Polygon(new_exterior, new_interiors)
-
-    elif isinstance(geom, shapely.geometry.LinearRing):
-        return shapely.geometry.LinearRing([xy[0:2] for xy in list(geom.coords)])
-
-    elif isinstance(geom, shapely.geometry.LineString):
-        return shapely.geometry.LineString([xy[0:2] for xy in list(geom.coords)])
-
-    elif isinstance(geom, shapely.geometry.Point):
-        return shapely.geometry.Point([xy[0:2] for xy in list(geom.coords)])
-
-    elif isinstance(geom, shapely.geometry.MultiPoint):
-        points = list(geom.geoms)
-        new_points = []
-        for point in points:
-            new_points.append(remove_third_dimension(point))
-
-        return shapely.geometry.MultiPoint(new_points)
-
-    elif isinstance(geom, shapely.geometry.MultiLineString):
-        lines = list(geom.geoms)
-        new_lines = []
-        for line in lines:
-            new_lines.append(remove_third_dimension(line))
-
-        return shapely.geometry.MultiLineString(new_lines)
-
-    elif isinstance(geom, shapely.geometry.MultiPolygon):
-        pols = list(geom.geoms)
-
-        new_pols = []
-        for pol in pols:
-            new_pols.append(remove_third_dimension(pol))
-
-        return shapely.geometry.MultiPolygon(new_pols)
-
-    elif isinstance(geom, shapely.geometry.GeometryCollection):
-        geoms = list(geom.geoms)
-
-        new_geoms = []
-        for geom in geoms:
-            new_geoms.append(remove_third_dimension(geom))
-
-        return shapely.geometry.GeometryCollection(new_geoms)
-
-    else:
-        raise RuntimeError("Currently this type of geometry is not supported: {}".format(
-            type(geom)))
-
-
-def create_empty_raster(target_bounds, crs, target_dx, dtype, nodata):
-    """Generates a profile and a nodata-filled 2D array."""
-    target_x0 = np.round(target_bounds[0] - target_dx/2)
-    target_y1 = np.round(target_bounds[3] + target_dx/2)
-    width = int(np.ceil((target_bounds[2] + target_dx/2 - target_x0) / target_dx))
-    height = int(np.ceil((target_y1 - target_bounds[1] - target_dx/2) / target_dx))
-
-    out_bounds = [target_x0, target_y1 - target_dx*height, target_x0 + target_dx*width, target_y1]
-
-    logging.info('  target_bounds = {}'.format(target_bounds))
-    logging.info('  out_bounds = {}'.format(out_bounds))
-    logging.info('  pixel_size = {}'.format(target_dx))
-    logging.info('  width = {}, height = {}'.format(width, height))
-
-    transform = rasterio.transform.from_origin(target_x0, target_y1, target_dx, target_dx)
-
-    out_profile = {
-        'height': height,
-        'width': width,
-        'count': 1,
-        'dtype': dtype,
-        'crs': watershed_workflow.crs.to_rasterio(crs),
-        'transform': transform,
-        'nodata': nodata
-    }
-    out = nodata * np.ones((height, width), dtype)
-    return out_profile, out
-
-
 def is_convex(points):
     poly = shapely.geometry.Polygon(points)
     return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
@@ -664,42 +835,3 @@ def cluster(points, tol):
     indices = hcluster.fclusterdata(points, tol, criterion='distance')
     centroids = [points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())]
     return indices - 1, centroids
-
-
-def impute_holes2D(arr, nodata=np.nan, method='cubic'):
-    """Very simple imputation algorithm to interpolate values for missing data in rasters.
-
-    Note, this may throw if there is a hole on the boundary?
-
-    Parameters
-    ----------
-    arr : np.ndarray
-      2D array, with missing data.
-    nodata : optional = np.nan
-      Value to treat as a hole to fill.
-    method : str, optional = 'cubic'
-      Algorithm to use (see scipy.interpolate.griddata).  Likely
-      'cubic', 'linear', or 'nearest'.
-
-    Returns
-    -------
-    np.ndarray
-      New array with no values of nodata.
-
-    """
-    if nodata is np.nan:
-        mask = np.isnan(arr)
-    else:
-        mask = (arr == nodata)
-
-    x = np.arange(0, arr.shape[1])
-    y = np.arange(0, arr.shape[0])
-    xx, yy = np.meshgrid(x, y)
-
-    #get only the valid values
-    x1 = xx[~mask]
-    y1 = yy[~mask]
-    newarr = arr[~mask]
-
-    res = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method='cubic')
-    return res

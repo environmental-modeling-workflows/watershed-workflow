@@ -1,4 +1,4 @@
-"""Manager for downloading MODIS products from the LP DAAC AppEEARS database."""
+"""Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
 
 import os, sys
 import logging
@@ -8,12 +8,46 @@ import datetime
 import shapely
 import numpy as np
 import netCDF4
+import attrs
+import rasterio.transform
 
 import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.crs
+import watershed_workflow.datasets
+
+colors = {
+    -1: ('Unclassified', (0.00000000000, 0.00000000000, 0.00000000000)),
+    0: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
+    1: ('Evergreen Needleleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
+    2: ('Evergreen Broadleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
+    3: ('Deciduous Needleleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
+    4: ('Deciduous Broadleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
+    5: ('Mixed Forests', (0.70980392157, 0.78823529412, 0.55686274510)),
+    6: ('Closed Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
+    7: ('Open Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
+    8: ('Woody Savannas', (0.40784313726, 0.66666666667, 0.38823529412)),
+    9: ('Savannas', (0.70980392157, 0.78823529412, 0.55686274510)),
+    10: ('Grasslands', (0.88627450980, 0.88627450980, 0.75686274510)),
+    11: ('Permanent Wetlands', (0.43921568628, 0.63921568628, 0.72941176471)),
+    12: ('Croplands', (0.66666666667, 0.43921568628, 0.15686274510)),
+    13: ('Urban and Built up lands', (0.86666666667, 0.78823529412, 0.78823529412)),
+    14: ('Cropland Natural Vegetation Mosaics', (0.66666666667, 0.43921568628, 0.15686274510)),
+    15: ('Permanent Snow and Ice', (0.81960784314, 0.86666666667, 0.97647058824)),
+    16: ('Barren Land', (0.69803921569, 0.67843137255, 0.63921568628)),
+    17: ('Water Bodies', (0.27843137255, 0.41960784314, 0.62745098039)),
+}
+
+
+@attrs.define
+class Task:
+    task_id: str
+    variables: list
+    filenames: dict = attrs.Factory(dict)
+    urls: dict = attrs.Factory(dict)
+    shas: dict = attrs.Factory(dict)
 
 
 class FileManagerMODISAppEEARS:
@@ -27,18 +61,29 @@ class FileManagerMODISAppEEARS:
     contribute (the developers of this package are not security
     experts!)
 
-    .. [MODIS] << insert link here >>
-    
-    Currently the variables supported here include LAI and estimated ET.
+    To enter the username and password, register for a login in the
+    AppEEARs data portal at:
 
-    << DOCUMENT ACCESS PATTERN HERE >>
+    .. [AppEEARs](https://appeears.earthdatacloud.nasa.gov/)
+    
+    Currently the variables supported here include LAI and estimated
+    ET.  
+
+    All data returned includes a time variable, which is in units of
+    [days past Jan 1, 2000, 0:00:00.
+
+    Note this is implemented based on the API documentation here:
+
+       https://appeears.earthdatacloud.nasa.gov/api/?python#introduction
+
     """
-    _LOGIN_URL = "https://lpdaacsvc.cr.usgs.gov/appeears/api/login"  # URL for AppEEARS rest requests
-    _TASK_URL = "https://lpdaacsvc.cr.usgs.gov/appeears/api/task"
-    _BUNDLE_URL_TEMPLATE = "https://lpdaacsvc.cr.usgs.gov/appeears/api/bundle/"
+    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"  # URL for AppEEARS rest requests
+    _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
+    _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
+    _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
 
     _START = datetime.date(2002, 7, 1)
-    _END = datetime.date(2020, 12, 30)
+    _END = datetime.date(2021, 1, 1)
 
     _PRODUCTS = {
         'LAI': {
@@ -58,8 +103,9 @@ class FileManagerMODISAppEEARS:
             'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
         self.login_token = login_token
         if not os.path.isdir(self.names.folder_name()):
-            os.mkdir(self.names.folder_name())
+            os.makedirs(self.names.folder_name())
         self.tasks = []
+        self.completed_tasks = []
 
     def _authenticate(self, username=None, password=None):
         """Authenticate to the AppEEARS API.
@@ -100,19 +146,19 @@ class FileManagerMODISAppEEARS:
         return filename
 
     def _clean_date(self, date):
-        # test input: date
+        """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         if date < self._START:
-            date = self._START
+            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
-            date = self._END
+            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date.strftime('%m-%d-%Y')
 
     def _clean_bounds(self, polygon_or_bounds, crs):
-        """Compute bounds in the needed CRS"""
+        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
         if type(polygon_or_bounds) is dict:
-            polygon_or_bounds = watershed_workflow.utils.shply(polygon_or_bounds)
+            polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
         if type(polygon_or_bounds) is shapely.geometry.Polygon:
             bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
                                                       watershed_workflow.crs.latlon_crs()).bounds
@@ -128,7 +174,7 @@ class FileManagerMODISAppEEARS:
         feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
         return feather_bounds
 
-    def _construct_request(self, bounds_ll, start, end, variable):
+    def _construct_request(self, bounds_ll, start, end, variables):
         """Create an AppEEARS request to download the variable from start to
         finish.  Note that this does not do the download -- it only creates
         the request.
@@ -146,6 +192,8 @@ class FileManagerMODISAppEEARS:
         end : int
           Year to end (inclusive), must be XXXX -- YYYY and greater
           than start.  Defaults to YYYY
+        variables : list
+          List of variables to collect.
         
         Returns
         -------
@@ -153,11 +201,11 @@ class FileManagerMODISAppEEARS:
           Integer token for downloading this data.
 
         """
-        if login_token is None:
-            login_token = self._authenticate()
+        if self.login_token is None:
+            self.login_token = self._authenticate()
 
-        filename = self._filename(bounds_ll, start, end, variable)
         (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
+        json_vars = [self._PRODUCTS[var] for var in variables]
 
         task = {
             "task_type": "area",
@@ -167,7 +215,7 @@ class FileManagerMODISAppEEARS:
                     "startDate": start,
                     "endDate": end
                 }],
-                "layers": [self._PRODUCTS[variable], ],
+                "layers": json_vars,
                 "output": {
                     "format": {
                         "type": "netcdf4"
@@ -194,68 +242,142 @@ class FileManagerMODISAppEEARS:
         }
 
         # submit the task request
-        response = requests.post(self._TASK_URL,
-                                 json=task,
-                                 headers={ 'Authorization': f'Bearer {self.login_token}'})
-        logging.info('Constructing Task: {response.url}')
-        response.raise_for_status()
-        self.tasks.append((response.json()['task_id'], filename))
-        logging.info(f'Requesting dataset on {bounds_ll} response task_id {self.tasks[-1][0]}')
-        return self.tasks[-1]
+        logging.info('Constructing Task:')
+        r = requests.post(self._TASK_URL,
+                          json=task,
+                          headers={ 'Authorization': f'Bearer {self.login_token}'})
+        r.raise_for_status()
 
-    def _is_ready(self, task=None):
-        """Checks whether the provided token (or last token generated) is ready."""
+        task = Task(r.json()['task_id'],
+                    variables,
+                    filenames=dict(
+                        (v, self._filename(bounds_ll, start, end, v)) for v in variables))
+        self.tasks.append(task)
+        logging.info(f'Requesting dataset on {bounds_ll} response task_id {task.task_id}')
+        return task
+
+    def _check_status(self, task=None):
+        """Checks and prints the status of the task.
+
+        Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
+        """
+        if self.login_token is None:
+            self.login_token = self._authenticate()
         if task is None:
             task = self.tasks[0]
 
-        url = self._BUNDLE_URL_TEMPLATE + task[0]
-        response = requests.get(url)
+        logging.info(f'Checking status of task: {task.task_id}')
+        r = requests.get(self._STATUS_URL,
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
         try:
-            response.raise_for_status()
+            r.raise_for_status()
+        except requests.HTTPError:
+            logging.info('... http error')
+            return 'UNKNOWN'
+        else:
+            json = r.json()
+            if len(json) == 0:
+                logging.info('... status not found')
+                return 'UNKNOWN'
+            else:
+                for entry in json:
+                    if entry['task_id'] == task.task_id:
+                        logging.info(entry)
+                        if 'status' in entry and 'done' == entry['status']:
+                            return True
+                        else:
+                            return False
+            logging.info('... status not found')
+            return 'UNKNOWN'
+
+    def _check_bundle_url(self, task=None):
+        if self.login_token is None:
+            self.login_token = self._authenticate()
+        if task is None:
+            task = self.tasks[0]
+
+        logging.info(f'Checking for bundle of task: {task.task_id}')
+        r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
+        try:
+            r.raise_for_status()
         except requests.HTTPError:
             return False
         else:
-            json = response.json()
-            return next(f for f in json['files'] if f['file_type'] == 'nc')
+            # does the bundle exist?
+            if len(r.json()) == 0:
+                logging.info('... bundle not found')
+                return False
 
-    def _download(self, task=None, file_id=None):
-        """Downloads the provided task/file_id.
+            # bundle exists -- find the url and sha for each varname
+            for var in task.variables:
+                product = self._PRODUCTS[var]['product']
+                found = False
+                for entry in r.json()['files']:
+                    if entry['file_name'].startswith(product):
+                        logging.info(f'... bundle found {entry["file_name"]}')
+                        assert (entry['file_name'].endswith('.nc'))
+                        task.urls[var] = self._BUNDLE_URL_TEMPLATE.format(
+                            task.task_id) + '/' + entry['file_id']
+                        found = True
+                assert (found)
+            return True
+
+    def is_ready(self, task=None):
+        """Actually knowing if it is ready is a bit tricky because Appeears does not appear to be saving its status after it is complete."""
+        status = self._check_status(task)
+        if status != False:  # note this matches True or UNKNOWN
+            return self._check_bundle_url(task)
+        else:
+            return status
+
+    def _download(self, task=None):
+        """Downloads the provided task.
 
         If file_id is not provided, is_ready() will be called.
         If file_id is provided, it is assumed is_ready() is True.
 
         If task is not provided, the first in the queue is used.
         """
-        if file_id is None:
-            file_id = self._is_ready(task)
-        if file_id is False:
-            return None
-
         if task is None:
             task = self.tasks[0]
-        task_id, filename = task
 
-        url = self._BUNDLE_URL_TEMPLATE + task_id + '/' + file_id['file_id']
-        logging.info("  Downloading: {}".format(url))
-        logging.info("      to file: {}".format(filename))
+        if len(task.urls) == 0:
+            ready = self._check_bundle_url(task)
+        else:
+            ready = True
 
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
+        if ready:
+            assert (len(task.filenames) == len(task.urls))
+            assert (len(task.variables) == len(task.urls))
+            for var in task.variables:
+                url = task.urls[var]
+                filename = task.filenames[var]
+                logging.info("  Downloading: {}".format(url))
+                logging.info("      to file: {}".format(filename))
+                good = source_utils.download(
+                    url, filename, headers={ 'Authorization': f'Bearer {self.login_token}'})
+                assert (good)
+            return True
+        else:
+            return False
 
-        with open(filename, 'wb') as fid:
-            for data in response.iter_content(chunk_size=8192):
-                fid.write(data)
-        return filename
+    def _read_data(self, task):
+        """Read all files for a task, returning the data in the order of variables requested in the task."""
+        s = watershed_workflow.datasets.State()
+        for var in task.variables:
+            s[var] = self._read_file(task.filenames[var], var)
+        return s
 
-    def _open(self, filename, variable):
+    def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         profile = dict()
+        logging.info(f'... reading {variable} from {filename}')
         with netCDF4.Dataset(filename, 'r') as nc:
             profile['crs'] = watershed_workflow.crs.from_epsg(nc.variables['crs'].epsg_code)
             profile['width'] = nc.dimensions['lon'].size
             profile['height'] = nc.dimensions['lat'].size
             profile['count'] = nc.dimensions['time'].size
-            profile['nodata'] = np.nan
 
             # this assumes it is a fixed dx and dy, which should be
             # pretty good for not-too-big domains.
@@ -263,20 +385,42 @@ class FileManagerMODISAppEEARS:
             lon = nc.variables['lon'][:]
             profile['dx'] = (lon[1:] - lon[:-1]).mean()
             profile['dy'] = (lat[1:] - lat[:-1]).mean()
+            profile['resolution'] = (profile['dx'], -profile['dy'])
+            profile['height'] = len(lat)
+            profile['width'] = len(lon)
             profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
-            # do we need to make an affine transform?
-
+            profile['transform'] = rasterio.transform.from_bounds(lon[0], lat[-1], lon[-1], lat[0],
+                                                                  profile['width'],
+                                                                  profile['height'])
+            profile['nodata'] = -9999
             varname = self._PRODUCTS[variable]['layer']
             profile['layer'] = varname
-            data = nc.variables[varname][:].filled(np.nan)
-        return profile, data
+
+            times = nc.variables['time'][:].filled(-1)
+            time_origin = datetime.date(2000, 1, 1)
+            times = np.array([time_origin + datetime.timedelta(days=int(t)) for t in times])
+
+            data = nc.variables[varname][:]
+            if np.issubdtype(data.dtype, np.integer):
+                profile['nodata'] = -1
+                profile['dtype'] = data.dtype
+                data = data.filled(-1)
+            elif np.issubdtype(data.dtype, np.floating):
+                profile['nodata'] = np.nan
+                profile['dtype'] = data.dtype
+                data = data.filled(np.nan)
+            else:
+                profile['nodata'] = data.fill_value
+                profile['dtype'] = data.dtype
+                data = data.filled()
+        return watershed_workflow.datasets.Data(profile, times, data)
 
     def get_data(self,
-                 polygon_or_bounds,
-                 crs,
+                 polygon_or_bounds=None,
+                 crs=None,
                  start=None,
                  end=None,
-                 variable='LAI',
+                 variables=None,
                  force_download=False,
                  task=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
@@ -298,9 +442,9 @@ class FileManagerMODISAppEEARS:
         end : str or datetime.date object, optional
           Date for the end of the data, in YYYY-MM-DD. Valid is
           <= 2020-12-30.
-        variable : str, optional
+        variables : str or list, optional
           Variable to download, currently one of {LAI, LULC}.  Default
-          is LAI.
+          is both LAI and LULC.
         force_download : bool, optional
           Force a new file to be downloaded.  Default is False.
         task : (str, str) tuple of task_id, filename
@@ -310,52 +454,86 @@ class FileManagerMODISAppEEARS:
         
         Returns
         -------
-        (data, profile) : (np.ndarray of shape [NX,NY,NT], dict)
-          If the file already exists or the download is successful,
-          returns the 3D array of data and a dictionary containing
-          metadata including bounds, affine transform, CRS, etc.
+        dict : { variable : (profile, times, data) }
+          Returns a dictionary of (variable, data) pairs. For each
+          variable, profile is a dictionary of standard raster profile
+          information, times is an array of datetime objects of length
+          NTIMES, and data is an array of shape (NTIMES, NX, NY) storing
+          the actual values.
 
         OR
 
         task : (task_id, filename)
           If the data is not yet ready after the wait time, returns a
-          task tuple for use in a future call to get_raster().
+          task tuple for use in a future call to get_data().
 
         """
-        if task is not None:
-            task_id, filename = task
-        else:
+        if task is None:
+            if polygon_or_bounds is None or crs is None:
+                raise RuntimeError(
+                    'Must provide either polgyon_or_bounds and crs or task arguments.')
+
+            # clean the variables list
+            if variables is None:
+                variables = ['LAI', 'LULC']
+            for var in variables:
+                if var not in self._PRODUCTS:
+                    err = 'FileManagerMODISAppEEARS cannot provide variable {variable}.  Valid are: '
+                    raise ValueError(err + ', '.join(self._PRODUCTS.keys()))
+
             # clean bounds
             bounds = self._clean_bounds(polygon_or_bounds, crs)
 
             # check start and end times
+            if start is None:
+                start = self._START
+            if end is None:
+                end = self._END
             start = self._clean_date(start)
             end = self._clean_date(end)
 
-            if variable not in self._PRODUCTS:
-                err = 'FileManagerMODISAppEEARS cannot provide variable {variable}.  Valid are: '
-                raise ValueError(err + ', '.join(self._PRODUCTS.keys()))
+            # create a task
+            task = Task('',
+                        variables,
+                        filenames=dict(
+                            (v, self._filename(bounds, start, end, v)) for v in variables))
 
-            filename = self._filename(bounds, start, end, variable)
-            task_id = None
+            # check for existing file
+            for filename in task.filenames.values():
+                logging.info(f'... searching for: {filename}')
+            if all(os.path.isfile(filename) for filename in task.filenames.values()):
+                if force_download:
+                    for filename in task.filenames:
+                        try:
+                            os.remove(filename)
+                        except FileNotFoundError:
+                            pass
+                else:
+                    return self._read_data(task)
 
-        # check for existing file
-        if os.path.isfile(filename):
-            if force_download:
-                os.path.remove(filename)
-            else:
-                return self._open(filename, variable)
-
-        if task_id is None:
+        if len(task.task_id) == 0:
             # create the task
-            task = self._construct_request(bounds, start, end, variable)
-            assert (filename == task[1])
-            task_id = task[0]
+            task = self._construct_request(bounds, start, end, variables)
 
-        task = (task_id, filename)
-        file_id = self._is_ready(task)
-        if file_id:
-            self._download(task, file_id)
-            return self._open(filename, variable)
-
+        if self._download(task):
+            return self._read_data(task)
         return task
+
+    def wait(self, task, interval=120, tries=100):
+        """Blocking -- waits for a task to end."""
+        count = 0
+        success = False
+        res = task
+        while count < tries and not success:
+            res = self.get_data(task=res)
+            if isinstance(res, watershed_workflow.datasets.State):
+                success = True
+                break
+            else:
+                time.sleep(interval)
+                count += 1
+
+        if success:
+            return res
+        else:
+            raise RuntimeError(f'Unable to get data after {interval*tries} seconds.')
