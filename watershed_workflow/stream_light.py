@@ -746,8 +746,6 @@ class StreamLight:
         self.get_energy_stream()
 
     def test_streamlight(self, path_data_test = None, plot_scatter = False):
-        
-
 
         # Test scenario from StreamLight implementation in R -------------------------
         
