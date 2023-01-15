@@ -8,48 +8,37 @@ import pytest
 
 import watershed_workflow.stream_light
 
-
 @pytest.fixture
 def sl_data():
     sl = watershed_workflow.stream_light.StreamLight()
     path_data_test = './watershed_workflow/test/data_test_streamlight/'
     
-    ## Channel characteristics 
-    lat = 35.9925
-    lon = -79.0460
-    channel_azimuth = 330
-    bottom_width = 18.9
-    bank_height = 0.1
-    bank_slope = 100
-    water_depth = 0.05
-    tree_height = 23
-    overhang = 2.3
-    overhang_height = 0.1*tree_height
-    x_LAD = 1
-
     ## Files with the drivers and results
-    input_data_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_streamlight.csv'))
-    
-    results_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'results_test_streamlight.csv'))
-    
-    test_solar_geo_calc_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_solar_geo_calc.csv'))
-    
-    test_rt_cn_1998_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_RT_CN_1998.csv'))
-    
-    test_shade2_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_SHADE2.csv'))
-    
-    test_stream_light_df = pd.read_csv(os.path.join(path_data_test,'input_data_test_stream_light.csv'))
-    
-    data = pd.concat([input_data_test_streamlight_df, results_test_streamlight_df, test_solar_geo_calc_df, test_rt_cn_1998_df, test_shade2_df, test_stream_light_df],axis =1)
+    data_ts = input_data_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'data_test_streamlight_time_series.csv'))
+
+    data_params = input_data_test_streamlight_df = pd.read_csv(os.path.join(path_data_test,'data_test_streamlight_parameters.csv'))
+
+    ## Channel characteristics 
+    lat = data_params['lat'].values
+    lon = data_params['lon'].values
+    channel_azimuth = data_params['channel_azimuth'].values
+    bottom_width = data_params['bottom_width'].values
+    bank_height = data_params['bh'].values
+    bank_slope = data_params['bs'].values
+    water_depth = data_params['wl'].values
+    tree_height = data_params['th'].values
+    overhang = data_params['overhang'].values
+    overhang_height = data_params['overhang_height'].values
+    x_LAD = data_params['x_LAD'].values
 
     # Drivers for test simulation
 
     # Extract information from test drivers
-    doy = data['DOY'].values
-    hour = data['Hour'].values
-    tz_offset = data['offset'].values
-    sw_inc = data['SW_inc'].values
-    lai = data['LAI'].values
+    doy = data_ts['DOY'].values
+    hour = data_ts['Hour'].values
+    tz_offset = data_ts['offset'].values
+    sw_inc = data_ts['SW_inc'].values
+    lai = data_ts['LAI'].values
 
     # Run pyton implementation of StreamLight
 
@@ -64,28 +53,7 @@ def sl_data():
     sl.run_streamlight()
     #sl.data_comparison = data_comparison
 
-    return sl, data, path_data_test
-
-
-def test_solar_dec(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08,plot_scatter = False):
-
-    sl, data, path_data_test = sl_data
-
-    #assert np.allclose(sl.solar_angles['solar_dec'], data['solar_dec'].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
-    
-    print(os.getcwd())
-
-    assert len(sl.solar_angles['solar_dec']) == len(data['solar_dec'].values)
-
-    plot_scatter = False
-    if plot_scatter:
-        fig, ax = plt.subplots(figsize=(5,5))
-        plot_comparison(sl.solar_angles['solar_dec'], data['solar_dec'].values,'solar_dec',ax)
-
-        plt.tight_layout()#(pad=0.4, w_pad=0.5, h_pad=1.0)
-        plt.savefig(os.path.join(path_data_test,"test_StreamLight.pdf"), transparent=True)
-        plt.savefig(os.path.join(path_data_test,"test_StreamLight.png"), dpi=300, transparent=True)
-    
+    return sl, data_ts, path_data_test
 
 def plot_comparison(var_estimate, var_reference, var_name, ax):
 
@@ -97,4 +65,140 @@ def plot_comparison(var_estimate, var_reference, var_name, ax):
     ax.set_title(the_title.format(vname=var_name,vrmse=rmse_solar_dec), loc='left')
     ax.set_xlabel('From StreamLight in R')
     ax.set_ylabel('From StreamLight in Python')
+
+def test_solar_dec(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'solar_dec'
+    var_name_test = 'solar_dec'
+
+    assert np.allclose(sl.solar_angles[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.solar_angles[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
     
+def test_solar_altitude(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'solar_altitude'
+    var_name_test = 'solar_altitude'
+
+    assert np.allclose(sl.solar_angles[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.solar_angles[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+def test_sza(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'sza'
+    var_name_test = 'SZA'
+
+    assert np.allclose(sl.solar_angles[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.solar_angles[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+
+def test_solar_azimuth(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'solar_azimuth'
+    var_name_test = 'solar_azimuth2'
+
+    assert np.allclose(sl.solar_angles[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.solar_angles[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+def test_total_trans_PAR_ppfd(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'total_trans_PAR_ppfd'
+    var_name_test = 'PAR_bc'
+
+    assert np.allclose(sl.energy_response[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.energy_response[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+def test_fraction_shade_veg(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'fraction_shade_veg'
+    var_name_test = 'veg_shade'
+
+    assert np.allclose(sl.shading_response[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.shading_response[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+def test_fraction_shade_bank(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'fraction_shade_bank'
+    var_name_test = 'bank_shade'
+
+    assert np.allclose(sl.shading_response[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.shading_response[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
+
+def test_energy_total_surface_PAR_ppfd(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
+
+    sl, data_ts, path_data_test = sl_data
+
+    var_name_ww = 'energy_total_surface_PAR_ppfd'
+    var_name_test = 'PAR_surface'
+
+    assert np.allclose(sl.energy_response[var_name_ww], data_ts[var_name_test].values, rtol=relative_tolerance, atol=absolute_tolerance, equal_nan=True)
+
+    if plot_scatter:
+        fig, ax = plt.subplots(figsize=(5,5))
+        plot_comparison(sl.energy_response[var_name_ww], data_ts[var_name_test].values,var_name_ww,ax)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".pdf")), transparent=True)
+        plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
