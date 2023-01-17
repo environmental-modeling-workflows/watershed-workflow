@@ -51,7 +51,7 @@ class FileManagerNHDPlusV21:
         self.name = 'NHD Plus Medium Res v2.1 (EPA)'
         self.name_manager = watershed_workflow.sources.names.Names(self.name, 'hydrography',
                                                                    'NHDPlusV21_{}_{}', 'NHDPlusV21_{}_{}_{}_{}_{}')        
-        self.boundary_unit_file = self._get_v21_boundary_unit_file()
+        #self.boundary_unit_file = self._get_v21_boundary_unit_file()
         self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
         self._componentnames_vpu_wide = self._componentnames_vpu_wide_main
         self._componentnames_rpu_wide = self._componentnames_rpu_wide_main
@@ -134,7 +134,7 @@ class FileManagerNHDPlusV21:
     })
     
     def _get_v21_boundary_unit_file(self):
-        """This just downloads the NHD v2.1 Boundary Unit file, which contains
+        """This downloads the NHD v2.1 Boundary Unit file, which contains
         VPUs, RPUs, and Drainage Area IDs."""
         # check directory structure
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
@@ -147,13 +147,14 @@ class FileManagerNHDPlusV21:
             source_utils.download(url, loc+'.7z', force=False)
             source_utils.unzip(loc+'.7z', loc)
             assert(os.path.isfile(final_loc))
+
         return final_loc
 
 
     def _get_v21_boundary_units(self, huc, enforce_VPUs = True):
         """Given a list of HUCs, figure out which VPU and HRU and DAID we are in."""
         wbd_profile, wbd_huc = self.wbd.get_huc(huc)
-        huc_bounds = watershed_workflow.utils.bounds(wbd_huc)
+        huc_bounds = watershed_workflow.utils.create_bounds(wbd_huc)
 
         with fiona.open(self.boundary_unit_file, 'r') as fid:
             # Get the CRS for the Boundary Units
@@ -292,10 +293,12 @@ class FileManagerNHDPlusV21:
         ----------
         huc : int or str
           The USGS Hydrologic Unit Code
+        force_download : bool
+            If True, data is downloaded even if it already exists. The default value is force_download=False   
         enforce_VPUs : bool
-            Enforces the download to the VPU that mathces the level 2 hydrologic unit from huc 
+            Enforces the download to the VPU that matches the level 2 hydrologic unit from huc 
             (i.e., first two digits of huc) and not all the VPUs intersecting the rectangle that
-            encloses the huc polygon 
+            encloses the huc polygon. The default value is enforce_VPUs=True
 
         Returns
         -------
@@ -349,6 +352,7 @@ class FileManagerNHDPlusV21:
                 .format(self.name, self.file_level))
 
         # get drainage area ID, vpu, and rpu info
+        self.boundary_unit_file = self._get_v21_boundary_unit_file()
         self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
         self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
 
@@ -369,7 +373,6 @@ class FileManagerNHDPlusV21:
         os.makedirs(my_wbd_file_name, exist_ok=True)
         os.makedirs(os.path.join(my_wbd_file_name,'raw'), exist_ok=True)
         
-
         loc = my_wbd_file_name
         final_loc = os.path.join(loc, 'WBD_Subwatershed.shp')
 
@@ -423,7 +426,7 @@ class FileManagerNHDPlusV21:
 
                 hus_subset = [hu for hu in hus if hu['properties']['HUC_12'].startswith(hu_level)]
 
-                geoms = [watershed_workflow.utils.shply(feature) for feature in hus_subset]
+                geoms = [watershed_workflow.utils.create_shply(feature) for feature in hus_subset]
                 # geoms = [shape(feature['geometry']) for feature in hus_subset]
                 new_poly_shply = cascaded_union(geoms)
 
@@ -469,9 +472,8 @@ class FileManagerNHDPlusV21:
           CRS of the above bounds.
         in_network : bool, optional
           If True (default), remove reaches that are not "in" the NHD network
-
         properties : list(str) or bool, optional
-          A list of property aliases to be added to reaches.  See
+          A list of property aliases to be added to reaches. See
           alias names in Table 16 (NHDPlusFlowlineVAA) or 17
           (NHDPlusEROMMA) of NHDPlus User Guide).  This is only
           supported for NHDPlus.  Commonly used properties include: 
@@ -486,11 +488,10 @@ class FileManagerNHDPlusV21:
           If bool is provided and the value is True, a standard
           default set of VAA and EROMMA attributes are added as
           properties.
-
         include_catchments : bool, optional 
           If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
-        force_download : bool Download
-          or re-download the file if true.
+        force_download : bool 
+            Download or re-download the file if true.
 
         Returns
         -------
@@ -515,7 +516,7 @@ class FileManagerNHDPlusV21:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level
@@ -684,7 +685,7 @@ class FileManagerNHDPlusV21:
 
         """
 
-        if 'NHDPlus' not in self.name:
+        if 'NHD Plus Medium' not in self.name:
             raise RuntimeError(f'{self.name}: does not provide water body data.')
 
         huc = source_utils.huc_str(huc)
@@ -694,7 +695,7 @@ class FileManagerNHDPlusV21:
         if bounds is None:
             # can we infer a bounds by getting the HUC?
             profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.bounds(hu)
+            bounds = watershed_workflow.utils.create_bounds(hu)
             bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
 
         # error checking on the levels, require file_level <= huc_level <= lowest_level
@@ -707,17 +708,31 @@ class FileManagerNHDPlusV21:
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('  Using Hydrography file "{}"'.format(filename))
 
-        # find and open the waterbody layer
-        filename = self.name_manager.file_name(huc[0:self.file_level])
+        filename = os.path.join(
+            self._url_data_info_df['data_local_path'][
+            self._url_data_info_df['component_name'] == 'NHDSnapshot'].values[0],
+            'Hydrography')
         layer = 'NHDWaterbody'
         logging.info(
-            f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
-        with fiona.open(filename, mode='r', layer=layer) as fid:
+            f"  {self.name}: opening '{filename}' layer '{layer}' for water bodies in '{bounds}'")
+        with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(
                 bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
             bodies = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(bodies)} in bounds.")
+
+        # # find and open the waterbody layer
+        # filename = self.name_manager.file_name(huc[0:self.file_level])
+        # layer = 'NHDWaterbody'
+        # logging.info(
+        #     f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
+        # with fiona.open(filename, mode='r', layer=layer) as fid:
+        #     profile = fid.profile
+        #     bounds = watershed_workflow.warp.bounds(
+        #         bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
+        #     bodies = [r for (i, r) in fid.items(bbox=bounds)]
+        #     logging.info(f"  Found total of {len(bodies)} in bounds.")
 
         return profile, bodies
 
