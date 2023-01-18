@@ -352,9 +352,10 @@ class FileManagerNHDPlusV21:
                 .format(self.name, self.file_level))
 
         # get drainage area ID, vpu, and rpu info
-        self.boundary_unit_file = self._get_v21_boundary_unit_file()
-        self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
-        self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
+        self._get_url_info(huc, enforce_VPUs)
+        # self.boundary_unit_file = self._get_v21_boundary_unit_file()
+        # self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+        # self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
 
         # Download the WBD for the NHD Plus V2 dataset
         idx = self._url_data_info_df.index[self._url_data_info_df['component_name'] == 'WBDSnapshot'].tolist()[0]
@@ -454,7 +455,12 @@ class FileManagerNHDPlusV21:
             raise ValueError("The level must be within the interval [2, 12].")
 
         return profile, hus
-    
+
+    def _get_url_info(self,huc, enforce_VPUs=True):
+            self.boundary_unit_file = self._get_v21_boundary_unit_file()
+            self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+            self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
+
     def get_hydro(self,
                   huc,
                   bounds=None,
@@ -462,7 +468,8 @@ class FileManagerNHDPlusV21:
                   in_network=True,
                   properties=None,
                   include_catchments=False,
-                  force_download=False):
+                  force_download=False,
+                  enforce_VPUs=True):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -529,6 +536,8 @@ class FileManagerNHDPlusV21:
                 f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level."
             )
 
+        # get drainage area ID, vpu, and rpu info
+        self._get_url_info(huc, enforce_VPUs)
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('  Using Hydrography file "{}"'.format(filename))
@@ -663,7 +672,7 @@ class FileManagerNHDPlusV21:
 
         return profile, reaches
 
-    def get_waterbodies(self, huc, bounds=None, bounds_crs=None, force_download=False):
+    def get_waterbodies(self, huc, bounds=None, bounds_crs=None, force_download=False,enforce_VPUs = True):
         """Get all water bodies, e.g. lakes, reservoirs, etc, within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -707,6 +716,9 @@ class FileManagerNHDPlusV21:
             raise ValueError(
                 f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level."
             )
+
+        # get drainage area ID, vpu, and rpu info
+        self._get_url_info(huc, enforce_VPUs)
 
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
@@ -817,53 +829,53 @@ class FileManagerNHDPlusV21:
         # logging.debug('  REST query without polyCODE... FAIL')
         raise ValueError('{}: cannot find HUC {}'.format(self.name, hucstr))
 
-    def _valid_url(self, i, match, huc, gdb_only=True):
-        """Helper function that returns the URL if valid, or False if not."""
-        ok = True
-        logging.info(f'Checking match for {huc}? {match["downloadURL"]}')
+    # def _valid_url(self, i, match, huc, gdb_only=True):
+    #     """Helper function that returns the URL if valid, or False if not."""
+    #     ok = True
+    #     logging.info(f'Checking match for {huc}? {match["downloadURL"]}')
 
-        if ok:
-            ok = "format" in match
-            logging.info(f'format in match? {ok}')
-        if ok:
-            ok = "urls" in match
-            logging.info(f'urls in match? {ok}')
-        if ok:
-            # search for a GDB url
-            try:
-                url_type = next(ut for ut in match['urls'] if 'GDB' in ut or 'GeoDatabase' in ut)
-            except StopIteration:
-                logging.info(f'Cannot find GDB url: {list(match["urls"].keys())}')
-                return False
-            else:
-                url = match['urls'][url_type]
+    #     if ok:
+    #         ok = "format" in match
+    #         logging.info(f'format in match? {ok}')
+    #     if ok:
+    #         ok = "urls" in match
+    #         logging.info(f'urls in match? {ok}')
+    #     if ok:
+    #         # search for a GDB url
+    #         try:
+    #             url_type = next(ut for ut in match['urls'] if 'GDB' in ut or 'GeoDatabase' in ut)
+    #         except StopIteration:
+    #             logging.info(f'Cannot find GDB url: {list(match["urls"].keys())}')
+    #             return False
+    #         else:
+    #             url = match['urls'][url_type]
 
-        # we have a url, is it actually this huc?
-        url_split = url.split('/')
-        logging.info(f'YAY: {url}')
-        logging.info(f'Checking match {i}: {url_split[-2]}, {url_split[-1]}')
+    #     # we have a url, is it actually this huc?
+    #     url_split = url.split('/')
+    #     logging.info(f'YAY: {url}')
+    #     logging.info(f'Checking match {i}: {url_split[-2]}, {url_split[-1]}')
 
-        # check the title contains (NHD) if NHD, or (NHDPlus HR) if NHDPlus
-        if ok:
-            ok = "title" in match
-            logging.debug(f'title in match? {ok}')
-        if ok:
-            for abbrev in ['NHD', 'NHDPlus', 'NHDPlus HR', 'WBD']:
-                my_abbrev = f'({abbrev})'.lower()
-                if my_abbrev in self.name.lower():
-                    break
-            ok = my_abbrev in match["title"].lower()
-            logging.debug(f'name in title? {ok}')
-        if not ok:
-            return False
+    #     # check the title contains (NHD) if NHD, or (NHDPlus HR) if NHDPlus
+    #     if ok:
+    #         ok = "title" in match
+    #         logging.debug(f'title in match? {ok}')
+    #     if ok:
+    #         for abbrev in ['NHD', 'NHDPlus', 'NHDPlus HR', 'WBD']:
+    #             my_abbrev = f'({abbrev})'.lower()
+    #             if my_abbrev in self.name.lower():
+    #                 break
+    #         ok = my_abbrev in match["title"].lower()
+    #         logging.debug(f'name in title? {ok}')
+    #     if not ok:
+    #         return False
 
-        if huc not in url_split[-1]:
-            # not the right HUC
-            return False
-        if gdb_only and 'GDB' != url_split[-2]:
-            # not a GDB
-            return False
-        return url
+    #     if huc not in url_split[-1]:
+    #         # not the right HUC
+    #         return False
+    #     if gdb_only and 'GDB' != url_split[-2]:
+    #         # not a GDB
+    #         return False
+    #     return url
 
     def _download(self, hucstr, force=False):
         """Find and download data from a given HUC.
