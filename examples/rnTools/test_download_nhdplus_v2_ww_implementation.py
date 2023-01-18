@@ -7,18 +7,51 @@ import matplotlib.pyplot as plt
 import watershed_workflow
 import watershed_workflow.plot 
 
-## Test Highlevel Functions
-# set up a dictionary of source objects
+# Test Highlevel Functions
+
+test_huc = '14010001'
+test_hucs_level = 10
+
+## set up a dictionary of source objects
 sources = watershed_workflow.source_list.get_default_sources()
 sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHDPlus_MidRes']
 sources['HUC'] = watershed_workflow.source_list.huc_sources['NHDPlus_MidRes']
+sources['DEM'] = watershed_workflow.source_list.dem_sources['NED 1/3 arc-second']
+watershed_workflow.source_list.log_sources(sources)
+crs = watershed_workflow.crs.daymet_crs() # Use the same projection than Daymet
+
+profile_ws, ws = watershed_workflow.get_huc(
+            source=sources['HUC'], 
+            huc=test_huc, 
+            out_crs=crs)
+
+profile_ws_10, ws_10 = watershed_workflow.get_hucs(
+            source=sources['HUC'], 
+            huc=test_huc,
+            level=10, 
+            out_crs=crs)
+
+profile_ws_12, ws_12 = watershed_workflow.get_hucs(
+            source=sources['HUC'], 
+            huc=test_huc,
+            level=12, 
+            out_crs=crs)
 
 
 
-## Test FileManager directly
+fig, ax = plt.subplots(1)
+[watershed_workflow.plot.huc(huc=hu, crs=profile_ws_12, ax=ax, color='lightgrey') \
+    for hu in ws_12]
+[watershed_workflow.plot.huc(huc=hu, crs=profile_ws_10, ax=ax, color='grey') \
+    for hu in ws_10]
+watershed_workflow.plot.huc(huc=ws, crs=profile_ws, ax=ax, color='black')
+
+
+
+# Test FileManager directly
 fm = watershed_workflow.sources.manager_nhdplusv21.FileManagerNHDPlusV21() # File manager
 test_huc = '14010001'
-test_hucs_level = 10
+test_hucs_level = 12
 
 profile_huc,huc = fm.get_huc(huc = test_huc)
 

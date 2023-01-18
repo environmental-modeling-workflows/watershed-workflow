@@ -411,10 +411,10 @@ class FileManagerNHDPlusV21:
 
         if level == 12:
             logging.info('Returning all the HUCs of level {} inside the HUC of level {}'.format(level,huc_level))
-
-        if level < 12:
-
+        elif (level < 12) and (level >= 2):
             logging.info('Aggregating from HUCs of level {} to HUC of level {}'.format(self.lowest_level,level))
+
+        if (level >= 2) and (level <= 12):
 
             #huc_at_level = np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
             huc_at_level_unique = np.unique(
@@ -433,8 +433,9 @@ class FileManagerNHDPlusV21:
                 new_poly_fiona = copy.deepcopy(hus_subset[0])
                 new_poly_fiona.keys()
                 
+                key_huc = 'HUC{:d}'.format(level)
                 new_poly_fiona['id'] = idx
-                new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID',idx),('HUC',hu_level)])
+                new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID',idx),(key_huc,hu_level)])
                 new_poly_fiona['geometry'] = mapping(new_poly_shply)
                 new_hus.append(new_poly_fiona)
                 # # Quick plot for verification purposes
@@ -448,6 +449,9 @@ class FileManagerNHDPlusV21:
             hus = copy.deepcopy(new_hus)
             profile['schema']['properties'] = hus[0]['properties']
             profile['schema']['geometry'] = hus[0]['geometry']
+
+        else:
+            raise ValueError("The level must be within the interval [2, 12].")
 
         return profile, hus
     
