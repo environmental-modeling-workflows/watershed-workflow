@@ -24,18 +24,24 @@ from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAp
 
 from watershed_workflow.sources.manager_shape import FileManagerShape
 from watershed_workflow.sources.manager_raster import FileManagerRaster
+from watershed_workflow.sources.manager_nhdplusv21 import FileManagerNHDPlusV21
 
 # available and default water boundary datasets
 huc_sources = {
     'NHDPlus': FileManagerNHDPlusAccumulator(),
     'NHD': FileManagerNHD(),
-    'WBD': FileManagerWBD()
+    'WBD': FileManagerWBD(),
+    'NHDPlus_MidRes': FileManagerNHDPlusV21()
 }
 huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for backward compatibility
 default_huc_source = 'NHDPlus'
 
 # available and default hydrography datasets
-hydrography_sources = { 'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
+hydrography_sources = { 
+    'NHDPlus': FileManagerNHDPlus(), 
+    'NHD': FileManagerNHD(), 
+    'NHDPlus_MidRes': FileManagerNHDPlusV21()
+}
 hydrography_sources['NHD Plus'] = hydrography_sources[
     'NHDPlus']  # historical typo, kept for backward compatibility
 default_hydrography_source = 'NHDPlus'

@@ -10,8 +10,8 @@ import watershed_workflow.plot
 ## Test Highlevel Functions
 # set up a dictionary of source objects
 sources = watershed_workflow.source_list.get_default_sources()
-sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHD Plus']
-sources['HUC'] = watershed_workflow.source_list.huc_sources['NHD Plus']
+sources['hydrography'] = watershed_workflow.source_list.hydrography_sources['NHDPlus_MidRes']
+sources['HUC'] = watershed_workflow.source_list.huc_sources['NHDPlus_MidRes']
 
 
 

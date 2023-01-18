@@ -920,4 +920,3 @@ class FileManagerNHDPlusV21:
 
 
         self._url_data_info_df['data_local_path'] = loc_data
-
