@@ -156,31 +156,35 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
     watershed_densified: watershed_workflow.split_hucs.SplitHUCs object
         a densified huc
     """
-
+    densified_polygons = list()
     # first if there are multiple segments, we define outer-ring and remove close points
-    coords = list(huc.exterior().exterior.coords)
-    coords_raw = list(huc_raw.exterior().exterior.coords)
+    #huc_ring=huc.exterior().exterior.simplify(tolerance=1)
+    for poly, poly_raw in zip(huc.polygons(), huc_raw.polygons()):
+        coords = list(poly.exterior.coords)
+        coords_raw = list(poly_raw.exterior.coords)
 
-    if use_original:
-        if type(limit_scales) is list:
-            # basic refine
-            coords_densified_basic = densify_hucs_(coords,
-                                                   coords_raw,
-                                                   rivers,
-                                                   limit_scales=limit_scales[-1])
-            # adaptive refine
-            coords_densified = densify_hucs_(coords_densified_basic,
-                                             coords_raw,
-                                             rivers,
-                                             limit_scales=limit_scales)
+        if use_original:
+            if type(limit_scales) is list:
+                # basic refine
+                coords_densified_basic = densify_hucs_(coords,
+                                                    coords_raw,
+                                                    rivers,
+                                                    limit_scales=limit_scales[-1])
+                # adaptive refine
+                coords_densified = densify_hucs_(coords_densified_basic,
+                                                coords_raw,
+                                                rivers,
+                                                limit_scales=limit_scales)
+
+            else:
+                coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
         else:
             coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
-
-    else:
-        coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
-
-    return watershed_workflow.split_hucs.SplitHUCs([shapely.geometry.Polygon(coords_densified)])
+        
+        densified_polygons.append(shapely.geometry.Polygon(coords_densified))
+ 
+    return watershed_workflow.split_hucs.SplitHUCs(densified_polygons)
 
 
 def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):

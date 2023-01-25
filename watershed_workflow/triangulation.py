@@ -308,7 +308,9 @@ def integrate_river_corrs_in_huc(river_corrs, hucs):
 def add_river_outlet_in_huc(river_corr, hucs):
     """Returns updated huc with river outlet represented"""
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
-        huc_segment = hucs.segments[0]
+        poly_containing_huc = [poly for poly in  hucs.polygons() if poly.contains(river_corr)][0]
+        res_polys = [poly for poly in  hucs.polygons() if not poly.contains(river_corr)]
+        huc_segment = poly_containing_huc.exterior
     elif type(hucs) is list:
         huc_segment = hucs[0]
     elif type(hucs) is shapely.geometry.Polygon:
@@ -344,8 +346,8 @@ def add_river_outlet_in_huc(river_corr, hucs):
         huc_coords.insert(ind, river_corr.exterior.coords[0])
 
     huc_coords.append(huc_coords[0])  # to make the polygonal loop complete
-    hucs_new_poly = shapely.geometry.Polygon(huc_coords)
-    return watershed_workflow.split_hucs.SplitHUCs([hucs_new_poly])
+    hucs_new_polys = [shapely.geometry.Polygon(huc_coords),] + res_polys
+    return watershed_workflow.split_hucs.SplitHUCs(hucs_new_polys)
 
 
 def pick_hole_point(poly):
