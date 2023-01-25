@@ -158,7 +158,6 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
     """
 
     # first if there are multiple segments, we define outer-ring and remove close points
-    #huc_ring=huc.exterior().exterior.simplify(tolerance=1)
     coords = list(huc.exterior().exterior.coords)
     coords_raw = list(huc_raw.exterior().exterior.coords)
 
