@@ -156,12 +156,20 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
     watershed_densified: watershed_workflow.split_hucs.SplitHUCs object
         a densified huc
     """
-    densified_polygons = list()
-    # first if there are multiple segments, we define outer-ring and remove close points
-    #huc_ring=huc.exterior().exterior.simplify(tolerance=1)
-    for poly, poly_raw in zip(huc.polygons(), huc_raw.polygons()):
-        coords = list(poly.exterior.coords)
-        coords_raw = list(poly_raw.exterior.coords)
+
+    for i, seg in enumerate(huc.segments): # densifying segment by segment 
+        # find which original segment is this segment part of, so we can use it to resample
+        seg_raw = None
+        for seg_orig in huc_raw.segments:  
+            intersect = seg.intersection(seg_orig)
+            if type(intersect) is shapely.geometry.MultiPoint and len(seg.intersection(seg_orig)) > 2:
+                seg_raw = seg_orig
+        
+        if seg_raw == None:
+            RuntimeError('No original segment found')
+
+        coords = list(seg.coords)    
+        coords_raw = list(seg_raw.coords)
 
         if use_original:
             if type(limit_scales) is list:
@@ -181,11 +189,11 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
 
         else:
             coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
-        
-        densified_polygons.append(shapely.geometry.Polygon(coords_densified))
- 
-    return watershed_workflow.split_hucs.SplitHUCs(densified_polygons)
 
+        huc.segments[i] = shapely.geometry.LineString(coords_densified)
+
+    return huc
+ 
 
 def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
@@ -222,10 +230,10 @@ def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):
         if section_length > limit:
             number_new_points = int(section_length // limit)
             end_points = [coords[i], coords[i + 1]]  # points betwen which more points will be added
-
             if adaptive:
                 new_points = interpolate_simple(end_points, number_new_points)
             else:
+                #print(end_points, coords_raw, number_new_points)
                 new_points = interpolate_with_orig(end_points, coords_raw, number_new_points)
 
             coords_densified[j + 1:j + 1] = new_points
