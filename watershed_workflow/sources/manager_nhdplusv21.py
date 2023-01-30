@@ -578,7 +578,11 @@ class FileManagerNHDPlusV21:
         '''
         # associate catchment areas with the reaches if NHDPlus
         if properties != None:
-            reach_dict = dict((r['properties']['ComID'], r) for r in reaches) # The ComID is the key for this dictionary
+
+            properties_keys = reaches[0]['properties'].keys()
+            the_comid_key = [kk for kk in properties_keys if (kk.lower() == 'comid')]
+
+            reach_dict = dict((r['properties'][the_comid_key[0]], r) for r in reaches) # The ComID is the key for this dictionary
 
             # validation of properties
             valid_props = list(self._nhdplus_vaa.keys()) + list(
