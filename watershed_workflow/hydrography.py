@@ -77,6 +77,24 @@ def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=Fa
     return rivers
 
 
+def snap_waterbodies(hucs, waterbodies, tol=_tol, cut_intersections=True):
+    """Snap waterbodies to HUCs."""
+    assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
+    assert (type(waterbodies) is list)
+    list(hucs.polygons())
+
+    if len(waterbodies) == 0:
+        return True
+    assert (len(waterbodies) > 0)
+
+    # snap endpoints of all rivers to the boundary if close
+    # note this is a null-op on cases dealt with above
+    logging.info("  snapping waterbody points to the HUC boundary")
+    for i,wb in enumerate(waterbodies):
+        for polygon in hucs.polygons():
+            waterbodies[i] = shapely.ops.snap(wb, polygon, tol)
+
+
 def cut_and_snap_crossings(hucs, rivers, tol=_tol):
     """If any reach crosses a HUC boundary:
 
