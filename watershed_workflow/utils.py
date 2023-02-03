@@ -322,8 +322,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
     data = data.mean(axis=0)
 
     if filter:
-        defaults = { 'window': 61, 'poly_order': 2, 'axis': 0, 'mode': 'wrap'}
-        for k, v in defaults:
+        defaults = { 'window_length': 61, 'polyorder': 2, 'axis': 0, 'mode': 'wrap'}
+        for (k, v) in defaults.items():
             kwargs.setdefault(k, v)
 
         data = scipy.signal.savgol_filter(data, **kwargs)
