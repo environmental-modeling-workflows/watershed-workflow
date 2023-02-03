@@ -114,7 +114,7 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, **kwargs):
+def triangulate(hucs, refinement_polygon=None, internal_boundaries=None, river_corrs=None, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -124,27 +124,31 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    rivers : watershed_workflow.river_tree.RiverTree object
-        river tree 
+    refinement_polygon : list, optional
+        List of RiverTrees or other iterable collections of
+        coordinates used to refine the mesh given the distance
+        function refinement.
+    internal_boundaries : list, optional
+        List of shapely objects or RiverTrees or other iterable
+        collections of coordinates used as internal boundaries that
+        must be included in the mesh.
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
-    mesh_rivers : bool, optional
-        if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
-        else - Include stream network in the mesh discretely if river and allow steiner points
     tol : float, optional
-        Set tolerance for minimum distance between two nodes. The unit is the same as 
-        that of the watershed's CRS. The default is 1.
+        Set tolerance for minimum distance between two nodes. The unit
+        is the same as that of the watershed's CRS. The default is 1.
 
     Additional keyword arguments include all options for meshpy.triangle.build()
+
     """
     import meshpy.triangle
 
     logging.info("Triangulating...")
 
-    if not river_corrs == None:
+    if river_corrs != None:
         logging.info("Adding river-corridor outlet into huc boundary")
-        hucs = add_river_outlet_in_huc(river_corrs[0],
-                                       hucs)  # adjusting hucs to accomodate river corridor
+        # adjust hucs to accomodate river corridor
+        hucs = add_river_outlet_in_huc(river_corrs[0], hucs)
 
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
         segments = list(hucs.segments)
@@ -155,17 +159,21 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     else:
         raise RuntimeError("Triangulate not implemented for container of type '%r'" % type(hucs))
 
-    if mesh_rivers:
-        if not river_corrs == None:
-            if type(river_corrs) is list:
-                segments = river_corrs + segments
-            elif type(river_corrs) is shapely.geometry.Polygon:
-                segments = [river_corrs, ] + segments
+    if internal_boundaries is not None:
+        for internal_boundary in internal_boundaries:
+            if isinstance(internal_boundary, shapely.geometry.Polygon):
+                segments.append(internal_boundary)
             else:
-                raise RuntimeError("Triangulate not implemented for container of type '%r'"
-                                   % type(hucs))
+                segments += list(internal_boundary)
+
+    if river_corrs != None:
+        if type(river_corrs) is list:
+            segments = river_corrs + segments
+        elif type(river_corrs) is shapely.geometry.Polygon:
+            segments = [river_corrs, ] + segments
         else:
-            segments = segments + [r for river in rivers for r in river]
+            raise RuntimeError("Triangulate not implemented for container of type '%r'"
+                               % type(hucs))
 
     nodes_edges = NodesEdges(segments)
 
@@ -181,7 +189,7 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    if not river_corrs == None:
+    if river_corrs is not None:
         # adding hole in the river corridor for quad elements
         logging.info("defining hole..")
         hole_points = []
