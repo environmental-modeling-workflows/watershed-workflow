@@ -536,7 +536,7 @@ def get_waterbodies(source,
         # clip to the shape
         if clip:
             bodies_new = [body.intersection(bounds_or_shp) for body in bodies]
-            count = sum(1 for b1,b2 in zip(bodies_new,bodies) if b1 != b2)
+            count = sum(1 for b1, b2 in zip(bodies_new, bodies) if b1 != b2)
             logging.info(f"Clipped {count} water bodies to the shape")
 
     if prune_by_area is not None:

@@ -90,7 +90,7 @@ def snap_waterbodies(hucs, waterbodies, tol=_tol, cut_intersections=True):
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
     logging.info("  snapping waterbody points to the HUC boundary")
-    for i,wb in enumerate(waterbodies):
+    for i, wb in enumerate(waterbodies):
         for polygon in hucs.polygons():
             waterbodies[i] = shapely.ops.snap(wb, polygon, tol)
 

@@ -1566,10 +1566,10 @@ def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None,
     if isinstance(hucs, list):
         polygons = hucs
         if outlets is None:
-            outlets = [None,]*len(polygons)
+            outlets = [None, ] * len(polygons)
     else:
         polygons = list(hucs.polygons())
-        assert(outlets is None)
+        assert (outlets is None)
         outlets = hucs.polygon_outlets
     if labels is None:
         labels = _get_labels(polygons)
@@ -1617,7 +1617,8 @@ def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None,
             m2.labeled_sets.append(ls)
 
     # also write one for the full domain
-    if isinstance(hucs, watershed_workflow.split_hucs.SplitHUCs) and hucs.exterior_outlet is not None:
+    if isinstance(hucs,
+                  watershed_workflow.split_hucs.SplitHUCs) and hucs.exterior_outlet is not None:
         outlet_faces = [e for e in m2.boundary_edges if inside_ball(hucs.exterior_outlet, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
         ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(), 'FACE', edges)

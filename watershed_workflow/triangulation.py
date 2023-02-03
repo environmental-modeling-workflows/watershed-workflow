@@ -114,7 +114,12 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, refinement_polygon=None, internal_boundaries=None, river_corrs=None, tol=1, **kwargs):
+def triangulate(hucs,
+                refinement_polygon=None,
+                internal_boundaries=None,
+                river_corrs=None,
+                tol=1,
+                **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided

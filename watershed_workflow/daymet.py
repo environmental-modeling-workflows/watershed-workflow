@@ -45,8 +45,8 @@ def daymet_to_daily_averages(dat):
     times = dat['tmin'].times
 
     mean_air_temp_c = (dat['tmin'].data + dat['tmax'].data) / 2.0
-    dout['air temperature [K]'] = watershed_workflow.datasets.Dataset(
-        profile, times, 273.15 + mean_air_temp_c)  # K
+    dout['air temperature [K]'] = watershed_workflow.datasets.Dataset(profile, times,
+                                                                      273.15 + mean_air_temp_c)  # K
 
     precip_ms = dat['prcp'].data / 1.e3 / 86400.  # mm/day --> m/s
 
