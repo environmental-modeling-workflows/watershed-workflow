@@ -281,13 +281,44 @@ def refine_from_max_edge_length(edge_length):
     return refine
 
 
-def integrate_river_corrs_in_huc(river_corrs, hucs):
+
+# def integrate_river_corrs_in_huc(river_corrs, hucs):
+#     """Return huc boundary with river-corridor outlet edge integrated into huc
+#         if hucs have polygon_outlets, w3e use them. Else we check the proximity of the outlet
+#         of each river corridor polygon to huc, and integrate outlet into huc if "close" enough"""
+
+#     if type(hucs.polygon_outlets) == list & len(hucs.polygon_outlets) != 0:
+#         for i, gon in enumerate(hucs.gons):
+#             #assert(hucs.)
+            
+
+#         # we find river corridor for each huc_outlet point
+#         for huc_outlet_point, river_corr in itertools.product(hucs.polygon_outlets, river_corrs):
+#             rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
+#                                                                 river_corr.exterior.coords[-2])
+#             if huc_outlet_point.distance(shapely.geometery.Point(rc_outlet_point)) < 5:
+#                 add_river_outlet_in_huc(river_corr, hucs)
+
+#     else:
+#         # we check the proximity of outlet of each river_corridor and integrate it in huc if they are "close"
+#         for river_corr in river_corrs:
+#             rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
+#                                                                 river_corr.exterior.coords[-2])
+#             huc_poly = hucs.exterior()
+#             if shapely.geometery.Point(rc_outlet_point).distance(huc_poly) < 10:
+#                 hucs = add_river_outlet_in_huc(river_corr, hucs)
+#     return hucs
+
+
+
+
+def integrate_river_corrs_in_huc_old(river_corrs, hucs):
     """Return huc boundary with river-corridor outlet edge integrated into huc
         if hucs have polygon_outlets, w3e use them. Else we check the proximity of the outlet
         of each river corridor polygon to huc, and integrate outlet into huc if "close" enough"""
 
     if type(hucs.polygon_outlets) == list & len(hucs.polygon_outlets) != 0:
-        # we find river corridor for each huc_outlet poinnt
+        # we find river corridor for each huc_outlet point
         for huc_outlet_point, river_corr in itertools.product(hucs.polygon_outlets, river_corrs):
             rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
                                                                 river_corr.exterior.coords[-2])
@@ -303,6 +334,8 @@ def integrate_river_corrs_in_huc(river_corrs, hucs):
             if shapely.geometery.Point(rc_outlet_point).distance(huc_poly) < 10:
                 hucs = add_river_outlet_in_huc(river_corr, hucs)
     return hucs
+
+
 
 
 def add_river_outlet_in_huc(river_corr, hucs):

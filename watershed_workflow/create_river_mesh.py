@@ -133,7 +133,7 @@ def create_river_corridor(river, width):
         mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
        
-    length_scale = max(2.1*delta, min(mins) - 2*delta) # Currently this same for the whole river, should we change it reachwise?
+    length_scale = max(2.1*delta, min(mins) - 4*delta) # Currently this same for the whole river, should we change it reachwise?
     print('length_scale ', length_scale )
 
     # buffer by the width
@@ -218,7 +218,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
         List of river elements
     """
     delta = width/2
-    print(15*delta)
+    
     coords = corr.exterior.coords[:-1]
 
     import time
@@ -255,7 +255,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
             seg_coords = np.array(seg_coords)
             if ax != None: 
-                ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^', markersize=10)
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'm^', markersize=5)
                 pause()
 
         elif node.touched == 1 and len(node.children) == 0:
@@ -277,7 +277,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             if ax != None:           
             # plot it...
                 seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:,0], seg_coords[:,1], 'g^',markersize=10)
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'gv',markersize=5)
 
                 # also plot the conn
                 for i, elem in enumerate(node.elements):
@@ -308,7 +308,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             if ax != None: 
                 #plot it...
                 seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:,0], seg_coords[:,1], 'b^',markersize=10)
+                ax.plot(seg_coords[:,0], seg_coords[:,1], 'b^',markersize=5)
 
             # also plot the conn
             for i,elem in enumerate(node.elements):
@@ -326,6 +326,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta)):
                            print(c, node.segment.coords[len(node.segment.coords)-(i+1)], node.segment.coords[len(node.segment.coords)-(i+2)])
+                           print(node.id)
                            assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta))
                 if ax != None: 
