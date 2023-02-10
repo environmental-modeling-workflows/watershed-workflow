@@ -13,8 +13,9 @@ import watershed_workflow.sources.manager_daymet
 
 def test_daymet1():
     # single file covers it
-    nhd = watershed_workflow.sources.manager_nhd.FileManagerNHDPlus()
-    hprofile, huc = nhd.get_huc('020401010101')
+    ms = watershed_workflow.sources.manager_shape.FileManagerShape(
+        os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_basin.shp'))
+    hprofile, huc = ms.get_shape()
     hucly = watershed_workflow.utils.create_shply(huc['geometry'])
     native_crs = watershed_workflow.crs.from_fiona(hprofile['crs'])
 
@@ -28,7 +29,7 @@ def test_daymet1():
 
     prcp = state['prcp']
     assert (watershed_workflow.crs.equal(watershed_workflow.crs.daymet_crs(), prcp.profile['crs']))
-    assert (prcp.data.shape == (31, 19, 17))
-    assert (prcp.profile['height'] == 19)
-    assert (prcp.profile['width'] == 17)
+    assert (prcp.data.shape == (31, 9, 9))
+    assert (prcp.profile['height'] == 9)
+    assert (prcp.profile['width'] == 9)
     assert (len(prcp.times) == 31)
