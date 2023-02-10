@@ -65,7 +65,7 @@ class _FileManagerNHD:
         'MeanAnnualFlowGaugeAdj': 'QEMA'
     })
 
-    def get_huc(self, huc, force_download=False):
+    def get_huc(self, huc, force_download=False, exclude_hu_types=None):
         """Get the specified HUC in its native CRS.
 
         Parameters
@@ -81,13 +81,14 @@ class _FileManagerNHD:
           Fiona shape object representing the hydrologic unit.
 
         Note this finds and downloads files as needed.
+
         """
         huc = source_utils.huc_str(huc)
         profile, hus = self.get_hucs(huc, len(huc), force_download)
         assert (len(hus) == 1)
         return profile, hus[0]
 
-    def get_hucs(self, huc, level, force_download=False):
+    def get_hucs(self, huc, level, force_download=False, exclude_hu_types=None):
         """Get all sub-catchments of a given HUC level within a given HUC.
 
         Parameters
@@ -99,6 +100,9 @@ class _FileManagerNHD:
           level of the input huc.
         force_download : bool
           Download or re-download the file if true.
+        exclude_hu_types : list[str]
+          List of HUtypes to exclude.  Likely this is None or ['W',]
+          to exclude water HUCs for e.g. a bay, great lake, or ocean.
 
         Returns
         -------
@@ -137,6 +141,9 @@ class _FileManagerNHD:
             hus = [hu for hu in fid if source_utils.get_code(hu, level).startswith(huc)]
             profile = fid.profile
         profile['always_xy'] = True
+
+        if exclude_hu_types is not None:
+            hus = [hu for hu in hus if hu['properties']['hutype'] not in exclude_hu_types]
         return profile, hus
 
     def get_hydro(self,

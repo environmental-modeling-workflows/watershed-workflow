@@ -8,7 +8,7 @@ import datetime
 import shapely
 import numpy as np
 import netCDF4
-import attrs
+import attr
 import rasterio.transform
 
 import watershed_workflow.config
@@ -41,13 +41,13 @@ colors = {
 }
 
 
-@attrs.define
+@attr.define
 class Task:
     task_id: str
     variables: list
-    filenames: dict = attrs.Factory(dict)
-    urls: dict = attrs.Factory(dict)
-    shas: dict = attrs.Factory(dict)
+    filenames: dict = attr.Factory(dict)
+    urls: dict = attr.Factory(dict)
+    shas: dict = attr.Factory(dict)
 
 
 class FileManagerMODISAppEEARS:

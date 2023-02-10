@@ -75,7 +75,7 @@ def get_huc(source, huc, out_crs=None, digits=None):
     return out_crs, hu_shapes[0]
 
 
-def get_hucs(source, huc, level, out_crs=None, digits=None):
+def get_hucs(source, huc, level, out_crs=None, digits=None, **kwargs):
     """Get shape objects for all HUCs at a level contained in huc.
 
     Parameters
@@ -90,6 +90,8 @@ def get_hucs(source, huc, level, out_crs=None, digits=None):
         Output coordinate system.  Default is source's crs.
     digits : int, optional
         Number of digits to round coordinates to.
+    kwargs 
+       All additional arguments are passed to the source manager.
 
     Returns
     -------
@@ -108,7 +110,7 @@ def get_hucs(source, huc, level, out_crs=None, digits=None):
     logging.info(f"Loading level {level} HUCs in {huc}")
     logging.info("-" * 30)
 
-    profile, hus = source.get_hucs(huc, level)
+    profile, hus = source.get_hucs(huc, level, **kwargs)
     logging.info("... found {} HUCs".format(len(hus)))
     for hu in hus:
         logging.info('  -- {}'.format(watershed_workflow.sources.utils.get_code(hu, level)))
@@ -446,6 +448,7 @@ def get_waterbodies(source,
                     digits=None,
                     tol=None,
                     prune_by_area=None,
+                    clip=True,
                     **kwargs):
     """Get waterbodies from NHDPlus hydrography source within a given HUC and/or bounding box.
 
@@ -478,6 +481,10 @@ def get_waterbodies(source,
     prune_by_area : float, optional
         If provided, remove bodies whose total area is
         less than this tol.
+    clip : bool, optional
+        If true, clip the waterbodies to the bounds_or_shape.  Some
+        waterbodies are not entirely contained within the HUC, just
+        close.  Default is true.
     **kwargs : dict, optional
         Other arguments are passed to the file manager's get_waterbodies() method.
 
@@ -525,6 +532,12 @@ def get_waterbodies(source,
         bodies = watershed_workflow.utils.filter_to_shape(bounds_or_shp, bodies, tol)
         count = num_bodies - len(bodies)
         logging.info(f"Removed {count} of {num_bodies} water bodies not in shape")
+
+        # clip to the shape
+        if clip:
+            bodies_new = [body.intersection(bounds_or_shp) for body in bodies]
+            count = sum(1 for b1, b2 in zip(bodies_new, bodies) if b1 != b2)
+            logging.info(f"Clipped {count} water bodies to the shape")
 
     if prune_by_area is not None:
         num_bodies = len(bodies)
@@ -816,7 +829,8 @@ def simplify(hucs,
              simplify_waterbodies=None,
              prune_tol=None,
              merge_tol=None,
-             snap=False,
+             snap_rivers=False,
+             snap_waterbodies=False,
              cut_intersections=False):
     """Simplifies the HUC and river shapes.
 
@@ -851,8 +865,11 @@ def simplify(hucs,
         at the downstream node of the small reach, it will get moved
         to the upstream node.  If not provided, uses simplify_rivers
         value.  Provide 0 to not do this step.
-    snap : bool, optional
+    snap_rivers : bool, optional
         If true, snaps river and HUC nodes that are nearly coincident
+        to be discretely coincident.
+    snap_waterbodies : bool, optional
+        If true, snaps waterbodies and HUC nodes that are nearly coincident
         to be discretely coincident.
     cut_intersections : bool, optional
         If true, force intersections of the river network and the HUC
@@ -894,14 +911,21 @@ def simplify(hucs,
         logging.info("Simplifying HUCs")
         watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
 
-    if simplify_waterbodies > 0 and waterbodies is not None:
-        for i, wb in enumerate(waterbodies):
-            waterbodies[i] = wb.simplify(simplify_waterbodies)
-
-    if snap:
+    if snap_rivers:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
         rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
                                                      3 * simplify_rivers, cut_intersections)
+
+    if simplify_waterbodies > 0 and waterbodies is not None:
+        for i, wb in enumerate(waterbodies):
+            wb = wb.simplify(simplify_waterbodies)
+            wb = hucs.exterior().intersection(wb)
+            waterbodies[i] = wb
+
+        if snap_waterbodies:
+            logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
+            watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, simplify_waterbodies)
+
     elif cut_intersections:
         logging.info("Cutting crossings and removing external segments")
         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
@@ -927,6 +951,16 @@ def simplify(hucs,
         mins.append(np.min(dz))
     logging.info(f"  HUC min seg length: {min(mins)}")
     logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
+
+    mins = []
+    if waterbodies is not None:
+        for wb in waterbodies:
+            coords = np.array(wb.exterior.coords[:])
+            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+            mins.append(np.min(dz))
+        if len(mins) > 0:
+            logging.info(f"  Waterbody min seg length: {min(mins)}")
+            logging.info(f"  Waterbody median seg length: {np.median(np.array(mins))}")
     return rivers
 
 
@@ -947,9 +981,9 @@ def simplify_and_prune(hucs,
 
 
 def triangulate(hucs,
-                rivers,
+                rivers=None,
+                internal_boundaries=None,
                 river_corrs=None,
-                mesh_rivers=False,
                 diagnostics=True,
                 stream_outlet_width=None,
                 verbosity=1,
@@ -969,13 +1003,14 @@ def triangulate(hucs,
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    rivers: watershed_workflow.river_tree.RiverTree object
-        river tree 
-    river_corrs : list(shapely.geometry.Polygons)
+    rivers : list[watershed_workflow.river_tree.River], optional
+        List of rivers, used to refine the triangulation in conjunction with refine_distance.
+    internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
+        List of objects, whose boundary (in the case of
+        polygons/waterbodies) or reaches (in the case of River) will
+        be present in the edges of the triangulation.
+    river_corrs : list(shapely.geometry.Polygons), optional
         A list of river corridor polygons for each river
-    mesh_rivers : bool, optional
-        if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
-        else - Include stream network in the mesh discretely if river and allow steiner points
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     stream_outlet_width : float, optional
@@ -1060,8 +1095,8 @@ def triangulate(hucs,
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
         rivers,
+        internal_boundaries,
         river_corrs,
-        mesh_rivers=mesh_rivers,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,

@@ -1554,7 +1554,7 @@ def add_watershed_regions(m2, polygons, labels=None):
     return partitions
 
 
-def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
+def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None, labels=None):
     """Add four labeled sets to m2 for each polygon:
 
     - cells in the polygon, to be extruded
@@ -1563,7 +1563,14 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
     - outlet of the polygon (edges within outlet width of the outlet)
 
     """
-    polygons = list(hucs.polygons())
+    if isinstance(hucs, list):
+        polygons = hucs
+        if outlets is None:
+            outlets = [None, ] * len(polygons)
+    else:
+        polygons = list(hucs.polygons())
+        assert (outlets is None)
+        outlets = hucs.polygon_outlets
     if labels is None:
         labels = _get_labels(polygons)
     else:
@@ -1588,7 +1595,7 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
         return close
 
-    for label, tris, outlet in zip(labels, partitions, hucs.polygon_outlets):
+    for label, tris, outlet in zip(labels, partitions, outlets):
         subdomain_conn = [list(m2.conn[tri]) for tri in tris]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
         subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
@@ -1601,15 +1608,17 @@ def add_watershed_regions_and_outlets(m2, hucs, outlet_width=None, labels=None):
         m2.labeled_sets.append(ls)
 
         # every polygon now has an outlet -- find the boundary faces near that outlet
-        outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
-        edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-        ls = LabeledSet(label + ' outlet', m2.next_available_labeled_setid(), 'FACE', edges)
-        ls.to_extrude = True  # this marker tells the extrusion routine
-        # to not limit it to the surface
-        m2.labeled_sets.append(ls)
+        if outlet is not None:
+            outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
+            edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
+            ls = LabeledSet(label + ' outlet', m2.next_available_labeled_setid(), 'FACE', edges)
+            ls.to_extrude = True  # this marker tells the extrusion routine
+            # to not limit it to the surface
+            m2.labeled_sets.append(ls)
 
     # also write one for the full domain
-    if hucs.exterior_outlet is not None:
+    if isinstance(hucs,
+                  watershed_workflow.split_hucs.SplitHUCs) and hucs.exterior_outlet is not None:
         outlet_faces = [e for e in m2.boundary_edges if inside_ball(hucs.exterior_outlet, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
         ls2 = LabeledSet('surface domain outlet', m2.next_available_labeled_setid(), 'FACE', edges)
