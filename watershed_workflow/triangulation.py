@@ -6,11 +6,13 @@ import numpy as np
 import numpy.linalg as la
 from matplotlib import pyplot as plt
 import scipy.spatial
+import copy
 
 import shapely
 
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
+import watershed_workflow.create_river_mesh
 
 
 class Nodes:
@@ -114,7 +116,7 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, **kwargs):
+def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, keep_internal_hucs=False, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -142,13 +144,15 @@ def triangulate(hucs, rivers=None, river_corrs=None, mesh_rivers=False, tol=1, *
     logging.info("Triangulating...")
 
     if not river_corrs == None:
-        logging.info("Adding river-corridor outlet into huc boundary")
-        hucs = add_river_outlet_in_huc(river_corrs[0],
-                                       hucs)  # adjusting hucs to accomodate river corridor
+        logging.info("Adjusting hucs to accomodate river corridor")
+        hucs = watershed_workflow.create_river_mesh.adjust_hucs_for_river_corridors(copy.deepcopy(hucs), rivers, river_corrs, integrate_rc = False)
 
+    # at this stage it would be good to allow SplictHUCS onject only and let use pre-process as needed. 
+    # is there a reason we are allowing so many options? Is it to keep watershed workflow usable for general 
+    # triangulation without going through the whole watershed workflow process?? 
     if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
-        segments = list(hucs.segments)
-    elif type(hucs) is list:
+        segments = list(hucs.segments) 
+    elif type(hucs) is list: 
         segments = hucs
     elif type(hucs) is shapely.geometry.Polygon:
         segments = [hucs, ]
@@ -279,108 +283,6 @@ def refine_from_max_edge_length(edge_length):
         return bool(edge_lengths.max() > edge_length)
 
     return refine
-
-
-
-# def integrate_river_corrs_in_huc(river_corrs, hucs):
-#     """Return huc boundary with river-corridor outlet edge integrated into huc
-#         if hucs have polygon_outlets, w3e use them. Else we check the proximity of the outlet
-#         of each river corridor polygon to huc, and integrate outlet into huc if "close" enough"""
-
-#     if type(hucs.polygon_outlets) == list & len(hucs.polygon_outlets) != 0:
-#         for i, gon in enumerate(hucs.gons):
-#             #assert(hucs.)
-            
-
-#         # we find river corridor for each huc_outlet point
-#         for huc_outlet_point, river_corr in itertools.product(hucs.polygon_outlets, river_corrs):
-#             rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
-#                                                                 river_corr.exterior.coords[-2])
-#             if huc_outlet_point.distance(shapely.geometery.Point(rc_outlet_point)) < 5:
-#                 add_river_outlet_in_huc(river_corr, hucs)
-
-#     else:
-#         # we check the proximity of outlet of each river_corridor and integrate it in huc if they are "close"
-#         for river_corr in river_corrs:
-#             rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
-#                                                                 river_corr.exterior.coords[-2])
-#             huc_poly = hucs.exterior()
-#             if shapely.geometery.Point(rc_outlet_point).distance(huc_poly) < 10:
-#                 hucs = add_river_outlet_in_huc(river_corr, hucs)
-#     return hucs
-
-
-
-
-def integrate_river_corrs_in_huc_old(river_corrs, hucs):
-    """Return huc boundary with river-corridor outlet edge integrated into huc
-        if hucs have polygon_outlets, w3e use them. Else we check the proximity of the outlet
-        of each river corridor polygon to huc, and integrate outlet into huc if "close" enough"""
-
-    if type(hucs.polygon_outlets) == list & len(hucs.polygon_outlets) != 0:
-        # we find river corridor for each huc_outlet point
-        for huc_outlet_point, river_corr in itertools.product(hucs.polygon_outlets, river_corrs):
-            rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
-                                                                river_corr.exterior.coords[-2])
-            if huc_outlet_point.distance(shapely.geometery.Point(rc_outlet_point)) < 5:
-                add_river_outlet_in_huc(river_corr, hucs)
-
-    else:
-        # we check the proximity of outlet of each river_corridor and integrate it in huc if they are "close"
-        for river_corr in river_corrs:
-            rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
-                                                                river_corr.exterior.coords[-2])
-            huc_poly = hucs.exterior()
-            if shapely.geometery.Point(rc_outlet_point).distance(huc_poly) < 10:
-                hucs = add_river_outlet_in_huc(river_corr, hucs)
-    return hucs
-
-
-
-
-def add_river_outlet_in_huc(river_corr, hucs):
-    """Returns updated huc with river outlet represented"""
-    if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
-        poly_containing_huc = [poly for poly in  hucs.polygons() if poly.contains(river_corr)][0]
-        res_polys = [poly for poly in  hucs.polygons() if not poly.contains(river_corr)]
-        huc_segment = poly_containing_huc.exterior
-    elif type(hucs) is list:
-        huc_segment = hucs[0]
-    elif type(hucs) is shapely.geometry.Polygon:
-        huc_segment = hucs.exterior()
-
-    huc_coords = list(huc_segment.coords
-                      )[:-1]  # to avoid repeated points interferring in the river outlet adjustment
-    rc_outlet_point = watershed_workflow.utils.midpoint(river_corr.exterior.coords[0],
-                                                        river_corr.exterior.coords[-2])
-    ind = watershed_workflow.utils.closest_point_ind(rc_outlet_point, list(huc_segment.coords)[:-1])
-    nearest_huc_point = list(huc_segment.coords)[:-1][ind]
-    dist = watershed_workflow.utils.distance(rc_outlet_point, nearest_huc_point)
-
-    ind = list(huc_segment.coords)[:-1].index(nearest_huc_point)
-
-    # if the above point is close to the river corridor we can just eliminate it from the huc boundary
-    limit = watershed_workflow.utils.distance(river_corr.exterior.coords[0],
-                                              river_corr.exterior.coords[1])
-    if dist < limit:
-        huc_coords.pop(ind)
-
-    # check the orientation of the watershed boundary
-    p1, p2, p3 = [huc_coords[i] for i in [0, len(huc_coords) // 3, 2 * len(huc_coords) // 3]]
-    orientation = watershed_workflow.utils.orientation(shapely.geometry.Point(p1),
-                                                       shapely.geometry.Point(p2),
-                                                       shapely.geometry.Point(p3))
-
-    if orientation == 1:
-        huc_coords.insert(ind, river_corr.exterior.coords[0])
-        huc_coords.insert(ind, river_corr.exterior.coords[-2])
-    elif orientation == 2:
-        huc_coords.insert(ind, river_corr.exterior.coords[-2])
-        huc_coords.insert(ind, river_corr.exterior.coords[0])
-
-    huc_coords.append(huc_coords[0])  # to make the polygonal loop complete
-    hucs_new_polys = [shapely.geometry.Polygon(huc_coords),] + res_polys
-    return watershed_workflow.split_hucs.SplitHUCs(hucs_new_polys)
 
 
 def pick_hole_point(poly):
