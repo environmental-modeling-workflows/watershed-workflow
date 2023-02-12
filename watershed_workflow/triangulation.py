@@ -118,8 +118,8 @@ class NodesEdges:
 
 def triangulate(hucs, 
                 rivers=None, 
-                refinement_polygon=None,
                 river_corrs=None, 
+                internal_boundaries=None,
                 tol=1, 
                 **kwargs):
     """Triangulates HUCs and rivers.
@@ -152,7 +152,7 @@ def triangulate(hucs,
 
     logging.info("Triangulating...")
 
-    if not river_corrs == None:
+    if river_corrs != None:
         logging.info("Adjusting hucs to accomodate river corridor")
         hucs = watershed_workflow.create_river_mesh.adjust_hucs_for_river_corridors(copy.deepcopy(hucs), rivers, river_corrs, integrate_rc = False)
 
@@ -177,6 +177,12 @@ def triangulate(hucs,
             raise RuntimeError("Triangulate not implemented for container of type '%r'"
                                % type(hucs))
 
+    if internal_boundaries !=None:
+        if type(internal_boundaries) is list: 
+            segments = internal_boundaries + segments
+        elif type(internal_boundaries) is shapely.geometry.Polygon:
+            segments = [internal_boundaries, ] + segments
+
     nodes_edges = NodesEdges(segments)
 
     logging.info("   %i points and %i facets" % (len(nodes_edges.nodes), len(nodes_edges.edges)))
@@ -191,7 +197,7 @@ def triangulate(hucs,
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    if river_corrs is not None:
+    if not river_corrs == None:
         # adding hole in the river corridor for quad elements
         logging.info("defining hole..")
         hole_points = []

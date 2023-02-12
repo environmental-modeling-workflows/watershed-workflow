@@ -133,6 +133,7 @@ def test_to_quads(river_small, corr_small):
 
 
 def test_traingulate(watershed_small, river_small, corr_small):
+    watershed_workflow.create_river_mesh.to_quads(river_small, corr_small, 1)
     points, elems = watershed_workflow.triangulate(watershed_small,
                                                    [river_small],
                                                    river_corrs=[corr_small],
