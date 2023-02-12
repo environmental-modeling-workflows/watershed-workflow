@@ -133,7 +133,7 @@ def densify_node_segments(node, node_raw, use_original=False, limit=100, treat_c
     return node.segment
 
 
-def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
+def densify_hucs(huc, huc_raw=None, rivers=None, use_original=False, limit_scales=None):
     """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
     function where huc segment refinedment is greater for huc segments closer to the river tree
      
@@ -159,19 +159,18 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
 
     for i, seg in enumerate(huc.segments): # densifying segment by segment 
         # find which original segment is this segment part of, so we can use it to resample
-        seg_raw = None
-        for seg_orig in huc_raw.segments:  
-            intersect = seg.intersection(seg_orig)
-            if type(intersect) is shapely.geometry.MultiPoint and len(seg.intersection(seg_orig)) > 2:
-                seg_raw = seg_orig
-        
-        if seg_raw == None:
-            RuntimeError('No original segment found')
-
-        coords = list(seg.coords)    
-        coords_raw = list(seg_raw.coords)
-
+        coords = list(seg.coords)  
         if use_original:
+            if huc_raw == None:
+                raise RuntimeError('No original hucs found')
+
+            for seg_orig in huc_raw.segments:  
+                intersect = seg.intersection(seg_orig)
+                if type(intersect) is shapely.geometry.MultiPoint and len(seg.intersection(seg_orig)) > 2:
+                    seg_raw = seg_orig
+
+            coords_raw = list(seg_raw.coords)
+
             if type(limit_scales) is list:
                 # basic refine
                 coords_densified_basic = densify_hucs_(coords,
@@ -188,6 +187,7 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
                 coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
         else:
+            coords_raw = None
             coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
         huc.segments[i] = shapely.geometry.LineString(coords_densified)
@@ -195,7 +195,7 @@ def densify_hucs(huc, huc_raw, rivers, use_original=False, limit_scales=None):
     return huc
  
 
-def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):
+def densify_hucs_(coords, coords_raw=None, rivers=None, limit_scales=None):
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
 
      Parameters:
@@ -229,11 +229,10 @@ def densify_hucs_(coords, coords_raw, rivers, limit_scales=None):
 
         if section_length > limit:
             number_new_points = int(section_length // limit)
-            end_points = [coords[i], coords[i + 1]]  # points betwen which more points will be added
+            end_points = [coords[i], coords[i + 1]]  # points between which more points will be added
             if adaptive:
                 new_points = interpolate_simple(end_points, number_new_points)
             else:
-                #print(end_points, coords_raw, number_new_points)
                 new_points = interpolate_with_orig(end_points, coords_raw, number_new_points)
 
             coords_densified[j + 1:j + 1] = new_points
