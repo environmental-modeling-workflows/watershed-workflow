@@ -93,7 +93,6 @@ def test_densify_rivers_hucs(watershed_rivers):
     watershed_workflow.simplify(watershed,
                                 rivers,
                                 simplify_rivers=10,
-                                snap=False,
                                 cut_intersections=True)
 
     watershed = watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed,
@@ -133,10 +132,10 @@ def test_to_quads(river_small, corr_small):
     assert_list_same([7, 8, 9], quads[-1])
 
 
-def test_triangulate(watershed_small, river_small, corr_small):
-    watershed_workflow.create_river_mesh.to_quads(river_small, corr_small, 1)   
-    points, elems = watershed_workflow.triangulate(watershed_small, [river_small], [corr_small],
-                                                   mesh_rivers=True,
+def test_traingulate(watershed_small, river_small, corr_small):
+    points, elems = watershed_workflow.triangulate(watershed_small,
+                                                   [river_small],
+                                                   river_corrs=[corr_small],
                                                    tol=0.1,
                                                    refine_min_angle=32,
                                                    refine_distance=[2, 5, 5, 10],

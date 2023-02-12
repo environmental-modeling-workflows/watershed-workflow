@@ -32,22 +32,31 @@ def daymet_to_daily_averages(dat):
 
     """
     logging.info('Converting to ATS met input')
-    dout = watershed_workflow.datasets.Dataset(dat.profile, dat.times)
+
+    # note that all of these can live in the same dataset since they
+    # share the same profile/times
+    dout = watershed_workflow.datasets.State()
 
     # make missing values (-9999) as NaNs to do math while propagating NaNs
     for key in dat.keys():
-        dat.data[key][dat.data[key] == -9999] = np.nan
+        dat[key].data[dat[key].data == -9999] = np.nan
 
-    mean_air_temp_c = (dat.data['tmin'] + dat.data['tmax']) / 2.0
-    precip_ms = dat.data['prcp'] / 1.e3 / 86400.  # mm/day --> m/s
+    profile = dat['tmin'].profile
+    times = dat['tmin'].times
 
-    dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K
+    mean_air_temp_c = (dat['tmin'].data + dat['tmax'].data) / 2.0
+    dout['air temperature [K]'] = watershed_workflow.datasets.Dataset(profile, times,
+                                                                      273.15 + mean_air_temp_c)  # K
+
+    precip_ms = dat['prcp'].data / 1.e3 / 86400.  # mm/day --> m/s
+
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
-    dout['incoming shortwave radiation [W m^-2]'] = dat.data['srad'] * dat.data[
-        'dayl'] / 86400  # Wm2
-    dout['vapor pressure air [Pa]'] = dat.data['vp']  # Pa
-    dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
-    dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
+    dout['incoming shortwave radiation [W m^-2]'] = watershed_workflow.datasets.Dataset(
+        profile, times, dat['srad'].data * dat['dayl'].data / 86400)  # Wm2
+    dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
+    dout['precipitation rain [m s^-1]'] = watershed_workflow.datasets.Dataset(
+        profile, times, np.where(mean_air_temp_c >= 0, precip_ms, 0))
+    dout['precipitation snow [m SWE s^-1]'] = watershed_workflow.datasets.Dataset(
+        profile, times, np.where(mean_air_temp_c < 0, precip_ms, 0))
 
-    logging.debug(f"output dout shape: {dout.data['incoming shortwave radiation [W m^-2]'].shape}")
     return dout
