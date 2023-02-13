@@ -629,9 +629,21 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc = True)
 
     huc_segs_adjusted = [] # keep track of already modified hucs
     for i, seg in enumerate(hucs.segments):
+        is_unadjusted_outlet_point = False
         if i not in huc_segs_adjusted and seg.intersects(river_mls): # check if this huc is part of already processed junction
-
             intersection_point = seg.intersection(river_mls)
+            if type(intersection_point) is shapely.geometry.Point:
+                parent_node = node_at_intersection(intersection_point, river)
+                if len(parent_node.children) != 0: # maiing sure it is not a leaf node
+                        is_unadjusted_outlet_point = True
+            elif type(intersection_point) is shapely.geometry.MultiPoint:
+                for point in intersection_point:
+                    parent_node = node_at_intersection(point, river)
+                    if len(parent_node.children) != 0:
+                        is_unadjusted_outlet_point = True
+                        intersection_point=point
+                        
+        if is_unadjusted_outlet_point:
            # assert(type(intersection_point) is shapely.geometry.Point) # hopefully no LineStrings or MultiPoints
             # find all the huc-segments at this junction 
             intersection_segs = hucsegs_at_intersection(intersection_point, hucs)
@@ -644,7 +656,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc = True)
             else:
                 outlet_junction = False
 
-            # find the index of the intersection point (at this junction) on the rt-node-segment (needed to find rc points)   
+            # find the index of the intersection point (at this junction) on the rt-node-segment (needed to find rc points)
             ind_intersection_point = parent_node.segment.coords[:].index(intersection_point.coords[0])
 
             if outlet_junction:
