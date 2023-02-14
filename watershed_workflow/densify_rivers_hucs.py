@@ -158,32 +158,46 @@ def densify_hucs(huc, huc_raw=None, rivers=None, use_original=False, limit_scale
     """
 
     for i, seg in enumerate(huc.segments): # densifying segment by segment 
+        
         # find which original segment is this segment part of, so we can use it to resample
+        logging.info(f"trying to refine huc segment: {i}")
         coords = list(seg.coords)  
         if use_original:
             if huc_raw == None:
                 raise RuntimeError('No original hucs found')
+            seg_raw=None
+            for j, seg_orig in enumerate(huc_raw.segments): 
+                if seg.intersects(seg_orig):
+                    intersect_seg = seg.intersection(seg_orig)
+                    logging.info(f"original huc segment {j} intersect huc segment {i} as {type(intersect_seg)}")
+                    if type(intersect_seg) in [shapely.geometry.LineString , shapely.geometry.MultiPoint , list, shapely.geometry.collection.GeometryCollection]: # LineString or MultiPoint or List
+                        seg_raw = seg_orig
+                        logging.info(f"for huc segment {i}, found original huc segment {j}")
+                        coords_raw = list(seg_raw.coords)
+                        assert(len(coords_raw)>2)
 
-            for seg_orig in huc_raw.segments:  
-                intersect = seg.intersection(seg_orig)
-                if type(intersect) is shapely.geometry.MultiPoint and len(seg.intersection(seg_orig)) > 2:
-                    seg_raw = seg_orig
+                        if type(limit_scales) is list:
+                            # basic refine
+                            coords_densified_basic = densify_hucs_(coords,
+                                                                coords_raw,
+                                                                rivers,
+                                                                limit_scales=limit_scales[-1])
+                            # adaptive refine
+                            coords_densified = densify_hucs_(coords_densified_basic,
+                                                            coords_raw,
+                                                            rivers,
+                                                            limit_scales=limit_scales)
 
-            coords_raw = list(seg_raw.coords)
+                        else:
+                            coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
-            if type(limit_scales) is list:
-                # basic refine
-                coords_densified_basic = densify_hucs_(coords,
-                                                    coords_raw,
-                                                    rivers,
-                                                    limit_scales=limit_scales[-1])
-                # adaptive refine
-                coords_densified = densify_hucs_(coords_densified_basic,
-                                                coords_raw,
-                                                rivers,
-                                                limit_scales=limit_scales)
+                        break
+                else: 
+                    logging.info(f"original huc segment {j} do not intersect huc segment {i}")
 
-            else:
+            if seg_raw==None:
+                logging.info("did not find corresponding huc.segment in original, doing simple interpolation")
+                coords_raw = None
                 coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
         else:
@@ -230,6 +244,7 @@ def densify_hucs_(coords, coords_raw=None, rivers=None, limit_scales=None):
         if section_length > limit:
             number_new_points = int(section_length // limit)
             end_points = [coords[i], coords[i + 1]]  # points between which more points will be added
+        
             if adaptive:
                 new_points = interpolate_simple(end_points, number_new_points)
             else:
