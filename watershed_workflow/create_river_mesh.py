@@ -28,7 +28,7 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
-def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
@@ -61,14 +61,14 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True):
         elems_river, corr = create_river_mesh(river,
                                               widths=widths,
                                               enforce_convexity=enforce_convexity,
-                                              gid_shift=gid_shift)
+                                              gid_shift=gid_shift, ax=ax)
         elems = elems + elems_river
         corrs = corrs + [corr, ]
 
     return elems, corrs
 
 
-def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=4):
+def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dilation_width=4, ax=None):
     """Returns list of elems and river corridor polygons for a given river tree
 
     Parameters:
@@ -102,7 +102,7 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dila
     # creating a polygon for river corridor by dilating the river tree
     corr = create_river_corridor(river, dilation_width)
     # defining special elements in the mesh
-    elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift)
+    elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
     # setting river_widths in the river corridor polygon
     corr = set_width_by_order(river, corr, widths=widths, dilation_width = dilation_width, gid_shift=gid_shift)
     # treating non-convexity at junctions
@@ -522,7 +522,7 @@ def node_at_intersection(point, river):
     # for a given intersection point, find all the huc-segments (indices)
     intersection_node = None 
     for node in river.preOrder():
-        if point.intersects(node.segment):
+        if point.buffer(5).intersects(node.segment):
             intersection_node = node
             break
     return intersection_node
@@ -570,7 +570,9 @@ def rc_points_for_rt_point(rt_point, node, river_corr):
 def adjust_seg_for_rc(seg, river_corr, new_seg_point, integrate_rc = False):
     """return modified segment accomodating river-corridor-polygon (exclude river corridor or integrate with it)"""
     if not integrate_rc: 
-        seg = seg.difference(river_corr) # removing seg points inside the RC
+        seg = seg.difference(river_corr.buffer(5)) # removing seg points inside the RC
+        if type(seg) is shapely.geometry.MultiLineString:  # sometimes small portion of the segment can end up on the other side of the rc
+            seg = seg[np.argmax([seg_.length for seg_ in seg])]
         seg_orientation_flag = np.argmin([watershed_workflow.utils.distance(seg_end, new_seg_point) for seg_end in [seg.coords[0], seg.coords[-1]]])
         if seg_orientation_flag == 0:
             seg = shapely.geometry.LineString([new_seg_point,] + seg.coords[1:]) 
@@ -692,7 +694,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc = True)
                     if type(key) is int:
                         logging.info(f"Modifying HUC Segment {key}")
                         # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
-                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key] ,  river_corr, rc_points[rc_point_ind]) 
+                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr, rc_points[rc_point_ind]) 
                         key_hold = key                  
                     else:
                         rc_point_ind+=1
