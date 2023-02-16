@@ -3,6 +3,7 @@
 import logging
 import numpy as np
 import collections
+import copy
 
 import shapely.geometry
 import shapely.ops
@@ -202,6 +203,11 @@ class SplitHUCs:
             return shapely.geometry.Polygon(ml)
         else:
             return shapely.geometry.MultiPolygon([shapely.geometry.Polygon(l) for l in ml])
+    
+    def deep_copy(self):
+        """Return a deep copy"""
+        cp = copy.deepcopy(self)
+        return cp
 
     def __len__(self):
         return len(self.gons)

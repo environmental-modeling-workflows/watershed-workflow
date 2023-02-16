@@ -12,16 +12,14 @@ def densify_rivers(rivers,
                    rivers_raw=None,
                    use_original=False,
                    limit=100,
-                   treat_collinearity=False):
+                   treat_collinearity=False, angle_limit=None):
     """Returns a list for densified rivers"""
-    rivers = [
+    for river, river_raw in zip(rivers, rivers_raw):
         densify_river(river,
                       river_raw,
                       use_original=use_original,
                       limit=limit,
-                      treat_collinearity=treat_collinearity)
-        for river, river_raw in zip(rivers, rivers_raw)
-    ]
+                      treat_collinearity=treat_collinearity, angle_limit=angle_limit)
 
     mins = []
     for river in rivers:
@@ -32,10 +30,8 @@ def densify_rivers(rivers,
     logging.info(f"  river min seg length: {min(mins)}")
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
-    return rivers
 
-
-def densify_river(river, river_raw=None, use_original=False, limit=100, treat_collinearity=False):
+def densify_river(river, river_raw=None, use_original=False, limit=100, treat_collinearity=False, angle_limit=None):
     """This function traverse in the river tree and densify node.segments
     
     Parameters:
@@ -58,9 +54,6 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
         a densified river tree
 
     """
-    
-    river_densified = river.deep_copy()
-
     if 'NHDPlusID' in river.properties.keys():
   
         NHD_ids_raw = []
@@ -69,7 +62,7 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
     else:
          assert (len(river) == len(river_raw))
 
-    for j, node in enumerate(river_densified.preOrder()):
+    for j, node in enumerate(river.preOrder()):
 
         if 'NHDPlusID' in river.properties.keys():
             node_index_in_raw = NHD_ids_raw.index(node.properties['NHDPlusID'])
@@ -82,8 +75,11 @@ def densify_river(river, river_raw=None, use_original=False, limit=100, treat_co
                                             limit=limit,
                                             use_original=use_original,
                                             treat_collinearity=treat_collinearity)
-    return river_densified
-
+    
+    if angle_limit != None:
+        remove_sharp_angles_from_river_tree(river, angle_limit=angle_limit)
+        watershed_workflow.hydrography.merge(river, tol=limit*0.6)
+    
 
 def densify_node_segments(node, node_raw, use_original=False, limit=100, treat_collinearity=False):
     """This function adds equally-spaced points in the reach-sections longer than the limit at a desired resolution
@@ -205,8 +201,6 @@ def densify_hucs(huc, huc_raw=None, rivers=None, use_original=False, limit_scale
             coords_densified = densify_hucs_(coords, coords_raw, rivers, limit_scales=limit_scales)
 
         huc.segments[i] = shapely.geometry.LineString(coords_densified)
-
-    return huc
  
 
 def densify_hucs_(coords, coords_raw=None, rivers=None, limit_scales=None):
@@ -368,3 +362,114 @@ def limit_from_river_distance(segment_ends, limit_scales, rivers):
             away_length-near_length)
 
     return length
+
+
+## functions to deal with sharp angles in reaches resulting from simplified meanders that lead small 
+## triangles
+
+def remove_sharp_angles_from_river_tree(river, angle_limit=0):
+    """this function smoothen out the sharp angles in the river tree"""
+    for node in river.preOrder():
+        remove_sharp_angles_from_seg(node, angle_limit=angle_limit) # from internal segments
+        if len(node.children) !=0: # at junctions, angle between parent and child node
+            treat_node_junctions_for_sharp_angles(node, angle_limit=angle_limit)
+        treat_small_angle_between_child_nodes(node, angle_limit=angle_limit+5) # angle between two children (how ofteen can we have >2 children)   
+    assert(river.is_continuous())
+
+
+def remove_sharp_angles_from_seg(node, angle_limit = 10):
+    """this function smoothen out the sharp angles in the river tree"""
+    seg=node.segment
+    seg_coords=seg.coords[:]
+    for i in range(len(seg_coords)-2):
+        seg_up = shapely.geometry.LineString([seg_coords[i],seg_coords[i+1]])
+        seg_down = shapely.geometry.LineString([seg_coords[i+1],seg_coords[i+2]])
+        angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg = seg_down, seg=seg_up)
+        if angle > 360-angle_limit or angle < angle_limit:
+            logging.info(f"removing sharp angle: {angle}")
+            if len(seg_coords)>3:
+                new_point = shapely.geometry.Polygon([seg_coords[i],seg_coords[i+1], seg_coords[i+2]]).centroid
+                seg_coords_new = seg_coords[:i]+new_point.coords[:]+seg_coords[i+3:]
+                node.segment = shapely.geometry.LineString(seg_coords_new)
+                remove_sharp_angles_from_seg(node, angle_limit = angle_limit)
+            else:
+                seg_coords_new = [seg_coords[0],seg_coords[2]]
+                node.segment = shapely.geometry.LineString(seg_coords_new)
+            if i==0: # upstream end of the segment moved, update childres segments 
+                for child in node.children:
+                    child_seg_coords = child.segment.coords[:]
+                    child_seg_coords[-1] = node.segment.coords[0]
+                    child.segment = shapely.geometry.LineString(child_seg_coords)
+            elif i == len(seg_coords)-3: # downstream end if the segment moved, update parent and siblings
+                if node.parent != None: # update parent
+                    parent_seg_coords = node.parent.segment.coords[:]
+                    parent_seg_coords[0] = node.segment.coords[-1]
+                    node.parent.segment = shapely.geometry.LineString(parent_seg_coords)
+                for sibling in node.siblings(): # update siglings
+                    sibling_coords = sibling.segment.coords[:]
+                    sibling_coords[-1] =  node.segment.coords[-1]
+                    sibling.segment = shapely.geometry.LineString(sibling_coords)
+
+
+def treat_node_junctions_for_sharp_angles(node, angle_limit = 10):
+    seg1 = node.segment
+    for child in node.children:
+        seg2 = child.segment
+        seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit = angle_limit)
+        is_changed = seg2 == child.segment 
+        child.segment = seg2
+        node.segment = seg1
+        if is_changed and len(list(child.siblings())) >1:
+            for sibling in child.siblings():
+                sibling_coords = sibling.segment.coords[:]
+                sibling_coords[-1] =  child.segment.coords[-1]
+                sibling.segment = shapely.geometry.LineString(sibling_coords)
+            
+
+def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit = 10):
+        seg_up = shapely.geometry.LineString([seg2.coords[-2],seg2.coords[-1]])
+        seg_down = shapely.geometry.LineString([seg1.coords[0],seg1.coords[1]])
+        angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg = seg_down, seg=seg_up)
+        if angle > 360-angle_limit or angle < angle_limit:
+            logging.info(f"removing sharp angle: {angle}")
+            new_point = shapely.geometry.Polygon([seg2.coords[-2],seg2.coords[-1],seg1.coords[1]]).centroid
+            if len(seg1.coords)<3:
+                seg1_coords_new = new_point.coords[:]+seg1.coords[1:]
+            else:
+                seg1_coords_new = new_point.coords[:]+seg1.coords[2:]
+            if len(seg2.coords)<3:
+                seg2_coords_new = seg2.coords[:-1]+new_point.coords[:]
+            else:
+                seg2_coords_new = seg2.coords[:-2]+new_point.coords[:]
+            seg1 = shapely.geometry.LineString(seg1_coords_new)
+            seg2 = shapely.geometry.LineString(seg2_coords_new)
+            seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit = angle_limit)
+        return seg1, seg2
+
+
+def treat_small_angle_between_child_nodes(node, angle_limit = 10):
+        if len(node.children)>1:
+            seg1 = node.segment
+            angles=[]
+            for child in node.children:
+                seg2 = child.segment
+                seg_up = shapely.geometry.LineString([seg2.coords[-2],seg2.coords[-1]])
+                seg_down = shapely.geometry.LineString([seg1.coords[0],seg1.coords[1]])
+                angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg = seg_down, seg=seg_up)
+                angles.append(angle)
+            if abs(angles[1]-angles[0])< angle_limit:
+                logging.info(f"removing sharp angle between children: {abs(angles[1]-angles[0])}")
+                for child in node.children:
+                    child_coords = child.segment.coords[:]
+                    if len(child_coords) > 2:
+                        child_coords[-2] = watershed_workflow.utils.midpoint(child_coords[-1], child_coords[-3])
+                    elif len(child_coords) == 2 and len(child.children) !=0: # if reach has only two points and is not a headwater reach
+                        child_coords[0] = watershed_workflow.utils.midpoint(child_coords[1], child.children[0].segment.coords[-2])
+                        for grandchild in child.children: # update coordinates of children
+                            grandchild_seg_coords = grandchild.segment.coords[:]
+                            grandchild_seg_coords[-1] = child_coords[0]
+                            grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
+                    child.segment = shapely.geometry.LineString(child_coords)
+
+
+
