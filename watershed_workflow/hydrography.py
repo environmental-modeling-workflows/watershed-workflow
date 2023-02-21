@@ -611,6 +611,12 @@ def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
                         count = 1
                         while not done:
                             parent = reach.parent
+                            if 'area' in reach.properties and 'area' in parent.properties:
+                                parent.properties['area'] += reach.properties['area'] 
+                            if 'catchment' in reach.properties and 'catchment' in parent.properties:
+                                if parent.properties['catchment']!= None and reach.properties['catchment']!= None:
+                                    parent.properties['catchment'] = shapely.ops.unary_union([reach.properties['catchment'],
+                                                                parent.properties['catchment']])
                             reach.remove()
                             done = len(parent.children) > 0
                             count += 1
@@ -666,10 +672,13 @@ def merge(river, tol=_tol):
                                                             + [node.segment.coords[0], ])
             if 'area' in node.properties and 'area' in node.parent.properties:
                 node.parent.properties['area'] += node.properties['area'] 
+            
+            if 'catchment' in node.properties and 'catchment' in node.parent.properties:
+                node.parent.properties['catchment'] = shapely.ops.unary_union([node.properties['catchment'],
+                                                            node.parent.properties['catchment']])
             for child in node.children:
                 node.parent.addChild(child)
             node.remove()
-
 
 def simplify(river, tol=_tol):
     """Simplify, IN PLACE, all reaches."""
