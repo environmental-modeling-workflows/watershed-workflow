@@ -95,16 +95,16 @@ def test_densify_rivers_hucs(watershed_rivers):
                                 simplify_rivers=10,
                                 cut_intersections=True)
 
-    watershed = watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed,
-                                                                    huc_raw=watershed,
-                                                                    rivers=rivers,
-                                                                    use_original=False,
-                                                                    limit_scales=[0, 25, 100, 50])
-    rivers = watershed_workflow.densify_rivers_hucs.densify_rivers(rivers,
-                                                                   rivers,
-                                                                   limit=14,
-                                                                   use_original=False,
-                                                                   treat_collinearity=True)
+    watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed,
+                                                            huc_raw=watershed,
+                                                            rivers=rivers,
+                                                            use_original=False,
+                                                            limit_scales=[0, 25, 100, 50])
+    watershed_workflow.densify_rivers_hucs.densify_rivers(rivers,
+                                                            rivers,
+                                                            limit=14,
+                                                            use_original=False,
+                                                            treat_collinearity=True)
 
     assert (51 == len(watershed.exterior().exterior.coords))
     assert (16 == len(rivers[0].segment.coords))
@@ -143,7 +143,7 @@ def test_traingulate(watershed_small, river_small, corr_small):
                                                    diagnostics=False)
     areas = np.array([watershed_workflow.utils.triangle_area(points[e]) for e in elems])
 
-    assert (46 == len(points))
-    assert (60 == len(elems))
+    assert (47 == len(points))
+    assert (62 == len(elems))
     assert (math.isclose(9.192787, max(areas), rel_tol=1e-4))
     assert (math.isclose(1.181316, min(areas), rel_tol=1e-4))

@@ -576,8 +576,9 @@ def hucsegs_at_intersection(point, hucs):
 def node_at_intersection(point, river):
     # for a given intersection point, find all the huc-segments (indices)
     intersection_node = None 
+    len_scale = watershed_workflow.utils.distance(river.segment.coords[0], river.segment.coords[1])
     for node in river.preOrder():
-        if point.buffer(5).intersects(node.segment):
+        if point.buffer(0.1*len_scale).intersects(node.segment):
             intersection_node = node
             break
     return intersection_node
@@ -625,7 +626,8 @@ def rc_points_for_rt_point(rt_point, node, river_corr):
 def adjust_seg_for_rc(seg, river_corr, new_seg_point, integrate_rc = False):
     """return modified segment accomodating river-corridor-polygon (exclude river corridor or integrate with it)"""
     if not integrate_rc: 
-        seg = seg.difference(river_corr.buffer(5)) # removing seg points inside the RC
+        len_scale = watershed_workflow.utils.distance(river_corr.exterior.coords[0], river_corr.exterior.coords[-1])
+        seg = seg.difference(river_corr.buffer(0.1*len_scale)) # removing seg points inside the RC
         if type(seg) is shapely.geometry.MultiLineString:  # sometimes small portion of the segment can end up on the other side of the rc
             seg = seg[np.argmax([seg_.length for seg_ in seg])]
         seg_orientation_flag = np.argmin([watershed_workflow.utils.distance(seg_end, new_seg_point) for seg_end in [seg.coords[0], seg.coords[-1]]])

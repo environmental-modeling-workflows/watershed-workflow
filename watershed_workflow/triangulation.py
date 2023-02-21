@@ -272,7 +272,10 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
                                                            -near_distance) * (away_area-near_area)
         return area
 
-    river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
+    if type(rivers[0])== shapely.geometry.Polygon:
+        river_multiline = shapely.geometry.MultiPolygon(rivers)
+    else:
+        river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
 
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
