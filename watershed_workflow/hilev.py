@@ -1078,8 +1078,12 @@ def triangulate(hucs,
     if refine_max_area != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_from_max_area(refine_max_area))
     if refine_distance != None:
-        refine_funcs.append(
-            watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
+        if river_corrs != None:
+            refine_funcs.append(
+                watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, river_corrs))
+        else:
+            refine_funcs.append(
+                watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
     if refine_max_edge_length != None:
         refine_funcs.append(
             watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
@@ -1087,10 +1091,11 @@ def triangulate(hucs,
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)
 
-    if not river_corrs == None:
+    if river_corrs != None:
         allow_boundary_steiner = False
     else:
         allow_boundary_steiner = True
+
 
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
