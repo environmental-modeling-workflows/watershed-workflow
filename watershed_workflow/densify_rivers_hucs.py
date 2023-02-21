@@ -305,7 +305,7 @@ def interpolate_simple(end_points, n):
     return new_points
 
 
-def treat_segment_collinearity(segment_coords, tol=1e-6):
+def treat_segment_collinearity(segment_coords, tol=1e-5):
     """This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment"""
     col_checks = []
     for i in range(0,
@@ -373,7 +373,7 @@ def remove_sharp_angles_from_river_tree(river, angle_limit=0):
         remove_sharp_angles_from_seg(node, angle_limit=angle_limit) # from internal segments
         if len(node.children) !=0: # at junctions, angle between parent and child node
             treat_node_junctions_for_sharp_angles(node, angle_limit=angle_limit)
-        treat_small_angle_between_child_nodes(node, angle_limit=angle_limit+5) # angle between two children (how ofteen can we have >2 children)   
+        treat_small_angle_between_child_nodes(node, angle_limit=angle_limit+7) # angle between two children (how ofteen can we have >2 children)   
     assert(river.is_continuous())
 
 
@@ -458,7 +458,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit = 10):
                 angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg = seg_down, seg=seg_up)
                 angles.append(angle)
             if abs(angles[1]-angles[0])< angle_limit:
-                logging.info(f"removing sharp angle between children: {abs(angles[1]-angles[0])}")
+                logging.info(f"removing sharp angle between children: {abs(angles[1]-angles[0])} for node {node.properties['NHDPlusID']}")
                 for child in node.children:
                     child_coords = child.segment.coords[:]
                     if len(child_coords) > 2:
@@ -469,6 +469,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit = 10):
                             grandchild_seg_coords = grandchild.segment.coords[:]
                             grandchild_seg_coords[-1] = child_coords[0]
                             grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
+                    child_coords = treat_segment_collinearity(child_coords)
                     child.segment = shapely.geometry.LineString(child_coords)
 
 
