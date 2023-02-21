@@ -137,20 +137,33 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
                 try:
                     assert (len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
                     assert (len(new_spine) == 1 or len(new_spine) == 2)
-                    logging.info("  - cutting reach at external boundary of HUCs")
+                    logging.info("  - cutting reach at external boundary of HUCs:")
+                    logging.info(f"      split HUC boundary seg into {len(new_spine)} pieces")
+                    logging.info(f"      split reach seg into {len(new_reach_segs)} pieces")
+
+                    # which piece of the reach are we keeping?
                     if hucs.exterior().buffer(-tol).contains(
                             shapely.geometry.Point(new_reach_segs[0].coords[0])):
+                        # keep the upstream (or only) reach seg
                         if len(new_reach_segs) == 2:
+                            # confirm other/downstream reach is outside
                             assert (not hucs.exterior().contains(
                                 shapely.geometry.Point(new_reach_segs[1].coords[-1])))
                         reach_node.segment = new_reach_segs[0]
 
                     elif len(new_reach_segs) == 2:
                         if hucs.exterior().buffer(-tol).contains(
-                                shapely.geometry.Point(new_reach_segs[1].coords[0])):
+                                shapely.geometry.Point(new_reach_segs[1].coords[-1])):
+                            # keep the downstream reach seg, confirm upstream is outside
+                            assert (not hucs.exterior().contains(
+                                shapely.geometry.Point(new_reach_segs[0].coords[0])))
                             reach_node.segment = new_reach_segs[1]
+
+                    # keep both pieces of a split huc boundary segment
+                    # -- rename the first
                     hucs.segments[seg_handle] = new_spine[0]
                     if len(new_spine) > 1:
+                        # -- add the first
                         assert (len(new_spine) == 2)
                         new_handle = hucs.segments.add(new_spine[1])
                         spine.add(new_handle)
@@ -612,11 +625,14 @@ def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
                         while not done:
                             parent = reach.parent
                             if 'area' in reach.properties and 'area' in parent.properties:
-                                parent.properties['area'] += reach.properties['area'] 
+                                parent.properties['area'] += reach.properties['area']
                             if 'catchment' in reach.properties and 'catchment' in parent.properties:
-                                if parent.properties['catchment']!= None and reach.properties['catchment']!= None:
-                                    parent.properties['catchment'] = shapely.ops.unary_union([reach.properties['catchment'],
-                                                                parent.properties['catchment']])
+                                if parent.properties['catchment'] != None and reach.properties[
+                                        'catchment'] != None:
+                                    parent.properties['catchment'] = shapely.ops.unary_union([
+                                        reach.properties['catchment'],
+                                        parent.properties['catchment']
+                                    ])
                             reach.remove()
                             done = len(parent.children) > 0
                             count += 1
@@ -665,20 +681,21 @@ def merge(river, tol=_tol):
                          (node.segment.length, node.segment.centroid.coords[0]))
             num_siblings = len(list(node.siblings()))
             node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
-                                                            + node.parent.segment.coords[1:])
-            if num_siblings !=0:
+                                                              + node.parent.segment.coords[1:])
+            if num_siblings != 0:
                 for sibling in node.siblings():
                     sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
-                                                            + [node.segment.coords[0], ])
+                                                                  + [node.segment.coords[0], ])
             if 'area' in node.properties and 'area' in node.parent.properties:
-                node.parent.properties['area'] += node.properties['area'] 
-            
+                node.parent.properties['area'] += node.properties['area']
+
             if 'catchment' in node.properties and 'catchment' in node.parent.properties:
-                node.parent.properties['catchment'] = shapely.ops.unary_union([node.properties['catchment'],
-                                                            node.parent.properties['catchment']])
+                node.parent.properties['catchment'] = shapely.ops.unary_union(
+                    [node.properties['catchment'], node.parent.properties['catchment']])
             for child in node.children:
                 node.parent.addChild(child)
             node.remove()
+
 
 def simplify(river, tol=_tol):
     """Simplify, IN PLACE, all reaches."""

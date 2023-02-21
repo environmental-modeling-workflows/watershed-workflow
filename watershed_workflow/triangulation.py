@@ -12,7 +12,6 @@ import shapely
 
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
-import watershed_workflow.create_river_mesh
 
 
 class Nodes:
@@ -116,12 +115,7 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, 
-                rivers=None, 
-                river_corrs=None, 
-                internal_boundaries=None,
-                tol=1, 
-                **kwargs):
+def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -151,22 +145,7 @@ def triangulate(hucs,
     import meshpy.triangle
 
     logging.info("Triangulating...")
-
-    if river_corrs != None:
-        logging.info("Adjusting hucs to accomodate river corridor")
-        hucs = watershed_workflow.create_river_mesh.adjust_hucs_for_river_corridors(copy.deepcopy(hucs), rivers, river_corrs, integrate_rc = False)
-
-    # at this stage it would be good to allow SplictHUCS onject only and let use pre-process as needed. 
-    # is there a reason we are allowing so many options? Is it to keep watershed workflow usable for general 
-    # triangulation without going through the whole watershed workflow process?? 
-    if type(hucs) is watershed_workflow.split_hucs.SplitHUCs:
-        segments = list(hucs.segments) 
-    elif type(hucs) is list: 
-        segments = hucs
-    elif type(hucs) is shapely.geometry.Polygon:
-        segments = [hucs, ]
-    else:
-        raise RuntimeError("Triangulate not implemented for container of type '%r'" % type(hucs))
+    segments = list(hucs.segments)
 
     if river_corrs != None:
         if type(river_corrs) is list:
@@ -177,8 +156,8 @@ def triangulate(hucs,
             raise RuntimeError("Triangulate not implemented for container of type '%r'"
                                % type(hucs))
 
-    if internal_boundaries !=None:
-        if type(internal_boundaries) is list: 
+    if internal_boundaries != None:
+        if type(internal_boundaries) is list:
             segments = internal_boundaries + segments
         elif type(internal_boundaries) is shapely.geometry.Polygon:
             segments = [internal_boundaries, ] + segments
@@ -272,7 +251,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
                                                            -near_distance) * (away_area-near_area)
         return area
 
-    if type(rivers[0])== shapely.geometry.Polygon:
+    if type(rivers[0]) == shapely.geometry.Polygon:
         river_multiline = shapely.geometry.MultiPolygon(rivers)
     else:
         river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])

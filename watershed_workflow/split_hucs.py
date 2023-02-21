@@ -203,7 +203,7 @@ class SplitHUCs:
             return shapely.geometry.Polygon(ml)
         else:
             return shapely.geometry.MultiPolygon([shapely.geometry.Polygon(l) for l in ml])
-    
+
     def deep_copy(self):
         """Return a deep copy"""
         cp = copy.deepcopy(self)

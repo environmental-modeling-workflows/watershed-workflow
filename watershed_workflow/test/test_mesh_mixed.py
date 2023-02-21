@@ -58,30 +58,25 @@ def river_small():
 
 @pytest.fixture
 def corr_small():
-    corr_coords = [(3.500000999997, 0.0009999980000059787),
- (3.5099990000009997, 5.0),
- (3.5001921882905838, 9.903405855207968),
- (1.523171889094147, 14.855841704695042),
- (1.0, 19.0),
- (2.476828110905853, 15.164158295304956),
- (4.0, 11.348612713124119),
- (5.543501505461575, 15.215083984305364),
- (8.0, 19.0),
- (6.456498494538425, 14.804916015694635),
- (4.500192262191668, 9.90436890366601),
- (4.510000999999, 5.0),
- (4.499999000003, -0.0009999980000059787),
- (3.500000999997, 0.0009999980000059787)]
+    corr_coords = [(3.500000999997, 0.0009999980000059787), (3.5099990000009997, 5.0),
+                   (3.5001921882905838, 9.903405855207968), (1.523171889094147, 14.855841704695042),
+                   (1.0, 19.0), (2.476828110905853, 15.164158295304956), (4.0, 11.348612713124119),
+                   (5.543501505461575, 15.215083984305364), (8.0, 19.0),
+                   (6.456498494538425, 14.804916015694635), (4.500192262191668, 9.90436890366601),
+                   (4.510000999999, 5.0), (4.499999000003, -0.0009999980000059787),
+                   (3.500000999997, 0.0009999980000059787)]
     return shapely.geometry.Polygon(corr_coords)
 
 
 @pytest.fixture
 def watershed_small():
 
-    seg1 = shapely.geometry.LineString([[16, 4], [16, 8], [16, 12], [16, 16], [16, 20], [12, 20], [8, 20], [4, 20], [0, 20], [0, 16], [0, 12], [0, 8], [0, 4], [0, 0], [4, 0]])
-    seg2 = shapely.geometry.LineString([[4,0],[8, 0], [12, 0], [16, 0],[16, 4]])
+    seg1 = shapely.geometry.LineString([[16, 4], [16, 8], [16, 12], [16, 16], [16, 20], [12, 20],
+                                        [8, 20], [4, 20], [0, 20], [0, 16], [0, 12], [0, 8], [0, 4],
+                                        [0, 0], [4, 0]])
+    seg2 = shapely.geometry.LineString([[4, 0], [8, 0], [12, 0], [16, 0], [16, 4]])
 
-    ws = shapely.geometry.Polygon(seg1.coords[:]+seg2.coords[:])
+    ws = shapely.geometry.Polygon(seg1.coords[:] + seg2.coords[:])
     watershed = watershed_workflow.split_hucs.SplitHUCs([ws])
     for i, seg in enumerate([seg1, seg2]):
         watershed.segments[i] = seg
@@ -90,21 +85,18 @@ def watershed_small():
 
 def test_densify_rivers_hucs(watershed_rivers):
     watershed, rivers = watershed_rivers
-    watershed_workflow.simplify(watershed,
-                                rivers,
-                                simplify_rivers=10,
-                                cut_intersections=True)
+    watershed_workflow.simplify(watershed, rivers, simplify_rivers=10, cut_intersections=True)
 
     watershed_workflow.densify_rivers_hucs.densify_hucs(huc=watershed,
-                                                            huc_raw=watershed,
-                                                            rivers=rivers,
-                                                            use_original=False,
-                                                            limit_scales=[0, 25, 100, 50])
+                                                        huc_raw=watershed,
+                                                        rivers=rivers,
+                                                        use_original=False,
+                                                        limit_scales=[0, 25, 100, 50])
     watershed_workflow.densify_rivers_hucs.densify_rivers(rivers,
-                                                            rivers,
-                                                            limit=14,
-                                                            use_original=False,
-                                                            treat_collinearity=True)
+                                                          rivers,
+                                                          limit=14,
+                                                          use_original=False,
+                                                          treat_collinearity=True)
 
     assert (51 == len(watershed.exterior().exterior.coords))
     assert (16 == len(rivers[0].segment.coords))
@@ -134,8 +126,7 @@ def test_to_quads(river_small, corr_small):
 
 def test_traingulate(watershed_small, river_small, corr_small):
     watershed_workflow.create_river_mesh.to_quads(river_small, corr_small, 1)
-    points, elems = watershed_workflow.triangulate(watershed_small,
-                                                   [river_small],
+    points, elems = watershed_workflow.triangulate(watershed_small, [river_small],
                                                    river_corrs=[corr_small],
                                                    tol=0.1,
                                                    refine_min_angle=32,
