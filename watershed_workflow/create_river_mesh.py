@@ -107,7 +107,7 @@ def create_river_mesh(river, widths=8, enforce_convexity=True, gid_shift=0, dila
     corr = set_width_by_order(river, corr, widths=widths, dilation_width = dilation_width, gid_shift=gid_shift)
     # treating non-convexity at junctions
     if enforce_convexity:
-        corr = convexity_enforcement(river, corr)
+        corr = convexity_enforcement(river, corr, widths=widths, dilation_width = dilation_width, gid_shift=gid_shift)
     return elems, corr
 
 
@@ -467,7 +467,7 @@ def width_cal(width_dict, order):
     return width
 
 
-def convexity_enforcement(river, corr):
+def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
     """this functions check the river-corridor polygon for convexity, if non-convex, moves the node onto the convex hull of the element-polygon
 
     Parameters
@@ -486,6 +486,7 @@ def convexity_enforcement(river, corr):
 
     for j, node in enumerate(river.preOrder()):
         for elem in node.elements:
+            elem = [id-gid_shift for id in elem]
             if len(elem) == 5 or len(elem) == 6:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]
                 if not watershed_workflow.utils.is_convex(points):
@@ -496,14 +497,68 @@ def convexity_enforcement(river, corr):
                         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
                         points[i] = new_point
 
-                assert(watershed_workflow.utils.is_convex(points))
-                # updating coords
-                for id, point in zip(elem, points):
-                    coords[id] = point
+                if not (watershed_workflow.utils.is_convex(points)):
+                    logging.info(f"  could not make these: {points} using convex hull, trying nudging....")
+                    points = make_convex_by_nudge(points)
+
+                # double check widths
+                if type(widths) == dict:
+                    order = node.properties["StreamOrder"]
+                    target_width = width_cal(widths, order)
+                else:
+                    target_width= widths
+
+                if len(points) == 4:
+                    p1 = np.array(points[1])# points of the upstream edge of the quad
+                    p2 = np.array(points[2])
+                    [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
+                    points[1] = tuple(p1_)
+                    points[2] = tuple(p2_)
+
+                if len(elem) == 5:
+                    p1 = np.array(points[1]) # points of the upstream edge of the quad
+                    p2 = np.array(points[3])
+                    [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
+                    points[1] = tuple(p1_)
+                    points[3] = tuple(p2_)
+                if len(elem)==6:
+                    p1 = np.array(points[2]) # points of the upstream edge of the quad
+                    p2 = np.array(points[3])
+                    [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
+                    points[2] = tuple(p1_)
+                    points[3] = tuple(p2_)
+
+                    p1 = np.array(points[1]) # points of the upstream edge of the quad
+                    p2 = np.array(points[4])
+                    [p1_, p2_] = move_to_target_separation(p1, p2, target_width, dilation_width = dilation_width)
+                    points[1] = tuple(p1_)
+                    points[4] = tuple(p2_)
+                    
+                    assert(watershed_workflow.utils.is_convex(points))
+                    # updating coords
+                    for id, point in zip(elem, points):
+                        coords[id] = point
 
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
 
+
+def make_convex_by_nudge(points): # if efficient convexity does not work
+    """this functions takes the river-corridor elemet, nudges the neck-points of the junction if the pentagon is non-convex 
+    until it becomes convex
+    Parameters"""
+    i=0
+    while not watershed_workflow.utils.is_convex(points):
+        p1, p3= [np.array(points[1]), np.array(points[3])]
+        d=p1-p3
+        p1_=p3+1.01*d
+        p3_=p1-1.01*d
+        points[1]=tuple(p1_)
+        points[3]=tuple(p3_)
+        i+=1
+    logging.debug("element was adjusted", i, " times")
+    assert(watershed_workflow.utils.is_convex(points))            
+    return points
 
 ## Supporting functions for river meshing: accomodate river corridor with internal huc boundaries
 ## generally rc = river corridor; rt = river tree
@@ -636,7 +691,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc = True)
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
                 parent_node = node_at_intersection(intersection_point, river)
-                if len(parent_node.children) != 0: # maiing sure it is not a leaf node
+                if len(parent_node.children) != 0: # making sure it is not a leaf node
                         is_unadjusted_outlet_point = True
             elif type(intersection_point) is shapely.geometry.MultiPoint:
                 for point in intersection_point:
@@ -690,23 +745,26 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc = True)
 
             if integrate_rc or outlet_junction: # this will modify huc boundary to integrate quad edges
                 rc_point_ind = 0 # to identify which rc points is added to hucs-segment
+                elem = parent_node.elements[0]
+                river_corr_part = shapely.geometry.Polygon([river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points)  # his polygon is used to remove overlapping huc-segment and rc. To avoid issues at snapped leaf node intersecting with this 
+                                  # with this huc segment, we create lcal rc polygon 
                 for key in junction_seg_angles_sorted.keys():
                     if type(key) is int:
                         logging.info(f"Modifying HUC Segment {key}")
                         # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
-                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr, rc_points[rc_point_ind]) 
+                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part, rc_points[rc_point_ind]) 
                         key_hold = key                  
                     else:
                         rc_point_ind+=1
                          # extending huc-segment along smaller edge of the quad
-                        hucs.segments[key_hold]= adjust_seg_for_rc(hucs.segments[key_hold], river_corr, rc_points[rc_point_ind], integrate_rc = integrate_rc or outlet_junction)   
+                        hucs.segments[key_hold]= adjust_seg_for_rc(hucs.segments[key_hold], river_corr_part, rc_points[rc_point_ind], integrate_rc = integrate_rc or outlet_junction)   
 
             else: # this will just remove the part of huc-segment overlappig with rc 
                 rc_point_ind = 0 
                 for key in junction_seg_angles_sorted.keys():
                     if type(key) is int:
                         logging.info(f"Modifying HUC Segment {key}")
-                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key] , river_corr, rc_points[rc_point_ind]) 
+                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part, rc_points[rc_point_ind]) 
                     else:
                         rc_point_ind+=1  
     return hucs
