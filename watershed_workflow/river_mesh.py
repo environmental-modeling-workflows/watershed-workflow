@@ -536,7 +536,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
 
                 if not (watershed_workflow.utils.is_convex(points)):
                     logging.info(
-                        f"  could not make these: {points} using convex hull, trying nudging....")
+                        f"  could not make these: {points} convex using convex hull, trying nudging....")
                     points = make_convex_by_nudge(points)
 
                 # double check widths

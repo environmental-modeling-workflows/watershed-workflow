@@ -45,7 +45,9 @@ def densify_river(river, river_raw=None, limit=100, treat_collinearity=False, an
     treat_collinearity: boolean
         flag for whether to enforce non-colinearity. Collinear points in the segment create problem when 
         river corridor polynomial is created 
-
+    angle_limit: int (optional)
+        this will smoothen angle any angle formed by three consecutive points on the river tree
+        smaller thea this value 
     """
     if 'NHDPlusID' in river.properties.keys():
 
@@ -369,7 +371,7 @@ def remove_sharp_angles_from_river_tree(river, angle_limit=0):
             treat_node_junctions_for_sharp_angles(node, angle_limit=angle_limit)
         treat_small_angle_between_child_nodes(
             node, angle_limit=angle_limit
-            + 7)  # angle between two children (how ofteen can we have >2 children)
+            + 7)  # angle between two children (how ofteen can we have >2 children??)
     assert (river.is_continuous())
 
 

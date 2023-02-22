@@ -1015,6 +1015,7 @@ def simplify_and_prune(hucs,
 
 def triangulate(hucs,
                 rivers=None,
+                river_corrs=None,
                 internal_boundaries=None,
                 diagnostics=True,
                 verbosity=1,
@@ -1036,6 +1037,8 @@ def triangulate(hucs,
         A split-form HUC object from, e.g., get_split_form_hucs()
     rivers : list[watershed_workflow.river_tree.River], optional
         List of rivers, used to refine the triangulation in conjunction with refine_distance.
+    river_corrs : list[shapely.geometry.Polygon], optional
+        List of rivers corridor polygons.
     internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
         List of objects, whose boundary (in the case of
         polygons/waterbodies) or reaches (in the case of River) will
@@ -1122,6 +1125,7 @@ def triangulate(hucs,
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
         rivers,
+        river_corrs,
         internal_boundaries=internal_boundaries,
         tol=tol,
         verbose=verbose,
@@ -1239,13 +1243,13 @@ def tessalate_river_aligned(hucs,
                                                                   integrate_rc=False)
 
     # triangulate the rest
-    tri_res = watershed_workflow.triangulation.triangulate(hucs_without_outlet, rivers, corrs,
-                                                           internal_boundaries, **kwargs)
+    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
+                                                           internal_boundaries, diagnostics, **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]
 
     # merge into a single output
-    tri_conn_list = [conn.tolist() for conn in list(tri_conn)]
+    tri_conn_list = [conn.tolist() for conn in tri_conn]
     conn_list = tri_conn_list + quad_conn
 
     # note, all quad verts are in the tri_verts, and hopefully in the right order!
@@ -1279,8 +1283,10 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
         Array of triangle vertices, including a z-dimension.
 
     """
-    # logging.info("")
-    # logging.info("Elevating Triangulation to DEM")
+    # logging is commented because this function is also used to elevate rivers 
+    # and this blow up output!! any suggestion??
+    # logging.info("") 
+    # logging.info("Elevating points to DEM")
     # logging.info("-" * 30)
 
     # index the i,j of the points, pick the elevations

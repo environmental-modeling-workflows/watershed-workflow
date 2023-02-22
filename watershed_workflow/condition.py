@@ -6,6 +6,7 @@ import copy
 import math
 import scipy.ndimage
 
+import watershed_workflow
 
 @attr.s
 class Point:
@@ -337,7 +338,7 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     assert (len(waterway.edges) == m2.num_edges)
 
     # delete the centroid info to force recalculation
-    m2.clear_geometry_cache()
+    # m2.clear_geometry_cache()
     return
 
 
@@ -631,3 +632,13 @@ def bank_nodes_from_edge(edge, elem, m2):
     bank_tri = cells_to_edge[0]
     node_id = (set(bank_tri) - set(edge)).pop()
     return node_id
+
+
+def elevate_rivers(rivers, crs, dem, dem_profile):
+    """elevate river using dem and store reach-bed-profile as node properties"""
+    for river in rivers:
+        for i, node in enumerate(river.preOrder()):
+                node_points=(np.array(node.segment.xy).T)
+                node_elevs = watershed_workflow.elevate(node_points, crs, dem, dem_profile)[:,2] 
+                assert(len(node_elevs)==len(node.segment.coords))
+                node.properties['elev_profile']=node_elevs
