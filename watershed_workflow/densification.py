@@ -382,7 +382,7 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
     for i in range(len(seg_coords) - 2):
         seg_up = shapely.geometry.LineString([seg_coords[i], seg_coords[i + 1]])
         seg_down = shapely.geometry.LineString([seg_coords[i + 1], seg_coords[i + 2]])
-        angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
+        angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
         if angle > 360 - angle_limit or angle < angle_limit:
             logging.info(f"removing sharp angle: {angle}")
             if len(seg_coords) > 3:
@@ -429,7 +429,7 @@ def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
 def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10):
     seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
     seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
-    angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
+    angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
     if angle > 360 - angle_limit or angle < angle_limit:
         logging.info(f"removing sharp angle: {angle}")
         new_point = shapely.geometry.Polygon([seg2.coords[-2], seg2.coords[-1],
@@ -456,7 +456,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
             seg2 = child.segment
             seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
             seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
-            angle = watershed_workflow.create_river_mesh.angle_rivers_segs(ref_seg=seg_down,
+            angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down,
                                                                            seg=seg_up)
             angles.append(angle)
         if abs(angles[1] - angles[0]) < angle_limit:
@@ -477,5 +477,5 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
                         grandchild_seg_coords = grandchild.segment.coords[:]
                         grandchild_seg_coords[-1] = child_coords[0]
                         grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
-                child_coords = treat_segment_collinearity(child_coords)
+                child_coords = _treat_segment_collinearity(child_coords)
                 child.segment = shapely.geometry.LineString(child_coords)

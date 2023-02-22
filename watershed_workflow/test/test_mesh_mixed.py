@@ -5,9 +5,9 @@ import shapely
 
 import watershed_workflow.mesh
 import watershed_workflow.utils
-import watershed_workflow.densify_rivers_hucs
+import watershed_workflow.densification
 import watershed_workflow.river_tree
-import watershed_workflow.create_river_mesh
+import watershed_workflow.river_mesh
 import watershed_workflow.split_hucs
 
 
