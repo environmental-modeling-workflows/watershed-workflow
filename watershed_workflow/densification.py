@@ -50,7 +50,6 @@ def densify_river(river, river_raw=None, limit=100, treat_collinearity=False, an
         smaller thea this value 
     """
     if 'NHDPlusID' in river.properties.keys():
-
         NHD_ids_raw = []
         for node in river_raw.preOrder():
             NHD_ids_raw.append(node.properties['NHDPlusID'])
@@ -58,7 +57,6 @@ def densify_river(river, river_raw=None, limit=100, treat_collinearity=False, an
         assert (len(river) == len(river_raw))
 
     for j, node in enumerate(river.preOrder()):
-
         if 'NHDPlusID' in river.properties.keys():
             node_index_in_raw = NHD_ids_raw.index(node.properties['NHDPlusID'])
             node_raw = list(river_raw.preOrder())[node_index_in_raw]
@@ -142,9 +140,7 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
     watershed_densified: watershed_workflow.split_hucs.SplitHUCs object
         a densified huc
     """
-
     for i, seg in enumerate(huc.segments):  # densifying segment by segment
-
         # find which original segment is this segment part of, so we can use it to resample
         logging.info(f"trying to refine huc segment: {i}")
         coords = list(seg.coords)
@@ -153,17 +149,14 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
             for j, seg_orig in enumerate(huc_raw.segments):
                 if seg.intersects(seg_orig):
                     intersect_seg = seg.intersection(seg_orig)
-                    logging.info(
-                        f"original huc segment {j} intersect huc segment {i} as {type(intersect_seg)}"
-                    )
-                    if type(intersect_seg) in [
-                            shapely.geometry.LineString, shapely.geometry.MultiPoint, list,
-                            shapely.geometry.collection.GeometryCollection
-                    ]:  # LineString or MultiPoint or List
+                    logging.info(f"original huc segment {j} intersect huc segment {i} as {type(intersect_seg)}")
+                    if isinstance(intersect_seg, shapely.geometry.MultiPoint) and len(intersect_seg.geoms) == 2:
+                        pass
+                    elif isinstance(intersect_seg, shapely.geometry.LineString) or \
+                         isinstance(intersect_seg, shapely.geometry.collection.GeometryCollection):
                         seg_raw = seg_orig
                         logging.info(f"for huc segment {i}, found original huc segment {j}")
                         coords_raw = list(seg_raw.coords)
-                        assert (len(coords_raw) > 2)
 
                         if type(limit_scales) is list:
                             # basic refine
