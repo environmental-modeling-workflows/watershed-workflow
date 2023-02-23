@@ -535,7 +535,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
         for elem in node.elements:
             elem = [id - gid_shift for id in elem]
             if len(elem) == 5 or len(elem) == 6:  # checking and treating this pentagon/hexagon
-                points = [coords[id] for id in elem]
+                points = [coords[id] for id in elem] # element points
                 if not watershed_workflow.utils.is_convex(points):
                     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
                     for i, point in enumerate(
@@ -545,60 +545,14 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                         points[i] = new_point
 
                 if not (watershed_workflow.utils.is_convex(points)):
+                    points = [coords[id] for id in elem] # go back to original set of points as snapping on hull might have incorrectly oriented points
                     logging.info(
                         f"  could not make these: {points} convex using convex hull, trying nudging....")
                     points = make_convex_by_nudge(points)
 
-                # double check widths
-                if type(widths) == dict:
-                    order = node.properties["StreamOrder"]
-                    target_width = width_cal(widths, order)
-                else:
-                    target_width = widths
-
-                if len(points) == 4:
-                    p1 = np.array(points[1])  # points of the upstream edge of the quad
-                    p2 = np.array(points[2])
-                    [p1_, p2_] = move_to_target_separation(p1,
-                                                           p2,
-                                                           target_width,
-                                                           dilation_width=dilation_width)
-                    points[1] = tuple(p1_)
-                    points[2] = tuple(p2_)
-
-                elif len(points) == 5:
-                    p1 = np.array(points[1])  # points of the upstream edge of the quad
-                    p2 = np.array(points[3])
-                    [p1_, p2_] = move_to_target_separation(p1,
-                                                           p2,
-                                                           target_width,
-                                                           dilation_width=dilation_width)
-                    points[1] = tuple(p1_)
-                    points[3] = tuple(p2_)
-
-                elif len(points) == 6:
-                    p1 = np.array(points[2])  # points of the upstream edge of the quad
-                    p2 = np.array(points[3])
-                    [p1_, p2_] = move_to_target_separation(p1,
-                                                           p2,
-                                                           target_width,
-                                                           dilation_width=dilation_width)
-                    points[2] = tuple(p1_)
-                    points[3] = tuple(p2_)
-
-                    p1 = np.array(points[1])  # points of the upstream edge of the quad
-                    p2 = np.array(points[4])
-                    [p1_, p2_] = move_to_target_separation(p1,
-                                                           p2,
-                                                           target_width,
-                                                           dilation_width=dilation_width)
-                    points[1] = tuple(p1_)
-                    points[4] = tuple(p2_)
-
-                    assert (watershed_workflow.utils.is_convex(points))
-                    # updating coords
-                    for id, point in zip(elem, points):
-                        coords[id] = point
+                assert((watershed_workflow.utils.is_convex(points)))
+                for id, point in zip(elem, points):
+                    coords[id] = point
 
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
