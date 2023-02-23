@@ -655,23 +655,6 @@ def filter_small_rivers(rivers, count):
     return new_rivers
 
 
-def merge_old(river, tol=_tol):
-    """Remove inner branches that are short, combining branchpoints as needed. This function
-    extend the children segments; concern: can cause acute angle between the merging rivers)"""
-    for node in list(river.preOrder()):
-        if node.segment.length < tol and node.parent is not None:
-            logging.info("  ...cleaned inner segment of length %g at centroid %r" %
-                         (node.segment.length, node.segment.centroid.coords[0]))
-            num_children = len(node.children)
-            for child in node.children:
-                child.segment = shapely.geometry.LineString(child.segment.coords[:-1]
-                                                            + [node.parent.segment.coords[0], ])
-                if 'area' in child.properties and 'area' in node.properties:
-                    child.properties['area'] += node.properties['area'] / num_children
-                node.parent.addChild(child)
-            node.remove()
-
-
 def merge(river, tol=_tol):
     """Remove inner branches that are short, combining branchpoints as needed. This function
     merge the "short" segment into the parent segment"""

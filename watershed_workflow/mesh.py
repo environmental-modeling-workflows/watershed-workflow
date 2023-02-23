@@ -298,7 +298,9 @@ class Mesh2D:
         recomputed.  It is the USER's responsibility to call this
         function if any coords are changed!
         """
-        del self._centroids
+        # toss geometry cache
+        if hasattr(self, '_centroids'):
+            del self._centroids
 
     def plot(self, color=None, ax=None):
         """Plot the flattened 2D mesh."""
@@ -340,8 +342,7 @@ class Mesh2D:
         self.coords = new_coords
 
         # toss geometry cache
-        if hasattr(self, '_centroids'):
-            del self._centroids
+        self.clear_geometry_cache()
 
     @classmethod
     def read_VTK(cls, filename):
@@ -1081,11 +1082,14 @@ class Mesh3D:
         # add labeled sets
         for ls in self.labeled_sets:
             if ls.entity == 'CELL':
-                logging.info(f'adding elem set: {ls.setid}')
-                new_elem_list = sorted([old_to_new_elems[elem][1] for elem in ls.ent_ids])
-                e.put_elem_set_params(ls.setid, len(new_elem_list), None)
-                e.put_elem_set_name(ls.setid, ls.name)
-                e.put_elem_set(ls.setid, np.array(new_elem_list) + 1)
+                if hasattr(e, 'put_elem_set_params'):
+                    logging.info(f'adding elem set: {ls.setid}')
+                    new_elem_list = sorted([old_to_new_elems[elem][1] for elem in ls.ent_ids])
+                    e.put_elem_set_params(ls.setid, len(new_elem_list), None)
+                    e.put_elem_set_name(ls.setid, ls.name)
+                    e.put_elem_set(ls.setid, np.array(new_elem_list) + 1)
+                else:
+                    logging.warning(f'not writing elem_set: {ls.setid} because this exodus installation does not write element sets')
             else:
                 warnings.warning(f'Cannot write labeled set of type {ls.entity}')
 

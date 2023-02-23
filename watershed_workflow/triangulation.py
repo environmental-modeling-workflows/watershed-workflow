@@ -6,7 +6,6 @@ import numpy as np
 import numpy.linalg as la
 from matplotlib import pyplot as plt
 import scipy.spatial
-import copy
 
 import shapely
 
@@ -176,7 +175,7 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
     info.set_facets(fdata)
 
-    if not river_corrs == None:
+    if river_corrs is not None:
         # adding hole in the river corridor for quad elements
         logging.info("defining hole..")
         hole_points = []
