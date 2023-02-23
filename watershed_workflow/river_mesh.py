@@ -104,7 +104,12 @@ def create_river_mesh(river,
     corr: List(shapely.geometry.Polygon)
         a river corridor polygon
     """
+    
     # creating a polygon for river corridor by dilating the river tree
+    if type(widths) == dict: 
+        dilation_width = min(dilation_width, min(widths.values()))
+    else:
+        dilation_width = min(dilation_width, widths)
     corr = create_river_corridor(river, dilation_width)
 
     # defining special elements in the mesh
@@ -148,6 +153,11 @@ def create_river_corridor(river, width):
         river.make_continuous()
     sort_children_by_angle(river, True)
     delta = width / 2
+
+    # make there are no three collinear points, else buffer will ignore those points
+    for node in river.preOrder():
+        new_seg_coords = watershed_workflow.utils.treat_segment_collinearity(node.segment.coords[:])
+        node.segment = shapely.geometry.LineString(new_seg_coords)
 
     # find smallest lengthscale as threshold to identify double and triple points
     mins = []

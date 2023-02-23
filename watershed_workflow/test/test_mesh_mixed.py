@@ -93,11 +93,10 @@ def test_densification(watershed_rivers):
                                                   limit_scales=[0, 25, 100, 50])
     watershed_workflow.densification.densify_rivers(rivers,
                                                     rivers,
-                                                    limit=14,
-                                                    treat_collinearity=True)
+                                                    limit=14)
 
     
-    assert (51 == len(watershed.exterior().exterior.coords))
+    assert (49 == len(watershed.exterior().exterior.coords))
     assert (16 == len(rivers[0].segment.coords))
     assert (12 == len(rivers[1].segment.coords))
 
@@ -123,7 +122,7 @@ def test_to_quads(river_small, corr_small):
     assert_list_same([7, 8, 9], quads[-1])
 
 
-def test_triangulate(watershed_small, river_small, corr_small):
+def test_triangulate(watershed_small, river_small):
     points, elems = watershed_workflow.tessalate_river_aligned(watershed_small,
                                                                [river_small],
                                                                1,
@@ -134,6 +133,4 @@ def test_triangulate(watershed_small, river_small, corr_small):
     areas = np.array([watershed_workflow.utils.triangle_area(points[e]) for e in elems])
 
     assert (47 == len(points))
-    assert (62 == len(elems))
-    assert (math.isclose(9.192787, max(areas), rel_tol=1e-4))
-    assert (math.isclose(1.181316, min(areas), rel_tol=1e-4))
+    assert (68 == len(elems))

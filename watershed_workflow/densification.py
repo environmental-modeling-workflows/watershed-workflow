@@ -12,13 +12,12 @@ import shapely
 import watershed_workflow.utils
 
 
-def densify_rivers(rivers, rivers_raw=None, limit=100, treat_collinearity=False, angle_limit=None):
+def densify_rivers(rivers, rivers_raw=None, limit=100, angle_limit=None):
     """Returns a list for densified rivers"""
     for river, river_raw in zip(rivers, rivers_raw):
         densify_river(river,
                       river_raw,
                       limit=limit,
-                      treat_collinearity=treat_collinearity,
                       angle_limit=angle_limit)
 
     mins = []
@@ -31,7 +30,7 @@ def densify_rivers(rivers, rivers_raw=None, limit=100, treat_collinearity=False,
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
 
-def densify_river(river, river_raw=None, limit=100, treat_collinearity=False, angle_limit=None):
+def densify_river(river, river_raw=None, limit=100, angle_limit=None):
     """This function traverse in the river tree and densify node.segments in place.
     
     Parameters:
@@ -65,15 +64,14 @@ def densify_river(river, river_raw=None, limit=100, treat_collinearity=False, an
 
         node.segment = densify_node_segments(node,
                                              node_raw,
-                                             limit=limit,
-                                             treat_collinearity=treat_collinearity)
+                                             limit=limit)
 
     if angle_limit != None:
         remove_sharp_angles_from_river_tree(river, angle_limit=angle_limit)
         watershed_workflow.hydrography.merge(river, tol=limit * 0.6)
 
 
-def densify_node_segments(node, node_raw, limit=100, treat_collinearity=False):
+def densify_node_segments(node, node_raw, limit=100):
     """This function adds equally-spaced points in the reach-sections longer than the limit at a desired resolution
         potentially using original river tree
      
@@ -85,9 +83,6 @@ def densify_node_segments(node, node_raw, limit=100, treat_collinearity=False):
         node from the original tree containing all the known points from NHDPlus 
     limit : int
         limit on the section length above which more points are added
-    treat_collinearity: boolean
-        flag for whether to enforce non-colinearity. Collinear points in the segment create problem when 
-        river corridor polynomial is created 
 
     Returns
     -------
@@ -113,8 +108,6 @@ def densify_node_segments(node, node_raw, limit=100, treat_collinearity=False):
             seg_coords_densified[j + 1:j + 1] = new_points
             j += number_new_points
         j += 1
-    if treat_collinearity:
-        seg_coords_densified = _treat_segment_collinearity(seg_coords_densified)
     node.segment.coords = seg_coords_densified
     return node.segment
 
@@ -300,30 +293,6 @@ def _interpolate_simple(end_points, n):
     return new_points
 
 
-def _treat_segment_collinearity(segment_coords, tol=1e-5):
-    """This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment"""
-    col_checks = []
-    for i in range(0,
-                   len(segment_coords)
-                   - 2):  # traversing along the segment, checking 3 consecutive points at a time
-        p0 = segment_coords[i]
-        p1 = segment_coords[i + 1]
-        p2 = segment_coords[i + 2]
-        if watershed_workflow.utils.is_collinear(
-                p0, p1, p2, tol=tol):  # treating collinearity through a small pertubation
-            del_ortho = 10 * tol  # shift in the middle point
-            m = (p2[1] - p0[1]) / (p2[0] - p0[0])
-            if abs(m) == float('inf'):
-                m = 1e6
-            del_y = del_ortho / (1 + m**2)**0.5
-            del_x = -1 * del_ortho * m / (1 + m**2)**0.5
-            p1 = (p1[0] + del_x, p1[1] + del_y)
-            segment_coords[i + 1] = p1
-        col_checks.append(watershed_workflow.utils.is_collinear(p0, p1, p2))
-    assert (sum(col_checks) == 0)
-    return segment_coords
-
-
 def limit_from_river_distance(segment_ends, limit_scales, rivers):
     """Returns a graded refinement function based upon a distance function from rivers, for use with DensifyHucs function.
     HUC segment resolution must be higher in near_distance when the HUC segment midpoint is within near_distance from the river network.
@@ -470,5 +439,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
                         grandchild_seg_coords = grandchild.segment.coords[:]
                         grandchild_seg_coords[-1] = child_coords[0]
                         grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
-                child_coords = _treat_segment_collinearity(child_coords)
+                child_coords = watershed_workflow.utils.treat_segment_collinearity(child_coords)
                 child.segment = shapely.geometry.LineString(child_coords)
+
+
