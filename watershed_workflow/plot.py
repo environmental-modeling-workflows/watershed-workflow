@@ -153,7 +153,7 @@ def huc(huc, crs, color='k', ax=None, **kwargs):
     return shply([huc, ], crs, color, ax, **kwargs)
 
 
-def hucs(hucs, crs, color='k', ax=None, **kwargs):
+def hucs(hucs, crs, color='k', ax=None, outlet_marker=None, outlet_markersize=100, **kwargs):
     """Plot a SplitHUCs object.
     
     A wrapper for plot.shply()
@@ -177,16 +177,9 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
     patches : matplotib PatchCollection
     """
     ps = list(hucs.polygons())
-
-    kwargs_scatter = dict()
-    if 'markersize' in kwargs:
-        kwargs_scatter['markersize'] = kwargs.pop('markersize')
-    if 'marker' in kwargs:
-        kwargs_scatter['marker'] = kwargs.pop('marker')
-
     polys = shply(ps, crs, color, ax, **kwargs)
 
-    if hucs.polygon_outlets is not None and ax is not None:
+    if hucs.polygon_outlets is not None and ax is not None and outlet_marker is not None:
         x = np.array([
             p.xy[0][0] for p in hucs.polygon_outlets
             if not watershed_workflow.utils.is_empty_shapely(p)
@@ -199,11 +192,7 @@ def hucs(hucs, crs, color='k', ax=None, **kwargs):
             c for (c, p) in zip(color, hucs.polygon_outlets)
             if not watershed_workflow.utils.is_empty_shapely(p)
         ]
-        if 'markersize' in kwargs:
-            s = kwargs['markersize']
-        else:
-            s = 100
-        ax.scatter(x, y, s=s, c=c, **kwargs_scatter)
+        ax.scatter(x, y, s=outlet_marker, c=c, markersize=outlet_markersize)
 
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):
@@ -301,7 +290,7 @@ def shply(shp, *args, **kwargs):
         return shplys([shp, ], *args, **kwargs)
 
 
-def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
+def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     """Plot shapely objects.
 
     Currently this assumes shps is an iterable collection of Points, Lines, or
@@ -320,6 +309,8 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
       See https://matplotlib.org/tutorials/colors/colors.html
     ax : matplotib axes object, optional
       Axes to plot on.  Calls get_ax() if not provided.
+    marker : matplotlib marker string
+      If provided, also plots the actual points that make up the shape.
     kwargs : dict
       Extra arguments passed to the plotting method, which can be:
       * pyplot.scatter() (if shps are Point objects)
@@ -338,32 +329,39 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
     except TypeError:
         shps = [shps, ]
 
-    if 'facecolor' not in kwargs:
-        kwargs['facecolor'] = 'none'
-
+    # get an axis and projection to work on
     if ax is None:
         fig, ax = get_ax(crs)
-
     if not hasattr(ax, 'projection') or crs is None:
         projection = None
     else:
         projection = watershed_workflow.crs.to_cartopy(crs)
 
+    # update keyword arguments
+    if 'facecolor' not in kwargs:
+        kwargs['facecolor'] = 'none'
+
+    # markers cannot be used in collections, so we scatter them separately
+    marker_kwargs = dict()
+    if marker is not None:
+        marker_kwargs['marker'] = marker
+        if 'markersize' in kwargs:
+            marker_kwargs['markersize'] = kwargs.pop('markersize')
+
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
-        if 'marker' not in kwargs:
-            kwargs['marker'] = 'o'
+        marker_kwargs.update(kwargs)
+        if 'marker' not in marker_kwargs:
+            marker_kwargs['marker'] = 'o'
 
         points = np.array([p.coords for p in shps])[:, 0, :]
         if projection is None:
-            res = ax.scatter(points[:, 0], points[:, 1], c=color, **kwargs)
+            res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
         else:
             res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **kwargs)
 
     elif type(next(iter(shps))) is shapely.geometry.LineString:
         # plot lines
-        if 'linestyle' not in kwargs:
-            kwargs['linestyle'] = style
         if 'colors' not in kwargs:
             kwargs['colors'] = color
 
@@ -387,6 +385,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             kwargs['colors'] = colors
 
         lines = [np.array(l.coords)[:, 0:2] for l in shps]
+
         lc = pltc.LineCollection(lines, **kwargs)
         if projection is not None:
             lc.set_transform(projection)
@@ -397,15 +396,27 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             res = ax.add_collection(lc)
             ax.autoscale()
 
-    elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
-        if 'linestyle' not in kwargs:
-            kwargs['linestyle'] = style
+        if marker is not None:
+            points = np.array([c for l in lines for c in l])
+            if projection is None:
+                res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+            else:
+                res = ax.scatter(points[:, 0],
+                                 points[:, 1],
+                                 c=color,
+                                 transform=projection,
+                                 **marker_kwargs)
 
+    elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if kwargs['facecolor'] in ['color', 'edge']:
             kwargs.pop('facecolor')
             face_is_edge = True
         else:
             face_is_edge = False
+
+        if color == 'elevation':
+            # compute colors from the mean elevation
+            color = [np.array(p.exterior.coords)[0:-1, 2].mean() for p in iter(shps)]
 
         try:
             color_len = len(color)
@@ -430,6 +441,7 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
                     return [thing, ]
 
             multi_poly = shapely.geometry.MultiPolygon([l for shp in shps for l in listify(shp)])
+
             patch = descartes.PolygonPatch(multi_poly, **kwargs)
             if projection is not None:
                 patch.set_transform(projection)
@@ -438,6 +450,17 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
                 res = ax.add_collection3d(patch)
             else:
                 res = ax.add_patch(patch)
+
+            if marker is not None:
+                points = np.array([p for poly in multi_poly.geoms for p in poly.exterior.coords])
+                if projection is None:
+                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                else:
+                    pnts_res = ax.scatter(points[:, 0],
+                                          points[:, 1],
+                                          c=color,
+                                          transform=projection,
+                                          **marker_kwargs)
 
         elif type(color[0]) is tuple or type(color[0]) is np.ndarray or type(color[0]) is str:
             # list of colors
@@ -452,6 +475,17 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             else:
                 res.set_edgecolor(color)
             ax.add_collection(res)
+
+            if marker is not None:
+                points = np.array([p for poly in multi_poly.geoms for c in poly.exterior])
+                if projection is None:
+                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                else:
+                    pnts_res = ax.scatter(points[:, 0],
+                                          points[:, 1],
+                                          c=color,
+                                          transform=projection,
+                                          **marker_kwargs)
 
         else:
             # list of scalars that will be used with cmap to define a color
@@ -480,6 +514,18 @@ def shplys(shps, crs, color=None, ax=None, style='-', **kwargs):
             print('kwargs = ', kwargs)
             print('setting face color = ', color)
             ax.add_collection(res)
+
+            if marker is not None:
+                points = np.array([p for poly in multi_poly.geoms for c in poly.exterior])
+                if projection is None:
+                    res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                else:
+                    res = ax.scatter(points[:, 0],
+                                     points[:, 1],
+                                     c=color,
+                                     transform=projection,
+                                     **marker_kwargs)
+
         ax.autoscale()
     else:
         raise TypeError('Unknown shply type: {}'.format(type(next(iter(shps)))))
