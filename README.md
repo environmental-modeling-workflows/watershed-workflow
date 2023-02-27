@@ -2,7 +2,7 @@
 [![Docs](https://img.shields.io/badge/docs-link-blue?style=for-the-badge)](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/index.html)
 [![Release](https://img.shields.io/github/v/release/environmental-modeling-workflows/watershed-workflow?display_name=release&style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/releases/tag/watershed-workflow-1.1.0)
 
-[![Build Status](https://img.shields.io/github/workflow/status/environmental-modeling-workflows/watershed-workflow/CI%20to%20Docker%20Hub?label=tests&style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/environmental-modeling-workflows/watershed-workflow/main.yml?label=tests&style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/actions)
 [![Issues](https://img.shields.io/github/issues/environmental-modeling-workflows/watershed-workflow?style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/issues)
 [![Issues](https://img.shields.io/github/issues-pr/environmental-modeling-workflows/watershed-workflow?style=for-the-badge)](https://github.com/environmental-modeling-workflows/watershed-workflow/pulls)
 
