@@ -487,7 +487,7 @@ def prune_by_segment_length(tree, prune_tol=10):
         if leaf.segment.length < prune_tol:
             logging.info("  ...cleaned leaf segment of length: %g at centroid %r" %
                          (leaf.segment.length, leaf.segment.centroid.coords[0]))
-            leaf.removePreserveAreas()
+            leaf.removePreserveProperties()
 
 
 def prune_river_by_area(river, area, prop='TotalDrainageAreaSqKm'):
