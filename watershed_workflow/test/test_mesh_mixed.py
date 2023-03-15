@@ -91,11 +91,8 @@ def test_densification(watershed_rivers):
                                                   huc_raw=watershed,
                                                   rivers=rivers,
                                                   limit_scales=[0, 25, 100, 50])
-    watershed_workflow.densification.densify_rivers(rivers,
-                                                    rivers,
-                                                    limit=14)
+    watershed_workflow.densification.densify_rivers(rivers, rivers, limit=14)
 
-    
     assert (49 == len(watershed.exterior().exterior.coords))
     assert (16 == len(rivers[0].segment.coords))
     assert (12 == len(rivers[1].segment.coords))
@@ -123,8 +120,7 @@ def test_to_quads(river_small, corr_small):
 
 
 def test_triangulate(watershed_small, river_small):
-    points, elems = watershed_workflow.tessalate_river_aligned(watershed_small,
-                                                               [river_small],
+    points, elems = watershed_workflow.tessalate_river_aligned(watershed_small, [river_small],
                                                                1,
                                                                tol=0.1,
                                                                refine_min_angle=32,

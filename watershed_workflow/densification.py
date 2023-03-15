@@ -15,14 +15,11 @@ import watershed_workflow.utils
 def densify_rivers(rivers, rivers_raw=None, limit=100, angle_limit=None):
     """Returns a list for densified rivers"""
     for river, river_raw in zip(rivers, rivers_raw):
-        densify_river(river,
-                      river_raw,
-                      limit=limit,
-                      angle_limit=angle_limit)
+        densify_river(river, river_raw, limit=limit, angle_limit=angle_limit)
 
     mins = []
     for river in rivers:
-        for line in river.dfs():
+        for line in river.depthFirst():
             coords = np.array(line.coords[:])
             dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
             mins.append(np.min(dz))
@@ -62,9 +59,7 @@ def densify_river(river, river_raw=None, limit=100, angle_limit=None):
         else:
             node_raw = list(river_raw.preOrder())[j]
 
-        node.segment = densify_node_segments(node,
-                                             node_raw,
-                                             limit=limit)
+        node.segment = densify_node_segments(node, node_raw, limit=limit)
 
     if angle_limit != None:
         remove_sharp_angles_from_river_tree(river, angle_limit=angle_limit)
@@ -135,20 +130,23 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
     """
     for i, seg in enumerate(huc.segments):  # densifying segment by segment
         # find which original segment is this segment part of, so we can use it to resample
-        logging.info(f"trying to refine huc segment: {i}")
+        logging.debug(f"trying to refine huc segment: {i}")
         coords = list(seg.coords)
         if huc_raw is not None:
             seg_raw = None
             for j, seg_orig in enumerate(huc_raw.segments):
                 if seg.intersects(seg_orig):
                     intersect_seg = seg.intersection(seg_orig)
-                    logging.info(f"original huc segment {j} intersect huc segment {i} as {type(intersect_seg)}")
-                    if isinstance(intersect_seg, shapely.geometry.MultiPoint) and len(intersect_seg.geoms) == 2:
+                    logging.debug(
+                        f"original huc segment {j} intersect huc segment {i} as {type(intersect_seg)}"
+                    )
+                    if isinstance(intersect_seg, shapely.geometry.MultiPoint) and len(
+                            intersect_seg.geoms) == 2:
                         pass
                     elif isinstance(intersect_seg, shapely.geometry.LineString) or \
                          isinstance(intersect_seg, shapely.geometry.collection.GeometryCollection):
                         seg_raw = seg_orig
-                        logging.info(f"for huc segment {i}, found original huc segment {j}")
+                        logging.debug(f"for huc segment {i}, found original huc segment {j}")
                         coords_raw = list(seg_raw.coords)
 
                         if type(limit_scales) is list:
@@ -171,10 +169,10 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
 
                         break
                 else:
-                    logging.info(f"original huc segment {j} do not intersect huc segment {i}")
+                    logging.debug(f"original huc segment {j} do not intersect huc segment {i}")
 
             if seg_raw == None:
-                logging.info(
+                logging.debug(
                     "did not find corresponding huc.segment in original, doing simple interpolation"
                 )
                 coords_raw = None
@@ -418,8 +416,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
             seg2 = child.segment
             seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
             seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
-            angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down,
-                                                                           seg=seg_up)
+            angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
             angles.append(angle)
         if abs(angles[1] - angles[0]) < angle_limit:
             logging.info(
@@ -441,5 +438,3 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
                         grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
                 child_coords = watershed_workflow.utils.treat_segment_collinearity(child_coords)
                 child.segment = shapely.geometry.LineString(child_coords)
-
-

@@ -104,9 +104,9 @@ def create_river_mesh(river,
     corr: List(shapely.geometry.Polygon)
         a river corridor polygon
     """
-    
+
     # creating a polygon for river corridor by dilating the river tree
-    if type(widths) == dict: 
+    if type(widths) == dict:
         dilation_width = min(dilation_width, min(widths.values()))
     else:
         dilation_width = min(dilation_width, widths)
@@ -161,7 +161,7 @@ def create_river_corridor(river, width):
 
     # find smallest lengthscale as threshold to identify double and triple points
     mins = []
-    for line in river.dfs():
+    for line in river.depthFirst():
         coords = np.array(line.coords[:])
         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
         mins.append(np.min(dz))
@@ -177,7 +177,7 @@ def create_river_corridor(river, width):
         f"merging points closer than this distance along the river corridor: {length_scale}")
 
     # buffer by the width
-    mls = shapely.geometry.MultiLineString([r for r in river.dfs()])
+    mls = shapely.geometry.MultiLineString([r for r in river.depthFirst()])
     corr = mls.buffer(delta,
                       cap_style=shapely.geometry.CAP_STYLE.flat,
                       join_style=shapely.geometry.JOIN_STYLE.mitre)
@@ -535,7 +535,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
         for elem in node.elements:
             elem = [id - gid_shift for id in elem]
             if len(elem) == 5 or len(elem) == 6:  # checking and treating this pentagon/hexagon
-                points = [coords[id] for id in elem] # element points
+                points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
                     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
                     for i, point in enumerate(
@@ -545,12 +545,15 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                         points[i] = new_point
 
                 if not (watershed_workflow.utils.is_convex(points)):
-                    points = [coords[id] for id in elem] # go back to original set of points as snapping on hull might have incorrectly oriented points
+                    points = [
+                        coords[id] for id in elem
+                    ]  # go back to original set of points as snapping on hull might have incorrectly oriented points
                     logging.info(
-                        f"  could not make these: {points} convex using convex hull, trying nudging....")
+                        f"  could not make these: {points} convex using convex hull, trying nudging...."
+                    )
                     points = make_convex_by_nudge(points)
 
-                assert((watershed_workflow.utils.is_convex(points)))
+                assert ((watershed_workflow.utils.is_convex(points)))
                 for id, point in zip(elem, points):
                     coords[id] = point
 

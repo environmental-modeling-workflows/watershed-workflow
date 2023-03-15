@@ -158,10 +158,9 @@ class Tree(object):
 
             :node A Tree object
         """
-        for i in self.children[:]:
-            i.remove()
+        children = self.clear()
+        for i in children:
             node.addChild(i)
-        self.clear()
         self.addChild(node)
         return node
 
@@ -236,7 +235,7 @@ class Tree(object):
 
     def preOrder(self):
         """
-            Return a list of subnodes in PreOrder.
+            Generates nodes in PreOrder.
         """
         yield self
         # Take copy to make this robust under modification
@@ -246,7 +245,7 @@ class Tree(object):
 
     def postOrder(self):
         """
-            Return a list of the subnodes in PostOrder.
+            Generates nodes in PostOrder.
         """
         # Take copy to make this robust under modification
         for i in self.children[:]:
@@ -256,7 +255,7 @@ class Tree(object):
 
     def prePostInBetweenOrder(self):
         """
-            Return a list of subnodes in pre and post order, but also in between children.
+            Generates nodes in pre and post order, but also with self in between all consective children.
         """
         yield self
         for i in self.children[:]:
@@ -265,6 +264,18 @@ class Tree(object):
             yield self
         if len(self.children) == 0:
             yield self
+
+    def breadthFirstOrder(self):
+        """
+            Generates nodes in a breadth-first ordering.
+        """
+        import queue
+        q = queue.Queue()
+        q.put(self)
+        for obj in q.get():
+            for child in obj.children:
+                q.put(child)
+            yield obj
 
     def _find(self, itr, *func, **kwargs):
         for i in itr:
@@ -431,11 +442,19 @@ class Tree(object):
             outf.write(s)
             outf.write("\n")
 
-    def count(self):
+    def __len__(self):
         """
             Number of nodes in this tree, including the root.
         """
-        return len(list(self.preOrder()))
+        return sum(1 for i in self.preOrder())
+
+    def to_networkx(self, hash):
+        import networkx
+        G = networkx.DiGraph()
+        for node in self.preOrder():
+            for child in node.children:
+                G.add_edge(hash(child), hash(node))
+        return G
 
 
 def constructFromList(lst):

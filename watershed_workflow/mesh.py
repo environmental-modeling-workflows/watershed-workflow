@@ -1089,7 +1089,9 @@ class Mesh3D:
                     e.put_elem_set_name(ls.setid, ls.name)
                     e.put_elem_set(ls.setid, np.array(new_elem_list) + 1)
                 else:
-                    logging.warning(f'not writing elem_set: {ls.setid} because this exodus installation does not write element sets')
+                    logging.warning(
+                        f'not writing elem_set: {ls.setid} because this exodus installation does not write element sets'
+                    )
             else:
                 warnings.warning(f'Cannot write labeled set of type {ls.entity}')
 
@@ -1656,3 +1658,43 @@ def add_river_corridor_regions(m2, corrs, labels=None):
             setid2 = m2.next_available_labeled_setid()
             ls2 = LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
+
+
+def create_submesh(m2, shp):
+    """Given a shape that contains some cells of m2, create the submesh."""
+    # create the new coordinates and a map
+    new_coords_i = []
+    new_coords_map = dict()
+    for i, c in enumerate(m2.coords):
+        if shp.intersects(shapely.geometry.Point(c[0], c[1])):
+            new_coords_map[i] = len(new_coords_i)
+            new_coords_i.append(i)
+    new_coords = np.array([m2.coords[i] for i in new_coords_i])
+
+    # create the new conn and map
+    new_conns = []
+    new_conn_map = dict()
+    for j, conn in enumerate(m2.conn):
+        if all(i in new_coords_i for i in conn):
+            new_conn = [new_coords_map[i] for i in conn]
+            new_conn_map[j] = len(new_conns)
+            new_conns.append(new_conn)
+
+    # new labeled sets
+    new_labeled_sets = []
+    for ls in m2.labeled_sets:
+        if (ls.entity == 'CELL'):
+            new_ent_ids = [new_conn_map[e] for e in ls.ent_ids if e in new_conn_map.keys()]
+            if len(new_ent_ids) > 0:
+                new_ls = LabeledSet(ls.name, ls.setid, ls.entity, new_ent_ids, ls.to_extrude)
+                new_labeled_sets.append(new_ls)
+        elif (ls.entity == 'FACE'):
+            new_edges = [(new_coords_map[e[0]], new_coords_map[e[1]]) for e in ls.ent_ids
+                         if (e[0] in new_coords_map and e[1] in new_coords_map)]
+            if len(new_edges) > 0:
+                new_ls = LabeledSet(ls.name, ls.setid, ls.entity, new_edges, ls.to_extrude)
+                new_labeled_sets.append(new_ls)
+
+    # create the new mesh
+    new_mesh = Mesh2D(new_coords, new_conns, new_labeled_sets, m2.crs, m2.eps, False, True)
+    return new_coords_map, new_conn_map, new_mesh
