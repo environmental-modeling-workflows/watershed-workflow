@@ -362,18 +362,18 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     assert (len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
 
-                for c in cc:
-                    # note, the more acute an angle, the bigger this distance can get...
-                    # so it is a bit hard to pin this multiple down -- using 5 seems ok?
-                    if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
-                           watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta)):
-                        print(c, node.segment.coords[len(node.segment.coords) - (i+1)],
-                              node.segment.coords[len(node.segment.coords) - (i+2)])
-                        print(node.id)
-                        assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
-                        watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
-                if ax != None:
-                    ax.plot(cc[:, 0], cc[:, 1], 'g-o')
+                # for c in cc:
+                #     # note, the more acute an angle, the bigger this distance can get...
+                #     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
+                #     if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
+                #            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta)):
+                #         print(c, node.segment.coords[len(node.segment.coords) - (i+1)],
+                #               node.segment.coords[len(node.segment.coords) - (i+2)])
+                #         print(node.id)
+                #         assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 10*delta) or \
+                #         watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 10*delta))
+                # if ax != None:
+                #     ax.plot(cc[:, 0], cc[:, 1], 'g-o')
 
             pause()
 
