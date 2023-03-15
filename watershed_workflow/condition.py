@@ -442,7 +442,8 @@ def condition_river_mesh(m2,
                          lower=False,
                          use_nhd_elev=False,
                          treat_banks=False,
-                         depress_by=0,
+                         depress_upstream_by=0,
+                         network_burn_in_depth = 0,
                          ignore_in_sweep=[]):
     """Conditoning the elevations of stream-corridor elements (generally required in flat agricultural watersheds) to ensure connectivity throgh culverts, 
     skips ponds, maintaiin monotonicity, enforce depths of constructed channels
@@ -468,10 +469,13 @@ def condition_river_mesh(m2,
     treat_banks: boolean, optional
         if the river is passing right next to the reservoir or NHDline is misplaced into the reservoir, where banks may fall into reservoir
         this will enforce bank node is at a higher elevation than the stream bed elevation 
-    depress_by: float, optional
+    depress_upstream_by: float, optional
         if the depression is not captured well in DEM, the river-mesh elements (streambed) is lowered by this number, currently this step is
         done only for headwater reaches, and the effect of propogated downstream only upto where it is needed to maintain topographic gradients 
         on the network scale in the network sweep step
+    network_burn_in_depth: int, dict() or function
+        the depth at by which the quad elements in the streams are to be lowered can be provided either as an integer (uniform lowering),
+        or dictionary {stream order : depth to depress by} or a function of drainage area 
 
     Returns
     -------
@@ -493,7 +497,7 @@ def condition_river_mesh(m2,
                            lower=lower)  # adds smooth profile in node properties
 
         network_sweep(river,
-                      depress_by=depress_by,
+                      depress_upstream_by=depress_upstream_by,
                       use_nhd_elev=use_nhd_elev,
                       ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
 
@@ -505,6 +509,23 @@ def condition_river_mesh(m2,
         else:
             profile = get_profile(
                 node)  # if only centerline elevation is to be use, without any conditioning
+        
+        # can we pass such user-defined functions for channel width and depth as a function of drainage area W or D = f(Drainage_area)
+        if type(network_burn_in_depth) == int:
+            burn_in_depth = network_burn_in_depth
+        elif isinstance(network_burn_in_depth, dict):
+                order = node.properties["StreamOrder"]
+                if order > max(network_burn_in_depth.keys()):
+                    burn_in_depth = network_burn_in_depth[max(network_burn_in_depth.keys())]
+                elif order < min(network_burn_in_depth.keys()):
+                    burn_in_depth = network_burn_in_depth[min(network_burn_in_depth.keys())]
+                else:
+                    burn_in_depth = network_burn_in_depth[order]
+        elif callable(network_burn_in_depth):
+            DA_sqm = node.properties['TotalDrainageAreaSqKm']*1e6
+            burn_in_depth= network_burn_in_depth(DA_sqm)
+            
+        profile[:,1] = profile[:,1] - burn_in_depth
 
         for i, elem in enumerate(node.elements):
 
@@ -593,13 +614,13 @@ def enforce_monotonicity(profile, monotonicity='upstream'):
     return profile_new
 
 
-def network_sweep(river, depress_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
+def network_sweep(river, depress_upstream_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
     """sweeps the river network from each headwater reach (leaf node) to the watershed outlet (root node), removing aritificial obstructions in 
     the river mesh and enforce depths of constructed channels"""
 
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
-        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties['SmoothProfile'][
-            -1, 1] - depress_by  # providing extra depression at the upstream end
+        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties[
+            'SmoothProfile'][-1, 1] - depress_upstream_by  # providing extra depression at the upstream end
         for node in leaf.pathToRoot(
         ):  # traversing from leaf node (headwater) catchment to the root node
             node.properties['SmoothProfile'] = enforce_monotonicity(
