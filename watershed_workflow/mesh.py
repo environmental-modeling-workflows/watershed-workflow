@@ -69,7 +69,7 @@ class SideSet:
             assert (0 <= s < len(cell_faces[c]))
 
 
-@attr.define
+@attr.define(slots=False)
 class LabeledSet:
     """A generic collection of entities."""
     name: str
@@ -277,7 +277,7 @@ class Mesh2D:
         i = 10000
         while any(i == ls.setid for ls in self.labeled_sets):
             i += 1
-        return i
+        return int(i)
 
     def compute_centroid(self, c):
         """Computes, based on coords, the centroid of a cell with ID c.
@@ -1548,7 +1548,7 @@ def add_watershed_regions(m2, polygons, labels=None):
             # add a region, denoting this one as "to extrude".  This
             # will become the volume region
             setid = m2.next_available_labeled_setid()
-            ls = LabeledSet(label, setid, 'CELL', part)
+            ls = LabeledSet(label, int(setid), 'CELL', part)
             m2.labeled_sets.append(ls)
             ls.to_extrude = True
 
