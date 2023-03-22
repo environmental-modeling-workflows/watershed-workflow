@@ -146,6 +146,7 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
                     if isinstance(intersect_seg, shapely.geometry.MultiPoint) and len(intersect_seg.geoms) == 2:
                         pass
                     elif isinstance(intersect_seg, shapely.geometry.LineString) or \
+                         isinstance(intersect_seg, shapely.geometry.MultiPoint) or \
                          isinstance(intersect_seg, shapely.geometry.collection.GeometryCollection):
                         seg_raw = seg_orig
                         logging.info(f"for huc segment {i}, found original huc segment {j}")
