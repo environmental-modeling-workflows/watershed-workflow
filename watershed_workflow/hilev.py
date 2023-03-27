@@ -746,6 +746,7 @@ def construct_rivers(hucs,
                      ignore_small_rivers=None,
                      prune_by_area=None,
                      prune_by_area_fraction=None,
+                     prune_whole_rivers=True,
                      remove_diversions=False,
                      remove_braided_divergences=False):
     """Create a river, which is a tree of reaches.
@@ -780,6 +781,8 @@ def construct_rivers(hucs,
         a fraction of the area of hucs, is less than this tol.  NOTE:
         only valid for reaches that include a contributing area
         property (e.g. NHDPlus).
+    prune_whole_rivers : bool, optional=True
+        If an entire river's area is under tolerance, remove it.
     remove_diversions : bool, optional=False
         If true, remove diversions (see documentation of
         modify_rivers_remove_divergences()).
@@ -813,7 +816,7 @@ def construct_rivers(hucs,
 
     if prune_by_area_fraction is not None:
         rivers = watershed_workflow.hydrography.prune_by_fractional_contributing_area(
-            rivers, prune_by_area_fraction)
+            rivers, prune_by_area_fraction, prune_whole_rivers=prune_whole_rivers)
         if len(rivers) == 0:
             return rivers
 
@@ -938,7 +941,7 @@ def simplify(hucs,
     if len(rivers) != 0:
         mins = []
         for river in rivers:
-            for line in river.dfs():
+            for line in river.depthFirst():
                 coords = np.array(line.coords[:])
                 dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
                 mins.append(np.min(dz))
@@ -1244,7 +1247,7 @@ def tessalate_river_aligned(hucs,
 
     # triangulate the rest
     tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
-                                                           internal_boundaries, diagnostics, **kwargs)
+                                             internal_boundaries, diagnostics, **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]
 
@@ -1283,9 +1286,9 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
         Array of triangle vertices, including a z-dimension.
 
     """
-    # logging is commented because this function is also used to elevate rivers 
+    # logging is commented because this function is also used to elevate rivers
     # and this blow up output!! any suggestion??
-    # logging.info("") 
+    # logging.info("")
     # logging.info("Elevating points to DEM")
     # logging.info("-" * 30)
 

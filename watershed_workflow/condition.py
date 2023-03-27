@@ -8,6 +8,7 @@ import scipy.ndimage
 
 import watershed_workflow
 
+
 @attr.s
 class Point:
     """POD struct that stores coords, a np array of length 3 (x,y,z) and neighbors, 
@@ -638,7 +639,7 @@ def elevate_rivers(rivers, crs, dem, dem_profile):
     """elevate river using dem and store reach-bed-profile as node properties"""
     for river in rivers:
         for i, node in enumerate(river.preOrder()):
-                node_points=(np.array(node.segment.xy).T)
-                node_elevs = watershed_workflow.elevate(node_points, crs, dem, dem_profile)[:,2] 
-                assert(len(node_elevs)==len(node.segment.coords))
-                node.properties['elev_profile']=node_elevs
+            node_points = (np.array(node.segment.xy).T)
+            node_elevs = watershed_workflow.elevate(node_points, crs, dem, dem_profile)[:, 2]
+            assert (len(node_elevs) == len(node.segment.coords))
+            node.properties['elev_profile'] = node_elevs

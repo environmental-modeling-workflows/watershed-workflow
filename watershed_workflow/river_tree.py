@@ -45,11 +45,26 @@ class River(watershed_workflow.tinytree.Tree):
             super(River, self).addChild(type(self)(segment))
         return self.children[-1]
 
-    def dfs(self):
-        """Iterates of reaches in the river in an "upstream-first" or "depth-first" ordering."""
-        for node in self.preOrder():
-            if node.segment is not None:
-                yield node.segment
+    def removePreserveProperties(self):
+        """Removes a reach, preserving catchments and area properties."""
+        if self.parent is not None:
+            parent = self.parent
+            if 'catchment' in self.properties and self.properties['catchment'] is not None:
+                if parent.properties['catchment'] is None:
+                    parent.properties['catchment'] = self.properties['catchment']
+                else:
+                    parent.properties['catchment'] = shapely.ops.unary_union(
+                        [self.properties['catchment'], parent.properties['catchment']])
+
+            if 'area' in self.properties:
+                parent.properties['area'] += self.properties['area']
+
+        self.remove()
+
+    def prune(self):
+        """Removes a reach all the way to the leaf node."""
+        for node in self.postOrder():
+            node.removePreserveProperties()
 
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
@@ -96,12 +111,20 @@ class River(watershed_workflow.tinytree.Tree):
             self.properties[to_save] = val
         return val
 
-    def __len__(self):
-        """Number of total reaches in the river."""
-        return sum(1 for i in self.dfs())
+    def depthFirst(self):
+        """Iterates of reaches in the river in an "upstream-first" or "depth-first" ordering."""
+        for node in self.preOrder():
+            if node.segment is not None:
+                yield node.segment
+
+    def breadthFirst(self):
+        """Iterates of reaches in the river in an "breadth-first" ordering."""
+        for node in self.breadthFirstOrder():
+            if node.segment is not None:
+                yield node.segment
 
     def __iter__(self):
-        return self.dfs()
+        return self.depthFirst()
 
     def _is_continuous(self, child, tol=_tol):
         """Is a given child continuous with self.."""
