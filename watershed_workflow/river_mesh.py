@@ -569,15 +569,26 @@ def make_convex_by_nudge(points):
     Used if efficient convexity does not work
     """
     i = 0
-    while not watershed_workflow.utils.is_convex(points):
-        p1, p3 = [np.array(points[1]), np.array(points[3])]
-        d = p1 - p3
-        p1_ = p3 + 1.01*d
-        p3_ = p1 - 1.01*d
-        points[1] = tuple(p1_)
-        points[3] = tuple(p3_)
-        i += 1
-    logging.debug(f"... element was adjusted {i} times")
+    if len(points)==5:
+        while not watershed_workflow.utils.is_convex(points):
+            p1, p3 = [np.array(points[1]), np.array(points[3])]
+            d = p1 - p3
+            p1_ = p3 + 1.01*d
+            p3_ = p1 - 1.01*d
+            points[1] = tuple(p1_)
+            points[3] = tuple(p3_)
+            i += 1
+        logging.debug(f"... element was adjusted {i} times")
+    elif len(points)==6:
+        while not watershed_workflow.utils.is_convex(points):
+            p1, p4 = [np.array(points[1]), np.array(points[4])]
+            d = p1 - p4
+            p1_ = p4 + 1.01*d
+            p4_ = p1 - 1.01*d
+            points[1] = tuple(p1_)
+            points[4] = tuple(p4_)
+            i += 1
+        logging.debug(f"... element was adjusted {i} times")
     assert (watershed_workflow.utils.is_convex(points))
     return points
 
