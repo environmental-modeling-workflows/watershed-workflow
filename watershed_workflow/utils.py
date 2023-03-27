@@ -856,7 +856,7 @@ def treat_segment_collinearity(segment_coords, tol=1e-5):
         if watershed_workflow.utils.is_collinear(
                 p0, p1, p2, tol=tol):  # treating collinearity through a small pertubation
             del_ortho = 10 * tol  # shift in the middle point
-            if (p2[0] - p0[0]) == 0:
+            if (p2[0] - p0[0]) < 1e-6:
                 m = 1e6
             else:
                 m = (p2[1] - p0[1]) / (p2[0] - p0[0])

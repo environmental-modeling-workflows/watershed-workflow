@@ -521,7 +521,7 @@ def condition_river_mesh(m2,
                         if m2.coords[node_id][2] < min(profile[i + 1, 1], profile[i, 1]):
                             logging.info(f"raised node {node_id} for bank integrity")
                             m2.coords[node_id][2] = 0.5 * (profile[i, 1] + profile[i + 1, 1]) + 0.55
-
+    m2.clear_geometry_cache()
 
 def get_profile(node):
     """for a given node, generates a bedprofile using elevations on the node.segment"""

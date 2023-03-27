@@ -172,7 +172,7 @@ def create_river_corridor(river, width):
     length_scale = max(
         2.1 * delta,
         min(mins)
-        - 4*delta)  # Currently this same for the whole river, should we change it reachwise?
+        - 8*delta)  # Currently this same for the whole river, should we change it reachwise?
     logging.info(
         f"merging points closer than this distance along the river corridor: {length_scale}")
 
