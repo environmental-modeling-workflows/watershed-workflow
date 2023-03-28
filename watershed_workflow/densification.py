@@ -144,6 +144,7 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
                             intersect_seg.geoms) == 2:
                         pass
                     elif isinstance(intersect_seg, shapely.geometry.LineString) or \
+                         isinstance(intersect_seg, shapely.geometry.MultiPoint) or \
                          isinstance(intersect_seg, shapely.geometry.collection.GeometryCollection):
                         seg_raw = seg_orig
                         logging.debug(f"for huc segment {i}, found original huc segment {j}")
@@ -260,7 +261,10 @@ def _interpolate_with_orig(end_points, interp_data, n):
             ]  # point-indices on original network slicing a section for interpolation
     if inds[1] < inds[0]:  # this is to deal with corner case of interpolation of the last segment
         inds[1] = -2
-    section_interp_data = np.array(interp_data[inds[0]:inds[1] + 1])  # coordinates on section
+    if inds[0] == inds[1]: # this is the case when original segment does not offer any data for interpolation here
+        section_interp_data = np.array(end_points)
+    else: 
+        section_interp_data = np.array(interp_data[inds[0]:inds[1] + 1])  # coordinates on section
     a = np.array(end_points)
     (dx, dy) = abs(a[0, :] - a[1, :])
     if dx > dy:  # interpolating on x axis
