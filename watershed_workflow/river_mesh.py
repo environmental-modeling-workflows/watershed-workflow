@@ -231,6 +231,17 @@ def create_river_corridor(river, width):
 
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
+
+    ## check if the points on the river corridor are same as calculated theoretically
+    n_child=[]
+    for node in river.preOrder():
+        n_child.append(len(node.children))
+    n=2 # two outlet points
+    for node in river.preOrder():
+        n= n + 2*(len(node.segment.coords)-1)   
+    n= n - n_child.count(0)+n_child.count(2)+n_child.count(3)+n_child.count(4)
+    if len(corr3.coords[:])-1 != n:
+        RuntimeError('number of points on corridor polygon not same as expected')
     return corr3
 
 
