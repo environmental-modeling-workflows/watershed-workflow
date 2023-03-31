@@ -240,7 +240,7 @@ def create_river_corridor(river, width):
     for node in river.preOrder():
         n= n + 2*(len(node.segment.coords)-1)   
     n= n - n_child.count(0)+n_child.count(2)+n_child.count(3)+n_child.count(4)
-    if len(corr3.coords[:])-1 != n:
+    if len(corr3.exterior.coords[:])-1 != n:
         RuntimeError('number of points on corridor polygon not same as expected')
     return corr3
 
