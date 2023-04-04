@@ -172,7 +172,7 @@ def create_river_corridor(river, width):
     length_scale = max(
         2.1 * delta,
         min(mins)
-        - 4*delta)  # Currently this same for the whole river, should we change it reachwise?
+        - 8*delta)  # Currently this same for the whole river, should we change it reachwise?
     logging.info(
         f"merging points closer than this distance along the river corridor: {length_scale}")
 
@@ -231,6 +231,17 @@ def create_river_corridor(river, width):
 
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
+
+    ## check if the points on the river corridor are same as calculated theoretically
+    n_child=[]
+    for node in river.preOrder():
+        n_child.append(len(node.children))
+    n=2 # two outlet points
+    for node in river.preOrder():
+        n= n + 2*(len(node.segment.coords)-1)   
+    n= n - n_child.count(0)+n_child.count(2)+n_child.count(3)+n_child.count(4)
+    if len(corr3.exterior.coords[:])-1 != n:
+        RuntimeError('number of points on corridor polygon not same as expected')
     return corr3
 
 
@@ -569,15 +580,26 @@ def make_convex_by_nudge(points):
     Used if efficient convexity does not work
     """
     i = 0
-    while not watershed_workflow.utils.is_convex(points):
-        p1, p3 = [np.array(points[1]), np.array(points[3])]
-        d = p1 - p3
-        p1_ = p3 + 1.01*d
-        p3_ = p1 - 1.01*d
-        points[1] = tuple(p1_)
-        points[3] = tuple(p3_)
-        i += 1
-    logging.debug(f"... element was adjusted {i} times")
+    if len(points)==5:
+        while not watershed_workflow.utils.is_convex(points):
+            p1, p3 = [np.array(points[1]), np.array(points[3])]
+            d = p1 - p3
+            p1_ = p3 + 1.01*d
+            p3_ = p1 - 1.01*d
+            points[1] = tuple(p1_)
+            points[3] = tuple(p3_)
+            i += 1
+        logging.debug(f"... element was adjusted {i} times")
+    elif len(points)==6:
+        while not watershed_workflow.utils.is_convex(points):
+            p1, p4 = [np.array(points[1]), np.array(points[4])]
+            d = p1 - p4
+            p1_ = p4 + 1.01*d
+            p4_ = p1 - 1.01*d
+            points[1] = tuple(p1_)
+            points[4] = tuple(p4_)
+            i += 1
+        logging.debug(f"... element was adjusted {i} times")
     assert (watershed_workflow.utils.is_convex(points))
     return points
 
