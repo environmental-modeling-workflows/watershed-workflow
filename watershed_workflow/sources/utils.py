@@ -161,3 +161,19 @@ def move(filename, to_location):
     logging.info('Moving: "%s"' % filename)
     logging.info('    to: "%s"' % to_location)
     shutil.move(filename, to_location)
+
+
+
+def from_pandas_to_ww(pd):
+    """YUCK -- eventually we want to go the other way..."""
+    crs = watershed_workflow.crs.from_proj(pd.crs)
+    shps = []
+    for index in pd.index:
+        shp = dict()
+        shp['geometry'] = shapely.geometry.mapping(pd.loc[index].geometry)
+        shp['properties'] = dict()
+        for k in pd.keys():
+            if k != 'geometry':
+                shp['properties'][k] = pd.loc[index][k]
+        shps.append(shp)
+    return crs, shps

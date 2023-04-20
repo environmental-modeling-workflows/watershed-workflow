@@ -223,11 +223,7 @@ def get_shapes(source,
         logging.info(f"Loading file: '{source}'")
         source = watershed_workflow.sources.manager_shape.FileManagerShape(source)
 
-    if properties:
-        profile, shps, out_props = source.get_shapes_and_properties(index_or_bounds, in_crs,
-                                                                    **kwargs)
-    else:
-        profile, shps = source.get_shapes(index_or_bounds, in_crs, **kwargs)
+    profile, shps = source.get_shapes(index_or_bounds, in_crs, **kwargs)
     logging.info(f"... found {len(shps)} shapes")
 
     # convert to shapely
@@ -252,10 +248,7 @@ def get_shapes(source,
         logging.info("Rounding coordinates")
         watershed_workflow.utils.round_shplys(shplys, digits)
 
-    if properties:
-        return out_crs, shplys, out_props
-    else:
-        return out_crs, shplys
+    return out_crs, shplys
 
 
 def get_split_form_shapes(source, index_or_bounds=-1, in_crs=None, out_crs=None, digits=None):
@@ -811,7 +804,7 @@ def construct_rivers(hucs,
             return rivers
 
     if prune_by_area is not None:
-        rivers = watershed_workflow.hydrography.prune_by_contributing_area(rivers, prune_by_area)
+        rivers = watershed_workflow.hydrography.prune_by_area(rivers, prune_by_area)
         if len(rivers) == 0:
             return rivers
 

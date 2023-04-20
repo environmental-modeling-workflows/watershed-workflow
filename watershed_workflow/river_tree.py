@@ -28,6 +28,10 @@ class River(watershed_workflow.tinytree.Tree):
         This method initializes a single node in the River,
         representing one reach and its upstream children.
 
+        Note segment coordinates must always be ordered from upstream
+        to downstream, so that the last coordinate of segment
+        corresponds with the 0th coordinate of the parent's segment.
+
         """
         super(River, self).__init__(children)
         self.segment = segment
@@ -37,6 +41,15 @@ class River(watershed_workflow.tinytree.Tree):
         else:
             self.properties = dict()
 
+    def __setattr__(self, key, val):
+        """Custom setattr forces copy of properties dictionary."""
+        if key == 'segment':
+            if not hasattr(val, 'properties'):
+                val.properties = self.properties
+            else:
+                self.properties = val.properties
+        super(River, self).__setattr__(key, val)
+        
     def addChild(self, segment):
         """Append a child (upstream) reach to this reach."""
         if type(segment) is River:
@@ -46,7 +59,10 @@ class River(watershed_workflow.tinytree.Tree):
         return self.children[-1]
 
     def removePreserveProperties(self):
-        """Removes a reach, preserving catchments and area properties."""
+        """Removes a reach, preserving catchments and area properties.
+
+        Does not deal with self's children!
+        """
         if self.parent is not None:
             parent = self.parent
             if 'catchment' in self.properties and self.properties['catchment'] is not None:
@@ -59,12 +75,29 @@ class River(watershed_workflow.tinytree.Tree):
             if 'area' in self.properties:
                 parent.properties['area'] += self.properties['area']
 
+            if 'IDs' in self.properties:
+                parent.properties['IDs'].extend(self.properties['IDs'])
+
         self.remove()
 
     def prune(self):
         """Removes a reach all the way to the leaf node."""
         for node in self.postOrder():
             node.removePreserveProperties()
+
+    def merge(self):
+        """Removes a reach, merging it with its parent."""
+        assert(self.parent is not None)
+        assert(len(self.siblings) == 0)
+
+        parent = self.parent
+        parent.segment = shapely.geometry.LineString(list(self.segment.coords)
+                                                     + list(parent.segment.coords)[1:])
+
+        self.removePreserveProperties()
+        for child in self.children():
+            parent.addChild(child)
+        
 
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
@@ -126,9 +159,12 @@ class River(watershed_workflow.tinytree.Tree):
     def __iter__(self):
         return self.depthFirst()
 
-    def _is_continuous(self, child, tol=_tol):
-        """Is a given child continuous with self.."""
-        return watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol)
+    def _is_continuous(self, tol):
+        """Is this segment continuous with its parent?"""
+        if self.parent is None:
+            return True
+        else:
+            return watershed_workflow.utils.close(self.segment.coords[-1], self.parent.segment.coords[0], tol)
 
     def is_continuous(self, tol=_tol):
         """Checks geometric continuity of the river.
@@ -136,36 +172,34 @@ class River(watershed_workflow.tinytree.Tree):
         Confirms that all upstream children's downstream coordinate
         coincides with self's upstream coordinate.
         """
-        return all(self._is_continuous(child, tol) for child in self.children) and \
-            all(child.is_continuous(tol) for child in self.children)
+        return all(node._is_continuous(tol) for node in self.preOrder())
 
-    def _make_continuous(self, child):
-        child_coords = list(child.segment.coords)
-        child_coords[-1] = list(self.segment.coords)[0]
-        child.segment = shapely.geometry.LineString(child_coords)
+    def _make_continuous(self, tol):
+        if not self._is_continuous(tol):
+            coords = list(self.segment.coords)
+            coords[-1] = list(self.parent.segment.coords)[0]
+            self.segment = shapely.geometry.LineString(coords)
 
     def make_continuous(self, tol=_tol):
         """Sometimes there can be small gaps between segments of river tree if river is constructed using
         HydrologicSequence and Snap option is not used. Here we make them consistent"""
         for node in self.preOrder():
-            for child in node.children:
-                if not node._is_continuous(child, tol):
-                    node._make_continuous(child)
-        assert (self.is_continuous())
+            node._make_continuous(tol)
+        assert(self.is_continuous())
 
     def is_hydroseq_consistent(self):
         """Confirms that hydrosequence is valid."""
         if len(self.children) == 0:
             return True
 
-        self.children = sorted(self.children, key=lambda c: c.properties['HydrologicSequence'])
-        return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
+        children = sorted(self.children, key=lambda c: c.properties['HydrologicSequence'])
+        return self.properties[hydroseq] < children[0].properties[hydroseq] and \
             all(child.is_hydroseq_consistent() for child in self.children)
 
-    def is_consistent(self, tol=_tol):
+    def is_consistent(self, tol=_tol, hydroseq=False):
         """Validity checking of the tree."""
         good = self.is_continuous(tol)
-        if 'HydrologicSequence' in self.properties:
+        if hydroseq:
             good |= self.is_hydroseq_consistent()
         return good
 

@@ -497,7 +497,7 @@ def prune_river_by_area(river, area, prop='TotalDrainageAreaSqKm'):
     'TotalDrainageAreaSqKm' property to have been set.
     """
     count = 0
-    for node in tree.preOrder():
+    for node in river.preOrder():
         if node.properties[prop] < area:
             count += 1
             node.prune()
@@ -641,6 +641,26 @@ def filter_small_rivers(rivers, count):
     return new_rivers
 
 
+def merge_one(node):
+    """Merges this node into its parent, altering geometry."""
+    assert(node.parent is not None)
+    if len(node.siblings()) > 0:
+        assert(node.parent.parent is not None)
+
+    # alter this segment's geometry to remove any additional coords
+    node.segment = shapely.geometry.LineString([node.segment.coords[0], node.segment.coords[-1]])
+
+    # alter siblings geometry and move them to parent's parent, making them parent's siblings
+    for sibling in list(node.siblings()):
+        sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
+                                                          + [node.segment.coords[0], ])
+        sibling.remove()
+        node.parent.parent.addChild(sibling)        
+
+    # merge
+    node.merge()
+    
+
 def merge(river, tol=_tol):
     """Remove inner branches that are short, combining branchpoints as needed. This function
     merge the "short" segment into the parent segment"""
@@ -648,23 +668,7 @@ def merge(river, tol=_tol):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
                          (node.segment.length, node.segment.centroid.coords[0]))
-            num_siblings = len(list(node.siblings()))
-            node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
-                                                              + node.parent.segment.coords[1:])
-            if num_siblings != 0:
-                for sibling in node.siblings():
-                    sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
-                                                                  + [node.segment.coords[0], ])
-            if 'area' in node.properties and 'area' in node.parent.properties:
-                node.parent.properties['area'] += node.properties['area']
-
-            if 'catchment' in node.properties and 'catchment' in node.parent.properties:
-                node.parent.properties['catchment'] = shapely.ops.unary_union(
-                    [node.properties['catchment'], node.parent.properties['catchment']])
-            for child in node.children:
-                node.parent.addChild(child)
-            node.remove()
-
+            merge_one(node)
 
 def simplify(river, tol=_tol):
     """Simplify, IN PLACE, all reaches."""

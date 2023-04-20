@@ -257,7 +257,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
 
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
-        bary = np.sum(np.array(vertices), axis=0) / 3
+        bary = np.sum(vertices, axis=0) / len(vertices)
         bary_p = shapely.geometry.Point(bary[0], bary[1])
         distance = bary_p.distance(river_multiline)
         max_area = max_area_valid(distance)

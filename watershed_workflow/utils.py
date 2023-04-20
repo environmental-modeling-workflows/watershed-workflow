@@ -867,3 +867,10 @@ def treat_segment_collinearity(segment_coords, tol=1e-5):
         col_checks.append(is_collinear(p0, p1, p2))
     assert (sum(col_checks) == 0)
     return segment_coords
+
+def interpolate(segment, arclen):
+    """Wrapper to eventually fix with shapely 2.0 which supports arrys of arclen."""
+    res = np.array([segment.interpolate(s).coords[0] for s in arclen])
+    assert(len(res.shape) == 2)
+    return res
+

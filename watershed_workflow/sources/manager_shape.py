@@ -86,4 +86,10 @@ class FileManagerShape:
                 bounds = watershed_workflow.warp.bounds(index_or_bounds, crs, crs_file)
                 shps = [s for (i, s) in fid.items(bbox=bounds)]
 
+        # convert IDs to a list!
+        if len(shps) > 0:
+            ashp = shps[0]
+            if 'properties' in ashp and 'IDs' in ashp['properties'] and type(ashp['properties']['IDs']) is not list:
+                for shp in shps:
+                    shp['properties']['IDs'] = [shp['properties']['IDs'],]
         return profile, shps

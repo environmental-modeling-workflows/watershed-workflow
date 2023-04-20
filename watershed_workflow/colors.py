@@ -268,14 +268,16 @@ def generate_indexed_colormap(indices, cmap=None):
     labels = [str(i) for i in indices]
     return indices, cmap, norm, ticks, labels
 
+
 _doc_template = \
 """Generates a colormap and labels for imaging with the {label} colors.
 
 Parameters
 ----------
-indices : iterable(int), optional
-    Collection of {label} indices that will be used in this colormap.
-    If None (default), uses all {label} indices.
+indices : iterable(int) or np.ndarray,  optional
+    Collection of {label} indices that will be used in this colormap,
+    as a list, or can be a 2D raster, etc.  If None (default), uses
+    all {label} indices.
 
 Returns
 -------
@@ -292,8 +294,6 @@ ticks : list(int)
 labels : list(str)
     A list of labels associated with the ticks.  For use with
     `set_{{x,y}}ticklabels()`.
-formatted: bool, 
-    To make the labels formatted nicely (i.e. add newline in long label names)
 
 Example
 -------
@@ -315,19 +315,28 @@ indices for each triangle (tri_{label_lower}):
     cb.ax.set_xticklabels(labels, rotation=45)
 
 """
-
-
 def _indexed_colormap(label, all_colors):
     def _generate_colormap(indices=None, formatted=False):
         if indices is None:
             indices = list(all_colors.keys())
+        else:
+            try:
+                indices = sorted(set(indices))
+            except TypeError:
+                try:
+                    indices = sorted(set(np.ravel(indices)))
+                except Error:
+                    raise TypeError('Cannot parse input indices as array or iterable.')
 
         indices = sorted(set(indices))
 
         values = [all_colors[k][1] for k in indices]
         cmap = matplotlib.colors.ListedColormap(values)
-        ticks = [i - 0.5 for i in indices] + [indices[-1] + 0.5, ]
-        norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
+        boundary = [i-.5 for i in indices] + [indices[-1] + 0.5, ]
+        norm = matplotlib.colors.BoundaryNorm(boundary, len(boundary) - 1)
+
+        boundary = np.array(boundary)
+        ticks = (boundary[1:] + boundary[:-1]) / 2.
         labels = [all_colors[k][0] for k in indices]
 
         if formatted:

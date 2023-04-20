@@ -250,6 +250,8 @@ class _FileManagerNHD:
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name and properties != None:
             reach_dict = dict((r['properties']['NHDPlusID'], r) for r in reaches)
+            for r in reaches:
+                r['properties']['IDs'] = [r['properties']['NHDPlusID'],]
 
             # validation of properties
             valid_props = list(self._nhdplus_vaa.keys()) + list(

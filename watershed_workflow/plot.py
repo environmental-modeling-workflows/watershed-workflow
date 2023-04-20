@@ -341,6 +341,11 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
 
+    # random colors
+    if color == 'random':
+        kwargs['cmap'] = 'tab10'
+        color = [i%10 for (i,shp) in enumerate(shps)]
+
     # markers cannot be used in collections, so we scatter them separately
     marker_kwargs = dict()
     if marker is not None:
@@ -397,13 +402,20 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
             ax.autoscale()
 
         if marker is not None:
+            if len(color) == len(lines):
+                scatter_colors = [[color[i] for c in l] for (i,l) in enumerate(lines)]
+                scatter_colors = [c for l in scatter_colors for c in l]
+                if 'cmap' in kwargs and 'cmap' not in marker_kwargs:
+                    marker_kwargs['cmap'] = kwargs['cmap']
+            else:
+                scatter_colors = color
             points = np.array([c for l in lines for c in l])
             if projection is None:
-                res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                res = ax.scatter(points[:, 0], points[:, 1], c=scatter_colors, **marker_kwargs)
             else:
                 res = ax.scatter(points[:, 0],
                                  points[:, 1],
-                                 c=color,
+                                 c=scatter_colors,
                                  transform=projection,
                                  **marker_kwargs)
 
