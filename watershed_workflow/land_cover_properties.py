@@ -46,7 +46,9 @@ def compute_crosswalk_correlation(modis_profile,
                                   nlcd_profile,
                                   nlcd_lc,
                                   plot=True,
-                                  warp=True):
+                                  warp=True,
+                                  unique_nlcd=None,
+                                  unique_modis=None):
     """Compute a map from NLCD indices to MODIS indices using correlation
     of the two rasters.
 
@@ -64,6 +66,10 @@ def compute_crosswalk_correlation(modis_profile,
       Image the correlation matrix.
     warp : bool
       Warps MODIS to NLCD.  Should always be true except for tests.
+    unique_nlcd : list
+      List of unique NLCD indices.  If None, will be computed from raster.
+    unique_modis : list
+      List of unique MODIS indices.  If None, will be computed from raster.
 
     Returns
     -------
@@ -79,15 +85,18 @@ def compute_crosswalk_correlation(modis_profile,
                                                                  dst_crs=nlcd_profile['crs'],
                                                                  dst_height=nlcd_profile['height'],
                                                                  dst_width=nlcd_profile['width'])
+    if unique_nlcd is None:
+        unique_nlcd = list(np.unique(nlcd_lc))
 
-    unique_nlcd = list(np.unique(nlcd_lc))
     if 'nodata' in nlcd_profile:
         try:
             unique_nlcd.remove(nlcd_profile['nodata'])
         except ValueError:
             pass
 
-    unique_modis = list(np.unique(modis_lc))
+    if unique_modis is None:
+        unique_modis = list(np.unique(modis_lc))
+
     if 'nodata' in modis_profile:
         try:
             unique_modis.remove(modis_profile['nodata'])
