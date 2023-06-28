@@ -2,12 +2,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+import scipy
 
 import watershed_workflow.warp
 import watershed_workflow.plot
 
 
-def compute_time_series(lai, lc):
+def compute_time_series(lai, lc, unique_lc=None, smooth=False, **kwargs):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
 
@@ -17,14 +18,21 @@ def compute_time_series(lai, lc):
       The LAI data.
     lc : datasets.Data
       The LULC data.
-       
+    unique_lc : list
+      List of unique land cover types.  If None, will be computed from raster.
+    smooth : bool
+      Smooth the time series using a Savitzky-Golay filter.
+    kwargs : dict
+      Keyword arguments to pass to scipy.signal.savgol_filter such as 
+      'window_length (default=101)' and 'polyorder (default=3)'.
     Returns
     -------
     lai timeseries : pandas datafame
        LAI time series dataframe with rows as time and columns as land
        type.
     """
-    unique_lc = list(np.unique(lc.data))
+    if unique_lc is None:
+        unique_lc = list(np.unique(lc.data))
     try:
         unique_lc.remove(lc.profile['nodata'])
     except ValueError:
@@ -37,7 +45,29 @@ def compute_time_series(lai, lc):
         time_series = [
             lai.data[i, :, :][np.where(lc.data == lc)].mean() for i in range(len(lai.times))
         ]
-        df[f'{lc}'] = time_series
+        col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(lc)][0]
+        df[f'{col_name} LAI [-]'] = time_series
+
+    if smooth:
+        # interpolate to daily time series
+        df['time [datetime]'] = pd.to_datetime(df['time [datetime]'])
+        df = df.set_index('time [datetime]')
+        df_daily = df.resample('D').asfreq()
+        df_interpolated = df_daily.interpolate(method='linear')
+
+        # smooth
+        if 'window_length' not in kwargs:
+            kwargs['window_length'] = 101
+        if 'polyorder' not in kwargs:
+            kwargs['polyorder'] = 3
+        df_smoothed = df_interpolated.copy()
+        for k in df_interpolated.columns:
+            df_smoothed[k] = scipy.signal.savgol_filter(df_interpolated[k], **kwargs)
+
+        df_smoothed = df_smoothed.reset_index()
+        df_smoothed['time [datetime]'] = df_smoothed['time [datetime]'].dt.date
+        return df_smoothed
+
     return df
 
 
