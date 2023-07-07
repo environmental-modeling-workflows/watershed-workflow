@@ -42,6 +42,7 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 WORKDIR /opt/conda/envs/${env_name}/src
 RUN apt-get install git
 RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
+RUN sed -i '1745d' seacas/libraries/exodus/src/ex_utils.c # delete a bad line that is inconsistent with nc?
 
 # configure
 WORKDIR /ww/tmp
