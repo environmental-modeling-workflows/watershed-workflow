@@ -52,7 +52,7 @@ jobs:
           file: ./docker/CI.Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}
-          build-args: CI_ENV_DOCKER_TAG=master
+          build-args: CI_ENV_DOCKER_TAG=${{ env.BRANCH_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
