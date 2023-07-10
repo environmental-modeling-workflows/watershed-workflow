@@ -8,7 +8,7 @@ import watershed_workflow.warp
 import watershed_workflow.plot
 
 
-def compute_time_series(lai, lc, unique_lc=None, smooth=False, **kwargs):
+def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, smooth=False, **kwargs):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
 
@@ -20,6 +20,8 @@ def compute_time_series(lai, lc, unique_lc=None, smooth=False, **kwargs):
       The LULC data.
     unique_lc : list
       List of unique land cover types.  If None, will be computed from raster.
+    lc_idx : int
+      Index of the land cover type to use for the time series. Default is -1 (lastest year).
     smooth : bool
       Smooth the time series using a Savitzky-Golay filter.
     kwargs : dict
@@ -41,12 +43,12 @@ def compute_time_series(lai, lc, unique_lc=None, smooth=False, **kwargs):
     df = pd.DataFrame()
     df['time [datetime]'] = lai.times
 
-    for lc in unique_lc:
+    for ilc in unique_lc:
         time_series = [
-            lai.data[i, :, :][np.where(lc.data == lc)].mean() for i in range(len(lai.times))
+            lai.data[itime, :, :][np.where(lc.data[lc_idx, :, :] == ilc)].mean() for itime in range(len(lai.times))
         ]
-        col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(lc)][0]
-        df[f'{col_name} LAI [-]'] = time_series
+        col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
+        df[f'MODIS {col_name} LAI [-]'] = time_series
 
     if smooth:
         # interpolate to daily time series
