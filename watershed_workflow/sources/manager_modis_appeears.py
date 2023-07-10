@@ -268,7 +268,8 @@ class FileManagerMODISAppEEARS:
 
         logging.info(f'Checking status of task: {task.task_id}')
         r = requests.get(self._STATUS_URL,
-                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
+                         verify=source_utils.get_verify_option())
         try:
             r.raise_for_status()
         except requests.HTTPError:
@@ -298,7 +299,9 @@ class FileManagerMODISAppEEARS:
 
         logging.info(f'Checking for bundle of task: {task.task_id}')
         r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
-                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
+                         verify=source_utils.get_verify_option())
+                         
         try:
             r.raise_for_status()
         except requests.HTTPError:

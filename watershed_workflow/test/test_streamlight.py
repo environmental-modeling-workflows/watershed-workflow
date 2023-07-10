@@ -2,7 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import mean_squared_error
 import os
 import pytest
 
@@ -56,8 +55,7 @@ def sl_data():
     return sl, data_ts, path_data_test
 
 def plot_comparison(var_estimate, var_reference, var_name, ax):
-
-    rmse_solar_dec = mean_squared_error(var_reference,var_estimate, squared=False)
+    rmse_solar_dec = np.linalg.norm2(var_reference - var_estimate)
     ax.plot(var_reference,var_reference,'-k', lw = 0.5)
     ax.scatter(var_reference,var_estimate, c = 'red', alpha=.1, s=2)
     ax.set_aspect('equal')
@@ -67,7 +65,6 @@ def plot_comparison(var_estimate, var_reference, var_name, ax):
     ax.set_ylabel('From StreamLight in Python')
 
 def test_solar_dec(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
-
     sl, data_ts, path_data_test = sl_data
 
     var_name_ww = 'solar_dec'
@@ -84,7 +81,6 @@ def test_solar_dec(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-
         plt.savefig(os.path.join(path_data_test,(var_name_ww + ".png")), dpi=300, transparent=True)
     
 def test_solar_altitude(sl_data, relative_tolerance = 1e-05, absolute_tolerance = 1e-08, plot_scatter = False):
-
     sl, data_ts, path_data_test = sl_data
 
     var_name_ww = 'solar_altitude'

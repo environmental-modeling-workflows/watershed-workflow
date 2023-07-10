@@ -48,6 +48,16 @@ def huc_str(huc):
     return huc
 
 
+def get_verify_option():
+    """Returns the 'verify' option for requests as provided in config files."""
+    verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
+    logging.debug('       cert: "%s"' % verify)
+    if verify == "True":
+        verify = True
+    elif verify == "False":
+        verify = False
+    return verify
+
 def download(url, location, force=False, **kwargs):
     """Download a file from a URL to a location.  If force, clobber whatever is there.
 
@@ -59,20 +69,8 @@ def download(url, location, force=False, **kwargs):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"' % url)
         logging.info('         to: "%s"' % location)
-        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
-        logging.info('       cert: "%s"' % verify)
-        if verify == "True":
-            verify = True
-        elif verify == "False":
-            verify = False
 
-        # with requests.get(url, stream=True, verify=verify) as r:
-        #     r.raise_for_status()
-        #     with open(location, 'wb') as f:
-        #         for chunk in r.iter_content(chunk_size=128):
-        #             f.write(chunk)
-
-        with requests.get(url, stream=True, verify=verify, **kwargs) as r:
+        with requests.get(url, stream=True, verify=get_verify_option(), **kwargs) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)

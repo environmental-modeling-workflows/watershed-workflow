@@ -6,7 +6,6 @@ import attr
 import requests
 import shutil
 import numpy as np
-from requests_html import HTMLSession
 import pandas as pd
 from shapely.ops import cascaded_union
 from shapely.geometry import shape
@@ -212,14 +211,6 @@ class FileManagerNHDPlusV21:
         base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu] 
         base_URLs = np.unique(base_URLs).tolist()
 
-        # Check for url verification of certificates?  
-        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
-        logging.info('       cert: "%s"' % verify)
-        if verify == "True":
-            verify = True
-        elif verify == "False":
-            verify = False
-        
         my_url = []
         my_daID = []
         my_vpu = []
@@ -231,7 +222,8 @@ class FileManagerNHDPlusV21:
 
             daID, vpu, rpu = daID_vpu_rpu[idx]
 
-            data_links = self._get_v21_data_url_from_base_url(b_url, verify=verify)
+            data_links = self._get_v21_data_url_from_base_url(b_url, verify=source_utils.get_verify_option())
+
 
             # VPU-wide
             url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc+'_')[0] for cc  in self._componentnames_vpu_wide]
@@ -264,16 +256,12 @@ class FileManagerNHDPlusV21:
         
         return url_data_info_df
      
-    def _get_v21_data_url_from_base_url(self, url, verify=True):
-
-        with HTMLSession() as session:
-            response = session.get(url, verify=verify)
-            response.raise_for_status()
-            status_code = response.status_code  # A status code of 200 means it was accepted
-            print("Status code:" + str(status_code))
-            html = response.html
-            html.render()
-            all_links = html.absolute_links
+    def _get_v21_data_url_from_base_url(self, url):
+        r = requests.get(url, verify=source_utils.get_verify_option())
+        r.raise_for_status()
+        html = response.html
+        html.render()
+        all_links = html.absolute_links
         return [ll for ll in list(all_links) if ".7z" in ll]
 
     def _get_v21_url_NHD_dataset(self, data_links, nhd_name):
@@ -773,7 +761,7 @@ class FileManagerNHDPlusV21:
         hucstr = hucstr[0:self.file_level]
 
         def attempt(params):
-            r = requests.get(rest_url, params=params, verify=False)
+            r = requests.get(rest_url, params=params, verify=source_utils.get_verify_option())
             logging.info(f'  REST URL: {r.url}')
             try:
                 r.raise_for_status()

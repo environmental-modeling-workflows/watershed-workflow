@@ -143,7 +143,9 @@ class FileManagerNED:
                                  'datasets': rest_dataset,
                                  'bbox': rest_bounds,
                                  'prodFormats': self.file_format
-                             })
+                             },
+                             verify=source_utils.get_verify_option())
+
             logging.info(r.url)
         except requests.exceptions.ConnectionError as err:
             logging.error('{}: Failed to access REST API for NED DEM products.'.format(self.name))

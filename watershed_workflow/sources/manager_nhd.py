@@ -383,7 +383,7 @@ class _FileManagerNHD:
         hucstr = hucstr[0:self.file_level]
 
         def attempt(params):
-            r = requests.get(rest_url, params=params, verify=False)
+            r = requests.get(rest_url, params=params, verify=source_utils.get_verify_option())
             logging.info(f'  REST URL: {r.url}')
             try:
                 r.raise_for_status()

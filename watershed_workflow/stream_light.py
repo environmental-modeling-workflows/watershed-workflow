@@ -3,7 +3,6 @@ import numpy as np
 import copy
 import pandas as pd
 import os
-from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt 
 
 class StreamLight:
