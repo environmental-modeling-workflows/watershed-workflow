@@ -301,7 +301,7 @@ class FileManagerMODISAppEEARS:
         r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
                          headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
                          verify=source_utils.get_verify_option())
-                         
+
         try:
             r.raise_for_status()
         except requests.HTTPError:

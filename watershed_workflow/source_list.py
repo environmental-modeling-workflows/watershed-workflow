@@ -37,9 +37,9 @@ huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for ba
 default_huc_source = 'NHDPlus'
 
 # available and default hydrography datasets
-hydrography_sources = { 
-    'NHDPlus': FileManagerNHDPlus(), 
-    'NHD': FileManagerNHD(), 
+hydrography_sources = {
+    'NHDPlus': FileManagerNHDPlus(),
+    'NHD': FileManagerNHD(),
     'NHDPlus_MidRes': FileManagerNHDPlusV21()
 }
 hydrography_sources['NHD Plus'] = hydrography_sources[

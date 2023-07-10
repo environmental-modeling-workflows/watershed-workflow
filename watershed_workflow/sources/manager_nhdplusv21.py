@@ -49,29 +49,31 @@ class FileManagerNHDPlusV21:
         """
         self.name = 'NHD Plus Medium Res v2.1 (EPA)'
         self.name_manager = watershed_workflow.sources.names.Names(self.name, 'hydrography',
-                                                                   'NHDPlusV21_{}_{}', 'NHDPlusV21_{}_{}_{}_{}_{}')        
+                                                                   'NHDPlusV21_{}_{}',
+                                                                   'NHDPlusV21_{}_{}_{}_{}_{}')
         #self.boundary_unit_file = self._get_v21_boundary_unit_file()
         self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
         self._componentnames_vpu_wide = self._componentnames_vpu_wide_main
         self._componentnames_rpu_wide = self._componentnames_rpu_wide_main
-    
+
     """NHDPlus V2 is organized by VPUs that generally correspond to HUCs of level 2."""
     lowest_level = 12  # This is the finest level reported by NHDPlus V21
     highest_level = 2  # This is the coarsest level reported in NHDPlus V21 (each VPU ~ HUC level 2)
-    file_level = 2 # NHDPlus V21 provides HUC level 12 information only
+    file_level = 2  # NHDPlus V21 provides HUC level 12 information only
     # variables needed from attribute files
-    _componentnames_vpu_wide_all = ["EROMExtension", "NHDPlusAttributes",
-                                   "NHDPlusBurnComponents", "NHDPlusCatchment",
-                                   "NHDSnapshotFGDB", "NHDSnapshot",
-                                   "VPUAttributeExtension", "VogelExtension",
-                                   "WBDSnapshot"]
+    _componentnames_vpu_wide_all = [
+        "EROMExtension", "NHDPlusAttributes", "NHDPlusBurnComponents", "NHDPlusCatchment",
+        "NHDSnapshotFGDB", "NHDSnapshot", "VPUAttributeExtension", "VogelExtension", "WBDSnapshot"
+    ]
 
-    _componentnames_rpu_wide_all = ["CatSeed", "FdrFac", "FdrNull",
-                                   "FilledAreas", "HydroDem", "NEDSnapshot"]
+    _componentnames_rpu_wide_all = [
+        "CatSeed", "FdrFac", "FdrNull", "FilledAreas", "HydroDem", "NEDSnapshot"
+    ]
 
-    _componentnames_vpu_wide_main = ["EROMExtension", "NHDPlusCatchment",
-                                    "NHDPlusAttributes", "NHDSnapshot",
-                                    "VPUAttributeExtension", "WBDSnapshot"]
+    _componentnames_vpu_wide_main = [
+        "EROMExtension", "NHDPlusCatchment", "NHDPlusAttributes", "NHDSnapshot",
+        "VPUAttributeExtension", "WBDSnapshot"
+    ]
 
     _componentnames_rpu_wide_main = ["NEDSnapshot"]
 
@@ -104,34 +106,137 @@ class FileManagerNHDPlusV21:
     })
 
     _vpu_name_url_info = dict({
-        "01": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northeast-data-vector-processing-unit-01", "vpu_name": "Northeast"},
-        "02": {"url_name": "https://www.epa.gov/waterdata/nhdplus-mid-atlantic-data-vector-processing-unit-02", "vpu_name": "Mid Atlantic"},
-        "03N": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-north-data-vector-processing-unit-03n", "vpu_name": "South Atlantic North"},
-        "03S": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-south-data-vector-processing-unit-03s", "vpu_name": "South Atlantic South"},
-        "03W": {"url_name": "https://www.epa.gov/waterdata/nhdplus-south-atlantic-west-data-vector-processing-unit-03w", "vpu_name": "South Atlantic West"},
-        "04": {"url_name": "https://www.epa.gov/waterdata/nhdplus-great-lakes-data-vector-processing-unit-04", "vpu_name": "Great Lakes"},
-        "05": {"url_name": "https://www.epa.gov/waterdata/nhdplus-ohio-data-vector-processing-unit-05", "vpu_name": "Ohio"},
-        "06": {"url_name": "https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06", "vpu_name": "Tennessee"},
-        "07": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-mississippi-data-vector-processing-unit-07", "vpu_name": "Upper Mississippi"},
-        "08": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-mississippi-data-vector-processing-unit-08", "vpu_name": "Lower Mississippi"},
-        "09": {"url_name": "https://www.epa.gov/waterdata/nhdplus-souris-red-rainy-data-vector-processing-unit-09", "vpu_name": "Souris-Red-Rainy"},
-        "10U": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-missouri-data-vector-processing-unit-10u", "vpu_name": "Upper Missouri"},
-        "10L": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-missouri-data-vector-processing-unit-10l", "vpu_name": "Lower Missouri"},
-        "11": {"url_name": "https://www.epa.gov/waterdata/nhdplus-ark-red-white-data-vector-processing-unit-11", "vpu_name": "Ark-Red-White"},
-        "12": {"url_name": "https://www.epa.gov/waterdata/nhdplus-texas-data-vector-processing-unit-12", "vpu_name": "Texas"},
-        "13": {"url_name": "https://www.epa.gov/waterdata/nhdplus-rio-grande-data-vector-processing-unit-13", "vpu_name": "Rio Grande"},
-        "14": {"url_name": "https://www.epa.gov/waterdata/nhdplus-upper-colorado-data-vector-processing-unit-14", "vpu_name": "Upper Colorado"},
-        "15": {"url_name": "https://www.epa.gov/waterdata/nhdplus-lower-colorado-data-vector-processing-unit-15", "vpu_name": "Lower Colorado"},
-        "16": {"url_name": "https://www.epa.gov/waterdata/nhdplus-great-basin-data-vector-processing-unit-16", "vpu_name": "Great Basin"},
-        "17": {"url_name": "https://www.epa.gov/waterdata/nhdplus-pacific-northwest-data-vector-processing-unit-17", "vpu_name": "Pacific Northwest"},
-        "18": {"url_name": "https://www.epa.gov/waterdata/nhdplus-california-data-vector-processing-unit-18", "vpu_name": "California"},
-        "20": {"url_name": "https://www.epa.gov/waterdata/nhdplus-hawaii-data-vector-processing-unit-20", "vpu_name": "Hawaii"},
-        "21": {"url_name": "https://www.epa.gov/waterdata/nhdplus-puerto-rico-us-virgin-islands-data-vector-processing-unit-21", "vpu_name": "Puerto Rico/U.S. Virgin Islands"},
-        "22A": {"url_name": "https://www.epa.gov/waterdata/nhdplus-american-samoa-data-vector-processing-unit-22a", "vpu_name": "American Samoa"},
-        "22G": {"url_name": "https://www.epa.gov/waterdata/nhdplus-guam-data-vector-processing-unit-22g", "vpu_name": "Guam"},
-        "22M": {"url_name": "https://www.epa.gov/waterdata/nhdplus-northern-mariana-islands-data-vector-processing-unit-22m", "vpu_name": "Northern Mariana Islands"}
+        "01": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-northeast-data-vector-processing-unit-01",
+            "vpu_name": "Northeast"
+        },
+        "02": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-mid-atlantic-data-vector-processing-unit-02",
+            "vpu_name": "Mid Atlantic"
+        },
+        "03N": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-south-atlantic-north-data-vector-processing-unit-03n",
+            "vpu_name": "South Atlantic North"
+        },
+        "03S": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-south-atlantic-south-data-vector-processing-unit-03s",
+            "vpu_name": "South Atlantic South"
+        },
+        "03W": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-south-atlantic-west-data-vector-processing-unit-03w",
+            "vpu_name": "South Atlantic West"
+        },
+        "04": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-great-lakes-data-vector-processing-unit-04",
+            "vpu_name": "Great Lakes"
+        },
+        "05": {
+            "url_name": "https://www.epa.gov/waterdata/nhdplus-ohio-data-vector-processing-unit-05",
+            "vpu_name": "Ohio"
+        },
+        "06": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-tennessee-data-vector-processing-unit-06",
+            "vpu_name": "Tennessee"
+        },
+        "07": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-upper-mississippi-data-vector-processing-unit-07",
+            "vpu_name": "Upper Mississippi"
+        },
+        "08": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-lower-mississippi-data-vector-processing-unit-08",
+            "vpu_name": "Lower Mississippi"
+        },
+        "09": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-souris-red-rainy-data-vector-processing-unit-09",
+            "vpu_name": "Souris-Red-Rainy"
+        },
+        "10U": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-upper-missouri-data-vector-processing-unit-10u",
+            "vpu_name": "Upper Missouri"
+        },
+        "10L": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-lower-missouri-data-vector-processing-unit-10l",
+            "vpu_name": "Lower Missouri"
+        },
+        "11": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-ark-red-white-data-vector-processing-unit-11",
+            "vpu_name": "Ark-Red-White"
+        },
+        "12": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-texas-data-vector-processing-unit-12",
+            "vpu_name": "Texas"
+        },
+        "13": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-rio-grande-data-vector-processing-unit-13",
+            "vpu_name": "Rio Grande"
+        },
+        "14": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-upper-colorado-data-vector-processing-unit-14",
+            "vpu_name": "Upper Colorado"
+        },
+        "15": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-lower-colorado-data-vector-processing-unit-15",
+            "vpu_name": "Lower Colorado"
+        },
+        "16": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-great-basin-data-vector-processing-unit-16",
+            "vpu_name": "Great Basin"
+        },
+        "17": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-pacific-northwest-data-vector-processing-unit-17",
+            "vpu_name": "Pacific Northwest"
+        },
+        "18": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-california-data-vector-processing-unit-18",
+            "vpu_name": "California"
+        },
+        "20": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-hawaii-data-vector-processing-unit-20",
+            "vpu_name": "Hawaii"
+        },
+        "21": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-puerto-rico-us-virgin-islands-data-vector-processing-unit-21",
+            "vpu_name": "Puerto Rico/U.S. Virgin Islands"
+        },
+        "22A": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-american-samoa-data-vector-processing-unit-22a",
+            "vpu_name": "American Samoa"
+        },
+        "22G": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-guam-data-vector-processing-unit-22g",
+            "vpu_name": "Guam"
+        },
+        "22M": {
+            "url_name":
+            "https://www.epa.gov/waterdata/nhdplus-northern-mariana-islands-data-vector-processing-unit-22m",
+            "vpu_name": "Northern Mariana Islands"
+        }
     })
-    
+
     def _get_v21_boundary_unit_file(self):
         """This downloads the NHD v2.1 Boundary Unit file, which contains
         VPUs, RPUs, and Drainage Area IDs."""
@@ -143,14 +248,13 @@ class FileManagerNHDPlusV21:
         if not os.path.isfile(final_loc):
             # download and unzip
             url = 'https://edap-ow-data-commons.s3.amazonaws.com/NHDPlusV21/Data/GlobalData/NHDPlusV21_NHDPlusGlobalData_03.7z'
-            source_utils.download(url, loc+'.7z', force=False)
-            source_utils.unzip(loc+'.7z', loc)
-            assert(os.path.isfile(final_loc))
+            source_utils.download(url, loc + '.7z', force=False)
+            source_utils.unzip(loc + '.7z', loc)
+            assert (os.path.isfile(final_loc))
 
         return final_loc
 
-
-    def _get_v21_boundary_units(self, huc, enforce_VPUs = True):
+    def _get_v21_boundary_units(self, huc, enforce_VPUs=True):
         """Given a list of HUCs, figure out which VPU and HRU and DAID we are in."""
         wbd_profile, wbd_huc = self.wbd.get_huc(huc)
         huc_bounds = watershed_workflow.utils.create_bounds(wbd_huc)
@@ -160,8 +264,8 @@ class FileManagerNHDPlusV21:
             BoundaryUnits_crs = watershed_workflow.crs.from_fiona(fid.profile['crs'])
 
             # Project the watershed boundary to the CRS for the Boundary Units
-            bounds = watershed_workflow.warp.bounds(
-                huc_bounds, wbd_profile['crs'], BoundaryUnits_crs)
+            bounds = watershed_workflow.warp.bounds(huc_bounds, wbd_profile['crs'],
+                                                    BoundaryUnits_crs)
 
             # Get the boundary Units that intersect with the watershed
             BUs = [r for (i, r) in fid.items(bbox=bounds)]
@@ -184,21 +288,20 @@ class FileManagerNHDPlusV21:
         daID_unique = np.unique(DrainageID)
 
         for dd in daID_unique:
-            vpu_unique = np.unique(
-                UnitID[np.argwhere((UnitType == 'VPU') & (DrainageID == dd))])
+            vpu_unique = np.unique(UnitID[np.argwhere((UnitType == 'VPU') & (DrainageID == dd))])
 
             for vv in vpu_unique:
                 daID_vpu_rpu += [[dd, vv, UnitID[ii]] for ii in range(len(UnitType))
-                                if (('RPU' in UnitType[ii]) & (vv[0:2] in UnitID[ii]))]
+                                 if (('RPU' in UnitType[ii]) & (vv[0:2] in UnitID[ii]))]
 
         if enforce_VPUs:
             print("--------- Enforcing VPUs ---------")
             if isinstance(huc, str):
                 enforce_VPUs = np.array([huc[0:2]])
-            else: 
+            else:
                 enforce_VPUs = np.unique([tt[0:2] for tt in huc])
 
-            toKeep = np.zeros((1,len(daID_vpu_rpu)), dtype=bool)
+            toKeep = np.zeros((1, len(daID_vpu_rpu)), dtype=bool)
             for vpu in enforce_VPUs:
                 print(vpu)
                 toKeep += [vpu in vv[1] for vv in daID_vpu_rpu]
@@ -208,7 +311,7 @@ class FileManagerNHDPlusV21:
 
     def _get_v21_urls(self, daID_vpu_rpu):
         # Get the base URLs
-        base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu] 
+        base_URLs = [self._vpu_name_url_info[tmp[1]]['url_name'] for tmp in daID_vpu_rpu]
         base_URLs = np.unique(base_URLs).tolist()
 
         my_url = []
@@ -222,40 +325,48 @@ class FileManagerNHDPlusV21:
 
             daID, vpu, rpu = daID_vpu_rpu[idx]
 
-            data_links = self._get_v21_data_url_from_base_url(b_url, verify=source_utils.get_verify_option())
-
+            data_links = self._get_v21_data_url_from_base_url(
+                b_url, verify=source_utils.get_verify_option())
 
             # VPU-wide
-            url_vpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc+'_')[0] for cc  in self._componentnames_vpu_wide]
+            url_vpu_wide = [
+                self._get_v21_url_NHD_dataset(data_links, cc + '_')[0]
+                for cc in self._componentnames_vpu_wide
+            ]
             vv_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_vpu_wide]
             cc_vpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_vpu_wide]
-            
+
             my_url += url_vpu_wide
             my_dataversion += vv_vpu
-            my_componentname += cc_vpu 
-            my_daID += [daID]*len(url_vpu_wide)
-            my_vpu += [vpu]*len(url_vpu_wide)
-            my_rpu += [vpu]*len(url_vpu_wide)
+            my_componentname += cc_vpu
+            my_daID += [daID] * len(url_vpu_wide)
+            my_vpu += [vpu] * len(url_vpu_wide)
+            my_rpu += [vpu] * len(url_vpu_wide)
 
             # RPU-wide
-            url_rpu_wide = [self._get_v21_url_NHD_dataset(data_links, cc)[0] for cc  in self._componentnames_rpu_wide]
+            url_rpu_wide = [
+                self._get_v21_url_NHD_dataset(data_links, cc)[0]
+                for cc in self._componentnames_rpu_wide
+            ]
             vv_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-1] for uu in url_rpu_wide]
             cc_rpu = [uu.split('/')[-1].split('.7z')[0].split('_')[-2] for uu in url_rpu_wide]
 
             my_url += url_rpu_wide
             my_dataversion += vv_rpu
-            my_componentname += cc_rpu 
-            my_daID += [daID]*len(url_rpu_wide)
-            my_vpu += [vpu]*len(url_rpu_wide)
-            my_rpu += [rpu]*len(url_rpu_wide)
+            my_componentname += cc_rpu
+            my_daID += [daID] * len(url_rpu_wide)
+            my_vpu += [vpu] * len(url_rpu_wide)
+            my_rpu += [rpu] * len(url_rpu_wide)
 
-        url_data_info_df = pd.DataFrame(list(zip(my_componentname, my_daID, my_vpu, my_rpu,
-                my_dataversion, my_url)),
-                columns =['component_name', 'drainage_area_ID', 'vpu', 'rpu', 
-                'data_version', 'data_url'])
-        
+        url_data_info_df = pd.DataFrame(list(
+            zip(my_componentname, my_daID, my_vpu, my_rpu, my_dataversion, my_url)),
+                                        columns=[
+                                            'component_name', 'drainage_area_ID', 'vpu', 'rpu',
+                                            'data_version', 'data_url'
+                                        ])
+
         return url_data_info_df
-     
+
     def _get_v21_data_url_from_base_url(self, url):
         r = requests.get(url, verify=source_utils.get_verify_option())
         r.raise_for_status()
@@ -269,12 +380,12 @@ class FileManagerNHDPlusV21:
 
     def _check_V21_downloaded(self, path):
         files = os.listdir(path)
-        if (len(files)==1) and (files[0] == 'raw'):
+        if (len(files) == 1) and (files[0] == 'raw'):
             return False
         else:
             return True
 
-    def get_huc(self, huc, force_download=False, enforce_VPUs = True):
+    def get_huc(self, huc, force_download=False, enforce_VPUs=True):
         """Get the specified HUC in its native CRS.
 
         Parameters
@@ -302,7 +413,7 @@ class FileManagerNHDPlusV21:
         assert (len(hu) == 1)
         return profile, hu[0]
 
-    def get_hucs(self, huc, level, force_download=False, enforce_VPUs = True):
+    def get_hucs(self, huc, level, force_download=False, enforce_VPUs=True):
         """Get all sub-catchments of a given HUC level within a given HUC.
 
         Parameters
@@ -346,7 +457,8 @@ class FileManagerNHDPlusV21:
         # self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
 
         # Download the WBD for the NHD Plus V2 dataset
-        idx = self._url_data_info_df.index[self._url_data_info_df['component_name'] == 'WBDSnapshot'].tolist()[0]
+        idx = self._url_data_info_df.index[self._url_data_info_df['component_name'] ==
+                                           'WBDSnapshot'].tolist()[0]
         url_wbd = self._url_data_info_df['data_url'][idx]
         daID = self._url_data_info_df['drainage_area_ID'][idx]
         vpu = self._url_data_info_df['vpu'][idx]
@@ -356,12 +468,12 @@ class FileManagerNHDPlusV21:
 
         my_wbd_folder_name = self.name_manager.folder_name(daID, vpu)
         my_wbd_file_name = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
-        
+
         # check directory structure
         os.makedirs(my_wbd_folder_name, exist_ok=True)
         os.makedirs(my_wbd_file_name, exist_ok=True)
-        os.makedirs(os.path.join(my_wbd_file_name,'raw'), exist_ok=True)
-        
+        os.makedirs(os.path.join(my_wbd_file_name, 'raw'), exist_ok=True)
+
         loc = my_wbd_file_name
         final_loc = os.path.join(loc, 'WBD_Subwatershed.shp')
 
@@ -370,8 +482,12 @@ class FileManagerNHDPlusV21:
             location_7z = os.path.join(loc, 'raw')
             location_unzip = os.path.join(location_7z, 'unzipped')
             os.makedirs(location_unzip, exist_ok=True)
-            source_utils.download(url_wbd, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
-            source_utils.unzip(os.path.join(location_7z, loc.split('/')[-1]+'.7z'), location_unzip)
+            source_utils.download(url_wbd,
+                                  os.path.join(location_7z,
+                                               loc.split('/')[-1] + '.7z'),
+                                  force=False)
+            source_utils.unzip(os.path.join(location_7z,
+                                            loc.split('/')[-1] + '.7z'), location_unzip)
 
             # Get the directory tree for the files unzipped
 
@@ -385,9 +501,9 @@ class FileManagerNHDPlusV21:
 
             dir_shps = my_dirnames[-1]
             files_to_move = os.listdir(dir_shps)
-            [source_utils.move(os.path.join(dir_shps, ff),loc) for ff in files_to_move]
+            [source_utils.move(os.path.join(dir_shps, ff), loc) for ff in files_to_move]
             shutil.rmtree(location_unzip)
-            assert(os.path.isfile(final_loc))
+            assert (os.path.isfile(final_loc))
 
         # read the file
         with fiona.open(final_loc, mode='r') as fid:
@@ -399,16 +515,17 @@ class FileManagerNHDPlusV21:
         # Check the need for hus aggregarion
 
         if level == 12:
-            logging.info('Returning all the HUCs of level {} inside the HUC of level {}'.format(level,huc_level))
+            logging.info('Returning all the HUCs of level {} inside the HUC of level {}'.format(
+                level, huc_level))
         elif (level < 12) and (level >= 2):
-            logging.info('Aggregating from HUCs of level {} to HUC of level {}'.format(self.lowest_level,level))
+            logging.info('Aggregating from HUCs of level {} to HUC of level {}'.format(
+                self.lowest_level, level))
 
         if (level >= 2) and (level <= 12):
 
             #huc_at_level = np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
             huc_at_level_unique = np.unique(
-                np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
-                )
+                np.array([hh['properties']['HUC_12'][0:level] for hh in hus]))
 
             new_hus = []
             for idx, hu_level in enumerate(huc_at_level_unique):
@@ -421,10 +538,11 @@ class FileManagerNHDPlusV21:
 
                 new_poly_fiona = copy.deepcopy(hus_subset[0])
                 new_poly_fiona.keys()
-                
+
                 key_huc = 'HUC{:d}'.format(level)
                 new_poly_fiona['id'] = idx
-                new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID',idx),(key_huc,hu_level)])
+                new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID', idx),
+                                                                        (key_huc, hu_level)])
                 new_poly_fiona['geometry'] = mapping(new_poly_shply)
                 new_hus.append(new_poly_fiona)
                 # # Quick plot for verification purposes
@@ -444,10 +562,10 @@ class FileManagerNHDPlusV21:
 
         return profile, hus
 
-    def _get_url_info(self,huc, enforce_VPUs=True):
-            self.boundary_unit_file = self._get_v21_boundary_unit_file()
-            self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
-            self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
+    def _get_url_info(self, huc, enforce_VPUs=True):
+        self.boundary_unit_file = self._get_v21_boundary_unit_file()
+        self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
+        self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
 
     def get_hydro(self,
                   huc,
@@ -503,7 +621,8 @@ class FileManagerNHDPlusV21:
 
         """
         if properties is True:
-            properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_elevslope.keys()) + list(self._nhdplus_eromma.keys())
+            properties = list(self._nhdplus_vaa.keys()) + list(
+                self._nhdplus_elevslope.keys()) + list(self._nhdplus_eromma.keys())
 
         if 'WBD' in self.name:
             raise RuntimeError(f'{self.name}: does not provide hydrographic data.')
@@ -533,13 +652,12 @@ class FileManagerNHDPlusV21:
         # find and open the hydrography layer
 
         filename = os.path.join(
-            self._url_data_info_df['data_local_path'][
-            self._url_data_info_df['component_name'] == 'NHDSnapshot'].values[0],
-            'Hydrography')
+            self._url_data_info_df['data_local_path'][self._url_data_info_df['component_name'] ==
+                                                      'NHDSnapshot'].values[0], 'Hydrography')
         layer = 'NHDFlowline'
         logging.info(
             f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
-        with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
+        with fiona.open(os.path.join(filename, layer + '.shp'), mode='r') as fid:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(
                 bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
@@ -551,8 +669,8 @@ class FileManagerNHDPlusV21:
         if in_network:
             logging.info("  Filtering reaches not in-network")
             reaches = [
-                r for r in reaches
-                if ('FLOWDIR' in r['properties']) and not ('Uninitialized' in r['properties']['FLOWDIR'])
+                r for r in reaches if ('FLOWDIR' in r['properties'])
+                and not ('Uninitialized' in r['properties']['FLOWDIR'])
             ]
         '''
         For NHDPlus HR: InNetwork = “Yes” means that the reach is part of the networked NHD flowlines. In NHDPlus HR, some networked flowlines were intentionally removed from the set of features used for catchment generation. Examples included pipelines, elevated canals, headwater flowlines that conflicted with the WBD, and some other limited data conditions. 
@@ -570,12 +688,12 @@ class FileManagerNHDPlusV21:
             properties_keys = reaches[0]['properties'].keys()
             the_comid_key = [kk for kk in properties_keys if (kk.lower() == 'comid')]
 
-            reach_dict = dict((r['properties'][the_comid_key[0]], r) for r in reaches) # The ComID is the key for this dictionary
+            reach_dict = dict((r['properties'][the_comid_key[0]], r)
+                              for r in reaches)  # The ComID is the key for this dictionary
 
             # validation of properties
-            valid_props = list(self._nhdplus_vaa.keys()) + list(
-                self._nhdplus_eromma.keys()) + list(
-                    self._nhdplus_elevslope.keys()) + ['catchment', ]
+            valid_props = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys()) + list(
+                self._nhdplus_elevslope.keys()) + ['catchment', ]
             for prop in properties:
                 if prop not in valid_props:
                     raise ValueError(
@@ -592,23 +710,21 @@ class FileManagerNHDPlusV21:
                 )
                 for r in reaches:
                     r['properties']['catchment'] = None
-                with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
+                with fiona.open(os.path.join(filename, layer + '.shp'), mode='r') as fid:
                     for catchment in fid.values():
                         reach = reach_dict.get(catchment['properties']['FEATUREID'])
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
-            # VAA 
+            # VAA
             if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
 
                 path_file = self._url_data_info_df['data_local_path'][
                     self._url_data_info_df['component_name'] == 'NHDPlusAttributes'].values[0]
                 layer = 'PlusFlowlineVAA'
-                filename = os.path.join(path_file,layer+'.dbf')
+                filename = os.path.join(path_file, layer + '.dbf')
 
-                logging.info(
-                    f"Opening '{filename}' for river network properties in '{bounds}'"
-                )
+                logging.info(f"Opening '{filename}' for river network properties in '{bounds}'")
                 with fiona.open(filename, mode='r') as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['ComID'])
@@ -618,18 +734,16 @@ class FileManagerNHDPlusV21:
                                     prop_code = self._nhdplus_vaa[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
-            # Elevslope 
+            # Elevslope
 
             if len(set(self._nhdplus_elevslope.keys()).intersection(set(properties))) > 0:
-                
+
                 path_file = self._url_data_info_df['data_local_path'][
                     self._url_data_info_df['component_name'] == 'NHDPlusAttributes'].values[0]
                 layer = 'elevslope'
-                filename = os.path.join(path_file,layer+'.dbf')
+                filename = os.path.join(path_file, layer + '.dbf')
 
-                logging.info(
-                    f"Opening '{filename}' for river network properties in '{bounds}'"
-                )
+                logging.info(f"Opening '{filename}' for river network properties in '{bounds}'")
                 with fiona.open(filename, mode='r') as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['COMID'])
@@ -639,20 +753,18 @@ class FileManagerNHDPlusV21:
                                     prop_code = self._nhdplus_elevslope[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
-            # EROM 
+            # EROM
 
             if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
-                
+
                 path_file = self._url_data_info_df['data_local_path'][
-                    self._url_data_info_df['component_name'] == 'EROMExtension'].values[0]                
+                    self._url_data_info_df['component_name'] == 'EROMExtension'].values[0]
                 name_files = os.listdir(path_file)
 
                 layer = [pp for pp in name_files if "EROM_MA" in pp][0].split('.DBF')[0]
-                filename = os.path.join(path_file,layer+'.DBF')
+                filename = os.path.join(path_file, layer + '.DBF')
 
-                logging.info(
-                    f"Opening '{filename}' for river network properties in '{bounds}'"
-                )
+                logging.info(f"Opening '{filename}' for river network properties in '{bounds}'")
                 with fiona.open(filename, mode='r') as fid:
                     for flowline in fid.values():
                         reach = reach_dict.get(flowline['properties']['ComID'])
@@ -664,7 +776,12 @@ class FileManagerNHDPlusV21:
 
         return profile, reaches
 
-    def get_waterbodies(self, huc, bounds=None, bounds_crs=None, force_download=False,enforce_VPUs = True):
+    def get_waterbodies(self,
+                        huc,
+                        bounds=None,
+                        bounds_crs=None,
+                        force_download=False,
+                        enforce_VPUs=True):
         """Get all water bodies, e.g. lakes, reservoirs, etc, within a given HUC and/or coordinate bounds.
 
         Parameters
@@ -717,13 +834,12 @@ class FileManagerNHDPlusV21:
         logging.info('  Using Hydrography file "{}"'.format(filename))
 
         filename = os.path.join(
-            self._url_data_info_df['data_local_path'][
-            self._url_data_info_df['component_name'] == 'NHDSnapshot'].values[0],
-            'Hydrography')
+            self._url_data_info_df['data_local_path'][self._url_data_info_df['component_name'] ==
+                                                      'NHDSnapshot'].values[0], 'Hydrography')
         layer = 'NHDWaterbody'
         logging.info(
             f"  {self.name}: opening '{filename}' layer '{layer}' for water bodies in '{bounds}'")
-        with fiona.open(os.path.join(filename, layer+'.shp'), mode='r') as fid:
+        with fiona.open(os.path.join(filename, layer + '.shp'), mode='r') as fid:
             profile = fid.profile
             bounds = watershed_workflow.warp.bounds(
                 bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
@@ -887,28 +1003,32 @@ class FileManagerNHDPlusV21:
 
         # check directory structure
         loc_data = []
-        for row in self._url_data_info_df.itertuples(index = True):
-            daID = getattr(row,'drainage_area_ID')
-            vpu = getattr(row,'vpu')
-            rpu = getattr(row,'rpu')
-            cc = getattr(row,'component_name')
-            vv = getattr(row,'data_version')  
-            url = getattr(row,'data_url')
+        for row in self._url_data_info_df.itertuples(index=True):
+            daID = getattr(row, 'drainage_area_ID')
+            vpu = getattr(row, 'vpu')
+            rpu = getattr(row, 'rpu')
+            cc = getattr(row, 'component_name')
+            vv = getattr(row, 'data_version')
+            url = getattr(row, 'data_url')
 
             loc_root = self.name_manager.folder_name(daID, vpu)
             loc = self.name_manager.file_name(daID, vpu, rpu, cc, vv)
             loc_data.append(loc)
             os.makedirs(loc_root, exist_ok=True)
             os.makedirs(loc, exist_ok=True)
-            os.makedirs(os.path.join(loc,'raw'), exist_ok=True)
+            os.makedirs(os.path.join(loc, 'raw'), exist_ok=True)
 
             if not self._check_V21_downloaded(loc) or force:
                 # download and unzip
                 location_7z = os.path.join(loc, 'raw')
                 location_unzip = os.path.join(location_7z, 'unzipped')
                 os.makedirs(location_unzip, exist_ok=True)
-                source_utils.download(url, os.path.join(location_7z, loc.split('/')[-1]+'.7z'), force=False)
-                source_utils.unzip(os.path.join(location_7z, loc.split('/')[-1]+'.7z'), location_unzip)
+                source_utils.download(url,
+                                      os.path.join(location_7z,
+                                                   loc.split('/')[-1] + '.7z'),
+                                      force=False)
+                source_utils.unzip(os.path.join(location_7z,
+                                                loc.split('/')[-1] + '.7z'), location_unzip)
 
                 # Get the directory tree for the files unzipped
 
@@ -922,9 +1042,8 @@ class FileManagerNHDPlusV21:
 
                 dir_data = my_dirnames[2]
                 files_to_move = os.listdir(dir_data)
-                [source_utils.move(os.path.join(dir_data, ff),loc) for ff in files_to_move]
+                [source_utils.move(os.path.join(dir_data, ff), loc) for ff in files_to_move]
                 shutil.rmtree(location_unzip)
-                assert(self._check_V21_downloaded(loc))
-
+                assert (self._check_V21_downloaded(loc))
 
         self._url_data_info_df['data_local_path'] = loc_data
