@@ -50,26 +50,26 @@ def test_factory_empty():
 def test_factory_y(y):
     trees = watershed_workflow.river_tree.River.construct_rivers_by_geometry(y)
     assert (len(trees) == 1)
-    assert_list_same(trees[0].dfs(), y)
+    assert_list_same(trees[0].depthFirst(), y)
 
 
 def test_factory_y2(y_with_extension):
     trees = watershed_workflow.river_tree.River.construct_rivers_by_geometry(y_with_extension)
     assert (len(trees) == 1)
-    assert_list_same(trees[0].dfs(), y_with_extension)
+    assert_list_same(trees[0].depthFirst(), y_with_extension)
 
 
 def test_factory_ys(two_ys):
     trees = watershed_workflow.river_tree.River.construct_rivers_by_geometry(two_ys)
     assert (len(trees) == 2)
-    assert_list_same(itertools.chain(trees[0].dfs(), trees[1].dfs()), two_ys)
+    assert_list_same(itertools.chain(trees[0].depthFirst(), trees[1].depthFirst()), two_ys)
 
 
 def test_factory_dfs():
     points = [[(0, 0), (1, 0)], [(1, 0), (2, 0)]]
     ml = list(shapely.geometry.MultiLineString(points).geoms)
     trees = watershed_workflow.river_tree.River.construct_rivers_by_geometry(ml)
-    riverlist = list(trees[0].dfs())
+    riverlist = list(trees[0].depthFirst())
     assert (riverlist[0] == ml[1])
     assert (riverlist[1] == ml[0])
 
@@ -78,7 +78,7 @@ def test_factory_two_ys_props(two_ys):
     """Creates a river using the mocked HydroSeq data"""
     trees = watershed_workflow.river_tree.River.construct_rivers_by_hydroseq(two_ys)
     assert (len(trees) == 2)
-    assert_list_same(itertools.chain(trees[0].dfs(), trees[1].dfs()), two_ys)
+    assert_list_same(itertools.chain(trees[0].depthFirst(), trees[1].depthFirst()), two_ys)
 
 
 def test_factory_braided_geometry(braided_stream):
@@ -96,7 +96,7 @@ def test_factory_braided_geometry(braided_stream):
                        [0, 4, 5, 3, 1, 2]]
 
     assert (any(
-        is_list_same(trees[0].dfs(), [braided_stream[i] for i in ordering])
+        is_list_same(trees[0].depthFirst(), [braided_stream[i] for i in ordering])
         for ordering in valid_orderings))
 
 
@@ -110,4 +110,4 @@ def test_factory_braided_hydroseq(braided_stream):
     assert (len(trees) == 1)
     assert (type(trees[0]) is watershed_workflow.river_tree.River)
     assert (len(trees[0]) == 6)
-    assert_list_same(trees[0].dfs(), braided_stream)
+    assert_list_same(trees[0].depthFirst(), braided_stream)

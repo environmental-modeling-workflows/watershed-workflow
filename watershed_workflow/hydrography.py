@@ -137,20 +137,33 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
                 try:
                     assert (len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
                     assert (len(new_spine) == 1 or len(new_spine) == 2)
-                    logging.info("  - cutting reach at external boundary of HUCs")
+                    logging.info("  - cutting reach at external boundary of HUCs:")
+                    logging.info(f"      split HUC boundary seg into {len(new_spine)} pieces")
+                    logging.info(f"      split reach seg into {len(new_reach_segs)} pieces")
+
+                    # which piece of the reach are we keeping?
                     if hucs.exterior().buffer(-tol).contains(
                             shapely.geometry.Point(new_reach_segs[0].coords[0])):
+                        # keep the upstream (or only) reach seg
                         if len(new_reach_segs) == 2:
+                            # confirm other/downstream reach is outside
                             assert (not hucs.exterior().contains(
                                 shapely.geometry.Point(new_reach_segs[1].coords[-1])))
                         reach_node.segment = new_reach_segs[0]
 
                     elif len(new_reach_segs) == 2:
                         if hucs.exterior().buffer(-tol).contains(
-                                shapely.geometry.Point(new_reach_segs[1].coords[0])):
+                                shapely.geometry.Point(new_reach_segs[1].coords[-1])):
+                            # keep the downstream reach seg, confirm upstream is outside
+                            assert (not hucs.exterior().contains(
+                                shapely.geometry.Point(new_reach_segs[0].coords[0])))
                             reach_node.segment = new_reach_segs[1]
+
+                    # keep both pieces of a split huc boundary segment
+                    # -- rename the first
                     hucs.segments[seg_handle] = new_spine[0]
                     if len(new_spine) > 1:
+                        # -- add the first
                         assert (len(new_spine) == 2)
                         new_handle = hucs.segments.add(new_spine[1])
                         spine.add(new_handle)
@@ -223,7 +236,7 @@ def _cut_and_snap_crossing(hucs, reach_node, tol=_tol):
 def snap_polygon_endpoints(hucs, rivers, tol=_tol):
     """Snaps the endpoints of HUC segments to endpoints of rivers."""
     # make the kdTree of endpoints of all reaches
-    coords1 = np.array([reach.coords[-1] for river in rivers for reach in river.dfs()])
+    coords1 = np.array([reach.coords[-1] for river in rivers for reach in river.depthFirst()])
     coords2 = np.array([reach.coords[0] for river in rivers for reach in river.leaves()])
     coords = np.concatenate([coords1, coords2], axis=0)
 
@@ -474,12 +487,10 @@ def prune_by_segment_length(tree, prune_tol=10):
         if leaf.segment.length < prune_tol:
             logging.info("  ...cleaned leaf segment of length: %g at centroid %r" %
                          (leaf.segment.length, leaf.segment.centroid.coords[0]))
-            if 'area' in leaf.properties and 'area' in leaf.parent.properties:
-                leaf.parent.properties['area'] += leaf.properties['area']
-            leaf.remove()
+            leaf.removePreserveProperties()
 
 
-def prune_river_by_area(river, area):
+def prune_river_by_area(river, area, prop='TotalDrainageAreaSqKm'):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
@@ -487,10 +498,9 @@ def prune_river_by_area(river, area):
     """
     count = 0
     for node in tree.preOrder():
-        if node.properties['TotalDrainageAreaSqKm'] < area:
+        if node.properties[prop] < area:
             count += 1
-            node.remove()
-            node.clear()  # this ensures we can stop removing anything upstream of this
+            node.prune()
     return count
 
 
@@ -523,29 +533,26 @@ def prune_river_by_fractional_contributing_area(river, area_fraction, total_area
 
     catchments_available = 'catchment' in river.properties.keys()
     count = 0
+    first = True
     for node in river.preOrder():
+        if first:
+            # removing the top reach kills the whole river...
+            first = False
+            continue
+
         if node.properties['TotalDrainageAreaSqKm'] / total_area < area_fraction:
             logging.info(
                 f"... removing: {node.properties['TotalDrainageAreaSqKm']} of {total_area}")
             count += 1
 
-            if catchments_available:  # accumulate catchment polygons
-                pruned_catchments = []
-                for pruned_node in node.preOrder():
-                    if type(pruned_node.properties['catchment']
-                            ) == shapely.geometry.polygon.Polygon:
-                        pruned_catchments.append(pruned_node.properties['catchment'])
-
-                new_parent_catchment = shapely.ops.unary_union(
-                    pruned_catchments + [node.parent.properties['catchment']])
-                node.parent.properties['catchment'] = new_parent_catchment
-
-            node.remove()
-            node.clear()  # this ensures we can stop removing anything upstream of this
+            node.prune()
     return count
 
 
-def prune_by_fractional_contributing_area(rivers, area_fraction, total_area=None):
+def prune_by_fractional_contributing_area(rivers,
+                                          area_fraction,
+                                          total_area=None,
+                                          prune_whole_rivers=True):
     """Removes, IN PLACE, reaches whose CA/total_area < area_fraction.
 
     Note this requires NHDPlus data to have been used and the
@@ -558,7 +565,8 @@ def prune_by_fractional_contributing_area(rivers, area_fraction, total_area=None
         total_area = sum(river.properties['TotalDrainageAreaSqKm'] for river in rivers)
 
     for river in rivers:
-        if river.properties['TotalDrainageAreaSqKm'] >= area_fraction * total_area:
+        if (not prune_whole_rivers
+            ) or river.properties['TotalDrainageAreaSqKm'] >= area_fraction * total_area:
             count += prune_river_by_fractional_contributing_area(river, area_fraction, total_area)
             sufficiently_big_rivers.append(river)
         else:
@@ -607,14 +615,14 @@ def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
                         pass
                     else:
                         # a divergence, start removing until we meet a junction
-                        done = False
+                        done = reach.parent is None
                         count = 1
                         while not done:
                             parent = reach.parent
-                            reach.remove()
-                            done = len(parent.children) > 0
+                            reach.removePreserveProperties()
                             count += 1
                             reach = parent
+                            done = len(parent.children) > 0 or reach.parent is None
                         logging.info(f"  ... pruning braid of length {count}")
     return rivers
 
@@ -634,17 +642,26 @@ def filter_small_rivers(rivers, count):
 
 
 def merge(river, tol=_tol):
-    """Remove inner branches that are short, combining branchpoints as needed."""
+    """Remove inner branches that are short, combining branchpoints as needed. This function
+    merge the "short" segment into the parent segment"""
     for node in list(river.preOrder()):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
                          (node.segment.length, node.segment.centroid.coords[0]))
-            num_children = len(node.children)
+            num_siblings = len(list(node.siblings()))
+            node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
+                                                              + node.parent.segment.coords[1:])
+            if num_siblings != 0:
+                for sibling in node.siblings():
+                    sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
+                                                                  + [node.segment.coords[0], ])
+            if 'area' in node.properties and 'area' in node.parent.properties:
+                node.parent.properties['area'] += node.properties['area']
+
+            if 'catchment' in node.properties and 'catchment' in node.parent.properties:
+                node.parent.properties['catchment'] = shapely.ops.unary_union(
+                    [node.properties['catchment'], node.parent.properties['catchment']])
             for child in node.children:
-                child.segment = shapely.geometry.LineString(child.segment.coords[:-1]
-                                                            + [node.parent.segment.coords[0], ])
-                if 'area' in child.properties and 'area' in node.properties:
-                    child.properties['area'] += node.properties['area'] / num_children
                 node.parent.addChild(child)
             node.remove()
 

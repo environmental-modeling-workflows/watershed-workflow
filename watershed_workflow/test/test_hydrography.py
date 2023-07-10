@@ -59,7 +59,7 @@ def check1(hucs, rivers):
     # assert(len(hucs.segments) is 1)
     # assert(0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].dfs())
+    riverlist = list(rivers[0].depthFirst())
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(riverlist[0],
@@ -95,7 +95,7 @@ def check1b(hucs, rivers):
     assert (len(hucs.segments) is 1)
     assert (0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].dfs())
+    riverlist = list(rivers[0].depthFirst())
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(riverlist[0],
@@ -130,7 +130,7 @@ def check1c(hucs, rivers):
     assert (len(hucs.segments) is 1)
     assert (0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].dfs())
+    riverlist = list(rivers[0].depthFirst())
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(
@@ -151,7 +151,7 @@ def check2(hucs, rivers):
     assert (watershed_workflow.utils.close(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].dfs())  # dfs, preOrdered
+    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(riverlist[0],
@@ -169,7 +169,7 @@ def check2b(hucs, rivers):
     assert (watershed_workflow.utils.close(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].dfs())  # dfs, preOrdered
+    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
     assert (len(riverlist) is 3)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(
@@ -196,7 +196,7 @@ def check2b_nullop(hucs, rivers):
     assert (watershed_workflow.utils.close(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].dfs())  # dfs, preOrdered
+    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
     assert (len(riverlist) is 3)
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(
@@ -230,7 +230,7 @@ def check3(hucs, rivers):
         poly2, shapely.geometry.Polygon([(0, 5), (10, 5), (20, 5), (20, 10), (10, 10), (0, 10)])))
 
     assert (len(rivers[0]) is 3)
-    riverlist = list(rivers[0].dfs())
+    riverlist = list(rivers[0].depthFirst())
     print(riverlist[0].coords[:])
     assert (watershed_workflow.utils.close(riverlist[0],
                                            shapely.geometry.LineString([(10., 5.), (10., 10.)])))

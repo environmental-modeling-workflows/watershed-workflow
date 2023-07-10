@@ -692,6 +692,13 @@ def triangle_area(vertices):
     return A
 
 
+def is_collinear(p0, p1, p2, tol=1e-6):
+    """this function checks if three points are collinear for given tolerance value"""
+    x1, y1 = p1[0] - p0[0], p1[1] - p0[1]
+    x2, y2 = p2[0] - p0[0], p2[1] - p0[1]
+    return abs(x1*y2 - x2*y1) < tol
+
+
 def area(vertices):
     """Area of polygons in 2D"""
     area = shapely.geometry.Polygon(vertices).area
@@ -835,3 +842,28 @@ def cluster(points, tol):
     indices = hcluster.fclusterdata(points, tol, criterion='distance')
     centroids = [points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())]
     return indices - 1, centroids
+
+
+def treat_segment_collinearity(segment_coords, tol=1e-5):
+    """This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment"""
+    col_checks = []
+    for i in range(0,
+                   len(segment_coords)
+                   - 2):  # traversing along the segment, checking 3 consecutive points at a time
+        p0 = segment_coords[i]
+        p1 = segment_coords[i + 1]
+        p2 = segment_coords[i + 2]
+        if watershed_workflow.utils.is_collinear(
+                p0, p1, p2, tol=tol):  # treating collinearity through a small pertubation
+            del_ortho = 10 * tol  # shift in the middle point
+            if (p2[0] - p0[0]) == 0:
+                m = 1e6
+            else:
+                m = (p2[1] - p0[1]) / (p2[0] - p0[0])
+            del_y = del_ortho / (1 + m**2)**0.5
+            del_x = -1 * del_ortho * m / (1 + m**2)**0.5
+            p1 = (p1[0] + del_x, p1[1] + del_y)
+            segment_coords[i + 1] = p1
+        col_checks.append(is_collinear(p0, p1, p2))
+    assert (sum(col_checks) == 0)
+    return segment_coords

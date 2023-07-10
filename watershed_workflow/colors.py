@@ -326,7 +326,7 @@ def _indexed_colormap(label, all_colors):
 
         values = [all_colors[k][1] for k in indices]
         cmap = matplotlib.colors.ListedColormap(values)
-        ticks = indices + [indices[-1] + 1, ]
+        ticks = [i - 0.5 for i in indices] + [indices[-1] + 0.5, ]
         norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
         labels = [all_colors[k][0] for k in indices]
 
@@ -350,8 +350,6 @@ def _indexed_colormap(label, all_colors):
 
             labels = nlcd_labels_fw
 
-        # last is empty tick
-        labels.append('')
         return indices, cmap, norm, ticks, labels
 
     doc = _doc_template.format(label=label, label_lower=label.lower())
@@ -394,6 +392,9 @@ def colorbar_index(ncolors, cmap, labels=None, **kwargs):
     colorbar : the colorbar object
 
     """
+    if labels is not None:
+        assert (len(labels) == ncolors)
+
     cmap = cm_discrete(ncolors, cmap)
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
     mappable.set_array([])
@@ -403,9 +404,11 @@ def colorbar_index(ncolors, cmap, labels=None, **kwargs):
     if 'pad' not in kwargs: kwargs['pad'] = 0.04
 
     colorbar = plt.colorbar(mappable, **kwargs)
-    colorbar.set_ticks(np.linspace(0, ncolors, ncolors))  # set tick locations
+    ticks = np.linspace(0, ncolors, ncolors)
+    colorbar.set_ticks(ticks)  # set tick locations
     # set tick labels
     if labels is not None:
+        assert (len(labels) == len(ticks))
         colorbar.set_ticklabels(labels)
     else:
         colorbar.set_ticklabels(range(ncolors))

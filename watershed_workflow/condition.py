@@ -6,6 +6,8 @@ import copy
 import math
 import scipy.ndimage
 
+import watershed_workflow
+
 
 @attr.s
 class Point:
@@ -440,7 +442,8 @@ def condition_river_mesh(m2,
                          lower=False,
                          use_nhd_elev=False,
                          treat_banks=False,
-                         depress_by=0):
+                         depress_by=0,
+                         ignore_in_sweep=[]):
     """Conditoning the elevations of stream-corridor elements (generally required in flat agricultural watersheds) to ensure connectivity throgh culverts, 
     skips ponds, maintaiin monotonicity, enforce depths of constructed channels
 
@@ -489,8 +492,10 @@ def condition_river_mesh(m2,
             smooth_profile(node, use_parent=use_parent,
                            lower=lower)  # adds smooth profile in node properties
 
-        network_sweep(river, depress_by=depress_by,
-                      use_nhd_elev=use_nhd_elev)  # network-wide conditioning
+        network_sweep(river,
+                      depress_by=depress_by,
+                      use_nhd_elev=use_nhd_elev,
+                      ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
 
     # transferring network-scale-conditioned stream-bed elevations onto the mesh
     for node in river.preOrder():
@@ -519,6 +524,7 @@ def condition_river_mesh(m2,
                         if m2.coords[node_id][2] < min(profile[i + 1, 1], profile[i, 1]):
                             logging.info(f"raised node {node_id} for bank integrity")
                             m2.coords[node_id][2] = 0.5 * (profile[i, 1] + profile[i + 1, 1]) + 0.55
+    m2.clear_geometry_cache()
 
 
 def get_profile(node):
@@ -587,13 +593,13 @@ def enforce_monotonicity(profile, monotonicity='upstream'):
     return profile_new
 
 
-def network_sweep(river, depress_by=0, use_nhd_elev=False):
+def network_sweep(river, depress_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
     """sweeps the river network from each headwater reach (leaf node) to the watershed outlet (root node), removing aritificial obstructions in 
     the river mesh and enforce depths of constructed channels"""
 
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
-        leaf.properties['SmoothProfile'][:, 1] = leaf.properties[
-            'SmoothProfile'][:, 1] - depress_by  # providing extra depression at the upstream end
+        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties['SmoothProfile'][
+            -1, 1] - depress_by  # providing extra depression at the upstream end
         for node in leaf.pathToRoot(
         ):  # traversing from leaf node (headwater) catchment to the root node
             node.properties['SmoothProfile'] = enforce_monotonicity(
@@ -602,7 +608,7 @@ def network_sweep(river, depress_by=0, use_nhd_elev=False):
 
             if use_nhd_elev:
                 junction_elevs.append(node.properties['MinimumElevationSmoothed'] / 100)
-            if not node.parent == None:
+            if node.parent != None and node.properties['NHDPlusID'] not in ignore_in_sweep:
                 junction_elevs.append(node.parent.properties['SmoothProfile'][-1, 1])
                 node.parent.properties['SmoothProfile'][-1, 1] = min(
                     junction_elevs)  # giving min junction elevation to both the siblings
@@ -631,3 +637,13 @@ def bank_nodes_from_edge(edge, elem, m2):
     bank_tri = cells_to_edge[0]
     node_id = (set(bank_tri) - set(edge)).pop()
     return node_id
+
+
+def elevate_rivers(rivers, crs, dem, dem_profile):
+    """elevate river using dem and store reach-bed-profile as node properties"""
+    for river in rivers:
+        for i, node in enumerate(river.preOrder()):
+            node_points = (np.array(node.segment.xy).T)
+            node_elevs = watershed_workflow.elevate(node_points, crs, dem, dem_profile)[:, 2]
+            assert (len(node_elevs) == len(node.segment.coords))
+            node.properties['elev_profile'] = node_elevs

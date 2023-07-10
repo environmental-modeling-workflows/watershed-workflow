@@ -279,3 +279,40 @@ def mangle_glhymps_properties(shapes,
             #'description' : descriptions,
         })
     return properties
+
+
+def drop_duplicates(df):
+    """Search for duplicate soils which differ only by ID, and rename them, returning a new df.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+      A data frame that contains only properties (e.g. permeability,
+      porosity, WRM) and is indexed by some native ID.
+
+    Returns
+    -------
+    df_new : pandas.DataFrame
+      After this is called, df_new will:
+      1. have a new column, named by df's index name, containing a tuple of all
+         of the original indices that had the same properties.
+      2. be reduced in number of rows relative to df such that soil
+         properties are now unique
+
+    """
+    df_new = df.copy()
+
+    grouped = list(df_new.groupby(list(df_new)).apply(lambda x: tuple(x.index)))
+    df_new.drop_duplicates(inplace=True)
+    df_new.reset_index(inplace=True)
+
+    grouped_reordered = [next(g for g in grouped if i in g) for i in df_new[df.index.name]]
+    df_new[df.index.name] = grouped_reordered
+
+    # error checkign!
+    common_cols = [col for col in df if col in df_new]
+    for ind in df.index:
+        new_ind = next(e for e in df_new.index if ind in df_new.loc[e, df.index.name])
+        for col in common_cols:
+            assert (df.loc[ind, col] == df_new.loc[new_ind, col])
+    return df_new

@@ -3,12 +3,19 @@ import numpy as np
 import collections.abc
 
 
+def np_array_convertor(thing, *args, **kwargs):
+    if isinstance(thing, np.ndarray):
+        return thing
+    else:
+        return np.ndarray(thing, *args, **kwargs)
+
+
 @attr.define
 class Data:
     """Simple struct for storing time-dependent rasters"""
     profile: dict
-    times: np.ndarray = attr.field(converter=np.array)
-    data: np.ndarray = attr.field(converter=np.array)
+    times: np.ndarray = attr.field(converter=np_array_convertor)
+    data: np.ndarray = attr.field(converter=np_array_convertor)
 
 
 @attr.define

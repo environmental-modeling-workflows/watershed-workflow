@@ -28,12 +28,14 @@ import watershed_workflow.hydrography
 import watershed_workflow.sources.utils
 import watershed_workflow.sources.manager_shape
 import watershed_workflow.utils
+import watershed_workflow.densification
+import watershed_workflow.river_mesh
 
 __all__ = [
     'get_huc', 'get_hucs', 'get_split_form_hucs', 'get_shapes', 'get_split_form_shapes', 'find_huc',
-    'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune', 'get_waterbodies',
-    'triangulate', 'get_raster_on_shape', 'values_from_raster', 'elevate',
-    'color_raster_from_shapes', 'color_existing_raster_from_shapes'
+    'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune', 'densify',
+    'get_waterbodies', 'triangulate', 'tessalate_river_aligned', 'get_raster_on_shape',
+    'values_from_raster', 'elevate', 'color_raster_from_shapes', 'color_existing_raster_from_shapes'
 ]
 
 #
@@ -744,8 +746,10 @@ def construct_rivers(hucs,
                      ignore_small_rivers=None,
                      prune_by_area=None,
                      prune_by_area_fraction=None,
+                     prune_whole_rivers=True,
                      remove_diversions=False,
-                     remove_braided_divergences=False):
+                     remove_braided_divergences=False,
+                     tol=0.1):
     """Create a river, which is a tree of reaches.
     
     Note, HUCs and rivers must be in the same crs.
@@ -778,6 +782,8 @@ def construct_rivers(hucs,
         a fraction of the area of hucs, is less than this tol.  NOTE:
         only valid for reaches that include a contributing area
         property (e.g. NHDPlus).
+    prune_whole_rivers : bool, optional=True
+        If an entire river's area is under tolerance, remove it.
     remove_diversions : bool, optional=False
         If true, remove diversions (see documentation of
         modify_rivers_remove_divergences()).
@@ -796,7 +802,7 @@ def construct_rivers(hucs,
     logging.info("-" * 30)
 
     logging.info("Generating the river tree")
-    rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method)
+    rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method, tol=tol)
     logging.info(f" ... generated {len(rivers)} rivers")
 
     if ignore_small_rivers is not None:
@@ -811,7 +817,7 @@ def construct_rivers(hucs,
 
     if prune_by_area_fraction is not None:
         rivers = watershed_workflow.hydrography.prune_by_fractional_contributing_area(
-            rivers, prune_by_area_fraction)
+            rivers, prune_by_area_fraction, prune_whole_rivers=prune_whole_rivers)
         if len(rivers) == 0:
             return rivers
 
@@ -913,7 +919,7 @@ def simplify(hucs,
 
     if snap_rivers:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
-        rivers = watershed_workflow.hydrography.snap(hucs, rivers, simplify_rivers,
+        rivers = watershed_workflow.hydrography.snap(hucs, rivers, 0.75 * simplify_rivers,
                                                      3 * simplify_rivers, cut_intersections)
 
     if simplify_waterbodies > 0 and waterbodies is not None:
@@ -926,7 +932,7 @@ def simplify(hucs,
             logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
             watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, simplify_waterbodies)
 
-    elif cut_intersections:
+    if cut_intersections:
         logging.info("Cutting crossings and removing external segments")
         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
 
@@ -936,7 +942,7 @@ def simplify(hucs,
     if len(rivers) != 0:
         mins = []
         for river in rivers:
-            for line in river.dfs():
+            for line in river.depthFirst():
                 coords = np.array(line.coords[:])
                 dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
                 mins.append(np.min(dz))
@@ -964,6 +970,37 @@ def simplify(hucs,
     return rivers
 
 
+def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
+    """Redensify a river, huc, or waterbodies object, meeting a provided target or target resolution function.
+
+    Parameters
+    ----------
+    objct : SplitHUCs, list(River), or list(shapely.Polygon)
+      The object to be densified.
+    target : float, list[float]
+      Parameters for the target density -- either a float target
+      length or a list of floats used in
+      watershed_workflow.densification.limit_from_river_distance
+      object.
+    objct_orig : same as objct, optional
+      The object with original coordinates.  The original,
+      unsimplified object, if provided, allows better interpolation
+      between the coarsened coordinates.
+    rivers : optional
+      If target is a list of floats, the rivers used in the signed
+      distance function.
+    **kwargs : optional
+      Passed along to the densify function.
+    """
+    if isinstance(objct, watershed_workflow.split_hucs.SplitHUCs):
+        return watershed_workflow.densification.densify_hucs(objct, objct_orig, rivers, target,
+                                                             **kwargs)
+    elif isinstance(objct[0], watershed_workflow.river_tree.River):
+        return watershed_workflow.densification.densify_rivers(objct, objct_orig, target, **kwargs)
+    else:
+        raise ValueError("densify() currently only supports list(River) and SplitHUC objects.")
+
+
 def simplify_and_prune(hucs,
                        reaches,
                        simplify_hucs=None,
@@ -982,10 +1019,9 @@ def simplify_and_prune(hucs,
 
 def triangulate(hucs,
                 rivers=None,
-                internal_boundaries=None,
                 river_corrs=None,
+                internal_boundaries=None,
                 diagnostics=True,
-                stream_outlet_width=None,
                 verbosity=1,
                 tol=1,
                 refine_max_area=None,
@@ -1005,17 +1041,14 @@ def triangulate(hucs,
         A split-form HUC object from, e.g., get_split_form_hucs()
     rivers : list[watershed_workflow.river_tree.River], optional
         List of rivers, used to refine the triangulation in conjunction with refine_distance.
+    river_corrs : list[shapely.geometry.Polygon], optional
+        List of rivers corridor polygons.
     internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
         List of objects, whose boundary (in the case of
         polygons/waterbodies) or reaches (in the case of River) will
         be present in the edges of the triangulation.
-    river_corrs : list(shapely.geometry.Polygons), optional
-        A list of river corridor polygons for each river
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
-    stream_outlet_width : float, optional
-        If provided, adds edge sets within the provided distance from
-        all outlets, used to track discharge observation regions.
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit is the same as 
         that of the watershed's CRS. The default is 1.
@@ -1078,8 +1111,14 @@ def triangulate(hucs,
     if refine_max_area != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_from_max_area(refine_max_area))
     if refine_distance != None:
-        refine_funcs.append(
-            watershed_workflow.triangulation.refine_from_river_distance(*refine_distance, rivers))
+        if river_corrs != None:
+            refine_funcs.append(
+                watershed_workflow.triangulation.refine_from_river_distance(
+                    *refine_distance, river_corrs))
+        else:
+            refine_funcs.append(
+                watershed_workflow.triangulation.refine_from_river_distance(
+                    *refine_distance, rivers))
     if refine_max_edge_length != None:
         refine_funcs.append(
             watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
@@ -1087,22 +1126,17 @@ def triangulate(hucs,
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)
 
-    if not river_corrs == None:
-        allow_boundary_steiner = False
-    else:
-        allow_boundary_steiner = True
-
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
         rivers,
-        internal_boundaries,
         river_corrs,
+        internal_boundaries=internal_boundaries,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,
         min_angle=refine_min_angle,
         enforce_delaunay=enforce_delaunay,
-        allow_boundary_steiner=allow_boundary_steiner)
+        allow_boundary_steiner=(river_corrs is None))
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
@@ -1160,6 +1194,75 @@ def triangulate(hucs,
     return vertices, triangles
 
 
+def tessalate_river_aligned(hucs,
+                            rivers,
+                            river_width,
+                            river_n_quads=1,
+                            internal_boundaries=None,
+                            diagnostics=False,
+                            **kwargs):
+    """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
+
+    Parameters
+    ----------
+    hucs : SplitHUCs
+       The huc geometry to tessalate.  Note this will be adjusted if
+       required by the river corridor.
+    rivers : list[River]
+       The rivers to mesh with quads
+    river_width : float or dict
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+    river_n_quads : int, optional
+       Number of quads across the river.  Currently only 1 is
+       supported (the default).
+    internal_boundaries : list[shapely.Polygon]
+       List of internal boundaries to embed in the domain, e.g. waterbodies.
+    diagnostics : bool
+       If true, prints extra diagnostic info.
+    kwargs :
+       All other arguments are passed to the triangulation function for refinement.
+
+    Returns
+    -------
+    vertices : np.array((n_vertices, 2), 'd')
+        Array of triangle vertices.
+    cell_vertices : list[list[int]]
+        For each cell, an ordered list of indices into the vertices
+        array that make up that cell.
+    areas : _only if diagnostics=True_, np.array((n_cell_vertices), 'd')
+        Array of areas.
+
+    """
+    # generate the quads
+    quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
+                                                                          widths=river_width,
+                                                                          enforce_convexity=True)
+
+    # adjust the HUC to match the corridor at the boundary
+    hucs_without_outlet = hucs.deep_copy()
+    watershed_workflow.river_mesh.adjust_hucs_for_river_corridors(hucs_without_outlet,
+                                                                  rivers,
+                                                                  corrs,
+                                                                  integrate_rc=False)
+
+    # triangulate the rest
+    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
+                                             internal_boundaries, diagnostics, **kwargs)
+    tri_verts = tri_res[0]
+    tri_conn = tri_res[1]
+
+    # merge into a single output
+    tri_conn_list = [conn.tolist() for conn in tri_conn]
+    conn_list = tri_conn_list + quad_conn
+
+    # note, all quad verts are in the tri_verts, and hopefully in the right order!
+    if len(tri_res) > 2:
+        return (tri_verts, conn_list) + tuple(tri_res[2:])
+    else:
+        return tri_verts, conn_list
+
+
 def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise bilinear'):
     """Elevate mesh_points onto the provided dem.
 
@@ -1184,9 +1287,11 @@ def elevate(mesh_points, mesh_crs, dem, dem_profile, algorithm='piecewise biline
         Array of triangle vertices, including a z-dimension.
 
     """
-    logging.info("")
-    logging.info("Elevating Triangulation to DEM")
-    logging.info("-" * 30)
+    # logging is commented because this function is also used to elevate rivers
+    # and this blow up output!! any suggestion??
+    # logging.info("")
+    # logging.info("Elevating points to DEM")
+    # logging.info("-" * 30)
 
     # index the i,j of the points, pick the elevations
     elev = values_from_raster(mesh_points, mesh_crs, dem, dem_profile, algorithm)
