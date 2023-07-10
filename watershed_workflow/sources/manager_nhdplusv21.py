@@ -1,15 +1,13 @@
 import os, sys
 import logging
 import fiona
-import shapely
 import attr
 import requests
 import shutil
 import numpy as np
 import pandas as pd
-from shapely.ops import cascaded_union
-from shapely.geometry import shape
-from shapely.geometry import mapping
+import shapely.ops
+import shapely.geometry
 import copy
 import collections
 
@@ -37,21 +35,16 @@ class FileManagerNHDPlusV21:
             NHDPlusV21_<dd>_<VPUid>_<RPUid>_<componentname>_<vv>
         
         where 
-            dd = the drainage area identifier
-
-            VPUid = the VPU identifier
-            
-            RPUid = the RPU identifier
-            
-            componentname = the name of the NHDPlusV2 component contained in the file
-            
-            vv = the data content version, 01, 02, ... for the component
+            - dd = the drainage area identifier
+            - VPUid = the VPU identifier
+            - RPUid = the RPU identifier
+            - componentname = the name of the NHDPlusV2 component contained in the file
+            - vv = the data content version, 01, 02, ... for the component
         """
         self.name = 'NHD Plus Medium Res v2.1 (EPA)'
         self.name_manager = watershed_workflow.sources.names.Names(self.name, 'hydrography',
                                                                    'NHDPlusV21_{}_{}',
                                                                    'NHDPlusV21_{}_{}_{}_{}_{}')
-        #self.boundary_unit_file = self._get_v21_boundary_unit_file()
         self.wbd = watershed_workflow.sources.manager_nhd.FileManagerWBD()
         self._componentnames_vpu_wide = self._componentnames_vpu_wide_main
         self._componentnames_rpu_wide = self._componentnames_rpu_wide_main
@@ -322,9 +315,7 @@ class FileManagerNHDPlusV21:
         my_dataversion = []
 
         for idx, b_url in enumerate(base_URLs):
-
             daID, vpu, rpu = daID_vpu_rpu[idx]
-
             data_links = self._get_v21_data_url_from_base_url(
                 b_url, verify=source_utils.get_verify_option())
 
@@ -452,9 +443,6 @@ class FileManagerNHDPlusV21:
 
         # get drainage area ID, vpu, and rpu info
         self._get_url_info(huc, enforce_VPUs)
-        # self.boundary_unit_file = self._get_v21_boundary_unit_file()
-        # self._daID_vpu_rpu = self._get_v21_boundary_units(huc, enforce_VPUs)
-        # self._url_data_info_df = self._get_v21_urls(self._daID_vpu_rpu)
 
         # Download the WBD for the NHD Plus V2 dataset
         idx = self._url_data_info_df.index[self._url_data_info_df['component_name'] ==
@@ -512,7 +500,7 @@ class FileManagerNHDPlusV21:
         profile['always_xy'] = True
         self._path_wbd_shp = final_loc
 
-        # Check the need for hus aggregarion
+        # Check the need for hus aggregation
 
         if level == 12:
             logging.info('Returning all the HUCs of level {} inside the HUC of level {}'.format(
@@ -522,8 +510,6 @@ class FileManagerNHDPlusV21:
                 self.lowest_level, level))
 
         if (level >= 2) and (level <= 12):
-
-            #huc_at_level = np.array([hh['properties']['HUC_12'][0:level] for hh in hus])
             huc_at_level_unique = np.unique(
                 np.array([hh['properties']['HUC_12'][0:level] for hh in hus]))
 
@@ -533,8 +519,7 @@ class FileManagerNHDPlusV21:
                 hus_subset = [hu for hu in hus if hu['properties']['HUC_12'].startswith(hu_level)]
 
                 geoms = [watershed_workflow.utils.create_shply(feature) for feature in hus_subset]
-                # geoms = [shape(feature['geometry']) for feature in hus_subset]
-                new_poly_shply = cascaded_union(geoms)
+                new_poly_shply = shapely.ops.cascaded_union(geoms)
 
                 new_poly_fiona = copy.deepcopy(hus_subset[0])
                 new_poly_fiona.keys()
@@ -543,7 +528,7 @@ class FileManagerNHDPlusV21:
                 new_poly_fiona['id'] = idx
                 new_poly_fiona['properties'] = collections.OrderedDict([('OBJECTID', idx),
                                                                         (key_huc, hu_level)])
-                new_poly_fiona['geometry'] = mapping(new_poly_shply)
+                new_poly_fiona['geometry'] = shapely.geometry.mapping(new_poly_shply)
                 new_hus.append(new_poly_fiona)
                 # # Quick plot for verification purposes
                 # import matplotlib.pyplot as plt
@@ -551,7 +536,7 @@ class FileManagerNHDPlusV21:
                 # fig, ax = plt.subplots()
                 # [ax.plot(*gg.exterior.xy) for gg in geoms]
                 # ax.plot(*new_poly_shply.exterior.xy, c='k')
-                # ax.plot(*shape(new_poly_fiona['geometry']).exterior.xy, c = 'r')
+                # ax.plot(*shapely.geometry.shape(new_poly_fiona['geometry']).exterior.xy, c = 'r')
 
             hus = copy.deepcopy(new_hus)
             profile['schema']['properties'] = hus[0]['properties']
@@ -645,12 +630,12 @@ class FileManagerNHDPlusV21:
 
         # get drainage area ID, vpu, and rpu info
         self._get_url_info(huc, enforce_VPUs)
+
         # download the file
         filename = self._download(huc[0:self.file_level], force=force_download)
         logging.info('  Using Hydrography file "{}"'.format(filename))
 
         # find and open the hydrography layer
-
         filename = os.path.join(
             self._url_data_info_df['data_local_path'][self._url_data_info_df['component_name'] ==
                                                       'NHDSnapshot'].values[0], 'Hydrography')
@@ -665,6 +650,19 @@ class FileManagerNHDPlusV21:
             logging.info(f"  Found total of {len(reaches)} in bounds.")
 
         # filter not in network:
+
+        # For NHDPlus HR: InNetwork = “Yes” means that the reach is
+        # part of the networked NHD flowlines. In NHDPlus HR, some
+        # networked flowlines were intentionally removed from the set
+        # of features used for catchment generation. Examples included
+        # pipelines, elevated canals, headwater flowlines that
+        # conflicted with the WBD, and some other limited data
+        # conditions.
+
+        # For NHD Plus V2: there is not attribute InNetwork. We can
+        # use the FlowDir feature. In general, all the InNetwork = 0
+        # would also have FlowDir = 0
+
         # Unlike NHD Plus HR, we use 'FLOWDIR' to identify these features
         if in_network:
             logging.info("  Filtering reaches not in-network")
@@ -672,19 +670,9 @@ class FileManagerNHDPlusV21:
                 r for r in reaches if ('FLOWDIR' in r['properties'])
                 and not ('Uninitialized' in r['properties']['FLOWDIR'])
             ]
-        '''
-        For NHDPlus HR: InNetwork = “Yes” means that the reach is part of the networked NHD flowlines. In NHDPlus HR, some networked flowlines were intentionally removed from the set of features used for catchment generation. Examples included pipelines, elevated canals, headwater flowlines that conflicted with the WBD, and some other limited data conditions. 
 
-        For NHD Plus V2: there is not attribute InNetwork. We can use the FlowDir feature. In general, all the InNetwork = 0 would also have 
-        FlowDir = 0
-
-        NHDFlowline Features with "Known Flow" vs. Features with “Unknown
-        Flow”
-        There are approximately three million NHDFlowline features in NHDPlusV2. Most, but not all of these features have a known flow direction. Flow direction information is contained in the attribute “FlowDir” in the NHDFlowline feature class attribute table. FlowDir can have the values “With Digitized” (known flow direction) or “Uninitialized” (unknown flow direction). The features having unknown flow direction are primarily: isolated stream segments, canal/ditches, and some channels inside braided networks. The features with known flow direction are the subset of the NHDFlowline feature class which makeup the NHDPlusV2 surface water network. The “Plus” part of NHDPlusV2 is constructed for the flowlines with known flow direction. Catchments and associated catchment area attributes are only populated in NHDPlusV2 features with known flow direction. When using NHDPlusV2, it is useful to symbolize the NHDFlowline feature class using the FlowDir attribute. This helps eliminate displaying of features considered to be in the NHDPlusV2 surface water network. In Figure 12:, the dark blue lines indicate NHDFlowline features with known flow direction and, consequently, are included in the “plus” part of NHDPlusV2. The cyan lines are NHDFlowline features with unknown flow direction and, consequently, are not part of the “Plus” portion of NHDPlusV2.
-        '''
         # associate catchment areas with the reaches if NHDPlus
         if properties != None:
-
             properties_keys = reaches[0]['properties'].keys()
             the_comid_key = [kk for kk in properties_keys if (kk.lower() == 'comid')]
 
@@ -735,9 +723,7 @@ class FileManagerNHDPlusV21:
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
             # Elevslope
-
             if len(set(self._nhdplus_elevslope.keys()).intersection(set(properties))) > 0:
-
                 path_file = self._url_data_info_df['data_local_path'][
                     self._url_data_info_df['component_name'] == 'NHDPlusAttributes'].values[0]
                 layer = 'elevslope'
@@ -754,9 +740,7 @@ class FileManagerNHDPlusV21:
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
             # EROM
-
             if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
-
                 path_file = self._url_data_info_df['data_local_path'][
                     self._url_data_info_df['component_name'] == 'EROMExtension'].values[0]
                 name_files = os.listdir(path_file)
@@ -775,6 +759,7 @@ class FileManagerNHDPlusV21:
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
         return profile, reaches
+
 
     def get_waterbodies(self,
                         huc,
@@ -806,7 +791,6 @@ class FileManagerNHDPlusV21:
         Note this finds and downloads files as needed.
 
         """
-
         if 'NHD Plus Medium' not in self.name:
             raise RuntimeError(f'{self.name}: does not provide water body data.')
 
@@ -846,19 +830,8 @@ class FileManagerNHDPlusV21:
             bodies = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(bodies)} in bounds.")
 
-        # # find and open the waterbody layer
-        # filename = self.name_manager.file_name(huc[0:self.file_level])
-        # layer = 'NHDWaterbody'
-        # logging.info(
-        #     f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
-        # with fiona.open(filename, mode='r', layer=layer) as fid:
-        #     profile = fid.profile
-        #     bounds = watershed_workflow.warp.bounds(
-        #         bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
-        #     bodies = [r for (i, r) in fid.items(bbox=bounds)]
-        #     logging.info(f"  Found total of {len(bodies)} in bounds.")
-
         return profile, bodies
+
 
     def _url(self, hucstr):
         """Use the USGS REST API to find the URL to download a file for a given huc.
@@ -927,64 +900,9 @@ class FileManagerNHDPlusV21:
             else:
                 logging.debug('  REST query with polyCode... FAIL')
 
-        # # works more univerasally but is a BIG lookup, then filter locally
-        # a2 = attempt({'datasets':self.name})
-        # if not a2[0]:
-        #     logging.debug('  REST query without polyCODE... SUCCESS')
-        #     logging.debug(f'  REST query: {a2[1]}')
-        #     return a2[1]
-
-        # logging.debug('  REST query without polyCODE... FAIL')
         raise ValueError('{}: cannot find HUC {}'.format(self.name, hucstr))
 
-    # def _valid_url(self, i, match, huc, gdb_only=True):
-    #     """Helper function that returns the URL if valid, or False if not."""
-    #     ok = True
-    #     logging.info(f'Checking match for {huc}? {match["downloadURL"]}')
-
-    #     if ok:
-    #         ok = "format" in match
-    #         logging.info(f'format in match? {ok}')
-    #     if ok:
-    #         ok = "urls" in match
-    #         logging.info(f'urls in match? {ok}')
-    #     if ok:
-    #         # search for a GDB url
-    #         try:
-    #             url_type = next(ut for ut in match['urls'] if 'GDB' in ut or 'GeoDatabase' in ut)
-    #         except StopIteration:
-    #             logging.info(f'Cannot find GDB url: {list(match["urls"].keys())}')
-    #             return False
-    #         else:
-    #             url = match['urls'][url_type]
-
-    #     # we have a url, is it actually this huc?
-    #     url_split = url.split('/')
-    #     logging.info(f'YAY: {url}')
-    #     logging.info(f'Checking match {i}: {url_split[-2]}, {url_split[-1]}')
-
-    #     # check the title contains (NHD) if NHD, or (NHDPlus HR) if NHDPlus
-    #     if ok:
-    #         ok = "title" in match
-    #         logging.debug(f'title in match? {ok}')
-    #     if ok:
-    #         for abbrev in ['NHD', 'NHDPlus', 'NHDPlus HR', 'WBD']:
-    #             my_abbrev = f'({abbrev})'.lower()
-    #             if my_abbrev in self.name.lower():
-    #                 break
-    #         ok = my_abbrev in match["title"].lower()
-    #         logging.debug(f'name in title? {ok}')
-    #     if not ok:
-    #         return False
-
-    #     if huc not in url_split[-1]:
-    #         # not the right HUC
-    #         return False
-    #     if gdb_only and 'GDB' != url_split[-2]:
-    #         # not a GDB
-    #         return False
-    #     return url
-
+    
     def _download(self, hucstr, force=False):
         """Find and download data from a given HUC.
 
@@ -1031,12 +949,8 @@ class FileManagerNHDPlusV21:
                                                 loc.split('/')[-1] + '.7z'), location_unzip)
 
                 # Get the directory tree for the files unzipped
-
                 my_dirnames = []
-                # my_filenames = []
                 for root, dirs, files in os.walk(location_unzip, topdown=True):
-                    # for name in files:
-                    #     my_filenames.append(os.path.join(root, name))
                     for name in dirs:
                         my_dirnames.append(os.path.join(root, name))
 
