@@ -317,7 +317,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
 
     """
     nyears = data.shape[0] // 365
-
+    if nyears == 0:
+        raise ValueError('Not enough data to compute average year. Need at least 365 days.')
     data = data[0:nyears * 365, :, :].reshape(nyears, 365, data.shape[1], data.shape[2])
     data = data.mean(axis=0)
 
@@ -327,9 +328,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
             kwargs.setdefault(k, v)
 
         data = scipy.signal.savgol_filter(data, **kwargs)
-
     if output_nyears != 1:
-        data = np.tile(data, (nyears, 1, 1))
+        data = np.tile(data, (output_nyears, 1, 1))
     return data
 
 
