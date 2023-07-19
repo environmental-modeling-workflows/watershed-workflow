@@ -123,8 +123,7 @@ def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None):
             'Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.'
         )
     x = np.array([(transform * (i, 0))[0] for i in range(profile['width'])])
-    y = np.array([(transform * (0, j))[0] for j in range(profile['height'])])
-
+    y = np.array([(transform * (0, j))[1] for j in range(profile['height'])])
     if time0 is None:
         time0 = times[0]
 
