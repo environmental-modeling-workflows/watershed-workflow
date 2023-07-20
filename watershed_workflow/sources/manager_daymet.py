@@ -156,7 +156,7 @@ class FileManagerDaymet:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date
 
-    def _clean_bounds(self, polygon_or_bounds, crs):
+    def _clean_bounds(self, polygon_or_bounds, crs, buffer):
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
         if type(polygon_or_bounds) is dict:
             polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
@@ -167,7 +167,6 @@ class FileManagerDaymet:
             bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
                                                        watershed_workflow.crs.latlon_crs())
 
-        buffer = 0.01
         feather_bounds = list(bounds_ll[:])
         feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
         feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
@@ -221,7 +220,8 @@ class FileManagerDaymet:
                  start=None,
                  end=None,
                  variables=None,
-                 force_download=False):
+                 force_download=False,
+                 buffer=0.01):
         """Gets file for a single year and single variable.
 
         Parameters
@@ -241,6 +241,8 @@ class FileManagerDaymet:
           documentation for valid.  Default is [prcp,tmin,tmax,vp,srad].
         force_download : bool
           Download or re-download the file if true.
+        buffer : float
+          Buffer the bounds by this amount, in degrees. The default is 0.01.
 
         Returns
         -------
@@ -274,7 +276,7 @@ class FileManagerDaymet:
                     ', '.join(self.VALID_VARIABLES), var))
 
         # clean bounds
-        bounds = self._clean_bounds(polygon_or_bounds, crs)
+        bounds = self._clean_bounds(polygon_or_bounds, crs, buffer=buffer)
 
         # download files
         filenames = []
