@@ -49,7 +49,7 @@ setup(
     long_description=readme,
     author="Ethan Coon",
     author_email='etcoon@gmail.com',
-    url='https://github.com/ecoon/watershed-workflow',
+    url='https://github.com/environmental-modeling-workflow/watershed-workflow',
     python_requires='>={}'.format('.'.join(str(n) for n in min_version)),
     packages=find_packages(exclude=['docs', 'tests']),
     entry_points={
