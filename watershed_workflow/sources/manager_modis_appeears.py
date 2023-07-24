@@ -97,6 +97,7 @@ class FileManagerMODISAppEEARS:
     }
 
     def __init__(self, login_token=None):
+        """Create a new manager for MODIS data."""
         self.name = 'MODIS'
         self.names = watershed_workflow.sources.names.Names(
             self.name, 'land_cover', self.name,
@@ -422,7 +423,8 @@ class FileManagerMODISAppEEARS:
                  end=None,
                  variables=None,
                  force_download=False,
-                 task=None):
+                 task=None,
+                 filenames=None):
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -451,6 +453,8 @@ class FileManagerMODISAppEEARS:
           If a request has already been created, use this task to
           access the data rather than creating a new request.  Default
           means to create a new request.
+        filenames : list of str, optional
+            If a list of filenames is provided, use these rather than creating a new request.
         
         Returns
         -------
@@ -468,7 +472,15 @@ class FileManagerMODISAppEEARS:
           task tuple for use in a future call to get_data().
 
         """
-        if task is None:
+        if filenames is not None:
+            # read the file
+            assert variables is not None, "Must provide variables if providing filenames."
+            s = watershed_workflow.datasets.State()
+            for filename,var in zip(filenames,variables):
+                s[var] = self._read_file(filename, var)
+            return s
+
+        if task is None and filenames is None:
             if polygon_or_bounds is None or crs is None:
                 raise RuntimeError(
                     'Must provide either polgyon_or_bounds and crs or task arguments.')
