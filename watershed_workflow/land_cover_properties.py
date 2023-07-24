@@ -8,7 +8,7 @@ import watershed_workflow.warp
 import watershed_workflow.plot
 
 
-def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, smooth=False, **kwargs):
+def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, **kwargs):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
 
@@ -22,8 +22,6 @@ def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, smooth=False, **kwar
       List of unique land cover types.  If None, will be computed from raster.
     lc_idx : int
       Index of the land cover type to use for the time series. Default is -1 (lastest year).
-    smooth : bool
-      Smooth the time series using a Savitzky-Golay filter.
     kwargs : dict
       Keyword arguments to pass to scipy.signal.savgol_filter such as 
       'window_length (default=101)' and 'polyorder (default=3)'.
@@ -49,27 +47,6 @@ def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, smooth=False, **kwar
         ]
         col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
         df[f'MODIS {col_name} LAI [-]'] = time_series
-
-    if smooth:
-        # interpolate to daily time series
-        df['time [datetime]'] = pd.to_datetime(df['time [datetime]'])
-        df = df.set_index('time [datetime]')
-        df_daily = df.resample('D').asfreq()
-        df_interpolated = df_daily.interpolate(method='linear')
-
-        # smooth
-        if 'window_length' not in kwargs:
-            kwargs['window_length'] = 101
-        if 'polyorder' not in kwargs:
-            kwargs['polyorder'] = 3
-        df_smoothed = df_interpolated.copy()
-        for k in df_interpolated.columns:
-            df_smoothed[k] = scipy.signal.savgol_filter(df_interpolated[k], **kwargs)
-
-        df_smoothed = df_smoothed.reset_index()
-        df_smoothed['time [datetime]'] = df_smoothed['time [datetime]'].dt.date
-        return df_smoothed
-
     return df
 
 

@@ -376,7 +376,43 @@ def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
     return new_times, new_data
 
 
+def smooth(data, window_length=61, polyorder=2, axis=0, mode='wrap', **kwargs):
+    """Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.
+
+    Note that this wrapper just sets some sane default values for
+    daily data -- one could just as easily call
+    scipy.signal.savgol_filter themselves.
+    
+    Parameters
+    ----------
+    data : np.ndarray-like
+      The data to smooth.  Note that the expectation is that the time
+      axis is the 0th axis.
+    window_length : int, 61
+      Length of the moving window over which to fit the polynomial.
+    polyorder : int, 2
+      Order of the fitting polynomial.
+    axis : int, 0
+      Time axis over which to smooth.
+    mode : str, 'wrap'
+      See scipy.signal.savgol_filter documentation, but 'wrap' is the
+      best bet for data in multiples of years.
+    **kwargs : see scipy.signal.savgol_filter
+
+    Returns
+    -------
+    np.ndarray
+      Smoothed data in the same shape as data
+    """
+    kwargs['window_length'] = window_length
+    kwargs['polyorder'] = polyorder
+    kwargs['axis'] = axis
+    kwargs['mode'] = mode
+    return scipy.signal.savgol_filter(data, **kwargs)
+
+
 def generate_rings(obj):
+
     """Generator for a fiona shape's coordinates object and yield rings.
 
     As long as the input is conforming, the type of the geometry doesn't matter.
