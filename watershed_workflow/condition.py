@@ -492,8 +492,10 @@ def condition_river_mesh(m2,
             smooth_profile(node, use_parent=use_parent,
                            lower=lower)  # adds smooth profile in node properties
 
-        network_sweep(river, depress_by=depress_by,
-                      use_nhd_elev=use_nhd_elev, ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
+        network_sweep(river,
+                      depress_by=depress_by,
+                      use_nhd_elev=use_nhd_elev,
+                      ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
 
     # transferring network-scale-conditioned stream-bed elevations onto the mesh
     for node in river.preOrder():
@@ -523,6 +525,7 @@ def condition_river_mesh(m2,
                             logging.info(f"raised node {node_id} for bank integrity")
                             m2.coords[node_id][2] = 0.5 * (profile[i, 1] + profile[i + 1, 1]) + 0.55
     m2.clear_geometry_cache()
+
 
 def get_profile(node):
     """for a given node, generates a bedprofile using elevations on the node.segment"""
@@ -595,8 +598,8 @@ def network_sweep(river, depress_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
     the river mesh and enforce depths of constructed channels"""
 
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
-        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties[
-            'SmoothProfile'][-1, 1] - depress_by  # providing extra depression at the upstream end
+        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties['SmoothProfile'][
+            -1, 1] - depress_by  # providing extra depression at the upstream end
         for node in leaf.pathToRoot(
         ):  # traversing from leaf node (headwater) catchment to the root node
             node.properties['SmoothProfile'] = enforce_monotonicity(

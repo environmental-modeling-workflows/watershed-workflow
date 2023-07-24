@@ -9,6 +9,7 @@ def np_array_convertor(thing, *args, **kwargs):
     else:
         return np.ndarray(thing, *args, **kwargs)
 
+
 @attr.define
 class Data:
     """Simple struct for storing time-dependent rasters"""

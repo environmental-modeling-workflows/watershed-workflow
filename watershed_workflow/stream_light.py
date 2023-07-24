@@ -467,8 +467,8 @@ class StreamLight:
         ## Eastern shading
         delta_prime = self.solar_angles['solar_azimuth_shade2'] - (
             self.channel_properties['channel_azimuth'] * np.pi / 180)
-        delta_prime[
-            delta_prime < 0] = np.pi + np.abs(delta_prime[delta_prime < 0]) % (2 * np.pi)  #PS 2019
+        delta_prime[delta_prime <
+                    0] = np.pi + np.abs(delta_prime[delta_prime < 0]) % (2 * np.pi)  #PS 2019
         delta_east = delta_prime % (2 * np.pi)
 
         ## Western shading
