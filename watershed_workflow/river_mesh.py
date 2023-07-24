@@ -189,8 +189,8 @@ def create_river_corridor(river, width):
                     key=lambda i: watershed_workflow.utils.distance(corr_p[i], outlet_p))
     plus_one = (index_min+1) % len(corr_p)
     minus_one = (index_min-1) % len(corr_p)
-    if (watershed_workflow.utils.distance(corr_p[plus_one], outlet_p) <
-            watershed_workflow.utils.distance(corr_p[minus_one], outlet_p)):
+    if (watershed_workflow.utils.distance(corr_p[plus_one], outlet_p)
+            < watershed_workflow.utils.distance(corr_p[minus_one], outlet_p)):
         corr2_p = corr_p[plus_one:] + corr_p[0:plus_one]
     else:
         corr2_p = corr_p[index_min:] + corr_p[0:index_min]
@@ -233,14 +233,14 @@ def create_river_corridor(river, width):
     corr3 = shapely.geometry.Polygon(corr3_p)
 
     ## check if the points on the river corridor are same as calculated theoretically
-    n_child=[]
+    n_child = []
     for node in river.preOrder():
         n_child.append(len(node.children))
-    n=2 # two outlet points
+    n = 2  # two outlet points
     for node in river.preOrder():
-        n= n + 2*(len(node.segment.coords)-1)   
-    n= n - n_child.count(0)+n_child.count(2)+n_child.count(3)+n_child.count(4)
-    if len(corr3.exterior.coords[:])-1 != n:
+        n = n + 2 * (len(node.segment.coords) - 1)
+    n = n - n_child.count(0) + n_child.count(2) + n_child.count(3) + n_child.count(4)
+    if len(corr3.exterior.coords[:]) - 1 != n:
         RuntimeError('number of points on corridor polygon not same as expected')
     return corr3
 
@@ -580,7 +580,7 @@ def make_convex_by_nudge(points):
     Used if efficient convexity does not work
     """
     i = 0
-    if len(points)==5:
+    if len(points) == 5:
         while not watershed_workflow.utils.is_convex(points):
             p1, p3 = [np.array(points[1]), np.array(points[3])]
             d = p1 - p3
@@ -590,7 +590,7 @@ def make_convex_by_nudge(points):
             points[3] = tuple(p3_)
             i += 1
         logging.debug(f"... element was adjusted {i} times")
-    elif len(points)==6:
+    elif len(points) == 6:
         while not watershed_workflow.utils.is_convex(points):
             p1, p4 = [np.array(points[1]), np.array(points[4])]
             d = p1 - p4

@@ -10,6 +10,7 @@ disable_ending_comma_heuristic = true
 spaces_around_dict_delimiters = true
 split_before_arithmetic_operator = true
 column_limit = 100
+blank_line_before_nested_class_or_def = false
 
 
 

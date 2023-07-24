@@ -880,8 +880,8 @@ class Mesh3D:
         assert (max(c for conn in self.face_to_node_conn for c in conn) < len(self.coords))
 
         assert (min(c for conn in self.cell_to_face_conn for c in conn) >= 0)
-        assert (max(c for conn in self.cell_to_face_conn
-                    for c in conn) < len(self.face_to_node_conn))
+        assert (max(c for conn in self.cell_to_face_conn for c in conn)
+                < len(self.face_to_node_conn))
 
         # validate labeled_sets and side sets
         ls_ss_ids = [ls.setid for ls in self.labeled_sets] + \

@@ -49,30 +49,30 @@ def test_collection(dc):
     assert (dc.can_contain(a))
 
     another = dsets.Dataset(profile('profile2'), np.array([0, 1]), { 'c': np.array([6, 7]) })
-    assert (not dc.can_contain(another)) # wrong profile
+    assert (not dc.can_contain(another))  # wrong profile
 
-    another2 = dsets.Dataset(profile('profile1'), np.array([1,2]), { 'c': np.array([6, 7]) })
-    assert (not dc.can_contain(another2)) # wrong times
+    another2 = dsets.Dataset(profile('profile1'), np.array([1, 2]), { 'c': np.array([6, 7]) })
+    assert (not dc.can_contain(another2))  # wrong times
 
 
 def test_state(s):
     assert ('a' in s)
     assert ('b' in s)
     assert (len(s) == 2)
-    s['c'] = (profile('profile2'), np.array([0,1]), np.array([6, 7]))
+    s['c'] = (profile('profile2'), np.array([0, 1]), np.array([6, 7]))
     assert (len(s) == 3)
     assert ('c' in s)
     assert (len(s.collections) == 2)
 
     c2 = s['c']
     assert (c2.profile['name'] == 'profile2')
-    assert (all(c2.times == np.array([0,1])))
+    assert (all(c2.times == np.array([0, 1])))
     assert (all(c2.data == np.array([6, 7])))
     del c2
 
     a2 = s['a']
     assert (a2.profile['name'] == 'profile1')
-    assert (all(a2.times == [0,1]))
+    assert (all(a2.times == [0, 1]))
     assert (all(a2.data == [2, 3]))
     del a2
 
@@ -86,12 +86,12 @@ def test_state(s):
 
 def test_update(s):
     s1 = dsets.State()
-    s1['a'] = (profile('profile1'), np.array([0,1]), np.array([0, 1, 2]))
-    s1['b'] = (profile('profile2'), np.array([0,1]), np.array([0, 1, 2]))
+    s1['a'] = (profile('profile1'), np.array([0, 1]), np.array([0, 1, 2]))
+    s1['b'] = (profile('profile2'), np.array([0, 1]), np.array([0, 1, 2]))
 
     s2 = dsets.State()
-    s2['c'] = (profile('profile1'), np.array([0,1]), np.array([0, 1, 2]))
-    s2['d'] = (profile('profile3'), np.array([0,1]), np.array([0, 1, 2]))
+    s2['c'] = (profile('profile1'), np.array([0, 1]), np.array([0, 1, 2]))
+    s2['d'] = (profile('profile3'), np.array([0, 1]), np.array([0, 1, 2]))
 
     s1.update(s2)
     assert (len(s1) == 4)
@@ -104,23 +104,24 @@ def test_data_setting_inplace():
     d = dsets.Data(profile('profile2'), np.array([2, 3]), np.array([6, 7]))
     d.data[:] = -1
     assert (d.data[0] == -1)
-    
-    
+
+
 def test_dataset_setting_inplace(dc):
-    assert(isinstance(dc.data['a'], np.ndarray))
+    assert (isinstance(dc.data['a'], np.ndarray))
     print(dc.data['a'])
 
-    assert(isinstance(dc['a'].data, np.ndarray))
-    assert(dc['a'].data is dc.data['a'])
+    assert (isinstance(dc['a'].data, np.ndarray))
+    assert (dc['a'].data is dc.data['a'])
 
     dc['a'].data[:] = -1
     assert (dc['a'].data[0] == -1)
 
+
 def test_dataset_setting_inplace2(dc):
     dc.data['a'][:] = -1
     assert (dc['a'].data[0] == -1)
-    
-    
+
+
 def test_state_setting_inplace(s):
     s['a'].data[:] = -1
     assert (s['a'].data[0] == -1)
