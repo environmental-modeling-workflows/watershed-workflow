@@ -43,7 +43,8 @@ def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, **kwargs):
 
     for ilc in unique_lc:
         time_series = [
-            lai.data[itime, :, :][np.where(lc.data[lc_idx, :, :] == ilc)].mean() for itime in range(len(lai.times))
+            lai.data[itime, :, :][np.where(lc.data[lc_idx, :, :] == ilc)].mean()
+            for itime in range(len(lai.times))
         ]
         col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
         df[f'MODIS {col_name} LAI [-]'] = time_series

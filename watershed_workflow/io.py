@@ -198,7 +198,7 @@ def write_timeseries_to_hdf5(filename, ts, attributes=None, time0=None):
         attributes = dict()
     attributes['origin date'] = str(time0)
     attributes['start date'] = str(times.values[0])
-    attributes['end date']= str(times.values[-1])
+    attributes['end date'] = str(times.values[-1])
 
     times = np.array([(t - time0).total_seconds() for t in times])
     times = times.astype(np.int32)

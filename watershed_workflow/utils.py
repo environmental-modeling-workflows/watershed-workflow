@@ -412,7 +412,6 @@ def smooth(data, window_length=61, polyorder=2, axis=0, mode='wrap', **kwargs):
 
 
 def generate_rings(obj):
-
     """Generator for a fiona shape's coordinates object and yield rings.
 
     As long as the input is conforming, the type of the geometry doesn't matter.

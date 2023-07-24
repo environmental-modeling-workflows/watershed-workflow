@@ -153,7 +153,14 @@ def huc(huc, crs, color='k', ax=None, **kwargs):
     return shply([huc, ], crs, color, ax, **kwargs)
 
 
-def hucs(hucs, crs, color='k', ax=None, outlet_marker=None, outlet_markersize=100, outlet_markercolor='green', **kwargs):
+def hucs(hucs,
+         crs,
+         color='k',
+         ax=None,
+         outlet_marker=None,
+         outlet_markersize=100,
+         outlet_markercolor='green',
+         **kwargs):
     """Plot a SplitHUCs object.
     
     A wrapper for plot.shply()

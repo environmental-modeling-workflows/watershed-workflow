@@ -476,7 +476,7 @@ class FileManagerMODISAppEEARS:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
             s = watershed_workflow.datasets.State()
-            for filename,var in zip(filenames,variables):
+            for filename, var in zip(filenames, variables):
                 s[var] = self._read_file(filename, var)
             return s
 
