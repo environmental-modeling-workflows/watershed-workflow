@@ -110,15 +110,15 @@ class River(watershed_workflow.tinytree.Tree):
         if to_save is not None:
             self.properties[to_save] = val
         return val
-    
+
     def getNodeFromNHDPlusID(self, nhd_id):
         """return node for a given NHDPLus ID"""
         try:
-            node = next(node for node in self.preOrder() if node.properties['NHDPlusID']==nhd_id)
+            node = next(node for node in self.preOrder() if node.properties['NHDPlusID'] == nhd_id)
         except StopIteration:
             node = None
         return node
-    
+
     def accumulateContributingArea(self, outlet_NHDPlusIDs, names):
         """creates catchment polygons of contributing areas for  a given outlet/spillpoint reach
             Parameters:
@@ -136,10 +136,13 @@ class River(watershed_workflow.tinytree.Tree):
         """
         catchments = []
         for i, outlet_NHDPlusID in enumerate(outlet_NHDPlusIDs):
-            node_ob = next(node for node in self.preOrder() if node.properties['NHDPlusID']==outlet_NHDPlusID)
-            catch = shapely.geometry.Polygon(shapely.ops.unary_union([node.properties['catchment'] for node in node_ob.preOrder()]).exterior)
+            node_ob = next(node for node in self.preOrder()
+                           if node.properties['NHDPlusID'] == outlet_NHDPlusID)
+            catch = shapely.geometry.Polygon(
+                shapely.ops.unary_union(
+                    [node.properties['catchment'] for node in node_ob.preOrder()]).exterior)
             catch.properties = dict()
-            catch.properties['outlet_NHDPlusID'] = outlet_NHDPlusID 
+            catch.properties['outlet_NHDPlusID'] = outlet_NHDPlusID
             catch.properties['name'] = names[i]
             catch.properties['outlet_point'] = node_ob.segment.coords[-1]
             catchments.append(catch)
@@ -305,8 +308,7 @@ def accumulateContributingAreaRivers(rivers, outlet_NHDPlusIDs, names):
     -------
     list(shapely.geometry.Polygon) with NHDPlusIDs, names abnd outlet points in properties
     """
-    catchments=[]
+    catchments = []
     for river in rivers:
         catchments = catchments + river.accumulateContributingArea(outlet_NHDPlusIDs, names)
     return catchments
-    

@@ -2,15 +2,12 @@
 This script hosts functions to add labelsets to define regions
 """
 
-
 import numpy as np
 import attr
 import shapely
 
-
 import watershed_workflow.mesh
 import watershed_workflow.utils
-
 
 
 def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
@@ -66,8 +63,12 @@ def add_watershed_regions(m2, polygons, labels=None):
     return partitions
 
 
-
-def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None, labels=None, exterior_outlet= True):
+def add_watershed_regions_and_outlets(m2,
+                                      hucs,
+                                      outlets=None,
+                                      outlet_width=None,
+                                      labels=None,
+                                      exterior_outlet=True):
     """Add four labeled sets to m2 for each polygon:
 
     - cells in the polygon, to be extruded
@@ -112,10 +113,14 @@ def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None,
         subdomain_conn = [list(m2.conn[tri]) for tri in tris]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
         subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
-        m2h = watershed_workflow.mesh.Mesh2D(subdomain_coords, subdomain_conn, check_handedness=False, validate=False)
+        m2h = watershed_workflow.mesh.Mesh2D(subdomain_coords,
+                                             subdomain_conn,
+                                             check_handedness=False,
+                                             validate=False)
 
         edges = [(int(e[0]), int(e[1])) for e in m2h.boundary_edges]
-        ls = watershed_workflow.mesh.LabeledSet(label + ' boundary', m2.next_available_labeled_setid(), 'FACE', edges)
+        ls = watershed_workflow.mesh.LabeledSet(label + ' boundary',
+                                                m2.next_available_labeled_setid(), 'FACE', edges)
         ls.to_extrude = True  # this marker tells the extrusion routine
         # to not limit it to the surface
         m2.labeled_sets.append(ls)
@@ -124,7 +129,9 @@ def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None,
         if outlet is not None:
             outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
             edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-            ls = watershed_workflow.mesh.LabeledSet(label + ' outlet', m2.next_available_labeled_setid(), 'FACE', edges)
+            ls = watershed_workflow.mesh.LabeledSet(label + ' outlet',
+                                                    m2.next_available_labeled_setid(), 'FACE',
+                                                    edges)
             ls.to_extrude = True  # this marker tells the extrusion routine
             # to not limit it to the surface
             m2.labeled_sets.append(ls)
@@ -133,21 +140,22 @@ def add_watershed_regions_and_outlets(m2, hucs, outlets=None, outlet_width=None,
     if exterior_outlet:
         if hasattr(hucs, "exterior_outlet"):
             exterior_outlet_point = hucs.exterior_outlet
-        else: 
-            try: 
+        else:
+            try:
                 boundary = hucs.exterior()
             except AttributeError:
                 boundary = shapely.ops.unary_union(hucs)
-            exterior_outlet_point = next(outlet for outlet in outlets if outlet.buffer(500).intersects(boundary))
+            exterior_outlet_point = next(outlet for outlet in outlets
+                                         if outlet.buffer(500).intersects(boundary))
 
         outlet_faces = [e for e in m2.boundary_edges if inside_ball(exterior_outlet_point, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-        ls2 = watershed_workflow.mesh.LabeledSet('surface domain outlet', m2.next_available_labeled_setid(), 'FACE', edges)
+        ls2 = watershed_workflow.mesh.LabeledSet('surface domain outlet',
+                                                 m2.next_available_labeled_setid(), 'FACE', edges)
         ls2.to_extrude = True
         m2.labeled_sets.append(ls2)
 
 
-    
 def add_river_corridor_regions(m2, rivers, labels=None):
     """Add labeled sets to m2 for each river corridor.
      
@@ -172,8 +180,8 @@ def add_river_corridor_regions(m2, rivers, labels=None):
     for c, conn in enumerate(m2.conn):
         cell_poly = shapely.geometry.Polygon(m2.coords[conn])
         try:
-            ip = next(i for (i, p) in enumerate(rivers_mls) if p.intersects(cell_poly.buffer(-1))) 
-            # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater 
+            ip = next(i for (i, p) in enumerate(rivers_mls) if p.intersects(cell_poly.buffer(-1)))
+            # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
             # reach that might be touching the reach end from being included in the region
         except StopIteration:
             pass

@@ -564,7 +564,8 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
     for j, node in enumerate(river.preOrder()):
         for elem in node.elements:
             elem = [id - gid_shift for id in elem]
-            if len(elem) == 5 or len(elem) == 6 or len(elem) == 7:  # checking and treating this pentagon/hexagon
+            if len(elem) == 5 or len(elem) == 6 or len(
+                    elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
                     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
@@ -620,7 +621,7 @@ def make_convex_by_nudge(points):
             i += 1
         logging.debug(f"... element was adjusted {i} times")
 
-    elif len(points)==7:
+    elif len(points) == 7:
         while not watershed_workflow.utils.is_convex(points):
             p1, p5 = [np.array(points[1]), np.array(points[5])]
             d = p1 - p5
@@ -889,20 +890,21 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                 )  # his polygon is used to remove overlapping huc-segment and rc. To avoid issues at snapped leaf node intersecting with this
                 # with this huc segment, we create lcal rc polygon
 
-                if len(hucs.segments)==1:
-                    key=0
+                if len(hucs.segments) == 1:
+                    key = 0
                     hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
-                                                                rc_points[0])
+                                                           rc_points[0])
                     hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
-                                                                rc_points[1])
+                                                           rc_points[1])
 
                 else:
                     for key in junction_seg_angles_sorted.keys():
                         if type(key) is int:
                             logging.info(f"Modifying HUC Segment {key}")
                             # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
-                            hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
-                                                                rc_points[rc_point_ind])
+                            hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key],
+                                                                   river_corr_part,
+                                                                   rc_points[rc_point_ind])
                             key_hold = key
                         else:
                             rc_point_ind += 1

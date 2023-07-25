@@ -443,7 +443,7 @@ def condition_river_mesh(m2,
                          use_nhd_elev=False,
                          treat_banks=False,
                          depress_upstream_by=0,
-                         network_burn_in_depth = 0,
+                         network_burn_in_depth=0,
                          ignore_in_sweep=[]):
     """Conditoning the elevations of stream-corridor elements (generally required in flat agricultural watersheds) to ensure connectivity throgh culverts, 
     skips ponds, maintaiin monotonicity, enforce depths of constructed channels
@@ -509,23 +509,23 @@ def condition_river_mesh(m2,
         else:
             profile = get_profile(
                 node)  # if only centerline elevation is to be use, without any conditioning
-        
+
         # can we pass such user-defined functions for channel width and depth as a function of drainage area W or D = f(Drainage_area)
         if type(network_burn_in_depth) == int:
             burn_in_depth = network_burn_in_depth
         elif isinstance(network_burn_in_depth, dict):
-                order = node.properties["StreamOrder"]
-                if order > max(network_burn_in_depth.keys()):
-                    burn_in_depth = network_burn_in_depth[max(network_burn_in_depth.keys())]
-                elif order < min(network_burn_in_depth.keys()):
-                    burn_in_depth = network_burn_in_depth[min(network_burn_in_depth.keys())]
-                else:
-                    burn_in_depth = network_burn_in_depth[order]
+            order = node.properties["StreamOrder"]
+            if order > max(network_burn_in_depth.keys()):
+                burn_in_depth = network_burn_in_depth[max(network_burn_in_depth.keys())]
+            elif order < min(network_burn_in_depth.keys()):
+                burn_in_depth = network_burn_in_depth[min(network_burn_in_depth.keys())]
+            else:
+                burn_in_depth = network_burn_in_depth[order]
         elif callable(network_burn_in_depth):
-            DA_sqm = node.properties['TotalDrainageAreaSqKm']*1e6
-            burn_in_depth= network_burn_in_depth(DA_sqm)
-            
-        profile[:,1] = profile[:,1] - burn_in_depth
+            DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
+            burn_in_depth = network_burn_in_depth(DA_sqm)
+
+        profile[:, 1] = profile[:, 1] - burn_in_depth
 
         for i, elem in enumerate(node.elements):
 
@@ -619,8 +619,8 @@ def network_sweep(river, depress_upstream_by=0, use_nhd_elev=False, ignore_in_sw
     the river mesh and enforce depths of constructed channels"""
 
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
-        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties[
-            'SmoothProfile'][-1, 1] - depress_upstream_by  # providing extra depression at the upstream end
+        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties['SmoothProfile'][
+            -1, 1] - depress_upstream_by  # providing extra depression at the upstream end
         for node in leaf.pathToRoot(
         ):  # traversing from leaf node (headwater) catchment to the root node
             node.properties['SmoothProfile'] = enforce_monotonicity(
