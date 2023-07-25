@@ -672,7 +672,7 @@ def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_i
 
 def _bank_nodes_from_elem(elem, m2):
     """For a given m2 mesh and id of river-corridor element, returns
-    longitudnal edges of the river-corridor element.
+    longitudinal edges of the river-corridor element.
 
     """
     # edge on the right as we look from the downstream direction
