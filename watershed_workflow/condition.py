@@ -8,36 +8,65 @@ import scipy.ndimage
 
 import watershed_workflow
 
-
 @attr.s
-class Point:
-    """POD struct that stores coords, a np array of length 3 (x,y,z) and neighbors, 
-    a list of IDs of neighboring points.
-    """
+class _Point:
+    """POD struct of coordinate and set of neighbors"""
     coords = attr.ib()
     neighbors = attr.ib(factory=set)
 
 
-def points_from_mesh(m2):
-    """Generates a Point dictionary from a surface mesh, for use with fill_pits"""
-    points = dict((i, Point(c)) for (i, c) in enumerate(m2.coords))
+def fill_pits(m2, outlet=None, algorithm=3):
+    """Conditions a mesh, IN PLACE, by removing pits.
+    
+    Starts at outlet and works through all coordinates in the mesh,
+    ensuring that there is a path to all nodes of the mesh from the
+    outlet that monotonically increases in elevation.
+
+    Available algorithms (likely all should be equivalent):
+     1: original, 2-pass algorithm
+     2: refactored single-pass algorithm based on sorted lists
+     3: boundary marching method.  Should be the fastest.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to condition.
+    outlet : int, optional
+      If provided, the ID of the point to start conditioning from.  If
+      not provided, will use the boundary node with minimal elevation.
+    algorithm : int
+      See above, defaults to 3.
+
+    """
+
+    # generate a dictionary of ID,Point for all points of the mesh
+    points_dict = dict((i, _Point(c)) for (i, c) in enumerate(m2.coords))
     for conn in m2.conn:
         for c in conn:
-            points[c].neighbors.update(conn)
-    for i, p in points.items():
+            points_dict[c].neighbors.update(conn)
+    for i, p in points_dict.items():
         p.neighbors.remove(i)
-    return points
+
+    # set the outlet as minimal boundary elevation
+    if outlet is None:
+        boundary_nodes = m2.boundary_nodes
+        outlet = boundary_nodes[np.argmin(m2.coords[boundary_nodes, 2])]
+
+    if algorithm == 1:
+        fill_pits1(points_dict, outlet)
+    elif algorithm == 2:
+        fill_pits2(points_dict, outlet)
+    elif algorithm == 3:
+        fill_pits3(points_dict, outlet)
+    else:
+        raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
+
+    m2.points = np.array([p.coords for p in points_dict.values()])
 
 
 def fill_pits1(points, outletID=None):
-    """Conditions a mesh, in place, by removing pits.
+    """This is the origional, 2-pass algorithm, and is likely inefficient."""
 
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is the origional, 2-pass algorithm.
-    """
     if outletID is None:
         outletID = np.argmin(np.array([points[i].coords[2] for i in range(len(points))]))
 
@@ -78,14 +107,7 @@ def fill_pits1(points, outletID=None):
 
 
 def fill_pits2(points, outletID):
-    """Conditions a mesh, in place, by removing pits.
-
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is a refactored, single pass algorithm that leverages a sorted list.
-    """
+    """This is a refactored, single pass algorithm that leverages a sorted list."""
 
     # create a sorted list of elevations, from largest to smallest
     elev = sortedcontainers.SortedList(list(points.items()), key=lambda id_p: id_p[1].coords[2])
@@ -111,14 +133,7 @@ def fill_pits2(points, outletID):
 
 
 def fill_pits3(points, outletID):
-    """Conditions a mesh, in place, by removing pits.
-
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is a third algorithm, based on a boundary marching method.
-    """
+    """This algorithm is based on a boundary marching method"""
     # Waterway is the list of things that are already conditioned and
     # can be reached.
     waterway = set()
@@ -158,13 +173,12 @@ def fill_pits3(points, outletID):
 
 
 def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
-    """Conditions a dual mesh IN PLACE, ensuring the property that,
-    starting with an outlet cell, there is a path to every cell by way
-    of faces that is monotonically increasing in elevation (except in
-    cells which are a part of waterbodies).
+    """Conditions the dual of the mesh, IN PLACE, by filling pits.
 
-    If the is_waterbody mask is provided, these cells are special
-    cells that may be pits -- e.g. lakes, reservoirs, etc.
+    This ensures the property that, starting with an outlet cell,
+    there is a path to every cell by way of faces that is
+    monotonically increasing in elevation (except in cells which are a
+    part of waterbodies).
 
     Parameters
     ----------
@@ -343,42 +357,26 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     return
 
 
-def fill_pits(mesh, outlet=None, algorithm=3):
-    """Condition a 2D mesh, in place.
-    
-    Starts at outlet, if not provided, this defaults to the lowpoint on the boundary.
-
-    Available algorithms:
-     1: original, 2-pass algorithm
-     2: refactored single-pass algorithm based on sorted lists
-     3: boundary marching method.  Should be fastest, and likely equivalent?
-    """
-    points_dict = points_from_mesh(mesh)
-    if outlet is None:
-        boundary_nodes = mesh.boundary_nodes
-        outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes, 2])]
-
-    if algorithm == 1:
-        fill_pits1(points_dict, outlet)
-    elif algorithm == 2:
-        fill_pits2(points_dict, outlet)
-    elif algorithm == 3:
-        fill_pits3(points_dict, outlet)
-    else:
-        raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
-
-    mesh.points = np.array([p.coords for p in points_dict.values()])
-
-
-def identify_local_minima(mesh):
+def identify_local_minima(m2):
     """For all cells, identify if their centroid elevation is lower than
-    the elevation of all neighbors."""
-    res = np.zeros((mesh.num_cells, ), )
-    for cell, conn in enumerate(mesh.conn):
+    the elevation of all neighbors.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to check.
+
+    Returns
+    -------
+    np.array
+      Array of 0s and 1s, where 1 indicates a local minima.
+    """
+    res = np.zeros((m2.num_cells, ), )
+    for cell, conn in enumerate(m2.conn):
         higher = []
-        for e in mesh.cell_edges(conn):
+        for e in m2.cell_edges(conn):
             # find the other cell
-            e_cells = mesh.edges_to_cells[e]
+            e_cells = m2.edges_to_cells[e]
             if len(e_cells) > 1:
                 if e_cells[0] == cell:
                     other_cell = e_cells[1]
@@ -388,7 +386,7 @@ def identify_local_minima(mesh):
                     raise RuntimeError("Mismatch, cell not in edges_to_cells?")
             else:
                 continue
-            if mesh.centroids[other_cell][-1] > mesh.centroids[cell][-1]:
+            if m2.centroids[other_cell][-1] > m2.centroids[cell][-1]:
                 higher.append(True)
             else:
                 higher.append(False)
@@ -442,41 +440,55 @@ def condition_river_mesh(m2,
                          lower=False,
                          use_nhd_elev=False,
                          treat_banks=False,
-                         depress_by=0,
-                         ignore_in_sweep=[]):
-    """Conditoning the elevations of stream-corridor elements (generally required in flat agricultural watersheds) to ensure connectivity throgh culverts, 
-    skips ponds, maintaiin monotonicity, enforce depths of constructed channels
+                         depress_upstream_by=None,
+                         network_burn_in_depth=None,
+                         ignore_in_sweep=None):
+    """Condition, IN PLACE, the elevations of stream-corridor elements
+   to ensure connectivity throgh culverts, skips ponds, maintain
+   monotonicity, or otherwise enforce depths of constructed channels.
 
     Parameters:
     -----------
-    
     m2: watershed_workflow.mesh.Mesh2D object
-        2D mesh elevated on DEMs
+        2D mesh with 3D coordinates.
     river: watershed_workflow.river_tree.River object
-        river tree with node.elements added for quads
+        River tree with node.elements added for quads
     smooth: boolean, optional
-        flag for smoothing the profile of each reach using a gaussian filter (mainly to pass through railroads and avoid reservoirs)
+        If true, smooth the profile of each reach using a gaussian
+        filter (mainly to pass through railroads and avoid reservoirs).
     use_parent: boolean, optional
-        if to use segment of parent node while smoothing (seems to be not making a huge difference)
+        If true, use the segment from the original parent reach while
+        smoothing (seems to be not making a huge difference).
     lower: boolean, optional
-        to lower the smoothed bed profile to match the lower points on the raw bed profile. This is useful particularly for narrow ag. ditches
-        where NHDPLus flowlines often to do not coincide with the DEM depressions hence, stream-elements intermitently fall into them
+        If true, lower the smoothed bed profile to match the lower
+        points on the raw bed profile. This is useful particularly for
+        narrow ag. ditches where NHDPLus flowlines often do not
+        coincide with the DEM depressions and so stream-elements
+        intermitently fall into them.
     use_nhd_elev: boolean, optional
-        whether to enforce maximum and minimum elevation for each reach provided in NHDPlus
-    cut_off_order: int, optional
-        reaches of order greater than this number will not be depressed/smoothed (yet to be decided where to put this condition)
+        If true, enforce maximum and minimum elevation for each
+        reach provided in NHDPlus.
     treat_banks: boolean, optional
-        if the river is passing right next to the reservoir or NHDline is misplaced into the reservoir, where banks may fall into reservoir
-        this will enforce bank node is at a higher elevation than the stream bed elevation 
-    depress_by: float, optional
-        if the depression is not captured well in DEM, the river-mesh elements (streambed) is lowered by this number, currently this step is
-        done only for headwater reaches, and the effect of propogated downstream only upto where it is needed to maintain topographic gradients 
-        on the network scale in the network sweep step
+        Where the river is passing right next to the reservoir or
+        NHDline is misplaced into the reservoir, banks may fall into
+        the reservoir. If true, this will enforce that the bank node
+        is at a higher elevation than the stream bed elevation.
+    depress_upstream_by: float, optional
+        If the depression is not captured well in the DEM, the
+        river-mesh elements (streambed) headwater reaches may be
+        lowered by this number.  The effect of propogated downstream
+        only upto where it is needed to maintain topographic gradients
+        on the network scale in the network sweep step.
+    network_burn_in_depth: float, dict, or function
+        Like depress_upstream_by, this also lowers river-mesh elements
+        by this value, but this variant lowers all reaches.  The depth
+        may be provided as a float (uniform lowering), dictionary
+        {stream order : depth to depress by}, or as a function of
+        drainage area.
+    ignore_in_sweep: list, optional
+        If provided, a list of IDs to not be burned in via the network
+        sweep.
 
-    Returns
-    -------
-    m2: watershed_workflow.mesh.Mesh2D object
-        a 2D mesh with conditioned stream network           
     """
     river_corr_ids = []  # collecting IDs of all nodes in the river/stream
     for node in river.preOrder():
@@ -485,40 +497,64 @@ def condition_river_mesh(m2,
                 if id not in river_corr_ids:
                     river_corr_ids.append(id)
 
-    # conditioning of stream-bed profiles to enforce typical channel depths, large-scale
-    # topographic gradients in the streambeds, and connectivity through culverts that pass under road and railway embankments
+    # conditioning of stream-bed profiles to enforce typical channel
+    # depths, large-scale topographic gradients in the streambeds, and
+    # connectivity through culverts that pass under road and railway
+    # embankments
     if smooth:
         for node in river.preOrder():  # reachwise smoothing
-            smooth_profile(node, use_parent=use_parent,
-                           lower=lower)  # adds smooth profile in node properties
+            # adds smooth profile in node properties
+            _smooth_profile(node, use_parent=use_parent, lower=lower)  
 
-        network_sweep(river,
-                      depress_by=depress_by,
-                      use_nhd_elev=use_nhd_elev,
-                      ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
+        _network_sweep(river,
+                       depress_upstream_by=depress_upstream_by,
+                       use_nhd_elev=use_nhd_elev,
+                       ignore_in_sweep=ignore_in_sweep)  # network-wide conditioning
 
-    # transferring network-scale-conditioned stream-bed elevations onto the mesh
+    # transferring network-scale-conditioned stream-bed elevations
+    # onto the mesh
     for node in river.preOrder():
-
         if smooth:
             profile = node.properties["SmoothProfile"]
         else:
-            profile = get_profile(
-                node)  # if only centerline elevation is to be use, without any conditioning
+            # only centerline elevation is to be used, without any
+            # conditioning
+            profile = _get_profile(node)  
+
+        if network_burn_in_depth is not None:
+            if isinstance(network_burn_in_depth, dict):
+                order = node.properties["StreamOrder"]
+                if order > max(network_burn_in_depth.keys()):
+                    burn_in_depth = network_burn_in_depth[max(network_burn_in_depth.keys())]
+                elif order < min(network_burn_in_depth.keys()):
+                    burn_in_depth = network_burn_in_depth[min(network_burn_in_depth.keys())]
+                else:
+                    burn_in_depth = network_burn_in_depth[order]
+            elif callable(network_burn_in_depth):
+                # can we pass such user-defined functions for channel width
+                # and depth as a function of drainage area W or D =
+                # f(Drainage_area)
+                DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
+                burn_in_depth = network_burn_in_depth(DA_sqm)
+            else:
+                burn_in_depth = network_burn_in_depth
+
+            profile[:, 1] = profile[:, 1] - burn_in_depth
 
         for i, elem in enumerate(node.elements):
-
             if i == 0:  # for the first point
                 m2.coords[elem[0]][2] = m2.coords[elem[-1]][2] = profile[i, 1]
 
-            # assigning elevations to the upstream points of each river-corridor element (quads)
+            # assign elevations to the upstream points of each
+            # river-corridor element (quads)
             for coord_id in elem[1:-1]:
                 m2.coords[coord_id][2] = profile[i + 1, 1]
 
-            # this to ensure that a diked channel passing over/around a pond or reservoirs
-            #  do not have bank-nodes fall into the depression
+            # this to ensure that a diked channel passing over/around
+            # a pond or reservoirs does not have bank-nodes fall into
+            # the depression
             if treat_banks:
-                bank_node_ids = bank_nodes_from_elem(elem, m2)
+                bank_node_ids = _bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                     if node_id not in river_corr_ids:
                         if m2.coords[node_id][2] < min(profile[i + 1, 1], profile[i, 1]):
@@ -527,23 +563,27 @@ def condition_river_mesh(m2,
     m2.clear_geometry_cache()
 
 
-def get_profile(node):
-    """for a given node, generates a bedprofile using elevations on the node.segment"""
-    stream_bed_coords = list(
-        reversed(node.segment.coords)
-    )  # node that node_elems are downstream to upstream, while segment coords are upstream to downstream
+def _get_profile(node):
+    """For a given node, generate a bedprofile using elevations on the node.segment."""
+    # Note that node_elems are downstream to upstream, while segment coords are upstream to downstream.
+    stream_bed_coords = list(reversed(node.segment.coords))
     dists = [math.dist(stream_bed_coords[0], point) for point in stream_bed_coords]
     elevs = node.properties['elev_profile'][::-1]  # reversed
     profile = np.array([dists, elevs]).T
     return profile
 
 
-def smooth_profile(node, use_parent=False, lower=False):
-    """applies gaussian filter smoothing to the bed-profile obtained from DEM. This option becomes important in ag. watersheds when NHDPLus
-    is off the actually depression corresponding to narrow agricultural ditches on the DEM. One can also include elevation profile of the parent
-    node for better continuity, although, subsequent network sweep option makes using parent profile redundant.
+def _smooth_profile(node, use_parent=False, lower=False):
+    """Applies gaussian filter smoothing to the bed-profile obtained from DEM.
+
+    This option becomes important in ag. watersheds when NHDPLus is
+    inconsistent with the depression in the DEM.  One can also include
+    elevation profile of the parent node for better continuity,
+    although, subsequent network sweep option makes using parent
+    profile redundant.
+
     """
-    profile = get_profile(node)
+    profile = _get_profile(node)
     profile_new = copy.deepcopy(profile)
 
     if use_parent:
@@ -564,45 +604,59 @@ def smooth_profile(node, use_parent=False, lower=False):
         profile_new[:, 1] = scipy.ndimage.gaussian_filter(profile[:, 1], 5, mode='nearest')
 
     if lower:
-        # NHDPlus flowlines may not fall on the DEM depression of the narrow ditch, hence the smoothed bed profile will underestimate the depression
-        # In this step, the smoothed bed propfile is depressed by a median of one-sided difference between the raw and smoothed profile
+        # NHDPlus flowlines may not fall on the DEM depression of the
+        # narrow ditch, hence the smoothed bed profile will
+        # underestimate the depression In this step, the smoothed bed
+        # propfile is depressed by a median of one-sided difference
+        # between the raw and smoothed profile
         diffs = profile_new[:, 1] - profile[:, 1]
         if any(diffs > 0):
             profile_new[:, 1] = profile_new[:, 1] - np.median(diffs[diffs > 0])
 
     node.properties["SmoothProfile"] = profile_new
-
     return profile_new
 
 
-def enforce_monotonicity(profile, monotonicity='upstream'):
-    """ensures that the streambed-profile elevations are monotonically 
-    decreasing or stays same as we move from upstream to downstream and vice versa"""
-
+def _enforce_monotonicity(profile, moving='upstream'):
+    """Ensures that the streambed-profile elevations are monotonically
+    increasing as we move upstream, or decreasing as we move
+    downstream.
+    """
     profile_new = copy.deepcopy(profile)
-    if monotonicity == 'upstream':
+    if moving == 'upstream':
         for i in range(len(profile_new) - 1):
             if profile_new[i + 1, 1] < profile_new[i, 1]:
                 profile_new[i + 1, 1] = profile_new[i, 1]
 
-    elif monotonicity == 'downstream':
+    elif moving == 'downstream':
         for i in range(len(profile_new) - 1, 0, -1):
             if profile_new[i - 1, 1] > profile_new[i, 1]:
                 profile_new[i - 1, 1] = profile_new[i, 1]
 
+    else:
+        raise ValueError(f"Invalid value '{moving}' for enforce_monotonicity()")
+
     return profile_new
 
 
-def network_sweep(river, depress_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
-    """sweeps the river network from each headwater reach (leaf node) to the watershed outlet (root node), removing aritificial obstructions in 
-    the river mesh and enforce depths of constructed channels"""
+def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_in_sweep=None):
+    """Sweep the river network from each headwater reach (leaf node)
+    to the watershed outlet (root node), removing aritificial
+    obstructions in the river mesh and enforcing depths of constructed
+    channels.
 
+    """
+    if ignore_in_sweep is None:
+        ignore_in_sweep = []
+    
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
-        leaf.properties['SmoothProfile'][-1, 1] = leaf.properties['SmoothProfile'][
-            -1, 1] - depress_by  # providing extra depression at the upstream end
-        for node in leaf.pathToRoot(
-        ):  # traversing from leaf node (headwater) catchment to the root node
-            node.properties['SmoothProfile'] = enforce_monotonicity(
+        # providing extra depression at the upstream end
+        if depress_upstream_by is not None:
+            leaf.properties['SmoothProfile'][-1, 1] -= depress_upstream_by  
+
+        for node in leaf.pathToRoot():
+            # traversing from leaf node (headwater) catchment to the root node
+            node.properties['SmoothProfile'] = _enforce_monotonicity(
                 node.properties['SmoothProfile'], 'downstream')  # making monotonous
             junction_elevs = [sib.properties['SmoothProfile'][0, 1] for sib in node.siblings()]
 
@@ -616,20 +670,25 @@ def network_sweep(river, depress_by=0, use_nhd_elev=False, ignore_in_sweep=[]):
                 sib.properties['SmoothProfile'][0, 1] = min(junction_elevs)
 
 
-def bank_nodes_from_elem(elem, m2):
-    """for a given m2 mesh and id of river-corridor element, returns longitudnal edges of the river-corridor element"""
+def _bank_nodes_from_elem(elem, m2):
+    """For a given m2 mesh and id of river-corridor element, returns
+    longitudinal edges of the river-corridor element.
 
-    edge_r = list(
-        m2.cell_edges(elem))[0]  # edge on the right as we look from the downstream direction
-    edge_l = list(
-        m2.cell_edges(elem))[2]  # edge on the left as we look from the downstream direction
+    """
+    # edge on the right as we look from the downstream direction
+    edge_r = list(m2.cell_edges(elem))[0]
 
-    return [bank_nodes_from_edge(edge_r, elem, m2), bank_nodes_from_edge(edge_l, elem, m2)]
+    # edge on the left as we look from the downstream direction
+    edge_l = list(m2.cell_edges(elem))[2]
+
+    return [_bank_nodes_from_edge(edge_r, elem, m2), _bank_nodes_from_edge(edge_l, elem, m2)]
 
 
-def bank_nodes_from_edge(edge, elem, m2):
-    """for a given m2 mesh, id of river-corridor element and edge, returns bank-node id, i.e., for the triangle attached to the river-corridor, 
-    node that does not form the river corridor"""
+def _bank_nodes_from_edge(edge, elem, m2):
+    """For a given m2 mesh, id of river-corridor element, and edge,
+    returns the bank-node id, i.e., for the triangle attached to the
+    river-corridor, node that does not form the river corridor.
+    """
 
     cell_ids = m2.edges_to_cells[edge]
     cells_to_edge = [m2.conn[cell_id] for cell_id in cell_ids]
@@ -640,7 +699,7 @@ def bank_nodes_from_edge(edge, elem, m2):
 
 
 def elevate_rivers(rivers, crs, dem, dem_profile):
-    """elevate river using dem and store reach-bed-profile as node properties"""
+    """Elevate the river using dem and store reach-bed-profile as node properties."""
     for river in rivers:
         for i, node in enumerate(river.preOrder()):
             node_points = (np.array(node.segment.xy).T)

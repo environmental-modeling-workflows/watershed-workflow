@@ -420,7 +420,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
 
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree object)
+    river: watershed_workflow.river_tree.RiverTree object
         river tree along which mesh is to be created
     corr : shapely.geometry.Polygons
         a river corridor polygon for the river    
@@ -482,6 +482,25 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                                                        dilation_width=dilation_width)
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[4]] = tuple(p2_)
+
+            if len(elem) == 7:
+                p1 = np.array(corr_coords[elem[2]][:2])  # neck of the hex
+                p2 = np.array(corr_coords[elem[4]][:2])
+                [p1_, p2_] = move_to_target_separation(p1,
+                                                       p2,
+                                                       target_width,
+                                                       dilation_width=dilation_width)
+                corr_coords[elem[2]] = tuple(p1_)
+                corr_coords[elem[4]] = tuple(p2_)
+
+                p1 = np.array(corr_coords[elem[1]][:2])  # neck of the hex
+                p2 = np.array(corr_coords[elem[5]][:2])
+                [p1_, p2_] = move_to_target_separation(p1,
+                                                       p2,
+                                                       target_width,
+                                                       dilation_width=dilation_width)
+                corr_coords[elem[1]] = tuple(p1_)
+                corr_coords[elem[5]] = tuple(p2_)
 
             if i == 0:  # this is to treat the most downstream edge which is left out so far
                 p1 = np.array(
@@ -545,7 +564,8 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
     for j, node in enumerate(river.preOrder()):
         for elem in node.elements:
             elem = [id - gid_shift for id in elem]
-            if len(elem) == 5 or len(elem) == 6:  # checking and treating this pentagon/hexagon
+            if len(elem) == 5 or len(elem) == 6 or len(
+                    elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
                     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
@@ -597,6 +617,24 @@ def make_convex_by_nudge(points):
             p1_ = p4 + 1.01*d
             p4_ = p1 - 1.01*d
             points[1] = tuple(p1_)
+            points[4] = tuple(p4_)
+            i += 1
+        logging.debug(f"... element was adjusted {i} times")
+
+    elif len(points) == 7:
+        while not watershed_workflow.utils.is_convex(points):
+            p1, p5 = [np.array(points[1]), np.array(points[5])]
+            d = p1 - p5
+            p1_ = p5 + 1.01*d
+            p5_ = p1 - 1.01*d
+            points[1] = tuple(p1_)
+            points[5] = tuple(p5_)
+
+            p2, p4 = [np.array(points[2]), np.array(points[4])]
+            d = p2 - p4
+            p2_ = p4 + 1.01*d
+            p4_ = p2 - 1.01*d
+            points[2] = tuple(p2_)
             points[4] = tuple(p4_)
             i += 1
         logging.debug(f"... element was adjusted {i} times")
@@ -851,21 +889,31 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                     [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points
                 )  # his polygon is used to remove overlapping huc-segment and rc. To avoid issues at snapped leaf node intersecting with this
                 # with this huc segment, we create lcal rc polygon
-                for key in junction_seg_angles_sorted.keys():
-                    if type(key) is int:
-                        logging.info(f"Modifying HUC Segment {key}")
-                        # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
-                        hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
-                                                               rc_points[rc_point_ind])
-                        key_hold = key
-                    else:
-                        rc_point_ind += 1
-                        # extending huc-segment along smaller edge of the quad
-                        hucs.segments[key_hold] = adjust_seg_for_rc(hucs.segments[key_hold],
-                                                                    river_corr_part,
-                                                                    rc_points[rc_point_ind],
-                                                                    integrate_rc=integrate_rc
-                                                                    or outlet_junction)
+
+                if len(hucs.segments) == 1:
+                    key = 0
+                    hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
+                                                           rc_points[0])
+                    hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
+                                                           rc_points[1])
+
+                else:
+                    for key in junction_seg_angles_sorted.keys():
+                        if type(key) is int:
+                            logging.info(f"Modifying HUC Segment {key}")
+                            # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
+                            hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key],
+                                                                   river_corr_part,
+                                                                   rc_points[rc_point_ind])
+                            key_hold = key
+                        else:
+                            rc_point_ind += 1
+                            # extending huc-segment along smaller edge of the quad
+                            hucs.segments[key_hold] = adjust_seg_for_rc(hucs.segments[key_hold],
+                                                                        river_corr_part,
+                                                                        rc_points[rc_point_ind],
+                                                                        integrate_rc=integrate_rc
+                                                                        or outlet_junction)
 
             else:  # this will just remove the part of huc-segment overlappig with rc
                 rc_point_ind = 0

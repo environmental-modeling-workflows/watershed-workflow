@@ -15,7 +15,7 @@ def make_points_1D(elevs):
             neighbors = [i - 1, ]
         else:
             neighbors = [i - 1, i + 1]
-        points[i] = watershed_workflow.condition.Point(coords, neighbors)
+        points[i] = watershed_workflow.condition._Point(coords, neighbors)
     return points
 
 
