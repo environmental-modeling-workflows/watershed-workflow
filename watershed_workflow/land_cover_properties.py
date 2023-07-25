@@ -2,12 +2,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+import scipy
 
 import watershed_workflow.warp
 import watershed_workflow.plot
 
 
-def compute_time_series(lai, lc):
+def compute_time_series(lai, lc, unique_lc=None, lc_idx=-1, **kwargs):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
 
@@ -17,14 +18,21 @@ def compute_time_series(lai, lc):
       The LAI data.
     lc : datasets.Data
       The LULC data.
-       
+    unique_lc : list
+      List of unique land cover types.  If None, will be computed from raster.
+    lc_idx : int
+      Index of the land cover type to use for the time series. Default is -1 (lastest year).
+    kwargs : dict
+      Keyword arguments to pass to scipy.signal.savgol_filter such as 
+      'window_length (default=101)' and 'polyorder (default=3)'.
     Returns
     -------
     lai timeseries : pandas datafame
        LAI time series dataframe with rows as time and columns as land
        type.
     """
-    unique_lc = list(np.unique(lc.data))
+    if unique_lc is None:
+        unique_lc = list(np.unique(lc.data))
     try:
         unique_lc.remove(lc.profile['nodata'])
     except ValueError:
@@ -33,11 +41,13 @@ def compute_time_series(lai, lc):
     df = pd.DataFrame()
     df['time [datetime]'] = lai.times
 
-    for lc in unique_lc:
+    for ilc in unique_lc:
         time_series = [
-            lai.data[i, :, :][np.where(lc.data == lc)].mean() for i in range(len(lai.times))
+            lai.data[itime, :, :][np.where(lc.data[lc_idx, :, :] == ilc)].mean()
+            for itime in range(len(lai.times))
         ]
-        df[f'{lc}'] = time_series
+        col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
+        df[f'MODIS {col_name} LAI [-]'] = time_series
     return df
 
 
@@ -46,7 +56,9 @@ def compute_crosswalk_correlation(modis_profile,
                                   nlcd_profile,
                                   nlcd_lc,
                                   plot=True,
-                                  warp=True):
+                                  warp=True,
+                                  unique_nlcd=None,
+                                  unique_modis=None):
     """Compute a map from NLCD indices to MODIS indices using correlation
     of the two rasters.
 
@@ -64,6 +76,10 @@ def compute_crosswalk_correlation(modis_profile,
       Image the correlation matrix.
     warp : bool
       Warps MODIS to NLCD.  Should always be true except for tests.
+    unique_nlcd : list
+      List of unique NLCD indices.  If None, will be computed from raster.
+    unique_modis : list
+      List of unique MODIS indices.  If None, will be computed from raster.
 
     Returns
     -------
@@ -79,15 +95,18 @@ def compute_crosswalk_correlation(modis_profile,
                                                                  dst_crs=nlcd_profile['crs'],
                                                                  dst_height=nlcd_profile['height'],
                                                                  dst_width=nlcd_profile['width'])
+    if unique_nlcd is None:
+        unique_nlcd = list(np.unique(nlcd_lc))
 
-    unique_nlcd = list(np.unique(nlcd_lc))
     if 'nodata' in nlcd_profile:
         try:
             unique_nlcd.remove(nlcd_profile['nodata'])
         except ValueError:
             pass
 
-    unique_modis = list(np.unique(modis_lc))
+    if unique_modis is None:
+        unique_modis = list(np.unique(modis_lc))
+
     if 'nodata' in modis_profile:
         try:
             unique_modis.remove(modis_profile['nodata'])

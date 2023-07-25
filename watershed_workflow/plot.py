@@ -153,7 +153,14 @@ def huc(huc, crs, color='k', ax=None, **kwargs):
     return shply([huc, ], crs, color, ax, **kwargs)
 
 
-def hucs(hucs, crs, color='k', ax=None, outlet_marker=None, outlet_markersize=100, **kwargs):
+def hucs(hucs,
+         crs,
+         color='k',
+         ax=None,
+         outlet_marker=None,
+         outlet_markersize=100,
+         outlet_markercolor='green',
+         **kwargs):
     """Plot a SplitHUCs object.
     
     A wrapper for plot.shply()
@@ -168,6 +175,12 @@ def hucs(hucs, crs, color='k', ax=None, outlet_marker=None, outlet_markersize=10
       See https://matplotlib.org/tutorials/colors/colors.html
     ax : matplotib axes object, optional
       Axes to plot on.  Calls get_ax() if not provided.
+    outlet_marker : matplotlib marker string, optional
+      If provided, also plots the actual points that make up the shape.
+    outlet_markersize : float, optional
+      Size of the outlet marker.
+    outlet_markercolor : matplotlib color string, optional
+      Color of the outlet marker.
     kwargs : dict
       Extra arguments passed to the plotting method, which is likely
       descartes.PolygonPatch.
@@ -189,10 +202,10 @@ def hucs(hucs, crs, color='k', ax=None, outlet_marker=None, outlet_markersize=10
             if not watershed_workflow.utils.is_empty_shapely(p)
         ])
         c = [
-            c for (c, p) in zip(color, hucs.polygon_outlets)
+            c for (c, p) in zip(outlet_markercolor, hucs.polygon_outlets)
             if not watershed_workflow.utils.is_empty_shapely(p)
         ]
-        ax.scatter(x, y, s=outlet_marker, c=c, markersize=outlet_markersize)
+        ax.scatter(x, y, s=outlet_markersize, marker=outlet_marker, c=c)
 
 
 def shapes(shps, crs, color='k', ax=None, **kwargs):

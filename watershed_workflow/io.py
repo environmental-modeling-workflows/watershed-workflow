@@ -8,6 +8,7 @@ import shapely.geometry
 import collections
 import logging
 import h5py
+import datetime
 
 import watershed_workflow.crs
 
@@ -85,8 +86,27 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
             c.write({ 'geometry': shapely.geometry.mapping(shp), 'properties': props })
 
 
-def write_dataset_to_hdf5(filename, dataset, attributes, time0=None):
-    """Writes a DatasetCollection and attributes to an HDF5 file."""
+def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None):
+    """Writes a DatasetCollection and attributes to an HDF5 file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to write.
+    ts : dict or dataframe
+        Dictionary or dataframe of time series, with keys being the name of the time series
+        and values being the time series data.
+    attributes : dict
+        Dictionary of attributes to write to the HDF5 file.
+    time0 : str or datetime.date object, optional
+        Time to use as the zero time for the time series.  If not provided, the first
+        time in the time series is used.
+
+    Returns
+    -------
+    None
+
+    """
     try:
         os.remove(filename)
     except FileNotFoundError:
@@ -103,12 +123,17 @@ def write_dataset_to_hdf5(filename, dataset, attributes, time0=None):
             'Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.'
         )
     x = np.array([(transform * (i, 0))[0] for i in range(profile['width'])])
-    y = np.array([(transform * (0, j))[0] for j in range(profile['height'])])
-
+    y = np.array([(transform * (0, j))[1] for j in range(profile['height'])])
     if time0 is None:
         time0 = times[0]
-    times = np.array([(t - time0).total_seconds() for t in times])
 
+    if type(time0) is str:
+        time0 = datetime.datetime.strptime(time0, '%Y-%m-%d').date()
+    if attributes is None:
+        attributes = dict()
+    attributes['origin date'] = str(time0)
+    times = np.array([(t - time0).total_seconds() for t in times])
+    times = times.astype(np.int32)
     logging.info('Writing HDF5 file: {}'.format(filename))
     with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=times)
@@ -137,7 +162,25 @@ def write_dataset_to_hdf5(filename, dataset, attributes, time0=None):
 
 
 def write_timeseries_to_hdf5(filename, ts, attributes=None, time0=None):
-    """Writes a time series and attributes to an HDF5 file."""
+    """Writes a time series and attributes to an HDF5 file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to write.
+    ts : dict or dataframe
+        Dictionary or dataframe of time series, with keys being the name of the time series
+        and values being the time series data.
+    attributes : dict, optional
+        Dictionary of attributes to write to the HDF5 file.
+    time0 : str or datetime.date object, optional
+        Time to use as the zero time for the time series.  If not provided, the first
+        time in the time series is used.
+
+    Returns
+    -------
+    None
+    """
     try:
         os.remove(filename)
     except FileNotFoundError:
@@ -146,10 +189,19 @@ def write_timeseries_to_hdf5(filename, ts, attributes=None, time0=None):
     keys = list(ts.keys())
     keys.remove('time [datetime]')
     times = ts['time [datetime]']
-    if time0 is None:
-        time0 = times[0]
-    times = np.array([(t - time0).total_seconds() for t in times])
 
+    if time0 is None:
+        time0 = times.values[0]
+    if type(time0) is str:
+        time0 = datetime.datetime.strptime(time0, '%Y-%m-%d').date()
+    if attributes is None:
+        attributes = dict()
+    attributes['origin date'] = str(time0)
+    attributes['start date'] = str(times.values[0])
+    attributes['end date'] = str(times.values[-1])
+
+    times = np.array([(t - time0).total_seconds() for t in times])
+    times = times.astype(np.int32)
     logging.info('Writing HDF5 file: {}'.format(filename))
     with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=times)

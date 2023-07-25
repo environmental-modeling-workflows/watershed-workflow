@@ -317,7 +317,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
 
     """
     nyears = data.shape[0] // 365
-
+    if nyears == 0:
+        raise ValueError('Not enough data to compute average year. Need at least 365 days.')
     data = data[0:nyears * 365, :, :].reshape(nyears, 365, data.shape[1], data.shape[2])
     data = data.mean(axis=0)
 
@@ -327,9 +328,8 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
             kwargs.setdefault(k, v)
 
         data = scipy.signal.savgol_filter(data, **kwargs)
-
     if output_nyears != 1:
-        data = np.tile(data, (nyears, 1, 1))
+        data = np.tile(data, (output_nyears, 1, 1))
     return data
 
 
@@ -374,6 +374,41 @@ def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
     new_rel_origin = np.arange(start_rel_origin, start_rel_origin + new_count)
     new_data = interp(new_rel_origin)
     return new_times, new_data
+
+
+def smooth(data, window_length=61, polyorder=2, axis=0, mode='wrap', **kwargs):
+    """Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.
+
+    Note that this wrapper just sets some sane default values for
+    daily data -- one could just as easily call
+    scipy.signal.savgol_filter themselves.
+    
+    Parameters
+    ----------
+    data : np.ndarray-like
+      The data to smooth.  Note that the expectation is that the time
+      axis is the 0th axis.
+    window_length : int, 61
+      Length of the moving window over which to fit the polynomial.
+    polyorder : int, 2
+      Order of the fitting polynomial.
+    axis : int, 0
+      Time axis over which to smooth.
+    mode : str, 'wrap'
+      See scipy.signal.savgol_filter documentation, but 'wrap' is the
+      best bet for data in multiples of years.
+    **kwargs : see scipy.signal.savgol_filter
+
+    Returns
+    -------
+    np.ndarray
+      Smoothed data in the same shape as data
+    """
+    kwargs['window_length'] = window_length
+    kwargs['polyorder'] = polyorder
+    kwargs['axis'] = axis
+    kwargs['mode'] = mode
+    return scipy.signal.savgol_filter(data, **kwargs)
 
 
 def generate_rings(obj):
