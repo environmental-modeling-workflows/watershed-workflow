@@ -1,35 +1,68 @@
 """
-This script hosts functions to add labelsets to define regions
+This namespace hosts functions to add labelsets to define regions
 """
 
 import numpy as np
-import attr
 import shapely
 
 import watershed_workflow.mesh
 import watershed_workflow.utils
 
 
-def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names):
-    """Given a 2D mesh and an array of length m2.num_cells of indices, add labeled sets."""
+def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names=None):
+    """Add labeled sets to a mesh -- one per unique color.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to label.
+    nlcd_colors : np.array
+      1D array of len m2.num_cells of cell colors.
+    nlcd_names : dict, optional
+      Dictionary mapping colors to color name.
+
+    """
     inds = np.unique(nlcd_colors)
+
+    if nlcd_names is None:
+        nlcd_names = dict((i, str(i)) for i in inds)
+    
     for ind in inds:
         ent_ids = list(np.where(nlcd_colors == ind)[0])
         ls = watershed_workflow.mesh.LabeledSet(nlcd_names[ind], int(ind), 'CELL', ent_ids)
         m2.labeled_sets.append(ls)
 
 
-def _get_labels(polygons):
+def _get_labels(polygons, kind):
     labels = []
     for i, p in enumerate(polygons):
-        label = f'watershed {i}'
+        label = f'{kind} {i}'
         labels.append(label)
     return labels
 
 
-def add_watershed_regions(m2, polygons, labels=None):
-    """Add labeled sets to m2 for each polygon."""
-    import shapely
+def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=False):
+    """Label m2 with region(s) for each polygon.
+
+    Always adds a surface region; if volume also adds a volume region
+    for extrusion in 3D.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D
+      The mesh to label.
+    polygons : iterable[shapely.Polygon]
+      The polygons covering each watershed.
+    labels : iterable[str], optional
+      Names of the polygons (often HUC strings)
+    kind : str, optional
+      The kind of polygon to add -- this is only used to generate
+      labels.  Default is 'watershed'.
+    volume : bool, optional
+      If true, also add the volumetric region below the polygon that
+      will be extruded in a 3D mesh eventually.
+
+    """
     if labels is None:
         labels = _get_labels(polygons)
     else:
@@ -62,19 +95,44 @@ def add_watershed_regions(m2, polygons, labels=None):
 
     return partitions
 
+def add_watershed_regions(m2, polygons, labels=None):
+    """Deprecated -- kept for backward compatibility."""
+    return add_polygonal_regions(m2, polygons, labels, volume=True)
+
 
 def add_watershed_regions_and_outlets(m2,
                                       hucs,
                                       outlets=None,
-                                      outlet_width=None,
+                                      outlet_width=300,
                                       labels=None,
                                       exterior_outlet=True):
     """Add four labeled sets to m2 for each polygon:
 
     - cells in the polygon, to be extruded
     - cells in the polygon, to be kept as faces upon extrusion
-    - boundary of the polygon (edges)
-    - outlet of the polygon (edges within outlet width of the outlet)
+    - boundary of the polygon (edges, kept as faces)
+    - outlet of the polygon (edges, kept as faces, within outlet width
+      of the outlet)
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D
+      The mesh to label.
+    hucs : iterable[shapely.Polygon] or SplitHUCs object
+      Watershed polygons.
+    outlets : iterable[shapely.Point], optional
+      If provided, the outlet points.  If SplitHUCs are provided,
+      outlets are in that object and this must be None.
+    outlet_width : float, optional
+      How wide should the outlet region be?  Note this should include
+      not just the river width, but more realistically the best
+      resolved floodplain, or 1-2 face-widths, whichever is bigger.
+    labels : iterable[str], optional
+      Name of the polygons.  If SplitHUCs are provided, HUC names are
+      used and None should be provided.
+    exterior_outlet : bool, optional
+      If true, find the outlet point that intersects the boundary and
+      include regions around that outlet as well.
 
     """
     if isinstance(hucs, list):
@@ -90,11 +148,8 @@ def add_watershed_regions_and_outlets(m2,
     else:
         assert (len(labels) == len(polygons))
 
-    if outlet_width is None:
-        outlet_width = 300
-
     # this adds the first two sets
-    partitions = add_watershed_regions(m2, polygons, labels)
+    partitions = add_polygon_regions(m2, polygons, labels, volume=True)
 
     # find a list of faces on the boundary of these sets of triangles
     #
@@ -162,10 +217,11 @@ def add_river_corridor_regions(m2, rivers, labels=None):
     Parameters:
     -----------
     m2: watershed_workflow.mesh.Mesh2D object
-        2D mesh elevated on DEMs
+      2D mesh elevated on DEMs
     rivers: list(watershed_workflow.river_tree.RiverTree)
-        list of rivers used to  create river corridors 
+      List of rivers used to create the river corridors.
     labels: list(str), optional
+      List of names, one per river.
     """
     rivers_mls = [shapely.geometry.MultiLineString(list(river)) for river in rivers]
     if labels is None:
@@ -194,38 +250,3 @@ def add_river_corridor_regions(m2, rivers, labels=None):
             ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
-
-def add_poly_regions(m2, polys, labels=None):
-    """Add labeled sets to m2 for list of areas (for example, reservoir, detention pond, etc.) defined by polygons.
-    
-    Parameters:
-    -----------
-    m2: watershed_workflow.mesh.Mesh2D object
-        2D mesh elevated on DEMs
-    polys: list(shapely.geometry.Polygon)
-    labels: list(str), optional
-    """
-    if labels is None:
-        labels = []
-        for i, p in enumerate(polys):
-            label = f'area {i}'
-            labels.append(label)
-    else:
-        assert (len(labels) == len(polys))
-
-    partitions = [list() for p in polys]
-    for c in range(m2.num_cells):
-        cc = m2.compute_centroid(c)
-        cc = shapely.geometry.Point(cc[0], cc[1])
-        try:
-            ip = next(i for (i, p) in enumerate(polys) if p.contains(cc))
-        except StopIteration:
-            pass
-        else:
-            partitions[ip].append(c)
-
-    for label, part in zip(labels, partitions):
-        if len(part) > 0:
-            setid2 = m2.next_available_labeled_setid()
-            ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
-            m2.labeled_sets.append(ls2)
