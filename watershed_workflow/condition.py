@@ -8,6 +8,12 @@ import scipy.ndimage
 
 import watershed_workflow
 
+@attr.s
+class _Point:
+    """POD struct of coordinate and set of neighbors"""
+    coords = attr.ib()
+    neighbors = attr.ib(factory=set)
+
 
 def fill_pits(m2, outlet=None, algorithm=3):
     """Conditions a mesh, IN PLACE, by removing pits.
@@ -33,14 +39,8 @@ def fill_pits(m2, outlet=None, algorithm=3):
 
     """
 
-    @attr.s
-    class Point:
-        """POD struct of coordinate and set of neighbors"""
-        coords = attr.ib()
-        neighbors = attr.ib(factory=set)
-
     # generate a dictionary of ID,Point for all points of the mesh
-    points_dict = dict((i, Point(c)) for (i, c) in enumerate(m2.coords))
+    points_dict = dict((i, _Point(c)) for (i, c) in enumerate(m2.coords))
     for conn in m2.conn:
         for c in conn:
             points_dict[c].neighbors.update(conn)
