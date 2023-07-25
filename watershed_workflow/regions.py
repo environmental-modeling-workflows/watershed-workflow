@@ -149,7 +149,7 @@ def add_watershed_regions_and_outlets(m2,
         assert (len(labels) == len(polygons))
 
     # this adds the first two sets
-    partitions = add_polygon_regions(m2, polygons, labels, volume=True)
+    partitions = add_polygonal_regions(m2, polygons, labels, volume=True)
 
     # find a list of faces on the boundary of these sets of triangles
     #
