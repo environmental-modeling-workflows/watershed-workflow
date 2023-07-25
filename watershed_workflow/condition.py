@@ -9,35 +9,64 @@ import scipy.ndimage
 import watershed_workflow
 
 
-@attr.s
-class Point:
-    """POD struct that stores coords, a np array of length 3 (x,y,z) and neighbors, 
-    a list of IDs of neighboring points.
+def fill_pits(m2, outlet=None, algorithm=3):
+    """Conditions a mesh, IN PLACE, by removing pits.
+    
+    Starts at outlet and works through all coordinates in the mesh,
+    ensuring that there is a path to all nodes of the mesh from the
+    outlet that monotonically increases in elevation.
+
+    Available algorithms (likely all should be equivalent):
+     1: original, 2-pass algorithm
+     2: refactored single-pass algorithm based on sorted lists
+     3: boundary marching method.  Should be the fastest.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to condition.
+    outlet : int, optional
+      If provided, the ID of the point to start conditioning from.  If
+      not provided, will use the boundary node with minimal elevation.
+    algorithm : int
+      See above, defaults to 3.
+
     """
-    coords = attr.ib()
-    neighbors = attr.ib(factory=set)
 
+    @attr.s
+    class Point:
+        """POD struct of coordinate and set of neighbors"""
+        coords = attr.ib()
+        neighbors = attr.ib(factory=set)
 
-def points_from_mesh(m2):
-    """Generates a Point dictionary from a surface mesh, for use with fill_pits"""
-    points = dict((i, Point(c)) for (i, c) in enumerate(m2.coords))
+    # generate a dictionary of ID,Point for all points of the mesh
+    points_dict = dict((i, Point(c)) for (i, c) in enumerate(m2.coords))
     for conn in m2.conn:
         for c in conn:
-            points[c].neighbors.update(conn)
-    for i, p in points.items():
+            points_dict[c].neighbors.update(conn)
+    for i, p in points_dict.items():
         p.neighbors.remove(i)
-    return points
+
+    # set the outlet as minimal boundary elevation
+    if outlet is None:
+        boundary_nodes = m2.boundary_nodes
+        outlet = boundary_nodes[np.argmin(m2.coords[boundary_nodes, 2])]
+
+    if algorithm == 1:
+        fill_pits1(points_dict, outlet)
+    elif algorithm == 2:
+        fill_pits2(points_dict, outlet)
+    elif algorithm == 3:
+        fill_pits3(points_dict, outlet)
+    else:
+        raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
+
+    m2.points = np.array([p.coords for p in points_dict.values()])
 
 
 def fill_pits1(points, outletID=None):
-    """Conditions a mesh, in place, by removing pits.
+    """This is the origional, 2-pass algorithm, and is likely inefficient."""
 
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is the origional, 2-pass algorithm.
-    """
     if outletID is None:
         outletID = np.argmin(np.array([points[i].coords[2] for i in range(len(points))]))
 
@@ -78,14 +107,7 @@ def fill_pits1(points, outletID=None):
 
 
 def fill_pits2(points, outletID):
-    """Conditions a mesh, in place, by removing pits.
-
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is a refactored, single pass algorithm that leverages a sorted list.
-    """
+    """This is a refactored, single pass algorithm that leverages a sorted list."""
 
     # create a sorted list of elevations, from largest to smallest
     elev = sortedcontainers.SortedList(list(points.items()), key=lambda id_p: id_p[1].coords[2])
@@ -111,14 +133,7 @@ def fill_pits2(points, outletID):
 
 
 def fill_pits3(points, outletID):
-    """Conditions a mesh, in place, by removing pits.
-
-    Inputs:
-      points    | A dictionary of the form {ID, Point()} 
-      outletID  | ID of the outlet
-
-    This is a third algorithm, based on a boundary marching method.
-    """
+    """This algorithm is based on a boundary marching method"""
     # Waterway is the list of things that are already conditioned and
     # can be reached.
     waterway = set()
@@ -158,13 +173,12 @@ def fill_pits3(points, outletID):
 
 
 def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
-    """Conditions a dual mesh IN PLACE, ensuring the property that,
-    starting with an outlet cell, there is a path to every cell by way
-    of faces that is monotonically increasing in elevation (except in
-    cells which are a part of waterbodies).
+    """Conditions the dual of the mesh, IN PLACE, by filling pits.
 
-    If the is_waterbody mask is provided, these cells are special
-    cells that may be pits -- e.g. lakes, reservoirs, etc.
+    This ensures the property that, starting with an outlet cell,
+    there is a path to every cell by way of faces that is
+    monotonically increasing in elevation (except in cells which are a
+    part of waterbodies).
 
     Parameters
     ----------
@@ -343,42 +357,26 @@ def fill_pits_dual(m2, is_waterbody=None, outlet_edge=None, eps=1e-3):
     return
 
 
-def fill_pits(mesh, outlet=None, algorithm=3):
-    """Condition a 2D mesh, in place.
-    
-    Starts at outlet, if not provided, this defaults to the lowpoint on the boundary.
-
-    Available algorithms:
-     1: original, 2-pass algorithm
-     2: refactored single-pass algorithm based on sorted lists
-     3: boundary marching method.  Should be fastest, and likely equivalent?
-    """
-    points_dict = points_from_mesh(mesh)
-    if outlet is None:
-        boundary_nodes = mesh.boundary_nodes
-        outlet = boundary_nodes[np.argmin(mesh.coords[boundary_nodes, 2])]
-
-    if algorithm == 1:
-        fill_pits1(points_dict, outlet)
-    elif algorithm == 2:
-        fill_pits2(points_dict, outlet)
-    elif algorithm == 3:
-        fill_pits3(points_dict, outlet)
-    else:
-        raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
-
-    mesh.points = np.array([p.coords for p in points_dict.values()])
-
-
-def identify_local_minima(mesh):
+def identify_local_minima(m2):
     """For all cells, identify if their centroid elevation is lower than
-    the elevation of all neighbors."""
-    res = np.zeros((mesh.num_cells, ), )
-    for cell, conn in enumerate(mesh.conn):
+    the elevation of all neighbors.
+
+    Parameters
+    ----------
+    m2 : mesh.Mesh2D object
+      The mesh to check.
+
+    Returns
+    -------
+    np.array
+      Array of 0s and 1s, where 1 indicates a local minima.
+    """
+    res = np.zeros((m2.num_cells, ), )
+    for cell, conn in enumerate(m2.conn):
         higher = []
-        for e in mesh.cell_edges(conn):
+        for e in m2.cell_edges(conn):
             # find the other cell
-            e_cells = mesh.edges_to_cells[e]
+            e_cells = m2.edges_to_cells[e]
             if len(e_cells) > 1:
                 if e_cells[0] == cell:
                     other_cell = e_cells[1]
@@ -388,7 +386,7 @@ def identify_local_minima(mesh):
                     raise RuntimeError("Mismatch, cell not in edges_to_cells?")
             else:
                 continue
-            if mesh.centroids[other_cell][-1] > mesh.centroids[cell][-1]:
+            if m2.centroids[other_cell][-1] > m2.centroids[cell][-1]:
                 higher.append(True)
             else:
                 higher.append(False)
@@ -445,13 +443,12 @@ def condition_river_mesh(m2,
                          depress_upstream_by=None,
                          network_burn_in_depth=None,
                          ignore_in_sweep=None):
-    """Conditon, IN PLACE, the elevations of stream-corridor elements
+    """Condition, IN PLACE, the elevations of stream-corridor elements
    to ensure connectivity throgh culverts, skips ponds, maintain
    monotonicity, or otherwise enforce depths of constructed channels.
 
     Parameters:
     -----------
-    
     m2: watershed_workflow.mesh.Mesh2D object
         2D mesh with 3D coordinates.
     river: watershed_workflow.river_tree.River object
