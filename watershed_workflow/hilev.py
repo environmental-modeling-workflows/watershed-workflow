@@ -31,6 +31,11 @@ import watershed_workflow.utils
 import watershed_workflow.densification
 import watershed_workflow.river_mesh
 
+try:
+    from fiona.model import Feature as fiona_feature
+except ImportError:
+    fiona_feature = dict
+
 __all__ = [
     'get_huc', 'get_hucs', 'get_split_form_hucs', 'get_shapes', 'get_split_form_shapes', 'find_huc',
     'get_reaches', 'construct_rivers', 'simplify', 'simplify_and_prune', 'densify',
@@ -234,7 +239,7 @@ def get_shapes(source,
     logging.info("Converting to shapely")
     if len(shps) == 0:
         shplys = []
-    elif type(shps[0]) is dict:
+    elif isinstance(shps[0], dict) or isinstance(shps[0], fiona_feature):
         shplys = [watershed_workflow.utils.create_shply(shp) for shp in shps]
     else:
         shplys = shps
@@ -397,7 +402,7 @@ def get_reaches(source,
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
 
         for reach in reaches:
-            if 'catchment' in reach.properties and reach.properties['catchment'] != None:
+            if ('catchment' in reach.properties) and reach.properties['catchment'] is not None:
                 reach.properties['catchment'] = watershed_workflow.utils.create_shply(
                     reach.properties['catchment'])
                 reach.properties['catchment'] = watershed_workflow.warp.shply(
@@ -599,7 +604,7 @@ def get_raster_on_shape(source,
         logging.info(f"Loading file: '{source}'")
         source = watershed_workflow.sources.manager_raster.FileManagerRaster(source)
 
-    if type(shape) is dict:
+    if isinstance(shape, dict) or isinstance(shape, fiona_feature):
         shape = watershed_workflow.utils.create_shply(shape)
     if type(shape) is shapely.geometry.MultiPolygon:
         shape = shapely.ops.unary_union(shape)
@@ -740,8 +745,7 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 #
 # functions for manipulating objects
 # -----------------------------------------------------------------------------
-def construct_rivers(hucs,
-                     reaches,
+def construct_rivers(reaches,
                      method='geometry',
                      ignore_small_rivers=None,
                      prune_by_area=None,
@@ -756,8 +760,6 @@ def construct_rivers(hucs,
 
     Parameters
     ----------
-    hucs : SplitHUCs
-        A split-form HUC object containing all reaches.
     reaches : list(LineString)
         A list of reaches.
     method : str, optional='geometry'
@@ -1200,6 +1202,7 @@ def tessalate_river_aligned(hucs,
                             river_n_quads=1,
                             internal_boundaries=None,
                             diagnostics=False,
+                            ax=None,
                             **kwargs):
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
@@ -1216,10 +1219,13 @@ def tessalate_river_aligned(hucs,
     river_n_quads : int, optional
        Number of quads across the river.  Currently only 1 is
        supported (the default).
-    internal_boundaries : list[shapely.Polygon]
+    internal_boundaries : list[shapely.Polygon], optional
        List of internal boundaries to embed in the domain, e.g. waterbodies.
-    diagnostics : bool
+    diagnostics : bool, optional
        If true, prints extra diagnostic info.
+    ax : matplotlib Axes object, optional
+       For debugging -- plots troublesome reaches as quad elements are
+       generated to find tricky areas.
     kwargs :
        All other arguments are passed to the triangulation function for refinement.
 
@@ -1237,7 +1243,8 @@ def tessalate_river_aligned(hucs,
     # generate the quads
     quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
                                                                           widths=river_width,
-                                                                          enforce_convexity=True)
+                                                                          enforce_convexity=True,
+                                                                          ax=ax)
 
     # adjust the HUC to match the corridor at the boundary
     hucs_without_outlet = hucs.deep_copy()

@@ -9,6 +9,7 @@ import shapely.ops
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
+import watershed_workflow.plot
 
 
 def sort_children_by_angle(tree, reverse=False):
@@ -44,6 +45,9 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
         Should be provided if user wants to modify hucs (in place) to accomodate river corridor polygon 
     modify_hucs: bool, optional 
         if true, will extend the hucs-segments along the edge of quads to integrate quads boundary into huc boundaries
+    ax : matplotlib Axes object, optional
+       For debugging -- plots troublesome reaches as quad elements are
+       generated to find tricky areas.
     
     Returns
     -------
@@ -55,6 +59,50 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
     elems = []
     corrs = []
     gid_shift = 0
+
+    # set up debugging plot
+    if ax is not None:
+        fig = ax.get_figure()
+        ax.set_title(' magenta ^: first touch \n green o: leaf, final element complete \n blue o: internal element complete ')
+
+        nodes = [r for river in rivers for r in river.preOrder()]
+        reach_list = [r.segment for r in nodes]
+        reach_names = [str(int(r.properties['ID'])) for r in nodes]
+        reach_colors = watershed_workflow.colors.enumerated_colors(len(nodes), 2)
+        lines = watershed_workflow.plot.shplys(reach_list, None, reach_colors, ax)
+
+
+        annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+                            bbox=dict(boxstyle="round", fc="w"),
+                            arrowprops=dict(arrowstyle="->"))
+        annot.set_visible(False)
+
+        def update_annot(idx):
+            posx, posy = reach_list[idx].centroid.coords[0]
+            annot.xy = (posx, posy)
+            text = f'ID: {reach_names[idx]}'
+            annot.set_text(text)
+            annot.get_bbox_patch().set_facecolor(reach_colors[idx])
+            annot.get_bbox_patch().set_alpha(0.8)
+
+            
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == ax:
+                cont, ind = lines.contains(event)
+                if cont:
+                    update_annot(ind['ind'][0])
+                    annot.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        fig.canvas.draw_idle()
+
+        ax.get_figure().canvas.mpl_connect("motion_notify_event", hover)
+        
+
+
     for river in rivers:
         if len(elems) != 0:
             gid_shift = np.max([max(map(int, elem)) for elem in elems]) + 1
@@ -97,14 +145,18 @@ def create_river_mesh(river,
         Should be provided if user wants to modify hucs (in place) to accomodate river corridor polygon 
     modify_hucs: bool, optional 
         if true, will extend the hucs-segments along the edge of quads to integrate quads boundary into huc boundaries 
+    ax : matplotlib Axes object, optional
+       For debugging -- plots troublesome reaches as quad elements are
+       generated to find tricky areas.
+
     Returns
     -------
     elems: List(List)
         List of river elements
     corr: List(shapely.geometry.Polygon)
         a river corridor polygon
-    """
 
+    """
     # creating a polygon for river corridor by dilating the river tree
     if type(widths) == dict:
         dilation_width = min(dilation_width, min(widths.values()))
@@ -330,8 +382,8 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
             if ax != None:
                 # plot it...
-                seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5)
+                # seg_coords = np.array(seg_coords)
+                # ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5)
 
                 # also plot the conn
                 for i, elem in enumerate(node.elements):
@@ -373,6 +425,9 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     assert (len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
 
+                if ax != None:
+                    ax.plot(cc[:, 0], cc[:, 1], 'b-o')
+
                 for c in cc:
                     # note, the more acute an angle, the bigger this distance can get...
                     # so it is a bit hard to pin this multiple down -- using 5 seems ok?
@@ -383,8 +438,6 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                         print(node.id)
                         assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                         watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta))
-                if ax != None:
-                    ax.plot(cc[:, 0], cc[:, 1], 'g-o')
 
             pause()
 
@@ -882,14 +935,17 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                 sorted(junction_seg_angles.items(),
                        key=lambda item: item[1]))  # sort segments by their orientation angles
 
-            if integrate_rc or outlet_junction:  # this will modify huc boundary to integrate quad edges
-                rc_point_ind = 0  # to identify which rc points is added to hucs-segment
-                elem = parent_node.elements[0]
-                river_corr_part = shapely.geometry.Polygon(
-                    [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points
-                )  # his polygon is used to remove overlapping huc-segment and rc. To avoid issues at snapped leaf node intersecting with this
-                # with this huc segment, we create lcal rc polygon
+            # This polygon is used to remove overlapping
+            # huc-segment and river corridor. To avoid issues at
+            # snapped leaf node intersecting with this with this
+            # huc segment, we create local river corridor polygon
+            elem = parent_node.elements[0]
+            river_corr_part = shapely.geometry.Polygon(
+                [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points
+            )  
 
+            if integrate_rc or outlet_junction:
+                # Modify the huc boundary to integrate quad edges
                 if len(hucs.segments) == 1:
                     key = 0
                     hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
@@ -898,6 +954,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                                                            rc_points[1])
 
                 else:
+                    # identify which river corridor point is added to hucs-segment
+                    rc_point_ind = 0
                     for key in junction_seg_angles_sorted.keys():
                         if type(key) is int:
                             logging.info(f"Modifying HUC Segment {key}")
@@ -915,7 +973,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                                                                         integrate_rc=integrate_rc
                                                                         or outlet_junction)
 
-            else:  # this will just remove the part of huc-segment overlappig with rc
+            else:
+                # Just remove the part of of the huc-segment overlapping with the river corridor
                 rc_point_ind = 0
                 for key in junction_seg_angles_sorted.keys():
                     if type(key) is int:

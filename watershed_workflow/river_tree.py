@@ -111,38 +111,38 @@ class River(watershed_workflow.tinytree.Tree):
             self.properties[to_save] = val
         return val
 
-    def getNodeFromNHDPlusID(self, nhd_id):
-        """return node for a given NHDPLus ID"""
+    def getNode(self, id):
+        """return node for a given ID"""
         try:
-            node = next(node for node in self.preOrder() if node.properties['NHDPlusID'] == nhd_id)
+            node = next(node for node in self.preOrder() if node.properties['ID'] == id)
         except StopIteration:
             node = None
         return node
 
-    def accumulateContributingArea(self, outlet_NHDPlusIDs, names):
+    def accumulateContributingArea(self, outlet_IDs, names):
         """creates catchment polygons of contributing areas for  a given outlet/spillpoint reach
             Parameters:
             -----------
             river: watershed_workflow.river_tree.RiverTree object
             river from which outlet reaches are potentially from 
-            outlet_NHDPlusIDs: list(int)
-                list of NHDPlusIDs of the outlet reaches
+            outlet_IDs: list(int)
+                list of IDs of the outlet reaches
             names: list(str)
                 names for the catchments
 
             Returns
             -------
-            list(shapely.geometry.Polygon) with NHDPlusIDs, names abnd outlet points in properties
+            list(shapely.geometry.Polygon) with IDs, names abnd outlet points in properties
         """
         catchments = []
-        for i, outlet_NHDPlusID in enumerate(outlet_NHDPlusIDs):
+        for i, outlet_ID in enumerate(outlet_IDs):
             node_ob = next(node for node in self.preOrder()
-                           if node.properties['NHDPlusID'] == outlet_NHDPlusID)
+                           if node.properties['ID'] == outlet_ID)
             catch = shapely.geometry.Polygon(
                 shapely.ops.unary_union(
                     [node.properties['catchment'] for node in node_ob.preOrder()]).exterior)
             catch.properties = dict()
-            catch.properties['outlet_NHDPlusID'] = outlet_NHDPlusID
+            catch.properties['outlet_ID'] = outlet_ID
             catch.properties['name'] = names[i]
             catch.properties['outlet_point'] = node_ob.segment.coords[-1]
             catchments.append(catch)
@@ -292,23 +292,23 @@ class River(watershed_workflow.tinytree.Tree):
         return cp
 
 
-def accumulateContributingAreaRivers(rivers, outlet_NHDPlusIDs, names):
+def accumulateContributingAreaRivers(rivers, outlet_IDs, names):
     """creates catchment polygons of contributing areas for given outlet/spillpoint reaches
     
     Parameters:
     -----------
     rivers: list(watershed_workflow.river_tree.RiverTree object)
        rivers from which outlet reaches are potentially from 
-    outlet_NHDPlusIDs: list(int)
-        list of NHDPlusIDs of the outlet reaches
+    outlet_IDs: list(int)
+        list of IDs of the outlet reaches
     names: list(str)
         names for the catchments
 
     Returns
     -------
-    list(shapely.geometry.Polygon) with NHDPlusIDs, names abnd outlet points in properties
+    list(shapely.geometry.Polygon) with IDs, names abnd outlet points in properties
     """
     catchments = []
     for river in rivers:
-        catchments = catchments + river.accumulateContributingArea(outlet_NHDPlusIDs, names)
+        catchments = catchments + river.accumulateContributingArea(outlet_IDs, names)
     return catchments

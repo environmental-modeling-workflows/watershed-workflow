@@ -4,6 +4,7 @@ import shapely
 from matplotlib import pyplot as plt
 import cartopy.crs
 import numpy.testing as npt
+import numpy as np
 
 from crs_fixtures import point, point_ak, shift, points, lines, polygons
 
@@ -103,7 +104,7 @@ def polygons():
 
 
 def run_test(start_p, obj_gen, epsg_data, epsg_ax):
-    print("Running test from {} to {}".format(epsg_data, epsg_ax))
+    # print("Running test from {} to {}".format(epsg_data, epsg_ax))
     if show:
         fig = plt.figure()
     else:

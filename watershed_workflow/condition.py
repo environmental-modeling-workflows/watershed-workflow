@@ -662,7 +662,7 @@ def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_i
 
             if use_nhd_elev:
                 junction_elevs.append(node.properties['MinimumElevationSmoothed'] / 100)
-            if node.parent != None and node.properties['NHDPlusID'] not in ignore_in_sweep:
+            if node.parent != None and node.properties['ID'] not in ignore_in_sweep:
                 junction_elevs.append(node.parent.properties['SmoothProfile'][-1, 1])
                 node.parent.properties['SmoothProfile'][-1, 1] = min(
                     junction_elevs)  # giving min junction elevation to both the siblings

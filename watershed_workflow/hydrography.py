@@ -658,9 +658,13 @@ def merge(river, tol=_tol):
             if 'area' in node.properties and 'area' in node.parent.properties:
                 node.parent.properties['area'] += node.properties['area']
 
-            if 'catchment' in node.properties and 'catchment' in node.parent.properties:
-                node.parent.properties['catchment'] = shapely.ops.unary_union(
-                    [node.properties['catchment'], node.parent.properties['catchment']])
+            if 'catchment' in node.properties and node.properties['catchment'] is not None:
+                if 'catchment' in node.parent.properties and node.parent.properties['catchment'] is not None:
+                    node.parent.properties['catchment'] = shapely.ops.unary_union(
+                        [node.properties['catchment'], node.parent.properties['catchment']])
+                else:
+                    node.parent.properties['catchment'] = node.properties['catchment']
+                
             for child in node.children:
                 node.parent.addChild(child)
             node.remove()

@@ -47,7 +47,7 @@ class PolyCollectionWithArray:
         pass
 
 
-def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **kwargs):
+def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, ax_kwargs=None, **kwargs):
     """Returns an axis with a given projection.
     
     Note this forwards extra kwargs for plt.figure().
@@ -73,6 +73,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
       Figure size in inches.
     dpi : int, optional
       Dots per inch for figures.
+    ax_kwargs : dict
+      Other arguments provided to the axes creation call.
     kwargs : dict
       Additional arguments to plt.figure()
 
@@ -85,6 +87,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
     fig : matplotlib figure object
     ax : matplotlib ax object
     """
+    if ax_kwargs is None:
+        ax_kwargs = dict()
     # make a figure
     if fig is None:
         fig = plt.figure(**kwargs)
@@ -96,17 +100,19 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
         if axgrid is None:
             axargs = [nrow, ncol, index]
         else:
-            axargs = [axgrid, ]
+            axargs = [axgrid,]
 
         if crs is None:
             # no crs, just get an ax -- you deal with it.
-            ax = fig.add_subplot(*axargs)
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
         elif crs == '3d':
             # 3d plot
-            ax = fig.add_subplot(*axargs, projection='3d')
+            ax_kwargs['projection'] = '3d'
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
         else:
             projection = watershed_workflow.crs.to_cartopy(crs)
-            ax = fig.add_subplot(*axargs, projection=projection)
+            ax_kwargs['projection'] = projection
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
 
     else:
         if crs is None:
@@ -359,7 +365,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     if marker is not None:
         marker_kwargs['marker'] = marker
         if 'markersize' in kwargs:
-            marker_kwargs['markersize'] = kwargs.pop('markersize')
+            marker_kwargs['s'] = kwargs.pop('markersize')
 
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
@@ -411,14 +417,19 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
 
         if marker is not None:
             points = np.array([c for l in lines for c in l])
-            if projection is None:
-                res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+            if type(color) is str:
+                point_colors = color
             else:
-                res = ax.scatter(points[:, 0],
-                                 points[:, 1],
-                                 c=color,
-                                 transform=projection,
-                                 **marker_kwargs)
+                point_colors = np.array([color[i] for (i,l) in enumerate(lines) for c in l])
+            if projection is None:
+                ax.scatter(points[:, 0], points[:, 1], c=point_colors, **marker_kwargs)
+            else:
+                ax.scatter(points[:, 0],
+                           points[:, 1],
+                           c=point_colors,
+                           transform=projection,
+                           **marker_kwargs)
+        res = lc
 
     elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if kwargs['facecolor'] in ['color', 'edge']:
@@ -427,7 +438,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         else:
             face_is_edge = False
 
-        if color == 'elevation':
+        if type(color) is str and color == 'elevation':
             # compute colors from the mean elevation
             color = [np.array(p.exterior.coords)[0:-1, 2].mean() for p in iter(shps)]
 
@@ -490,13 +501,14 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
             ax.add_collection(res)
 
             if marker is not None:
-                points = np.array([p for poly in multi_poly.geoms for c in poly.exterior])
+                points = np.array([p for poly in shps for p in poly.exterior.coords])
+                pcolors = np.array([color[i] for (i,poly) in enumerate(shps) for p in poly.exterior.coords])
                 if projection is None:
-                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=pcolors, **marker_kwargs)
                 else:
                     pnts_res = ax.scatter(points[:, 0],
                                           points[:, 1],
-                                          c=color,
+                                          c=pcolors,
                                           transform=projection,
                                           **marker_kwargs)
 
