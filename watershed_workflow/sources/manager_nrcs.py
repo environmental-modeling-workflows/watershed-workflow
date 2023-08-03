@@ -19,6 +19,7 @@ import watershed_workflow.warp
 import watershed_workflow.utils
 import watershed_workflow.soil_properties
 import watershed_workflow.io
+import watershed_workflow.sources.utils as source_utils
 
 _query_template_props = """
 SELECT
@@ -136,6 +137,7 @@ def aggregate_component_values(df, agg_var=None):
     df_comp = pandas.DataFrame(columns=comp_list)
     cokeys = df['cokey'].unique()
 
+    rows = []
     for icokey in cokeys:
         idf_horizon = df.loc[df['cokey'] == icokey, horizon_selected_cols]
 
@@ -175,9 +177,9 @@ def aggregate_component_values(df, agg_var=None):
                 idf_comp[isoil] = idf_comp[isoil] / sum_soil * 100
 
         # append to df
-        df_comp = df_comp.append(idf_comp)
+        rows.append(idf_comp)
 
-    return df_comp
+    return pandas.concat(rows)
 
 
 def aggregate_mukey_values(df, agg_var=None):
@@ -210,8 +212,8 @@ def aggregate_mukey_values(df, agg_var=None):
     # area-average to mukey
     area_agg_var = ['thickness [cm]', ] + agg_var
     mukey_agg_var = ['mukey', ] + area_agg_var
-    df_mukey = pandas.DataFrame(columns=mukey_agg_var)
 
+    df_mukey_rows = []
     for imukey in df_comp['mukey'].unique()[:]:
         idf_comp = df_comp.loc[df_comp['mukey'] == imukey]
         area_agg_value = []
@@ -232,8 +234,9 @@ def aggregate_mukey_values(df, agg_var=None):
         assert (len(area_agg_value) == len(mukey_agg_var))
         idf_mukey = pandas.DataFrame(np.array(area_agg_value).reshape(1, len(area_agg_value)),
                                      columns=mukey_agg_var)
-        df_mukey = df_mukey.append(idf_mukey)
+        df_mukey_rows.append(idf_mukey)
 
+    df_mukey = pandas.concat(df_mukey_rows)
     df_mukey['mukey'] = np.array(df_mukey['mukey'], dtype=int)
     return df_mukey
 
@@ -342,7 +345,7 @@ class FileManagerNRCS:
             query = _query_template_props.format(mukey_list_string)
 
             data = { 'FORMAT': 'JSON', 'QUERY': query }
-            r = requests.post(self.url_data, data=data)
+            r = requests.post(self.url_data, data=data, verify=source_utils.get_verify_option())
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
@@ -512,7 +515,7 @@ class FileManagerNRCS:
             box = shapely.geometry.box(*bounds)
             query = _query_template_shapes.format(box.wkt)
             data = { 'FORMAT': 'JSON', 'QUERY': query }
-            r = requests.post(self.url_data, data=data)
+            r = requests.post(self.url_data, data=data, verify=source_utils.get_verify_option())
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
