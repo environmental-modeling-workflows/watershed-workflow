@@ -356,6 +356,10 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     else:
         projection = watershed_workflow.crs.to_cartopy(crs)
 
+    # set default colors
+    if color is None:
+        color = watershed_workflow.colors.enumerated_colors(len(shps))
+        
     # update keyword arguments
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
