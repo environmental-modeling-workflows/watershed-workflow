@@ -280,7 +280,7 @@ def create_river_corridor(river, width):
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
 
-    ## check if the points on the river corridor are same as calculated theoretically
+    # check if the points on the river corridor are same as calculated theoretically
     n_child = []
     for node in river.preOrder():
         n_child.append(len(node.children))
@@ -288,10 +288,9 @@ def create_river_corridor(river, width):
     for node in river.preOrder():
         n = n + 2 * (len(node.segment.coords) - 1)
     n = n - n_child.count(0) + n_child.count(2) + n_child.count(3) + n_child.count(4)
-
-    # final check
     if (len(corr3.exterior.coords[:]) - 1 != n):
         logging.warning("Broken dilation -- recommend running with ax argument to tessalate_rvier_aligned() to debug!")
+
     return corr3
 
 

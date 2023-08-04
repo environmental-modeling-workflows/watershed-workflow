@@ -82,10 +82,12 @@ class SplitHUCs:
                         | the first into boundaries and the second into 
                         | intersections -- which together form the polygon.
 
+    Note that this constructor does not modify shapes!
+    
     """
     def __init__(self,
                  shapes,
-                 abs_tol=0.,
+                 abs_tol=1.e-5,
                  rel_tol=1.e-5,
                  exterior_outlet=None,
                  polygon_outlets=None):
@@ -117,7 +119,9 @@ class SplitHUCs:
         self.exterior_outlet = exterior_outlet
 
         # initialize
+        assert(all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
         shapes = partition(shapes, abs_tol, rel_tol)
+        assert(all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
         uniques, intersections = intersect_and_split(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
@@ -219,40 +223,43 @@ def simplify(hucs, tol=0.1):
         hucs.segments[i] = seg.simplify(tol)
 
 
-def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
+def partition(list_of_shapes, abs_tol=1.e-2, rel_tol=1.e-5):
     """Given a list of shapes which mostly share boundaries, make sure they
     partition the space.  Often HUC boundaries have minor overlaps and
-    underlaps -- here we try to account for wiggles."""
+    underlaps -- here we try to account for wiggles.
+    """
+    # create a copy to not modify the user's input list
+    list_of_shapes = [s.buffer(abs_tol) for s in list_of_shapes]
+    
     # deal with overlaps
     for i in range(len(list_of_shapes)):
+        s1 = list_of_shapes[i]
         for j in range(i + 1, len(list_of_shapes)):
-            s1 = list_of_shapes[i]
             s2 = list_of_shapes[j]
 
-            s2 = s2.buffer(abs_tol)
             if watershed_workflow.utils.intersects(s1, s2):
                 s2 = s2.difference(s1)
-                list_of_shapes[j] = s2.difference(s1)
+                list_of_shapes[j] = s2
 
     # remove holes
     union = shapely.ops.unary_union(list_of_shapes)
-    assert (type(union) is shapely.geometry.Polygon)
 
     # -- deal with disjoint sections separately
-    if type(union) is shapely.geometry.Polygon:
+    if isinstance(union, shapely.geometry.Polygon):
         union = [union, ]
+    else:
+        union = [p for p in union]
 
     for part in union:
         # find all holes
         for hole in part.interiors:
             hole = shapely.geometry.Polygon(hole)
-            if hole.area < abs_tol or hole.area < rel_tol * part.area:
+            if hole.area < (abs_tol**2) or hole.area < rel_tol * part.area:
                 # give it to someone, anyone, doesn't matter who
-                logging.info(f'Found a little hole: area = {hole.area}')
+                logging.info(f'Found a little hole: area = {hole.area} at {hole.centroid}')
                 i,poly = next((i,poly) for (i,poly) in enumerate(list_of_shapes) if watershed_workflow.utils.non_point_intersection(poly, hole))
-                logging.info(f'      union with {i}')
-                poly = poly.union(hole)
-                list_of_shapes[i] = poly
+                logging.info(f'      placing in shape {i}')
+                list_of_shapes[i] = poly.union(hole)
 
             else:
                 logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
