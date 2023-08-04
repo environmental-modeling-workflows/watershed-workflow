@@ -1021,7 +1021,7 @@ def simplify_and_prune(hucs,
 
 def triangulate(hucs,
                 rivers=None,
-                river_corrs=None,
+                river_corr_mesh=None
                 internal_boundaries=None,
                 diagnostics=True,
                 verbosity=1,
@@ -1043,8 +1043,8 @@ def triangulate(hucs,
         A split-form HUC object from, e.g., get_split_form_hucs()
     rivers : list[watershed_workflow.river_tree.River], optional
         List of rivers, used to refine the triangulation in conjunction with refine_distance.
-    river_corrs : list[shapely.geometry.Polygon], optional
-        List of rivers corridor polygons.
+    river_corr_mesh : watershed_workflow.mesh.Mesh2D
+        River corridor mesh.
     internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
         List of objects, whose boundary (in the case of
         polygons/waterbodies) or reaches (in the case of River) will
@@ -1113,14 +1113,9 @@ def triangulate(hucs,
     if refine_max_area != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_from_max_area(refine_max_area))
     if refine_distance != None:
-        if river_corrs != None:
-            refine_funcs.append(
-                watershed_workflow.triangulation.refine_from_river_distance(
-                    *refine_distance, river_corrs))
-        else:
-            refine_funcs.append(
-                watershed_workflow.triangulation.refine_from_river_distance(
-                    *refine_distance, rivers))
+        refine_funcs.append(
+            watershed_workflow.triangulation.refine_from_river_distance(
+                *refine_distance, rivers))
     if refine_max_edge_length != None:
         refine_funcs.append(
             watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
@@ -1131,14 +1126,14 @@ def triangulate(hucs,
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
         rivers,
-        river_corrs,
+        river_corr_mesh,
         internal_boundaries=internal_boundaries,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,
         min_angle=refine_min_angle,
         enforce_delaunay=enforce_delaunay,
-        allow_boundary_steiner=(river_corrs is None))
+        allow_boundary_steiner=(river_corr_mesh is None))
 
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
@@ -1241,20 +1236,21 @@ def tessalate_river_aligned(hucs,
 
     """
     # generate the quads
-    quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
-                                                                          widths=river_width,
-                                                                          enforce_convexity=True,
-                                                                          ax=ax)
+    points, quad_conn = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
+                                                                           widths=river_width,
+                                                                           enforce_convexity=True,
+                                                                           ax=ax)
+    m2_quads = watershed_workflow.mesh.Mesh2D(points, quad_conn)
 
     # adjust the HUC to match the corridor at the boundary
     hucs_without_outlet = hucs.deep_copy()
     watershed_workflow.river_mesh.adjust_hucs_for_river_corridors(hucs_without_outlet,
                                                                   rivers,
-                                                                  corrs,
+                                                                  points,
                                                                   integrate_rc=False)
 
     # triangulate the rest
-    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
+    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, m2_quads,
                                              internal_boundaries, diagnostics, **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]

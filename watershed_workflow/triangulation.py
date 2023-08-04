@@ -114,7 +114,7 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, tol=1, **kwargs):
+def triangulate(hucs, rivers=None, river_corr_points=None, internal_boundaries=None, tol=1, **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -132,13 +132,21 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
         List of shapely objects or RiverTrees or other iterable
         collections of coordinates used as internal boundaries that
         must be included in the mesh.
-    river_corrs : list(shapely.geometry.Polygons)
-        A list of river corridor polygons for each river
+    river_corr_mesh : watershed_workflow.mesh.Mesh2D
+        River corridor mesh.
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit
         is the same as that of the watershed's CRS. The default is 1.
+    kwargs : dict
+        Additional keyword arguments include all options for
+        meshpy.triangle.build()
 
-    Additional keyword arguments include all options for meshpy.triangle.build()
+    Returns
+    -------
+    mesh_points : np.array((npoints, 2), float)
+        Points of the mesh
+    elem_conn : np.array((nelem, 3), int)
+        Point indices of each triangle.
 
     """
     import meshpy.triangle
@@ -146,14 +154,9 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
     logging.info("Triangulating...")
     segments = list(hucs.segments)
 
-    if river_corrs != None:
-        if type(river_corrs) is list:
-            segments = river_corrs + segments
-        elif type(river_corrs) is shapely.geometry.Polygon:
-            segments = [river_corrs, ] + segments
-        else:
-            raise RuntimeError("Triangulate not implemented for container of type '%r'"
-                               % type(hucs))
+    if river_corr_mesh is not None:
+        river_corr_boundary = shapely.geometry.Polygon([river_corr_mesh.coords[n] for n in river_corr_mesh.boundary_nodes])
+        segments.insert(0, river_corr_boundary)
 
     if internal_boundaries != None:
         if type(internal_boundaries) is list:

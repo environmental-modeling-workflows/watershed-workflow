@@ -29,9 +29,11 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
-def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
+def create_rivers_meshes2(rivers, widths=8, enforce_convexity=True, ax=None):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
+    Second, direct algorithm that skips the dilation step.
+    
     Parameters:
     -----------
     rivers: list(watershed_workflow.river_tree.RiverTree object)
@@ -53,10 +55,36 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
       List of river corridor polygons
 
     """
-    elems = []
-    corrs = []
-    gid_shift = 0
+    
 
+
+            
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, algorithm="dilation", ax=None):
+    """Returns list of elems and river corridor polygons for a given list of river trees
+
+    Parameters:
+    -----------
+    rivers: list(watershed_workflow.river_tree.RiverTree object)
+      List of river tree along which river meshes are to be created
+    widths: float or a dictionary
+      Width of streams, as constant or {stream-order: width}
+    enforce_convexity: boolean 
+      If true, enforce convexity of the pentagons/hexagons at the
+      junctions.
+    algorithm: str
+      One of "dilation" or "direct" -- choose the method.
+    ax : matplotlib Axes object, optional
+      For debugging -- plots troublesome reaches as quad elements are
+      generated to find tricky areas.
+    
+    Returns
+    -------
+    mesh_points : np.array((npoints, 2), float)
+        Points of the mesh
+    elem_conn : np.array((nelem, 3), int)
+        Point indicies of each element.
+
+    """
     # set up debugging plot
     if ax is not None:
         fig = ax.get_figure()
@@ -100,24 +128,29 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
         ax.get_figure().canvas.mpl_connect("motion_notify_event", hover)
 
     # now do the actual work
+    gid_shift = 0
+    all_points = []
+    all_conn = []
     for river in rivers:
-        if len(elems) != 0:
-            gid_shift = np.max([max(map(int, elem)) for elem in elems]) + 1
-        elems_river, corr = create_river_mesh(river,
-                                              widths=widths,
-                                              enforce_convexity=enforce_convexity,
-                                              gid_shift=gid_shift,
-                                              ax=ax)
-        elems = elems + elems_river
-        corrs = corrs + [corr, ]
+        gid_shift = np.max([max(map(int, elem)) for elem in elems]) + 1
+        points, conn = create_river_mesh(river,
+                                         widths=widths,
+                                         enforce_convexity=enforce_convexity,
+                                         gid_shift=gid_shift,
+                                         algorithm=algorithm,
+                                         ax=ax)
+        all_points.append(points)
+        all_conn.extend(conn)
 
-    return elems, corrs
+    points = np.concatenate(all_points, axis=0)
+    return points, all_conn
 
 
 def create_river_mesh(river,
                       widths=8,
                       enforce_convexity=True,
                       gid_shift=0,
+                      algorithm="dilation",
                       dilation_width=4,
                       ax=None):
     """Returns list of elems and river corridor polygons for a given river tree
@@ -135,52 +168,68 @@ def create_river_mesh(river,
       All the node-ids used in the element defination are shifted by
       this number to make it consistant with the global ids in the m2
       mesh, necessary in the case of multiple rivers
+    algorithm: str
+      One of "dilation" or "direct" -- choose the method.
     dilation_width: float
-      This is used for initial buffering of the river tree into the
-      river corridor polygon.  For a typical watershed the 4 m default
-      should work well; for smaller domains, setting smaller initial
-      dilation_width might be desirable (much smaller than expected
-      quad element length).
+      If algorithm == 'dilation', the initial buffering of the river
+      tree into the river corridor polygon.  For a typical watershed
+      the 4 m default should work well; for smaller domains, setting
+      smaller initial dilation_width might be desirable (much smaller
+      than expected quad element length).
     ax : matplotlib Axes object, optional
       For debugging -- plots troublesome reaches as quad elements are
       generated to find tricky areas.
 
     Returns
     -------
-    elems: List(List)
-        List of river elements
-    corr: List(shapely.geometry.Polygon)
-        a river corridor polygon
+    mesh_points : np.array((npoints, 2), float)
+        Points of the mesh
+    elem_conn : np.array((nelem, 3), int)
+        Point indicies of each element.
 
     """
     # creating a polygon for river corridor by dilating the river tree
-    if type(widths) == dict:
-        dilation_width = min(dilation_width, min(widths.values()))
-    else:
-        dilation_width = min(dilation_width, widths)
-    corr = create_river_corridor(river, dilation_width)
+    if algorithm == 'dilation':
+        if type(widths) == dict:
+            dilation_width = min(dilation_width, min(widths.values()))
+        else:
+            dilation_width = min(dilation_width, widths)
 
-    # defining special elements in the mesh
-    elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
+        # create the polygon by dilation/buffering
+        corr = create_river_corridor_dilation(river, dilation_width)
 
-    # setting river_widths in the river corridor polygon
-    corr = set_width_by_order(river,
-                              corr,
-                              widths=widths,
-                              dilation_width=dilation_width,
-                              gid_shift=gid_shift)
+        # defining special elements in the mesh
+        elem_conn = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
 
-    # treating non-convexity at junctions
-    if enforce_convexity:
-        corr = convexity_enforcement(river,
-                                     corr,
-                                     widths=widths,
-                                     dilation_width=dilation_width,
-                                     gid_shift=gid_shift)
-    return elems, corr
+        # setting river_widths in the river corridor polygon
+        corr = set_width_by_order(river,
+                                  corr,
+                                  widths=widths,
+                                  dilation_width=dilation_width,
+                                  gid_shift=gid_shift)
+
+        # treating non-convexity at junctions
+        if enforce_convexity:
+            corr = convexity_enforcement(river,
+                                         corr,
+                                         widths=widths,
+                                         dilation_width=dilation_width,
+                                         gid_shift=gid_shift)
+
+        points = np.array(corr.exterior.coords)
+
+    elif algorithm == 'direct':
+        points, elem_conn = create_river_corridor_direct(river, widths)
+
+    return points, elem_conn
 
 
-def create_river_corridor(river, width):
+def create_river_corridor_direct(river, widths, gid_shift):
+    pass
+
+
+
+def create_river_corridor_dilation(river, width):
     """Returns a polygon representing the river corridor with a fixed
     dilation width.
     
@@ -757,7 +806,7 @@ def angle_rivers_segs(ref_seg, seg):
     return angle
 
 
-def rc_points_for_rt_point(rt_point, node, river_corr):
+def rc_points_for_rt_point(rt_point, node, river_corr_points):
     """Returns the points (list of indices of coords) on the river-corridor-polygon for a given junction point on river tree."""
     assert (node.segment.intersects(rt_point))
     rt_point_ind = node.segment.coords[:].index(rt_point.coords[0])
@@ -767,14 +816,14 @@ def rc_points_for_rt_point(rt_point, node, river_corr):
     elem = node.elements[elem_ind]
 
     if len(elem) == 4:
-        rc_points = [river_corr.exterior.coords[ind]
+        rc_points = [river_corr_points[ind]
                      for ind in [elem[1], elem[2]]]  # return two points
     elif len(elem) == 5:
-        rc_points = [river_corr.exterior.coords[ind]
+        rc_points = [river_corr_points[ind]
                      for ind in [elem[1], elem[2], elem[3]]]  # return three points at junction
     elif len(elem) == 6:
         rc_points = [
-            river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3], elem[4]]
+            river_corr_points[ind] for ind in [elem[1], elem[2], elem[3], elem[4]]
         ]  # return three points at junction
 
     return rc_points
@@ -811,7 +860,7 @@ def adjust_seg_for_rc(seg, river_corr, new_seg_point, integrate_rc=False):
     return seg
 
 
-def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True):
+def adjust_hucs_for_river_corridors(hucs, rivers, river_corr_points, integrate_rc=True):
     """Adjusts hucs to accomodate river corridor polygons.
 
     Parameters
@@ -820,8 +869,8 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
         A split-form HUC object from, e.g., get_split_form_hucs(), will be modified in place.
     rivers : list(watershed_workflow.river_tree.RiverTree)
         A list of river tree object
-    river_corrs : list(shapely.geometry.Polygons)
-        A list of river corridor polygons for each river
+    river_corr_points : np.array((npoints,2))
+        Points used to make up the river corridor.
     integrate_rc: bool, optional
         if false, will leave gap in the huc whereever rc crosses huc except at the overall outlet; 
         hence hucs.polygons() will break, this mode is to be used during triangulation to creates NodesEdges object 
@@ -832,7 +881,7 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
         adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc)
 
 
-def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
+def adjust_hucs_for_river_corridor(hucs, river, river_corr_points, integrate_rc=True):
     """Adjusts hucs to accomodate river corridor polygon.
 
     Parameters
@@ -841,8 +890,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
         A split-form HUC object from, e.g., get_split_form_hucs()
     river : watershed_workflow.river_tree.RiverTree object
         river tree 
-    river_corr : shapely.geometry.Polygons
-        A river corridor polygon for given river
+    river_corr_points : np.array((npoints,2))
+        Points used to make up the river corridor.
     integrate_rc: bool, optional
         If false, this will leave gap in the huc whereever rc crosses
         huc except at the overall outlet; hence hucs.polygons() will
@@ -900,7 +949,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
             if outlet_junction:
                 logging.info('found outlet junction')
                 elem = parent_node.elements[0]
-                rc_points = [river_corr.exterior.coords[ind]
+                rc_points = [river_corr_points[ind]
                              for ind in [elem[0], elem[-1]]]  # rc points at junction
                 ref_seg = shapely.geometry.LineString(
                     parent_node.segment.coords[ind_intersection_point
@@ -914,7 +963,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                     parent_node,
                 ]  # all line segments (hucs-segments and river-segments) at this junction
             else:  # if internal junction
-                rc_points = rc_points_for_rt_point(intersection_point, parent_node, river_corr)
+                rc_points = rc_points_for_rt_point(intersection_point, parent_node, river_corr_points)
                 ref_seg = shapely.geometry.LineString(
                     parent_node.segment.coords[ind_intersection_point:ind_intersection_point + 2]
                 )  # this is small part of the parent node.segment just downstream of the intersection point
