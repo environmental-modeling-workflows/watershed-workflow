@@ -132,20 +132,25 @@ class River(watershed_workflow.tinytree.Tree):
 
             Returns
             -------
-            list(shapely.geometry.Polygon) with IDs, names abnd outlet points in properties
+            list(shapely.geometry.Polygon) with IDs, names and outlet points in properties
         """
         catchments = []
         for i, outlet_ID in enumerate(outlet_IDs):
-            node_ob = next(node for node in self.preOrder()
-                           if node.properties['ID'] == outlet_ID)
-            catch = shapely.geometry.Polygon(
-                shapely.ops.unary_union(
-                    [node.properties['catchment'] for node in node_ob.preOrder()]).exterior)
-            catch.properties = dict()
-            catch.properties['outlet_ID'] = outlet_ID
-            catch.properties['name'] = names[i]
-            catch.properties['outlet_point'] = node_ob.segment.coords[-1]
-            catchments.append(catch)
+            try:
+                node_ob = next(node for node in self.preOrder()
+                               if node.properties['ID'] == outlet_ID)
+            except StopIteration:
+                catchments.append(None)
+            else:
+                catch = shapely.ops.unary_union([node.properties['catchment'].buffer(1e-6) for node in node_ob.preOrder() if node.properties['catchment'] is not None])
+                catch.properties = dict()
+                catch.properties['outlet_ID'] = outlet_ID
+                catch.properties['name'] = names[i]
+                catch.properties['outlet_point'] = node_ob.segment.coords[-1]
+                catchments.append(catch)
+
+                # also tag the node as being the trunk of a catchment
+                node_ob.properties['catchment name'] = names[i]
         return catchments
 
     def depthFirst(self):

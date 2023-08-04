@@ -532,6 +532,18 @@ def compNonOverlappingPolys(polys):
         for (i, a) in enumerate(sorted_polys[0:-1])
     ]
     non_overlapping_polys.append(sorted_polys[-1])
-    for new_poly, poly in zip(non_overlapping_polys, sorted_polys):
+
+    for i, (new_poly, poly) in enumerate(zip(non_overlapping_polys, sorted_polys)):
+        if isinstance(new_poly, shapely.geometry.MultiPolygon):
+            # sometimes these come with individual pixels hanging on
+            # to the contributing area -- just delete the tiny ones
+            # and keep the biggest
+            new_poly = list(new_poly)[np.argmax([poly.area for poly in new_poly])]
+
+        # remove internal holes
+        new_poly = shapely.geometry.Polygon(new_poly.exterior)
+
+        # save the properties
         new_poly.properties = poly.properties
+        non_overlapping_polys[i] = new_poly
     return non_overlapping_polys
