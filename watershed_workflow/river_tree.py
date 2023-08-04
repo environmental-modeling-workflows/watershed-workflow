@@ -320,7 +320,14 @@ def accumulateContributingAreaRivers(rivers, outlet_IDs, names):
     -------
     list(shapely.geometry.Polygon) with IDs, names abnd outlet points in properties
     """
-    catchments = []
+    all_catchments = []
     for river in rivers:
-        catchments = catchments + river.accumulateContributingArea(outlet_IDs, names)
-    return catchments
+        all_catchments.append(river.accumulateContributingArea(outlet_IDs, names))
+
+    merged_catchments = []
+    for catches in zip(all_catchments):
+        one = [c for c in catches if c is not None]
+        # if this fails, then the outlet_ID appeared in multiple rivers!
+        assert(len(one) == 1)
+        merged_catchments.append(one[0])
+    return merged_catchments
