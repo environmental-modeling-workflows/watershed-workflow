@@ -1233,7 +1233,7 @@ def tessalate_river_aligned(hucs,
     -------
     vertices : np.array((n_vertices, 2), 'd')
         Array of triangle vertices.
-    cell_vertices : list[list[int]]
+    cell_conn : list[list[int]]
         For each cell, an ordered list of indices into the vertices
         array that make up that cell.
     areas : _only if diagnostics=True_, np.array((n_cell_vertices), 'd')

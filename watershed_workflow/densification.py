@@ -338,26 +338,33 @@ def limit_from_river_distance(segment_ends, limit_scales, rivers):
 
 
 def remove_sharp_angles_from_river_tree(river, angle_limit=0, junction_angle_limit=0):
-    """this function smoothen out the sharp angles in the river tree"""
+    """Smooth out any sharp angles in the river tree.
+
+    Note all angle tolerances are in degrees.
+    """
     for node in river.preOrder():
         if angle_limit is not None:
             remove_sharp_angles_from_seg(node, angle_limit=angle_limit)  # from internal segments
+            assert(node.is_locally_continuous())
+
         if len(node.children) != 0:
             # at junctions, angle between parent and child node
             if angle_limit is not None:
                 treat_node_junctions_for_sharp_angles(node, angle_limit=angle_limit)
+                assert(node.is_locally_continuous())
 
             # angle between two children (how often can we have >2 children??)
             if junction_angle_limit is not None:
                 remove = True
                 while remove:
                     remove = treat_small_angle_between_child_nodes(node, angle_limit=junction_angle_limit) 
-                    assert (river.is_continuous())
-    assert (river.is_continuous())
+                    assert(node.is_locally_continuous())
+
+        assert(river.is_continuous())
 
 
 def remove_sharp_angles_from_seg(node, angle_limit=10):
-    """this function smoothen out the sharp angles in the river tree"""
+    """Smooth out any sharp angles in a reach segment."""
     seg = node.segment
     seg_coords = seg.coords[:]
     for i in range(len(seg_coords) - 2):
@@ -390,17 +397,27 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
                     sibling_coords = sibling.segment.coords[:]
                     sibling_coords[-1] = node.segment.coords[-1]
                     sibling.segment = shapely.geometry.LineString(sibling_coords)
+            assert(node.parent.is_continuous())
 
 
 def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
-    seg1 = node.segment
+    """Smooth out junction angles.
+
+    Moves the junction point to the centroid of the triangle formed by
+    the junction point and the two neighboring points.  This is done
+    recursively until the tolerance is met.
+    """
     for child in node.children:
+        # note, this must be done here.  If there are multiple
+        # children and the first moves the parent, we have to look at
+        # the moved parent, not the original parent.
+        seg1 = node.segment
         seg2 = child.segment
-        seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
-        is_changed = seg2 == child.segment
-        child.segment = seg2
-        node.segment = seg1
-        if is_changed and len(list(child.siblings())) > 1:
+        is_changed, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
+
+        if is_changed:
+            node.segment = seg1
+            child.segment = seg2
             for sibling in child.siblings():
                 sibling_coords = sibling.segment.coords[:]
                 sibling_coords[-1] = child.segment.coords[-1]
@@ -408,6 +425,12 @@ def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
 
 
 def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10):
+    """Moves the common shared point of seg1 and seg2 to the centroid
+    of the triangle formed by the junction point and the two
+    neighboring points.  This is done recursively until the tolerance
+    is met.
+    """
+    is_changed = False
     seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
     seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
     angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
@@ -425,8 +448,9 @@ def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10):
             seg2_coords_new = seg2.coords[:-2] + new_point.coords[:]
         seg1 = shapely.geometry.LineString(seg1_coords_new)
         seg2 = shapely.geometry.LineString(seg2_coords_new)
-        seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
-    return seg1, seg2
+        _, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
+        is_changed = True
+    return is_changed, seg1, seg2
 
 
 def treat_small_angle_between_child_nodes(node, angle_limit=10):
@@ -445,6 +469,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
         for child in node.children:
             seg2 = child.segment
             seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
+            assert(watershed_workflow.utils.close(seg2.coords[-1], seg1.coords[0], 1.e-10))
             seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
             angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
             angles.append(angle)

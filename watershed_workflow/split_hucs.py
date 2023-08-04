@@ -248,15 +248,14 @@ def partition(list_of_shapes, abs_tol=1.0, rel_tol=1.e-3):
             hole = shapely.geometry.Polygon(hole)
             if hole.area < abs_tol or hole.area < rel_tol * part.area:
                 # give it to someone, anyone, doesn't matter who
-                logging.info("Found a little hole: area = {}".format(hole.area))
-                for i, poly in enumerate(list_of_shapes):
-                    if watershed_workflow.utils.non_point_intersection(poly, hole):
-                        logging.info('touches {}'.format(i))
-                        poly = poly.union(hole)
-                        list_of_shapes[i] = poly
-                        break
+                logging.info(f'Found a little hole: area = {hole.area}')
+                i,poly = next((i,poly) for (i,poly) in enumerate(list_of_shapes) if watershed_workflow.utils.non_point_intersection(poly, hole))
+                logging.info(f'      union with {i}')
+                poly = poly.union(hole)
+                list_of_shapes[i] = poly
+
             else:
-                logging.info("Found a big hole: area = {}".format(hole.area))
+                logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
 
     return list_of_shapes
 

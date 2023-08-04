@@ -164,8 +164,15 @@ class River(watershed_workflow.tinytree.Tree):
         return self.depthFirst()
 
     def _is_continuous(self, child, tol=_tol):
-        """Is a given child continuous with self.."""
+        """Is a given child continuous with self?"""
         return watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol)
+
+    def is_locally_continuous(self, tol=_tol):
+        """Is this node continuous with its parent and children?"""
+        res = all(self._is_continuous(child) for child in self.children)
+        if self.parent is not None:
+            res = res and self.parent._is_continuous(self)
+        return res
 
     def is_continuous(self, tol=_tol):
         """Checks geometric continuity of the river.
