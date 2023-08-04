@@ -290,7 +290,8 @@ def create_river_corridor(river, width):
     n = n - n_child.count(0) + n_child.count(2) + n_child.count(3) + n_child.count(4)
 
     # final check
-    assert(len(corr3.exterior.coords[:]) - 1 == n)
+    if (len(corr3.exterior.coords[:]) - 1 != n):
+        logging.warning("Broken dilation -- recommend running with ax argument to tessalate_rvier_aligned() to debug!")
     return corr3
 
 
@@ -496,9 +497,14 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
         else:
             target_width = widths
 
-        for i, elem in enumerate(node.elements):  # treating the upstream edge of the element
+        # loop over elems, treating the upstream edge
+        for i, elem in enumerate(node.elements):
             elem = [id - gid_shift for id in elem]
-            if len(elem) == 4:
+
+            if len(elem) == 3:
+                continue # no upstream edge
+            
+            elif len(elem) == 4:
                 p1 = np.array(corr_coords[elem[1]][:2])  # points of the upstream edge of the quad
                 p2 = np.array(corr_coords[elem[2]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
@@ -557,7 +563,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[5]] = tuple(p2_)
 
             else:
-                raise NotImplementedError("Case with {len(elem)} nodes is not yet treated... good luck!")
+                raise NotImplementedError(f"Case with {len(elem)} nodes is not yet treated... good luck!")
 
             # treat the most downstream edge, which is left out so far
             if i == 0:

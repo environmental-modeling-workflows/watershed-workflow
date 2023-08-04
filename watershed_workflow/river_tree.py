@@ -119,39 +119,19 @@ class River(watershed_workflow.tinytree.Tree):
             node = None
         return node
 
-    def accumulateContributingArea(self, outlet_IDs, names):
-        """creates catchment polygons of contributing areas for  a given outlet/spillpoint reach
-            Parameters:
-            -----------
-            river: watershed_workflow.river_tree.RiverTree object
-            river from which outlet reaches are potentially from 
-            outlet_IDs: list(int)
-                list of IDs of the outlet reaches
-            names: list(str)
-                names for the catchments
-
-            Returns
-            -------
-            list(shapely.geometry.Polygon) with IDs, names and outlet points in properties
-        """
-        catchments = []
-        for i, outlet_ID in enumerate(outlet_IDs):
-            try:
-                node_ob = next(node for node in self.preOrder()
-                               if node.properties['ID'] == outlet_ID)
-            except StopIteration:
-                catchments.append(None)
-            else:
-                catch = shapely.ops.unary_union([node.properties['catchment'].buffer(1e-6) for node in node_ob.preOrder() if node.properties['catchment'] is not None])
-                catch.properties = dict()
-                catch.properties['outlet_ID'] = outlet_ID
-                catch.properties['name'] = names[i]
-                catch.properties['outlet_point'] = node_ob.segment.coords[-1]
-                catchments.append(catch)
-
-                # also tag the node as being the trunk of a catchment
-                node_ob.properties['catchment name'] = names[i]
-        return catchments
+    def accumulateContributingArea(self, name=None):
+        """Form a polygon of all contributing areas based on the 'catchment' property."""
+        if name is None:
+            name = self.properties['ID']
+        
+        catch = shapely.ops.unary_union([node.properties['catchment'].buffer(1e-6)
+                                         for node in self.preOrder() if node.properties['catchment'] is not None])
+        catch.properties = dict()
+        catch.properties['outlet_ID'] = self.properties['ID']
+        catch.properties['name'] = name
+        catch.properties['outlet_point'] = self.segment.coords[-1]
+        self.properties['catchment name'] = name
+        return catch
 
     def depthFirst(self):
         """Iterates of reaches in the river in an "upstream-first" or "depth-first" ordering."""
@@ -304,30 +284,39 @@ class River(watershed_workflow.tinytree.Tree):
         return cp
 
 
-def accumulateContributingAreaRivers(rivers, outlet_IDs, names):
-    """creates catchment polygons of contributing areas for given outlet/spillpoint reaches
+def accumulateContributingArea(rivers, outlet_IDs, names=None):
+    """Given a list of outlet_IDs, find the reach in rivers and form its contributing area.
     
     Parameters:
     -----------
-    rivers: list(watershed_workflow.river_tree.RiverTree object)
-       rivers from which outlet reaches are potentially from 
-    outlet_IDs: list(int)
-        list of IDs of the outlet reaches
-    names: list(str)
-        names for the catchments
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      Rivers from which outlet reaches are potentially from 
+    outlet_IDs: list(str)
+      List of IDs of the outlet reaches
+    names: list(str), optional
+      Names for the catchments
 
     Returns
     -------
-    list(shapely.geometry.Polygon) with IDs, names abnd outlet points in properties
-    """
-    all_catchments = []
-    for river in rivers:
-        all_catchments.append(river.accumulateContributingArea(outlet_IDs, names))
+    list(river_tree.RiverTree)
+      The trunks of the rivers at outlet_IDs
+    list(shapely.geometry.Polygon)
+      The contributing areas to those trunks.
 
-    merged_catchments = []
-    for catches in zip(all_catchments):
-        one = [c for c in catches if c is not None]
-        # if this fails, then the outlet_ID appeared in multiple rivers!
-        assert(len(one) == 1)
-        merged_catchments.append(one[0])
-    return merged_catchments
+    """
+    if names is None:
+        names = outlet_IDs
+
+    roots = []
+    catchments = []
+    for id, name in zip(outlet_IDs, names):
+        found = False
+        for river in rivers:
+            root = river.getNode(id)
+            if root is not None:
+                if found:
+                    raise RuntimeError(f'accumulateContributingArea: outlet_ID {outlet_ID} appears in more than one river')
+                roots.append(root)
+                catchments.append(root.accumulateContributingArea(name))
+                found = True
+    return roots, catchments

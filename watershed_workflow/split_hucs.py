@@ -523,7 +523,7 @@ def find_outlets_by_hydroseq(hucs, river, tol=0):
     hucs.polygon_outlets = polygon_outlets
 
 
-def compNonOverlappingPolys(polys):
+def computeNonOverlappingPolygons(polys):
     """returns a list of non-overlapping shapely.geometry.Polygons with properties retained
     """
     sorted_polys = sorted(polys, key=lambda a: a.area, reverse=True)
