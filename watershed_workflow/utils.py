@@ -17,6 +17,7 @@ import shapely.prepared
 import shapely.affinity
 import rasterio
 import rasterio.transform
+import copy
 
 import watershed_workflow.crs
 
@@ -78,6 +79,15 @@ def create_shply(shape, properties=None, flip=False):
         raise ValueError(
             'Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
 
+
+def deepcopy(list_of_shapes):
+    """Deals with properties dictionary"""
+    new_list = [type(shp)(shp) for shp in list_of_shapes]
+    for new, old in zip(new_list, list_of_shapes):
+        if hasattr(old, 'properties'):
+            new.properties = old.properties
+    return new_list
+    
 
 def create_bounds(f):
     """General bounding box for fiona and shapely types."""
