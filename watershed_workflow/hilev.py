@@ -1106,7 +1106,7 @@ def triangulate(hucs,
     verbose = verbosity > 2
 
     logging.info("")
-    logging.info("Meshing")
+    logging.info("Triangulation")
     logging.info("-" * 30)
 
     refine_funcs = []
@@ -1240,13 +1240,19 @@ def tessalate_river_aligned(hucs,
         Array of areas.
 
     """
+    logging.info("")
+    logging.info("Stream-aligned Meshing")
+    logging.info("-" * 30)
+
     # generate the quads
+    logging.info('Creating stream-aligned mesh...')
     quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
                                                                           widths=river_width,
                                                                           enforce_convexity=True,
                                                                           ax=ax)
 
     # adjust the HUC to match the corridor at the boundary
+    logging.info('Adjusting rivers at the watershed boundaries...')
     hucs_without_outlet = hucs.deep_copy()
     watershed_workflow.river_mesh.adjust_hucs_for_river_corridors(hucs_without_outlet,
                                                                   rivers,
