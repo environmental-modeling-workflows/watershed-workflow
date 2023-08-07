@@ -33,11 +33,11 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names=None):
         m2.labeled_sets.append(ls)
 
 
-def _get_labels(polygons, kind):
-    labels = []
-    for i, p in enumerate(polygons):
-        label = f'{kind} {i}'
-        labels.append(label)
+def _get_labels(polygons, kind='polygon'):
+    if isinstance(polygons, watershed_workflow.split_hucs.SplitHUCs):
+        labels = [prop['ID'] for prop in polygons.properties]
+    else:
+        labels = [f'{kind} {i}' for i in range(len(polygons))]
     return labels
 
 
@@ -65,19 +65,16 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
     """
     if labels is None:
         labels = _get_labels(polygons)
-    else:
-        assert (len(labels) == len(polygons))
+    assert (len(labels) == len(polygons))
 
     partitions = [list() for p in polygons]
     for c in range(m2.num_cells):
-        cc = m2.compute_centroid(c)
+        cc = m2.centroids[c]
         cc = shapely.geometry.Point(cc[0], cc[1])
-        try:
-            ip = next(i for (i, p) in enumerate(polygons) if p.contains(cc))
-        except StopIteration:
-            pass
-        else:
-            partitions[ip].append(c)
+
+        for i,p in enumerate(polygons):
+            if p.contains(cc):
+                partitions[i].append(c)
 
     for label, part in zip(labels, partitions):
         if len(part) > 0:
@@ -129,7 +126,7 @@ def add_watershed_regions_and_outlets(m2,
       resolved floodplain, or 1-2 face-widths, whichever is bigger.
     labels : iterable[str], optional
       Name of the polygons.  If SplitHUCs are provided, HUC names are
-      used and None should be provided.
+      used as the default.
     exterior_outlet : bool, optional
       If true, find the outlet point that intersects the boundary and
       include regions around that outlet as well.
@@ -137,16 +134,18 @@ def add_watershed_regions_and_outlets(m2,
     """
     if isinstance(hucs, list):
         polygons = hucs
-        if outlets is None:
-            outlets = [None, ] * len(polygons)
     else:
         polygons = list(hucs.polygons())
-        assert (outlets is None)
-        outlets = hucs.polygon_outlets
+        if outlets is None and hasattr(hucs, 'polygon_outlets'):
+            outlets = hucs.polygon_outlets
+
     if labels is None:
-        labels = _get_labels(polygons)
-    else:
-        assert (len(labels) == len(polygons))
+        labels = _get_labels(hucs)
+    
+    if outlets is None:
+        outlets = [None, ] * len(polygons)
+
+    assert (len(labels) == len(polygons))
 
     # this adds the first two sets
     partitions = add_polygonal_regions(m2, polygons, labels, volume=True)
