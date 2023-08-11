@@ -18,8 +18,6 @@ Browse the code at: https://github.com/environmental-modeling-workflow/watershed
    examples/mesh_coweeta.ipynb
    Installation <install>
    Concepts <concepts>
-   Scripts <scripts>
-   Data Sources <sources>
    API Documentation <api>
    Gallery <gallery>
 

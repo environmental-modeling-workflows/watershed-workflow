@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.hydrography &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.hydrography</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.hydrography</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Functions for manipulating hydrography and river_tree.River objects&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+
+<span class="kn">import</span> <span class="nn">shapely.ops</span>
+<span class="kn">import</span> <span class="nn">shapely.geometry</span>
+
+<span class="kn">import</span> <span class="nn">watershed_workflow.config</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.utils</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.river_tree</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.split_hucs</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.plot</span>
+
+<span class="n">_tol</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># meters by default</span>
+
+
+<div class="viewcode-block" id="make_global_tree"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.make_global_tree">[docs]</a><span class="k">def</span> <span class="nf">make_global_tree</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constructs River objects from a list of reaches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reaches : list[LineString]</span>
+<span class="sd">      List of reaches</span>
+<span class="sd">    method : str, optional=&#39;geometry&#39;</span>
+<span class="sd">        Provide the method for constructing rivers.  Valid are:</span>
+
+<span class="sd">        * &#39;geometry&#39; looks at coincident coordinates</span>
+<span class="sd">        * &#39;hydroseq&#39; Valid only for NHDPlus data, this uses the</span>
+<span class="sd">          NHDPlus VAA tables Hydrologic Sequence.  If using this</span>
+<span class="sd">          method, get_reaches() must have been called with both</span>
+<span class="sd">          &#39;HydrologicSequence&#39; and &#39;DownstreamMainPathHydroSeq&#39;</span>
+<span class="sd">          properties requested (or properties=True).</span>
+<span class="sd">    tol : float, optional=0.1</span>
+<span class="sd">        Defines what close is in the case of method == &#39;geometry&#39;</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;hydroseq&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">River</span><span class="o">.</span><span class="n">construct_rivers_by_hydroseq</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;geometry&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">River</span><span class="o">.</span><span class="n">construct_rivers_by_geometry</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Invalid method for making Rivers, must be one of &#39;hydroseq&#39; or &#39;geometry&#39;&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="snap"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.snap">[docs]</a><span class="k">def</span> <span class="nf">snap</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">,</span> <span class="n">tol_triple_junctions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snap HUCs to rivers.</span>
+
+<span class="sd">    Attempts to make rivers that intersect, or are close to</span>
+<span class="sd">    intersecting with HUC boundaries intersect discretely, in that</span>
+<span class="sd">    they share a common point on the boundary.</span>
+
+<span class="sd">    This is the highest level function -- it calls many of the other</span>
+<span class="sd">    functions in this namespace.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">hucs</span><span class="p">)</span> <span class="ow">is</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
+    <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tol_triple_junctions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tol_triple_junctions</span> <span class="o">=</span> <span class="n">tol</span>
+
+    <span class="c1"># snap boundary triple junctions to river endpoints</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  snapping polygon segment boundaries to river endpoints&quot;</span><span class="p">)</span>
+    <span class="n">snap_polygon_endpoints</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol_triple_junctions</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent rivers!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent HUCs&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># snap endpoints of all rivers to the boundary if close</span>
+    <span class="c1"># note this is a null-op on cases dealt with above</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  snapping river endpoints to the polygon&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">snap_endpoints</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">hucs</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent rivers!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent HUCs&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">cut_intersections</span><span class="p">:</span>
+        <span class="n">cut_and_snap_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rivers</span></div>
+
+
+<div class="viewcode-block" id="snap_waterbodies"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.snap_waterbodies">[docs]</a><span class="k">def</span> <span class="nf">snap_waterbodies</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">waterbodies</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">,</span> <span class="n">cut_intersections</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snap waterbodies to HUCs.</span>
+
+<span class="sd">    Attempts to make waterbodies that intersect or nearly intersect</span>
+<span class="sd">    hucs intersect discretely, in that they share common point(s).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">hucs</span><span class="p">)</span> <span class="ow">is</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">waterbodies</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">waterbodies</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waterbodies</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># snap endpoints of all rivers to the boundary if close</span>
+    <span class="c1"># note this is a null-op on cases dealt with above</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  snapping waterbody points to the HUC boundary&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">wb</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">waterbodies</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">polygon</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">():</span>
+            <span class="n">waterbodies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">snap</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span> <span class="n">polygon</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cut_and_snap_crossings"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.cut_and_snap_crossings">[docs]</a><span class="k">def</span> <span class="nf">cut_and_snap_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If any reach crosses a HUC boundary:</span>
+
+<span class="sd">    1. If it crosses an external boundary, cut the reach in two and</span>
+<span class="sd">       discard the portion outside of the domain.</span>
+
+<span class="sd">    2. If it crosses an internal boundary, ensure there is a</span>
+<span class="sd">       coordinate the reach that is on the internal boundary.</span>
+
+<span class="sd">    Either way, also ensure there is a coordinate on the HUC</span>
+<span class="sd">    boundary at the crossing point.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  cutting at crossings&quot;</span><span class="p">)</span>
+    <span class="c1"># Note this is O(M*N) where M is number of huc segments and N is</span>
+    <span class="c1"># number of reaches, and could be made more efficient.</span>
+    <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">river_node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+            <span class="n">_cut_and_snap_crossing</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river_node</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">is_consistent</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">rivers</span></div>
+
+
+<span class="k">def</span> <span class="nf">_cut_and_snap_crossing</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">reach_node</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function for cut_and_snap_crossings()&quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span>
+
+    <span class="c1"># first deal with crossings of the HUC exterior boundary -- in</span>
+    <span class="c1"># this case, the reach segment gets split in two and the external</span>
+    <span class="c1"># one is remoevd.</span>
+    <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">spine</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">seg_handle</span> <span class="ow">in</span> <span class="n">spine</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">seg</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">seg</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;intersection found&#39;</span><span class="p">)</span>
+                <span class="n">new_spine</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">seg</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="n">new_reach_segs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  - cutting reach at external boundary of HUCs:&quot;</span><span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      split HUC boundary seg into </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span><span class="si">}</span><span class="s2"> pieces&quot;</span><span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      split reach seg into </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span><span class="si">}</span><span class="s2"> pieces&quot;</span><span class="p">)</span>
+
+                    <span class="c1"># which piece of the reach are we keeping?</span>
+                    <span class="k">if</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                            <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+                        <span class="c1"># keep the upstream (or only) reach seg</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                            <span class="c1"># confirm other/downstream reach is outside</span>
+                            <span class="k">assert</span> <span class="p">(</span><span class="ow">not</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                                <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+                        <span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                                <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])):</span>
+                            <span class="c1"># keep the downstream reach seg, confirm upstream is outside</span>
+                            <span class="k">assert</span> <span class="p">(</span><span class="ow">not</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span>
+                                <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+                            <span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+                    <span class="c1"># keep both pieces of a split huc boundary segment</span>
+                    <span class="c1"># -- rename the first</span>
+                    <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_spine</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># -- add the first</span>
+                        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">new_handle</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_spine</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">spine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_handle</span><span class="p">)</span>
+
+                <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error:&#39;</span><span class="p">)</span>
+                    <span class="n">reachc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">segc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">reachc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">reachc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k--x&#39;</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">segc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">segc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k--+&#39;</span><span class="p">)</span>
+
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Reach split into </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span><span class="si">}</span><span class="s1"> segments&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">r1c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_spine</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r1c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">r1c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;rx&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">r2c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_spine</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r2c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">r2c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;m+&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Reach split into </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span><span class="si">}</span><span class="s1"> segments&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">r1c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r1c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">r1c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b+&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+                        <span class="n">inter</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">non_point_intersection</span><span class="p">(</span>
+                            <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">r1c</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  r1 intersects with boundary? </span><span class="si">{</span><span class="n">inter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">r2c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r2c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">r2c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;cx&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+                        <span class="n">inter</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">non_point_intersection</span><span class="p">(</span>
+                            <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">(),</span> <span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  r2 intersects with boundary? </span><span class="si">{</span><span class="n">inter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">r2c</span><span class="p">)</span>
+                        <span class="n">inter</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  r2 intersection = </span><span class="si">{</span><span class="n">inter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+                    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Problem in cut_intersection&#39;</span><span class="p">)</span>
+
+                <span class="k">break</span>
+
+    <span class="c1"># now deal with crossings of the HUC interior boundary -- in this</span>
+    <span class="c1"># case, the reach segment is kept as one but the segment geometry</span>
+    <span class="c1"># is snapped to make sure the intersection is exact</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">spine</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">seg_handle</span> <span class="ow">in</span> <span class="n">spine</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">seg</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">seg</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                <span class="n">new_spine</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">seg</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="n">new_reach_segs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  - snapping reach at internal boundary of HUCs&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+                    <span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">reach_node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">new_reach_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_spine</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_spine</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">new_handle</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_spine</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">spine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_handle</span><span class="p">)</span>
+                <span class="k">break</span>
+
+
+<div class="viewcode-block" id="snap_polygon_endpoints"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.snap_polygon_endpoints">[docs]</a><span class="k">def</span> <span class="nf">snap_polygon_endpoints</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snaps the endpoints of HUC segments to endpoints of rivers.&quot;&quot;&quot;</span>
+    <span class="c1"># make the kdTree of endpoints of all reaches</span>
+    <span class="n">coords1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">reach</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">depthFirst</span><span class="p">()])</span>
+    <span class="n">coords2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">reach</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">leaves</span><span class="p">()])</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">coords1</span><span class="p">,</span> <span class="n">coords2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># limit to x,y</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="c1"># kdtree = scipy.spatial.cKDTree(coords)</span>
+    <span class="n">kdtree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+    <span class="c1"># for each segment of the HUC spine, find the river outlet that is</span>
+    <span class="c1"># closest.  If within tolerance, move it</span>
+    <span class="k">for</span> <span class="n">seg_handle</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># check point 0, -1</span>
+        <span class="n">endpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="c1"># limit to x,y</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">endpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">endpoints</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">dists</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">kdtree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dists</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">new_seg</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dists</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="n">new_seg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;  Moving HUC segment point 0,1: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;        point 0 to river at </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_seg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">dists</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="n">new_seg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;  Moving HUC segment point 0,1: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;        point -1 to river at </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_seg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">new_seg</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_closest_point</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the closest location on line to point.  If that point is</span>
+<span class="sd">    further than tol or already a coordinate in the line, returns</span>
+<span class="sd">    None.  Otherwise, return the location.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">in_neighborhood</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">point</span><span class="p">),</span> <span class="n">line</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - in neighborhood&quot;</span><span class="p">)</span>
+        <span class="n">nearest_p</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">nearest_point</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">point</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">nearest_p</span><span class="p">,</span> <span class="n">point</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - nearest p = </span><span class="si">{0}</span><span class="s2">, dist = </span><span class="si">{1}</span><span class="s2">, tol = </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nearest_p</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">tol</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="mf">1.e-7</span><span class="p">:</span>
+                <span class="c1"># filter case where the point is already there</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">coords</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">nearest_p</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="snap_endpoints"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.snap_endpoints">[docs]</a><span class="k">def</span> <span class="nf">snap_endpoints</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">hucs</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snap river endpoints to huc segments and insert that point into</span>
+<span class="sd">    the boundary.</span>
+
+<span class="sd">    Note this is O(n^2), and could be made more efficient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">to_add</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="n">river</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span>
+        <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">hucs</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+
+            <span class="c1"># note, this is done in two stages to allow it deal with both endpoints touching</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">seg_handle</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">seg</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span>
+                <span class="c1">#logging.debug(&quot;SNAP P0:&quot;)</span>
+                <span class="c1">#logging.debug(&quot;  huc seg: %r&quot;%seg.coords[:])</span>
+                <span class="c1">#logging.debug(&quot;  river: %r&quot;%river.coords[:])</span>
+                <span class="n">altered</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - checking river coord: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - seg coords: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)))</span>
+                <span class="n">new_coord</span> <span class="o">=</span> <span class="n">_closest_point</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seg</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - new coord: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_coord</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">new_coord</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    snapped river: </span><span class="si">%r</span><span class="s2"> to </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_coord</span><span class="p">))</span>
+
+                    <span class="c1"># move new_coord onto an existing segment coord</span>
+                    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                                          <span class="mi">2</span><span class="p">,</span>
+                                          <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">):</span>
+                        <span class="n">new_coord</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+                    <span class="c1"># remove points that are closer</span>
+                    <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> \
+                          <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_coord</span>
+                    <span class="n">river</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">river</span>
+                    <span class="n">to_add</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">seg_handle</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># second stage</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">seg_handle</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">seg</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span>
+                <span class="c1"># logging.debug(&quot;SNAP P1:&quot;)</span>
+                <span class="c1"># logging.debug(&quot;  huc seg: %r&quot;%seg.coords[:])</span>
+                <span class="c1"># logging.debug(&quot;  river: %r&quot;%river.coords[:])</span>
+                <span class="n">altered</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - checking river coord: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - seg coords: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)))</span>
+                <span class="n">new_coord</span> <span class="o">=</span> <span class="n">_closest_point</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">seg</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  - new coord: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_coord</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">new_coord</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  - snapped river: </span><span class="si">%r</span><span class="s2"> to </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_coord</span><span class="p">))</span>
+
+                    <span class="c1"># move new_coord onto an existing segment coord</span>
+                    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                                          <span class="mi">2</span><span class="p">,</span>
+                                          <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
+                    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">):</span>
+                        <span class="n">new_coord</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+                    <span class="c1"># remove points that are closer</span>
+                    <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> \
+                       <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">new_coord</span><span class="p">,</span> <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                        <span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_coord</span>
+                    <span class="n">river</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">river</span>
+                    <span class="n">to_add</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">seg_handle</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+                    <span class="k">break</span>
+
+    <span class="c1"># find the list of points to add to a given segment</span>
+    <span class="n">to_add_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">seg_handle</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">to_add</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">seg_handle</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">to_add_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">to_add_dict</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">to_add_dict</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">component</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+    <span class="c1"># find the set of points to add to each given segment</span>
+    <span class="k">def</span> <span class="nf">equal</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">p1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">p2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+                                          <span class="mf">1.e-5</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">to_add_dict2</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">seg_handle</span><span class="p">,</span> <span class="n">insert_list</span> <span class="ow">in</span> <span class="n">to_add_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">new_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">insert_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="ow">not</span> <span class="n">equal</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">new_list</span><span class="p">)):</span>
+                <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
+        <span class="n">to_add_dict2</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_list</span>
+
+    <span class="c1"># add these points to the segment</span>
+    <span class="k">for</span> <span class="n">seg_handle</span><span class="p">,</span> <span class="n">insert_list</span> <span class="ow">in</span> <span class="n">to_add_dict2</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span>
+        <span class="c1"># make a list of the coords and a flag to indicate a new</span>
+        <span class="c1"># coord, then sort it by arclength along the segment.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Note this needs special care if the seg is a loop, or else the endpoint gets sorted twice</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">new_coords</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">insert_list</span><span class="p">]</span>
+            <span class="n">old_coords</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">nc</span> <span class="ow">in</span> <span class="n">new_coords</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">new_seg_coords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">new_coords</span> <span class="o">+</span> <span class="n">old_coords</span><span class="p">,</span>
+                                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">seg</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">a</span><span class="p">)))</span>
+
+            <span class="c1"># determine the new coordinate indices</span>
+            <span class="n">breakpoint_inds</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_seg_coords</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_coords</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">insert_list</span><span class="p">]</span>
+            <span class="n">old_coords</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">nc</span> <span class="ow">in</span> <span class="n">new_coords</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">new_seg_coords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">new_coords</span> <span class="o">+</span> <span class="n">old_coords</span><span class="p">,</span>
+                                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">seg</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">a</span><span class="p">)))</span>
+            <span class="n">breakpoint_inds</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_seg_coords</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">breakpoint_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">new_seg_coords</span> <span class="o">=</span> <span class="n">new_seg_coords</span><span class="p">[</span><span class="n">breakpoint_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">+</span> <span class="n">new_seg_coords</span><span class="p">[</span>
+                <span class="mi">0</span><span class="p">:</span><span class="n">breakpoint_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">new_seg_coords</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">new_seg_coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">breakpoint_inds</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_seg_coords</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># now break into new segments</span>
+        <span class="n">new_segs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ind_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">ind_end</span> <span class="ow">in</span> <span class="n">breakpoint_inds</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">ind_end</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">new_segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">c</span>
+                                             <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="n">new_seg_coords</span><span class="p">[</span><span class="n">ind_start</span><span class="p">:</span><span class="n">ind_end</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]))</span>
+            <span class="n">ind_start</span> <span class="o">=</span> <span class="n">ind_end</span>
+
+        <span class="k">assert</span> <span class="p">(</span><span class="n">ind_start</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_seg_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">new_segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="n">new_seg_coords</span><span class="p">[</span><span class="n">ind_start</span><span class="p">:]]))</span>
+
+        <span class="c1"># put all new_segs into the huc list.  Note insert_list[0][0] is the component</span>
+        <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">seg_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_segs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">new_handles</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">new_segs</span><span class="p">)</span>
+        <span class="n">insert_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">new_handles</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">river</span></div>
+
+
+<div class="viewcode-block" id="simplify_and_merge"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.simplify_and_merge">[docs]</a><span class="k">def</span> <span class="nf">simplify_and_merge</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;First pass to clean up hydro data&quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  quick simplify of reaches&quot;</span><span class="p">)</span>
+    <span class="n">reaches</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">reaches</span><span class="p">)</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">reaches</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cleanup"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.cleanup">[docs]</a><span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">simp_tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">,</span> <span class="n">prune_tol</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">merge_tol</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Some hydrography data seems to get some random branches, typically</span>
+<span class="sd">    quite short, that are nearly perfectly parallel to other, longer</span>
+<span class="sd">    branches.  Surely this is a data error -- remove them.</span>
+
+<span class="sd">    This returns rivers in a forest, not in a list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># simplify</span>
+    <span class="k">if</span> <span class="n">simp_tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+            <span class="n">simplify</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">simp_tol</span><span class="p">)</span>
+
+    <span class="c1"># prune short leaf branches and merge short interior reaches</span>
+    <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">merge_tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">merge</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">merge_tol</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">merge_tol</span> <span class="o">!=</span> <span class="n">prune_tol</span> <span class="ow">and</span> <span class="n">prune_tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prune_by_segment_length</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">prune_tol</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="prune_by_segment_length"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.prune_by_segment_length">[docs]</a><span class="k">def</span> <span class="nf">prune_by_segment_length</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">prune_tol</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes any leaf segments that are shorter than prune_tol&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">leaf_nodes</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">leaf</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="n">prune_tol</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...cleaned leaf segment of length: </span><span class="si">%g</span><span class="s2"> at centroid </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                         <span class="p">(</span><span class="n">leaf</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">leaf</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">leaf</span><span class="o">.</span><span class="n">removePreserveProperties</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="prune_river_by_area"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.prune_river_by_area">[docs]</a><span class="k">def</span> <span class="nf">prune_river_by_area</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">prop</span><span class="o">=</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes, IN PLACE, reaches whose total contributing area is less than area km^2.</span>
+
+<span class="sd">    Note this requires NHDPlus data to have been used and the</span>
+<span class="sd">    &#39;TotalDrainageAreaSqKm&#39; property to have been set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">prop</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">area</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">prune</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">count</span></div>
+
+
+<div class="viewcode-block" id="prune_by_area"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.prune_by_area">[docs]</a><span class="k">def</span> <span class="nf">prune_by_area</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes, IN PLACE, reaches whose total contributing area is less than area km^2.</span>
+
+<span class="sd">    Note this requires NHDPlus data to have been used and the</span>
+<span class="sd">    &#39;TotalDrainageAreaSqKm&#39; property to have been set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pruning by total contributing area &lt; </span><span class="si">{</span><span class="n">area</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">sufficiently_big_rivers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">area</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="n">prune_river_by_area</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">area</span><span class="p">)</span>
+            <span class="n">sufficiently_big_rivers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;... pruned </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sufficiently_big_rivers</span></div>
+
+
+<div class="viewcode-block" id="prune_river_by_fractional_contributing_area"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.prune_river_by_fractional_contributing_area">[docs]</a><span class="k">def</span> <span class="nf">prune_river_by_fractional_contributing_area</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">area_fraction</span><span class="p">,</span> <span class="n">total_area</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes, IN PLACE, reaches whose CA/total_area &lt; area_fraction.</span>
+
+<span class="sd">    Note this requires NHDPlus data to have been used and the</span>
+<span class="sd">    &#39;TotalDrainageAreaSqKm&#39; property to have been set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">total_area</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">total_area</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;... total contributing area = </span><span class="si">{</span><span class="n">total_area</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">catchments_available</span> <span class="o">=</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">first</span><span class="p">:</span>
+            <span class="c1"># removing the top reach kills the whole river...</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_area</span> <span class="o">&lt;</span> <span class="n">area_fraction</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;... removing: </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">total_area</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">node</span><span class="o">.</span><span class="n">prune</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">count</span></div>
+
+
+<div class="viewcode-block" id="prune_by_fractional_contributing_area"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.prune_by_fractional_contributing_area">[docs]</a><span class="k">def</span> <span class="nf">prune_by_fractional_contributing_area</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span>
+                                          <span class="n">area_fraction</span><span class="p">,</span>
+                                          <span class="n">total_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                          <span class="n">prune_whole_rivers</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes, IN PLACE, reaches whose CA/total_area &lt; area_fraction.</span>
+
+<span class="sd">    Note this requires NHDPlus data to have been used and the</span>
+<span class="sd">    &#39;TotalDrainageAreaSqKm&#39; property to have been set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pruning by fractional contributing area &lt; </span><span class="si">{</span><span class="n">area_fraction</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">sufficiently_big_rivers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">total_area</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">total_area</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">prune_whole_rivers</span>
+            <span class="p">)</span> <span class="ow">or</span> <span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">area_fraction</span> <span class="o">*</span> <span class="n">total_area</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="n">prune_river_by_fractional_contributing_area</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">area_fraction</span><span class="p">,</span> <span class="n">total_area</span><span class="p">)</span>
+            <span class="n">sufficiently_big_rivers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;... pruning river with area </span><span class="si">{</span><span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">total_area</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;... pruned </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sufficiently_big_rivers</span></div>
+
+
+<div class="viewcode-block" id="remove_divergences"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.remove_divergences">[docs]</a><span class="k">def</span> <span class="nf">remove_divergences</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">remove_diversions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">remove_braids</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Uses the NHDPlus property DIVERGENCE to remove divergences, IN PLACE.</span>
+
+<span class="sd">    These can be of two types:</span>
+
+<span class="sd">    Diversions are divergences that do not return to the stream</span>
+<span class="sd">    network.  These will consist of individual rivers, typically with</span>
+<span class="sd">    only one leaf reach, whose leaf reaches are all divergences.</span>
+
+<span class="sd">    Braids are divergences that return to the river network, and so</span>
+<span class="sd">    look like branches of a river tree, all of whose leaves are</span>
+<span class="sd">    divergences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">remove_diversions</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Remove diversions.&quot;</span><span class="p">)</span>
+        <span class="n">non_diversion</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">leaf</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DivergenceCode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">leaf_nodes</span><span class="p">()):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ...remove river with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">river</span><span class="p">)</span><span class="si">}</span><span class="s2"> reaches.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">non_diversion</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">non_diversion</span>
+
+    <span class="k">if</span> <span class="n">remove_braids</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Pruning divergences.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">leaf_nodes</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DivergenceCode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">upstream_hydroseq</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;UpstreamMainPathHydroSeq&#39;</span><span class="p">]</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">upstream</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                            <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span>
+                            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;UpstreamMainPathHydroSeq&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">upstream_hydroseq</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="c1"># a diversion, not a divergence</span>
+                        <span class="k">pass</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># a divergence, start removing until we meet a junction</span>
+                        <span class="n">done</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span>
+                        <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+                            <span class="n">parent</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span>
+                            <span class="n">reach</span><span class="o">.</span><span class="n">removePreserveProperties</span><span class="p">()</span>
+                            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">reach</span> <span class="o">=</span> <span class="n">parent</span>
+                            <span class="n">done</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ... pruning braid of length </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rivers</span></div>
+
+
+<div class="viewcode-block" id="filter_small_rivers"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.filter_small_rivers">[docs]</a><span class="k">def</span> <span class="nf">filter_small_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove any rivers with fewer than count reaches.&quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removing rivers with fewer than </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> reaches.&quot;</span><span class="p">)</span>
+    <span class="n">new_rivers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">ltree</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ltree</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...removing river with </span><span class="si">%d</span><span class="s2"> reaches&quot;</span> <span class="o">%</span> <span class="n">ltree</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_rivers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...keeping river with </span><span class="si">%d</span><span class="s2"> reaches&quot;</span> <span class="o">%</span> <span class="n">ltree</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_rivers</span></div>
+
+
+<div class="viewcode-block" id="merge"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.merge">[docs]</a><span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove inner branches that are short, combining branchpoints as needed.</span>
+
+<span class="sd">    This function merges the &quot;short&quot; segment into the parent segment</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="n">tol</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...cleaned inner segment of length </span><span class="si">%g</span><span class="s2"> at centroid </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                         <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">num_siblings</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">()))</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">]</span>
+                                                              <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">num_siblings</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">sibling</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">():</span>
+                    <span class="n">sibling</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">sibling</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                                                                  <span class="o">+</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">])</span>
+            <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">],</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span>
+                
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="simplify"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.hydrography.simplify">[docs]</a><span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplify, IN PLACE, all reaches.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_seg</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">new_seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">new_seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">new_seg</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

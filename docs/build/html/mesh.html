@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meshing &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Manipulation" href="data.html" />
+    <link rel="prev" title="Data Structures and Shape Manipulation" href="geometry.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Meshes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.mesh">Mesh</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.SideSet"><code class="docutils literal notranslate"><span class="pre">SideSet</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.LabeledSet"><code class="docutils literal notranslate"><span class="pre">LabeledSet</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.Mesh2D"><code class="docutils literal notranslate"><span class="pre">Mesh2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.Mesh3D"><code class="docutils literal notranslate"><span class="pre">Mesh3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.telescope_factor"><code class="docutils literal notranslate"><span class="pre">telescope_factor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.optimize_dzs"><code class="docutils literal notranslate"><span class="pre">optimize_dzs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.create_submesh"><code class="docutils literal notranslate"><span class="pre">create_submesh()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.river_mesh">River-aligned Mesh</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.sort_children_by_angle"><code class="docutils literal notranslate"><span class="pre">sort_children_by_angle()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.create_rivers_meshes"><code class="docutils literal notranslate"><span class="pre">create_rivers_meshes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.create_river_mesh"><code class="docutils literal notranslate"><span class="pre">create_river_mesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.create_river_corridor"><code class="docutils literal notranslate"><span class="pre">create_river_corridor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.to_quads"><code class="docutils literal notranslate"><span class="pre">to_quads()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.set_width_by_order"><code class="docutils literal notranslate"><span class="pre">set_width_by_order()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.move_to_target_separation"><code class="docutils literal notranslate"><span class="pre">move_to_target_separation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.width_by_order"><code class="docutils literal notranslate"><span class="pre">width_by_order()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.convexity_enforcement"><code class="docutils literal notranslate"><span class="pre">convexity_enforcement()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.make_convex_by_nudge"><code class="docutils literal notranslate"><span class="pre">make_convex_by_nudge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.hucsegs_at_intersection"><code class="docutils literal notranslate"><span class="pre">hucsegs_at_intersection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.angle_rivers_segs"><code class="docutils literal notranslate"><span class="pre">angle_rivers_segs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.rc_points_for_rt_point"><code class="docutils literal notranslate"><span class="pre">rc_points_for_rt_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.adjust_seg_for_rc"><code class="docutils literal notranslate"><span class="pre">adjust_seg_for_rc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridors"><code class="docutils literal notranslate"><span class="pre">adjust_hucs_for_river_corridors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor"><code class="docutils literal notranslate"><span class="pre">adjust_hucs_for_river_corridor()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.triangulation">Triangulation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.Nodes"><code class="docutils literal notranslate"><span class="pre">Nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.oneway_trip_connect"><code class="docutils literal notranslate"><span class="pre">oneway_trip_connect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.round_trip_connect"><code class="docutils literal notranslate"><span class="pre">round_trip_connect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.NodesEdges"><code class="docutils literal notranslate"><span class="pre">NodesEdges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.triangulate"><code class="docutils literal notranslate"><span class="pre">triangulate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.refine_from_max_area"><code class="docutils literal notranslate"><span class="pre">refine_from_max_area()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.refine_from_river_distance"><code class="docutils literal notranslate"><span class="pre">refine_from_river_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.refine_from_max_edge_length"><code class="docutils literal notranslate"><span class="pre">refine_from_max_edge_length()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.triangulation.pick_hole_point"><code class="docutils literal notranslate"><span class="pre">pick_hole_point()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.condition">Condition</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits"><code class="docutils literal notranslate"><span class="pre">fill_pits()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits1"><code class="docutils literal notranslate"><span class="pre">fill_pits1()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits2"><code class="docutils literal notranslate"><span class="pre">fill_pits2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits3"><code class="docutils literal notranslate"><span class="pre">fill_pits3()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits_dual"><code class="docutils literal notranslate"><span class="pre">fill_pits_dual()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.identify_local_minima"><code class="docutils literal notranslate"><span class="pre">identify_local_minima()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.smooth"><code class="docutils literal notranslate"><span class="pre">smooth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.condition_river_mesh"><code class="docutils literal notranslate"><span class="pre">condition_river_mesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.elevate_rivers"><code class="docutils literal notranslate"><span class="pre">elevate_rivers()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.regions">Regions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.regions.add_nlcd_labeled_sets"><code class="docutils literal notranslate"><span class="pre">add_nlcd_labeled_sets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.regions.add_polygonal_regions"><code class="docutils literal notranslate"><span class="pre">add_polygonal_regions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.regions.add_watershed_regions"><code class="docutils literal notranslate"><span class="pre">add_watershed_regions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.regions.add_watershed_regions_and_outlets"><code class="docutils literal notranslate"><span class="pre">add_watershed_regions_and_outlets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.regions.add_river_corridor_regions"><code class="docutils literal notranslate"><span class="pre">add_river_corridor_regions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">Meshing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/mesh.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="meshing">
+<h1>Meshing<a class="headerlink" href="#meshing" title="Permalink to this heading"></a></h1>
+<section id="module-watershed_workflow.mesh">
+<span id="mesh"></span><h2>Mesh<a class="headerlink" href="#module-watershed_workflow.mesh" title="Permalink to this heading"></a></h2>
+<p>Tools for turning data into meshes, then writing them to file.</p>
+<p>Works with and assumes all polyhedra cells (and polygon faces).</p>
+<p>Requires building a reasonably recent version of Exodus to get
+the associated exodus.py wrappers in python3.</p>
+<p>Note that this is typically done in your standard ATS installation,
+assuming you have built your Amanzi TPLs with shared libraries (the
+default through bootstrap).</p>
+<p>In that case, simply ensure that ${AMANZI_TPLS_DIR}/SEACAS/lib is in
+your PYTHONPATH.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.SideSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">SideSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#SideSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.SideSet" title="Permalink to this definition"></a></dt>
+<dd><p>A collection of faces in cells.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.LabeledSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">LabeledSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ent_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_extrude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#LabeledSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.LabeledSet" title="Permalink to this definition"></a></dt>
+<dd><p>A generic collection of entities.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">Mesh2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labeled_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_Nothing.NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_handedness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D" title="Permalink to this definition"></a></dt>
+<dd><p>A 2D mesh class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em><em>(</em><em>NCOORDS</em><em>,</em><em>NDIMS</em><em>)</em>) – Array of coordinates of the 2D mesh.</p></li>
+<li><p><strong>conn</strong> (<em>list</em><em>(</em><em>lists</em><em>)</em>) – List of lists of indices into coords that form the cells.</p></li>
+<li><p><strong>labeled_sets</strong> (<em>list</em><em>(</em><a class="reference internal" href="#watershed_workflow.mesh.LabeledSet" title="watershed_workflow.mesh.LabeledSet"><em>LabeledSet</em></a><em>)</em><em>, </em><em>optional</em>) – List of labeled sets to add to the mesh.</p></li>
+<li><p><strong>crs</strong> (<em>CRS</em>) – Keep this as a property for future reference.</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional=0.01</em>) – A small measure of length between coords.</p></li>
+<li><p><strong>check_handedness</strong> (<em>bool</em><em>, </em><em>optional=True</em>) – If true, ensure all cells are oriented so that right-hand rule
+ordering of the nodes points up.</p></li>
+<li><p><strong>validate</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If true, validate coordinates and connections
+post-construction.</p></li>
+<li><p><strong>Note</strong> (<em>(</em><em>coords</em><em>, </em><em>conn</em><em>) </em><em>may be output provided by a</em>) – </p></li>
+<li><p><strong>call.</strong> (<em>watershed_workflow.triangulation.triangulate</em><em>(</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.conn">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">conn</span></span><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.conn" title="Permalink to this definition"></a></dt>
+<dd><p>Note that conn is immutable because changing this breaks all the
+other properties, which may be cached.  To change topology, one must construct a new mesh!</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.edge_hash">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edge_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.edge_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.edge_hash" title="Permalink to this definition"></a></dt>
+<dd><p>Hashes edges in a direction-independent way.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.boundary_edges">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">boundary_edges</span></span><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.boundary_edges" title="Permalink to this definition"></a></dt>
+<dd><p>Return edges in the boundary of the mesh, ordered around the boundary.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.check_handedness">
+<span class="sig-name descname"><span class="pre">check_handedness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.check_handedness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.check_handedness" title="Permalink to this definition"></a></dt>
+<dd><p>Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.next_available_labeled_setid">
+<span class="sig-name descname"><span class="pre">next_available_labeled_setid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.next_available_labeled_setid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.next_available_labeled_setid" title="Permalink to this definition"></a></dt>
+<dd><p>Returns next available LS id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.compute_centroid">
+<span class="sig-name descname"><span class="pre">compute_centroid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.compute_centroid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.compute_centroid" title="Permalink to this definition"></a></dt>
+<dd><p>Computes, based on coords, the centroid of a cell with ID c.</p>
+<p>Note this ALWAYS recomputes the value, not using the cache.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.centroids">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">centroids</span></span><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.centroids" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate surface mesh centroids.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.clear_geometry_cache">
+<span class="sig-name descname"><span class="pre">clear_geometry_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.clear_geometry_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.clear_geometry_cache" title="Permalink to this definition"></a></dt>
+<dd><p>If coordinates are changed, any computed, cached geometry must be
+recomputed.  It is the USER’s responsibility to call this
+function if any coords are changed!</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.plot" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the flattened 2D mesh.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.write_vtk">
+<span class="sig-name descname"><span class="pre">write_vtk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.write_vtk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.write_vtk" title="Permalink to this definition"></a></dt>
+<dd><p>Writes to VTK.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.transform" title="Permalink to this definition"></a></dt>
+<dd><p>Transform a 2D mesh</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.read_VTK">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_VTK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.read_VTK"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.read_VTK" title="Permalink to this definition"></a></dt>
+<dd><p>Constructor from a VTK file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.read_VTK_Unstructured">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_VTK_Unstructured</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.read_VTK_Unstructured"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.read_VTK_Unstructured" title="Permalink to this definition"></a></dt>
+<dd><p>Constructor from an unstructured VTK file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.read_VTK_Simplices">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_VTK_Simplices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.read_VTK_Simplices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.read_VTK_Simplices" title="Permalink to this definition"></a></dt>
+<dd><p>Constructor from an structured VTK file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.from_Transect">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_Transect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.from_Transect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.from_Transect" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a 2D surface strip mesh from transect data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh2D.to_dual">
+<span class="sig-name descname"><span class="pre">to_dual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh2D.to_dual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh2D.to_dual" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a 2D surface mesh from a primal 2D triangular surface mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>dual_nodes</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>dual_conn</strong> (<em>list(lists)</em>) – The nodes and cell_to_node_conn of a 2D, polygonal, nearly Voronoi
+mesh that is the truncated dual of self.  Here we say nearly because
+the boundary triangles (see note below) are not Voronoi.</p></li>
+<li><p><strong>dual_from_primal_mapping</strong> (<em>np.array( (len(dual_conn),), ‘i’)</em>) – Mapping from a dual cell to the primal node it is based on.
+Without the boundary, this would be simply
+arange(0,len(dual_conn)), but beacuse we added triangles on the
+boundary, this mapping is useful.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Nodes of the dual are on circumcenters of the primal triangles.</p></li>
+<li><p>Centers of the dual are numbered by nodes of the primal mesh, modulo
+the boundary.</p></li>
+<li><p>At the boundary, the truncated dual polygon may be non-convex.  To
+avoid this issue, we triangulate boundary polygons.</p></li>
+</ul>
+<p>We do not simply construct a mesh because likely the user needs to
+elevate, generate material IDs, labeled sets, etc, prior to mesh
+construction.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">Mesh3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">face_to_node_conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_to_face_conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labeled_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_Nothing.NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_Nothing.NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D" title="Permalink to this definition"></a></dt>
+<dd><p>A 3D mesh class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em><em>(</em><em>NCOORDS</em><em>,</em><em>3</em><em>)</em>) – Array of coordinates of the 3D mesh.</p></li>
+<li><p><strong>face_to_node_conn</strong> (<em>list</em><em>(</em><em>lists</em><em>)</em>) – List of lists of indices into coords that form the faces.</p></li>
+<li><p><strong>cell_to_face_conn</strong> (<em>list</em><em>(</em><em>lists</em><em>)</em>) – List of lists of indices into face_to_node_conn that form the
+cells.</p></li>
+<li><p><strong>side_sets</strong> (<em>list</em><em>(</em><a class="reference internal" href="#watershed_workflow.mesh.SideSet" title="watershed_workflow.mesh.SideSet"><em>SideSet</em></a><em>)</em><em>, </em><em>optional</em>) – List of side sets to add to the mesh.</p></li>
+<li><p><strong>labeled_sets</strong> (<em>list</em><em>(</em><a class="reference internal" href="#watershed_workflow.mesh.LabeledSet" title="watershed_workflow.mesh.LabeledSet"><em>LabeledSet</em></a><em>)</em><em>, </em><em>optional</em>) – List of labeled sets to add to the mesh.</p></li>
+<li><p><strong>material_ids</strong> (<em>np.array</em><em>(</em><em>(</em><em>len</em><em>(</em><em>cell_to_face_conn</em><em>)</em><em>,</em><em>)</em><em>,</em><em>'i'</em><em>)</em><em>, </em><em>optional</em>) – Array of length num_cells that specifies material IDs</p></li>
+<li><p><strong>crs</strong> (<em>CRS</em>) – Keep the coordinate system for reference.</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional=0.01</em>) – A small measure of length between coords.</p></li>
+<li><p><strong>(</strong><strong>coords</strong> (<em>Note that</em>) – </p></li>
+<li><p><strong>a</strong> (<em>conn</em><em>) </em><em>may be output provided by</em>) – </p></li>
+<li><p><strong>call.</strong> (<em>watershed_workflow.triangulation.triangulate</em><em>(</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.validate" title="Permalink to this definition"></a></dt>
+<dd><p>Checks the validity of the mesh, or throws an AssertionError.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.next_available_labeled_setid">
+<span class="sig-name descname"><span class="pre">next_available_labeled_setid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.next_available_labeled_setid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.next_available_labeled_setid" title="Permalink to this definition"></a></dt>
+<dd><p>Returns next available LS id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.write_vtk">
+<span class="sig-name descname"><span class="pre">write_vtk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.write_vtk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.write_vtk" title="Permalink to this definition"></a></dt>
+<dd><p>Writes to VTK.</p>
+<p>Note, this just writes the topology/geometry information, for
+WEDGE type meshes (extruded triangles).  No labeled sets are
+written.  Prefer to use write_exodus() for a fully featured
+mesh.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.write_exodus">
+<span class="sig-name descname"><span class="pre">write_exodus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">face_block_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'one</span> <span class="pre">block'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.write_exodus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.write_exodus" title="Permalink to this definition"></a></dt>
+<dd><p>Write the 3D mesh to ExodusII using arbitrary polyhedra spec</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.summarize_extrusion">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">summarize_extrusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncells_per_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mat_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surface_cell_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.summarize_extrusion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.summarize_extrusion" title="Permalink to this definition"></a></dt>
+<dd><p>Summarizes extruded data by printing info to log file.</p>
+<p>This is useful in rapidly debugging and understanding the layering before
+you do the extrusion process.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.Mesh3D.extruded_Mesh2D">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extruded_Mesh2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh2D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncells_per_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mat_ids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#Mesh3D.extruded_Mesh2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.Mesh3D.extruded_Mesh2D" title="Permalink to this definition"></a></dt>
+<dd><p>Uniformly extrude a 2D mesh to make a 3D mesh.</p>
+<p>Layers of potentially multiple sets of cells are extruded
+downward in the vertical.  The cell dz is uniform horizontally
+and vertically through the layer in all but the ‘snapped’
+case, where it is uniform vertically but not horizontally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh2D</strong> (<a class="reference internal" href="#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.Mesh2D"><em>Mesh2D</em></a>) – The 2D mesh to extrude</p></li>
+<li><p><strong>layer_types</strong> (<em>str</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em>) – One of [‘snapped’, ‘function’, ‘node’, ‘cell’,] or a list of
+these strings, describing the extrusion method for each
+layer.  If only a single string is supplied, all layers are
+of this type.  See layer_data below.</p></li>
+<li><p><strong>layer_data</strong> (<em>list</em><em>[</em><em>data</em><em>]</em>) – <p>Data required, one for each layer.  The data is specific to
+the layer type:</p>
+<ul>
+<li><p>’constant’ : float, layer thickness</p></li>
+<li><p>’snapped’ : float, the bottom z-coordinate of the layer.
+Cells are extruded uniformly to whatever thickness
+required to match this bottom coordinate.</p></li>
+<li><p>’function’ : function, layer_thickness = func(x,y)</p></li>
+<li><p>’node’ : np.array((mesh2D.num_nodes,), float) layer
+thickness for each node</p></li>
+<li><p>’cell’ : np.array((mesh2D.num_cells,), float)
+interpolates nodal layer thickness from neighboring cell
+thicknesses</p></li>
+</ul>
+</p></li>
+<li><p><strong>ncells_per_layer</strong> (<em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em>) – Either a single integer (same number of cells in all layers)
+or a list of number of cells in each layer</p></li>
+<li><p><strong>mat_ids</strong> (<em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>np.ndarray</em><em>(</em><em>(</em><em>num_layers</em><em>, </em><em>mesh2D.num_cells</em><em>)</em><em>, </em><em>dtype=int</em><em>)</em>) – Material ID for each cell in each layer.  If an int, all
+cells in all layers share thesame material ID.  If a list or
+1D array, one material ID per layer.  If a 2D array,
+provides all material IDs explicitly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The extruded, 3D mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#watershed_workflow.mesh.Mesh3D" title="watershed_workflow.mesh.Mesh3D">Mesh3D</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.telescope_factor">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">telescope_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ncells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_dz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#telescope_factor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.telescope_factor" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates a telescoping factor to fill a given layer.</p>
+<p>Calculates a constant geometric factor, such that a layer of thickness
+layer_dz is perfectly filled by ncells in the vertical, where the top cell
+is dz in thickness and each successive cell grows by a factor of that
+factor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ncells</strong> (<em>int</em>) – Number of cells (in the vertical) needed.</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – Top cell’s thickness in the vertical.</p></li>
+<li><p><strong>layer_dz</strong> (<em>float</em>) – Thickness of the total layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The telescoping factor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.optimize_dzs">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">optimize_dzs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz_begin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz_end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_cells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_increasing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#optimize_dzs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.optimize_dzs" title="Permalink to this definition"></a></dt>
+<dd><p>Tries to optimize dzs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.create_submesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">create_submesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#create_submesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.create_submesh" title="Permalink to this definition"></a></dt>
+<dd><p>Given a shape that contains some cells of m2, create the submesh.</p>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.river_mesh">
+<span id="river-aligned-mesh"></span><h2>River-aligned Mesh<a class="headerlink" href="#module-watershed_workflow.river_mesh" title="Permalink to this heading"></a></h2>
+<p>creates river mesh using quad, pentagon and hexagon elements</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.sort_children_by_angle">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">sort_children_by_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#sort_children_by_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.sort_children_by_angle" title="Permalink to this definition"></a></dt>
+<dd><p>Sorts the children of a given segment by their angle with respect to that segment.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.create_rivers_meshes">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">create_rivers_meshes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_convexity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#create_rivers_meshes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.create_rivers_meshes" title="Permalink to this definition"></a></dt>
+<dd><p>Returns list of elems and river corridor polygons for a given list of river trees</p>
+<section id="parameters">
+<h3>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>rivers: list(watershed_workflow.river_tree.River object)</dt><dd><p>List of river tree along which river meshes are to be created</p>
+</dd>
+<dt>widths: float or a dictionary</dt><dd><p>Width of streams, as constant or {stream-order: width}</p>
+</dd>
+<dt>enforce_convexity: boolean</dt><dd><p>If true, enforce convexity of the pentagons/hexagons at the
+junctions.</p>
+</dd>
+<dt>ax<span class="classifier">matplotlib Axes object, optional</span></dt><dd><p>For debugging – plots troublesome reaches as quad elements are
+generated to find tricky areas.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elems</strong> (<em>list(list)</em>) – List of river elements</p></li>
+<li><p><strong>corrs</strong> (<em>list(shapely.geometry.Polygon)</em>) – List of river corridor polygons</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.create_river_mesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">create_river_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_convexity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#create_river_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.create_river_mesh" title="Permalink to this definition"></a></dt>
+<dd><p>Returns list of elems and river corridor polygons for a given river tree</p>
+<section id="id1">
+<h3>Parameters:<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>river: watershed_workflow.river_tree.River object)</dt><dd><p>River tree along which mesh is to be created</p>
+</dd>
+<dt>widths: float or a dictionary</dt><dd><p>Width of streams, as constant or {stream-order: width}</p>
+</dd>
+<dt>enforce_convexity: boolean</dt><dd><p>If true, enforce convexity of the pentagons/hexagons at the
+junctions.</p>
+</dd>
+<dt>gid_shift: int</dt><dd><p>All the node-ids used in the element defination are shifted by
+this number to make it consistant with the global ids in the m2
+mesh, necessary in the case of multiple rivers</p>
+</dd>
+<dt>dilation_width: float</dt><dd><p>This is used for initial buffering of the river tree into the
+river corridor polygon.  For a typical watershed the 4 m default
+should work well; for smaller domains, setting smaller initial
+dilation_width might be desirable (much smaller than expected
+quad element length).</p>
+</dd>
+<dt>ax<span class="classifier">matplotlib Axes object, optional</span></dt><dd><p>For debugging – plots troublesome reaches as quad elements are
+generated to find tricky areas.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elems</strong> (<em>List(List)</em>) – List of river elements</p></li>
+<li><p><strong>corr</strong> (<em>List(shapely.geometry.Polygon)</em>) – a river corridor polygon</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.create_river_corridor">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">create_river_corridor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#create_river_corridor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.create_river_corridor" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a polygon representing the river corridor with a fixed
+dilation width.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>river</strong> (<em>watershed_workflow.river_tree.River object</em>) – River tree along which corridor polygon is to be created.</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – Width to dilate the river.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resulting polygon.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>shapely.geometry.Polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.to_quads">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">to_quads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#to_quads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.to_quads" title="Permalink to this definition"></a></dt>
+<dd><p>Iterate over the rivers, creating quads and pentagons forming the corridor.</p>
+<p>The global_id_adjustment is to keep track of node_id in elements
+w.r.t to global id in mesh mainly relevant for multiple river</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rivers</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.river_tree.River" title="watershed_workflow.river_tree.River"><em>watershed_workflow.river_tree.River</em></a>) – river tree</p></li>
+<li><p><strong>corr</strong> (<em>shapely.geometry.Polygon</em>) – a river corridor polygon for the river</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – fixed width used for dilating the river</p></li>
+<li><p><strong>gid_shift</strong> (<em>int</em>) – All the node-ids used in the element defination are shifted by
+this number to make it consistant with the global ids in the m2
+mesh, necessary in the case of multiple rivers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>elems</strong> – List of river elements</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list(list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.set_width_by_order">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">set_width_by_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#set_width_by_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.set_width_by_order" title="Permalink to this definition"></a></dt>
+<dd><p>Adjust the river-corridor polygon width by order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>river</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.river_tree.River" title="watershed_workflow.river_tree.River"><em>watershed_workflow.river_tree.River</em></a>) – river tree along which mesh is to be created</p></li>
+<li><p><strong>corr</strong> (<em>shapely.geometry.Polygon</em>) – a river corridor polygon for the river</p></li>
+<li><p><strong>widths</strong> (<em>float</em><em> or </em><em>dict</em>) – Width of the river, as constant or {stream-order: width}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>river corridor polygon with adjusted width</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>shapely.geometry.Polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.move_to_target_separation">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">move_to_target_separation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#move_to_target_separation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.move_to_target_separation" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the points after moving them to a target separation from each other</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.width_by_order">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">width_by_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#width_by_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.width_by_order" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the reach width based using the {order:width dictionary}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.convexity_enforcement">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">convexity_enforcement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#convexity_enforcement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.convexity_enforcement" title="Permalink to this definition"></a></dt>
+<dd><p>Ensure convexity of each river-corridor element.</p>
+<p>Moves nodes onto the convex hull of the element if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>river</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.river_tree.River" title="watershed_workflow.river_tree.River"><em>watershed_workflow.river_tree.River</em></a>) – River tree along which mesh is to be created</p></li>
+<li><p><strong>corr</strong> (<em>shapely.geometry.Polygon</em>) – The river corridor polygon</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The new polygon with all convex elements.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>shapely.geometry.Polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.make_convex_by_nudge">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">make_convex_by_nudge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#make_convex_by_nudge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.make_convex_by_nudge" title="Permalink to this definition"></a></dt>
+<dd><p>Nudges the neck-points of the junction until the element is convex.</p>
+<p>Used if efficient convexity does not work</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.hucsegs_at_intersection">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">hucsegs_at_intersection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#hucsegs_at_intersection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.hucsegs_at_intersection" title="Permalink to this definition"></a></dt>
+<dd><p>For a given intersection point, return a list of indices for huc.segments touching this point</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.angle_rivers_segs">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">angle_rivers_segs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_seg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#angle_rivers_segs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.angle_rivers_segs" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the angle of incoming-river-segment or huc-segment w.r.t outgoing river.</p>
+<p>The angle is measured clockwise; this is useful to sort
+orientation wise and add river corridor points at junction</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.rc_points_for_rt_point">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">rc_points_for_rt_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rt_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#rc_points_for_rt_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.rc_points_for_rt_point" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the points (list of indices of coords) on the river-corridor-polygon for a given junction point on river tree.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.adjust_seg_for_rc">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">adjust_seg_for_rc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_seg_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrate_rc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#adjust_seg_for_rc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.adjust_seg_for_rc" title="Permalink to this definition"></a></dt>
+<dd><p>Return the modified segment accomodating river-corridor-polygon (exclude river corridor or integrate with it).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.adjust_hucs_for_river_corridors">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">adjust_hucs_for_river_corridors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrate_rc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#adjust_hucs_for_river_corridors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridors" title="Permalink to this definition"></a></dt>
+<dd><p>Adjusts hucs to accomodate river corridor polygons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hucs</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.split_hucs.SplitHUCs" title="watershed_workflow.split_hucs.SplitHUCs"><em>SplitHUCs</em></a>) – A split-form HUC object from, e.g., get_split_form_hucs(), will be modified in place.</p></li>
+<li><p><strong>rivers</strong> (<em>list</em><em>(</em><a class="reference internal" href="geometry.html#watershed_workflow.river_tree.River" title="watershed_workflow.river_tree.River"><em>watershed_workflow.river_tree.River</em></a><em>)</em>) – A list of river tree object</p></li>
+<li><p><strong>river_corrs</strong> (<em>list</em><em>(</em><em>shapely.geometry.Polygons</em><em>)</em>) – A list of river corridor polygons for each river</p></li>
+<li><p><strong>integrate_rc</strong> (<em>bool</em><em>, </em><em>optional</em>) – if false, will leave gap in the huc whereever rc crosses huc except at the overall outlet;
+hence hucs.polygons() will break, this mode is to be used during triangulation to creates NodesEdges object
+with a rc as a whole
+if true, will extend the hucs-segments alogn the edge of quads</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.adjust_hucs_for_river_corridor">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">adjust_hucs_for_river_corridor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrate_rc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#adjust_hucs_for_river_corridor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor" title="Permalink to this definition"></a></dt>
+<dd><p>Adjusts hucs to accomodate river corridor polygon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hucs</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.split_hucs.SplitHUCs" title="watershed_workflow.split_hucs.SplitHUCs"><em>SplitHUCs</em></a>) – A split-form HUC object from, e.g., get_split_form_hucs()</p></li>
+<li><p><strong>river</strong> (<em>watershed_workflow.river_tree.River object</em>) – river tree</p></li>
+<li><p><strong>river_corr</strong> (<em>shapely.geometry.Polygons</em>) – A river corridor polygon for given river</p></li>
+<li><p><strong>integrate_rc</strong> (<em>bool</em><em>, </em><em>optional</em>) – If false, this will leave gap in the huc whereever rc crosses
+huc except at the overall outlet; hence hucs.polygons() will
+break, this mode is to be used during triangulation to creates
+NodesEdges object with a rc as a whole.  If true, will extend
+the hucs-segments alogn the edge of quads.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.triangulation">
+<span id="triangulation"></span><h2>Triangulation<a class="headerlink" href="#module-watershed_workflow.triangulation" title="Permalink to this heading"></a></h2>
+<p>Triangulates polygons</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.Nodes">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">Nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decimals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#Nodes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.Nodes" title="Permalink to this definition"></a></dt>
+<dd><p>A collection of nodes that are indexed in the order they are added.</p>
+<p>Note this uses round() for an efficient solution, which is
+potentially fragile if numbers were not generated consistently.
+In this use case, however, it should be safe – numbers were
+originally rounded (in watershed_workflow.config), and then any function which
+inserted new points or moved points were always careful to ensure
+that all duplicates were always assigned the identical values –
+i.e. all math was done BEFORE assignment.  So duplicates have
+identical representations in floating point.  This suggests we
+shouldn’t have to round here at all, but we do anyway to keep
+things cleaner.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.oneway_trip_connect">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">oneway_trip_connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#oneway_trip_connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.oneway_trip_connect" title="Permalink to this definition"></a></dt>
+<dd><p>Connect indices in edges in a oneway fashion</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.round_trip_connect">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">round_trip_connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#round_trip_connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.round_trip_connect" title="Permalink to this definition"></a></dt>
+<dd><p>Connect indices in edges in a round-trip fashion</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.NodesEdges">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">NodesEdges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objlist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#NodesEdges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.NodesEdges" title="Permalink to this definition"></a></dt>
+<dd><p>A collection of nodes and edges.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.NodesEdges.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#NodesEdges.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.NodesEdges.add" title="Permalink to this definition"></a></dt>
+<dd><p>Adds nodes and edges from obj into collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.NodesEdges.check">
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#NodesEdges.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.NodesEdges.check" title="Permalink to this definition"></a></dt>
+<dd><p>Checks consistency of the interal representation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.triangulate">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">triangulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal_boundaries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#triangulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.triangulate" title="Permalink to this definition"></a></dt>
+<dd><p>Triangulates HUCs and rivers.</p>
+<p>Note, refinement of a given triangle is done if any of the provided
+criteria is met.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hucs</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.split_hucs.SplitHUCs" title="watershed_workflow.split_hucs.SplitHUCs"><em>SplitHUCs</em></a>) – A split-form HUC object from, e.g., get_split_form_hucs()</p></li>
+<li><p><strong>refinement_polygon</strong> (<em>list</em><em>, </em><em>optional</em>) – List of RiverTrees or other iterable collections of
+coordinates used to refine the mesh given the distance
+function refinement.</p></li>
+<li><p><strong>internal_boundaries</strong> (<em>list</em><em>, </em><em>optional</em>) – List of shapely objects or RiverTrees or other iterable
+collections of coordinates used as internal boundaries that
+must be included in the mesh.</p></li>
+<li><p><strong>river_corrs</strong> (<em>list</em><em>(</em><em>shapely.geometry.Polygons</em><em>)</em>) – A list of river corridor polygons for each river</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Set tolerance for minimum distance between two nodes. The unit
+is the same as that of the watershed’s CRS. The default is 1.</p></li>
+<li><p><strong>meshpy.triangle.build</strong><strong>(</strong><strong>)</strong> (<em>Additional keyword arguments include all options for</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.refine_from_max_area">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">refine_from_max_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_area</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#refine_from_max_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.refine_from_max_area" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a refinement function based on max area, for use with Triangle.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.refine_from_river_distance">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">refine_from_river_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">near_distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near_area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">away_distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">away_area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#refine_from_river_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.refine_from_river_distance" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.</p>
+<p>Triangle area must be smaller than near_area when the triangle
+centroid is within near_distance from the river network.
+Area must be smaller than away_area when the triangle
+centroid is at least away_distance from the river network.
+Area must be smaller than a linear interpolant between
+near_area and away_area when between
+near_distance and away_distance from the river
+network.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.refine_from_max_edge_length">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">refine_from_max_edge_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edge_length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#refine_from_max_edge_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.refine_from_max_edge_length" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a refinement function based on max edge length, for use with Triangle.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulation.pick_hole_point">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">pick_hole_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">poly</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#pick_hole_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.pick_hole_point" title="Permalink to this definition"></a></dt>
+<dd><p>A function to pick a point inside a polygon</p>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.condition">
+<span id="condition"></span><h2>Condition<a class="headerlink" href="#module-watershed_workflow.condition" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.fill_pits">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">fill_pits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#fill_pits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.fill_pits" title="Permalink to this definition"></a></dt>
+<dd><p>Conditions a mesh, IN PLACE, by removing pits.</p>
+<p>Starts at outlet and works through all coordinates in the mesh,
+ensuring that there is a path to all nodes of the mesh from the
+outlet that monotonically increases in elevation.</p>
+<dl class="simple">
+<dt>Available algorithms (likely all should be equivalent):</dt><dd><p>1: original, 2-pass algorithm
+2: refactored single-pass algorithm based on sorted lists
+3: boundary marching method.  Should be the fastest.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> (<em>mesh.Mesh2D object</em>) – The mesh to condition.</p></li>
+<li><p><strong>outlet</strong> (<em>int</em><em>, </em><em>optional</em>) – If provided, the ID of the point to start conditioning from.  If
+not provided, will use the boundary node with minimal elevation.</p></li>
+<li><p><strong>algorithm</strong> (<em>int</em>) – See above, defaults to 3.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.fill_pits1">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">fill_pits1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outletID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#fill_pits1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.fill_pits1" title="Permalink to this definition"></a></dt>
+<dd><p>This is the origional, 2-pass algorithm, and is likely inefficient.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.fill_pits2">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">fill_pits2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outletID</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#fill_pits2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.fill_pits2" title="Permalink to this definition"></a></dt>
+<dd><p>This is a refactored, single pass algorithm that leverages a sorted list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.fill_pits3">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">fill_pits3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outletID</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#fill_pits3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.fill_pits3" title="Permalink to this definition"></a></dt>
+<dd><p>This algorithm is based on a boundary marching method</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.fill_pits_dual">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">fill_pits_dual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_waterbody</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlet_edge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#fill_pits_dual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.fill_pits_dual" title="Permalink to this definition"></a></dt>
+<dd><p>Conditions the dual of the mesh, IN PLACE, by filling pits.</p>
+<p>This ensures the property that, starting with an outlet cell,
+there is a path to every cell by way of faces that is
+monotonically increasing in elevation (except in cells which are a
+part of waterbodies).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> (<em>mesh.Mesh2D object</em>) – The mesh to condition.</p></li>
+<li><p><strong>is_waterbody</strong> (<em>np.ndarray</em><em>(</em><em>int</em><em>, </em><em>shape=ncells</em><em>)</em><em>, </em><em>optional</em>) – A boolean/integer mask of length m2.num_cells, with True
+values indicating that the given cell is a part of a waterbody
+that may be a depression.  This is important for
+reservoirs/lakes/etc where bathymetry is known and pits are
+physical.</p></li>
+<li><p><strong>outlet_edge</strong> (<em>(</em><em>int</em><em>,</em><em>int</em><em>)</em><em>, </em><em>optional</em>) – If provided, the point to start conditioning from.  If not
+provided, will use the edge on the boundary of m2 with the
+lowest elevation.</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional=1e-3</em>) – A small vertical displacement for soft tolerances.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.identify_local_minima">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">identify_local_minima</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#identify_local_minima"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.identify_local_minima" title="Permalink to this definition"></a></dt>
+<dd><p>For all cells, identify if their centroid elevation is lower than
+the elevation of all neighbors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>m2</strong> (<em>mesh.Mesh2D object</em>) – The mesh to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of 0s and 1s, where 1 indicates a local minima.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.smooth">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">smooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#smooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.smooth" title="Permalink to this definition"></a></dt>
+<dd><p>Smooths an image according to an algorithm, passing kwargs on to that algorithm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.condition_river_mesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">condition_river_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nhd_elev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treat_banks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depress_upstream_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_burn_in_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_in_sweep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#condition_river_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.condition_river_mesh" title="Permalink to this definition"></a></dt>
+<dd><p>Condition, IN PLACE, the elevations of stream-corridor elements
+to ensure connectivity throgh culverts, skips ponds, maintain
+monotonicity, or otherwise enforce depths of constructed channels.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>m2: watershed_workflow.mesh.Mesh2D object</dt><dd><p>2D mesh with 3D coordinates.</p>
+</dd>
+<dt>river: watershed_workflow.river_tree.River object</dt><dd><p>River tree with node.elements added for quads</p>
+</dd>
+<dt>smooth: boolean, optional</dt><dd><p>If true, smooth the profile of each reach using a gaussian
+filter (mainly to pass through railroads and avoid reservoirs).</p>
+</dd>
+<dt>use_parent: boolean, optional</dt><dd><p>If true, use the segment from the original parent reach while
+smoothing (seems to be not making a huge difference).</p>
+</dd>
+<dt>lower: boolean, optional</dt><dd><p>If true, lower the smoothed bed profile to match the lower
+points on the raw bed profile. This is useful particularly for
+narrow ag. ditches where NHDPLus flowlines often do not
+coincide with the DEM depressions and so stream-elements
+intermitently fall into them.</p>
+</dd>
+<dt>use_nhd_elev: boolean, optional</dt><dd><p>If true, enforce maximum and minimum elevation for each
+reach provided in NHDPlus.</p>
+</dd>
+<dt>treat_banks: boolean, optional</dt><dd><p>Where the river is passing right next to the reservoir or
+NHDline is misplaced into the reservoir, banks may fall into
+the reservoir. If true, this will enforce that the bank node
+is at a higher elevation than the stream bed elevation.</p>
+</dd>
+<dt>depress_upstream_by: float, optional</dt><dd><p>If the depression is not captured well in the DEM, the
+river-mesh elements (streambed) headwater reaches may be
+lowered by this number.  The effect of propogated downstream
+only upto where it is needed to maintain topographic gradients
+on the network scale in the network sweep step.</p>
+</dd>
+<dt>network_burn_in_depth: float, dict, or function</dt><dd><p>Like depress_upstream_by, this also lowers river-mesh elements
+by this value, but this variant lowers all reaches.  The depth
+may be provided as a float (uniform lowering), dictionary
+{stream order : depth to depress by}, or as a function of
+drainage area.</p>
+</dd>
+<dt>ignore_in_sweep: list, optional</dt><dd><p>If provided, a list of IDs to not be burned in via the network
+sweep.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.elevate_rivers">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">elevate_rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem_profile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#elevate_rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.elevate_rivers" title="Permalink to this definition"></a></dt>
+<dd><p>Elevate the river using dem and store reach-bed-profile as node properties.</p>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.regions">
+<span id="regions"></span><h2>Regions<a class="headerlink" href="#module-watershed_workflow.regions" title="Permalink to this heading"></a></h2>
+<p>This namespace hosts functions to add labelsets to define regions</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.regions.add_nlcd_labeled_sets">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_nlcd_labeled_sets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlcd_colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlcd_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_nlcd_labeled_sets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_nlcd_labeled_sets" title="Permalink to this definition"></a></dt>
+<dd><p>Add labeled sets to a mesh – one per unique color.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> (<em>mesh.Mesh2D object</em>) – The mesh to label.</p></li>
+<li><p><strong>nlcd_colors</strong> (<em>np.array</em>) – 1D array of len m2.num_cells of cell colors.</p></li>
+<li><p><strong>nlcd_names</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary mapping colors to color name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.regions.add_polygonal_regions">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_polygonal_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'watershed'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_polygonal_regions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_polygonal_regions" title="Permalink to this definition"></a></dt>
+<dd><p>Label m2 with region(s) for each polygon.</p>
+<p>Always adds a surface region; if volume also adds a volume region
+for extrusion in 3D.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> (<a class="reference internal" href="#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.Mesh2D"><em>mesh.Mesh2D</em></a>) – The mesh to label.</p></li>
+<li><p><strong>polygons</strong> (<em>iterable</em><em>[</em><em>shapely.Polygon</em><em>]</em>) – The polygons covering each watershed.</p></li>
+<li><p><strong>labels</strong> (<em>iterable</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Names of the polygons (often HUC strings)</p></li>
+<li><p><strong>kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The kind of polygon to add – this is only used to generate
+labels.  Default is ‘watershed’.</p></li>
+<li><p><strong>volume</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, also add the volumetric region below the polygon that
+will be extruded in a 3D mesh eventually.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.regions.add_watershed_regions">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_watershed_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_watershed_regions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_watershed_regions" title="Permalink to this definition"></a></dt>
+<dd><p>Deprecated – kept for backward compatibility.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.regions.add_watershed_regions_and_outlets">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_watershed_regions_and_outlets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlet_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exterior_outlet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_watershed_regions_and_outlets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_watershed_regions_and_outlets" title="Permalink to this definition"></a></dt>
+<dd><p>Add four labeled sets to m2 for each polygon:</p>
+<ul class="simple">
+<li><p>cells in the polygon, to be extruded</p></li>
+<li><p>cells in the polygon, to be kept as faces upon extrusion</p></li>
+<li><p>boundary of the polygon (edges, kept as faces)</p></li>
+<li><p>outlet of the polygon (edges, kept as faces, within outlet width
+of the outlet)</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> (<a class="reference internal" href="#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.Mesh2D"><em>mesh.Mesh2D</em></a>) – The mesh to label.</p></li>
+<li><p><strong>hucs</strong> (<em>iterable</em><em>[</em><em>shapely.Polygon</em><em>] or </em><em>SplitHUCs object</em>) – Watershed polygons.</p></li>
+<li><p><strong>outlets</strong> (<em>iterable</em><em>[</em><em>shapely.Point</em><em>]</em><em>, </em><em>optional</em>) – If provided, the outlet points.  If SplitHUCs are provided,
+outlets are in that object and this must be None.</p></li>
+<li><p><strong>outlet_width</strong> (<em>float</em><em>, </em><em>optional</em>) – How wide should the outlet region be?  Note this should include
+not just the river width, but more realistically the best
+resolved floodplain, or 1-2 face-widths, whichever is bigger.</p></li>
+<li><p><strong>labels</strong> (<em>iterable</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Name of the polygons.  If SplitHUCs are provided, HUC names are
+used as the default.</p></li>
+<li><p><strong>exterior_outlet</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, find the outlet point that intersects the boundary and
+include regions around that outlet as well.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.regions.add_river_corridor_regions">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_river_corridor_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_river_corridor_regions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_river_corridor_regions" title="Permalink to this definition"></a></dt>
+<dd><p>Add labeled sets to m2 for each river corridor.</p>
+<section id="id2">
+<h3>Parameters:<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>m2: watershed_workflow.mesh.Mesh2D object</dt><dd><p>2D mesh elevated on DEMs</p>
+</dd>
+<dt>rivers: list(watershed_workflow.river_tree.RiverTree)</dt><dd><p>List of rivers used to create the river corridors.</p>
+</dd>
+<dt>labels: list(str), optional</dt><dd><p>List of names, one per river.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="geometry.html" class="btn btn-neutral float-left" title="Data Structures and Shape Manipulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data.html" class="btn btn-neutral float-right" title="Data Manipulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

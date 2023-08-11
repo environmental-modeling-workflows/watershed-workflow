@@ -34,7 +34,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
 
     Parameters:
     -----------
-    rivers: list(watershed_workflow.river_tree.RiverTree object)
+    rivers: list(watershed_workflow.river_tree.River object)
       List of river tree along which river meshes are to be created
     widths: float or a dictionary
       Width of streams, as constant or {stream-order: width}
@@ -126,7 +126,7 @@ def create_river_mesh(river,
 
     Parameters:
     -----------
-    river: watershed_workflow.river_tree.RiverTree object)
+    river: watershed_workflow.river_tree.River object)
       River tree along which mesh is to be created
     widths: float or a dictionary
       Width of streams, as constant or {stream-order: width}
@@ -188,7 +188,7 @@ def create_river_corridor(river, width):
     
     Parameters
     ----------
-    river : watershed_workflow.river_tree.RiverTree object
+    river : watershed_workflow.river_tree.River object
       River tree along which corridor polygon is to be created.
     width : float
       Width to dilate the river.
@@ -305,7 +305,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
     Parameters
     ----------
-    rivers : watershed_workflow.river_tree.RiverTree
+    rivers : watershed_workflow.river_tree.River
       river tree 
     corr : shapely.geometry.Polygon
       a river corridor polygon for the river
@@ -476,7 +476,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
 
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree
+    river: watershed_workflow.river_tree.River
       river tree along which mesh is to be created
     corr : shapely.geometry.Polygon
       a river corridor polygon for the river    
@@ -617,7 +617,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
 
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree
+    river: watershed_workflow.river_tree.River
       River tree along which mesh is to be created
     corr : shapely.geometry.Polygon
       The river corridor polygon
@@ -827,7 +827,7 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs(), will be modified in place.
-    rivers : list(watershed_workflow.river_tree.RiverTree)
+    rivers : list(watershed_workflow.river_tree.River)
         A list of river tree object
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
@@ -848,7 +848,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    river : watershed_workflow.river_tree.RiverTree object
+    river : watershed_workflow.river_tree.River object
         river tree 
     river_corr : shapely.geometry.Polygons
         A river corridor polygon for given river

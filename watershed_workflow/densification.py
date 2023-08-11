@@ -34,9 +34,9 @@ def densify_river(river, river_raw=None, limit=100, angle_limit=None, junction_a
     
     Parameters:
     -----------
-    river: watershed_workflow.river_tree.RiverTree object
+    river: watershed_workflow.river_tree.River object
       River tree to be redensified.
-    river_raw: watershed_workflow.river_tree.RiverTree object, optional
+    river_raw: watershed_workflow.river_tree.River object, optional
       Original river tree containing all known points.
     limit : float
       Upper bound on section length.
@@ -81,16 +81,16 @@ def densify_node_segments(node, node_raw, limit=100):
      
     Parameters:
      -----------
-    node: node of a watershed_workflow.river_tree.RiverTree object
+    node: node of a watershed_workflow.river_tree.River object
         node of a simplifed tree (sparse points) that is to be densified 
-    node_raw: nodeof a watershed_workflow.river_tree.RiverTree object, optional
+    node_raw: nodeof a watershed_workflow.river_tree.River object, optional
         node from the original tree containing all the known points from NHDPlus 
     limit : int
         limit on the section length above which more points are added
 
     Returns
     -------
-    node.segment: node.segment of a watershed_workflow.river_tree.RiverTree object
+    node.segment: node.segment of a watershed_workflow.river_tree.River object
         a densified (inplace) node.segment
     """
 
@@ -126,7 +126,7 @@ def densify_hucs(huc, huc_raw=None, rivers=None, limit_scales=None):
         huc to be densified 
       huc_raw: watershed_workflow.split_hucs.SplitHUCs object
         original huc with all the known points from NHDPlus 
-      river: watershed_workflow.river_tree.RiverTree object
+      river: watershed_workflow.river_tree.River object
         to check the proximity of huc and river for refinement 
       limit_scales: int or List 
         limit of section length above which more points are added, either a constant value or a list for step refinement 

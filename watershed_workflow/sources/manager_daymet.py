@@ -237,8 +237,9 @@ class FileManagerDaymet:
           Date for the end of the data, in YYYY-MM-DD. Valid is
           < the current month (DayMet updates monthly.)
         variables : str or list, optional
-          Name the variables to download, see table in the class
-          documentation for valid.  Default is [prcp,tmin,tmax,vp,srad].
+          Name the variables to download, see class-level
+          documentation for choices.  Default is
+          [prcp,tmin,tmax,vp,srad].
         force_download : bool
           Download or re-download the file if true.
         buffer : float

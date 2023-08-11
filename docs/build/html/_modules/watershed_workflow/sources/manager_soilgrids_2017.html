@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.sources.manager_soilgrids_2017 &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.sources.manager_soilgrids_2017</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.sources.manager_soilgrids_2017</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Manager for downloading SoilGrids250m-2017 products.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">shapely</span>
+<span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">import</span> <span class="nn">rasterio.mask</span>
+
+<span class="kn">import</span> <span class="nn">watershed_workflow.sources.utils</span> <span class="k">as</span> <span class="nn">source_utils</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.sources.names</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.warp</span>
+<span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_raster</span> <span class="kn">import</span> <span class="n">FileManagerRaster</span>
+
+
+<div class="viewcode-block" id="FileManagerSoilGrids2017"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017">[docs]</a><span class="k">class</span> <span class="nc">FileManagerSoilGrids2017</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SoilGrids 250m (2017) datasets.</span>
+
+<span class="sd">    SoilGrids 2017 maintains, to date, the only complete</span>
+<span class="sd">    characterization of all soil properties needed for a hydrologic</span>
+<span class="sd">    model.  The resolution is decent, and the accuracy is ok, but most</span>
+<span class="sd">    importantly it is complete.</span>
+
+<span class="sd">    .. [SoilGrids2017] https://www.isric.org/explore/soilgrids/faq-soilgrids-2017</span>
+
+<span class="sd">    .. [hengl2014soilgrids] Hengl, Tomislav, et al. &quot;SoilGrids1km—global soil information based on automated mapping.&quot; PloS one 9.8 (2014): e105992.</span>
+
+<span class="sd">    .. [hengl2017soilgrids] Hengl, Tomislav, et al. &quot;SoilGrids250m: Global gridded soil information based on machine learning.&quot; PLoS one 12.2 (2017): e0169748.</span>
+<span class="sd">    </span>
+<span class="sd">    See the above link for a complete listing of potential variable</span>
+<span class="sd">    names; included here are a subset used by this code.  That said,</span>
+<span class="sd">    any 2017 filename can be used with this source manager.</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :widths: 25 25 75</span>
+<span class="sd">    </span>
+<span class="sd">        * - name</span>
+<span class="sd">          - units</span>
+<span class="sd">          - description</span>
+<span class="sd">        * - BDTICM</span>
+<span class="sd">          - :math:`cm`</span>
+<span class="sd">          - Absolute depth to continuous, unfractured bedrock.</span>
+<span class="sd">        * - BLDFIE</span>
+<span class="sd">          - :math:`kg m^-3`</span>
+<span class="sd">          - Bulk density of fine earth</span>
+<span class="sd">        * - CLYPPT</span>
+<span class="sd">          - :math:`%`</span>
+<span class="sd">          - percent clay</span>
+<span class="sd">        * - SLTPPT</span>
+<span class="sd">          - :math:`%`</span>
+<span class="sd">          - percent silt</span>
+<span class="sd">        * - SNDPPT</span>
+<span class="sd">          - :math:`%`</span>
+<span class="sd">          - percent sand</span>
+<span class="sd">        * - WWP</span>
+<span class="sd">          - :math:`%`</span>
+<span class="sd">          - Soil water capacity % at wilting point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">URL</span> <span class="o">=</span> <span class="s2">&quot;https://files.isric.org/soilgrids/former/2017-03-10/data/&quot;</span>
+    <span class="n">DEPTHS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">variant</span> <span class="o">==</span> <span class="s1">&#39;US&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;SoilGrids2017_US&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;soil_structure&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{variable}</span><span class="s1">_M_</span><span class="si">{soillevel}</span><span class="s1">250m_ll_us.tif&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;SoilGrids2017&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;soil_structure&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{variable}</span><span class="s1">_M_</span><span class="si">{soillevel}</span><span class="s1">250m_ll.tif&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FileManagerSoilGrids2017.get_raster"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017.get_raster">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download and read a raster for this shape, clipping to the shape.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        shply : fiona or shapely shape or bounds</span>
+<span class="sd">          Shape to provide bounds of the raster.</span>
+<span class="sd">        crs : CRS</span>
+<span class="sd">          CRS of the shape.</span>
+<span class="sd">        variable : str</span>
+<span class="sd">          The SoilGrids variable, see class-level documentation for</span>
+<span class="sd">          choices.</span>
+<span class="sd">        layer : int, optional</span>
+<span class="sd">          Soil layer, from 0 (top) to 7 (bottom).  Only valid for</span>
+<span class="sd">          vertically distributed quantities.</span>
+<span class="sd">        force_download : bool, optional</span>
+<span class="sd">          Download or re-download the file if true.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : rasterio profile</span>
+<span class="sd">          Profile of the raster.</span>
+<span class="sd">        raster : np.ndarray</span>
+<span class="sd">          Array containing the elevation data.</span>
+
+<span class="sd">        Note that the raster provided is in SoilGrids native CRS</span>
+<span class="sd">        (which is in the rasterio profile), not the shape&#39;s CRS.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># download (or hopefully don&#39;t) the file</span>
+        <span class="n">filename</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SoilGrids CRS: </span><span class="si">{</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># load the raster</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;filename: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">FileManagerRaster</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_raster</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">get_depth_to_bedrock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raster</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="s1">&#39;BDTICM&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_soil_texture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="mi">7</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">variable</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s1">&#39;SNDPPT&#39;</span><span class="p">,</span> <span class="s1">&#39;SLTPPT&#39;</span><span class="p">,</span> <span class="s1">&#39;CLYPPT&#39;</span><span class="p">]):</span>
+            <span class="n">prof</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raster</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+            <span class="n">rasters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prof</span><span class="p">,</span> <span class="n">rasters</span>
+
+    <span class="k">def</span> <span class="nf">get_all_soil_texture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
+            <span class="n">prof</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soil_texture</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+            <span class="n">rasters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prof</span><span class="p">,</span> <span class="n">rasters</span>
+
+    <span class="k">def</span> <span class="nf">get_bulk_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="mi">7</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raster</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="s1">&#39;BLDFIE&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_all_bulk_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
+            <span class="n">prof</span><span class="p">,</span> <span class="n">raster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bulk_density</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+            <span class="n">rasters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
+        <span class="n">rasters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prof</span><span class="p">,</span> <span class="n">rasters</span>
+
+    <span class="k">def</span> <span class="nf">get_layer7</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">prof</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;bulk density [kg m^-3]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bulk_density</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;texture [%]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_soil_texture</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;depth to bedrock [cm]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_depth_to_bedrock</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prof</span><span class="p">,</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">get_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">prof</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;bulk density [kg m^-3]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_bulk_density</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;texture [%]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_soil_texture</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;depth to bedrock [cm]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_depth_to_bedrock</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prof</span><span class="p">,</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Downloads individual files via direct download.&quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">folder_name</span><span class="p">(),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">soillevel</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">soillevel</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sl</span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s1">_&#39;</span>
+
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span> <span class="n">soillevel</span><span class="o">=</span><span class="n">soillevel</span><span class="p">)</span>
+
+        <span class="c1"># download file</span>
+        <span class="n">filename_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name_base</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span> <span class="n">soillevel</span><span class="o">=</span><span class="n">soillevel</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">URL</span> <span class="o">+</span> <span class="n">filename_base</span>
+        <span class="n">source_utils</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span>
+
+        <span class="c1"># return raster profile</span>
+        <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
+        <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="n">profile</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

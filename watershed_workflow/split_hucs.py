@@ -69,21 +69,38 @@ class HandledCollection:
 class SplitHUCs:
     """Class for dealing with the multiple interacting views of HUCs
 
-    Includes the following views into data:
+    Parameters
+    ----------
+    shapes : list[Polygon]
+      The shapes to be split, one per subcatchment to be delineated.
+    abs_tol : float
+      Distance used in defining small holes at intersections to
+      ignore.
+    rel_tol : float
+      Relative to the shapes area, a tolerance for defining small
+      holes on intersections.
+    exterior_outlet : np.array((2,))
+      Location of the outlet of the entire domain.
+    polygon_outlets : np.array((len(shapes), 2))
+      Location of the outlets of each polygon.
 
-    segments            | Unique list of segments -- the only actual data, 
-                        | a HandledCollection of LineStrings
-    boundaries          | A HandledCollection of handles into segments 
-                        | describing the outer boundary of the collection.
-    intersections       | A HandledCollection of handles into segments 
-                        | describing the internal boundaries of the 
-                        | collection.
-    gons                | A HandledCollection of two-tuples of handles
-                        | the first into boundaries and the second into 
-                        | intersections -- which together form the polygon.
-
-    Note that this constructor does not modify shapes!
     
+    The resulting class instance includes the following views into
+    data:
+
+    segments : HandledCollection[LineString]
+      unique list of all segments, a HandledCollection of LineStrings
+    boundaries : HandledCollection[int]
+      A HandledCollection of handles into segments, identifying those
+      segments on the outer boundary of the collection.
+    intersections : HandledCollection[int]
+      A HandledCollection of handles into segments, identifying those
+      segments on the shared, inner boundaries.
+    gons : list[HandledCollection[int], HandledCollection[int]]
+      One per polygon provided, a pair of HandledCollections,
+      identifying the collection of handles into intersetctions and
+      boudaries that make up thos polygon.
+
     """
     def __init__(self,
                  shapes,

@@ -822,8 +822,9 @@ class Mesh3D:
     eps : float, optional=0.01
         A small measure of length between coords.
 
-    Note: (coords, conn) may be output provided by a
+    Note that (coords, conn) may be output provided by a
     watershed_workflow.triangulation.triangulate() call.
+
     """
     coords = attr.ib(validator=attr.validators.instance_of(np.ndarray))
     _face_to_node_conn = attr.ib()
@@ -1125,40 +1126,58 @@ class Mesh3D:
 
     @classmethod
     def extruded_Mesh2D(cls, mesh2D, layer_types, layer_data, ncells_per_layer, mat_ids):
+        """Uniformly extrude a 2D mesh to make a 3D mesh.
+
+        Layers of potentially multiple sets of cells are extruded
+        downward in the vertical.  The cell dz is uniform horizontally
+        and vertically through the layer in all but the 'snapped'
+        case, where it is uniform vertically but not horizontally.
+        
+        Parameters
+        ----------
+        mesh2D : Mesh2D
+          The 2D mesh to extrude
+        layer_types : str, list[str]
+          One of ['snapped', 'function', 'node', 'cell',] or a list of
+          these strings, describing the extrusion method for each
+          layer.  If only a single string is supplied, all layers are
+          of this type.  See layer_data below.
+        layer_data : list[data]
+          Data required, one for each layer.  The data is specific to
+          the layer type:
+
+          - 'constant' : float, layer thickness
+          - 'snapped' : float, the bottom z-coordinate of the layer.
+            Cells are extruded uniformly to whatever thickness
+            required to match this bottom coordinate.
+          - 'function' : function, layer_thickness = func(x,y)
+          - 'node' : np.array((mesh2D.num_nodes,), float) layer
+            thickness for each node
+          - 'cell' : np.array((mesh2D.num_cells,), float)
+            interpolates nodal layer thickness from neighboring cell
+            thicknesses
+        ncells_per_layer : int, list[int]
+          Either a single integer (same number of cells in all layers)
+          or a list of number of cells in each layer
+        mat_ids : int, list[int], np.ndarray((num_layers, mesh2D.num_cells), dtype=int)
+          Material ID for each cell in each layer.  If an int, all
+          cells in all layers share thesame material ID.  If a list or
+          1D array, one material ID per layer.  If a 2D array,
+          provides all material IDs explicitly.
+
+        Returns
+        -------
+        Mesh3D
+          The extruded, 3D mesh.
+
         """
-        Regularly extrude a 2D mesh to make a 3D mesh.
-
-        mesh2D              | a Mesh2D object
-        layer_types         | either a string (type) or list of strings (types)
-        layer_data          | array of data needed (specific to the type)
-        ncells_per_layer    | either a single integer (same number of cells in all
-                            | layers) or a list of number of cells in the layer
-        mat_ids             | either a single integer (one mat_id for all layers)
-                            | or a list of integers (mat_id for each layer)
-                            | or a 2D numpy array of integers (mat_id for each layer and
-                            | each column: [layer_id, surface_cell_id])
-
-        types:
-          - 'constant'      | (data=float thickness) uniform thickness
-          - 'function'      | (data=function or functor) thickness as a function
-                            | of (x,y)
-          - 'snapped'       | (data=float z coordinate) snap the layer to
-                            | provided z coordinate, telescoping as needed
-          - 'node'          | thickness provided on each node of the surface domain
-          - 'cell'          | thickness provided on each cell of the surface domain,
-                            | interpolate to nodes
-
-        NOTE: dz is uniform through the layer in all but the 'snapped' case
-        NOTE: 2D mesh is always labeled 'surface', extrusion is always downwards
-        """
-
         # make the data all lists
         # ---------------------------------
         def is_list(data):
             if type(data) is str:
                 return False
             try:
-                len(data)
+                iter(data)
             except TypeError:
                 return False
             else:

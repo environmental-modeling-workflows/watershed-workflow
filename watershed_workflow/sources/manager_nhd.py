@@ -72,6 +72,11 @@ class _FileManagerNHD:
         ----------
         huc : int or str
           The USGS Hydrologic Unit Code
+        force_download : bool, optional
+          If true, delete any file and redownload.
+        exclude_hu_types : list[str], optional
+          List of HUtypes to exclude.  Likely this is None or ['W',]
+          to exclude water HUCs for e.g. a bay, great lake, or ocean.
 
         Returns
         -------

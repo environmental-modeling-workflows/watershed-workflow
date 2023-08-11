@@ -1,9 +1,8 @@
 Data Sources
-============
-
-Watershed Workflow stores a library of managers, which provide
+~~~~~~~~~~~~
+Watershed Workflow stores a library of sources, which provide
 functionality to access data as if it was local.  Given appropriate
-bounds (spatial and/or temporal), the managers typically use REST-APIs
+bounds (spatial and/or temporal), the sources typically use REST-APIs
 or other web-based services to locate, download, unzip, and file
 datasets, which are then stored indefinitely for future use.  These
 datasets are stored in a local data store whose location is specified
@@ -11,11 +10,25 @@ in the :ref:`Package configuration` file.
 
 The following sections lay out the source list, which is simply a way
 of getting and working with default sources, and the broad classes of
-sources frequently used in workflows, and default values for these
-types of data are provide by existing managers.
+sources frequently used in workflows.
+
+.. autosummary::
+   :nosignatures:
+
+      watershed_workflow.sources.manager_nhd._FileManagerNHD
+      watershed_workflow.sources.manager_ned.FileManagerNED
+      watershed_workflow.sources.manager_nlcd.FileManagerNLCD
+      watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS
+      watershed_workflow.sources.manager_nrcs.FileManagerNRCS
+      watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS
+      watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017
+      watershed_workflow.sources.manager_daymet.FileManagerDaymet
+      watershed_workflow.sources.manager_raster.FileManagerRaster
+      watershed_workflow.sources.manager_shape.FileManagerShape
+
 
 Source List
-~~~~~~~~~~~
++++++++++++
 
 .. automodule:: watershed_workflow.source_list
         :members:
@@ -27,7 +40,7 @@ use it with the existing high level API.  See the
 
 
 Watershed boundaries and hydrography
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++++++++
 
 Watershed boundary datasets and hydrography datasets together form the
 geographic structure of a watershed.  Watershed boundary datasets are
@@ -67,7 +80,7 @@ manager.
       :members: get_huc, get_hucs, get_hydro
                
 Digital Elevation Models
-~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++
 
 For any distributed, integrated hydrologic model, elevation datasets
 are critical.  These set the local spatial gradients that drive flow
@@ -88,20 +101,25 @@ of the underlying elevation dataset.
         :members: get_raster
 
 Land Cover
-~~~~~~~~~~
+++++++++++
 
 Land cover datasets set everything from impervious surfaces to plant
 function and therefore evaportranspiration, and are used in some
 integrated hydrologic models for a wide range of processes.  Land
 cover is used to define a collection of indices on which mesh sets are
 generated and then used to generate and affect processes and process
-parameters.
+parameters.  Additionally, leaf area index (LAI) is used frequently in
+determining potential evapotranspiration.
 
 .. autoclass:: watershed_workflow.sources.manager_nlcd.FileManagerNLCD
         :members: get_raster               
 
+.. autoclass:: watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS
+        :members: get_data
+
+
 Soil structure and properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++++++
 
 Soil structure and hydrologic properties (i.e. porosity, permeability,
 water retention curves) are often derived from texture
@@ -110,23 +128,26 @@ data can be essential in these types of simulations.  Often these are
 mapped into the simulation mesh.
 
 .. autoclass:: watershed_workflow.sources.manager_nrcs.FileManagerNRCS
-        :members: get_shapes
+        :members: get_shapes, get_shapes_and_properties
+
+.. autoclass:: watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS
+        :members: get_shapes, get_shapes_and_properties
+
+.. autoclass:: watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017
+        :members: get_raster
+           
 
 Meteorology
-~~~~~~~~~~~
++++++++++++
 
-Meteorology datasets are a work in progress.  Different codes likely
-need to write met data in very different formats, and may need
-different variables, so met data is necessarily less standardized.
-
-Currently we provide some preliminary capability here, but more is
-both on the way and needs more input to develop community consensus.
+Meteorological data is used for forcing hydrologic models.
 
 .. autoclass:: watershed_workflow.sources.manager_daymet.FileManagerDaymet
-        :members: get_meteorology               
+        :members: get_data
+
                   
 Generic Files
-~~~~~~~~~~~~~
++++++++++++++
 
 We also provide readers for user-provided rasters and shapefiles for
 generic use.

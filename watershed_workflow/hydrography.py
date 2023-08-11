@@ -1,3 +1,5 @@
+"""Functions for manipulating hydrography and river_tree.River objects"""
+
 import math
 import copy
 import logging
@@ -20,7 +22,25 @@ _tol = 0.1  # meters by default
 
 
 def make_global_tree(reaches, method='geometry', tol=_tol):
-    """Constructs River objects from a list of reaches."""
+    """Constructs River objects from a list of reaches.
+
+    Parameters
+    ----------
+    reaches : list[LineString]
+      List of reaches
+    method : str, optional='geometry'
+        Provide the method for constructing rivers.  Valid are:
+
+        * 'geometry' looks at coincident coordinates
+        * 'hydroseq' Valid only for NHDPlus data, this uses the
+          NHDPlus VAA tables Hydrologic Sequence.  If using this
+          method, get_reaches() must have been called with both
+          'HydrologicSequence' and 'DownstreamMainPathHydroSeq'
+          properties requested (or properties=True).
+    tol : float, optional=0.1
+        Defines what close is in the case of method == 'geometry'
+    
+    """
     if method == 'hydroseq':
         return watershed_workflow.river_tree.River.construct_rivers_by_hydroseq(reaches)
     elif method == 'geometry':
@@ -31,7 +51,16 @@ def make_global_tree(reaches, method='geometry', tol=_tol):
 
 
 def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=False):
-    """Snap HUCs to rivers."""
+    """Snap HUCs to rivers.
+
+    Attempts to make rivers that intersect, or are close to
+    intersecting with HUC boundaries intersect discretely, in that
+    they share a common point on the boundary.
+
+    This is the highest level function -- it calls many of the other
+    functions in this namespace.
+
+    """
     assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert (type(rivers) is list)
     assert (all(river.is_continuous() for river in rivers))
@@ -78,7 +107,12 @@ def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=Fa
 
 
 def snap_waterbodies(hucs, waterbodies, tol=_tol, cut_intersections=True):
-    """Snap waterbodies to HUCs."""
+    """Snap waterbodies to HUCs.
+
+    Attempts to make waterbodies that intersect or nearly intersect
+    hucs intersect discretely, in that they share common point(s).
+
+    """
     assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert (type(waterbodies) is list)
     list(hucs.polygons())
@@ -642,8 +676,11 @@ def filter_small_rivers(rivers, count):
 
 
 def merge(river, tol=_tol):
-    """Remove inner branches that are short, combining branchpoints as needed. This function
-    merge the "short" segment into the parent segment"""
+    """Remove inner branches that are short, combining branchpoints as needed.
+
+    This function merges the "short" segment into the parent segment
+
+    """
     for node in list(river.preOrder()):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
