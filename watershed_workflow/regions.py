@@ -249,3 +249,70 @@ def add_river_corridor_regions(m2, rivers, labels=None):
             ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
+
+def add_stream_order_regions_rivers(m2, rivers, labels=None):
+    """Add labeled sets to m2 for reaches of each stream order for each river.
+     
+    Parameters:
+    -----------
+    m2: watershed_workflow.mesh.Mesh2D object
+      2D mesh elevated on DEMs
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      List of rivers used to create the river corridors.
+    labels: list(str), optional
+      List of names, one per river.
+    """
+    if labels is None:
+        labels = []
+        for i, p in enumerate(rivers):
+            label = f'river {i}'
+            labels.append(label)
+    else:
+        assert (len(labels) == len(rivers))
+
+    for label, river in zip(labels, rivers):
+        add_stream_order_regions(m2, river, river_id=label)
+    
+
+def add_stream_order_regions(m2, river, river_id=0):
+    """Add labeled sets to m2 for reaches of each stream order .
+     
+    Parameters:
+    -----------
+    m2: watershed_workflow.mesh.Mesh2D object
+      2D mesh elevated on DEMs
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      List of rivers used to create the river corridors.
+    river_id: str/int, optional
+      river identifier/name.
+    """
+    river_nodes = list(river.preOrder())
+    sorted_river_nodes = sorted(river_nodes, key=lambda node: node.properties['StreamOrder'])
+
+    from itertools import groupby
+    grouped_river_nodes = [list(result) for key, result in groupby(
+        sorted_river_nodes, key=lambda node: node.properties['StreamOrder'])]
+
+    mls_reaches_by_streeam_order = [shapely.geometry.MultiLineString([node.segment for node in node_group]) for node_group in grouped_river_nodes]
+    labels = []
+    for i, p in enumerate(mls_reaches_by_streeam_order):
+        label = f'reaches of StreamOrder {i} in river {river_id}'
+        labels.append(label)
+
+    partitions = [list() for p in mls_reaches_by_streeam_order]
+    for c, conn in enumerate(m2.conn):
+        cell_poly = shapely.geometry.Polygon(m2.coords[conn])
+        try:
+            ip = next(i for (i, p) in enumerate(mls_reaches_by_streeam_order) if p.intersects(cell_poly.buffer(-1)))
+            # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
+            # reach that might be touching the reach end from being included in the region
+        except StopIteration:
+            pass
+        else:
+            partitions[ip].append(c)
+
+    for label, part in zip(labels, partitions):
+        if len(part) > 0:
+            setid2 = m2.next_available_labeled_setid()
+            ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+            m2.labeled_sets.append(ls2)
