@@ -28,7 +28,7 @@ def test_close_cleanup(rivers):
 
 def data(poly_hucs, river_segs):
     hucs = watershed_workflow.split_hucs.SplitHUCs(poly_hucs)
-    rivers = watershed_workflow.hydrography.make_global_tree(river_segs, method='geometry')
+    rivers = watershed_workflow.hydrography.createGlobalTree(river_segs, method='geometry')
     for tree in rivers:
         assert (tree.is_consistent())
     return hucs, rivers
@@ -484,11 +484,11 @@ def test_snap8():
 
 
 def test_remove_divergences(braided_stream):
-    rivers = watershed_workflow.hydrography.make_global_tree(braided_stream, 'hydroseq')
+    rivers = watershed_workflow.hydrography.createGlobalTree(braided_stream, 'hydroseq')
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 6)
 
-    rivers = watershed_workflow.hydrography.remove_divergences(rivers)
+    rivers = watershed_workflow.hydrography.removeBraids(rivers)
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 4)
 

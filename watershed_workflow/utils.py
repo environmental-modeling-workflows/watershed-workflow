@@ -82,7 +82,7 @@ def create_shply(shape, properties=None, flip=False):
 
 def deepcopy(list_of_shapes):
     """Deals with properties dictionary"""
-    new_list = [type(shp)(shp) for shp in list_of_shapes]
+    new_list = [shp.__class__(shp) for shp in list_of_shapes]
     for new, old in zip(new_list, list_of_shapes):
         if hasattr(old, 'properties'):
             new.properties = old.properties

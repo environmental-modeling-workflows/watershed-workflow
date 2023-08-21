@@ -158,10 +158,12 @@ def get_hucs(source, huc, level, out_crs=None, digits=None, **kwargs):
     if digits != None:
         logging.info("Rounding coordinates")
         watershed_workflow.utils.round_shapes(hus, digits)
+        logging.info(" ... done")
 
     # convert to shapely
     logging.info("Converting to shapely")
     hu_shapes = [watershed_workflow.utils.create_shply(hu) for hu in hus]
+    logging.info(" ... done")
     return out_crs, hu_shapes
 
 
@@ -266,12 +268,14 @@ def get_shapes(source,
         shplys = [watershed_workflow.utils.create_shply(shp) for shp in shps]
     else:
         shplys = shps
+    logging.info(" ... done")
 
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
         logging.info("Converting to requested CRS")
         shplys = watershed_workflow.warp.shplys(shplys, native_crs, out_crs)
+        logging.info(" ... done")
     else:
         out_crs = native_crs
 
@@ -279,6 +283,7 @@ def get_shapes(source,
     if digits != None:
         logging.info("Rounding coordinates")
         watershed_workflow.utils.round_shplys(shplys, digits)
+        logging.info(" ... done")
 
     if properties:
         return out_crs, shplys, out_props
@@ -417,19 +422,36 @@ def get_reaches(source,
     # convert to shapely
     logging.info("Converting to shapely")
     reaches = [watershed_workflow.utils.create_shply(reach) for reach in reaches]
+    logging.info(" ... done")
 
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
         logging.info("Converting to out_crs")
+        logging.info(f"  {native_crs}")
+        logging.info(f"  {out_crs}")
         reaches = watershed_workflow.warp.shplys(reaches, native_crs, out_crs)
+        reaches_bounds = shapely.geometry.MultiLineString(reaches)
+        logging.info(reaches_bounds.bounds)
+        logging.info(" ... done")
 
-        for reach in reaches:
-            if ('catchment' in reach.properties) and reach.properties['catchment'] is not None:
-                reach.properties['catchment'] = watershed_workflow.utils.create_shply(
-                    reach.properties['catchment'])
-                reach.properties['catchment'] = watershed_workflow.warp.shply(
-                    reach.properties['catchment'], native_crs, out_crs)
+        if include_catchments:
+            catchments = [r.properties['catchment'] for r in reaches if 'catchment' in r.properties and r.properties['catchment'] is not None]
+
+            logging.info("Converting catchments to shapely")
+            catchments_shply = [watershed_workflow.utils.create_shply(catch) for catch in catchments]
+            logging.info(" ... done")
+
+            if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
+                logging.info("Converting catchments to out_crs")
+                catchments_shply = watershed_workflow.warp.shplys(catchments_shply, native_crs, out_crs)
+                i = 0
+                for reach in reaches:
+                    if 'catchment' in reach.properties and reach.properties['catchment'] is not None:
+                        reach.properties['catchment'] = catchments_shply[i]
+                        i += 1
+                logging.info(" ... done")
+
     else:
         out_crs = native_crs
 
@@ -453,11 +475,13 @@ def get_reaches(source,
     if merge:
         logging.info("Merging (warning: this loses properties)")
         reaches = list(shapely.ops.linemerge(shapely.geometry.MultiLineString(reaches)))
+        logging.info(" ... done")
 
     # round
     if digits != None:
         logging.info("Rounding coordinates")
         watershed_workflow.utils.round_shapes(reaches, digits)
+        logging.info(" ... done")
 
     # not too long
     if long != None:
@@ -466,6 +490,7 @@ def get_reaches(source,
         reaches_s = [reach for reach in reaches_s if reach.length < long]
         logging.info("... filtered {} of {} due to length criteria {}".format(
             n_r - len(reaches_s), n_r, long))
+        logging.info(" ... done")
 
     return out_crs, reaches
 
@@ -532,11 +557,14 @@ def get_waterbodies(source,
     logging.info(f"Loading waterbodies in HUC {huc}")
 
     # get the wbs
-    if not type(bounds_or_shp) is tuple:
+    if bounds_or_shp is None:
+        bounds = None
+    elif not type(bounds_or_shp) is tuple:
         bounds = bounds_or_shp.bounds
     else:
         bounds = bounds_or_shp
         bounds_or_shp = None
+    
 
     logging.info(f"         and/or bounds {bounds}")
     profile, bodies = source.get_waterbodies(huc, bounds, in_crs, **kwargs)
@@ -545,12 +573,16 @@ def get_waterbodies(source,
     # convert to shapely
     logging.info("Converting to shapely")
     bodies = [watershed_workflow.utils.create_shply(b) for b in bodies]
+    logging.info(" ... done")
 
     # convert to destination crs
     native_crs = watershed_workflow.crs.from_fiona(profile['crs'])
     if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
         logging.info("Converting to out_crs")
+        logging.info(f"  {native_crs}")
+        logging.info(f"  {out_crs}")
         bodies = watershed_workflow.warp.shplys(bodies, native_crs, out_crs)
+        logging.info(" ... done")
     else:
         out_crs = native_crs
 
@@ -772,8 +804,7 @@ def construct_rivers(reaches,
                      method='geometry',
                      ignore_small_rivers=None,
                      prune_by_area=None,
-                     prune_by_area_fraction=None,
-                     prune_whole_rivers=True,
+                     area_property='TotalDrainageAreaSqKm',
                      remove_diversions=False,
                      remove_braided_divergences=False,
                      tol=0.1):
@@ -802,13 +833,9 @@ def construct_rivers(reaches,
         If provided, remove reaches whose total contributing area is
         less than this tol.  NOTE: only valid for reaches that include
         a contributing area property (e.g. NHDPlus).
-    prune_by_area_fraction : float, optional
-        If provided, remove reaches whose total contributing area, as
-        a fraction of the area of hucs, is less than this tol.  NOTE:
-        only valid for reaches that include a contributing area
-        property (e.g. NHDPlus).
-    prune_whole_rivers : bool, optional=True
-        If an entire river's area is under tolerance, remove it.
+    area_property : str, optional='TotalDrainageAreaSqKm'
+        Name of the area property to use for determining reach CA.
+        Note that this defines the units of prune_by_area value.
     remove_diversions : bool, optional=False
         If true, remove diversions (see documentation of
         modify_rivers_remove_divergences()).
@@ -829,28 +856,34 @@ def construct_rivers(reaches,
     logging.info("-" * 30)
 
     logging.info("Generating the river tree")
-    rivers = watershed_workflow.hydrography.make_global_tree(reaches, method=method, tol=tol)
+    rivers = watershed_workflow.hydrography.createGlobalTree(reaches, method=method, tol=tol)
     logging.info(f" ... generated {len(rivers)} rivers")
 
+    # First we do everything we can to remove whole rivers.  This
+    # makes everything faster.
     if ignore_small_rivers is not None:
-        rivers = watershed_workflow.hydrography.filter_small_rivers(rivers, ignore_small_rivers)
+        rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
+        if len(rivers) == 0:
+            return rivers
+
+    if remove_diversions:
+        rivers = watershed_workflow.hydrography.removeDiversions(rivers)
         if len(rivers) == 0:
             return rivers
 
     if prune_by_area is not None:
-        rivers = watershed_workflow.hydrography.prune_by_contributing_area(rivers, prune_by_area)
+        logging.info(f"Removing rivers with area < {prune_by_area}")
+        rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
         if len(rivers) == 0:
             return rivers
 
-    if prune_by_area_fraction is not None:
-        rivers = watershed_workflow.hydrography.prune_by_fractional_contributing_area(
-            rivers, prune_by_area_fraction, prune_whole_rivers=prune_whole_rivers)
-        if len(rivers) == 0:
-            return rivers
+    # now we do things that prune
+    if remove_braided_divergences:
+        rivers = watershed_workflow.hydrography.removeBraids(rivers, remove_diversions)
+        
+    if prune_by_area is not None:
+        rivers = watershed_workflow.hydrography.pruneByArea(rivers, prune_by_area, area_property)
 
-    if remove_diversions or remove_braided_divergences:
-        rivers = watershed_workflow.hydrography.remove_divergences(rivers, remove_diversions,
-                                                                   remove_braided_divergences)
     return rivers
 
 

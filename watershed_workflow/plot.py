@@ -267,7 +267,7 @@ def river(river, crs, color='b', ax=None, **kwargs):
     shplys(river, crs, color, ax, **kwargs)
 
 
-def rivers(rivers, crs, color='b', ax=None, **kwargs):
+def rivers(rivers, crs, color=None, ax=None, **kwargs):
     """Plot an itereable collection of river Tree objects.
 
     A wrapper for plot.shply()
@@ -290,9 +290,9 @@ def rivers(rivers, crs, color='b', ax=None, **kwargs):
     -------
     lines : matplotib LineCollection
     """
-    if type(rivers) is shapely.geometry.MultiLineString:
-        return river(rivers, crs, color, ax, **kwargs)
-
+    if color is None:
+        color = watershed_workflow.colors.enumerated_colors(len(rivers))
+    
     if type(color) is not str and len(color) == len(rivers):
         for r, c in zip(rivers, color):
             river(r, crs, c, ax, **kwargs)
@@ -409,14 +409,14 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
 
         lines = [np.array(l.coords)[:, 0:2] for l in shps]
 
-        lc = pltc.LineCollection(lines, **kwargs)
+        res = pltc.LineCollection(lines, **kwargs)
         if projection is not None:
-            lc.set_transform(projection)
+            res.set_transform(projection)
 
         if type(ax) is Axes3D:
-            res = ax.add_collection3d(lc)
+            res = ax.add_collection3d(res)
         else:
-            res = ax.add_collection(lc)
+            res = ax.add_collection(res)
             ax.autoscale()
 
         if marker is not None:
@@ -433,7 +433,6 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
                            c=point_colors,
                            transform=projection,
                            **marker_kwargs)
-        res = lc
 
     elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if kwargs['facecolor'] in ['color', 'edge']:

@@ -45,8 +45,8 @@ class River(watershed_workflow.tinytree.Tree):
             super(River, self).addChild(type(self)(segment))
         return self.children[-1]
 
-    def removePreserveProperties(self):
-        """Removes a reach, preserving catchments and area properties."""
+    def removePreserveCatchments(self):
+        """Removes a reach, preserving catchments and catchment area properties by accumulating them into the parent."""
         if self.parent is not None:
             parent = self.parent
             if 'catchment' in self.properties and self.properties['catchment'] is not None:
@@ -61,10 +61,37 @@ class River(watershed_workflow.tinytree.Tree):
 
         self.remove()
 
-    def prune(self):
+    def prune(self, preserve_catchments=False):
         """Removes a reach all the way to the leaf node."""
-        for node in self.postOrder():
-            node.removePreserveProperties()
+        
+        if self.parent is None:
+            raise ValueError("Cannot prune a branch with no parent.")
+
+        if preserve_catchments:
+            parent = self.parent
+
+            # accumulate the sub-catchments
+            catches = [n.properties['catchment'] for n in self.preOrder()
+                       if 'catchment' in n.properties and n.properties['catchment'] is not None]
+            if len(catches) > 0:
+                ca = shapely.ops.unary_union(catches)
+            else:
+                ca = None
+                
+            if ca is not None:
+                if 'catchment' not in parent.properties or parent.properties['catchment'] is None:
+                    parent.properties['catchment'] = ca
+                else:
+                    parent.properties['catchment'] = shapely.ops.unary_union(
+                        [ca, parent.properties['catchment']])
+
+            # accumulate the area
+            if 'area' in self.properties:
+                total_area = sum(r.properties['area'] for r in self.preOrder())
+                parent.properties['area'] += total_area
+
+        self.remove()
+            
 
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
@@ -124,13 +151,14 @@ class River(watershed_workflow.tinytree.Tree):
         if name is None:
             name = self.properties['ID']
         
-        catch = shapely.ops.unary_union([node.properties['catchment'].buffer(1e-6)
+        catch = shapely.ops.unary_union([node.properties['catchment']
                                          for node in self.preOrder() if node.properties['catchment'] is not None])
         catch.properties = dict()
         catch.properties['outlet_ID'] = self.properties['ID']
+        catch.properties['ID'] = 'CA_'+self.properties['ID']
         catch.properties['name'] = name
         catch.properties['outlet_point'] = self.segment.coords[-1]
-        self.properties['catchment name'] = name
+        self.properties['contributing area name'] = name
         return catch
 
     def depthFirst(self):
@@ -284,7 +312,7 @@ class River(watershed_workflow.tinytree.Tree):
         return cp
 
 
-def accumulateContributingArea(rivers, outlet_IDs, names=None):
+def accumulateContributingAreas(rivers, outlet_IDs, names=None):
     """Given a list of outlet_IDs, find the reach in rivers and form its contributing area.
     
     Parameters:
@@ -320,3 +348,57 @@ def accumulateContributingArea(rivers, outlet_IDs, names=None):
                 catchments.append(root.accumulateContributingArea(name))
                 found = True
     return roots, catchments
+
+
+def accumulateIncrementalContributingAreas(rivers, outlet_IDs, names=None):
+    """Given a list of outlet_IDs, form the incremental contributing areas.
+    
+    Parameters:
+    -----------
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      Rivers from which outlet reaches are potentially from 
+    outlet_IDs: list(str)
+      List of IDs of the outlet reaches
+    names: list(str), optional
+      Names for the catchments
+
+    Returns
+    -------
+    list(river_tree.RiverTree)
+      The trunks of the rivers at outlet_IDs
+    list(shapely.geometry.Polygon)
+      The contributing areas to those trunks.
+
+    """
+    if names is None:
+        names = outlet_IDs
+
+    def getNode(nid):
+        for river in rivers:
+            n = river.getNode(nid)
+            if n is not None:
+                return n
+        return None
+
+    roots = [getNode(out_id) for out_id in outlet_IDs]
+    assert(all(root is not None for root in roots))
+
+    sorted_ids = sorted(outlet_IDs)
+    def truncated_tree_iter(n):
+        yield n
+        for c in n.children:
+            if c.properties['ID'] not in sorted_ids:
+                for nn in truncated_tree_iter(c):
+                    yield nn
+
+    incremental_cas = [shapely.ops.unary_union([n.properties['catchment'] for n in truncated_tree_iter(root) if n.properties['catchment'] is not None]) for root in roots]
+
+    for catch, root, name in zip(incremental_cas, roots, names):
+        catch.properties = dict()
+        catch.properties['outlet_ID'] = root.properties['ID']
+        catch.properties['ID'] = 'CA_'+root.properties['ID']
+        catch.properties['name'] = name
+        catch.properties['outlet_point'] = root.segment.coords[-1]
+        root.properties['incremental contributing area name'] = name
+
+    return roots, incremental_cas

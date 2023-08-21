@@ -503,7 +503,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
                         grandchild_seg_coords[-1] = new_junction
                         grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
                         node.addChild(grandchild)
-                    child.removePreserveProperties()
+                    child.remove()
 
             # we changed things -- return True so this can be called
             # repeatedly until all sections that have the close angle

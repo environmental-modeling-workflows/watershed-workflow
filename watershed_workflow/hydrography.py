@@ -21,7 +21,7 @@ import watershed_workflow.plot
 _tol = 0.1  # meters by default
 
 
-def make_global_tree(reaches, method='geometry', tol=_tol):
+def createGlobalTree(reaches, method='geometry', tol=_tol):
     """Constructs River objects from a list of reaches.
 
     Parameters
@@ -515,7 +515,7 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
             prune_by_segment_length(tree, prune_tol)
 
 
-def prune_by_segment_length(tree, prune_tol=10):
+def pruneBySegmentLength(tree, prune_tol=10):
     """Removes any leaf segments that are shorter than prune_tol"""
     for leaf in tree.leaf_nodes():
         if leaf.segment.length < prune_tol:
@@ -524,21 +524,29 @@ def prune_by_segment_length(tree, prune_tol=10):
             leaf.removePreserveProperties()
 
 
-def prune_river_by_area(river, area, prop='TotalDrainageAreaSqKm'):
+def pruneRiverByArea(river, area, prop='TotalDrainageAreaSqKm', preserve_catchments=False):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
     'TotalDrainageAreaSqKm' property to have been set.
     """
     count = 0
-    for node in tree.preOrder():
-        if node.properties[prop] < area:
-            count += 1
-            node.prune()
+    for node in river.preOrder():
+        # note, we only ever prune children, to avoid unneeded recursive pruning
+        #
+        # make a copy of the children, as this list will be modified by potential prune calls
+        children = node.children[:]
+        for child in children:
+            if child.properties[prop] < area:
+                logging.debug(
+                    f"... removing trib with {len(child)} reaches of area: {child.properties['TotalDrainageAreaSqKm']}")
+                count += len(child)
+                child.prune(preserve_catchments)
+
     return count
 
 
-def prune_by_area(rivers, area):
+def pruneByArea(rivers, area, prop='TotalDrainageAreaSqKm', preserve_catchments=False):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
@@ -549,69 +557,69 @@ def prune_by_area(rivers, area):
     sufficiently_big_rivers = []
     for river in rivers:
         if river.properties['TotalDrainageAreaSqKm'] >= area:
-            count += prune_river_by_area(river, area)
+            count += pruneRiverByArea(river, area, prop, preserve_catchments)
             sufficiently_big_rivers.append(river)
     logging.info(f"... pruned {count}")
     return sufficiently_big_rivers
 
 
-def prune_river_by_fractional_contributing_area(river, area_fraction, total_area=None):
-    """Removes, IN PLACE, reaches whose CA/total_area < area_fraction.
-
-    Note this requires NHDPlus data to have been used and the
-    'TotalDrainageAreaSqKm' property to have been set.
-    """
-    if total_area is None:
-        total_area = river.properties['TotalDrainageAreaSqKm']
-    logging.info(f'... total contributing area = {total_area}')
-
-    catchments_available = 'catchment' in river.properties.keys()
-    count = 0
-    first = True
-    for node in river.preOrder():
-        if first:
-            # removing the top reach kills the whole river...
-            first = False
-            continue
-
-        if node.properties['TotalDrainageAreaSqKm'] / total_area < area_fraction:
-            logging.info(
-                f"... removing: {node.properties['TotalDrainageAreaSqKm']} of {total_area}")
-            count += 1
-
-            node.prune()
-    return count
-
-
-def prune_by_fractional_contributing_area(rivers,
-                                          area_fraction,
-                                          total_area=None,
-                                          prune_whole_rivers=True):
-    """Removes, IN PLACE, reaches whose CA/total_area < area_fraction.
-
-    Note this requires NHDPlus data to have been used and the
-    'TotalDrainageAreaSqKm' property to have been set.
-    """
-    logging.info(f"Pruning by fractional contributing area < {area_fraction}")
-    count = 0
-    sufficiently_big_rivers = []
-    if total_area is None:
-        total_area = sum(river.properties['TotalDrainageAreaSqKm'] for river in rivers)
-
+def removeDiversions(rivers):
+    """Removes diversions"""
+    # diversions, by definition, are rivers.  Their leafs split off of another river
+    logging.info("Remove diversions...")
+    non_diversion = []
     for river in rivers:
-        if (not prune_whole_rivers
-            ) or river.properties['TotalDrainageAreaSqKm'] >= area_fraction * total_area:
-            count += prune_river_by_fractional_contributing_area(river, area_fraction, total_area)
-            sufficiently_big_rivers.append(river)
+        if all(leaf.properties['DivergenceCode'] == 2 for leaf in river.leaf_nodes()):
+            logging.debug(f"  ...remove diversion with {len(river)} reaches.")
         else:
-            logging.info(
-                f"... pruning river with area {river.properties['TotalDrainageAreaSqKm']} of {total_area}"
-            )
-    logging.info(f"... pruned {count}")
-    return sufficiently_big_rivers
+            non_diversion.append(river)
+    logging.info(f'... removed {len(rivers) - len(non_diversion)} diversions')
+    rivers = non_diversion
+    return rivers
 
+def removeBraids(rivers, remove_diversions=False, preserve_catchments=False):
+    logging.info("Removing braided systems...")
+    for river in rivers:
+        count = 0
+        for reach in river.leaf_nodes():
+            if reach.properties['DivergenceCode'] == 2:
+                # need to determine if I am a diversion or a braid
+                braid = False
+                if remove_diversions:
+                    # diversions are already gone!
+                    braid = True
+                else:
+                    upstream_hydroseq = reach.properties['UpstreamMainPathHydroSeq']
+                    try:
+                        upstream = next(
+                            r for r in river
+                            if r.properties['UpstreamMainPathHydroSeq'] == upstream_hydroseq)
+                    except StopIteration:
+                        # a diversion, not a divergence
+                        pass
+                    else:
+                        braid = True
 
-def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
+                if braid:
+                    # a braid, move upward until we hit the junction
+                    parent = reach.parent
+                    done = parent is None
+                    count2 = 1
+                    while not done:
+                        parent = reach.parent
+                        count2 += 1
+                        done = parent is None or len(parent.children) > 1
+                        if not done:
+                            reach = parent
+
+                    assert(parent is not None)
+                    reach.prune(preserve_catchments)
+                    logging.debug(f"  ... pruning braid of length {count2}")
+                    count += 1
+        logging.info(f'... removed {count} braids from a river of length {len(river)}')
+    return rivers
+
+def removeDivergences(rivers, remove_diversions=True, remove_braids=True):
     """Uses the NHDPlus property DIVERGENCE to remove divergences, IN PLACE.
 
     These can be of two types:
@@ -625,53 +633,25 @@ def remove_divergences(rivers, remove_diversions=True, remove_braids=True):
     divergences.
     """
     if remove_diversions:
-        logging.info("Remove diversions.")
-        non_diversion = []
-        for river in rivers:
-            if all(leaf.properties['DivergenceCode'] == 2 for leaf in river.leaf_nodes()):
-                logging.info(f"  ...remove river with {len(river)} reaches.")
-            else:
-                non_diversion.append(river)
-        rivers = non_diversion
+        rivers = removeDiversions(rivers)
 
     if remove_braids:
-        logging.info("Pruning divergences.")
-        for river in rivers:
-            for reach in river.leaf_nodes():
-                if reach.properties['DivergenceCode'] == 2:
-                    upstream_hydroseq = reach.properties['UpstreamMainPathHydroSeq']
-                    try:
-                        upstream = next(
-                            r for r in river
-                            if r.properties['UpstreamMainPathHydroSeq'] == upstream_hydroseq)
-                    except StopIteration:
-                        # a diversion, not a divergence
-                        pass
-                    else:
-                        # a divergence, start removing until we meet a junction
-                        done = reach.parent is None
-                        count = 1
-                        while not done:
-                            parent = reach.parent
-                            reach.removePreserveProperties()
-                            count += 1
-                            reach = parent
-                            done = len(parent.children) > 0 or reach.parent is None
-                        logging.info(f"  ... pruning braid of length {count}")
+        rivers = removeBraids(rivers, remove_diversions)
     return rivers
 
 
-def filter_small_rivers(rivers, count):
+def filterSmallRivers(rivers, count):
     """Remove any rivers with fewer than count reaches."""
     logging.info(f"Removing rivers with fewer than {count} reaches.")
     new_rivers = []
     for river in rivers:
         ltree = len(river)
         if ltree < count:
-            logging.info("  ...removing river with %d reaches" % ltree)
+            logging.debug("  ...removing river with %d reaches" % ltree)
         else:
             new_rivers.append(river)
-            logging.info("  ...keeping river with %d reaches" % ltree)
+            logging.debug("  ...keeping river with %d reaches" % ltree)
+    logging.info(f'... removed {len(rivers) - len(new_rivers)} rivers')
     return new_rivers
 
 

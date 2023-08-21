@@ -31,7 +31,7 @@ def hucs_rivers():
         shapely.geometry.LineString([(15., 0.), (10., 5), ]),
         shapely.geometry.LineString([(10., 5.), (10, 10)]),
     ]
-    rivers = watershed_workflow.hydrography.make_global_tree(rs)
+    rivers = watershed_workflow.hydrography.createGlobalTree(rs)
     watershed_workflow.hydrography.snap(hucs, rivers, 0.1)
     return hucs, rivers
 

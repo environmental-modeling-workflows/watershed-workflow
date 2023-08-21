@@ -113,9 +113,6 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
     if epsg_ax is not None:
         epsg_ax = watershed_workflow.crs.from_epsg(epsg_ax)
     ax = watershed_workflow.plot.get_ax(epsg_ax, fig)
-    if epsg_ax is not None:
-        ax.stock_img()
-
     if epsg_data is not None:
         crs = watershed_workflow.crs.from_epsg(epsg_data)
         objs = watershed_workflow.warp.shplys(obj_gen(start_p), watershed_workflow.crs.latlon_crs(),
@@ -124,6 +121,10 @@ def run_test(start_p, obj_gen, epsg_data, epsg_ax):
         epsg_data = 'None'
         crs = None
         objs = obj_gen(start_p)
+
+    if epsg_ax is not None:
+        ax.stock_img()
+
     res = watershed_workflow.plot.shply(objs, crs, 'r', ax=ax)
 
     if new_gold:
