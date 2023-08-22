@@ -802,9 +802,9 @@ def find_huc(source, shape, in_crs, hint, shrink_factor=1.e-5):
 # -----------------------------------------------------------------------------
 def construct_rivers(reaches,
                      method='geometry',
-                     ignore_small_rivers=None,
+                     ignore_small_rivers=0,
                      prune_by_area=None,
-                     area_property='TotalDrainageAreaSqKm',
+                     area_property='DivergenceRoutedDrainAreaSqKm',
                      remove_diversions=False,
                      remove_braided_divergences=False,
                      tol=0.1):
@@ -827,13 +827,15 @@ def construct_rivers(reaches,
           properties requested (or properties=True).
 
     ignore_small_rivers : int, optional
-        If provided, removes rivers whose number of reaches is less
-        than this value.
+        If provided and positive, removes rivers whose number of
+        reaches is less than this value.  If negative, keeps the N
+        biggest (in number of reaches) rivers, where N is the negative
+        of the provided value (e.g. -2 keeps the biggest 2 rivers).
     prune_by_area : float, optional
         If provided, remove reaches whose total contributing area is
         less than this tol.  NOTE: only valid for reaches that include
         a contributing area property (e.g. NHDPlus).
-    area_property : str, optional='TotalDrainageAreaSqKm'
+    area_property : str, optional='DivergenceRoutedDrainAreaSqKm'
         Name of the area property to use for determining reach CA.
         Note that this defines the units of prune_by_area value.
     remove_diversions : bool, optional=False
@@ -859,31 +861,39 @@ def construct_rivers(reaches,
     rivers = watershed_workflow.hydrography.createGlobalTree(reaches, method=method, tol=tol)
     logging.info(f" ... generated {len(rivers)} rivers")
 
-    # First we do everything we can to remove whole rivers.  This
-    # makes everything faster.
-    if ignore_small_rivers is not None:
+    if ignore_small_rivers < 0:
+        rivers = sorted(rivers, key=lambda a : len(a), reverse=True)
+        rivers = rivers[0:-ignore_small_rivers]
+        logging.info(f"Removing all but the biggest {-ignore_small_rivers} rivers")
+    elif ignore_small_rivers > 0:
         rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
         if len(rivers) == 0:
             return rivers
 
-    if remove_diversions:
-        rivers = watershed_workflow.hydrography.removeDiversions(rivers)
-        if len(rivers) == 0:
-            return rivers
-
+    # note it is faster to remove all rivers with small area first
     if prune_by_area is not None:
         logging.info(f"Removing rivers with area < {prune_by_area}")
         rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
         if len(rivers) == 0:
             return rivers
-
-    # now we do things that prune
-    if remove_braided_divergences:
-        rivers = watershed_workflow.hydrography.removeBraids(rivers, remove_diversions)
         
+    if remove_diversions and remove_braided_divergences:
+        rivers = watershed_workflow.hydrography.removeDivergences(rivers)
+    elif remove_diversions:
+        rivers = watershed_workflow.hydrography.removeDiversions(rivers)
+    elif remove_braided_divergences:
+        rivers = watershed_workflow.hydrography.removeBraids(rivers)
+    if len(rivers) == 0:
+        return rivers
+
     if prune_by_area is not None:
         rivers = watershed_workflow.hydrography.pruneByArea(rivers, prune_by_area, area_property)
 
+    if ignore_small_rivers > 0:
+        rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
+        if len(rivers) == 0:
+            return rivers
+        
     return rivers
 
 

@@ -57,7 +57,8 @@ class _FileManagerNHD:
         'MinimumElevationRaw': 'MinElevRaw',
         'MaximumElevationRaw': 'MaxElevRaw',
         'CatchmentAreaSqKm': 'AreaSqKm',
-        'TotalDrainageAreaSqKm': 'TotDASqKm'
+        'TotalDrainageAreaSqKm': 'TotDASqKm',
+        'DivergenceRoutedDrainAreaSqKm': 'DivDASqKm',
     })
     _nhdplus_eromma = dict({
         'MeanAnnualFlow': 'QAMA',

@@ -146,7 +146,7 @@ class River(watershed_workflow.tinytree.Tree):
             node = None
         return node
 
-    def accumulateContributingArea(self, name=None):
+    def accumulateCatchments(self, name=None):
         """Form a polygon of all contributing areas based on the 'catchment' property."""
         if name is None:
             name = self.properties['ID']
@@ -312,7 +312,7 @@ class River(watershed_workflow.tinytree.Tree):
         return cp
 
 
-def accumulateContributingAreas(rivers, outlet_IDs, names=None):
+def accumulateCatchments(rivers, outlet_IDs, names=None):
     """Given a list of outlet_IDs, find the reach in rivers and form its contributing area.
     
     Parameters:
@@ -343,14 +343,14 @@ def accumulateContributingAreas(rivers, outlet_IDs, names=None):
             root = river.getNode(id)
             if root is not None:
                 if found:
-                    raise RuntimeError(f'accumulateContributingArea: outlet_ID {outlet_ID} appears in more than one river')
+                    raise RuntimeError(f'accumulateCatchments: outlet_ID {outlet_ID} appears in more than one river')
                 roots.append(root)
-                catchments.append(root.accumulateContributingArea(name))
+                catchments.append(root.accumulateCatchments(name))
                 found = True
     return roots, catchments
 
 
-def accumulateIncrementalContributingAreas(rivers, outlet_IDs, names=None):
+def accumulateIncrementalCatchments(rivers, outlet_IDs, names=None):
     """Given a list of outlet_IDs, form the incremental contributing areas.
     
     Parameters:

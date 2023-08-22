@@ -605,6 +605,14 @@ def contains(s1, s2, tol=_tol):
     return s1.buffer(tol, 2).contains(s2)
 
 
+class CutError(Exception):
+    def __init__(self, message, line, seg, cutline):
+        super(Exception, self).__init__(message)
+        self.line = line
+        self.seg = seg
+        self.cutline = cutline
+        
+
 def cut(line, cutline, tol=1.e-5):
     """Cuts a line at all intersections with cutline.  If an existing
     point in line is within tol of the cutline, do not add an additional
@@ -670,8 +678,9 @@ def cut(line, cutline, tol=1.e-5):
         else:
             print("Dual/multiple section: type = {}".format(type(point)))
             print(" point = {}".format(point))
-            raise RuntimeError("Dual/multiple intersection in a single seg... ugh!  "
-                               + "Intersection is of type '{}'".format(type(point)))
+            raise CutError("Dual/multiple intersection in a single seg... ugh!  "
+                               + "Intersection is of type '{}'".format(type(point)),
+                           line, seg, cutline)
 
     if len(segcoords) > 1:
         segs.append(shapely.geometry.LineString(segcoords))

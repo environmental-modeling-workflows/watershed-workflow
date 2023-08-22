@@ -512,7 +512,7 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
         if merge_tol is not None:
             merge(tree, merge_tol)
         if merge_tol != prune_tol and prune_tol is not None:
-            prune_by_segment_length(tree, prune_tol)
+            pruneBySegmentLength(tree, prune_tol)
 
 
 def pruneBySegmentLength(tree, prune_tol=10):
@@ -521,7 +521,7 @@ def pruneBySegmentLength(tree, prune_tol=10):
         if leaf.segment.length < prune_tol:
             logging.info("  ...cleaned leaf segment of length: %g at centroid %r" %
                          (leaf.segment.length, leaf.segment.centroid.coords[0]))
-            leaf.removePreserveProperties()
+            leaf.removePreserveCatchments()
 
 
 def pruneRiverByArea(river, area, prop='TotalDrainageAreaSqKm', preserve_catchments=False):
@@ -563,81 +563,102 @@ def pruneByArea(rivers, area, prop='TotalDrainageAreaSqKm', preserve_catchments=
     return sufficiently_big_rivers
 
 
-def removeDiversions(rivers):
-    """Removes diversions"""
-    # diversions, by definition, are rivers.  Their leafs split off of another river
+def removeDiversions(rivers, preserve_catchments=False):
+    """Removes diversions, but not braids."""
     logging.info("Remove diversions...")
-    non_diversion = []
+    non_diversions = []
     for river in rivers:
-        if all(leaf.properties['DivergenceCode'] == 2 for leaf in river.leaf_nodes()):
-            logging.debug(f"  ...remove diversion with {len(river)} reaches.")
-        else:
-            non_diversion.append(river)
-    logging.info(f'... removed {len(rivers) - len(non_diversion)} diversions')
-    rivers = non_diversion
-    return rivers
-
-def removeBraids(rivers, remove_diversions=False, preserve_catchments=False):
-    logging.info("Removing braided systems...")
-    for river in rivers:
-        count = 0
-        for reach in river.leaf_nodes():
-            if reach.properties['DivergenceCode'] == 2:
-                # need to determine if I am a diversion or a braid
-                braid = False
-                if remove_diversions:
-                    # diversions are already gone!
-                    braid = True
-                else:
-                    upstream_hydroseq = reach.properties['UpstreamMainPathHydroSeq']
+        keep_river = True
+        count_tribs = 0
+        count_reaches = 0
+        for leaf in river.leaf_nodes():
+            if leaf.properties['DivergenceCode'] == 2:
+                # is a braid or a diversion
+                if river.getNode(leaf.properties['UpstreamMainPathHydroSeq']) is None:
+                    # diversion!
                     try:
-                        upstream = next(
-                            r for r in river
-                            if r.properties['UpstreamMainPathHydroSeq'] == upstream_hydroseq)
+                        joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
                     except StopIteration:
-                        # a diversion, not a divergence
-                        pass
+                        # no joiner means kill the whole tree
+                        logging.info(f'  ... remove diversion river with {len(river)} reaches.')
+                        keep_river = False
+                        break
                     else:
-                        braid = True
+                        count_tribs += 1
+                        count_reaches += len(joiner)
+                        joiner.prune(preserve_catchments)
+                    
+        if keep_river:
+            logging.info(f'  ... removed {count_tribs} diversion tributaries with {count_reaches} total reaches.')
+            non_diversions.append(river)
 
-                if braid:
-                    # a braid, move upward until we hit the junction
-                    parent = reach.parent
-                    done = parent is None
-                    count2 = 1
-                    while not done:
-                        parent = reach.parent
-                        count2 += 1
-                        done = parent is None or len(parent.children) > 1
-                        if not done:
-                            reach = parent
+    return non_diversions
 
-                    assert(parent is not None)
-                    reach.prune(preserve_catchments)
-                    logging.debug(f"  ... pruning braid of length {count2}")
-                    count += 1
-        logging.info(f'... removed {count} braids from a river of length {len(river)}')
+
+def removeBraids(rivers, preserve_catchments=False):
+    """Remove braids, but not diversions."""
+    logging.info("Removing braided sections...")
+    for river in rivers:
+        count_tribs = 0
+        count_reaches = 0
+
+        for leaf in river.leaf_nodes():
+            if leaf.properties['DivergenceCode'] == 2:
+                # is a braid or a diversion?
+                if river.getNode(leaf.properties['UpstreamMainPathHydroSeq']) is not None:
+                    # braid!
+
+                    try:
+                        joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
+                    except StopIteration:
+                        assert(False)
+                        # this should not be possible, because our braid must come back somewhere
+                    else:
+                        count_tribs += 1
+                        count_reaches += len(joiner)
+                        joiner.prune(preserve_catchments)
+
+        logging.info(f'... removed {count_tribs} braids with {count_reaches} reaches from a river of length {len(river)}')
     return rivers
 
-def removeDivergences(rivers, remove_diversions=True, remove_braids=True):
-    """Uses the NHDPlus property DIVERGENCE to remove divergences, IN PLACE.
 
-    These can be of two types:
-
-    Diversions are divergences that do not return to the stream
-    network.  These will consist of individual rivers, typically with
-    only one leaf reach, whose leaf reaches are all divergences.
+def removeDivergences(rivers, preserve_catchments=False):
+    """Removes both diversions and braids.
 
     Braids are divergences that return to the river network, and so
-    look like branches of a river tree, all of whose leaves are
-    divergences.
-    """
-    if remove_diversions:
-        rivers = removeDiversions(rivers)
+    look like branches of a river tree whose upstream entity is in the
+    river (in another branch).
 
-    if remove_braids:
-        rivers = removeBraids(rivers, remove_diversions)
-    return rivers
+    Diversions are divergences that do not return to the stream
+    network, and so their upstream entity is in another river.
+
+    """
+    logging.info("Removing divergent sections...")
+    non_divergences = []
+    for river in rivers:
+        keep_river = True
+        count_tribs = 0
+        count_reaches = 0
+        for leaf in river.leaf_nodes():
+            if leaf.properties['DivergenceCode'] == 2:
+                # diversion!
+                try:
+                    joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
+                except StopIteration:
+                    # no joiner means kill the whole tree
+                    logging.info(f'  ... remove divergence river with {len(river)} reaches.')
+                    keep_river = False
+                    break
+                else:
+                    count_tribs += 1
+                    count_reaches += len(joiner)
+                    joiner.prune(preserve_catchments)
+                    
+        if keep_river:
+            logging.info(f'  ... removed {count_tribs} divergence tributaries with {count_reaches} total reaches.')
+            non_divergences.append(river)
+
+    return non_divergences
 
 
 def filterSmallRivers(rivers, count):
