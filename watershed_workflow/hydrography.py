@@ -524,11 +524,11 @@ def pruneBySegmentLength(tree, prune_tol=10):
             leaf.removePreserveCatchments()
 
 
-def pruneRiverByArea(river, area, prop='TotalDrainageAreaSqKm', preserve_catchments=False):
+def pruneRiverByArea(river, area, prop='DivergenceRoutedDrainAreaSqKm', preserve_catchments=False):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
-    'TotalDrainageAreaSqKm' property to have been set.
+    'DivergenceRoutedDrainAreaSqKm' property (or whatever is selected) to have been set.
     """
     count = 0
     for node in river.preOrder():
@@ -539,24 +539,24 @@ def pruneRiverByArea(river, area, prop='TotalDrainageAreaSqKm', preserve_catchme
         for child in children:
             if child.properties[prop] < area:
                 logging.debug(
-                    f"... removing trib with {len(child)} reaches of area: {child.properties['TotalDrainageAreaSqKm']}")
+                    f"... removing trib with {len(child)} reaches of area: {child.properties[prop]}")
                 count += len(child)
                 child.prune(preserve_catchments)
 
     return count
 
 
-def pruneByArea(rivers, area, prop='TotalDrainageAreaSqKm', preserve_catchments=False):
+def pruneByArea(rivers, area, prop='DivergenceRoutedDrainAreaSqKm', preserve_catchments=False):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
-    'TotalDrainageAreaSqKm' property to have been set.
+    'DivergenceRoutedDrainAreaSqKm' property to have been set.
     """
     logging.info(f"Pruning by total contributing area < {area}")
     count = 0
     sufficiently_big_rivers = []
     for river in rivers:
-        if river.properties['TotalDrainageAreaSqKm'] >= area:
+        if river.properties[prop] >= area:
             count += pruneRiverByArea(river, area, prop, preserve_catchments)
             sufficiently_big_rivers.append(river)
     logging.info(f"... pruned {count}")
