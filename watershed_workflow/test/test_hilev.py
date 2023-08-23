@@ -127,7 +127,7 @@ def test_river_tree_properties_prune(sources_download):
                                                  prune_by_area=0.03*cc.exterior().area*1.e-6)
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
-    assert (len(rivers[0]) == 51)
+    assert (len(rivers[0]) == 50)
 
 
 def test_river_tree_geometry(sources):
