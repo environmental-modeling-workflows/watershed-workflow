@@ -290,16 +290,23 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                 if hole.area < (abs_tol**2) or hole.area < rel_tol * part.area:
                     # give it to someone, anyone, doesn't matter who
                     logging.info(f'Found a little hole: area = {hole.area} at {hole.centroid}')
-                    i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
-                    logging.debug(f'      placing in shape {i}')
-                    polygons[i] = poly.union(hole)
-                    if hasattr(poly, 'properties'):
-                        polygons[i].properties = poly.properties
-
+                    try:
+                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
+                        logging.debug(f'      placing in shape {i}')
+                        polygons[i] = poly.union(hole)
+                        if hasattr(poly, 'properties'):
+                            polygons[i].properties = poly.properties
+                    except StopIteration:
+                        pass
+                
                 else:
                     logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
                     big_holes.append(hole)
 
+    for i, poly in enumerate(polygons):
+        if isinstance(poly,shapely.geometry.collection.GeometryCollection):
+            polygons[i] = list(sorted(poly, key=lambda a : -a.area))[0]
+            polygons[i].properties = poly.properties
     logging.info(f'  -- complete')
     return polygons, big_holes
 
