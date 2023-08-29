@@ -10,20 +10,6 @@ import watershed_workflow.river_tree
 import watershed_workflow.plot
 
 
-def test_null_cleanup(rivers):
-    """Tests that cleanup on nice river network does nothing"""
-    riversc = watershed_workflow.hydrography.simplify_and_merge(rivers)
-    print(type(rivers))
-    print(type(riversc))
-    assert_close(riversc, rivers)
-
-
-def test_close_cleanup(rivers):
-    """Tests that cleanup can remove close points"""
-    extra = shapely.geometry.LineString([(15, -3.00000001), (15, -3)])
-    rivers_wextra = shapely.geometry.MultiLineString(list(rivers) + [extra, ])
-    rivers_clean = watershed_workflow.hydrography.simplify_and_merge(rivers_wextra)
-    assert_close(rivers_clean, rivers, 0.1)
 
 
 def data(poly_hucs, river_segs):

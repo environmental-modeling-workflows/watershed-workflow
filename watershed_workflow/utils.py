@@ -766,8 +766,13 @@ def angle(v1, v2):
     y1 = v1[1]
     x2 = v2[0]
     y2 = v2[1]
-    mag = 180. / np.pi * np.arccos((x1*x2 + y1*y2) /
-                                   (np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)))
+    numer = x1*x2 + y1*y2
+    denom = np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)
+    assert(denom > 0)
+    arg = numer / denom
+    assert(arg < 1.1 and arg > -1.1) # roundoff problems
+    arg = min(max(numer / denom, -1), 1)
+    mag = 180. / np.pi * np.arccos(arg)
     sign = x1*y2 - x2*y1
     if sign < 0:
         return -mag

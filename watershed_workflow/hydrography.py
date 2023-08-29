@@ -65,14 +65,14 @@ def snap(hucs, rivers,
     functions in this namespace.
 
     """
-    if triple_junctions_tol is None:
+    if triple_junctions_tol is None and tol is not None:
         triple_junctions_tol = 3 * tol
-    if reach_endpoints_tol is None:
-        reach_endpoints_tol = 2 * reach_endpoints_tol
+    if reach_endpoints_tol is None and tol is not None:
+        reach_endpoints_tol = 2 * tol
 
-    assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
-    assert (type(rivers) is list)
-    assert (all(river.is_continuous() for river in rivers))
+    assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
+    assert(type(rivers) is list)
+    assert(all(river.is_continuous() for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) == 0:
@@ -82,33 +82,39 @@ def snap(hucs, rivers,
         assert (len(r) > 0)
 
     # snap boundary triple junctions to river endpoints
-    logging.info("  snapping polygon segment boundaries to river endpoints")
-    snap_polygon_endpoints(hucs, rivers, triple_junctions_tol)
-    if not all(river.is_continuous() for river in rivers):
-        logging.info("    ...resulted in inconsistent rivers!")
-        return False
-    try:
-        list(hucs.polygons())
-    except AssertionError:
-        logging.info("    ...resulted in inconsistent HUCs")
-        return False
+    if triple_junctions_tol is not None:
+        logging.info("  snapping polygon segment boundaries to river endpoints")
+        snap_polygon_endpoints(hucs, rivers, triple_junctions_tol)
+        if not all(river.is_continuous() for river in rivers):
+            logging.info("    ...resulted in inconsistent rivers!")
+            return False
+        try:
+            list(hucs.polygons())
+        except AssertionError:
+            logging.info("    ...resulted in inconsistent HUCs")
+            return False
 
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
-    logging.info("  snapping river endpoints to the polygon")
-    for tree in rivers:
-        snap_endpoints(tree, hucs, reach_endpoints_tol)
-    if not all(river.is_continuous() for river in rivers):
-        logging.info("    ...resulted in inconsistent rivers!")
-        return False
-    try:
-        list(hucs.polygons())
-    except AssertionError:
-        logging.info("    ...resulted in inconsistent HUCs")
-        return False
+    if reach_endpoints_tol is not None:
+        logging.info("  snapping river endpoints to the polygon")
+        for tree in rivers:
+            snap_endpoints(tree, hucs, reach_endpoints_tol)
+        if not all(river.is_continuous() for river in rivers):
+            logging.info("    ...resulted in inconsistent rivers!")
+            return False
+        try:
+            list(hucs.polygons())
+        except AssertionError:
+            logging.info("    ...resulted in inconsistent HUCs")
+            return False
 
     if cut_intersections:
         cut_and_snap_crossings(hucs, rivers, tol)
+
+
+    # snapping can result in 0-length reaches
+    cleanup(rivers)
     return rivers
 
 
@@ -155,7 +161,7 @@ def cut_and_snap_crossings(hucs, rivers, tol=_tol):
         for river_node in tree.preOrder():
             _cut_and_snap_crossing(hucs, river_node, tol)
 
-    assert (all(river.is_consistent() for river in rivers))
+    cleanup(rivers)
     return rivers
 
 
@@ -297,21 +303,17 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
             endpoints = endpoints[:, 0:2]
         dists, inds = kdtree.query(endpoints)
 
-
-        debugging = False
-        
+        #### DEBUG CODE #####
         if debug_point.distance(shapely.geometry.Point(seg.coords[0])) < 10000:
             dist = debug_point.distance(shapely.geometry.Point(seg.coords[0]))
-            print(f'found a huc seg beginpoint: {seg.coords[0]} with distance {dist}')
-            debugging = True
+            print(f'found a huc seg beginpoint: {seg.coords[0]} with distance {dist} < tol = {tol}?')
+
         elif debug_point.distance(shapely.geometry.Point(seg.coords[-1])) < 10000:
             dist = debug_point.distance(shapely.geometry.Point(seg.coords[-1]))
-            print(f'found a huc seg endpoint: {seg.coords[-1]} with distance {dist}')
-            debugging = True
+            print(f'found a huc seg endpoint: {seg.coords[-1]} with distance {dist} < tol = {tol}?')
+        #### END DEBUG CODE #####
         
         if dists.min() < tol:
-            if debugging:
-                print(' MOVING!')
             new_seg = list(seg.coords)
             if dists[0] < tol:
                 new_seg[0] = coords[inds[0]]
@@ -319,6 +321,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
                     f"  Moving HUC segment point 0,1: {list(seg.coords)[0]}, {list(seg.coords)[-1]}"
                 )
                 logging.debug("        point 0 to river at %r" % list(new_seg[0]))
+
             if dists[1] < tol:
                 new_seg[-1] = coords[inds[1]]
                 logging.debug(
@@ -327,10 +330,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
                 logging.debug("        point -1 to river at %r" % list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
-        elif debugging:
-            print(' BAH!')
-    
-
+            
 def _closest_point(point, line, tol=_tol):
     """Determine the closest location on line to point.  If that point is
     further than tol or already a coordinate in the line, returns
@@ -514,24 +514,20 @@ def snap_endpoints(tree, hucs, tol=_tol):
     return river
 
 
-def simplify_and_merge(reaches, tol=_tol):
-    """First pass to clean up hydro data"""
-    logging.info("  quick simplify of reaches")
-    reaches = shapely.ops.linemerge(reaches).simplify(tol)
-    return list(reaches.geoms)
+def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol):
+    """Cleans rivers in place by:
 
-
-def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
-    """Some hydrography data seems to get some random branches, typically
-    quite short, that are nearly perfectly parallel to other, longer
-    branches.  Surely this is a data error -- remove them.
-
-    This returns rivers in a forest, not in a list.
+    1. simplifying to tol
+    2. pruning all leaf nodes of length < prune_tol
+    3. merging all internal nodes of length < merge_tol
     """
     # simplify
     if simp_tol is not None:
         for tree in rivers:
             simplify(tree, simp_tol)
+
+    for river in rivers:
+        assert(river.is_continuous())
 
     # prune short leaf branches and merge short interior reaches
     for tree in rivers:
@@ -540,6 +536,17 @@ def cleanup(rivers, simp_tol=_tol, prune_tol=10, merge_tol=10):
         if merge_tol != prune_tol and prune_tol is not None:
             pruneBySegmentLength(tree, prune_tol)
 
+    for river in rivers:
+        assert(river.is_continuous())
+
+    assert(all(river.is_continuous() for river in rivers))
+    tols = [t for t in [prune_tol, merge_tol] if t is not None]
+    if len(tols) > 0:
+        tol = min(tols)
+        for river in rivers:
+            for r in river:
+                assert(r.length > tol)
+            
 
 def pruneBySegmentLength(tree, prune_tol=10):
     """Removes any leaf segments that are shorter than prune_tol"""

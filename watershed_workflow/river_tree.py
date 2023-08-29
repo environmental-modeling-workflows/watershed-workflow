@@ -223,9 +223,9 @@ class River(watershed_workflow.tinytree.Tree):
         """Validity checking of the tree."""
         good = self.is_continuous(tol)
         if 'HydrologicSequence' in self.properties:
-            good |= self.is_hydroseq_consistent(key='HydrologicSequence')
+            good &= self.is_hydroseq_consistent(key='HydrologicSequence')
         elif 'hydroseq' in self.properties:
-            good |= self.is_hydroseq_consistent(key='hydroseq')
+            good &= self.is_hydroseq_consistent(key='hydroseq')
         return good
 
     #
