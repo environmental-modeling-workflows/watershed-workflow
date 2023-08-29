@@ -50,7 +50,11 @@ def createGlobalTree(reaches, method='geometry', tol=_tol):
             "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
-def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=False):
+def snap(hucs, rivers,
+         tol=_tol,
+         triple_junctions_tol=None,
+         reach_endpoints_tol=None,
+         cut_intersections=False):
     """Snap HUCs to rivers.
 
     Attempts to make rivers that intersect, or are close to
@@ -61,6 +65,11 @@ def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=Fa
     functions in this namespace.
 
     """
+    if triple_junctions_tol is None:
+        triple_junctions_tol = 3 * tol
+    if reach_endpoints_tol is None:
+        reach_endpoints_tol = 2 * reach_endpoints_tol
+
     assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
     assert (type(rivers) is list)
     assert (all(river.is_continuous() for river in rivers))
@@ -72,12 +81,9 @@ def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=Fa
     for r in rivers:
         assert (len(r) > 0)
 
-    if tol_triple_junctions is None:
-        tol_triple_junctions = tol
-
     # snap boundary triple junctions to river endpoints
     logging.info("  snapping polygon segment boundaries to river endpoints")
-    snap_polygon_endpoints(hucs, rivers, tol_triple_junctions)
+    snap_polygon_endpoints(hucs, rivers, triple_junctions_tol)
     if not all(river.is_continuous() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
@@ -91,7 +97,7 @@ def snap(hucs, rivers, tol=_tol, tol_triple_junctions=None, cut_intersections=Fa
     # note this is a null-op on cases dealt with above
     logging.info("  snapping river endpoints to the polygon")
     for tree in rivers:
-        snap_endpoints(tree, hucs, tol)
+        snap_endpoints(tree, hucs, reach_endpoints_tol)
     if not all(river.is_continuous() for river in rivers):
         logging.info("    ...resulted in inconsistent rivers!")
         return False
@@ -277,7 +283,9 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
     # limit to x,y
     if (coords.shape[1] != 2):
         coords = coords[:, 0:2]
-    # kdtree = scipy.spatial.cKDTree(coords)
+
+    debug_point = shapely.geometry.Point([-581678.5238123547, -378867.813358335])
+        
     kdtree = cKDTree(coords)
     # for each segment of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it
@@ -288,7 +296,22 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
         if (endpoints.shape[1] != 2):
             endpoints = endpoints[:, 0:2]
         dists, inds = kdtree.query(endpoints)
+
+
+        debugging = False
+        
+        if debug_point.distance(shapely.geometry.Point(seg.coords[0])) < 10000:
+            dist = debug_point.distance(shapely.geometry.Point(seg.coords[0]))
+            print(f'found a huc seg beginpoint: {seg.coords[0]} with distance {dist}')
+            debugging = True
+        elif debug_point.distance(shapely.geometry.Point(seg.coords[-1])) < 10000:
+            dist = debug_point.distance(shapely.geometry.Point(seg.coords[-1]))
+            print(f'found a huc seg endpoint: {seg.coords[-1]} with distance {dist}')
+            debugging = True
+        
         if dists.min() < tol:
+            if debugging:
+                print(' MOVING!')
             new_seg = list(seg.coords)
             if dists[0] < tol:
                 new_seg[0] = coords[inds[0]]
@@ -304,6 +327,9 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
                 logging.debug("        point -1 to river at %r" % list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
+        elif debugging:
+            print(' BAH!')
+    
 
 def _closest_point(point, line, tol=_tol):
     """Determine the closest location on line to point.  If that point is
@@ -635,12 +661,17 @@ def removeDivergences(rivers, preserve_catchments=False):
     """
     logging.info("Removing divergent sections...")
     non_divergences = []
+    if 'DivergenceCode' in rivers[0].properties:
+        divcode_key = 'DivergenceCode'
+    else:
+        divcode_key = 'divergence'
+    
     for river in rivers:
         keep_river = True
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes():
-            if leaf.properties['DivergenceCode'] == 2:
+            if leaf.properties[divcode_key] == 2:
                 # diversion!
                 try:
                     joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)

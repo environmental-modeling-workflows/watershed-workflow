@@ -414,8 +414,6 @@ def get_reaches(source,
     profile, reaches = source.get_hydro(huc,
                                         bounds,
                                         in_crs,
-                                        properties=properties,
-                                        include_catchments=include_catchments,
                                         **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
 
@@ -861,6 +859,52 @@ def construct_rivers(reaches,
     rivers = watershed_workflow.hydrography.createGlobalTree(reaches, method=method, tol=tol)
     logging.info(f" ... generated {len(rivers)} rivers")
 
+    return reduce_rivers(rivers, ignore_small_rivers, prune_by_area, area_property,
+                         remove_diversions, remove_braided_divergences, tol)
+
+
+def reduce_rivers(rivers,
+                  ignore_small_rivers=0,
+                  prune_by_area=None,
+                  area_property='DivergenceRoutedDrainAreaSqKm',
+                  remove_diversions=False,
+                  remove_braided_divergences=False,
+                  tol=0.1):
+    """Create a river, which is a tree of reaches.
+    
+    Note, HUCs and rivers must be in the same crs.
+
+    Parameters
+    ----------
+    rivers : list(river_tree.River)
+        A list of rivers to reduce.
+    ignore_small_rivers : int, optional
+        If provided and positive, removes rivers whose number of
+        reaches is less than this value.  If negative, keeps the N
+        biggest (in number of reaches) rivers, where N is the negative
+        of the provided value (e.g. -2 keeps the biggest 2 rivers).
+    prune_by_area : float, optional
+        If provided, remove reaches whose total contributing area is
+        less than this tol.  NOTE: only valid for reaches that include
+        a contributing area property (e.g. NHDPlus).
+    area_property : str, optional='DivergenceRoutedDrainAreaSqKm'
+        Name of the area property to use for determining reach CA.
+        Note that this defines the units of prune_by_area value.
+    remove_diversions : bool, optional=False
+        If true, remove diversions (see documentation of
+        modify_rivers_remove_divergences()).
+    remove_braided_divergences : bool, optional=False
+        If true, remove braided divergences (see documentation of
+        modify_rivers_remove_divergences()).
+    tol : float, optional=0.1
+        Defines what close is in the case of method == 'geometry'
+
+    Returns
+    ------- 
+    out : list(river_tree.River)
+        A list of rivers, as River objects.
+
+    """
     if ignore_small_rivers < 0:
         rivers = sorted(rivers, key=lambda a : len(a), reverse=True)
         rivers = rivers[0:-ignore_small_rivers]
@@ -905,8 +949,10 @@ def simplify(hucs,
              simplify_waterbodies=None,
              prune_tol=None,
              merge_tol=None,
-             snap_rivers=False,
-             snap_waterbodies=False,
+             snap_tol=None,
+             snap_triple_junctions_tol=None,
+             snap_reach_endpoints_tol=None,
+             snap_waterbodies_tol=None,
              cut_intersections=False):
     """Simplifies the HUC and river shapes.
 
@@ -931,23 +977,30 @@ def simplify(hucs,
         Simplify the waterbodies.  If not provided, uses the
         simplify_hucs value.  Provide 0 to make no changes to the
         waterbodies.
-    prune_tol : float, optional
+    prune_tol : float, optional = simplify_rivers
         Prune leaf reaches that are smaller than this tolerance.  If
         not provided, uses simplify_rivers value.  Provide 0 to not do
         this step.
-    merge_tol : float, optional
+    merge_tol : float, optional = simplify_rivers
         Merges reaches that are smaller than this tolerance with their
         downstream parent reach.  Note that if there is a branchpoint
         at the downstream node of the small reach, it will get moved
         to the upstream node.  If not provided, uses simplify_rivers
         value.  Provide 0 to not do this step.
-    snap_rivers : bool, optional
-        If true, snaps river and HUC nodes that are nearly coincident
-        to be discretely coincident.
-    snap_waterbodies : bool, optional
-        If true, snaps waterbodies and HUC nodes that are nearly coincident
-        to be discretely coincident.
-    cut_intersections : bool, optional
+    snap_tol : float, optional = 0.75 * simplify_rivers
+        Tolerance used for snapping rivers to nearby huc boundaries.
+        Provide 0 to not snap.
+    snap_triple_junctions_tol : float, optional = 3 * snap_tol
+        Tolerance used for snapping river triple junctions to huc
+        triple junctions.
+    snap_reach_endpoints_tol : float, optional = 2 * snap_tol
+        Tolerance used for snapping reach junctions to huc boundaries.
+    snap_waterbodies_tol : float, optional = snap_tol
+        If not 0, snaps waterbody and HUC nodes that are nearly
+        coincident to be discretely coincident.  Note this is not
+        recommended; prefer to include major waterbodies in the HUC
+        network.
+    cut_intersections : bool, optional = False
         If true, force intersections of the river network and the HUC
         boundary to occur at a coincident node by adding nodes as
         needed.
@@ -974,6 +1027,14 @@ def simplify(hucs,
         prune_tol = simplify_rivers
     if merge_tol is None:
         merge_tol = simplify_rivers
+    if snap_tol is None:
+        snap_tol = 0.75 * simplify_rivers
+    if snap_triple_junctions_tol is None:
+        snap_triple_junctions_tol = 3 * snap_tol
+    if snap_reach_endpoints_tol is None:
+        snap_reach_endpoints_tol = 2 * snap_tol
+    if snap_waterbodies_tol is None:
+        snap_waterbodies_tol = snap_tol
 
     logging.info("")
     logging.info("Simplifying")
@@ -987,10 +1048,14 @@ def simplify(hucs,
         logging.info("Simplifying HUCs")
         watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
 
-    if snap_rivers:
+    if snap_tol > 0 or snap_triple_junctions_tol > 0 or snap_reach_endpoints_tol > 0 or cut_intersections:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
-        rivers = watershed_workflow.hydrography.snap(hucs, rivers, 0.75 * simplify_rivers,
-                                                     3 * simplify_rivers, cut_intersections)
+        rivers = watershed_workflow.hydrography.snap(hucs,
+                                                     rivers,
+                                                     snap_tol,
+                                                     snap_triple_junctions_tol,
+                                                     snap_reach_endpoints_tol,
+                                                     cut_intersections)
 
     if simplify_waterbodies > 0 and waterbodies is not None:
         for i, wb in enumerate(waterbodies):
@@ -998,13 +1063,13 @@ def simplify(hucs,
             wb = hucs.exterior().intersection(wb)
             waterbodies[i] = wb
 
-        if snap_waterbodies:
-            logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
-            watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, simplify_waterbodies)
+    if snap_waterbodies_tol > 0 and waterbodies is not None:
+        logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
+        watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, snap_waterbodies_tol)
 
     if cut_intersections:
         logging.info("Cutting crossings and removing external segments")
-        watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, simplify_rivers)
+        watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, snap_tol)
 
     logging.info("")
     logging.info("Simplification Diagnostics")
@@ -1317,7 +1382,7 @@ def tessalate_river_aligned(hucs,
     quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
                                                                           widths=river_width,
                                                                           enforce_convexity=True,
-                                                                          ax=ax)
+                                                                          ax=ax, label=False)
 
     # adjust the HUC to match the corridor at the boundary
     logging.info('Adjusting rivers at the watershed boundaries...')
@@ -1325,7 +1390,8 @@ def tessalate_river_aligned(hucs,
     watershed_workflow.river_mesh.adjust_hucs_for_river_corridors(hucs_without_outlet,
                                                                   rivers,
                                                                   corrs,
-                                                                  integrate_rc=False)
+                                                                  integrate_rc=False,
+                                                                  ax=ax)
 
     # triangulate the rest
     tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,

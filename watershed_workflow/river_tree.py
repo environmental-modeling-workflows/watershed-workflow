@@ -210,20 +210,22 @@ class River(watershed_workflow.tinytree.Tree):
                     node._make_continuous(child)
         assert (self.is_continuous())
 
-    def is_hydroseq_consistent(self):
+    def is_hydroseq_consistent(self, key='HydrologicSequence'):
         """Confirms that hydrosequence is valid."""
         if len(self.children) == 0:
             return True
 
-        self.children = sorted(self.children, key=lambda c: c.properties['HydrologicSequence'])
-        return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
-            all(child.is_hydroseq_consistent() for child in self.children)
+        self.children = sorted(self.children, key=lambda c: c.properties[key])
+        return self.properties[key] < self.children[0].properties[key] and \
+            all(child.is_hydroseq_consistent(key) for child in self.children)
 
     def is_consistent(self, tol=_tol):
         """Validity checking of the tree."""
         good = self.is_continuous(tol)
         if 'HydrologicSequence' in self.properties:
-            good |= self.is_hydroseq_consistent()
+            good |= self.is_hydroseq_consistent(key='HydrologicSequence')
+        elif 'hydroseq' in self.properties:
+            good |= self.is_hydroseq_consistent(key='hydroseq')
         return good
 
     #
@@ -292,19 +294,26 @@ class River(watershed_workflow.tinytree.Tree):
         """Given a list of segments, create a list of rivers using the
         HydroSeq maps provided in NHDPlus datasets.
         """
+        if 'HydrologicSequence' in segments[0].properties:
+            key = 'HydrologicSequence'
+            down = 'DownstreamMainPathHydroSeq'
+        else:
+            key = 'hydroseq'
+            down = 'dnhydroseq'
+        
         # create a map of all segments from HydroSeqID to segment
-        hydro_seq_ids = dict((seg.properties['HydrologicSequence'], cls(seg)) for seg in segments)
+        hydro_seq_ids = dict((seg.properties[key], cls(seg)) for seg in segments)
 
         roots = []
         for hs_id, node in hydro_seq_ids.items():
-            down_hs_id = node.properties['DownstreamMainPathHydroSeq']
+            down_hs_id = node.properties[down]
             try:
                 hydro_seq_ids[down_hs_id].addChild(node)
             except KeyError:
                 roots.append(node)
         return roots
 
-    def deep_copy(self):
+    def deepcopy(self):
         """Creates a copy of self  including properties"""
         cp = copy.deepcopy(self)
         for node1, node2 in zip(cp.preOrder(), self.preOrder()):

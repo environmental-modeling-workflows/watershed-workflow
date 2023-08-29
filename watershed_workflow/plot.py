@@ -34,17 +34,28 @@ def _is_iter(obj):
     return True
 
 
-class PolyCollectionWithArray:
-    def __init__(self, poly, arr, **kwargs):
-        self.poly = poly
-        self.arr = arr
-        self.__dict__.update(**kwargs)
+# plot reaches and modify...
+#
+# This uses the annotated axes
+class Labeler:
+    def __init__(self, ax, lines, metadata, format="ID: {ID}   hy={hydroseq}   dn={dnhydroseq}"):
+        self.ax = ax
+        self.lines = lines
+        self.metadata = metadata
+        self._format = format
+        self.selected = None
 
-    def get_array(self):
-        return self.arr
+        self.ax.set_title("ID: None")
 
-    def autoscale_None(self):
-        pass
+    def update(self, event):
+        print('event loc:', event.mouseevent.x, event.mouseevent.y)
+        print('event dict:', event.__dict__)
+        if self.selected == event.ind[0]:
+            self.selected = -1
+        else:
+            self.selected = event.ind[0]
+            self.ax.set_title(self._format.format(**self.metadata[self.selected].properties))
+        self.ax.get_figure().canvas.draw_idle()
 
 
 def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, ax_kwargs=None, **kwargs):

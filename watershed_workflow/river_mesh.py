@@ -11,6 +11,17 @@ import watershed_workflow.utils
 import watershed_workflow.tinytree
 import watershed_workflow.plot
 
+class IntersectionError(Exception):
+    pass
+
+def _indexPointInSeg(segment, point, tol=1.e-2):
+    ind = segment.coords[:].index(point.coords[0])
+    # except ValueError:
+    #     ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
+    #                 key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
+    #     assert(shapely.geometry.Point(p).distance(point) < tol)
+    return ind
+
 
 def sort_children_by_angle(tree, reverse=False):
     """Sorts the children of a given segment by their angle with respect to that segment."""
@@ -29,7 +40,7 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
-def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
@@ -69,36 +80,37 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
         reach_colors = watershed_workflow.colors.enumerated_colors(len(nodes), 2)
         lines = watershed_workflow.plot.shplys(reach_list, None, reach_colors, ax)
 
-        # the next block creates a hoverable plot where reaches are
-        # annotated with their IDs.  This makes it easier for the user
-        # to find the bad spot.
-        annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
-                            bbox=dict(boxstyle="round", fc="w"),
-                            arrowprops=dict(arrowstyle="->"))
-        annot.set_visible(False)
+        if label:
+            # the next block creates a hoverable plot where reaches are
+            # annotated with their IDs.  This makes it easier for the user
+            # to find the bad spot.
+            annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+                                bbox=dict(boxstyle="round", fc="w"),
+                                arrowprops=dict(arrowstyle="->"))
+            annot.set_visible(False)
 
-        def update_annot(idx):
-            posx, posy = reach_list[idx].centroid.coords[0]
-            annot.xy = (posx, posy)
-            text = f'ID: {reach_names[idx]}'
-            annot.set_text(text)
-            annot.get_bbox_patch().set_facecolor(reach_colors[idx])
-            annot.get_bbox_patch().set_alpha(0.8)
-            
-        def hover(event):
-            vis = annot.get_visible()
-            if event.inaxes == ax:
-                cont, ind = lines.contains(event)
-                if cont:
-                    update_annot(ind['ind'][0])
-                    annot.set_visible(True)
-                    fig.canvas.draw_idle()
-                else:
-                    if vis:
-                        annot.set_visible(False)
+            def update_annot(idx):
+                posx, posy = reach_list[idx].centroid.coords[0]
+                annot.xy = (posx, posy)
+                text = f'ID: {reach_names[idx]}'
+                annot.set_text(text)
+                annot.get_bbox_patch().set_facecolor(reach_colors[idx])
+                annot.get_bbox_patch().set_alpha(0.8)
+
+            def hover(event):
+                vis = annot.get_visible()
+                if event.inaxes == ax:
+                    cont, ind = lines.contains(event)
+                    if cont:
+                        update_annot(ind['ind'][0])
+                        annot.set_visible(True)
                         fig.canvas.draw_idle()
+                    else:
+                        if vis:
+                            annot.set_visible(False)
+                            fig.canvas.draw_idle()
 
-        ax.get_figure().canvas.mpl_connect("motion_notify_event", hover)
+            ax.get_figure().canvas.mpl_connect("motion_notify_event", hover)
 
     # now do the actual work
     for i,river in enumerate(rivers):
@@ -492,9 +504,15 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
     logging.info("... setting width of quad elements")
     corr_coords = corr.exterior.coords[:-1]
 
+    if type(widths) == dict:
+        stream_order = next((i for i in ['StreamOrder', 'streamorder', 'streamorde']
+                            if i in river.properties), None)
+        if stream_order is None:
+            raise RuntimeError('set_width_by_order requested widths by stream order, but cannot guess stream order property name')
+
     for j, node in enumerate(river.preOrder()):
         if type(widths) == dict:
-            order = node.properties["StreamOrder"]
+            order = node.properties[stream_order]
             target_width = width_by_order(widths, order)
         else:
             target_width = widths
@@ -768,23 +786,24 @@ def angle_rivers_segs(ref_seg, seg):
 
 def rc_points_for_rt_point(rt_point, node, river_corr):
     """Returns the points (list of indices of coords) on the river-corridor-polygon for a given junction point on river tree."""
-    assert (node.segment.intersects(rt_point))
-    rt_point_ind = node.segment.coords[:].index(rt_point.coords[0])
-    elem_ind = (
-        len(node.segment.coords) - 1 - rt_point_ind
-    ) - 1  # this give id of stream mesh element which has this rt point  at upstream end
+    #assert (node.segment.intersects(rt_point))
+    rt_point_ind = _indexPointInSeg(node.segment, rt_point)
+
+    # this give id of stream mesh element which has this rt point  at upstream end
+    elem_ind = (len(node.segment.coords) - 1 - rt_point_ind) - 1
     elem = node.elements[elem_ind]
 
     if len(elem) == 4:
-        rc_points = [river_corr.exterior.coords[ind]
-                     for ind in [elem[1], elem[2]]]  # return two points
+        # return two points
+        rc_points = [river_corr.exterior.coords[ind] for ind in [elem[1], elem[2]]]
     elif len(elem) == 5:
-        rc_points = [river_corr.exterior.coords[ind]
-                     for ind in [elem[1], elem[2], elem[3]]]  # return three points at junction
+        # return three points at junction
+        rc_points = [river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3]]]
     elif len(elem) == 6:
-        rc_points = [
-            river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3], elem[4]]
-        ]  # return three points at junction
+        # return three points at junction
+        rc_points = [river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3], elem[4]]]
+    else:
+        raise ValueError('Too many points in elem?')
 
     return rc_points
 
@@ -820,7 +839,7 @@ def adjust_seg_for_rc(seg, river_corr, new_seg_point, integrate_rc=False):
     return seg
 
 
-def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True):
+def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True, ax=None):
     """Adjusts hucs to accomodate river corridor polygons.
 
     Parameters
@@ -838,10 +857,10 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
         if true, will extend the hucs-segments alogn the edge of quads 
     """
     for river, river_corr in zip(rivers, river_corrs):
-        adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc)
+        adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc, ax=ax)
 
 
-def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
+def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, ax=None):
     """Adjusts hucs to accomodate river corridor polygon.
 
     Parameters
@@ -867,8 +886,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
     huc_segs_adjusted = []  # keep track of already modified hucs
     for i, seg in enumerate(hucs.segments):
         is_unadjusted_outlet_point = False
-        if i not in huc_segs_adjusted and seg.intersects(
-                river_mls):  # check if this huc is part of already processed junction
+        # check if this huc is part of already processed junction
+        if i not in huc_segs_adjusted and seg.intersects(river_mls):
             logging.info("  ... found an intersection of river and huc seg")
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
@@ -889,10 +908,23 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
 
         if is_unadjusted_outlet_point:
             logging.info("  ... it is an unadjusted outlet!")
-            # assert(type(intersection_point) is shapely.geometry.Point) # hopefully no LineStrings or MultiPoints
+            if ax is not None:
+                if isinstance(intersection_point, shapely.geometry.Point):
+                    print('plotting...')
+                    print(list(intersection_point.coords))
+                    ax.scatter(intersection_point.xy[0], intersection_point.xy[1],
+                               color='r', marker='o', s=40)
+                else:
+                    raise ValueError('Weird intersection?')
+                                
+            # hopefully no LineStrings or MultiPoints
+            # assert(type(intersection_point) is shapely.geometry.Point)
+            
             # find all the huc-segments at this junction
             intersection_segs = hucsegs_at_intersection(intersection_point, hucs)
-            huc_segs_adjusted = huc_segs_adjusted + intersection_segs  # mark them as modified (in the following steps)
+            huc_segs_adjusted = huc_segs_adjusted + intersection_segs
+
+            # mark them as modified (in the following steps)
 
             # find the downstream node (outgoing river reach) at this junction
             parent_node = node_at_intersection(intersection_point, river)
@@ -902,40 +934,49 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                 outlet_junction = False
             logging.info(f"  ... is there a parent to this? {parent_node.parent}")
 
-            # find the index of the intersection point (at this junction) on the rt-node-segment (needed to find rc points)
-            ind_intersection_point = parent_node.segment.coords[:].index(
-                intersection_point.coords[0])
+            # find the index of the intersection point (at this
+            # junction) on the rt-node-segment (needed to find rc
+            # points)
+            try:
+                ind_intersection_point = _indexPointInSeg(parent_node.segment, intersection_point)
+            except ValueError:
+                err = IntersectionError()
+                err.point = intersection_point
+                err.river_seg = parent_node.segment
+                err.river = river
+                err.huc_segment = seg
+                raise err
 
             if outlet_junction:
                 logging.info('  found outlet junction')
                 elem = parent_node.elements[0]
+                # rc points at junction
                 rc_points = [river_corr.exterior.coords[ind]
-                             for ind in [elem[0], elem[-1]]]  # rc points at junction
-                ref_seg = shapely.geometry.LineString(
-                    parent_node.segment.coords[ind_intersection_point
-                                               - 2:])  # reference segment for angles
-                seg_angles = [
-                    angle_rivers_segs(ref_seg, hucs.segments[seg_id])
-                    for seg_id in intersection_segs
-                ]  # orientations of hucs-segments
-                incoming_river_angles = [180, ]  # this hardcoded only for outlet junction
-                all_segs = intersection_segs + [
-                    parent_node,
-                ]  # all line segments (hucs-segments and river-segments) at this junction
-            else:  # if internal junction
-                rc_points = rc_points_for_rt_point(intersection_point, parent_node, river_corr)
-                ref_seg = shapely.geometry.LineString(
-                    parent_node.segment.coords[ind_intersection_point:ind_intersection_point + 2]
-                )  # this is small part of the parent node.segment just downstream of the intersection point
+                             for ind in [elem[0], elem[-1]]]
+
+                # reference segment for angles
+                ref_seg = shapely.geometry.LineString(parent_node.segment.coords[ind_intersection_point - 2:])
+
+                # orientations of hucs-segments
                 seg_angles = [
                     angle_rivers_segs(ref_seg, hucs.segments[seg_id])
                     for seg_id in intersection_segs
                 ]
+                incoming_river_angles = [180, ]  # this hardcoded only for outlet junction
+
+                # all line segments (hucs-segments and river-segments) at this junction
+                all_segs = intersection_segs + [parent_node,]
+            else:
+                # internal junction
+                rc_points = rc_points_for_rt_point(intersection_point, parent_node, river_corr)
+
+                # this is small part of the parent node.segment just downstream of the intersection point
+                ref_seg = shapely.geometry.LineString(parent_node.segment.coords[ind_intersection_point:ind_intersection_point + 2])
+                seg_angles = [angle_rivers_segs(ref_seg, hucs.segments[seg_id]) for seg_id in intersection_segs]
 
                 # orientations of incoming river-segments
-                if intersection_point.intersects(
-                        shapely.geometry.Point(parent_node.segment.coords[0])
-                ):  # huc and rt intersect at river-merging point
+                if intersection_point.intersects(shapely.geometry.Point(parent_node.segment.coords[0])):
+                    # huc and rt intersect at river-merging point                    
                     incoming_river_angles = [
                         angle_rivers_segs(ref_seg, child) for child in parent_node.children
                     ]
@@ -947,12 +988,14 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                     incoming_river_angles = [angle_rivers_segs(ref_seg, upstream_seg), ]
                     all_segs = intersection_segs + [parent_node, ]
 
-            all_angles = seg_angles + incoming_river_angles  # orientation of all line segments (hucs-segments and river-segments) at this junction
+            # orientation of all line segments (hucs-segments and river-segments) at this junction
+            all_angles = seg_angles + incoming_river_angles
 
             junction_seg_angles = {all_segs[i]: all_angles[i] for i in range(len(all_segs))}
-            junction_seg_angles_sorted = dict(
-                sorted(junction_seg_angles.items(),
-                       key=lambda item: item[1]))  # sort segments by their orientation angles
+
+            # sort segments by their orientation angles
+            junction_seg_angles_sorted = dict(sorted(junction_seg_angles.items(),
+                                                     key=lambda item: item[1]))  
 
             # This polygon is used to remove overlapping
             # huc-segment and river corridor. To avoid issues at
@@ -1002,3 +1045,10 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                                                                rc_points[rc_point_ind])
                     else:
                         rc_point_ind += 1
+
+
+            if ax is not None:
+                if isinstance(intersection_point, shapely.geometry.Point):
+                    print(list(intersection_point.coords))
+                    ax.scatter(intersection_point.xy[0], intersection_point.xy[1],
+                               color='m', marker='o', s=40)
