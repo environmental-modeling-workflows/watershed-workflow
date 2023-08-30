@@ -40,28 +40,69 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
+def _isOverlappingCorridor(corr, river):
+    if len(corr.interiors) > 0:
+        # there is an overlap upstream of the junction of two tributaries,
+        # creating a hole
+        return True
+    if not _isExpectedNumPoints(corr, river):
+        # overlaps at the junction result in losing points in the corridor polygon.
+        return True
+    return False
+            
+
+def _isOverlappingCorridors(corrs, rivers):
+    """Corridors can overlap"""
+    if any(_isOverlappingCorridor(c, river) for (c,river) in zip(corrs, rivers)):
+        return True
+        
+    corrs_area = shapely.ops.unary_union(corrs)
+    summed_area = sum(c.area for c in corrs)
+    if abs(summed_area - corrs_area) > 1.e-3:
+        return True
+    return False
+
+
+def _isExpectedNumPoints(corr, river):
+    """Check if the points on the corridor are same as calculated theoretically"""
+    n_child = []
+    for node in river.preOrder():
+        n_child.append(len(node.children))
+    n = 2  # two outlet points
+    for node in river.preOrder():
+        n = n + 2 * (len(node.segment.coords) - 1)
+    n = n - n_child.count(0) + n_child.count(2) + 2*n_child.count(3) + 3*n_child.count(4)
+    return (len(corr.exterior.coords) - 1 == n)
+
+            
 def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
     -----------
     rivers: list(watershed_workflow.river_tree.River object)
-      List of river tree along which river meshes are to be created
+        List of river tree along which river meshes are to be created
     widths: float or a dictionary
-      Width of streams, as constant or {stream-order: width}
+        Width of streams, as constant or {stream-order: width}
     enforce_convexity: boolean 
-      If true, enforce convexity of the pentagons/hexagons at the
-      junctions.
+        If true, enforce convexity of the pentagons/hexagons at the
+        junctions.
     ax : matplotlib Axes object, optional
-      For debugging -- plots troublesome reaches as quad elements are
-      generated to find tricky areas.
+        For debugging -- plots troublesome reaches as quad elements are
+        generated to find tricky areas.
+    label : bool, optional = True
+        If true and ax is provided, animates the debugging plot with
+        reach ID labels as the user hovers over the plot.  Requires a
+        widget backend for matplotlib.
     
     Returns
     -------
     elems: list(list)
-      List of river elements
+        List of river elements, each element a list of indices into
+        corr.coords.
     corrs: list(shapely.geometry.Polygon)
-      List of river corridor polygons
+        List of river corridor polygons, one per river, storing the
+        coordinates used in elems.
 
     """
     elems = []
@@ -72,7 +113,8 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
     if ax is not None:
         logging.info('  ... setting up debug figure')
         fig = ax.get_figure()
-        ax.set_title(' magenta ^: first touch \n green o: leaf, final element complete \n blue o: internal element complete ')
+        ax.set_title(' magenta ^: first touch \n green o: leaf, final element '
+                     'complete \n blue o: internal element complete ')
 
         nodes = [r for river in rivers for r in river.preOrder()]
         reach_list = [r.segment for r in nodes]
@@ -122,9 +164,13 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
                                               enforce_convexity=enforce_convexity,
                                               gid_shift=gid_shift,
                                               ax=ax)
+
         elems = elems + elems_river
         corrs = corrs + [corr, ]
 
+    if not _isOverlappingCorridors(corrs, rivers):
+        raise RuntimeError('Overlapping quad elements in neighboring rivers, try '
+                           'reducing river width or check reach data')
     return elems, corrs
 
 
@@ -162,9 +208,10 @@ def create_river_mesh(river,
     Returns
     -------
     elems: List(List)
-        List of river elements
-    corr: List(shapely.geometry.Polygon)
-        a river corridor polygon
+        List of river elements, each element a list of indices into
+        corr.coords.
+    corr: shapely.geometry.Polygon
+        The polygon of all elements, stores the coordinates.
 
     """
     # creating a polygon for river corridor by dilating the river tree
@@ -191,6 +238,10 @@ def create_river_mesh(river,
                                      widths=widths,
                                      dilation_width=dilation_width,
                                      gid_shift=gid_shift)
+
+    if not _isOverlappingCorridor(corr, river):
+        raise RuntimeError('Overlapping quad elements in a single river -- try'
+                           ' increasing junction_angle_limit in densification, or check data.')
     return elems, corr
 
 
@@ -295,16 +346,9 @@ def create_river_corridor(river, width):
     corr3 = shapely.geometry.Polygon(corr3_p)
 
     # check if the points on the river corridor are same as calculated theoretically
-    n_child = []
-    for node in river.preOrder():
-        n_child.append(len(node.children))
-    n = 2  # two outlet points
-    for node in river.preOrder():
-        n = n + 2 * (len(node.segment.coords) - 1)
-    n = n - n_child.count(0) + n_child.count(2) + 2*n_child.count(3) + 3*n_child.count(4)
-    if (len(corr3.exterior.coords[:]) - 1 != n):
-        logging.warning(f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}")
-        logging.warning(" -- recommend running with ax argument to tessalate_river_aligned() to debug!")
+    if not _isExpectedNumPoints(corr3, river):
+        raise RuntimeError(f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}"
+                           " -- recommend running with ax argument to tessalate_river_aligned() to debug!")
 
     return corr3
 
@@ -908,14 +952,6 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, a
 
         if is_unadjusted_outlet_point:
             logging.info("  ... it is an unadjusted outlet!")
-            if ax is not None:
-                if isinstance(intersection_point, shapely.geometry.Point):
-                    print('plotting...')
-                    print(list(intersection_point.coords))
-                    ax.scatter(intersection_point.xy[0], intersection_point.xy[1],
-                               color='r', marker='o', s=40)
-                else:
-                    raise ValueError('Weird intersection?')
                                 
             # hopefully no LineStrings or MultiPoints
             # assert(type(intersection_point) is shapely.geometry.Point)
@@ -1046,9 +1082,3 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, a
                     else:
                         rc_point_ind += 1
 
-
-            if ax is not None:
-                if isinstance(intersection_point, shapely.geometry.Point):
-                    print(list(intersection_point.coords))
-                    ax.scatter(intersection_point.xy[0], intersection_point.xy[1],
-                               color='m', marker='o', s=40)

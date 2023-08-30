@@ -321,6 +321,15 @@ class River(watershed_workflow.tinytree.Tree):
         return cp
 
 
+def getNode(rivers, nid):
+    """Finds the node, by ID, in a list of rivers"""
+    for river in rivers:
+        n = river.getNode(nid)
+        if n is not None:
+            return n
+    return None
+    
+
 def accumulateCatchments(rivers, outlet_IDs, names=None):
     """Given a list of outlet_IDs, find the reach in rivers and form its contributing area.
     
@@ -382,14 +391,7 @@ def accumulateIncrementalCatchments(rivers, outlet_IDs, names=None):
     if names is None:
         names = outlet_IDs
 
-    def getNode(nid):
-        for river in rivers:
-            n = river.getNode(nid)
-            if n is not None:
-                return n
-        return None
-
-    roots = [getNode(out_id) for out_id in outlet_IDs]
+    roots = [getNode(rivers, out_id) for out_id in outlet_IDs]
     assert(all(root is not None for root in roots))
 
     sorted_ids = sorted(outlet_IDs)

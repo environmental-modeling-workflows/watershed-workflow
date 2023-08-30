@@ -455,6 +455,10 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         if type(color) is str and color == 'elevation':
             # compute colors from the mean elevation
             color = [np.array(p.exterior.coords)[0:-1, 2].mean() for p in iter(shps)]
+        elif type(color) is str and color == 'area':
+            color = [p.area for p in iter(shps)]
+        elif type(color) is str and color == 'log10area':
+            color = np.log10(np.array([p.area for p in iter(shps)]))
 
         try:
             color_len = len(color)
@@ -682,8 +686,8 @@ def mesh(m2, crs, color='gray', ax=None, **kwargs):
       Collection of patches representing the triangles.
 
     """
-    shplys = [shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn]
-    return shply(shplys, crs, color, ax, **kwargs)
+    shapes = [shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn]
+    return shplys(shapes, crs, color, ax, **kwargs)
 
 
 def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
