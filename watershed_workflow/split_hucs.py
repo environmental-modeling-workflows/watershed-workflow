@@ -250,7 +250,10 @@ def mostlyContains(p1, p2, tol=0.9):
     if p1.intersection(p2).area > tol * p2.area:
         return True
     return False
-        
+
+class HoleError(ValueError):
+    pass      
+
 def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):
     """Removes interior small holes betweent the boundaries of polygons.
 
@@ -293,7 +296,16 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     try:
                         i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
                         logging.debug(f'      placing in shape {i}')
+                        assert(isinstance(polygons[i], shapely.geometry.Polygon))
                         polygons[i] = poly.union(hole)
+                        try:
+                            assert(isinstance(polygons[i], shapely.geometry.Polygon))
+                        except AssertionError:
+                            err=HoleError('union of hole and poly is collection')
+                            err.hole = hole
+                            err.poly = poly
+                            err.union = polygons[i]
+                            raise err
                         if hasattr(poly, 'properties'):
                             polygons[i].properties = poly.properties
                     except StopIteration:
@@ -303,10 +315,6 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
                     big_holes.append(hole)
 
-    for i, poly in enumerate(polygons):
-        if isinstance(poly,shapely.geometry.collection.GeometryCollection):
-            polygons[i] = list(sorted(poly, key=lambda a : -a.area))[0]
-            polygons[i].properties = poly.properties
     logging.info(f'  -- complete')
     return polygons, big_holes
 
@@ -328,8 +336,12 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
             if watershed_workflow.utils.intersects(s1, s2):
                 s2 = s2.difference(s1)
                 list_of_shapes[j] = s2
-
-                # remove holes
+    # to deal with multi-part geometry
+    for i, poly in enumerate(list_of_shapes):
+        if isinstance(poly,shapely.geometry.base.BaseMultipartGeometry):
+            list_of_shapes[i] = sorted(poly, key=lambda a : -a.area)[0]
+            # list_of_shapes[i].properties = poly.properties
+    # remove holes
     list_of_shapes, holes = removeHoles(list_of_shapes, abs_tol, rel_tol)
     return list_of_shapes
 

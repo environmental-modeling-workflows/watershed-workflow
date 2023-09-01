@@ -414,6 +414,8 @@ def get_reaches(source,
     profile, reaches = source.get_hydro(huc,
                                         bounds,
                                         in_crs,
+                                        properties=properties,
+                                        include_catchments=include_catchments,
                                         **kwargs)
     logging.info("... found {} reaches".format(len(reaches)))
 
