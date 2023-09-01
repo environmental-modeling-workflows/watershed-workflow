@@ -858,8 +858,7 @@ def non_point_intersection(shp1, shp2):
     the same... we avoid using intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not (is_empty_shapely(inter) or isinstance(inter, shapely.geometry.Point) or isinstance(inter, shapely.geometry.MultiPoint) or
-                isinstance(inter, shapely.geometry.linestring.LineString) or isinstance(inter, shapely.geometry.linestring.MultiLineString))
+    return not (is_empty_shapely(inter) or isinstance(inter, shapely.geometry.Point) or isinstance(inter, shapely.geometry.MultiPoint))
 
 
 def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):

@@ -294,7 +294,7 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     # give it to someone, anyone, doesn't matter who
                     logging.info(f'Found a little hole: area = {hole.area} at {hole.centroid}')
                     try:
-                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
+                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if isinstance(hole.intersection(poly), shapely.geometry.Polygon))
                         logging.debug(f'      placing in shape {i}')
                         assert(isinstance(polygons[i], shapely.geometry.Polygon))
                         polygons[i] = poly.union(hole)
