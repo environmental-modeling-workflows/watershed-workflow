@@ -668,17 +668,13 @@ def removeDivergences(rivers, preserve_catchments=False):
     """
     logging.info("Removing divergent sections...")
     non_divergences = []
-    if 'DivergenceCode' in rivers[0].properties:
-        divcode_key = 'DivergenceCode'
-    else:
-        divcode_key = 'divergence'
     
     for river in rivers:
         keep_river = True
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes():
-            if leaf.properties[divcode_key] == 2:
+            if leaf.properties['DivergenceCode'] == 2:
                 # diversion!
                 try:
                     joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
@@ -724,26 +720,15 @@ def merge(river, tol=_tol):
         if node.segment.length < tol and node.parent is not None:
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
                          (node.segment.length, node.segment.centroid.coords[0]))
-            num_siblings = len(list(node.siblings()))
-            node.parent.segment = shapely.geometry.LineString([node.segment.coords[0], ]
-                                                              + node.parent.segment.coords[1:])
-            if num_siblings != 0:
-                for sibling in node.siblings():
-                    sibling.segment = shapely.geometry.LineString(sibling.segment.coords[:-1]
-                                                                  + [node.segment.coords[0], ])
-            if 'area' in node.properties and 'area' in node.parent.properties:
-                node.parent.properties['area'] += node.properties['area']
 
-            if 'catchment' in node.properties and node.properties['catchment'] is not None:
-                if 'catchment' in node.parent.properties and node.parent.properties['catchment'] is not None:
-                    node.parent.properties['catchment'] = shapely.ops.unary_union(
-                        [node.properties['catchment'], node.parent.properties['catchment']])
-                else:
-                    node.parent.properties['catchment'] = node.properties['catchment']
-                
-            for child in node.children:
-                node.parent.addChild(child)
-            node.remove()
+            node.parent.moveCoordinate(0, node.segment.coords[0])
+            siblings = list(node.siblings())
+            for sibling in node.siblings():
+                sibling.moveCoordinate(-1, node.segment.coords[0])
+                sibling.remove()
+                node.addChild(sibling)
+
+            node.merge()
 
 
 def simplify(river, tol=_tol):
@@ -754,3 +739,5 @@ def simplify(river, tol=_tol):
             assert (watershed_workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))
             assert (watershed_workflow.utils.close(new_seg.coords[-1], node.segment.coords[-1]))
             node.segment = new_seg
+
+            

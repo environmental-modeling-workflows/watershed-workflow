@@ -13,6 +13,7 @@ import math
 import scipy.interpolate
 import shapely.geometry
 import shapely.ops
+import shapely.wkt
 import shapely.prepared
 import shapely.affinity
 import rasterio
@@ -858,7 +859,15 @@ def non_point_intersection(shp1, shp2):
     the same... we avoid using intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not (is_empty_shapely(inter) or isinstance(inter, shapely.geometry.Point) or isinstance(inter, shapely.geometry.MultiPoint))
+    return not (is_empty_shapely(inter) or \
+                isinstance(inter, shapely.geometry.Point) or \
+                isinstance(inter, shapely.geometry.MultiPoint))
+
+
+def volumetric_intersection(shp1, shp2):
+    """Checks whether an intersection includes volume and not just points and lines."""
+    inter = shp1.intersection(shp2)
+    return inter.area > 0
 
 
 def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):

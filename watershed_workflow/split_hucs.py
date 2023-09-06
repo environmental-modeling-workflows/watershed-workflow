@@ -7,11 +7,15 @@ import copy
 
 import shapely.geometry
 import shapely.ops
+import shapely.errors
 
 import watershed_workflow.utils
 
-_abs_tol = 1.
+_abs_tol = 1
 _rel_tol = 1.e-5
+
+class GeometryError(Exception):
+    pass
 
 class HandledCollection:
     """A collection of of objects and handles for those objects."""
@@ -120,13 +124,9 @@ class SplitHUCs:
         self.intersections = HandledCollection()  # stores handles into segments
 
         # save the property dictionaries to give back upon request
-        self.properties = []
-        for s in shapes:
-            try:
-                self.properties.append(s.properties)
-            except AttributeError:
-                self.properties.append(None)
+        self.properties = [s.properties if hasattr(s, 'properties') else None for s in shapes]
 
+        # save outlets
         if polygon_outlets is not None:
             assert len(shapes) == len(polygon_outlets)
             for out in polygon_outlets:
@@ -242,27 +242,15 @@ def simplify(hucs, tol=0.1):
         hucs.segments[i] = seg.simplify(tol)
 
 
-def mostlyContains(p1, p2, tol=0.9):
-    """Fuzzy contains -- does p1 mostly contain p2"""
-    if p1.area < p2.area:
-        return False
-    
-    if p1.intersection(p2).area > tol * p2.area:
-        return True
-    return False
-
-class HoleError(ValueError):
-    pass      
-
 def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):
-    """Removes interior small holes betweent the boundaries of polygons.
+    """Removes interior small holes between the boundaries of polygons.
 
     Note this assumes the polygons are mostly disjoint.
     
     """
+    polygons = polygons[:]
     logging.info(f'Removing holes on {len(polygons)} polygons')
     assert(all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
-    # assert(all(hasattr(p, 'properties') for p in polygons))
 
     # first remove interior holes
     if remove_all_interior:
@@ -296,16 +284,7 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     try:
                         i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if isinstance(hole.intersection(poly), shapely.geometry.Polygon))
                         logging.debug(f'      placing in shape {i}')
-                        assert(isinstance(polygons[i], shapely.geometry.Polygon))
                         polygons[i] = poly.union(hole)
-                        try:
-                            assert(isinstance(polygons[i], shapely.geometry.Polygon))
-                        except AssertionError:
-                            err=HoleError('union of hole and poly is collection')
-                            err.hole = hole
-                            err.poly = poly
-                            err.union = polygons[i]
-                            raise err
                         if hasattr(poly, 'properties'):
                             polygons[i].properties = poly.properties
                     except StopIteration:
@@ -333,14 +312,15 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
         for j in range(i + 1, len(list_of_shapes)):
             s2 = list_of_shapes[j]
 
-            if watershed_workflow.utils.intersects(s1, s2):
-                s2 = s2.difference(s1)
-                list_of_shapes[j] = s2
-    # to deal with multi-part geometry
-    for i, poly in enumerate(list_of_shapes):
-        if isinstance(poly,shapely.geometry.base.BaseMultipartGeometry):
-            list_of_shapes[i] = sorted(poly, key=lambda a : -a.area)[0]
-            # list_of_shapes[i].properties = poly.properties
+            try:
+                if watershed_workflow.utils.volumetric_intersection(s1, s2):
+                    s2 = s2.difference(s1)
+                    if isinstance(s2, shapely.geometry.base.BaseMultipartGeometry):
+                        s2 = biggest(s2)
+                    list_of_shapes[j] = s2
+            except shapely.errors.TopologicalError as err:
+                raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '+str(err))
+                
     # remove holes
     list_of_shapes, holes = removeHoles(list_of_shapes, abs_tol, rel_tol)
     return list_of_shapes
@@ -374,7 +354,35 @@ def intersectAndSplit(list_of_shapes):
                 if type(inter) is shapely.geometry.MultiLineString:
                     inter = shapely.ops.linemerge(inter)
 
+                if type(inter) is shapely.geometry.GeometryCollection:
+                    parts_lines = [l for l in inter if isinstance(l, shapely.geometry.LineString)]
+                    parts_points = [p for p in inter if isinstance(p, shapely.geometry.Point)]
+                    parts_polys = [p for p in inter if isinstance(p, shapely.geometry.Polygon)]
+
+                    mls = shapely.geometry.MultiLineString(parts_lines)
+                    for poly in parts_polys:
+                        mps = poly.intersection(mls)
+                        print(mps)
+                        assert(isinstance(mps, shapely.geometry.MultiPoint))
+                        assert(len(mps) == 2)
+
+                        parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
+                    inter = shapely.ops.linemerge(parts_lines)
+
+                if type(inter) is shapely.geometry.GeometryCollection or \
+                   type(inter) is shapely.geometry.MultiLineString:
+                    logging.info(f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}')
+                    err = GeometryError('HUC intersection yielded collection of odd types')
+                    err.polys = list_of_shapes
+                    err.i_p1 = i
+                    err.p1 = s1
+                    err.i_p2 = j
+                    err.p2 = s2
+                    err.inter = inter
+                    raise err
+                
                 if type(inter) is not shapely.geometry.LineString:
+                    
                     logging.info('Hopefully hole in HUC intersection: ({},{}) = {}'.format(
                         i, j, type(inter)))
 

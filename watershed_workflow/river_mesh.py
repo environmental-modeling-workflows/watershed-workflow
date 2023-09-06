@@ -44,11 +44,11 @@ def _isOverlappingCorridor(corr, river):
     if len(corr.interiors) > 0:
         # there is an overlap upstream of the junction of two tributaries,
         # creating a hole
-        return True
+        return 2
     if not _isExpectedNumPoints(corr, river):
         # overlaps at the junction result in losing points in the corridor polygon.
-        return True
-    return False
+        return 1
+    return 0
             
 
 def _isOverlappingCorridors(corrs, rivers):
@@ -56,7 +56,7 @@ def _isOverlappingCorridors(corrs, rivers):
     if any(_isOverlappingCorridor(c, river) for (c,river) in zip(corrs, rivers)):
         return True
         
-    corrs_area = shapely.ops.unary_union(corrs)
+    corrs_area = shapely.ops.unary_union(corrs).area
     summed_area = sum(c.area for c in corrs)
     if abs(summed_area - corrs_area) > 1.e-3:
         return True
@@ -118,7 +118,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
 
         nodes = [r for river in rivers for r in river.preOrder()]
         reach_list = [r.segment for r in nodes]
-        reach_names = [str(int(r.properties['ID'])) for r in nodes]
+        reach_names = [r.properties['ID'] for r in nodes]
         reach_colors = watershed_workflow.colors.enumerated_colors(len(nodes), 2)
         lines = watershed_workflow.plot.shplys(reach_list, None, reach_colors, ax)
 
@@ -168,7 +168,7 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
         elems = elems + elems_river
         corrs = corrs + [corr, ]
 
-    if not _isOverlappingCorridors(corrs, rivers):
+    if _isOverlappingCorridors(corrs, rivers):
         raise RuntimeError('Overlapping quad elements in neighboring rivers, try '
                            'reducing river width or check reach data')
     return elems, corrs
@@ -239,8 +239,19 @@ def create_river_mesh(river,
                                      dilation_width=dilation_width,
                                      gid_shift=gid_shift)
 
-    if not _isOverlappingCorridor(corr, river):
-        raise RuntimeError('Overlapping quad elements in a single river -- try'
+    # redraw the debug plot with updated elems
+    if ax is not None:
+        coords = list(corr.exterior.coords)
+        shapes = [shapely.geometry.Polygon([coords[e] for e in elem]) for elem in elems]
+        watershed_workflow.plot.shplys(shapes, None, 'r', ax)
+
+    oc = _isOverlappingCorridor(corr, river)
+    if oc == 1:
+        raise RuntimeError('Overlapping quad elements away from a junction -- try '
+                           'reducing river width or checking data to ensure no braided '
+                           'or nearly braided systems')
+    elif oc == 2:
+        raise RuntimeError('Overlapping quad elements at a junction -- try '
                            ' increasing junction_angle_limit in densification, or check data.')
     return elems, corr
 
@@ -383,6 +394,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
     coords = corr.exterior.coords[:-1]
 
+    artists = [] # list of things added to ax here
     import time
     def pause():
         time.sleep(0.)
@@ -418,7 +430,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
             seg_coords = np.array(seg_coords)
             if ax != None:
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'm^', markersize=5)
+                artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'm^', markersize=5))
                 pause()
 
         elif node.touched == 1 and len(node.children) == 0:
@@ -440,7 +452,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             if ax != None:
                 # plot it...
                 # seg_coords = np.array(seg_coords)
-                # ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5)
+                # artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5))
 
                 # also plot the conn
                 for i, elem in enumerate(node.elements):
@@ -451,7 +463,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     else:
                         assert (len(looped_conn) == 5)
                     cc = np.array([coords[n] for n in looped_conn])
-                    ax.plot(cc[:, 0], cc[:, 1], 'g-o')
+                    artists.append(ax.plot(cc[:, 0], cc[:, 1], 'g-o'))
                 pause()
 
         elif node.touched == len(node.children):
@@ -470,7 +482,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             if ax != None:
                 #plot it...
                 seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'b^', markersize=5)
+                artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'b^', markersize=5))
 
             # also plot the conn
             for i, elem in enumerate(node.elements):
@@ -483,7 +495,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                 cc = np.array([coords[n] for n in looped_conn])
 
                 if ax != None:
-                    ax.plot(cc[:, 0], cc[:, 1], 'b-o')
+                    artists.append(ax.plot(cc[:, 0], cc[:, 1], 'b-o'))
 
                 for c in cc:
                     # What is this actually checking?  Need a comment here -- this is confusing code. --ETC
@@ -510,7 +522,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
 
             if ax != None:
-                ax.scatter([coords[ic][0], ], [coords[ic][1], ], c='m', marker='^')
+                artists.append(ax.scatter([coords[ic][0], ], [coords[ic][1], ], c='m', marker='^'))
                 pause()
 
     assert (len(coords) == (ic + 1))
@@ -524,6 +536,16 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.elements[i] = elems_new
 
     elems = [el for node in river.preOrder() for el in node.elements]
+
+    # once we have reached here, the debug plot is not so needed anymore,
+    # and leaving all our dots makes things cluttered.
+    for artist in artists:
+        if isinstance(artist, list):
+            for it in artist:
+                it.remove()
+        else:
+            artist.remove()
+    
     return elems
 
 

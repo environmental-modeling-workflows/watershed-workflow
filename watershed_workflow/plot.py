@@ -38,23 +38,95 @@ def _is_iter(obj):
 #
 # This uses the annotated axes
 class Labeler:
-    def __init__(self, ax, lines, metadata, format="ID: {ID}   hy={hydroseq}   dn={dnhydroseq}"):
+    """A labeling widget that can be attached to matplotlib figures to display info on-click.
+
+    When an geometry item (e.g. point, line, or polygon) is clicked on
+    the figure, that is mapped into the original WW object that
+    generated the geometry, and then run through a function to
+    generate a label that is written to the title of the figure.
+
+    Parameters
+    ----------
+    ax : matplotlib.Axes object
+        The axes to work with.
+    items : list[tuple[artist, metadata, formatter]]
+        See documentation of the addItem() method.
+
+    """
+    
+    def __init__(self, ax, items=None):
         self.ax = ax
-        self.lines = lines
-        self.metadata = metadata
-        self._format = format
+        self.items = []
+        for item in items:
+            self.addItem(*item)
+
+        self.ax.set_title("None")
         self.selected = None
 
-        self.ax.set_title("ID: None")
+    def addItem(self, data, artist, formatter):
+        """Adds an item to the list of things to label.
 
+        Parameters
+        ----------
+        data : List[*]
+            A list of objects being labeled.  This is likely the
+            underlying data, with properties, that was passed to
+            a ww.plot function.
+        artist : matplotlib collection
+            A matplotlib Collection, likely the return value of
+            a ww.plot call or similar.
+        formatter : function or str
+            A function that accepts an entry in data and returns a
+            string to label the item selected.  If this is a string,
+            it is assumed to be a formattable string to which the
+            item's properties dictionary is passed.
+        """
+        
+        if isinstance(formatter, str):
+            def format_this(item):
+                return formatter.format(**dict(item)), list()
+            formatter = format_this
+
+        assert(len(artist) == len(metadata))
+        self.items.append( (artist, metadata, formatter) )
+        self.metadata = metadata
+        self._format = format
+        self._selected = []
+
+    def deselect(self):
+        """Clears anything plotted in the last click"""
+        for artist in self._selected:
+            artist.clear()
+            self._selected = []
+
+    def select(self, i, j, xy):
+        """Selects item i, collection index j, with a click at xy"""
+        data, artist, formatter = self.items[i]
+
+        if isinstance(data, list):
+            dat = data[j]
+            if isinstance(dat, shapely.geometry.base.BaseGeometry) and hasattr(dat, 'properties'):
+                dat = dict(geometry=dat, **dat.properties)
+            title = formatter(dat)
+        elif isinstance(data, pandas.DataFrame):
+            title = formatter(data.iloc[j])
+        self.ax.set_title(title)
+
+        # redraw LineStrings with markers
+        if isinstance(artist, matplotlib.collections.LineCollection):
+            line = artist.get_data()[i]
+            color = artist.get_colors()[i]
+            
+            self._selected.append(self.ax.plot(line[:,0], line[:,1], '-x', color=color))
+            
+            
     def update(self, event):
+        """Acts on click."""
         print('event loc:', event.mouseevent.x, event.mouseevent.y)
         print('event dict:', event.__dict__)
-        if self.selected == event.ind[0]:
-            self.selected = -1
-        else:
-            self.selected = event.ind[0]
-            self.ax.set_title(self._format.format(**self.metadata[self.selected].properties))
+
+        i = next(i for (i,item) in enumerate(self.items) if item[0] is event.artist)
+        self.select(i, 0, (event.mouseevent.x, event.mouseevent.y))
         self.ax.get_figure().canvas.draw_idle()
 
 
