@@ -514,7 +514,7 @@ def snap_endpoints(tree, hucs, tol=_tol):
     return river
 
 
-def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol):
+def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol, preserve_catchments=False):
     """Cleans rivers in place by:
 
     1. simplifying to tol
@@ -534,7 +534,7 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol):
         if merge_tol is not None:
             merge(tree, merge_tol)
         if merge_tol != prune_tol and prune_tol is not None:
-            pruneBySegmentLength(tree, prune_tol)
+            pruneBySegmentLength(tree, prune_tol, preserve_catchments)
 
     for river in rivers:
         assert(river.is_continuous())
@@ -548,13 +548,13 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol):
                 assert(r.length > tol)
             
 
-def pruneBySegmentLength(tree, prune_tol=10):
+def pruneBySegmentLength(tree, prune_tol=10, preserve_catchments=False):
     """Removes any leaf segments that are shorter than prune_tol"""
     for leaf in tree.leaf_nodes():
         if leaf.segment.length < prune_tol:
             logging.info("  ...cleaned leaf segment of length: %g at centroid %r" %
                          (leaf.segment.length, leaf.segment.centroid.coords[0]))
-            leaf.removePreserveCatchments()
+            leaf.prune(preserve_catchments)
 
 
 def pruneRiverByArea(river, area, prop='DivergenceRoutedDrainAreaSqKm', preserve_catchments=False):
@@ -722,7 +722,6 @@ def merge(river, tol=_tol):
                          (node.segment.length, node.segment.centroid.coords[0]))
 
             node.parent.moveCoordinate(0, node.segment.coords[0])
-            siblings = list(node.siblings())
             for sibling in node.siblings():
                 sibling.moveCoordinate(-1, node.segment.coords[0])
                 sibling.remove()

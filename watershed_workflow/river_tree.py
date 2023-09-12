@@ -277,9 +277,9 @@ class River(watershed_workflow.tinytree.Tree):
 
     def is_locally_continuous(self, tol=_tol):
         """Is this node continuous with its parent and children?"""
-        res = all(self._is_continuous(child) for child in self.children)
+        res = all(self._is_continuous(child, tol=_tol) for child in self.children)
         if self.parent is not None:
-            res = res and self.parent._is_continuous(self)
+            res = res and self.parent._is_continuous(self, tol=_tol)
         return res
 
     def is_continuous(self, tol=_tol):

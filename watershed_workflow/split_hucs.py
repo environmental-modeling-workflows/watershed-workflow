@@ -196,7 +196,7 @@ class SplitHUCs:
         for h_intersection in inter:
             for s in self.intersections[h_intersection]:
                 segs.append(self.segments[s])
-
+     
         ml = shapely.ops.linemerge(segs)
         assert (type(ml) is shapely.geometry.LineString)
         poly = shapely.geometry.Polygon(ml)
@@ -282,7 +282,7 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     # give it to someone, anyone, doesn't matter who
                     logging.info(f'Found a little hole: area = {hole.area} at {hole.centroid}')
                     try:
-                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if isinstance(hole.intersection(poly), shapely.geometry.Polygon))
+                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
                         logging.debug(f'      placing in shape {i}')
                         polygons[i] = poly.union(hole)
                         if hasattr(poly, 'properties'):
@@ -293,6 +293,13 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                 else:
                     logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
                     big_holes.append(hole)
+
+    # for i, poly in enumerate(polygons):
+    #     if isinstance(poly,shapely.geometry.collection.GeometryCollection) or isinstance(poly,shapely.geometry.MultiPolygon):
+    #         polygons[i] = list(sorted(poly, key=lambda a : -a.area))[0]
+    #         if hasattr(poly, 'properties'):
+    #                     polygons[i].properties = poly.properties
+    # assert(all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
 
     logging.info(f'  -- complete')
     return polygons, big_holes
@@ -306,6 +313,13 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
     Modifies the list.
 
     """
+
+    # for i, s in enumerate(list_of_shapes):
+    #     props = s.properties
+    #     s=s.buffer(1)
+    #     s.properties = props
+    #     list_of_shapes[i]=s
+
     # deal with overlaps
     for i in range(len(list_of_shapes)):
         s1 = list_of_shapes[i]
@@ -314,10 +328,12 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
 
             try:
                 if watershed_workflow.utils.volumetric_intersection(s1, s2):
+                    props = s2.properties
                     s2 = s2.difference(s1)
                     if isinstance(s2, shapely.geometry.base.BaseMultipartGeometry):
                         s2 = biggest(s2)
                     list_of_shapes[j] = s2
+                    list_of_shapes[j].properties = props
             except shapely.errors.TopologicalError as err:
                 raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '+str(err))
                 
@@ -355,22 +371,32 @@ def intersectAndSplit(list_of_shapes):
                     inter = shapely.ops.linemerge(inter)
 
                 if type(inter) is shapely.geometry.GeometryCollection:
+                   
                     parts_lines = [l for l in inter if isinstance(l, shapely.geometry.LineString)]
                     parts_points = [p for p in inter if isinstance(p, shapely.geometry.Point)]
                     parts_polys = [p for p in inter if isinstance(p, shapely.geometry.Polygon)]
 
                     mls = shapely.geometry.MultiLineString(parts_lines)
+                    left_over_polys=[]
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
-                        print(mps)
+
+                        # print(mps)
                         assert(isinstance(mps, shapely.geometry.MultiPoint))
                         assert(len(mps) == 2)
-
                         parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
                     inter = shapely.ops.linemerge(parts_lines)
+                        # if (isinstance(mps, shapely.geometry.MultiPoint)) and (len(mps) == 2):
+                        #     parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
+                        # else:
+                        #     left_over_polys.append(poly)
+                    # mls_poly = shapely.geometry.MultiLineString([poly.exterior for poly in left_over_polys])
+                    # inter_with_polyrings =  shapely.geometry.MultiLineString(parts_lines+list(mls_poly))   
+                    # inter = shapely.ops.linemerge(inter_with_polyrings)
 
                 if type(inter) is shapely.geometry.GeometryCollection or \
                    type(inter) is shapely.geometry.MultiLineString:
+                   
                     logging.info(f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}')
                     err = GeometryError('HUC intersection yielded collection of odd types')
                     err.polys = list_of_shapes

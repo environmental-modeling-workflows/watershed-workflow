@@ -860,8 +860,7 @@ def non_point_intersection(shp1, shp2):
     """
     inter = shp1.intersection(shp2)
     return not (is_empty_shapely(inter) or \
-                isinstance(inter, shapely.geometry.Point) or \
-                isinstance(inter, shapely.geometry.MultiPoint))
+                isinstance(inter, shapely.geometry.Point))
 
 
 def volumetric_intersection(shp1, shp2):
