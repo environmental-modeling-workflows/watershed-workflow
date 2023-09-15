@@ -382,7 +382,7 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
             else:
                 seg_coords_new = [seg_coords[0], seg_coords[2]]
                 node.segment = shapely.geometry.LineString(seg_coords_new)
-            if i == 0:  # upstream end of the segment moved, update childres segments
+            if i == 0:  # upstream end of the segment moved, update children segments
                 for child in node.children:
                     child_seg_coords = child.segment.coords[:]
                     child_seg_coords[-1] = node.segment.coords[0]
@@ -393,7 +393,7 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
                     parent_seg_coords = node.parent.segment.coords[:]
                     parent_seg_coords[0] = node.segment.coords[-1]
                     node.parent.segment = shapely.geometry.LineString(parent_seg_coords)
-                for sibling in node.siblings():  # update siglings
+                for sibling in node.siblings():  # update siblings
                     sibling_coords = sibling.segment.coords[:]
                     sibling_coords[-1] = node.segment.coords[-1]
                     sibling.segment = shapely.geometry.LineString(sibling_coords)
