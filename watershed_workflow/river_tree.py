@@ -145,8 +145,7 @@ class River(watershed_workflow.tinytree.Tree):
             self.parent.properties['DivergenceCode'] = self.properties['DivergenceCode']
 
         parent = self.parent
-        parent.prependCoordinates(self.segment.coords[0:-1])
-        
+   
         self.remove()
         for child in self.children:
             parent.addChild(child)
