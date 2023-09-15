@@ -721,7 +721,6 @@ def merge(river, tol=_tol):
             logging.info("  ...cleaned inner segment of length %g at centroid %r" %
                          (node.segment.length, node.segment.centroid.coords[0]))
 
-            node.parent.moveCoordinate(0, node.segment.coords[0])
             for sibling in node.siblings():
                 sibling.moveCoordinate(-1, node.segment.coords[0])
                 sibling.remove()
