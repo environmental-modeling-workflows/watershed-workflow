@@ -138,8 +138,6 @@ class River(watershed_workflow.tinytree.Tree):
             else:
                 self.parent.properties['catchment'] = shapely.ops.unary_union([self.properties['catchment'],
                                                                                self.parent.properties['catchment']])
-        if 'HydrologicSequence' in self.parent.properties:
-            self.parent.properties['HydrologicSequence'] = self.properties['HydrologicSequence']
 
         if 'DivergenceCode' in self.parent.properties:
             self.parent.properties['DivergenceCode'] = self.properties['DivergenceCode']

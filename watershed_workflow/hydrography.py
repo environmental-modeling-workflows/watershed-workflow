@@ -526,6 +526,7 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol, preserve_catc
         for tree in rivers:
             simplify(tree, simp_tol)
 
+    assert(all([river.is_consistent() for river in rivers]))    
     for river in rivers:
         assert(river.is_continuous())
 
@@ -536,10 +537,8 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol, preserve_catc
         if merge_tol != prune_tol and prune_tol is not None:
             pruneBySegmentLength(tree, prune_tol, preserve_catchments)
 
-    for river in rivers:
-        assert(river.is_continuous())
-
     assert(all(river.is_continuous() for river in rivers))
+
     tols = [t for t in [prune_tol, merge_tol] if t is not None]
     if len(tols) > 0:
         tol = min(tols)
