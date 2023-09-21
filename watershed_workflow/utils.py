@@ -13,10 +13,12 @@ import math
 import scipy.interpolate
 import shapely.geometry
 import shapely.ops
+import shapely.wkt
 import shapely.prepared
 import shapely.affinity
 import rasterio
 import rasterio.transform
+import copy
 
 import watershed_workflow.crs
 
@@ -77,6 +79,15 @@ def create_shply(shape, properties=None, flip=False):
     except ValueError:
         raise ValueError(
             'Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
+
+
+def deepcopy(list_of_shapes):
+    """Deals with properties dictionary"""
+    new_list = [shp.__class__(shp) for shp in list_of_shapes]
+    for new, old in zip(new_list, list_of_shapes):
+        if hasattr(old, 'properties'):
+            new.properties = old.properties
+    return new_list
 
 
 def create_bounds(f):
@@ -595,6 +606,14 @@ def contains(s1, s2, tol=_tol):
     return s1.buffer(tol, 2).contains(s2)
 
 
+class CutError(Exception):
+    def __init__(self, message, line, seg, cutline):
+        super(Exception, self).__init__(message)
+        self.line = line
+        self.seg = seg
+        self.cutline = cutline
+
+
 def cut(line, cutline, tol=1.e-5):
     """Cuts a line at all intersections with cutline.  If an existing
     point in line is within tol of the cutline, do not add an additional
@@ -660,8 +679,9 @@ def cut(line, cutline, tol=1.e-5):
         else:
             print("Dual/multiple section: type = {}".format(type(point)))
             print(" point = {}".format(point))
-            raise RuntimeError("Dual/multiple intersection in a single seg... ugh!  "
-                               + "Intersection is of type '{}'".format(type(point)))
+            raise CutError(
+                "Dual/multiple intersection in a single seg... ugh!  "
+                + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
 
     if len(segcoords) > 1:
         segs.append(shapely.geometry.LineString(segcoords))
@@ -747,8 +767,13 @@ def angle(v1, v2):
     y1 = v1[1]
     x2 = v2[0]
     y2 = v2[1]
-    mag = 180. / np.pi * np.arccos((x1*x2 + y1*y2) /
-                                   (np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)))
+    numer = x1*x2 + y1*y2
+    denom = np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)
+    assert (denom > 0)
+    arg = numer / denom
+    assert (arg < 1.1 and arg > -1.1)  # roundoff problems
+    arg = min(max(numer / denom, -1), 1)
+    mag = 180. / np.pi * np.arccos(arg)
     sign = x1*y2 - x2*y1
     if sign < 0:
         return -mag
@@ -834,7 +859,14 @@ def non_point_intersection(shp1, shp2):
     the same... we avoid using intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not (is_empty_shapely(inter) or isinstance(inter, shapely.geometry.Point))
+    return not (is_empty_shapely(inter) or \
+                isinstance(inter, shapely.geometry.Point))
+
+
+def volumetric_intersection(shp1, shp2):
+    """Checks whether an intersection includes volume and not just points and lines."""
+    inter = shp1.intersection(shp2)
+    return inter.area > 0
 
 
 def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):

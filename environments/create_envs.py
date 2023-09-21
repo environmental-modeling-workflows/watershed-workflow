@@ -21,7 +21,7 @@ PACKAGES_BASE=['python=3.10',
               'h5py',
               'netCDF4',
               'pytest',
-              'nbmake' 
+              'nbmake',
               ]
 
 # extra packages needed in the WW env when building for a user
@@ -70,7 +70,7 @@ CHANNELS=['conda-forge',
 #          'defaults',
           ]
 
-PACKAGE_MANAGER = 'conda'
+PACKAGE_MANAGER = 'mamba'
 
 
 import datetime
@@ -105,7 +105,7 @@ def get_packages(env_type, os_name=None, extras=False):
             packages.extend(PACKAGES_USER_EXTRAS)
     elif env_type == 'TOOLS':
         packages = PACKAGES_TOOLS.copy()
-        if os_name == 'OSX':
+        if os_name == 'OSX' or os_name == 'Darwin':
             packages.append('clang_osx-64')
             packages.append('clangxx_osx-64')
             packages.append('gfortran_osx-64')
@@ -113,6 +113,8 @@ def get_packages(env_type, os_name=None, extras=False):
             packages.append('gcc_linux-64')
             packages.append('gxx_linux-64')
             packages.append('gfortran_linux-64')
+        else:
+            raise ValueError(f'Cannot determine compilers for unknown platform {os_name}')
     else:
         packages = PACKAGES_BASE.copy()
         if env_type != 'CI':
@@ -192,37 +194,40 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Helper script to (re-)create environments and dump them to file.')
     parser.add_argument('--env-type', type=str, default='STANDARD', choices=['STANDARD', 'CI', 'DEV'],
                         help='Type of environment to build, one of "STANDARD", "CI" (for minimal build), or "DEV" '
-                             '(for development tools)')
-    parser.add_argument('--env-name', default=None, type=str, help='Name for this environement')
+                             '(for developer tools)')
     parser.add_argument('--without-ww-env', action='store_true', help='Skip building the workflow environment.')
-    parser.add_argument('--with-user-env', action='store_true', help='Build a user environment.')
-    parser.add_argument('--user-env-name', default=None, type=str, help='Name for the user environment.')
+    parser.add_argument('--with-user-env', default=None, metavar='USER_ENV_NAME',
+                        help='Build a user (default, jupyterlab) environment with this name.')
     parser.add_argument('--user-env-extras', action='store_true', help='User build with my personal extras.')
-    parser.add_argument('--with-tools-env', action='store_true', help='Build an environment for compiling things.')
-    parser.add_argument('--tools-env-name', default=None, type=str, help='Name for the tools environment.')
+    parser.add_argument('--with-tools-env', default=None, metavar='TOOLS_ENV_NAME',
+                        help='Build a tools environment for compiling ExodusII.')
     parser.add_argument('--dump-only', action='store_true', help='Only write the .yml file')
-    parser.add_argument('--manager', default='conda', type=str,
-                        help='Package manager, one of conda, mamba, or micromamba')
-    parser.add_argument('OS', type=str, choices=['OSX', 'Linux'],
-                        help='Operating system flag for filename, likely OSX or Linux')
+    parser.add_argument('--manager', default='mamba', type=str,
+                        help='Package manager, likely one of mamba or conda, defaults to mamba')
+    parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
+                        help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env and a OS-specific filename for writing the environment.yml file.')
+    parser.add_argument('ENV_NAME', type=str, help='Name for this environement')
     args = parser.parse_args()
 
     PACKAGE_MANAGER = args.manager
+    if args.OS is None:
+        import platform
+        args.OS = platform.system()
     
     if args.env_type == 'STANDARD':
         args.env_type = None
     if not args.without_ww_env:
         # create the workflow environment
         packages = get_packages(args.env_type, args.OS)
-        create_and_dump_env_local(args.env_type, args.OS, packages, args.env_name, args.dump_only)
+        create_and_dump_env_local(args.env_type, args.OS, packages, args.name, args.dump_only)
 
-    if args.with_user_env:
+    if args.with_user_env is not None:
         # create the user environment
         packages = get_packages('USER', args.OS, args.user_env_extras)
-        create_and_dump_env_local('USER', args.OS, packages, args.user_env_name, args.dump_only)
+        create_and_dump_env_local('USER', args.OS, packages, args.with_user_env, args.dump_only)
 
-    if args.with_tools_env:
+    if args.with_tools_env is not None:
         # create the tools environment
         packages = get_packages('TOOLS', args.OS)
-        create_and_dump_env_local('TOOLS', args.OS, packages, args.tools_env_name, args.dump_only)
+        create_and_dump_env_local('TOOLS', args.OS, packages, args.with_tools_env, args.dump_only)
         

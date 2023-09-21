@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.daymet &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.daymet</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.daymet</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Manipulate DayMet data structures.</span>
+
+<span class="sd">DayMet is downloaded in box mode based on watershed bounds, then it can be converted to</span>
+<span class="sd">hdf5 files that models can read.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.datasets</span>
+
+
+<span class="k">def</span> <span class="nf">getAttributes</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+    <span class="c1"># set the wind speed height, which is made up</span>
+    <span class="n">attributes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet x min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet y min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet x max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet y max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet start date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+    <span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;DayMet end date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">attributes</span>
+
+
+<div class="viewcode-block" id="daymet_to_daily_averages"><a class="viewcode-back" href="../../data.html#watershed_workflow.daymet.daymet_to_daily_averages">[docs]</a><span class="k">def</span> <span class="nf">daymet_to_daily_averages</span><span class="p">(</span><span class="n">dat</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert dictionary of Daymet datasets to daily average data in standard form.</span>
+
+<span class="sd">    This:</span>
+
+<span class="sd">    - takes tmin and tmax to compute a mean</span>
+<span class="sd">    - splits rain and snow precip based on mean air temp</span>
+<span class="sd">    - standardizes units and names for ATS</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Converting to ATS met input&#39;</span><span class="p">)</span>
+
+    <span class="c1"># note that all of these can live in the same dataset since they</span>
+    <span class="c1"># share the same profile/times</span>
+    <span class="n">dout</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">State</span><span class="p">()</span>
+
+    <span class="c1"># make missing values (-9999) as NaNs to do math while propagating NaNs</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dat</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">dat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">dat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="o">-</span><span class="mi">9999</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">profile</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">times</span>
+
+    <span class="n">mean_air_temp_c</span> <span class="o">=</span> <span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;tmax&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;air temperature [K]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span>
+                                                                      <span class="mf">273.15</span> <span class="o">+</span> <span class="n">mean_air_temp_c</span><span class="p">)</span>  <span class="c1"># K</span>
+
+    <span class="n">precip_ms</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;prcp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">/</span> <span class="mf">1.e3</span> <span class="o">/</span> <span class="mf">86400.</span>  <span class="c1"># mm/day --&gt; m/s</span>
+
+    <span class="c1"># note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;incoming shortwave radiation [W m^-2]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;srad&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">*</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;dayl&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">/</span> <span class="mi">86400</span><span class="p">)</span>  <span class="c1"># Wm2</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;vapor pressure air [Pa]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;vp&#39;</span><span class="p">]</span>  <span class="c1"># Pa</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation rain [m s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation snow [m SWE s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">dout</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

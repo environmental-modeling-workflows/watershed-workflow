@@ -34,20 +34,111 @@ def _is_iter(obj):
     return True
 
 
-class PolyCollectionWithArray:
-    def __init__(self, poly, arr, **kwargs):
-        self.poly = poly
-        self.arr = arr
-        self.__dict__.update(**kwargs)
+# plot reaches and modify...
+#
+# This uses the annotated axes
+class Labeler:
+    """A labeling widget that can be attached to matplotlib figures to display info on-click.
 
-    def get_array(self):
-        return self.arr
+    When an geometry item (e.g. point, line, or polygon) is clicked on
+    the figure, that is mapped into the original WW object that
+    generated the geometry, and then run through a function to
+    generate a label that is written to the title of the figure.
 
-    def autoscale_None(self):
-        pass
+    Parameters
+    ----------
+    ax : matplotlib.Axes object
+        The axes to work with.
+    items : list[tuple[artist, metadata, formatter]]
+        See documentation of the addItem() method.
+
+    """
+    def __init__(self, ax, items=None):
+        self.ax = ax
+        self.items = []
+        for item in items:
+            self.addItem(*item)
+
+        self.ax.set_title("None")
+        self.selected = None
+
+    def addItem(self, data, artist, formatter):
+        """Adds an item to the list of things to label.
+
+        Parameters
+        ----------
+        data : List[*]
+            A list of objects being labeled.  This is likely the
+            underlying data, with properties, that was passed to
+            a ww.plot function.
+        artist : matplotlib collection
+            A matplotlib Collection, likely the return value of
+            a ww.plot call or similar.
+        formatter : function or str
+            A function that accepts an entry in data and returns a
+            string to label the item selected.  If this is a string,
+            it is assumed to be a formattable string to which the
+            item's properties dictionary is passed.
+        """
+
+        if isinstance(formatter, str):
+
+            def format_this(item):
+                return formatter.format(**dict(item)), list()
+
+            formatter = format_this
+
+        assert (len(artist) == len(metadata))
+        self.items.append((artist, metadata, formatter))
+        self.metadata = metadata
+        self._format = format
+        self._selected = []
+
+    def deselect(self):
+        """Clears anything plotted in the last click"""
+        for artist in self._selected:
+            artist.clear()
+            self._selected = []
+
+    def select(self, i, j, xy):
+        """Selects item i, collection index j, with a click at xy"""
+        data, artist, formatter = self.items[i]
+
+        if isinstance(data, list):
+            dat = data[j]
+            if isinstance(dat, shapely.geometry.base.BaseGeometry) and hasattr(dat, 'properties'):
+                dat = dict(geometry=dat, **dat.properties)
+            title = formatter(dat)
+        elif isinstance(data, pandas.DataFrame):
+            title = formatter(data.iloc[j])
+        self.ax.set_title(title)
+
+        # redraw LineStrings with markers
+        if isinstance(artist, matplotlib.collections.LineCollection):
+            line = artist.get_data()[i]
+            color = artist.get_colors()[i]
+
+            self._selected.append(self.ax.plot(line[:, 0], line[:, 1], '-x', color=color))
+
+    def update(self, event):
+        """Acts on click."""
+        print('event loc:', event.mouseevent.x, event.mouseevent.y)
+        print('event dict:', event.__dict__)
+
+        i = next(i for (i, item) in enumerate(self.items) if item[0] is event.artist)
+        self.select(i, 0, (event.mouseevent.x, event.mouseevent.y))
+        self.ax.get_figure().canvas.draw_idle()
 
 
-def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **kwargs):
+def get_ax(crs,
+           fig=None,
+           nrow=1,
+           ncol=1,
+           index=1,
+           window=None,
+           axgrid=None,
+           ax_kwargs=None,
+           **kwargs):
     """Returns an axis with a given projection.
     
     Note this forwards extra kwargs for plt.figure().
@@ -73,6 +164,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
       Figure size in inches.
     dpi : int, optional
       Dots per inch for figures.
+    ax_kwargs : dict
+      Other arguments provided to the axes creation call.
     kwargs : dict
       Additional arguments to plt.figure()
 
@@ -85,6 +178,8 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
     fig : matplotlib figure object
     ax : matplotlib ax object
     """
+    if ax_kwargs is None:
+        ax_kwargs = dict()
     # make a figure
     if fig is None:
         fig = plt.figure(**kwargs)
@@ -100,13 +195,15 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, **k
 
         if crs is None:
             # no crs, just get an ax -- you deal with it.
-            ax = fig.add_subplot(*axargs)
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
         elif crs == '3d':
             # 3d plot
-            ax = fig.add_subplot(*axargs, projection='3d')
+            ax_kwargs['projection'] = '3d'
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
         else:
             projection = watershed_workflow.crs.to_cartopy(crs)
-            ax = fig.add_subplot(*axargs, projection=projection)
+            ax_kwargs['projection'] = projection
+            ax = fig.add_subplot(*axargs, **ax_kwargs)
 
     else:
         if crs is None:
@@ -261,7 +358,7 @@ def river(river, crs, color='b', ax=None, **kwargs):
     shplys(river, crs, color, ax, **kwargs)
 
 
-def rivers(rivers, crs, color='b', ax=None, **kwargs):
+def rivers(rivers, crs, color=None, ax=None, **kwargs):
     """Plot an itereable collection of river Tree objects.
 
     A wrapper for plot.shply()
@@ -284,8 +381,8 @@ def rivers(rivers, crs, color='b', ax=None, **kwargs):
     -------
     lines : matplotib LineCollection
     """
-    if type(rivers) is shapely.geometry.MultiLineString:
-        return river(rivers, crs, color, ax, **kwargs)
+    if color is None:
+        color = watershed_workflow.colors.enumerated_colors(len(rivers))
 
     if type(color) is not str and len(color) == len(rivers):
         for r, c in zip(rivers, color):
@@ -350,6 +447,10 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     else:
         projection = watershed_workflow.crs.to_cartopy(crs)
 
+    # set default colors
+    if color is None:
+        color = watershed_workflow.colors.enumerated_colors(len(shps))
+
     # update keyword arguments
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
@@ -359,7 +460,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     if marker is not None:
         marker_kwargs['marker'] = marker
         if 'markersize' in kwargs:
-            marker_kwargs['markersize'] = kwargs.pop('markersize')
+            marker_kwargs['s'] = kwargs.pop('markersize')
 
     if type(next(iter(shps))) is shapely.geometry.Point:
         # plot points
@@ -399,26 +500,30 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
 
         lines = [np.array(l.coords)[:, 0:2] for l in shps]
 
-        lc = pltc.LineCollection(lines, **kwargs)
+        res = pltc.LineCollection(lines, **kwargs)
         if projection is not None:
-            lc.set_transform(projection)
+            res.set_transform(projection)
 
         if type(ax) is Axes3D:
-            res = ax.add_collection3d(lc)
+            res = ax.add_collection3d(res)
         else:
-            res = ax.add_collection(lc)
+            res = ax.add_collection(res)
             ax.autoscale()
 
         if marker is not None:
             points = np.array([c for l in lines for c in l])
-            if projection is None:
-                res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+            if type(color) is str:
+                point_colors = color
             else:
-                res = ax.scatter(points[:, 0],
-                                 points[:, 1],
-                                 c=color,
-                                 transform=projection,
-                                 **marker_kwargs)
+                point_colors = np.array([color[i] for (i, l) in enumerate(lines) for c in l])
+            if projection is None:
+                ax.scatter(points[:, 0], points[:, 1], c=point_colors, **marker_kwargs)
+            else:
+                ax.scatter(points[:, 0],
+                           points[:, 1],
+                           c=point_colors,
+                           transform=projection,
+                           **marker_kwargs)
 
     elif type(next(iter(shps))) in [shapely.geometry.Polygon, shapely.geometry.MultiPolygon]:
         if kwargs['facecolor'] in ['color', 'edge']:
@@ -427,9 +532,13 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         else:
             face_is_edge = False
 
-        if color == 'elevation':
+        if type(color) is str and color == 'elevation':
             # compute colors from the mean elevation
             color = [np.array(p.exterior.coords)[0:-1, 2].mean() for p in iter(shps)]
+        elif type(color) is str and color == 'area':
+            color = [p.area for p in iter(shps)]
+        elif type(color) is str and color == 'log10area':
+            color = np.log10(np.array([p.area for p in iter(shps)]))
 
         try:
             color_len = len(color)
@@ -490,13 +599,15 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
             ax.add_collection(res)
 
             if marker is not None:
-                points = np.array([p for poly in multi_poly.geoms for c in poly.exterior])
+                points = np.array([p for poly in shps for p in poly.exterior.coords])
+                pcolors = np.array(
+                    [color[i] for (i, poly) in enumerate(shps) for p in poly.exterior.coords])
                 if projection is None:
-                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
+                    pnts_res = ax.scatter(points[:, 0], points[:, 1], c=pcolors, **marker_kwargs)
                 else:
                     pnts_res = ax.scatter(points[:, 0],
                                           points[:, 1],
-                                          c=color,
+                                          c=pcolors,
                                           transform=projection,
                                           **marker_kwargs)
 
@@ -656,8 +767,8 @@ def mesh(m2, crs, color='gray', ax=None, **kwargs):
       Collection of patches representing the triangles.
 
     """
-    shplys = [shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn]
-    return shply(shplys, crs, color, ax, **kwargs)
+    shapes = [shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn]
+    return shplys(shapes, crs, color, ax, **kwargs)
 
 
 def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):

@@ -1,1525 +1,184 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API Documentation &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Gallery" href="gallery.html" />
-    <link rel="prev" title="Data Sources" href="sources.html" /> 
+    <link rel="next" title="High Level API" href="hilev.html" />
+    <link rel="prev" title="Workflow library Concepts" href="concepts.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="index.html" class="icon icon-home"> Watershed Workflow
           
-
-          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-watershed_workflow.hilev">High Level API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-watershed_workflow.crs">CRS module API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-watershed_workflow.plot">plot module API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-watershed_workflow.utils">utils module API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Watershed Workflow</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
-      <li>API Documentation</li>
-    
-    
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Documentation</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="api-documentation">
-<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this heading">¶</a></h1>
-<section id="module-watershed_workflow.hilev">
-<span id="high-level-api"></span><h2>High Level API<a class="headerlink" href="#module-watershed_workflow.hilev" title="Permalink to this heading">¶</a></h2>
-<p>High-level routines – these are imported into the top level <cite>“watershed_workflow</cite>” namespace.</p>
-<p>This top level module provides functionality for getting shapes and rasters
-representing watershed boundaries, river networks, digital elevation models,
-and other GIS datasets and then processing those data sets for use in
-simulations.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.color_existing_raster_from_shapes">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">color_existing_raster_from_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapes_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_profile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#color_existing_raster_from_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.color_existing_raster_from_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Color in a raster by filling in a collection of shapes.</p>
-<p>Given a canvas, find the intersection of that shape with the canvas and
-coloring it by a provided value.  Paint by numbers.</p>
-<p>Note, if the shapes overlap, the last shape containing a pixel gives the
-color of that pixel.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shapes</strong> (<em>list</em><em>(</em><em>Polygon</em><em>)</em>) – Collection of shapes (likely) overlapping the canvas.</p></li>
-<li><p><strong>shapes_crs</strong> (<em>crs-type</em>) – Coordinate system of the shapes.</p></li>
-<li><p><strong>shapes_colors</strong> (<em>iterable</em><em>[</em><em>]</em>) – Color to label the interior of each polygon with.</p></li>
-<li><p><strong>raster</strong> (<em>np.ndarray</em>) – The canvas to color on.</p></li>
-<li><p><strong>raster_profile</strong> (<em>dict</em>) – Rasterio style profile including at least CRS, nodata, and
-transform.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.color_raster_from_shapes">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">color_raster_from_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapes_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#color_raster_from_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.color_raster_from_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Color in a raster by filling in a collection of shapes.</p>
-<p>Given a canvas specified by bounds and pixel size, color a raster by, for
-each shape, finding the intersection of that shape with the canvas and
-coloring it by a provided value.  Paint by numbers.</p>
-<p>Note, if the shapes overlap, the last shape containing a pixel gives the
-color of that pixel.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shapes</strong> (<em>list</em><em>(</em><em>Polygon</em><em>)</em>) – Collection of shapes (likely) overlapping the canvas.</p></li>
-<li><p><strong>shapes_crs</strong> (<em>crs-type</em>) – Coordinate system of the shapes.</p></li>
-<li><p><strong>shapes_colors</strong> (<em>iterable</em><em>[</em><em>]</em>) – Color to label the interior of each polygon with.</p></li>
-<li><p><strong>raster_bounds</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>]</em>) – Bounding box for the output raster, in the given CRS.</p></li>
-<li><p><strong>raster_dx</strong> (<em>float</em>) – Pixel size (assumed the same in both x and y).</p></li>
-<li><p><strong>raster_crs</strong> (<em>crs-type</em><em>, </em><em>optional=shapes_crs</em>) – Coordinate system of the raster.</p></li>
-<li><p><strong>nodata</strong> (<em>dtype</em><em>, </em><em>optional={-1</em><em> (</em><em>int</em><em>)</em><em>, </em><em>nan</em><em> (</em><em>float</em><em>)</em><em>}</em>) – Value to place in pixels which intersect no shape.  Note the type of
-this should be the same as the type of shape_colors.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_profile</strong> (<em>dict</em>) – rasterio profile of the color raster.</p></li>
-<li><p><strong>out</strong> (<em>np.array(raster_bounds, dtype)</em>) – Raster of colors.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.construct_rivers">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">construct_rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reaches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'geometry'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_small_rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_diversions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_braided_divergences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#construct_rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.construct_rivers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a river, which is a tree of reaches.</p>
-<p>Note, HUCs and rivers must be in the same crs.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>hucs</strong> (<em>SplitHUCs</em>) – A split-form HUC object containing all reaches.</p></li>
-<li><p><strong>reaches</strong> (<em>list</em><em>(</em><em>LineString</em><em>)</em>) – A list of reaches.</p></li>
-<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional='geometry'</em>) – <p>Provide the method for constructing rivers.  Valid are:</p>
+             
+  <section id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li><p>’geometry’ looks at coincident coordinates</p></li>
-<li><p>’hydroseq’ Valid only for NHDPlus data, this uses the
-NHDPlus VAA tables Hydrologic Sequence.  If using this
-method, get_reaches() must have been called with both
-‘HydrologicSequence’ and ‘DownstreamMainPathHydroSeq’
-properties requested (or properties=True).</p></li>
+<li class="toctree-l1"><a class="reference internal" href="hilev.html">High Level API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_huc"><code class="docutils literal notranslate"><span class="pre">get_huc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_hucs"><code class="docutils literal notranslate"><span class="pre">get_hucs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_split_form_hucs"><code class="docutils literal notranslate"><span class="pre">get_split_form_hucs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_shapes"><code class="docutils literal notranslate"><span class="pre">get_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_split_form_shapes"><code class="docutils literal notranslate"><span class="pre">get_split_form_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.find_huc"><code class="docutils literal notranslate"><span class="pre">find_huc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_reaches"><code class="docutils literal notranslate"><span class="pre">get_reaches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.construct_rivers"><code class="docutils literal notranslate"><span class="pre">construct_rivers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.simplify"><code class="docutils literal notranslate"><span class="pre">simplify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.densify"><code class="docutils literal notranslate"><span class="pre">densify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_waterbodies"><code class="docutils literal notranslate"><span class="pre">get_waterbodies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.triangulate"><code class="docutils literal notranslate"><span class="pre">triangulate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.tessalate_river_aligned"><code class="docutils literal notranslate"><span class="pre">tessalate_river_aligned()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_raster_on_shape"><code class="docutils literal notranslate"><span class="pre">get_raster_on_shape()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.values_from_raster"><code class="docutils literal notranslate"><span class="pre">values_from_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.elevate"><code class="docutils literal notranslate"><span class="pre">elevate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.color_raster_from_shapes"><code class="docutils literal notranslate"><span class="pre">color_raster_from_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.color_existing_raster_from_shapes"><code class="docutils literal notranslate"><span class="pre">color_existing_raster_from_shapes()</span></code></a></li>
 </ul>
-</p></li>
-<li><p><strong>ignore_small_rivers</strong> (<em>int</em><em>, </em><em>optional</em>) – If provided, removes rivers whose number of reaches is less
-than this value.</p></li>
-<li><p><strong>prune_by_area</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, remove reaches whose total contributing area is
-less than this tol.  NOTE: only valid for reaches that include
-a contributing area property (e.g. NHDPlus).</p></li>
-<li><p><strong>prune_by_area_fraction</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, remove reaches whose total contributing area, as
-a fraction of the area of hucs, is less than this tol.  NOTE:
-only valid for reaches that include a contributing area
-property (e.g. NHDPlus).</p></li>
-<li><p><strong>remove_diversions</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If true, remove diversions (see documentation of
-modify_rivers_remove_divergences()).</p></li>
-<li><p><strong>remove_braided_divergences</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If true, remove braided divergences (see documentation of
-modify_rivers_remove_divergences()).</p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#module-watershed_workflow.source_list">Source List</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#digital-elevation-models">Digital Elevation Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#land-cover">Land Cover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#soil-structure-and-properties">Soil structure and properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#meteorology">Meteorology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#generic-files">Generic Files</a></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – A list of rivers, as River objects.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list(River)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.elevate">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">elevate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem_profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'piecewise</span> <span class="pre">bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#elevate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.elevate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Elevate mesh_points onto the provided dem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mesh_points</strong> (<em>np.array</em><em>(</em><em>(</em><em>n_points</em><em>, </em><em>2</em><em>)</em><em>, </em><em>'d'</em><em>)</em>) – Array of triangle vertices.</p></li>
-<li><p><strong>mesh_crs</strong> (<em>crs-type</em>) – Mesh coordinate system.</p></li>
-<li><p><strong>dem</strong> (<em>np.array</em>) – 2D array forming an elevation raster.</p></li>
-<li><p><strong>dem_profile</strong> (<em>dict</em>) – rasterio profile for the elevation raster.</p></li>
-<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><em>optional</em>) – Algorithm used for interpolation.  One of:
-* “nearest” for nearest-neighbor pixels
-* “piecewise bilinear” for interpolation (default)</p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.split_hucs">SplitHUCs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.river_tree">RiverTree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.hydrography">Hydrography</a></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Array of triangle vertices, including a z-dimension.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.array((n_points, 3), ‘d’)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.find_huc">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">find_huc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrink_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#find_huc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.find_huc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the smallest HUC containing shp.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – Source object providing a get_hucs() method.</p></li>
-<li><p><strong>shape</strong> (<em>Polygon</em>) – Shapely or fiona polygon on which to get the raster.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em>) – CRS of shape.</p></li>
-<li><p><strong>hint</strong> (<em>str</em>) – HUC in which to start searching.  This should be at least as long as
-the indexing file size – HUC 2 or longer for WBD, 4 or longer for NHD
-Plus, or 8 or longer for NHD.</p></li>
-<li><p><strong>shrink_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – A fraction of the radius of shape to shrink prior for checking
-containment within HUCs.  This fixes cases where shape is on a HUC
-boundary with potentially some numerical error.</p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Meshes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.mesh">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.river_mesh">River-aligned Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.triangulation">Triangulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.condition">Condition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.regions">Regions</a></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – The smallest containing HUC.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_huc">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_huc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_huc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_huc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a HUC shape object from a given code.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></p></li>
-<li><p><strong>huc</strong> (<em>str</em>) – hydrologic unit code</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data.html#module-watershed_workflow.daymet">DayMet data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#module-watershed_workflow.soil_properties">Soil properties data manipulation</a></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>Polygon</em>) – shapely polygon for the hydrologic unit.</p></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.crs">CRS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.plot">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.utils">Generic utilities</a></li>
 </ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_hucs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_hucs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_hucs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_hucs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get shape objects for all HUCs at a level contained in huc.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></p></li>
-<li><p><strong>huc</strong> (<em>str</em>) – hydrologic unit code</p></li>
-<li><p><strong>level</strong> (<em>int</em>) – HUC level of the requested sub-basins</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
+</li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of all entries in <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>list(Polygon)</em>) – List of shapely polygons for the subbasins.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_raster_on_shape">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_raster_on_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_raster_on_shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_raster_on_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects a raster that covers the requested shape.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em><em> or </em><em>source-type</em>) – Filename to parse, or a source object providing the get_raster()
-method.</p></li>
-<li><p><strong>shape</strong> (<em>polygon</em>) – shapely or fiona polygon on which to get the raster.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em>) – CRS of shape.</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – CRS of the raster.  Defaults to the source’s CRS.</p></li>
-<li><p><strong>buffer</strong> (<em>double</em><em>, </em><em>optional</em>) – Size of a buffer, in units of the shape’s CRS, added to shape to ensure
-pixels cover the entire shape.  Default is 0.</p></li>
-<li><p><strong>mask</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If True, mask the raster outside of shape.</p></li>
-<li><p><strong>nodata</strong> (<em>dtype</em><em>, </em><em>optional=raster nodata</em>) – Value to place outside of shape.</p></li>
-<li><p><strong>kwargs</strong> – All extra arguments are passed to the source’s get_raster() method.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>profile</strong> (<em>dict</em>) – Rasterio profile of the image including rasterio CRS and transform</p></li>
-<li><p><strong>raster</strong> (<em>ndarray</em>) – The raster data in a 2D-array.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_reaches">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_reaches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds_or_shp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">long</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">presimplify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_reaches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_reaches" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get reaches from hydrography source within a given HUC and/or bounding box.</p>
-<p>Collects reach datasets within a HUC and/or a bounding box.  If bounds are
-provided, a containing HUC must still be provided to give a hint for file
-downloads.  If bounds are not provided, then all reaches that intersect the
-HUC are included.</p>
-<p>If bounds is provided, crs must not be None and is the crs of the bounding box.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – Source object providing a get_hydro() method.</p></li>
-<li><p><strong>huc</strong> (<em>str</em>) – HUC containing reaches.  If bounds are provided, a hint to help the
-source find the file containing the bounds.  For NHD, this is a HUC4 or
-smaller.</p></li>
-<li><p><strong>bounds_or_shp</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>] </em><em>bounds</em><em> or </em><em>shly object</em><em>, </em><em>optional</em>) – Bounding box to filter the river network.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of the bounds.</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of the output reaches.  Default is the
-native crs of the source.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance used in filtering the reaches to the provided shape.</p></li>
-<li><p><strong>long</strong> (<em>float</em><em>, </em><em>optional</em>) – If a reach is longer than this value it gets filtered.  Some
-NHD data has impoundments or other artifacts which appear
-as very long, perfectly straight single segment reaches.</p></li>
-<li><p><strong>merge</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, reaches are merged (via shapely.ops.linemerge), collapsing
-connected, non-branching reaches into a single LineString.</p></li>
-<li><p><strong>presimplify</strong> (<em>double</em><em>, </em><em>optional</em>) – If provided, reaches are simplified within the specified
-tolerance as soon as possible for big extents.  Units are that
-of out_crs.</p></li>
-<li><p><strong>properties</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of properties to be added to reaches ‘catchment’ for
-catchment geometry, and property alias names for
-NHDPlusFlowlineVAA and NHDPlusEROMMA table (Table 16 and 17
-NHDPlus user guide)</p></li>
-<li><p><strong>include_catchments</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, adds catchment polygons for each reach in the river
-tree from ‘NHDPlusCatchment’ layer</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Other arguments are passed to the file manager’s get_reaches() method.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>list(LineString)</em>) – Reaches in the HUC and/or intersecting the bounds.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_shapes">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_or_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a shapefile.</p>
-<p>If index_or_bounds is a bounding box, in_crs must not be None and is the crs
-of the bounding box.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em><em> or </em><em>source-type</em>) – Filename to parse, or a source object providing the get_shapes()
-method.</p></li>
-<li><p><strong>index_or_bounds</strong> (<em>int</em><em> or </em><em>[</em><em>x_min</em><em>, </em><em>y_min</em><em>, </em><em>x_max</em><em>, </em><em>y_max</em><em>] </em><em>bounds</em><em>, </em><em>optional</em>) – Filter the file, either by selecting a specific shape by index of the
-requested shape in the file, or providing a bounds-type tuple to select
-only shapes that intersect with the bounding box.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of the bounding box.</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system to which shapes will be warped.  If not
-provided, the native crs of the file will be used.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
-<li><p><strong>properties</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, also get properties from the source.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – All extra parameters are passed to the source manager’s function.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>list(shapely)</em>) – List of shapely objects in the shapefile meeting the criteria.</p></li>
-<li><p><strong>out_properties</strong> (<em>pandas dataframe</em>) – Only if properties == True, a dataframe of corresponding properties</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_split_form_hucs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_split_form_hucs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_split_form_hucs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_split_form_hucs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a SplitHUCs object for all HUCs at level contained in huc.</p>
-<p>A SplitHUCs object is an object which stores a collection of polygons which
-share boundaries in a format that makes changing those shared boundaries
-possible without having to update all shapes that share the boundary.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – source object providing <cite>get_hucs()</cite></p></li>
-<li><p><strong>huc</strong> (<em>str</em>) – hydrologic unit code</p></li>
-<li><p><strong>level</strong> (<em>int</em>) – HUC level of the requested sub-basins</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Output coordinate system.  Default is source’s crs.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>SplitHUCs</em>) – Split-form HUCs object containing subbasins.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_split_form_shapes">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_split_form_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_or_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_split_form_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_split_form_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a shapefile.</p>
-<p>Note that if index_or_bounds is a bounding box, in_crs must not be
-None and is the crs of the bounding box.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em><em> or </em><em>source-type</em>) – Filename to parse, or a source object providing the get_shapes() method.</p></li>
-<li><p><strong>index_or_bounds</strong> (<em>int</em><em> or </em><em>[</em><em>x_min</em><em>, </em><em>y_min</em><em>, </em><em>x_max</em><em>, </em><em>y_max</em><em>] </em><em>bounds</em><em>, </em><em>optional</em>) – Filter the shapes, either by selecting a specific shape by index of the
-requested shape in the file, or providing a bounds-type tuple to select
-only shapes that intersect with the bounding box.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of out and/or the bounding box provided.</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system to which shapes will be warped.  If not
-provided, the native crs of the file will be used.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>SplitHUCs</em>) – Split-form polygons object containing subbasins.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.get_waterbodies">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">get_waterbodies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds_or_shp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#get_waterbodies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.get_waterbodies" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get waterbodies from NHDPlus hydrography source within a given HUC and/or bounding box.</p>
-<p>Collects waterbody datasets within a HUC and/or a bounding box.  If bounds are
-provided, a containing HUC must still be provided to give a hint for file
-downloads.  If bounds are not provided, then all bodies that intersect the
-HUC are included.</p>
-<p>If bounds is provided, crs must not be None and is the crs of the bounding box.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>source-type</em>) – Source object providing a get_hydro() method.</p></li>
-<li><p><strong>huc</strong> (<em>str</em>) – HUC containing reaches.  If bounds are provided, a hint to help the
-source find the file containing the bounds.  For NHD, this is a HUC4 or
-smaller.</p></li>
-<li><p><strong>bounds_or_shp</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>xmax</em><em>, </em><em>ymax</em><em>] </em><em>bounds</em><em> or </em><em>shply</em><em>, </em><em>optional</em>) – Bounding box or shapely shape to filter the river network.</p></li>
-<li><p><strong>in_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of the bounds.</p></li>
-<li><p><strong>out_crs</strong> (<em>crs-type</em><em>, </em><em>optional</em>) – Coordinate system of the output reaches.  Default is the
-native crs of the source.</p></li>
-<li><p><strong>digits</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of digits to round coordinates to.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance used in filtering the reaches to the provided shape.</p></li>
-<li><p><strong>prune_by_area</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, remove bodies whose total area is
-less than this tol.</p></li>
-<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Other arguments are passed to the file manager’s get_waterbodies() method.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_crs</strong> (<em>crs-type</em>) – Coordinate system of <cite>out</cite>.</p></li>
-<li><p><strong>out</strong> (<em>list(LineString)</em>) – Waterbodies in the HUC and/or intersecting the bounds.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.simplify">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">simplify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waterbodies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simplify_hucs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simplify_rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simplify_waterbodies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_intersections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#simplify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.simplify" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simplifies the HUC and river shapes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>hucs</strong> (<em>SplitHUCs</em>) – A split-form HUC object containing all reaches.</p></li>
-<li><p><strong>rivers</strong> (<em>list</em><em>(</em><em>River</em><em>)</em>) – A list of river objects.</p></li>
-<li><p><strong>waterbodies</strong> (<em>list</em><em>(</em><em>shply</em><em>)</em><em>, </em><em>optional</em>) – A list of waterbodies.</p></li>
-<li><p><strong>simplify_hucs</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, simply the hucs by moving points at most this
-many units (see also shapely.simplify).  Units are that of the
-CRS of shapes.</p></li>
-<li><p><strong>simplify_rivers</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, simply the rivers by moving points at most this
-many units (see also shapely.simplify).  Units are that of the
-CRS of shapes.  If not provided, use the simplify_hucs value.
-Provide 0 to make no changes to the rivers.</p></li>
-<li><p><strong>simplify_waterbodies</strong> (<em>float</em><em>, </em><em>optional</em>) – Simplify the waterbodies.  If not provided, uses the
-simplify_hucs value.  Provide 0 to make no changes to the
-rivers.</p></li>
-<li><p><strong>prune_tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Prune leaf reaches that are smaller than this tolerance.  If
-not provided, uses simplify_rivers value.  Provide 0 to not do
-this step.</p></li>
-<li><p><strong>merge_tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Merges reaches that are smaller than this tolerance with their
-downstream parent reach.  Note that if there is a branchpoint
-at the downstream node of the small reach, it will get moved
-to the upstream node.  If not provided, uses simplify_rivers
-value.  Provide 0 to not do this step.</p></li>
-<li><p><strong>snap</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, snaps river and HUC nodes that are nearly coincident
-to be discretely coincident.</p></li>
-<li><p><strong>cut_intersections</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, force intersections of the river network and the HUC
-boundary to occur at a coincident node by adding nodes as
-needed.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>rivers</strong> (<em>list(River)</em>) – Snap may change the rivers, so this returns the list of updated
-rivers.</p></li>
-<li><p><em>.. note</em> – This also may modify the hucs and waterbody objects in-place.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.simplify_and_prune">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">simplify_and_prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reaches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simplify_hucs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simplify_rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_small_rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_intersections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#simplify_and_prune"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.simplify_and_prune" title="Permalink to this definition">¶</a></dt>
-<dd><p>DEPRECATED: simply calls construct_rivers() and simplify()</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.triangulate">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">triangulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_outlet_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_max_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_max_edge_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_min_angle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_delaunay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_region_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#triangulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.triangulate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Triangulates HUCs and rivers.</p>
-<p>Note, refinement of a given triangle is done if any of the provided
-criteria is met.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>hucs</strong> (<em>SplitHUCs</em>) – A split-form HUC object from, e.g., get_split_form_hucs()</p></li>
-<li><p><strong>rivers</strong> (<em>watershed_workflow.river_tree.RiverTree object</em>) – river tree</p></li>
-<li><p><strong>river_corrs</strong> (<em>list</em><em>(</em><em>shapely.geometry.Polygons</em><em>)</em>) – A list of river corridor polygons for each river</p></li>
-<li><p><strong>mesh_rivers</strong> (<em>bool</em><em>, </em><em>optional</em>) – if river corridor polygon provided - Leave hole in TIN for river corridor and do not allow steiner points
-else - Include stream network in the mesh discretely if river and allow steiner points</p></li>
-<li><p><strong>diagnostics</strong> (<em>bool</em><em>, </em><em>optional</em>) – Plot diagnostics graphs of the triangle refinement.</p></li>
-<li><p><strong>stream_outlet_width</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, adds edge sets within the provided distance from
-all outlets, used to track discharge observation regions.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Set tolerance for minimum distance between two nodes. The unit is the same as
-that of the watershed’s CRS. The default is 1.</p></li>
-<li><p><strong>refine_max_area</strong> (<em>float</em><em>, </em><em>optional</em>) – Refine a triangle if its area is greater than this area.</p></li>
-<li><p><strong>refine_distance</strong> (<em>list</em><em>(</em><em>float</em><em>)</em><em>, </em><em>optional</em>) – <p>Refine a triangle if its area is greater than a function of its
-centroid’s distance from the nearest point on the river network.  The
-argument is given by:</p>
-<p>[near_distance, near_area, far_distance, far_area]</p>
-<p>Defining d as the distance from triangle centroid to the nearest point
-on the river network and area as the area of the triangle in question,
-refinement occurs if:</p>
-<ul>
-<li><p>d &lt; near_distance and area &gt; near_area</p></li>
-<li><p>d &gt; far_distance and area &gt; far_area</p></li>
-<li><p>otherwise, defining
-d’ = (d - near_distance) / (far_distance - near_distance),
-refining occurs if
-area &gt; near_area + (far_area - near_area) * d’</p></li>
-</ul>
-<p>Effectively this simply writes a piecewise linear function of triangle
-distance from centroid and uses that as a max area criteria.</p>
-</p></li>
-<li><p><strong>refine_max_edge_length</strong> (<em>float</em><em>, </em><em>optional</em>) – Refine a triangle if its max edge length is greater than this length.</p></li>
-<li><p><strong>refine_min_angle</strong> (<em>float</em><em>, </em><em>optional</em>) – Try to ensure that all triangles have a minimum edge length greater
-than this value.</p></li>
-<li><p><strong>enforce_delaunay</strong> (<em>bool</em><em>,</em><em>optional</em><em>, </em><em>experimental</em>) – <p>Attempt to ensure all triangles are proper Delaunay triangles.</p>
-</p></li>
-<li><p><strong>river_region_dist</strong> (<em>float</em><em>, </em><em>optional</em>) – Create river region based on the distance from river networks. This is useful if explicit
-representation of riverbed is desired. Default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>vertices</strong> (<em>np.array((n_points, 2), ‘d’)</em>) – Array of triangle vertices.</p></li>
-<li><p><strong>triangles</strong> (<em>np.array((n_tris, 3), ‘i’)</em>) – For each triangle, a list of 3 indices into the vertex array that make
-up that triangle.</p></li>
-<li><p><strong>areas</strong> (<em>_only if diagnostics=True_, np.array((n_tris), ‘d’)</em>) – Array of triangle areas.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.hilev.values_from_raster">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hilev.</span></span><span class="sig-name descname"><span class="pre">values_from_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points_crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hilev.html#values_from_raster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hilev.values_from_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolate a raster onto a collection of unstructured points.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>points</strong> (<em>np.array</em><em>(</em><em>(</em><em>n_points</em><em>, </em><em>2</em><em>)</em><em>, </em><em>'d'</em><em>)</em>) – Array of points to interpolate onto.</p></li>
-<li><p><strong>points_crs</strong> (<em>crs-type</em>) – Coordinate system of the points.</p></li>
-<li><p><strong>raster</strong> (<em>np.array</em>) – 2D array forming the raster.</p></li>
-<li><p><strong>raster_profile</strong> (<em>dict</em>) – rasterio profile for the raster.</p></li>
-<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><em>optional</em>) – Algorithm used for interpolation.  One of:
-* “nearest” for nearest neighbor pixels (default)
-* “piecewise bilinear” for interpolation</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Array of raster values interpolated onto the points.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.array((n_points,))</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="module-watershed_workflow.crs">
-<span id="crs-module-api"></span><h2>CRS module API<a class="headerlink" href="#module-watershed_workflow.crs" title="Permalink to this heading">¶</a></h2>
-<p>Coordinate Reference System conversions.</p>
-<p>Coordinate Reference Systems (CRSs) differ across datasets, and
-standardizing and managing these across the workflow is a necessary
-technical detail.  That said, rarely does the user care what
-coordinate system is being used, as long as it is appropriate for the
-watershed in question.  Watershed Workflow aims to make using datasets
-in different CRSs as streamlined as possible.  Typically, a workflow
-will pick a CRS based upon either a default for the region or by
-simply using the CRS of the shapefile that specifies the watershed
-boundary.  This CRS is the passed into each function that acquires
-more data, and that data’s coordinates are changed to the CRS
-requested.</p>
-<p>This process is made more difficult by the fact that most python GIS
-packages provide their own class object to store the CRS.  This said,
-nearly all of them are based, to some degree, on the <cite>proj4</cite> library
-and its python wrapper, <cite>pyproj</cite> for coordinate transformations.
-Watershed Workflow uses the <cite>pyproj.Proj</cite> class as its own internal
-representation of coordinate system, and provides methods for mapping
-<cite>fiona</cite> (shapefiles), <cite>rasterio</cite> (rasters), and <cite>cartopy</cite> (plotting)
-CRS objects to and from this type.  While this is typically done by
-calling functions from those libraries, standardizing the API makes
-dealing with these packages in an integrated form much simpler.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>We intend to use the pyproj.Proj object as our standard.  But for
-now we are trying to avoid hard-coding that, so internal code
-should avoid using that knowledge, and instead map to and from
-<cite>pyproj.Proj</cite> objects using the provided interface.</p>
 </div>
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.daymet_crs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">daymet_crs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#daymet_crs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.daymet_crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the CRS used by DayMet files, but in m, not km.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out</strong> – The DayMet CRS.  The user should not care what this is.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.daymet_crs_native">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">daymet_crs_native</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#daymet_crs_native"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.daymet_crs_native" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the CRS used by DayMet files natively, in km, not in m.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out</strong> – The DayMet CRS.  The user should not care what this is.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.default_alaska_crs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">default_alaska_crs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#default_alaska_crs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.default_alaska_crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a default CRS that is functionally useful for Alaska.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out</strong> – The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:3338.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.default_crs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">default_crs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#default_crs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.default_crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a default CRS that is functionally useful for North America.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out</strong> – The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:5070.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.equal">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#equal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.equal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tries to guess at the equality of two CRS objects.</p>
-<p>Note this is not trivial, just checking strings or dicts results
-in false-negatives.  Furthermore, this implementation may not be
-perfect, but it works for all those currently tested.  Please
-report bugs!</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>crs1</strong> (<em>crs-type</em>) – Input workflow CRS objects.</p></li>
-<li><p><strong>crs2</strong> (<em>crs-type</em>) – Input workflow CRS objects.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Are equal?</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_cartopy">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_cartopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_cartopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_cartopy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a cartopy CRS to a workflow CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>epsg</strong> (<em>int</em>) – An EPSG code. (see <a class="reference external" href="https://epsg.io">EPSG codes</a>)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent workflow CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_epsg">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_epsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_epsg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_epsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts from an EPSG code to a workflow CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>epsg</strong> (<em>int</em>) – <p>An EPSG code. (see <a class="reference external" href="https://epsg.io">EPSG codes</a>)</p>
-</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent workflow CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_fiona">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_fiona</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_fiona"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_fiona" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a fiona CRS to the workflow CRS standard.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>fiona-crs-dict</em>) – Input fiona CRS, which is a dictionary containing an EPSG
-code.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent workflow CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_proj">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_proj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_proj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_proj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a Proj CRS to the workflow CRS standard.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>pyproj.crs.CRS</em>) – Input proj CRS object.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent workflow CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_rasterio">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_rasterio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_rasterio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_rasterio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts from rasterio CRS to the workflow CRS standard.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>rasterio-crs-object</em>) – Input rasterio crs.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent workflow CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_string">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a CRS from a proj string</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.from_wkt">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_wkt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#from_wkt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_wkt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a CRS from a WKT string specification</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.is_native">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">is_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#is_native"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.is_native" title="Permalink to this definition">¶</a></dt>
-<dd><p>Is this crs in the native format?</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.latlon_crs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">latlon_crs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#latlon_crs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.latlon_crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the default latitude-longitude CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>out</strong> – The default CRS.  The user should not care what this is (if
-you do, don’t use the default!) but it is EPSG:4269.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>crs-type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_cartopy">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_cartopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_cartopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_cartopy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a workflow CRS to a cartopy.crs.Projection.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – The CRS to convert.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A cartopy.crs.Projection object for plotting.</em></p></li>
-<li><p><strong>Adopted from</strong> (<em>https://pyproj4.github.io/pyproj/stable/crs_compatibility.html</em>)</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_epsg">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_epsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_epsg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_epsg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempts to conver to an EPSG code.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>epsg</strong> (<em>int</em>) – An EPSG code, if possible.</p></li>
-<li><p><em>If not, this throws.</em></p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_fiona">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_fiona</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_fiona"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_fiona" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a workflow CRS to a fiona CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – A workflow CRS object.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent fiona CRS.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>fiona-crs-dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_proj">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_proj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_proj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_proj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a workflow CRS standard to a Proj4 CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – Workflow standard CRS.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent object.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pyproj.crs.CRS</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_rasterio">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_rasterio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_rasterio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_rasterio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a workflow CRS to a fiona CRS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – A workflow CRS object.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>out</strong> – Equivalent rasterio object.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>rasterio.CRS</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.crs.to_wkt">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_wkt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/crs.html#to_wkt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_wkt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the WKT string of a CRS.</p>
-</dd></dl>
-
-</section>
-<section id="module-watershed_workflow.plot">
-<span id="plot-module-api"></span><h2>plot module API<a class="headerlink" href="#module-watershed_workflow.plot" title="Permalink to this heading">¶</a></h2>
-<p>Plotting relies on cartopy to ensure that coordinate projections are dealt
-with reasonably within matplotlib.  The preferred usage for plotting is similar
-to the non-pylab interface to matplotlib – first get a figure and axis object,
-then call plotting functions passing in that ax object.</p>
-<p>Note that we use the descartes package to plot shapely objects, which is a
-simple wrapper to write a shapely polygon as a matplotlib patch.</p>
-<p>Note that, for complex plots, it can be useful to manage the ordering of the
-layers of objects.  In this case, all plotting functions accept matplotlib’s
-zorder argument, an int which controls the order of drawing, with larger being
-later (on top) of smaller values.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.basemap">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">basemap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'50m'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coastline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#basemap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.basemap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a basemap to the axis.</p>
-<p>Uses cartopy to add political and natural boundaries and shapes to the axes
-image.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>crs</strong> (<em>CRS object</em><em>, </em><em>optional</em>) – Coordinate system to plot.  May be ignored if ax is provided.</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib ax object</em><em>, </em><em>optional</em>) – Matplotlib axes to plot on.  If not provided, get_ax() is called using
-crs.</p></li>
-<li><p><strong>resolution</strong> (<em>str</em>) – Resolution of cartopy basemap.  One of ‘10m’, ‘50m’, or ‘110m’.</p></li>
-<li><p><strong>land_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
-land polygons.</p></li>
-<li><p><strong>ocean_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
-ocean polygons.</p></li>
-<li><p><strong>state_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
-political state boundary polygons.</p></li>
-<li><p><strong>country_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
-political country boundary polygons.</p></li>
-<li><p><strong>coastline_kwargs</strong> (<em>dict</em>) – Extra arguments passed to cartopy.feature.NaturalEarthFeature call to get
-natural coastline boundary polygons.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.dem">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">dem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#dem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.dem" title="Permalink to this definition">¶</a></dt>
-<dd><p>See raster documentation</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.feather_axis_limits">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">feather_axis_limits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#feather_axis_limits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.feather_axis_limits" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a small delta to the axis limits to provide a bit of buffer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ax</strong> (<em>matplotlib Axis object</em>) – The axis to feather.</p></li>
-<li><p><strong>delta</strong> (<em>2-tuple</em><em> or </em><em>double</em><em>, </em><em>default=0.02</em>) – If a double, equivalent to (delta,delta).  Provides the fraction of
-the current plot width,height to increase by.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.get_ax">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">get_ax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axgrid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#get_ax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.get_ax" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an axis with a given projection.</p>
-<p>Note this forwards extra kwargs for plt.figure().</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>crs</strong> (<em>CRS object</em><em>, </em><em>optional</em>) – A <strong>projected</strong> CRS for the plot.  None can be given for a normal
-matplotlib axis (useful for plotting lat/lon or other non-projected
-coordinate systems.  Note that if you call plotting on an object with an
-unprojected CRS, it will project for you, or change coordinates if
-needed.  This can get a bit dicey, so prefer to plot objects all in the
-same CRS.  Defaults to None.</p></li>
-<li><p><strong>fig</strong> (<em>matplotlib figure</em><em>, </em><em>optional</em>) – If you already have a figure, will create the axis on this figure.
-Defaults to None, at which point a figure will be created.</p></li>
-<li><p><strong>nrow</strong> (<em>int</em><em>, </em><em>optional</em>) – Create a grid of axes of this shape.  Calls
-plt.add_subplot(nrow,ncol,index).  Default is 1.</p></li>
-<li><p><strong>ncol</strong> (<em>int</em><em>, </em><em>optional</em>) – Create a grid of axes of this shape.  Calls
-plt.add_subplot(nrow,ncol,index).  Default is 1.</p></li>
-<li><p><strong>index</strong> (<em>int</em><em>, </em><em>optional</em>) – Create a grid of axes of this shape.  Calls
-plt.add_subplot(nrow,ncol,index).  Default is 1.</p></li>
-<li><p><strong>window</strong> (<em>[</em><em>xmin</em><em>, </em><em>ymin</em><em>, </em><em>width</em><em>, </em><em>height</em><em>]</em><em>, </em><em>optional</em>) – Matplotlib patch arguments for call to fig.add_axes()</p></li>
-<li><p><strong>figsize</strong> (<em>(</em><em>width</em><em>, </em><em>height</em><em>)</em><em>, </em><em>optional</em>) – Figure size in inches.</p></li>
-<li><p><strong>dpi</strong> (<em>int</em><em>, </em><em>optional</em>) – Dots per inch for figures.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Additional arguments to plt.figure()</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>*If fig is provided*</em></p></li>
-<li><p><strong>ax</strong> (<em>matplotlib axes object</em>)</p></li>
-<li><p><em>*If fig is not provided*</em></p></li>
-<li><p><strong>fig</strong> (<em>matplotlib figure object</em>)</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib ax object</em>)</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.huc">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">huc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">huc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#huc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.huc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a HUC polygon.</p>
-<p>A wrapper for plot.shply()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>huc</strong> (<em>shapely polygon</em>) – An object to plot.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
-descartes.PolygonPatch.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>patches</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotlib PatchCollection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.hucs">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">hucs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#hucs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.hucs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a SplitHUCs object.</p>
-<p>A wrapper for plot.shply()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>hucs</strong> (<em>watershed_workflow.split_hucs.SplitHucs object</em>) – The collection of hucs to plot.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
-descartes.PolygonPatch.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>patches</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotib PatchCollection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.mesh">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.mesh" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots a watershed_workflow.mesh.Mesh2D object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>m2</strong> (<em>Mesh2D</em>) – The 2D mesh to plot.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – Coordinate system of the points.</p></li>
-<li><p><strong>color</strong> (<em>matplotlib color object</em><em> or </em><em>iterable</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – Either a matplotlib color object (for uniform colors), or a list of color
-objects (length equal to the length of tris), or ‘elevation’ to color by
-z coordinate.</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib ax object</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to plot_trisurf() (for 3D axes) or tripcolor()
-(for 2D).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>col</strong> – Collection of patches representing the triangles.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotlib collection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.raster">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#raster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots a raster.</p>
-<p>A wrapper for matplotlib imshow()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>profile</strong> (<em>rasterio profile</em>) – Rasterio profile of the input raster.</p></li>
-<li><p><strong>data</strong> (<em>np.ndarray</em>) – 2D array of data.</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib ax object</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>vmin</strong> (<em>float</em>) – Min and max value to limit extent of color values.</p></li>
-<li><p><strong>vmax</strong> (<em>float</em>) – Min and max value to limit extent of color values.</p></li>
-<li><p><strong>mask</strong> (<em>bool</em>) – If true (default), masks out values given as profile[‘nodata’]</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Dictionary of extra arguments passed to imshow().</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>im</strong> – Return value of imshow()</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotlib image object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.river">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">river</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'b'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#river"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.river" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot an itereable collection of reaches.</p>
-<p>A wrapper for plot.shply()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>river</strong> (<em>list</em><em>(</em><em>shapely.LineString</em><em>)</em>) – An iterable of shapely LineString reaches.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
-matplotlib.collections.LineCollection.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>lines</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotib LineCollection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.rivers">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'b'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.rivers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot an itereable collection of river Tree objects.</p>
-<p>A wrapper for plot.shply()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>rivers</strong> (<em>list</em><em>(</em><em>river_tree.RiverTree</em><em>)</em>) – An iterable of river_tree.RiverTree objects.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
-matplotlib.collections.LineCollection.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>lines</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotib LineCollection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.shapes">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot an itereable collection of fiona shapes.</p>
-<p>A wrapper for plot.shply()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shapes</strong> (<em>list</em><em>(</em><em>fiona shape objects</em><em>)</em>) – The collection of fiona shape objects to plot.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which is likely
-descartes.PolygonPatch.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>patches</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotib PatchCollection</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.shply">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">shply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shp</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#shply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.shply" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a single shapely object.  See shplys() for options.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.shplys">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">shplys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'-'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#shplys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.shplys" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot shapely objects.</p>
-<p>Currently this assumes shps is an iterable collection of Points, Lines, or
-Polygons.  So while a single MultiPolygon is allowed, lists of
-MultiPolygons are not currently supported.  These can easily be unraveled.</p>
-<p>Heterogeneous collections are not supported.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shps</strong> (<em>shapely shape</em><em>, </em><em>list</em><em>(</em><em>shapely shape objects</em><em>)</em><em>, or </em><em>MultiShape object</em>) – An iterable of shapely objects to plot.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – The coordinate system to plot in.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>scalar</em><em>, or </em><em>array-like</em><em>, </em><em>optional</em>) – See <a class="reference external" href="https://matplotlib.org/tutorials/colors/colors.html">https://matplotlib.org/tutorials/colors/colors.html</a></p></li>
-<li><p><strong>ax</strong> (<em>matplotib axes object</em><em>, </em><em>optional</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to the plotting method, which can be:
-* pyplot.scatter() (if shps are Point objects)
-* matplotlib.collections.LineCollection() (if shps are LineStrings)
-* descartes.PolygonPatch() (if shps are Polygons)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>col</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>collection of matplotlib points or lines or patches</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.plot.triangulation">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">triangulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tris</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#triangulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.triangulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots a triangulation.</p>
-<p>A wrapper for matplotlib’s plot_trisurf() or tripcolor()</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>points</strong> (<em>np.ndarray</em><em>(</em><em>npoints</em><em>, </em><em>3</em><em>)</em>) – Array of point coordinates, x,y,z.</p></li>
-<li><p><strong>tris</strong> (<em>list</em><em>, </em><em>np.ndarray</em><em>(</em><em>ntris</em><em>, </em><em>3</em><em>)</em>) – List of lists or ndarray of indices into the points array for defining
-the triangle topology.</p></li>
-<li><p><strong>crs</strong> (<em>CRS object</em>) – Coordinate system of the points.</p></li>
-<li><p><strong>color</strong> (<em>matplotlib color object</em><em> or </em><em>iterable</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – Either a matplotlib color object (for uniform colors), or a list of color
-objects (length equal to the length of tris), or ‘elevation’ to color by
-z coordinate.</p></li>
-<li><p><strong>ax</strong> (<em>matplotlib ax object</em>) – Axes to plot on.  Calls get_ax() if not provided.</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra arguments passed to plot_trisurf() (for 3D axes) or tripcolor()
-(for 2D).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>col</strong> – Collection of patches representing the triangles.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotlib collection</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="module-watershed_workflow.utils">
-<span id="utils-module-api"></span><h2>utils module API<a class="headerlink" href="#module-watershed_workflow.utils" title="Permalink to this heading">¶</a></h2>
-<p>Shape and geometry utilities for working with fiona and shapely objects.</p>
-<p>Note this module contains a lot of other simple functions that are commonly
-used by other functions, but are not included in documentation because they are
-likely not useful to users.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.utils.bounds">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.bounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>General bounding box for fiona and shapely types.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.utils.close">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Are two shapely shapes topologically equivalent and geometrically close?</p>
-<p>Note this deals with things like rotations of polygons (clock-rotating the
-coordinates of the same shape are still close) and other gotchas that keep
-you from just comparing coordinates.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>s1</strong> (<em>shapely shapes</em>) – Objects to compare.</p></li>
-<li><p><strong>s2</strong> (<em>shapely shapes</em>) – Objects to compare.</p></li>
-<li><p><strong>tol</strong> (<em>double</em>) – Distance to compare geometric closeness.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>close</strong> – Is close?</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.utils.shply">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">shply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#shply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.shply" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a fiona style shape to a shapely shape with as much collapsing as possible.</p>
-<p>Note this collapses objects – for instance, fiona MultiPolygons of length
-1 are turned into shapely Polygons.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>fiona shape</em>) – Fiona shape to convert to shapely.</p></li>
-<li><p><strong>properties</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of parameters to associate with the object.  Defaults to
-shape[‘properties’] if it exists, None otherwise.</p></li>
-<li><p><strong>flip</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flip x,y coordinates while making the translation.  This helps if files
-provide lat-long ordered coordinates (note that is y,x) as opposed to
-long-lat (x,y).  Default is False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>thing</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>shapely shape</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
 </section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="gallery.html" class="btn btn-neutral float-right" title="Gallery" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="sources.html" class="btn btn-neutral float-left" title="Data Sources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="concepts.html" class="btn btn-neutral float-left" title="Workflow library Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hilev.html" class="btn btn-neutral float-right" title="High Level API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
-
-    </p>
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

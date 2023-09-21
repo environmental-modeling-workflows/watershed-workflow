@@ -1,159 +1,80 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.sources.manager_daymet &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../../index.html" class="icon icon-home"> Watershed Workflow
           
-
-          
+          <a href="../../../index.html" class="icon icon-home">
+            Watershed Workflow
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../sources.html">Data Sources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">Watershed Workflow</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-        
-      <li>watershed_workflow.sources.manager_daymet</li>
-    
-    
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.sources.manager_daymet</li>
       <li class="wy-breadcrumbs-aside">
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <h1>Source code for watershed_workflow.sources.manager_daymet</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Manager for interacting with DayMet datasets.&quot;&quot;&quot;</span>
 
@@ -164,16 +85,30 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">requests.exceptions</span>
 <span class="kn">import</span> <span class="nn">shapely.geometry</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span>
+<span class="kn">import</span> <span class="nn">rasterio.transform</span>
 
 <span class="kn">import</span> <span class="nn">watershed_workflow.sources.utils</span> <span class="k">as</span> <span class="nn">source_utils</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.crs</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.config</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.warp</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.sources.names</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.datasets</span>
+
+
+<span class="k">def</span> <span class="nf">_previous_month</span><span class="p">():</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">year</span>
+    <span class="n">month</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">month</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FileManagerDaymet"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_daymet.FileManagerDaymet">[docs]</a><span class="k">class</span> <span class="nc">FileManagerDaymet</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Daymet meterological datasets.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Daymet meterological datasets.</span>
 
 <span class="sd">    Daymet is a historic, spatially interpolated product which ingests large</span>
 <span class="sd">    number of point-sources of meterological data, aggregates them to daily</span>
@@ -193,7 +128,7 @@
 <span class="sd">          - :math:`mm / day`</span>
 <span class="sd">          - Total daily precipitation</span>
 <span class="sd">        * - tmin, tmax</span>
-<span class="sd">          - :math:`^\circ C`</span>
+<span class="sd">          - :math:`^\\circ C`</span>
 <span class="sd">          - Min/max daily air temperature</span>
 <span class="sd">        * - srad</span>
 <span class="sd">          - :math:`W / m^2`</span>
@@ -211,89 +146,33 @@
 <span class="sd">    .. [Daymet] https://daymet.ornl.gov</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">VALID_YEARS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1980</span><span class="p">,</span> <span class="mi">2020</span><span class="p">)</span>
+    <span class="n">_START</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1980</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">_END</span> <span class="o">=</span> <span class="n">_previous_month</span><span class="p">()</span>
     <span class="n">VALID_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">,</span> <span class="s1">&#39;tmax&#39;</span><span class="p">,</span> <span class="s1">&#39;prcp&#39;</span><span class="p">,</span> <span class="s1">&#39;srad&#39;</span><span class="p">,</span> <span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="s1">&#39;swe&#39;</span><span class="p">,</span> <span class="s1">&#39;dayl&#39;</span><span class="p">]</span>
-    <span class="c1"># URL = &quot;http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1328/{year}/daymet_v3_{variable}_{year}_na.nc4&quot;</span>
-    <span class="n">URL</span> <span class="o">=</span> <span class="s2">&quot;http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/1840/daymet_v4_daily_na_</span><span class="si">{variable}</span><span class="s2">_</span><span class="si">{year}</span><span class="s2">.nc&quot;</span>
+    <span class="n">DEFAULT_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">,</span> <span class="s1">&#39;tmax&#39;</span><span class="p">,</span> <span class="s1">&#39;prcp&#39;</span><span class="p">,</span> <span class="s1">&#39;srad&#39;</span><span class="p">,</span> <span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="s1">&#39;dayl&#39;</span><span class="p">]</span>
+    <span class="n">URL</span> <span class="o">=</span> <span class="s2">&quot;http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_</span><span class="si">{variable}</span><span class="s2">_</span><span class="si">{year}</span><span class="s2">.nc&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#self.layer_name = &#39;Daymet_{1}_{0}_{2}&#39;.format(self.layer, self.year, self.location)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;DayMet 1km&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;meteorology&#39;</span><span class="p">,</span> <span class="s1">&#39;daymet&#39;</span><span class="p">,</span>
             <span class="s1">&#39;daymet_</span><span class="si">{var}</span><span class="s1">_</span><span class="si">{year}</span><span class="s1">_</span><span class="si">{north}</span><span class="s1">x</span><span class="si">{west}</span><span class="s1">_</span><span class="si">{south}</span><span class="s1">x</span><span class="si">{east}</span><span class="s1">.nc&#39;</span><span class="p">)</span>
-        <span class="c1">#self.native_crs = pyproj.Proj4(&quot;&quot;)</span>
 
-<div class="viewcode-block" id="FileManagerDaymet.get_meteorology"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_daymet.FileManagerDaymet.get_meteorology">[docs]</a>    <span class="k">def</span> <span class="nf">get_meteorology</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                        <span class="n">varname</span><span class="p">,</span>
-                        <span class="n">year</span><span class="p">,</span>
-                        <span class="n">polygon_or_bounds</span><span class="p">,</span>
-                        <span class="n">crs</span><span class="p">,</span>
-                        <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">buffer</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Gets file for a single year and single variable.</span>
+    <span class="k">def</span> <span class="nf">_read_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">nc</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][:]</span> <span class="o">*</span> <span class="mf">1000.</span>  <span class="c1"># km to m; raw netCDF file has km unit</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][:]</span> <span class="o">*</span> <span class="mf">1000.</span>  <span class="c1"># km to m</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][:]</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="o">==</span> <span class="mi">365</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">var</span><span class="p">][:]</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">val</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        varname : str</span>
-<span class="sd">          Name the variable, see table in the class documentation.</span>
-<span class="sd">        year : int</span>
-<span class="sd">          A year in the valid range (currently 1980-2018)</span>
-<span class="sd">        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]</span>
-<span class="sd">          Collect a file that covers this shape or bounds.</span>
-<span class="sd">        crs : CRS object</span>
-<span class="sd">          Coordinate system of the above polygon_or_bounds</span>
-<span class="sd">        force_download : bool</span>
-<span class="sd">          Download or re-download the file if true.</span>
-<span class="sd">        buffer, float</span>
-<span class="sd">          buffer used for watershed shape (in degree)</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        filename : str</span>
-<span class="sd">          Path to the data file.</span>
-<span class="sd">        bounds : [xmin,ymin,xmax,ymax]</span>
-<span class="sd">          Updated bounds, buffered and in the coordinate system of the data.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">year</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">year</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DayMet data is available from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2"> (does not include </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_YEARS</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">year</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">varname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_VARIABLES</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DayMet data supports variables: </span><span class="si">{}</span><span class="s2"> (not </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_VARIABLES</span><span class="p">),</span> <span class="n">varname</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-            <span class="c1"># fiona shape object, convert to shapely to get a copy</span>
-            <span class="n">polygon_or_bounds</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span>
-
-        <span class="c1"># convert and get a bounds</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
-            <span class="c1"># bounds</span>
-            <span class="n">bounds</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span>
-                                                    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">latlon_crs</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># polygon</span>
-            <span class="n">bounds</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span>
-                                                   <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">latlon_crs</span><span class="p">())</span><span class="o">.</span><span class="n">bounds</span>
-
-        <span class="c1"># feather the bounds</span>
-        <span class="c1"># get the bounds and download</span>
-        <span class="n">feather_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bounds</span><span class="p">[:])</span>
-        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-</span> <span class="n">buffer</span>
-        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-</span> <span class="n">buffer</span>
-        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer</span>
-        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer</span>
-        <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">varname</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">feather_bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">fname</span><span class="p">,</span> <span class="n">feather_bounds</span></div>
-
-    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Download a NetCDF file covering the bounds.</span>
-
-<span class="sd">        Note: prefer to use get_meteorology()</span>
+    <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download a NetCDF file covering the bounds.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        varname : str</span>
+<span class="sd">        var : str</span>
 <span class="sd">          Name the variable, see table in the class documentation.</span>
 <span class="sd">        year : int</span>
 <span class="sd">          A year in the valid range (currently 1980-2018)</span>
@@ -314,7 +193,7 @@
 
         <span class="c1"># get the target filename</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bounds</span><span class="p">]</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span>
                                         <span class="n">year</span><span class="o">=</span><span class="n">year</span><span class="p">,</span>
                                         <span class="n">north</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
                                         <span class="n">east</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
@@ -322,19 +201,19 @@
                                         <span class="n">south</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
-            <span class="n">url_dict</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">),</span> <span class="s1">&#39;variable&#39;</span><span class="p">:</span> <span class="n">varname</span> <span class="p">}</span>
+            <span class="n">url_dict</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">),</span> <span class="s1">&#39;variable&#39;</span><span class="p">:</span> <span class="n">var</span> <span class="p">}</span>
             <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">url_dict</span><span class="p">)</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Downloading: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;      to file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
 
-            <span class="n">request_params</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="n">varname</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;west&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">request_params</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="n">var</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;west&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
                               <span class="p">(</span><span class="s1">&#39;south&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;east&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;north&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
                               <span class="p">(</span><span class="s1">&#39;horizStride&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">),</span>
                               <span class="p">(</span><span class="s1">&#39;time_start&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">-01-01T12:00:00Z&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">year</span><span class="p">)),</span>
                               <span class="p">(</span><span class="s1">&#39;time_end&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">-12-31T12:00:00Z&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">year</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;timeStride&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">),</span>
                               <span class="p">(</span><span class="s1">&#39;accept&#39;</span><span class="p">,</span> <span class="s1">&#39;netcdf&#39;</span><span class="p">)]</span>
 
-            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">request_params</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">request_params</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="n">source_utils</span><span class="o">.</span><span class="n">get_verify_option</span><span class="p">())</span>
             <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
@@ -343,46 +222,182 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Using existing: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
 
-        <span class="k">return</span> <span class="n">filename</span></div>
+        <span class="k">return</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="nf">_clean_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a string of the format needed for use in the filename and request.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">date</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_START</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid date </span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">, must be after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_START</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">date</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_END</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid date </span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">, must be before </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_END</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">date</span>
+
+    <span class="k">def</span> <span class="nf">_clean_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute bounds in the required CRS from a polygon or bounds in a given crs&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="n">polygon_or_bounds</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">create_shply</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">:</span>
+            <span class="n">bounds_ll</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span>
+                                                      <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">latlon_crs</span><span class="p">())</span><span class="o">.</span><span class="n">bounds</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bounds_ll</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">warp</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span>
+                                                       <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">latlon_crs</span><span class="p">())</span>
+
+        <span class="n">feather_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bounds_ll</span><span class="p">[:])</span>
+        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">buffer</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">feather_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">feather_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">buffer</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">feather_bounds</span>
+
+    <span class="k">def</span> <span class="nf">_open_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filenames</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Opens and loads the files, making a single array.&quot;&quot;&quot;</span>
+        <span class="c1"># NOTE: this probably needs to be refactored to not load the whole thing into memory?</span>
+        <span class="n">nyears</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_var</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>  <span class="c1"># returned v.shape(nband, nrow, ncol)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># note nrows, ncols ordering</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nyears</span> <span class="o">*</span> <span class="mi">365</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+
+            <span class="c1"># stuff in the right spot</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="mi">365</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">365</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">v</span>
+
+        <span class="c1"># times is a range</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">origin</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">365</span> <span class="o">*</span> <span class="n">nyears</span><span class="p">)])</span>
+
+        <span class="c1"># trim to start, end</span>
+        <span class="n">i_start</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span> <span class="o">-</span> <span class="n">origin</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+        <span class="n">i_end</span> <span class="o">=</span> <span class="n">i_start</span> <span class="o">+</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">i_start</span><span class="p">:</span><span class="n">i_end</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i_start</span><span class="p">:</span><span class="n">i_end</span><span class="p">]</span>
+
+        <span class="c1"># profile</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">daymet_crs</span><span class="p">()</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># convert to m</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># convert to m</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;resolution&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">],</span> <span class="o">-</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">])</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;driver&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;h5&#39;</span>  <span class="c1"># hint that this was not a real raster</span>
+
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">from_bounds</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                              <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">])</span>
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Data</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FileManagerDaymet.get_data"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_daymet.FileManagerDaymet.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">polygon_or_bounds</span><span class="p">,</span>
+                 <span class="n">crs</span><span class="p">,</span>
+                 <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">variables</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">buffer</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets file for a single year and single variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]</span>
+<span class="sd">          Collect a file that covers this shape or bounds.</span>
+<span class="sd">        crs : CRS object</span>
+<span class="sd">          Coordinate system of the above polygon_or_bounds</span>
+<span class="sd">        start : str or datetime.date object, optional</span>
+<span class="sd">          Date for the beginning of the data, in YYYY-MM-DD. Valid is</span>
+<span class="sd">          &gt;= 2002-07-01.</span>
+<span class="sd">        end : str or datetime.date object, optional</span>
+<span class="sd">          Date for the end of the data, in YYYY-MM-DD. Valid is</span>
+<span class="sd">          &lt; the current month (DayMet updates monthly.)</span>
+<span class="sd">        variables : str or list, optional</span>
+<span class="sd">          Name the variables to download, see class-level</span>
+<span class="sd">          documentation for choices.  Default is</span>
+<span class="sd">          [prcp,tmin,tmax,vp,srad].</span>
+<span class="sd">        force_download : bool</span>
+<span class="sd">          Download or re-download the file if true.</span>
+<span class="sd">        buffer : float</span>
+<span class="sd">          Buffer the bounds by this amount, in degrees. The default is 0.01.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">          Metadata including spatial info, as for a raster.</span>
+<span class="sd">        times : np.array((NTIMES,), dtype=datetime.date)</span>
+<span class="sd">          Array of date objects.</span>
+<span class="sd">        data : dict{ str : np.ndarray((NTIMES, NX, NY), float)</span>
+<span class="sd">          Dictionary with keys of variables and values storing the</span>
+<span class="sd">          actual data.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_START</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_date</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">start_year</span> <span class="o">=</span> <span class="n">start</span><span class="o">.</span><span class="n">year</span>
+
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_END</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_date</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+        <span class="n">end_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">year</span>
+        <span class="k">if</span> <span class="n">start_year</span> <span class="o">&gt;</span> <span class="n">end_year</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Provided start year </span><span class="si">{</span><span class="n">start_year</span><span class="si">}</span><span class="s2"> is after provided end year </span><span class="si">{</span><span class="n">end_year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">variables</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_VARIABLES</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_VARIABLES</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DayMet data supports variables: </span><span class="si">{}</span><span class="s2"> (not </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_VARIABLES</span><span class="p">),</span> <span class="n">var</span><span class="p">))</span>
+
+        <span class="c1"># clean bounds</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_bounds</span><span class="p">(</span><span class="n">polygon_or_bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">)</span>
+
+        <span class="c1"># download files</span>
+        <span class="n">filenames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="n">filename_var</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_year</span><span class="p">,</span> <span class="n">end_year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force_download</span><span class="p">)</span>
+                <span class="n">filename_var</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="n">filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename_var</span><span class="p">)</span>
+
+        <span class="c1"># open files</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">State</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">fnames</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_files</span><span class="p">(</span><span class="n">fnames</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span></div></div>
 </pre></div>
 
            </div>
-           
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
-
-    </p>
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

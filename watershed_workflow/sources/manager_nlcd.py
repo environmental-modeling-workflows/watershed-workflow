@@ -11,10 +11,11 @@ import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
 
+VERSION = '20210604'
 # No API for getting NLCD locally -- must download the whole thing.
 urls = {
     'NLCD_2016_Land_Cover_L48':
-    'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_20210604.zip'
+    f'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_{VERSION}.zip'
 }
 
 colors = {
@@ -59,7 +60,7 @@ class FileManagerNLCD:
     Parameters
     ----------
     layer : str, optional
-      Layer of interest.  Default is `"Land_Cover`", should also be one for at
+      Layer of interest.  Default is `"land_cover`", should also be one for at
       least imperviousness, maybe others?
     year : int, optional
       Year of dataset.  Defaults to the most current available at the location.
@@ -75,10 +76,11 @@ class FileManagerNLCD:
 
     def __init__(self, layer='Land_Cover', year=None, location='L48'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
+        self.version = VERSION
 
-        self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
+        self.layer_name = 'nlcd_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
-        self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover',
+        self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
 
@@ -170,7 +172,7 @@ class FileManagerNLCD:
         os.makedirs(work_folder, exist_ok=True)
 
         filename = self.names.file_name()
-        logging.debug('  filename: {}'.format(filename))
+        logging.info('  filename: {}'.format(filename))
         if not os.path.exists(filename) or force:
             try:
                 url = urls[self.layer_name]
@@ -187,8 +189,10 @@ class FileManagerNLCD:
             img_files = [f for f in os.listdir(work_folder) if f.endswith('.img')]
             assert (len(img_files) == 1)
             target = os.path.join(work_folder, img_files[0])
+
             os.rename(target, filename)
-            os.rename(target[:-3] + 'ige', filename[:-3] + 'ige')
+            for suffix in ['ige', 'rde', 'rrd', 'xml']:
+                os.rename(target[:-3] + suffix, filename[:-3] + suffix)
 
         with rasterio.open(filename, 'r') as fid:
             profile = fid.profile

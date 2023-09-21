@@ -62,9 +62,10 @@ Installation with Docker
 
 Because of this complex set of processes, the simplest form of using
 Watershed Workflow is through the provided Docker containers.  To do
-this, install the `Docker desktop app
-<https://www.docker.com/products/docker-desktop/>`_, then run the
-script `bin/run_ww_lab.py`:
+this, install the `Docker
+<https://www.docker.com/products/docker-desktop/>`_ or `Rancher
+<https://rancherdesktop.io>`_ desktop apps, then run the script
+`bin/run_ww_lab.py`:
 
 .. code-block:: console
 
@@ -101,25 +102,22 @@ top directory of this repository.
 Local Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is recommended to use Anaconda3 as a package manager, generating a
-unique environment for use with this package, as this makes it fairly
-easy to get all the required packages.
+It is recommended to use `Mambaforge
+<https://mamba.readthedocs.io/en/latest/>`_ as a package manager,
+generating a unique environment for use with this package, as this
+makes it fairly easy to get all the required packages.  Anaconda and
+other variants can work as well, but mamba is significantly faster at
+solving the complex set of dependencies required here.
 
-Download and install `Anaconda3
-<https://www.anaconda.com/distribution/>`_.  Then create a new
-environment that includes the required packages:
+Jupyter best practices suggest to install jupyterlab and a base set of
+packages in your own base environment or elsewhere, then use this
+environment as a kernel within Jupyter.  We provide scripts that get
+the needed dependencies:
 
 .. code-block:: console
     :caption: Packages for general users.
                 
-    conda env create -f environments/environment-OSX.yml
-    conda activate watershed_workflow
-
-Note OSX can be replaced by Linux where appropriate, and the
-environments folder includes environment-\*.yml files for developers
-and CI.  Windows users are recommended to use the docker container, or
-to run the `environments/create_envs.py` script to generate
-appropriate environments.
+    python3 environments/create_envs.py ENV_NAME
 
 Developers should also install a few packages for building
 documentation, testing, etc:
@@ -127,8 +125,8 @@ documentation, testing, etc:
 .. code-block:: console
     :caption: Packages for developers and building documentation
 
-    conda env create -f environments/environment-OSX-dev.yml
-    conda activate watershed_watershed_dev
+    python3 environments/create_envs.py --env-type=DEV ENV_NAME
+
 
 The expectation is that you have installed jupyterlab and/or related
 packages in your own base environment or elsewhere, and will simply
@@ -149,12 +147,12 @@ Clone the package from `source <https://github.com/gsjaardema/seacas>`_
 
 Unfortunately this package does not do semantic versioned releases
 except as part of the Trilinos project, and those releases are often
-somewhat old.  Configuration is done through cmake -- an example use
-is provided at `docker/configure-seacas.sh`.  Create a configure
-script defining your compilers (likely clang if Mac and gcc if Linux)
-and pointing to your SEACAS repo and Anaconda environment installation
-of the required packages (which are all in your environment created
-above).
+somewhat old.  Configuration is done through cmake -- an example which
+must be modified is provided at `docker/configure-seacas.sh`.  Create
+a configure script defining your compilers (likely clang if Mac and
+gcc if Linux) and pointing to your SEACAS repo and Anaconda
+environment installation of the required packages (which are all in
+your environment created above).
 
 Hopefully you are then able to add your installed SEACAS to your
 PYTHONPATH and import the python wrappers:
@@ -182,19 +180,19 @@ dependency are installed via:
 
 
 As in the docker case, a configuration file must be found.  By
-default, installing this package via `setup.py` places a copy of
+default, installing this package places a copy of
 `watershed_workflowrc` in your home directory -- this can and should
 be modified.
 
 
-Run the test suite
-~~~~~~~~~~~~~~~~~~
+Run the test suite (developers)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Given that you have activated your environment and successfully
-install the above, the unit tests should all pass.  They are not
-all fast -- some download files and may be internet-connection-speed
-dependent.  You may be happy enough just running the core
-library tests:
+install the DEV environment above, the unit tests should all pass.
+They are not all fast -- some download files and may be
+internet-connection-speed dependent.  You may be happy enough just
+running the core library tests:
 
 .. code-block:: console
 
@@ -207,3 +205,5 @@ but you can also run the entire suite:
 
     pytest watershed_workflow                
 
+Additionally, all ipynb files in examples should successfully
+complete.

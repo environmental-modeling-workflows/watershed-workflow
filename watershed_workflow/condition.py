@@ -8,6 +8,7 @@ import scipy.ndimage
 
 import watershed_workflow
 
+
 @attr.s
 class _Point:
     """POD struct of coordinate and set of neighbors"""
@@ -504,7 +505,7 @@ def condition_river_mesh(m2,
     if smooth:
         for node in river.preOrder():  # reachwise smoothing
             # adds smooth profile in node properties
-            _smooth_profile(node, use_parent=use_parent, lower=lower)  
+            _smooth_profile(node, use_parent=use_parent, lower=lower)
 
         _network_sweep(river,
                        depress_upstream_by=depress_upstream_by,
@@ -519,7 +520,7 @@ def condition_river_mesh(m2,
         else:
             # only centerline elevation is to be used, without any
             # conditioning
-            profile = _get_profile(node)  
+            profile = _get_profile(node)
 
         if network_burn_in_depth is not None:
             if isinstance(network_burn_in_depth, dict):
@@ -648,11 +649,11 @@ def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_i
     """
     if ignore_in_sweep is None:
         ignore_in_sweep = []
-    
+
     for leaf in river.leaf_nodes():  #starting from one of the leaf nodes
         # providing extra depression at the upstream end
         if depress_upstream_by is not None:
-            leaf.properties['SmoothProfile'][-1, 1] -= depress_upstream_by  
+            leaf.properties['SmoothProfile'][-1, 1] -= depress_upstream_by
 
         for node in leaf.pathToRoot():
             # traversing from leaf node (headwater) catchment to the root node
@@ -662,7 +663,7 @@ def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_i
 
             if use_nhd_elev:
                 junction_elevs.append(node.properties['MinimumElevationSmoothed'] / 100)
-            if node.parent != None and node.properties['NHDPlusID'] not in ignore_in_sweep:
+            if node.parent != None and node.properties['ID'] not in ignore_in_sweep:
                 junction_elevs.append(node.parent.properties['SmoothProfile'][-1, 1])
                 node.parent.properties['SmoothProfile'][-1, 1] = min(
                     junction_elevs)  # giving min junction elevation to both the siblings

@@ -1,22 +1,15 @@
 API Documentation
-====================
+=================
 
-High Level API
-~~~~~~~~~~~~~~
-.. automodule:: watershed_workflow.hilev
-    :members:
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
 
-CRS module API
-~~~~~~~~~~~~~~
-.. automodule:: watershed_workflow.crs
-    :members:               
+   High Level API <hilev>
+   Data Sources <sources>
+   Geometry and Shape Manipulation <geometry>
+   Meshes <mesh>
+   Data Manipulation <data>
+   Utilities <utilities>
 
-plot module API
-~~~~~~~~~~~~~~~
-.. automodule:: watershed_workflow.plot
-    :members:
-                
-utils module API
-~~~~~~~~~~~~~~~~
-.. automodule:: watershed_workflow.utils
-    :members: shply, bounds, close
+

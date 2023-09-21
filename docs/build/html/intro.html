@@ -1,90 +1,48 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Watershed Workflow &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Example: mesh a delineated watershed" href="examples/mesh_coweeta.html" />
     <link rel="prev" title="Watershed Workflow" href="index.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="index.html" class="icon icon-home"> Watershed Workflow
           
-
-          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
@@ -95,120 +53,66 @@
 <li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">Watershed Workflow</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
-      <li>Watershed Workflow</li>
-    
-    
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Watershed Workflow</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="watershed-workflow">
-<h1>Watershed Workflow<a class="headerlink" href="#watershed-workflow" title="Permalink to this heading">¶</a></h1>
+             
+  <section id="watershed-workflow">
+<h1>Watershed Workflow<a class="headerlink" href="#watershed-workflow" title="Permalink to this heading"></a></h1>
 <img alt="_images/watershed_workflow.png" src="_images/watershed_workflow.png" />
 <dl class="field-list simple">
 <dt class="field-odd">Author<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Ethan Coon, &lt;<a class="reference external" href="mailto:coonet&#37;&#52;&#48;ornl&#46;gov">coonet<span>&#64;</span>ornl<span>&#46;</span>gov</a>&gt;</p>
+<dd class="field-odd"><p><a class="reference external" href="https://github.com/ecoon/">Ethan Coon</a></p>
 </dd>
-<dt class="field-even">License<span class="colon">:</span></dt>
-<dd class="field-even"><p>This work, including code, images, and documentation, unless
+<dt class="field-even">Contributors<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/pinshuai/">Pin Shuai</a>,</p></li>
+<li><p><a class="reference external" href="https://github.com/saubhagya-gatech">Saubhagya Rathore</a></p></li>
+<li><p><a class="reference external" href="https://github.com/gaobhub">Bo Gao</a></p></li>
+<li><p><a class="reference external" href="https://github.com/soumendrabhanja/">Soumendra Bhanja</a></p></li>
+<li><p><a class="reference external" href="https://github.com/jgomezvelez">Jesus Velez-Gomez</a></p></li>
+<li><p>… your name here!</p></li>
+</ul>
+</dd>
+<dt class="field-odd">License<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This work, including code, images, and documentation, unless
 otherwise specified, is copyright UT Battelle/Oak Ridge National
 Laboratory, and is licensed under the 3-clause BSD license.</p>
 </dd>
 </dl>
 <p>Watershed Workflow is a python-based, open source chain of tools for
 generating meshes and other data inputs for hyper-resolution
-hydrology, anywhere in the (conterminous + Alaska?) US.</p>
-<p>Hyper-resolution hydrologic models have huge data requirements, thanks
-to their large extent (full river basins) and very high resolution
-(often ~10-100 meters).  Furthermore, most process-rich models of
-integrated, distributed hydrology at this scale require meshes that
-understand both surface land cover and subsurface structure.  Typical
-data needs for simulations such as these include:</p>
+hydrology, anywhere in the US.</p>
+<p>Fully distributed ydrologic models have huge data requirements, thanks
+to their large extent (full river basins) and often very high
+resolution (~1-500 meters).  Furthermore, most process-rich
+models of integrated, distributed hydrology at this scale require
+meshes that understand both surface land cover and subsurface
+structure.  Typical data needs for simulations such as these include:</p>
 <ul class="simple">
 <li><p>Watershed delineation (what is your domain?)</p></li>
 <li><p>Hydrography data (river network geometry, hydrographs for model evaluation)</p></li>
@@ -221,92 +125,77 @@ data needs for simulations such as these include:</p>
 <p>This package is a python library of tools and a set of jupyter
 notebooks for interacting with these types of data streams using free
 and open (both free as in freedom and free as in free beer) python and
-GIS libraries and data.  Critically, this package aims to provide a way for
-<strong>automatically and quickly</strong> downloading, interpreting, and
-processing data needed to <strong>generate a “first” hyper-resolution
-simulation on any watershed</strong> in the conterminous United States (and
-most of Alaska/Hawaii/Puerto Rico).</p>
-<p>To do this, this package provides tools to automate finding and
-downloading a wide range of <strong>open data streams,</strong> including data from
-United States governmental agencies, including USGS, USDA, DOE, and
-others.  These data streams are then colocated on a mesh which is
-generated based on a watershed delineation and a river network, and
-that mesh is written in one of a variety of mesh formats for use in
-hyper-resolution simulation tools.</p>
-<p>Note: Hypothetically, this package works on all of Linux, Mac, and
-Windows.  It has been tested on the first two, but not the third.</p>
+GIS libraries and data.  Critically, this package aims to provide a
+way for <strong>automatically and quickly</strong> downloading, interpreting, and
+processing data needed to <strong>generate a “first” simulation on any
+watershed</strong> in the United States.  Some, but not all, of the data
+products used here are global; the tools are directly applicable to
+global datasets as well.</p>
+<p>To do this, this package provides tools to automate querying and
+downloading a wide range of <strong>open datasets</strong> from various data
+portals, including data from United States governmental agencies such
+as USGS, USDA, DOE, NASA, and others.  These datasets are then
+colocated on a mesh which is generated based on a watershed
+delineation and a river network, and that mesh is written in one of a
+variety of mesh formats for use in simulation tools.</p>
 <section id="workflows-via-jupyter-notebooks">
-<h2>Workflows via Jupyter notebooks<a class="headerlink" href="#workflows-via-jupyter-notebooks" title="Permalink to this heading">¶</a></h2>
+<h2>Workflows via Jupyter notebooks<a class="headerlink" href="#workflows-via-jupyter-notebooks" title="Permalink to this heading"></a></h2>
 <p>Workflows are the composition of partially automated steps to
-accomplish a range of tasks.  Watershed Workflow provides tools for,
-given a watershed, finding, downloading, pre-processing, interpolating
-onto meshes, and writing data for use in hyper-resolution hydrologic
-simulations.  Combining these tools into a full product is reasonably
-supported by Jupyter notebooks.</p>
+accomplish a range of tasks.  Manual intervention is most commonly
+needed when there are problems or inconsistencies with the datasets
+themselves, or corner cases in data that these authors have not yet
+found.  Combining automated and manual steps in a single workflow is
+reasonably supported by Jupyter notebooks.</p>
 <p>Note that the majority of code is NOT in notebooks.  Notebooks have
 <a class="reference external" href="https://docs.google.com/presentation/d/1n2RlMdmv1p25Xy5thJUhkKGvjtV-dkAIsUXP-AL4ffI/">all sorts of issues for software development, demonstration, and
 reproducibility</a>
 but they are great for providing a template for <strong>modifiable</strong>
 tutorials.</p>
-<p>Here I assume you know a little about Jupyter notebooks, and python.</p>
 </section>
 <section id="acknowledgements-citation-etc">
-<h2>Acknowledgements, citation, etc<a class="headerlink" href="#acknowledgements-citation-etc" title="Permalink to this heading">¶</a></h2>
-<p>This work was supported by multiple US Department of Energy projects
-at the Oak Ridge National Laboratory.  Use of this codebase in the
-academic literature should cite this repository (paper in
-preparation).</p>
+<h2>Acknowledgements, citation, etc<a class="headerlink" href="#acknowledgements-citation-etc" title="Permalink to this heading"></a></h2>
+<p>This work was supported by multiple US Department of Energy projects,
+including ORNL LDRD funds, the ExaSheds project, and the IDEAS
+project, and has been contributed to by authors at the Oak Ridge
+National Laboratory, Pacific Northwest National Laboratory, and Utah
+State University.  Use of this codebase in the academic literature
+should cite:</p>
+<ul class="simple">
+<li><p>Coon, Ethan T., and Pin Shuai. “Watershed Workflow: A toolset for parameterizing data-intensive, integrated hydrologic models.” Environmental Modelling &amp; Software 157 (2022): 105502. : <a class="reference external" href="https://doi.org/10.1016/j.envsoft.2022.105502">https://doi.org/10.1016/j.envsoft.2022.105502</a></p></li>
+</ul>
 <p>Collaborators and contributions are very welcome!</p>
 </section>
 </section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="examples/mesh_coweeta.html" class="btn btn-neutral float-right" title="Example: mesh a delineated watershed" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral float-left" title="Watershed Workflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Watershed Workflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples/mesh_coweeta.html" class="btn btn-neutral float-right" title="Example: mesh a delineated watershed" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
-
-    </p>
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

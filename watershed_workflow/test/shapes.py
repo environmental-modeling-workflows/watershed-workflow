@@ -49,6 +49,7 @@ def braided_stream():
     divergence = [0, 0, 1, 0, 0, 2]
     for seg, hs_id, dn, up, div in zip(mls, hydroseqs, dnstream, upstream, divergence):
         seg.properties = {
+            'ID': hs_id,
             'HydrologicSequence': hs_id,
             'DownstreamMainPathHydroSeq': dn,
             'UpstreamMainPathHydroSeq': up,

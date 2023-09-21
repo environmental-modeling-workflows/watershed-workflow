@@ -10,28 +10,6 @@ working directory or the user's home directory.  An example including
 all defaults is shown in the top level directory as
 `"watershed_workflowrc`".
 
-shapes vs shapely
-~~~~~~~~~~~~~~~~~
-
-Watershed Workflow works with two different representations of shapes:
-fiona's GeoJSON-like, python dictionary-based representation and
-shapely's shape classes.  Each has advantages: the former is simple,
-native python, and allows for data attributes to be associated with
-the shape, while the latter allows for simpler geometric operations.
-Furthermore, while fiona shapes can often be manipulated in-place
-(their internal coordinates are most frequently lists, and therefore
-mutable), shapely shapes cannot.
-
-So while we initially keep shapes as fiona objects as long as
-possible, and then attach their properties to the shape object when it
-is created, as soon as that shapely shape is modified it loses its
-properties.  Currently we have no solution to this, and shape
-properties must be managed by the user external to the shape object.
-
-In general, Watershed Workflow does not introduce its own shape
-objects, and most of its data structures store shapely objects
-internally.
-
 Coordinate Reference Systems (CRS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -66,3 +44,31 @@ is especially useful for rasters that must be repeatedly interpolated
 (i.e. meterological data or other time-dependent datasets).
 
 See :ref:`CRS` for detailed documentation of working with CRSs.
+
+shapes vs shapely
+~~~~~~~~~~~~~~~~~
+
+Watershed Workflow works with two different representations of shapes:
+fiona's GeoJSON-like, python dictionary-based representation and
+shapely's shape classes.  Each has advantages: the former is simple,
+native python, and allows for data attributes to be associated with
+the shape, while the latter allows for simpler geometric operations.
+Furthermore, while fiona shapes can often be manipulated in-place
+(their internal coordinates are most frequently lists, and therefore
+mutable), shapely shapes cannot.
+
+So while we initially keep shapes as fiona objects as long as
+possible, and then attach their properties to the shape object when it
+is created, as soon as that shapely shape is modified it loses its
+properties.  Currently we have no solution to this, and shape
+properties must be managed by the user external to the shape object.
+
+In general, Watershed Workflow does not introduce its own shape
+objects, and most of its data structures store shapely objects
+internally.
+
+Note this will be fixed when the code is updated to shapely 2.0, which
+will require the usage of geopandas -- at that point, we will stop
+using either fiona or shapely formats and switch to all geopandas,
+which stores shapely shapes internally but with attached properties.
+

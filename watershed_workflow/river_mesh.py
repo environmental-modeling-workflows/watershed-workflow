@@ -9,11 +9,24 @@ import shapely.ops
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
+import watershed_workflow.plot
+
+
+class IntersectionError(Exception):
+    pass
+
+
+def _indexPointInSeg(segment, point, tol=1.e-2):
+    ind = segment.coords[:].index(point.coords[0])
+    # except ValueError:
+    #     ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
+    #                 key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
+    #     assert(shapely.geometry.Point(p).distance(point) < tol)
+    return ind
 
 
 def sort_children_by_angle(tree, reverse=False):
     """Sorts the children of a given segment by their angle with respect to that segment."""
-
     for node in tree.preOrder():
         if len(node.children) > 1:
             # compute tangents
@@ -29,33 +42,126 @@ def sort_children_by_angle(tree, reverse=False):
             node.children.sort(key=angle)
 
 
-def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
+def _isOverlappingCorridor(corr, river):
+    if len(corr.interiors) > 0:
+        # there is an overlap upstream of the junction of two tributaries,
+        # creating a hole
+        return 2
+    if not _isExpectedNumPoints(corr, river):
+        # overlaps at the junction result in losing points in the corridor polygon.
+        return 1
+    return 0
+
+
+def _isOverlappingCorridors(corrs, rivers):
+    """Corridors can overlap"""
+    if any(_isOverlappingCorridor(c, river) for (c, river) in zip(corrs, rivers)):
+        return True
+
+    corrs_area = shapely.ops.unary_union(corrs).area
+    summed_area = sum(c.area for c in corrs)
+    if abs(summed_area - corrs_area) > 1.e-3:
+        return True
+    return False
+
+
+def _isExpectedNumPoints(corr, river):
+    """Check if the points on the corridor are same as calculated theoretically"""
+    n_child = []
+    for node in river.preOrder():
+        n_child.append(len(node.children))
+    n = 2  # two outlet points
+    for node in river.preOrder():
+        n = n + 2 * (len(node.segment.coords) - 1)
+    n = n - n_child.count(0) + n_child.count(2) + 2 * n_child.count(3) + 3 * n_child.count(4)
+    return (len(corr.exterior.coords) - 1 == n)
+
+
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
     -----------
-    rivers: List(watershed_workflow.river_tree.RiverTree object)
+    rivers: list(watershed_workflow.river_tree.River object)
         List of river tree along which river meshes are to be created
-    widths: Float or a dictionary {stream-order: width}
+    widths: float or a dictionary
+        Width of streams, as constant or {stream-order: width}
     enforce_convexity: boolean 
-        flag for enforcing convexity of the pentagons/hexagons at the junctions
-    hucs: SplitHUCs (optional)
-        A split-form HUC object from, e.g., get_split_form_hucs() 
-        Should be provided if user wants to modify hucs (in place) to accomodate river corridor polygon 
-    modify_hucs: bool, optional 
-        if true, will extend the hucs-segments along the edge of quads to integrate quads boundary into huc boundaries
+        If true, enforce convexity of the pentagons/hexagons at the
+        junctions.
+    ax : matplotlib Axes object, optional
+        For debugging -- plots troublesome reaches as quad elements are
+        generated to find tricky areas.
+    label : bool, optional = True
+        If true and ax is provided, animates the debugging plot with
+        reach ID labels as the user hovers over the plot.  Requires a
+        widget backend for matplotlib.
     
     Returns
     -------
-    elems: List(List)
-        List of river elements
-    corrs: List(shapely.geometry.Polygon)
-        List of river corridor polygons
+    elems: list(list)
+        List of river elements, each element a list of indices into
+        corr.coords.
+    corrs: list(shapely.geometry.Polygon)
+        List of river corridor polygons, one per river, storing the
+        coordinates used in elems.
+
     """
     elems = []
     corrs = []
     gid_shift = 0
-    for river in rivers:
+
+    # set up debugging plot
+    if ax is not None:
+        logging.info('  ... setting up debug figure')
+        fig = ax.get_figure()
+        ax.set_title(' magenta ^: first touch \n green o: leaf, final element '
+                     'complete \n blue o: internal element complete ')
+
+        nodes = [r for river in rivers for r in river.preOrder()]
+        reach_list = [r.segment for r in nodes]
+        reach_names = [r.properties['ID'] for r in nodes]
+        reach_colors = watershed_workflow.colors.enumerated_colors(len(nodes), 2)
+        lines = watershed_workflow.plot.shplys(reach_list, None, reach_colors, ax)
+
+        if label:
+            # the next block creates a hoverable plot where reaches are
+            # annotated with their IDs.  This makes it easier for the user
+            # to find the bad spot.
+            annot = ax.annotate("",
+                                xy=(0, 0),
+                                xytext=(20, 20),
+                                textcoords="offset points",
+                                bbox=dict(boxstyle="round", fc="w"),
+                                arrowprops=dict(arrowstyle="->"))
+            annot.set_visible(False)
+
+            def update_annot(idx):
+                posx, posy = reach_list[idx].centroid.coords[0]
+                annot.xy = (posx, posy)
+                text = f'ID: {reach_names[idx]}'
+                annot.set_text(text)
+                annot.get_bbox_patch().set_facecolor(reach_colors[idx])
+                annot.get_bbox_patch().set_alpha(0.8)
+
+            def hover(event):
+                vis = annot.get_visible()
+                if event.inaxes == ax:
+                    cont, ind = lines.contains(event)
+                    if cont:
+                        update_annot(ind['ind'][0])
+                        annot.set_visible(True)
+                        fig.canvas.draw_idle()
+                    else:
+                        if vis:
+                            annot.set_visible(False)
+                            fig.canvas.draw_idle()
+
+            ax.get_figure().canvas.mpl_connect("motion_notify_event", hover)
+
+    # now do the actual work
+    for i, river in enumerate(rivers):
+        logging.info(f'River {i}')
         if len(elems) != 0:
             gid_shift = np.max([max(map(int, elem)) for elem in elems]) + 1
         elems_river, corr = create_river_mesh(river,
@@ -63,9 +169,13 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None):
                                               enforce_convexity=enforce_convexity,
                                               gid_shift=gid_shift,
                                               ax=ax)
+
         elems = elems + elems_river
         corrs = corrs + [corr, ]
 
+    if _isOverlappingCorridors(corrs, rivers):
+        raise RuntimeError('Overlapping quad elements in neighboring rivers, try '
+                           'reducing river width or check reach data')
     return elems, corrs
 
 
@@ -79,32 +189,36 @@ def create_river_mesh(river,
 
     Parameters:
     -----------
-    river: watershed_workflow.river_tree.RiverTree object)
-        river tree along which mesh is to be created
-    widths: Float or a dictionary {stream-order: width}
+    river: watershed_workflow.river_tree.River object)
+      River tree along which mesh is to be created
+    widths: float or a dictionary
+      Width of streams, as constant or {stream-order: width}
     enforce_convexity: boolean 
-        flag for enforcing convexity of the pentagons/hexagons at the junctions
-    gid_shift: Integer
-        all the node-ids used in the element defination are shifted by
-        this number to make it consistant with the global ids in the 
-        m2 mesh, important in case of multiple rivers
-    dilation_width: Integer
-        this is used for initial buffering of river tree into river corridor polygon. 
-        for typical watershed 8m default should work well, however, for smaller domains, setting smaller
-        initial dilation_width might be desirable (much smaller than expected quad element length)   
-    hucs: SplitHUCs (optional)
-        A split-form HUC object from, e.g., get_split_form_hucs() 
-        Should be provided if user wants to modify hucs (in place) to accomodate river corridor polygon 
-    modify_hucs: bool, optional 
-        if true, will extend the hucs-segments along the edge of quads to integrate quads boundary into huc boundaries 
+      If true, enforce convexity of the pentagons/hexagons at the
+      junctions.
+    gid_shift: int
+      All the node-ids used in the element defination are shifted by
+      this number to make it consistant with the global ids in the m2
+      mesh, necessary in the case of multiple rivers
+    dilation_width: float
+      This is used for initial buffering of the river tree into the
+      river corridor polygon.  For a typical watershed the 4 m default
+      should work well; for smaller domains, setting smaller initial
+      dilation_width might be desirable (much smaller than expected
+      quad element length).
+    ax : matplotlib Axes object, optional
+      For debugging -- plots troublesome reaches as quad elements are
+      generated to find tricky areas.
+
     Returns
     -------
     elems: List(List)
-        List of river elements
-    corr: List(shapely.geometry.Polygon)
-        a river corridor polygon
-    """
+        List of river elements, each element a list of indices into
+        corr.coords.
+    corr: shapely.geometry.Polygon
+        The polygon of all elements, stores the coordinates.
 
+    """
     # creating a polygon for river corridor by dilating the river tree
     if type(widths) == dict:
         dilation_width = min(dilation_width, min(widths.values()))
@@ -129,24 +243,42 @@ def create_river_mesh(river,
                                      widths=widths,
                                      dilation_width=dilation_width,
                                      gid_shift=gid_shift)
+
+    # redraw the debug plot with updated elems
+    if ax is not None:
+        coords = list(corr.exterior.coords)
+        shapes = [shapely.geometry.Polygon([coords[e] for e in elem]) for elem in elems]
+        watershed_workflow.plot.shplys(shapes, None, 'r', ax)
+
+    oc = _isOverlappingCorridor(corr, river)
+    if oc == 1:
+        raise RuntimeError('Overlapping quad elements away from a junction -- try '
+                           'reducing river width or checking data to ensure no braided '
+                           'or nearly braided systems')
+    elif oc == 2:
+        raise RuntimeError('Overlapping quad elements at a junction -- try '
+                           ' increasing junction_angle_limit in densification, or check data.')
     return elems, corr
 
 
 def create_river_corridor(river, width):
-    """Returns a polygon representing the river corridor.
+    """Returns a polygon representing the river corridor with a fixed
+    dilation width.
     
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree object
-        river tree along which river corrid polygon is to be created
-    delta: Float
-        for initial dilation, distance between stream-centerline and edge of corridor
+    river : watershed_workflow.river_tree.River object
+      River tree along which corridor polygon is to be created.
+    width : float
+      Width to dilate the river.
 
     Returns
     -------
-    corr3: shapely.geometry.Polygon
-        river corridor polygon for the given river     
+    shapely.geometry.Polygon
+      Resulting polygon.
+
     """
+    logging.info(f'... generating initial polygon through dilation ({width} m)')
     # first sort the river so that in a search we always take paddlers right...
     # check river consistency
     if not river.is_continuous():
@@ -155,6 +287,7 @@ def create_river_corridor(river, width):
     delta = width / 2
 
     # make there are no three collinear points, else buffer will ignore those points
+    logging.info(f'  -- treating collinearity')
     for node in river.preOrder():
         new_seg_coords = watershed_workflow.utils.treat_segment_collinearity(node.segment.coords[:])
         node.segment = shapely.geometry.LineString(new_seg_coords)
@@ -166,15 +299,11 @@ def create_river_corridor(river, width):
         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
         mins.append(np.min(dz))
 
-    logging.info('creating river corridor polygon')
-    logging.info(f"river min seg length: {min(mins)}")
+    logging.info(f"  -- river min seg length: {min(mins)}")
 
-    length_scale = max(
-        2.1 * delta,
-        min(mins)
-        - 8*delta)  # Currently this same for the whole river, should we change it reachwise?
-    logging.info(
-        f"merging points closer than this distance along the river corridor: {length_scale}")
+    # Currently this same for the whole river, should we change it reachwise?
+    length_scale = max(2.1 * delta, min(mins) - 8*delta)
+    logging.info(f"  -- merging points closer than {length_scale} m along the river corridor")
 
     # buffer by the width
     mls = shapely.geometry.MultiLineString([r for r in river.depthFirst()])
@@ -182,7 +311,7 @@ def create_river_corridor(river, width):
                       cap_style=shapely.geometry.CAP_STYLE.flat,
                       join_style=shapely.geometry.JOIN_STYLE.mitre)
 
-    # cycle the corridor points to start and end with the 1st point...
+    # cycle the corridor points to start and end with the 1st point.
     corr_p = list(corr.exterior.coords[:-1])
     outlet_p = river.segment.coords[-1]
     index_min = min(range(len(corr_p)),
@@ -232,47 +361,46 @@ def create_river_corridor(river, width):
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
 
-    ## check if the points on the river corridor are same as calculated theoretically
-    n_child = []
-    for node in river.preOrder():
-        n_child.append(len(node.children))
-    n = 2  # two outlet points
-    for node in river.preOrder():
-        n = n + 2 * (len(node.segment.coords) - 1)
-    n = n - n_child.count(0) + n_child.count(2) + n_child.count(3) + n_child.count(4)
-    if len(corr3.exterior.coords[:]) - 1 != n:
-        RuntimeError('number of points on corridor polygon not same as expected')
+    # check if the points on the river corridor are same as calculated theoretically
+    if not _isExpectedNumPoints(corr3, river):
+        raise RuntimeError(
+            f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}"
+            " -- recommend running with ax argument to tessalate_river_aligned() to debug!")
+
     return corr3
 
 
 def to_quads(river, corr, width, gid_shift=0, ax=None):
     """Iterate over the rivers, creating quads and pentagons forming the corridor.
-    The global_id_adjustment is to keep track of node_id in elements w.r.t to global id in mesh
-    mainly relevant for multiple river
+
+    The global_id_adjustment is to keep track of node_id in elements
+    w.r.t to global id in mesh mainly relevant for multiple river
 
     Parameters
     ----------
-    rivers : watershed_workflow.river_tree.RiverTree object
-        river tree 
-    corr : shapely.geometry.Polygons
-        a river corridor polygon for the river
-    delta : Float
-        river width used for creating corr from river in function "create_river_corridor"
-    gid_shift: Integer
-        all the node-ids used in the element defination are shifted by
-        this number to make it consistant with the global ids in the 
-        m2 mesh, important in case of multiple rivers
+    rivers : watershed_workflow.river_tree.River
+      river tree 
+    corr : shapely.geometry.Polygon
+      a river corridor polygon for the river
+    width : float
+      fixed width used for dilating the river
+    gid_shift: int
+      All the node-ids used in the element defination are shifted by
+      this number to make it consistant with the global ids in the m2
+      mesh, necessary in the case of multiple rivers.
 
     Returns
     -------
-    elems: List(List)
-        List of river elements
+    elems: list(list)
+      List of river elements
+
     """
-    logging.info('defining river-mesh topology (quad elements)')
+    logging.info('... defining river-mesh topology (quad elements)')
     delta = width / 2
 
     coords = corr.exterior.coords[:-1]
 
+    artists = []  # list of things added to ax here
     import time
 
     def pause():
@@ -309,7 +437,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
             seg_coords = np.array(seg_coords)
             if ax != None:
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'm^', markersize=5)
+                artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'm^', markersize=5))
                 pause()
 
         elif node.touched == 1 and len(node.children) == 0:
@@ -330,8 +458,8 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
 
             if ax != None:
                 # plot it...
-                seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5)
+                # seg_coords = np.array(seg_coords)
+                # artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'gv', markersize=5))
 
                 # also plot the conn
                 for i, elem in enumerate(node.elements):
@@ -342,7 +470,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     else:
                         assert (len(looped_conn) == 5)
                     cc = np.array([coords[n] for n in looped_conn])
-                    ax.plot(cc[:, 0], cc[:, 1], 'g-o')
+                    artists.append(ax.plot(cc[:, 0], cc[:, 1], 'g-o'))
                 pause()
 
         elif node.touched == len(node.children):
@@ -361,7 +489,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             if ax != None:
                 #plot it...
                 seg_coords = np.array(seg_coords)
-                ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'b^', markersize=5)
+                artists.append(ax.plot(seg_coords[:, 0], seg_coords[:, 1], 'b^', markersize=5))
 
             # also plot the conn
             for i, elem in enumerate(node.elements):
@@ -373,18 +501,21 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
                     assert (len(looped_conn) == 5)
                 cc = np.array([coords[n] for n in looped_conn])
 
+                if ax != None:
+                    artists.append(ax.plot(cc[:, 0], cc[:, 1], 'b-o'))
+
                 for c in cc:
+                    # What is this actually checking?  Need a comment here -- this is confusing code. --ETC
+                    #
                     # note, the more acute an angle, the bigger this distance can get...
-                    # so it is a bit hard to pin this multiple down -- using 5 seems ok?
+                    # so it is a bit hard to pin this multiple down -- using 25 seems ok?
                     if not (watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                            watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta)):
-                        print(c, node.segment.coords[len(node.segment.coords) - (i+1)],
-                              node.segment.coords[len(node.segment.coords) - (i+2)])
-                        print(node.id)
+                        logging.debug(c, node.segment.coords[len(node.segment.coords) - (i+1)],
+                                      node.segment.coords[len(node.segment.coords) - (i+2)])
+                        logging.debug(node.id)
                         assert(watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+1)], 25*delta) or \
                         watershed_workflow.utils.close(tuple(c), node.segment.coords[len(node.segment.coords)-(i+2)], 25*delta))
-                if ax != None:
-                    ax.plot(cc[:, 0], cc[:, 1], 'g-o')
 
             pause()
 
@@ -398,53 +529,78 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
             node.touched += 1
 
             if ax != None:
-                ax.scatter([coords[ic][0], ], [coords[ic][1], ], c='m', marker='^')
+                artists.append(ax.scatter([coords[ic][0], ], [coords[ic][1], ], c='m', marker='^'))
                 pause()
 
     assert (len(coords) == (ic + 1))
     assert (len(river) * 2 == total_touches)
 
-    # this nodeid-shift is needed in case of multiple rivers, to make this id consistent with global node ids in a m2 mesh
+    # this nodeid-shift is needed in case of multiple rivers, to make
+    # this id consistent with global node ids in a m2 mesh
     for node in river.preOrder():
         for i, elems in enumerate(node.elements):
             elems_new = [node_id + gid_shift for node_id in elems]
             node.elements[i] = elems_new
 
     elems = [el for node in river.preOrder() for el in node.elements]
+
+    # once we have reached here, the debug plot is not so needed anymore,
+    # and leaving all our dots makes things cluttered.
+    for artist in artists:
+        if isinstance(artist, list):
+            for it in artist:
+                it.remove()
+        else:
+            artist.remove()
+
     return elems
 
 
 def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
-    """this functions takes the river-corridor polygon and sets the width of the corridor based on the order 
-       dependent width dictionary
+    """Adjust the river-corridor polygon width by order.
 
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree object
-        river tree along which mesh is to be created
-    corr : shapely.geometry.Polygons
-        a river corridor polygon for the river    
-    widths: Float or a dictionary {stream-order: width}
+    river: watershed_workflow.river_tree.River
+      river tree along which mesh is to be created
+    corr : shapely.geometry.Polygon
+      a river corridor polygon for the river    
+    widths: float or dict
+      Width of the river, as constant or {stream-order: width}
 
     Returns
     -------
-    shapely.geometry.Polygon(corr_coords_new): 
-        river corridor polygon with adjusted width
+    shapely.geometry.Polygon
+      river corridor polygon with adjusted width
+
     """
-    logging.info("setting width of quad elements based on StreamOrder")
+    logging.info("... setting width of quad elements")
     corr_coords = corr.exterior.coords[:-1]
+
+    if type(widths) == dict:
+        stream_order = next(
+            (i for i in ['StreamOrder', 'streamorder', 'streamorde'] if i in river.properties),
+            None)
+        if stream_order is None:
+            raise RuntimeError(
+                'set_width_by_order requested widths by stream order, but cannot guess stream order property name'
+            )
+
     for j, node in enumerate(river.preOrder()):
-
         if type(widths) == dict:
-            order = node.properties["StreamOrder"]
-            target_width = width_cal(widths, order)
-
+            order = node.properties[stream_order]
+            target_width = width_by_order(widths, order)
         else:
             target_width = widths
 
-        for i, elem in enumerate(node.elements):  # treating the upstream edge of the element
+        # loop over elems, treating the upstream edge
+        for i, elem in enumerate(node.elements):
             elem = [id - gid_shift for id in elem]
-            if len(elem) == 4:
+
+            if len(elem) == 3:
+                continue  # no upstream edge
+
+            elif len(elem) == 4:
                 p1 = np.array(corr_coords[elem[1]][:2])  # points of the upstream edge of the quad
                 p2 = np.array(corr_coords[elem[2]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
@@ -454,7 +610,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[2]] = tuple(p2_)
 
-            if len(elem) == 5:
+            elif len(elem) == 5:
                 p1 = np.array(corr_coords[elem[1]][:2])  # neck of the pent
                 p2 = np.array(corr_coords[elem[3]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
@@ -464,7 +620,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[3]] = tuple(p2_)
 
-            if len(elem) == 6:
+            elif len(elem) == 6:
                 p1 = np.array(corr_coords[elem[2]][:2])  # neck of the hex
                 p2 = np.array(corr_coords[elem[3]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
@@ -474,7 +630,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[2]] = tuple(p1_)
                 corr_coords[elem[3]] = tuple(p2_)
 
-                p1 = np.array(corr_coords[elem[1]][:2])  # neck of the hex
+                p1 = np.array(corr_coords[elem[1]][:2])  # in one
                 p2 = np.array(corr_coords[elem[4]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
                                                        p2,
@@ -483,8 +639,8 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[4]] = tuple(p2_)
 
-            if len(elem) == 7:
-                p1 = np.array(corr_coords[elem[2]][:2])  # neck of the hex
+            elif len(elem) == 7:
+                p1 = np.array(corr_coords[elem[2]][:2])  # neck of the sept
                 p2 = np.array(corr_coords[elem[4]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
                                                        p2,
@@ -493,7 +649,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[2]] = tuple(p1_)
                 corr_coords[elem[4]] = tuple(p2_)
 
-                p1 = np.array(corr_coords[elem[1]][:2])  # neck of the hex
+                p1 = np.array(corr_coords[elem[1]][:2])  # in one
                 p2 = np.array(corr_coords[elem[5]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
                                                        p2,
@@ -502,9 +658,14 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
                 corr_coords[elem[1]] = tuple(p1_)
                 corr_coords[elem[5]] = tuple(p2_)
 
-            if i == 0:  # this is to treat the most downstream edge which is left out so far
-                p1 = np.array(
-                    corr_coords[elem[0]][:2])  # points of the upstream edge of the quad/pent
+            else:
+                raise NotImplementedError(
+                    f"Case with {len(elem)} nodes is not yet treated... good luck!")
+
+            # treat the most downstream edge, which is left out so far
+            if i == 0:
+                # points of the upstream edge of the quad/pent
+                p1 = np.array(corr_coords[elem[0]][:2])
                 p2 = np.array(corr_coords[elem[-1]][:2])
                 [p1_, p2_] = move_to_target_separation(p1,
                                                        p2,
@@ -522,9 +683,9 @@ def move_to_target_separation(p1, p2, target, dilation_width=8):
     import math
     d_vec = p1 - p2  # separation vector
     d = np.sqrt(d_vec.dot(d_vec))  # distance
-    target = target * min(
-        d / dilation_width,
-        1.2)  # this scales for angled joints (not exactly calculated but should be good enough)
+
+    # scales for angled joints (not exactly calculated but should be good enough)
+    target = target * min(d / dilation_width, 1.2)
     delta = target - d
     p1_ = p1 + 0.5 * delta * (d_vec) / d
     p2_ = p2 - 0.5 * delta * (d_vec) / d
@@ -533,7 +694,7 @@ def move_to_target_separation(p1, p2, target, dilation_width=8):
     return [p1_, p2_]
 
 
-def width_cal(width_dict, order):
+def width_by_order(width_dict, order):
     """Returns the reach width based using the {order:width dictionary}"""
     if order > max(width_dict.keys()):
         width = width_dict[max(width_dict.keys())]
@@ -545,20 +706,24 @@ def width_cal(width_dict, order):
 
 
 def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
-    """this functions check the river-corridor polygon for convexity, if non-convex, moves the node onto the convex hull of the element-polygon
+    """Ensure convexity of each river-corridor element.
+
+    Moves nodes onto the convex hull of the element if needed.
 
     Parameters
     ----------
-    river: watershed_workflow.river_tree.RiverTree object)
-        river tree along which mesh is to be created
-    corr : shapely.geometry.Polygons
-        a river corridor polygon for the river 
+    river: watershed_workflow.river_tree.River
+      River tree along which mesh is to be created
+    corr : shapely.geometry.Polygon
+      The river corridor polygon
   
     Returns
     -------
-    shapely.geometry.Polygon(corr_coords_new): 
-        river corridor polygon with adjusted width
+    shapely.geometry.Polygon
+      The new polygon with all convex elements.
+
     """
+    logging.info('... enforcing convexity')
     coords = corr.exterior.coords[:-1]
 
     for j, node in enumerate(river.preOrder()):
@@ -569,16 +734,16 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
                     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-                    for i, point in enumerate(
-                            points):  # replace point with nearest point on convex hull
+                    for i, point in enumerate(points):
+                        # replace point with nearest point on convex hull
                         p = shapely.geometry.Point(point)
                         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
                         points[i] = new_point
 
                 if not (watershed_workflow.utils.is_convex(points)):
-                    points = [
-                        coords[id] for id in elem
-                    ]  # go back to original set of points as snapping on hull might have incorrectly oriented points
+                    # go back to original set of points as snapping on
+                    # hull might have incorrectly oriented points
+                    points = [coords[id] for id in elem]
                     logging.info(
                         f"  could not make these: {points} convex using convex hull, trying nudging...."
                     )
@@ -593,9 +758,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
 
 
 def make_convex_by_nudge(points):
-    """this functions takes the river-corridor elemet, nudges the
-    neck-points of the junction if the pentagon is non-convex until it
-    becomes convex Parameters
+    """Nudges the neck-points of the junction until the element is convex.
 
     Used if efficient convexity does not work
     """
@@ -610,6 +773,7 @@ def make_convex_by_nudge(points):
             points[3] = tuple(p3_)
             i += 1
         logging.debug(f"... element was adjusted {i} times")
+
     elif len(points) == 6:
         while not watershed_workflow.utils.is_convex(points):
             p1, p4 = [np.array(points[1]), np.array(points[4])]
@@ -638,6 +802,9 @@ def make_convex_by_nudge(points):
             points[4] = tuple(p4_)
             i += 1
         logging.debug(f"... element was adjusted {i} times")
+
+    else:
+        raise NotImplementedError("Case with {len(points)} nodes is not yet treated... good luck!")
     assert (watershed_workflow.utils.is_convex(points))
     return points
 
@@ -667,10 +834,11 @@ def node_at_intersection(point, river):
 
 
 def angle_rivers_segs(ref_seg, seg):
-    """Returns the angle of incoming-river-segment or huc-segment w.r.t
-       outgoing river; angle is measured clockwise; this is useful to
-       sort orientation wise and add river corridor points at
-       junction
+    """Returns the angle of incoming-river-segment or huc-segment w.r.t outgoing river.
+
+    The angle is measured clockwise; this is useful to sort
+    orientation wise and add river corridor points at junction
+
     """
     ref_seg_tan = np.array(ref_seg.coords[1]) - np.array(ref_seg.coords[0])
     if type(seg) is shapely.geometry.LineString:
@@ -696,23 +864,26 @@ def angle_rivers_segs(ref_seg, seg):
 
 def rc_points_for_rt_point(rt_point, node, river_corr):
     """Returns the points (list of indices of coords) on the river-corridor-polygon for a given junction point on river tree."""
-    assert (node.segment.intersects(rt_point))
-    rt_point_ind = node.segment.coords[:].index(rt_point.coords[0])
-    elem_ind = (
-        len(node.segment.coords) - 1 - rt_point_ind
-    ) - 1  # this give id of stream mesh element which has this rt point  at upstream end
+    #assert (node.segment.intersects(rt_point))
+    rt_point_ind = _indexPointInSeg(node.segment, rt_point)
+
+    # this give id of stream mesh element which has this rt point  at upstream end
+    elem_ind = (len(node.segment.coords) - 1 - rt_point_ind) - 1
     elem = node.elements[elem_ind]
 
     if len(elem) == 4:
-        rc_points = [river_corr.exterior.coords[ind]
-                     for ind in [elem[1], elem[2]]]  # return two points
+        # return two points
+        rc_points = [river_corr.exterior.coords[ind] for ind in [elem[1], elem[2]]]
     elif len(elem) == 5:
-        rc_points = [river_corr.exterior.coords[ind]
-                     for ind in [elem[1], elem[2], elem[3]]]  # return three points at junction
+        # return three points at junction
+        rc_points = [river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3]]]
     elif len(elem) == 6:
+        # return three points at junction
         rc_points = [
             river_corr.exterior.coords[ind] for ind in [elem[1], elem[2], elem[3], elem[4]]
-        ]  # return three points at junction
+        ]
+    else:
+        raise ValueError('Too many points in elem?')
 
     return rc_points
 
@@ -748,14 +919,14 @@ def adjust_seg_for_rc(seg, river_corr, new_seg_point, integrate_rc=False):
     return seg
 
 
-def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True):
+def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True, ax=None):
     """Adjusts hucs to accomodate river corridor polygons.
 
     Parameters
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs(), will be modified in place.
-    rivers : list(watershed_workflow.river_tree.RiverTree)
+    rivers : list(watershed_workflow.river_tree.River)
         A list of river tree object
     river_corrs : list(shapely.geometry.Polygons)
         A list of river corridor polygons for each river
@@ -766,17 +937,17 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
         if true, will extend the hucs-segments alogn the edge of quads 
     """
     for river, river_corr in zip(rivers, river_corrs):
-        adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc)
+        adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc, ax=ax)
 
 
-def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
+def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, ax=None):
     """Adjusts hucs to accomodate river corridor polygon.
 
     Parameters
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    river : watershed_workflow.river_tree.RiverTree object
+    river : watershed_workflow.river_tree.River object
         river tree 
     river_corr : shapely.geometry.Polygons
         A river corridor polygon for given river
@@ -795,8 +966,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
     huc_segs_adjusted = []  # keep track of already modified hucs
     for i, seg in enumerate(hucs.segments):
         is_unadjusted_outlet_point = False
-        if i not in huc_segs_adjusted and seg.intersects(
-                river_mls):  # check if this huc is part of already processed junction
+        # check if this huc is part of already processed junction
+        if i not in huc_segs_adjusted and seg.intersects(river_mls):
             logging.info("  ... found an intersection of river and huc seg")
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
@@ -817,10 +988,15 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
 
         if is_unadjusted_outlet_point:
             logging.info("  ... it is an unadjusted outlet!")
-            # assert(type(intersection_point) is shapely.geometry.Point) # hopefully no LineStrings or MultiPoints
+
+            # hopefully no LineStrings or MultiPoints
+            # assert(type(intersection_point) is shapely.geometry.Point)
+
             # find all the huc-segments at this junction
             intersection_segs = hucsegs_at_intersection(intersection_point, hucs)
-            huc_segs_adjusted = huc_segs_adjusted + intersection_segs  # mark them as modified (in the following steps)
+            huc_segs_adjusted = huc_segs_adjusted + intersection_segs
+
+            # mark them as modified (in the following steps)
 
             # find the downstream node (outgoing river reach) at this junction
             parent_node = node_at_intersection(intersection_point, river)
@@ -830,31 +1006,45 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                 outlet_junction = False
             logging.info(f"  ... is there a parent to this? {parent_node.parent}")
 
-            # find the index of the intersection point (at this junction) on the rt-node-segment (needed to find rc points)
-            ind_intersection_point = parent_node.segment.coords[:].index(
-                intersection_point.coords[0])
+            # find the index of the intersection point (at this
+            # junction) on the rt-node-segment (needed to find rc
+            # points)
+            try:
+                ind_intersection_point = _indexPointInSeg(parent_node.segment, intersection_point)
+            except ValueError:
+                err = IntersectionError()
+                err.point = intersection_point
+                err.river_seg = parent_node.segment
+                err.river = river
+                err.huc_segment = seg
+                raise err
 
             if outlet_junction:
-                logging.info('found outlet junction')
+                logging.info('  found outlet junction')
                 elem = parent_node.elements[0]
-                rc_points = [river_corr.exterior.coords[ind]
-                             for ind in [elem[0], elem[-1]]]  # rc points at junction
+                # rc points at junction
+                rc_points = [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]]
+
+                # reference segment for angles
                 ref_seg = shapely.geometry.LineString(
-                    parent_node.segment.coords[ind_intersection_point
-                                               - 2:])  # reference segment for angles
+                    parent_node.segment.coords[ind_intersection_point - 2:])
+
+                # orientations of hucs-segments
                 seg_angles = [
                     angle_rivers_segs(ref_seg, hucs.segments[seg_id])
                     for seg_id in intersection_segs
-                ]  # orientations of hucs-segments
+                ]
                 incoming_river_angles = [180, ]  # this hardcoded only for outlet junction
-                all_segs = intersection_segs + [
-                    parent_node,
-                ]  # all line segments (hucs-segments and river-segments) at this junction
-            else:  # if internal junction
+
+                # all line segments (hucs-segments and river-segments) at this junction
+                all_segs = intersection_segs + [parent_node, ]
+            else:
+                # internal junction
                 rc_points = rc_points_for_rt_point(intersection_point, parent_node, river_corr)
+
+                # this is small part of the parent node.segment just downstream of the intersection point
                 ref_seg = shapely.geometry.LineString(
-                    parent_node.segment.coords[ind_intersection_point:ind_intersection_point + 2]
-                )  # this is small part of the parent node.segment just downstream of the intersection point
+                    parent_node.segment.coords[ind_intersection_point:ind_intersection_point + 2])
                 seg_angles = [
                     angle_rivers_segs(ref_seg, hucs.segments[seg_id])
                     for seg_id in intersection_segs
@@ -862,8 +1052,8 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
 
                 # orientations of incoming river-segments
                 if intersection_point.intersects(
-                        shapely.geometry.Point(parent_node.segment.coords[0])
-                ):  # huc and rt intersect at river-merging point
+                        shapely.geometry.Point(parent_node.segment.coords[0])):
+                    # huc and rt intersect at river-merging point
                     incoming_river_angles = [
                         angle_rivers_segs(ref_seg, child) for child in parent_node.children
                     ]
@@ -875,21 +1065,25 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                     incoming_river_angles = [angle_rivers_segs(ref_seg, upstream_seg), ]
                     all_segs = intersection_segs + [parent_node, ]
 
-            all_angles = seg_angles + incoming_river_angles  # orientation of all line segments (hucs-segments and river-segments) at this junction
+            # orientation of all line segments (hucs-segments and river-segments) at this junction
+            all_angles = seg_angles + incoming_river_angles
 
             junction_seg_angles = {all_segs[i]: all_angles[i] for i in range(len(all_segs))}
+
+            # sort segments by their orientation angles
             junction_seg_angles_sorted = dict(
-                sorted(junction_seg_angles.items(),
-                       key=lambda item: item[1]))  # sort segments by their orientation angles
+                sorted(junction_seg_angles.items(), key=lambda item: item[1]))
 
-            if integrate_rc or outlet_junction:  # this will modify huc boundary to integrate quad edges
-                rc_point_ind = 0  # to identify which rc points is added to hucs-segment
-                elem = parent_node.elements[0]
-                river_corr_part = shapely.geometry.Polygon(
-                    [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points
-                )  # his polygon is used to remove overlapping huc-segment and rc. To avoid issues at snapped leaf node intersecting with this
-                # with this huc segment, we create lcal rc polygon
+            # This polygon is used to remove overlapping
+            # huc-segment and river corridor. To avoid issues at
+            # snapped leaf node intersecting with this with this
+            # huc segment, we create local river corridor polygon
+            elem = parent_node.elements[0]
+            river_corr_part = shapely.geometry.Polygon(
+                [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points)
 
+            if integrate_rc or outlet_junction:
+                # Modify the huc boundary to integrate quad edges
                 if len(hucs.segments) == 1:
                     key = 0
                     hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
@@ -898,9 +1092,11 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                                                            rc_points[1])
 
                 else:
+                    # identify which river corridor point is added to hucs-segment
+                    rc_point_ind = 0
                     for key in junction_seg_angles_sorted.keys():
                         if type(key) is int:
-                            logging.info(f"Modifying HUC Segment {key}")
+                            logging.info(f"  modifying HUC segment {key}")
                             # removing part of huc-segment overlappig with rc and snapping huc-segment end to "right" rc point
                             hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key],
                                                                    river_corr_part,
@@ -915,11 +1111,12 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True):
                                                                         integrate_rc=integrate_rc
                                                                         or outlet_junction)
 
-            else:  # this will just remove the part of huc-segment overlappig with rc
+            else:
+                # Just remove the part of of the huc-segment overlapping with the river corridor
                 rc_point_ind = 0
                 for key in junction_seg_angles_sorted.keys():
                     if type(key) is int:
-                        logging.info(f"Modifying HUC Segment {key}")
+                        logging.info(f"  modifying HUC Segment {key}")
                         hucs.segments[key] = adjust_seg_for_rc(hucs.segments[key], river_corr_part,
                                                                rc_points[rc_point_ind])
                     else:

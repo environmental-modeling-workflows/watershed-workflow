@@ -26,18 +26,18 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names=None):
 
     if nlcd_names is None:
         nlcd_names = dict((i, str(i)) for i in inds)
-    
+
     for ind in inds:
         ent_ids = list(np.where(nlcd_colors == ind)[0])
         ls = watershed_workflow.mesh.LabeledSet(nlcd_names[ind], int(ind), 'CELL', ent_ids)
         m2.labeled_sets.append(ls)
 
 
-def _get_labels(polygons, kind):
-    labels = []
-    for i, p in enumerate(polygons):
-        label = f'{kind} {i}'
-        labels.append(label)
+def _get_labels(polygons, kind='polygon'):
+    if isinstance(polygons, watershed_workflow.split_hucs.SplitHUCs):
+        labels = [prop['ID'] for prop in polygons.properties]
+    else:
+        labels = [f'{kind} {i}' for i in range(len(polygons))]
     return labels
 
 
@@ -65,19 +65,16 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
     """
     if labels is None:
         labels = _get_labels(polygons)
-    else:
-        assert (len(labels) == len(polygons))
+    assert (len(labels) == len(polygons))
 
     partitions = [list() for p in polygons]
     for c in range(m2.num_cells):
-        cc = m2.compute_centroid(c)
+        cc = m2.centroids[c]
         cc = shapely.geometry.Point(cc[0], cc[1])
-        try:
-            ip = next(i for (i, p) in enumerate(polygons) if p.contains(cc))
-        except StopIteration:
-            pass
-        else:
-            partitions[ip].append(c)
+
+        for i, p in enumerate(polygons):
+            if p.contains(cc):
+                partitions[i].append(c)
 
     for label, part in zip(labels, partitions):
         if len(part) > 0:
@@ -94,6 +91,7 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
             m2.labeled_sets.append(ls2)
 
     return partitions
+
 
 def add_watershed_regions(m2, polygons, labels=None):
     """Deprecated -- kept for backward compatibility."""
@@ -129,7 +127,7 @@ def add_watershed_regions_and_outlets(m2,
       resolved floodplain, or 1-2 face-widths, whichever is bigger.
     labels : iterable[str], optional
       Name of the polygons.  If SplitHUCs are provided, HUC names are
-      used and None should be provided.
+      used as the default.
     exterior_outlet : bool, optional
       If true, find the outlet point that intersects the boundary and
       include regions around that outlet as well.
@@ -137,16 +135,18 @@ def add_watershed_regions_and_outlets(m2,
     """
     if isinstance(hucs, list):
         polygons = hucs
-        if outlets is None:
-            outlets = [None, ] * len(polygons)
     else:
         polygons = list(hucs.polygons())
-        assert (outlets is None)
-        outlets = hucs.polygon_outlets
+        if outlets is None and hasattr(hucs, 'polygon_outlets'):
+            outlets = hucs.polygon_outlets
+
     if labels is None:
-        labels = _get_labels(polygons)
-    else:
-        assert (len(labels) == len(polygons))
+        labels = _get_labels(hucs)
+
+    if outlets is None:
+        outlets = [None, ] * len(polygons)
+
+    assert (len(labels) == len(polygons))
 
     # this adds the first two sets
     partitions = add_polygonal_regions(m2, polygons, labels, volume=True)
@@ -250,3 +250,122 @@ def add_river_corridor_regions(m2, rivers, labels=None):
             ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
+
+def add_regions_by_stream_order_rivers(m2, rivers, labels=None):
+    """Add labeled sets to m2 for reaches of each stream order for each river.
+     
+    Parameters:
+    -----------
+    m2: watershed_workflow.mesh.Mesh2D object
+      2D mesh elevated on DEMs
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      List of rivers used to create the river corridors.
+    labels: list(str), optional
+      List of names, one per river.
+    """
+    if labels is None:
+        labels = []
+        for i, p in enumerate(rivers):
+            label = f'river {i}'
+            labels.append(label)
+    else:
+        assert (len(labels) == len(rivers))
+
+    for label, river in zip(labels, rivers):
+        add_regions_by_stream_order(m2, river, river_id=label)
+
+
+def add_regions_by_stream_order(m2, river, river_id=0):
+    """Add labeled sets to m2 for reaches of each stream order .
+     
+    Parameters:
+    -----------
+    m2: watershed_workflow.mesh.Mesh2D object
+      2D mesh elevated on DEMs
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      List of rivers used to create the river corridors.
+    river_id: str/int, optional
+      river identifier/name.
+    """
+    river_nodes = list(river.preOrder())
+    sorted_river_nodes = sorted(river_nodes, key=lambda node: node.properties['StreamOrder'])
+
+    from itertools import groupby
+    grouped_river_nodes = [
+        list(result) for key, result in groupby(sorted_river_nodes,
+                                                key=lambda node: node.properties['StreamOrder'])
+    ]
+
+    mls_reaches_by_stream_order = [
+        shapely.geometry.MultiLineString([node.segment for node in node_group])
+        for node_group in grouped_river_nodes
+    ]
+    labels = []
+    for i, p in enumerate(mls_reaches_by_stream_order):
+        label = f'reaches of StreamOrder {i} in river {river_id}'
+        labels.append(label)
+
+    partitions = [list() for p in mls_reaches_by_stream_order]
+    for c, conn in enumerate(m2.conn):
+        cell_poly = shapely.geometry.Polygon(m2.coords[conn])
+        try:
+            ip = next(i for (i, p) in enumerate(mls_reaches_by_stream_order)
+                      if p.intersects(cell_poly.buffer(-1)))
+            # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
+            # reach that might be touching the reach end from being included in the region
+        except StopIteration:
+            pass
+        else:
+            partitions[ip].append(c)
+
+    for label, part in zip(labels, partitions):
+        if len(part) > 0:
+            setid2 = m2.next_available_labeled_setid()
+            ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+            m2.labeled_sets.append(ls2)
+
+
+def add_region_by_reach_id(m2, rivers, reach_ids=None):
+    """Add labeled sets to m2 for reaches of each stream order .
+     
+    Parameters:
+    -----------
+    m2: watershed_workflow.mesh.Mesh2D object
+      2D mesh elevated on DEMs
+    rivers: list(watershed_workflow.river_tree.RiverTree)
+      List of rivers used to create the river corridors.
+    reaches: list(str)
+      list of NHDID IDs to be labeled.
+    """
+
+    if reach_ids != None:
+        ls_reaches_by_ids = [getNode(id, rivers).segment for id in reach_ids]
+        labels = []
+        for i, p in enumerate(ls_reaches_by_ids):
+            label = f'reach with id {reach_ids[i]}'
+            labels.append(label)
+
+        partitions = [list() for p in ls_reaches_by_ids]
+        for c, conn in enumerate(m2.conn):
+            cell_poly = shapely.geometry.Polygon(m2.coords[conn])
+            try:
+                ip = next(i for (i, p) in enumerate(ls_reaches_by_ids)
+                          if p.intersects(cell_poly.buffer(-1)))
+                # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
+                # reach that might be touching the reach end from being included in the region
+            except StopIteration:
+                pass
+            else:
+                partitions[ip].append(c)
+
+        for label, part in zip(labels, partitions):
+            if len(part) > 0:
+                setid2 = m2.next_available_labeled_setid()
+                ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+                m2.labeled_sets.append(ls2)
+
+
+def getNode(nhd_id, rivers):
+    """return node given NHDID"""
+    node = next(river.getNode(nhd_id) for river in rivers if river.getNode(nhd_id) != None)
+    return node
