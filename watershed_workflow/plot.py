@@ -53,7 +53,6 @@ class Labeler:
         See documentation of the addItem() method.
 
     """
-    
     def __init__(self, ax, items=None):
         self.ax = ax
         self.items = []
@@ -81,14 +80,16 @@ class Labeler:
             it is assumed to be a formattable string to which the
             item's properties dictionary is passed.
         """
-        
+
         if isinstance(formatter, str):
+
             def format_this(item):
                 return formatter.format(**dict(item)), list()
+
             formatter = format_this
 
-        assert(len(artist) == len(metadata))
-        self.items.append( (artist, metadata, formatter) )
+        assert (len(artist) == len(metadata))
+        self.items.append((artist, metadata, formatter))
         self.metadata = metadata
         self._format = format
         self._selected = []
@@ -116,21 +117,28 @@ class Labeler:
         if isinstance(artist, matplotlib.collections.LineCollection):
             line = artist.get_data()[i]
             color = artist.get_colors()[i]
-            
-            self._selected.append(self.ax.plot(line[:,0], line[:,1], '-x', color=color))
-            
-            
+
+            self._selected.append(self.ax.plot(line[:, 0], line[:, 1], '-x', color=color))
+
     def update(self, event):
         """Acts on click."""
         print('event loc:', event.mouseevent.x, event.mouseevent.y)
         print('event dict:', event.__dict__)
 
-        i = next(i for (i,item) in enumerate(self.items) if item[0] is event.artist)
+        i = next(i for (i, item) in enumerate(self.items) if item[0] is event.artist)
         self.select(i, 0, (event.mouseevent.x, event.mouseevent.y))
         self.ax.get_figure().canvas.draw_idle()
 
 
-def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, ax_kwargs=None, **kwargs):
+def get_ax(crs,
+           fig=None,
+           nrow=1,
+           ncol=1,
+           index=1,
+           window=None,
+           axgrid=None,
+           ax_kwargs=None,
+           **kwargs):
     """Returns an axis with a given projection.
     
     Note this forwards extra kwargs for plt.figure().
@@ -183,7 +191,7 @@ def get_ax(crs, fig=None, nrow=1, ncol=1, index=1, window=None, axgrid=None, ax_
         if axgrid is None:
             axargs = [nrow, ncol, index]
         else:
-            axargs = [axgrid,]
+            axargs = [axgrid, ]
 
         if crs is None:
             # no crs, just get an ax -- you deal with it.
@@ -375,7 +383,7 @@ def rivers(rivers, crs, color=None, ax=None, **kwargs):
     """
     if color is None:
         color = watershed_workflow.colors.enumerated_colors(len(rivers))
-    
+
     if type(color) is not str and len(color) == len(rivers):
         for r, c in zip(rivers, color):
             river(r, crs, c, ax, **kwargs)
@@ -442,7 +450,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
     # set default colors
     if color is None:
         color = watershed_workflow.colors.enumerated_colors(len(shps))
-        
+
     # update keyword arguments
     if 'facecolor' not in kwargs:
         kwargs['facecolor'] = 'none'
@@ -507,7 +515,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
             if type(color) is str:
                 point_colors = color
             else:
-                point_colors = np.array([color[i] for (i,l) in enumerate(lines) for c in l])
+                point_colors = np.array([color[i] for (i, l) in enumerate(lines) for c in l])
             if projection is None:
                 ax.scatter(points[:, 0], points[:, 1], c=point_colors, **marker_kwargs)
             else:
@@ -592,7 +600,8 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
 
             if marker is not None:
                 points = np.array([p for poly in shps for p in poly.exterior.coords])
-                pcolors = np.array([color[i] for (i,poly) in enumerate(shps) for p in poly.exterior.coords])
+                pcolors = np.array(
+                    [color[i] for (i, poly) in enumerate(shps) for p in poly.exterior.coords])
                 if projection is None:
                     pnts_res = ax.scatter(points[:, 0], points[:, 1], c=pcolors, **marker_kwargs)
                 else:

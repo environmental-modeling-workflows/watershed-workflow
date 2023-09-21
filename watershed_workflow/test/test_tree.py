@@ -114,11 +114,11 @@ def test_factory_braided_hydroseq(braided_stream):
 
 
 def test_merge():
-    s2 = shapely.geometry.LineString([ (2,0), (1,0) ])
-    s1 = shapely.geometry.LineString([ (1,0), (0,0) ])
+    s2 = shapely.geometry.LineString([(2, 0), (1, 0)])
+    s1 = shapely.geometry.LineString([(1, 0), (0, 0)])
 
     n2 = watershed_workflow.river_tree.River(s2)
-    n1 = watershed_workflow.river_tree.River(s1, [n2,])
+    n1 = watershed_workflow.river_tree.River(s1, [n2, ])
     assert n1.is_continuous()
     assert n1.segment.length == 1
     assert n2.parent is n1
@@ -127,5 +127,5 @@ def test_merge():
     n2.merge()
     assert n2 not in n1.preOrder()
     del n2
-    assert(n1.segment.length == 2)
-    assert(len(n1.children) == 0)
+    assert (n1.segment.length == 2)
+    assert (len(n1.children) == 0)

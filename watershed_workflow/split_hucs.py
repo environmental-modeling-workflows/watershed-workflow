@@ -14,8 +14,10 @@ import watershed_workflow.utils
 _abs_tol = 1
 _rel_tol = 1.e-5
 
+
 class GeometryError(Exception):
     pass
+
 
 class HandledCollection:
     """A collection of of objects and handles for those objects."""
@@ -138,9 +140,9 @@ class SplitHUCs:
         self.exterior_outlet = exterior_outlet
 
         # initialize
-        assert(all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
+        assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
         shapes = partition(shapes, abs_tol, rel_tol)
-        assert(all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
+        assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
         uniques, intersections = intersectAndSplit(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
@@ -196,7 +198,7 @@ class SplitHUCs:
         for h_intersection in inter:
             for s in self.intersections[h_intersection]:
                 segs.append(self.segments[s])
-     
+
         ml = shapely.ops.linemerge(segs)
         assert (type(ml) is shapely.geometry.LineString)
         poly = shapely.geometry.Polygon(ml)
@@ -250,12 +252,12 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
     """
     polygons = polygons[:]
     logging.info(f'Removing holes on {len(polygons)} polygons')
-    assert(all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
+    assert (all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
 
     # first remove interior holes
     if remove_all_interior:
         polygons2 = [shapely.geometry.Polygon(p.exterior) for p in polygons]
-        for p1,p2 in zip(polygons, polygons2):
+        for p1, p2 in zip(polygons, polygons2):
             if hasattr(p1, 'properties'):
                 p2.properties = p1.properties
         polygons = polygons2
@@ -282,14 +284,16 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     # give it to someone, anyone, doesn't matter who
                     logging.info(f'Found a little hole: area = {hole.area} at {hole.centroid}')
                     try:
-                        i,poly = next((i,poly) for (i,poly) in enumerate(polygons) if watershed_workflow.utils.non_point_intersection(poly, hole))
+                        i, poly = next(
+                            (i, poly) for (i, poly) in enumerate(polygons)
+                            if watershed_workflow.utils.non_point_intersection(poly, hole))
                         logging.debug(f'      placing in shape {i}')
                         polygons[i] = poly.union(hole)
                         if hasattr(poly, 'properties'):
                             polygons[i].properties = poly.properties
                     except StopIteration:
                         pass
-                
+
                 else:
                     logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
                     big_holes.append(hole)
@@ -335,8 +339,9 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
                     list_of_shapes[j] = s2
                     list_of_shapes[j].properties = props
             except shapely.errors.TopologicalError as err:
-                raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '+str(err))
-                
+                raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '
+                                                      + str(err))
+
     # remove holes
     list_of_shapes, holes = removeHoles(list_of_shapes, abs_tol, rel_tol)
     return list_of_shapes
@@ -371,33 +376,36 @@ def intersectAndSplit(list_of_shapes):
                     inter = shapely.ops.linemerge(inter)
 
                 if type(inter) is shapely.geometry.GeometryCollection:
-                   
+
                     parts_lines = [l for l in inter if isinstance(l, shapely.geometry.LineString)]
                     parts_points = [p for p in inter if isinstance(p, shapely.geometry.Point)]
                     parts_polys = [p for p in inter if isinstance(p, shapely.geometry.Polygon)]
 
                     mls = shapely.geometry.MultiLineString(parts_lines)
-                    left_over_polys=[]
+                    left_over_polys = []
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
 
                         # print(mps)
-                        assert(isinstance(mps, shapely.geometry.MultiPoint))
-                        assert(len(mps) == 2)
-                        parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
+                        assert (isinstance(mps, shapely.geometry.MultiPoint))
+                        assert (len(mps) == 2)
+                        parts_lines.append(
+                            shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
                     inter = shapely.ops.linemerge(parts_lines)
-                        # if (isinstance(mps, shapely.geometry.MultiPoint)) and (len(mps) == 2):
-                        #     parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
-                        # else:
-                        #     left_over_polys.append(poly)
+                    # if (isinstance(mps, shapely.geometry.MultiPoint)) and (len(mps) == 2):
+                    #     parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
+                    # else:
+                    #     left_over_polys.append(poly)
                     # mls_poly = shapely.geometry.MultiLineString([poly.exterior for poly in left_over_polys])
-                    # inter_with_polyrings =  shapely.geometry.MultiLineString(parts_lines+list(mls_poly))   
+                    # inter_with_polyrings =  shapely.geometry.MultiLineString(parts_lines+list(mls_poly))
                     # inter = shapely.ops.linemerge(inter_with_polyrings)
 
                 if type(inter) is shapely.geometry.GeometryCollection or \
                    type(inter) is shapely.geometry.MultiLineString:
-                   
-                    logging.info(f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}')
+
+                    logging.info(
+                        f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}'
+                    )
                     err = GeometryError('HUC intersection yielded collection of odd types')
                     err.polys = list_of_shapes
                     err.i_p1 = i
@@ -406,9 +414,9 @@ def intersectAndSplit(list_of_shapes):
                     err.p2 = s2
                     err.inter = inter
                     raise err
-                
+
                 if type(inter) is not shapely.geometry.LineString:
-                    
+
                     logging.info('Hopefully hole in HUC intersection: ({},{}) = {}'.format(
                         i, j, type(inter)))
 
@@ -647,7 +655,10 @@ def find_outlets_by_hydroseq(hucs, river, tol=0):
     hucs.polygon_outlets = polygon_outlets
 
 
-def computeNonOverlappingPolygons(polys, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):
+def computeNonOverlappingPolygons(polys,
+                                  abs_tol=_abs_tol,
+                                  rel_tol=_rel_tol,
+                                  remove_all_interior=True):
     """Given a list of overlapping contributing area polygons, compute a nonoverlapping set.
 
     Often we wish to use SplitHucs constructed from the "delta
@@ -674,23 +685,25 @@ def computeNonOverlappingPolygons(polys, abs_tol=_abs_tol, rel_tol=_rel_tol, rem
       Holes in the partition that are bigger than the tolerance.
 
     """
-    assert(all(isinstance(p, shapely.geometry.Polygon) for p in polys))
-    assert(all(hasattr(p, 'properties') for p in polys))
+    assert (all(isinstance(p, shapely.geometry.Polygon) for p in polys))
+    assert (all(hasattr(p, 'properties') for p in polys))
 
     sorted_polys = sorted(polys, key=lambda a: a.area, reverse=True)
-    
+
     # form the tree
 
     logging.info(f'Create {len(roots)} roots')
-    def print(r, ntabs):
-        logging.info(' '*ntabs+f'node {r.properties["ID"]}')
-        for n in r.children:
-            print(n, ntabs+1)
-    for i,root in enumerate(roots):
-        logging.info(f'Root {i}:')
-        print(root,1)
 
-    assert(all(hasattr(node, 'properties') for root in roots for node in root.preOrder()))
+    def print(r, ntabs):
+        logging.info(' '*ntabs + f'node {r.properties["ID"]}')
+        for n in r.children:
+            print(n, ntabs + 1)
+
+    for i, root in enumerate(roots):
+        logging.info(f'Root {i}:')
+        print(root, 1)
+
+    assert (all(hasattr(node, 'properties') for root in roots for node in root.preOrder()))
 
     # now, at each level, subtract all the containing children.  note
     # we want to work down the tree here
@@ -699,26 +712,27 @@ def computeNonOverlappingPolygons(polys, abs_tol=_abs_tol, rel_tol=_rel_tol, rem
         for node in root.preOrder():
             if len(node.children) > 0:
                 logging.info('First Remove Holes')
-                child_polys, holes = removeHoles([c.poly for c in node.children], abs_tol, rel_tol, remove_all_interior)
+                child_polys, holes = removeHoles([c.poly for c in node.children], abs_tol, rel_tol,
+                                                 remove_all_interior)
                 big_holes.extend(holes)
-                upstream = shapely.ops.unary_union(child_polys+holes)
-                assert(isinstance(node.poly, shapely.geometry.Polygon))
+                upstream = shapely.ops.unary_union(child_polys + holes)
+                assert (isinstance(node.poly, shapely.geometry.Polygon))
                 node.poly = node.poly.difference(upstream)
                 if isinstance(node.poly, shapely.geometry.MultiPolygon):
                     node.poly = biggest(list(node.poly))
-                assert(isinstance(node.poly, shapely.geometry.Polygon))
-
+                assert (isinstance(node.poly, shapely.geometry.Polygon))
 
     def getPoly(node):
         poly = node.poly
         poly.properties = node.properties
         return poly
+
     partition = [getPoly(n) for n in root.preOrder()]
     #return partition, big_holes
-    
+
     logging.info('Second Remove Holes')
     partition, holes = removeHoles(partition, abs_tol, rel_tol, remove_all_interior)
-    assert(all(hasattr(p, 'properties') for p in partition))
+    assert (all(hasattr(p, 'properties') for p in partition))
     return partition, holes
 
 

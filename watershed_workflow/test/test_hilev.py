@@ -124,7 +124,7 @@ def test_river_tree_properties_prune(sources_download):
 
     rivers = watershed_workflow.construct_rivers(reaches,
                                                  method='hydroseq',
-                                                 prune_by_area=0.03*cc.exterior().area*1.e-6)
+                                                 prune_by_area=0.03 * cc.exterior().area * 1.e-6)
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
     assert (len(rivers[0]) == 50)

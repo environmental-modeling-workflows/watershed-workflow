@@ -50,7 +50,8 @@ def createGlobalTree(reaches, method='geometry', tol=_tol):
             "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
 
 
-def snap(hucs, rivers,
+def snap(hucs,
+         rivers,
          tol=_tol,
          triple_junctions_tol=None,
          reach_endpoints_tol=None,
@@ -70,9 +71,9 @@ def snap(hucs, rivers,
     if reach_endpoints_tol is None and tol is not None:
         reach_endpoints_tol = 2 * tol
 
-    assert(type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
-    assert(type(rivers) is list)
-    assert(all(river.is_continuous() for river in rivers))
+    assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
+    assert (type(rivers) is list)
+    assert (all(river.is_continuous() for river in rivers))
     list(hucs.polygons())
 
     if len(rivers) == 0:
@@ -111,7 +112,6 @@ def snap(hucs, rivers,
 
     if cut_intersections:
         cut_and_snap_crossings(hucs, rivers, tol)
-
 
     # snapping can result in 0-length reaches
     cleanup(rivers)
@@ -291,7 +291,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
         coords = coords[:, 0:2]
 
     debug_point = shapely.geometry.Point([-581678.5238123547, -378867.813358335])
-        
+
     kdtree = cKDTree(coords)
     # for each segment of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it
@@ -306,13 +306,14 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
         #### DEBUG CODE #####
         if debug_point.distance(shapely.geometry.Point(seg.coords[0])) < 10000:
             dist = debug_point.distance(shapely.geometry.Point(seg.coords[0]))
-            print(f'found a huc seg beginpoint: {seg.coords[0]} with distance {dist} < tol = {tol}?')
+            print(
+                f'found a huc seg beginpoint: {seg.coords[0]} with distance {dist} < tol = {tol}?')
 
         elif debug_point.distance(shapely.geometry.Point(seg.coords[-1])) < 10000:
             dist = debug_point.distance(shapely.geometry.Point(seg.coords[-1]))
             print(f'found a huc seg endpoint: {seg.coords[-1]} with distance {dist} < tol = {tol}?')
         #### END DEBUG CODE #####
-        
+
         if dists.min() < tol:
             new_seg = list(seg.coords)
             if dists[0] < tol:
@@ -330,7 +331,7 @@ def snap_polygon_endpoints(hucs, rivers, tol=_tol):
                 logging.debug("        point -1 to river at %r" % list(new_seg[-1]))
             hucs.segments[seg_handle] = shapely.geometry.LineString(new_seg)
 
-            
+
 def _closest_point(point, line, tol=_tol):
     """Determine the closest location on line to point.  If that point is
     further than tol or already a coordinate in the line, returns
@@ -526,9 +527,9 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol, preserve_catc
         for tree in rivers:
             simplify(tree, simp_tol)
 
-    assert(all([river.is_consistent() for river in rivers]))    
+    assert (all([river.is_consistent() for river in rivers]))
     for river in rivers:
-        assert(river.is_continuous())
+        assert (river.is_continuous())
 
     # prune short leaf branches and merge short interior reaches
     for tree in rivers:
@@ -537,15 +538,15 @@ def cleanup(rivers, simp_tol=None, prune_tol=_tol, merge_tol=_tol, preserve_catc
         if merge_tol != prune_tol and prune_tol is not None:
             pruneBySegmentLength(tree, prune_tol, preserve_catchments)
 
-    assert(all(river.is_continuous() for river in rivers))
+    assert (all(river.is_continuous() for river in rivers))
 
     tols = [t for t in [prune_tol, merge_tol] if t is not None]
     if len(tols) > 0:
         tol = min(tols)
         for river in rivers:
             for r in river:
-                assert(r.length > tol)
-            
+                assert (r.length > tol)
+
 
 def pruneBySegmentLength(tree, prune_tol=10, preserve_catchments=False):
     """Removes any leaf segments that are shorter than prune_tol"""
@@ -571,7 +572,8 @@ def pruneRiverByArea(river, area, prop='DivergenceRoutedDrainAreaSqKm', preserve
         for child in children:
             if child.properties[prop] < area:
                 logging.debug(
-                    f"... removing trib with {len(child)} reaches of area: {child.properties[prop]}")
+                    f"... removing trib with {len(child)} reaches of area: {child.properties[prop]}"
+                )
                 count += len(child)
                 child.prune(preserve_catchments)
 
@@ -609,7 +611,8 @@ def removeDiversions(rivers, preserve_catchments=False):
                 if river.getNode(leaf.properties['UpstreamMainPathHydroSeq']) is None:
                     # diversion!
                     try:
-                        joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
+                        joiner = next(n for n in leaf.pathToRoot()
+                                      if n.parent is not None and len(n.parent.children) > 1)
                     except StopIteration:
                         # no joiner means kill the whole tree
                         logging.info(f'  ... remove diversion river with {len(river)} reaches.')
@@ -619,9 +622,11 @@ def removeDiversions(rivers, preserve_catchments=False):
                         count_tribs += 1
                         count_reaches += len(joiner)
                         joiner.prune(preserve_catchments)
-                    
+
         if keep_river:
-            logging.info(f'  ... removed {count_tribs} diversion tributaries with {count_reaches} total reaches.')
+            logging.info(
+                f'  ... removed {count_tribs} diversion tributaries with {count_reaches} total reaches.'
+            )
             non_diversions.append(river)
 
     return non_diversions
@@ -641,16 +646,19 @@ def removeBraids(rivers, preserve_catchments=False):
                     # braid!
 
                     try:
-                        joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
+                        joiner = next(n for n in leaf.pathToRoot()
+                                      if n.parent is not None and len(n.parent.children) > 1)
                     except StopIteration:
-                        assert(False)
+                        assert (False)
                         # this should not be possible, because our braid must come back somewhere
                     else:
                         count_tribs += 1
                         count_reaches += len(joiner)
                         joiner.prune(preserve_catchments)
 
-        logging.info(f'... removed {count_tribs} braids with {count_reaches} reaches from a river of length {len(river)}')
+        logging.info(
+            f'... removed {count_tribs} braids with {count_reaches} reaches from a river of length {len(river)}'
+        )
     return rivers
 
 
@@ -667,7 +675,7 @@ def removeDivergences(rivers, preserve_catchments=False):
     """
     logging.info("Removing divergent sections...")
     non_divergences = []
-    
+
     for river in rivers:
         keep_river = True
         count_tribs = 0
@@ -676,7 +684,8 @@ def removeDivergences(rivers, preserve_catchments=False):
             if leaf.properties['DivergenceCode'] == 2:
                 # diversion!
                 try:
-                    joiner = next(n for n in leaf.pathToRoot() if n.parent is not None and len(n.parent.children) > 1)
+                    joiner = next(n for n in leaf.pathToRoot()
+                                  if n.parent is not None and len(n.parent.children) > 1)
                 except StopIteration:
                     # no joiner means kill the whole tree
                     logging.info(f'  ... remove divergence river with {len(river)} reaches.')
@@ -686,9 +695,11 @@ def removeDivergences(rivers, preserve_catchments=False):
                     count_tribs += 1
                     count_reaches += len(joiner)
                     joiner.prune(preserve_catchments)
-                    
+
         if keep_river:
-            logging.info(f'  ... removed {count_tribs} divergence tributaries with {count_reaches} total reaches.')
+            logging.info(
+                f'  ... removed {count_tribs} divergence tributaries with {count_reaches} total reaches.'
+            )
             non_divergences.append(river)
 
     return non_divergences
@@ -736,5 +747,3 @@ def simplify(river, tol=_tol):
             assert (watershed_workflow.utils.close(new_seg.coords[0], node.segment.coords[0]))
             assert (watershed_workflow.utils.close(new_seg.coords[-1], node.segment.coords[-1]))
             node.segment = new_seg
-
-            

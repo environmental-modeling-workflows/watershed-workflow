@@ -84,10 +84,7 @@ def vgm_from_SSURGO(df):
 
     """
     rosetta_input_header = [
-        'total sand pct [%]',
-        'total silt pct [%]',
-        'total clay pct [%]',
-        'bulk density [g/cm^3]',
+        'total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]', 'bulk density [g/cm^3]',
     ]
     df_rosetta = df.dropna(subset=rosetta_input_header)
 

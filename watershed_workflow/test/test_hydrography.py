@@ -10,8 +10,6 @@ import watershed_workflow.river_tree
 import watershed_workflow.plot
 
 
-
-
 def data(poly_hucs, river_segs):
     hucs = watershed_workflow.split_hucs.SplitHUCs(poly_hucs)
     rivers = watershed_workflow.hydrography.createGlobalTree(river_segs, method='geometry')

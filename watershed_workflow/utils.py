@@ -88,7 +88,7 @@ def deepcopy(list_of_shapes):
         if hasattr(old, 'properties'):
             new.properties = old.properties
     return new_list
-    
+
 
 def create_bounds(f):
     """General bounding box for fiona and shapely types."""
@@ -612,7 +612,7 @@ class CutError(Exception):
         self.line = line
         self.seg = seg
         self.cutline = cutline
-        
+
 
 def cut(line, cutline, tol=1.e-5):
     """Cuts a line at all intersections with cutline.  If an existing
@@ -679,9 +679,9 @@ def cut(line, cutline, tol=1.e-5):
         else:
             print("Dual/multiple section: type = {}".format(type(point)))
             print(" point = {}".format(point))
-            raise CutError("Dual/multiple intersection in a single seg... ugh!  "
-                               + "Intersection is of type '{}'".format(type(point)),
-                           line, seg, cutline)
+            raise CutError(
+                "Dual/multiple intersection in a single seg... ugh!  "
+                + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
 
     if len(segcoords) > 1:
         segs.append(shapely.geometry.LineString(segcoords))
@@ -769,9 +769,9 @@ def angle(v1, v2):
     y2 = v2[1]
     numer = x1*x2 + y1*y2
     denom = np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)
-    assert(denom > 0)
+    assert (denom > 0)
     arg = numer / denom
-    assert(arg < 1.1 and arg > -1.1) # roundoff problems
+    assert (arg < 1.1 and arg > -1.1)  # roundoff problems
     arg = min(max(numer / denom, -1), 1)
     mag = 180. / np.pi * np.arccos(arg)
     sign = x1*y2 - x2*y1

@@ -15,7 +15,7 @@ import watershed_workflow.utils
 def densify_rivers(rivers, rivers_raw=None, **kwargs):
     """Returns a list for densified rivers"""
     if rivers_raw is None:
-        rivers_raw = [None,]*len(rivers)
+        rivers_raw = [None, ] * len(rivers)
     for river, river_raw in zip(rivers, rivers_raw):
         densify_river(river, river_raw, **kwargs)
 
@@ -71,7 +71,9 @@ def densify_river(river, river_raw=None, limit=100, angle_limit=None, junction_a
         node.segment = densify_node_segments(node, node_raw, limit=limit)
 
     if angle_limit is not None or junction_angle_limit is not None:
-        remove_sharp_angles_from_river_tree(river, angle_limit=angle_limit, junction_angle_limit=junction_angle_limit)
+        remove_sharp_angles_from_river_tree(river,
+                                            angle_limit=angle_limit,
+                                            junction_angle_limit=junction_angle_limit)
         watershed_workflow.hydrography.merge(river, tol=limit * 0.6)
 
 
@@ -345,22 +347,23 @@ def remove_sharp_angles_from_river_tree(river, angle_limit=0, junction_angle_lim
     for node in river.preOrder():
         if angle_limit is not None:
             remove_sharp_angles_from_seg(node, angle_limit=angle_limit)  # from internal segments
-            assert(node.is_locally_continuous())
+            assert (node.is_locally_continuous())
 
         if len(node.children) != 0:
             # at junctions, angle between parent and child node
             if angle_limit is not None:
                 treat_node_junctions_for_sharp_angles(node, angle_limit=angle_limit)
-                assert(node.is_locally_continuous())
+                assert (node.is_locally_continuous())
 
             # angle between two children (how often can we have >2 children??)
             if junction_angle_limit is not None:
                 remove = True
                 while remove:
-                    remove = treat_small_angle_between_child_nodes(node, angle_limit=junction_angle_limit) 
-                    assert(node.is_locally_continuous())
+                    remove = treat_small_angle_between_child_nodes(node,
+                                                                   angle_limit=junction_angle_limit)
+                    assert (node.is_locally_continuous())
 
-        assert(river.is_continuous())
+        assert (river.is_continuous())
 
 
 def remove_sharp_angles_from_seg(node, angle_limit=10):
@@ -397,7 +400,7 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
                     sibling_coords = sibling.segment.coords[:]
                     sibling_coords[-1] = node.segment.coords[-1]
                     sibling.segment = shapely.geometry.LineString(sibling_coords)
-            assert(node.parent.is_continuous())
+            assert (node.parent.is_continuous())
 
 
 def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
@@ -413,7 +416,9 @@ def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
         # the moved parent, not the original parent.
         seg1 = node.segment
         seg2 = child.segment
-        is_changed, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
+        is_changed, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1,
+                                                                        seg2,
+                                                                        angle_limit=angle_limit)
 
         if is_changed:
             node.segment = seg1
@@ -469,7 +474,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
         for child in node.children:
             seg2 = child.segment
             seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
-            assert(watershed_workflow.utils.close(seg2.coords[-1], seg1.coords[0], 1.e-10))
+            assert (watershed_workflow.utils.close(seg2.coords[-1], seg1.coords[0], 1.e-10))
             seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
             angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
             angles.append(angle)
@@ -481,10 +486,10 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
             # zip up the last section of the two children, and give it to the parent
             new_junction = watershed_workflow.utils.midpoint(node.children[0].segment.coords[-2],
                                                              node.children[1].segment.coords[-2])
-            new_node_coords = np.array([new_junction,] + node.segment.coords[:])
+            new_node_coords = np.array([new_junction, ] + node.segment.coords[:])
             new_node_coords = watershed_workflow.utils.treat_segment_collinearity(new_node_coords)
             node.segment = shapely.geometry.LineString(new_node_coords)
-            
+
             for child in node.children:
                 child_coords = child.segment.coords[:]
                 if len(child_coords) > 2:

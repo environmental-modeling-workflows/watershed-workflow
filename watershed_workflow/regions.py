@@ -26,7 +26,7 @@ def add_nlcd_labeled_sets(m2, nlcd_colors, nlcd_names=None):
 
     if nlcd_names is None:
         nlcd_names = dict((i, str(i)) for i in inds)
-    
+
     for ind in inds:
         ent_ids = list(np.where(nlcd_colors == ind)[0])
         ls = watershed_workflow.mesh.LabeledSet(nlcd_names[ind], int(ind), 'CELL', ent_ids)
@@ -72,7 +72,7 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
         cc = m2.centroids[c]
         cc = shapely.geometry.Point(cc[0], cc[1])
 
-        for i,p in enumerate(polygons):
+        for i, p in enumerate(polygons):
             if p.contains(cc):
                 partitions[i].append(c)
 
@@ -91,6 +91,7 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
             m2.labeled_sets.append(ls2)
 
     return partitions
+
 
 def add_watershed_regions(m2, polygons, labels=None):
     """Deprecated -- kept for backward compatibility."""
@@ -141,7 +142,7 @@ def add_watershed_regions_and_outlets(m2,
 
     if labels is None:
         labels = _get_labels(hucs)
-    
+
     if outlets is None:
         outlets = [None, ] * len(polygons)
 
@@ -272,7 +273,7 @@ def add_regions_by_stream_order_rivers(m2, rivers, labels=None):
 
     for label, river in zip(labels, rivers):
         add_regions_by_stream_order(m2, river, river_id=label)
-    
+
 
 def add_regions_by_stream_order(m2, river, river_id=0):
     """Add labeled sets to m2 for reaches of each stream order .
@@ -290,10 +291,15 @@ def add_regions_by_stream_order(m2, river, river_id=0):
     sorted_river_nodes = sorted(river_nodes, key=lambda node: node.properties['StreamOrder'])
 
     from itertools import groupby
-    grouped_river_nodes = [list(result) for key, result in groupby(
-        sorted_river_nodes, key=lambda node: node.properties['StreamOrder'])]
+    grouped_river_nodes = [
+        list(result) for key, result in groupby(sorted_river_nodes,
+                                                key=lambda node: node.properties['StreamOrder'])
+    ]
 
-    mls_reaches_by_stream_order = [shapely.geometry.MultiLineString([node.segment for node in node_group]) for node_group in grouped_river_nodes]
+    mls_reaches_by_stream_order = [
+        shapely.geometry.MultiLineString([node.segment for node in node_group])
+        for node_group in grouped_river_nodes
+    ]
     labels = []
     for i, p in enumerate(mls_reaches_by_stream_order):
         label = f'reaches of StreamOrder {i} in river {river_id}'
@@ -303,7 +309,8 @@ def add_regions_by_stream_order(m2, river, river_id=0):
     for c, conn in enumerate(m2.conn):
         cell_poly = shapely.geometry.Polygon(m2.coords[conn])
         try:
-            ip = next(i for (i, p) in enumerate(mls_reaches_by_stream_order) if p.intersects(cell_poly.buffer(-1)))
+            ip = next(i for (i, p) in enumerate(mls_reaches_by_stream_order)
+                      if p.intersects(cell_poly.buffer(-1)))
             # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
             # reach that might be touching the reach end from being included in the region
         except StopIteration:
@@ -332,32 +339,33 @@ def add_region_by_reach_id(m2, rivers, reach_ids=None):
     """
 
     if reach_ids != None:
-      ls_reaches_by_ids= [getNode(id , rivers).segment for id in reach_ids]
-      labels = []
-      for i, p in enumerate(ls_reaches_by_ids):
-          label = f'reach with id {reach_ids[i]}'
-          labels.append(label)
+        ls_reaches_by_ids = [getNode(id, rivers).segment for id in reach_ids]
+        labels = []
+        for i, p in enumerate(ls_reaches_by_ids):
+            label = f'reach with id {reach_ids[i]}'
+            labels.append(label)
 
-      partitions = [list() for p in ls_reaches_by_ids]
-      for c, conn in enumerate(m2.conn):
-          cell_poly = shapely.geometry.Polygon(m2.coords[conn])
-          try:
-              ip = next(i for (i, p) in enumerate(ls_reaches_by_ids) if p.intersects(cell_poly.buffer(-1)))
-              # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
-              # reach that might be touching the reach end from being included in the region
-          except StopIteration:
-              pass
-          else:
-              partitions[ip].append(c)
+        partitions = [list() for p in ls_reaches_by_ids]
+        for c, conn in enumerate(m2.conn):
+            cell_poly = shapely.geometry.Polygon(m2.coords[conn])
+            try:
+                ip = next(i for (i, p) in enumerate(ls_reaches_by_ids)
+                          if p.intersects(cell_poly.buffer(-1)))
+                # this shrinking is done to avoid non-river-corridor triangles at the tip of the headwater
+                # reach that might be touching the reach end from being included in the region
+            except StopIteration:
+                pass
+            else:
+                partitions[ip].append(c)
 
-      for label, part in zip(labels, partitions):
-          if len(part) > 0:
-              setid2 = m2.next_available_labeled_setid()
-              ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
-              m2.labeled_sets.append(ls2)
+        for label, part in zip(labels, partitions):
+            if len(part) > 0:
+                setid2 = m2.next_available_labeled_setid()
+                ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+                m2.labeled_sets.append(ls2)
 
 
-def getNode(nhd_id , rivers):
+def getNode(nhd_id, rivers):
     """return node given NHDID"""
     node = next(river.getNode(nhd_id) for river in rivers if river.getNode(nhd_id) != None)
     return node

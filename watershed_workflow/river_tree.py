@@ -52,7 +52,7 @@ class River(watershed_workflow.tinytree.Tree):
 
     def prune(self, preserve_catchments=False):
         """Removes a reach all the way to the leaf node."""
-        
+
         if self.parent is None:
             raise ValueError("Cannot prune a branch with no parent.")
 
@@ -60,13 +60,15 @@ class River(watershed_workflow.tinytree.Tree):
             parent = self.parent
 
             # accumulate the sub-catchments
-            catches = [n.properties['catchment'] for n in self.preOrder()
-                       if 'catchment' in n.properties and n.properties['catchment'] is not None]
+            catches = [
+                n.properties['catchment'] for n in self.preOrder()
+                if 'catchment' in n.properties and n.properties['catchment'] is not None
+            ]
             if len(catches) > 0:
                 ca = shapely.ops.unary_union(catches)
             else:
                 ca = None
-                
+
             if ca is not None:
                 if 'catchment' not in parent.properties or parent.properties['catchment'] is None:
                     parent.properties['catchment'] = ca
@@ -90,9 +92,9 @@ class River(watershed_workflow.tinytree.Tree):
         """
         if i < 0:
             i = len(self.segment.coords) + i
-        assert(i > 0 and i < len(self.segment.coords)-1)
+        assert (i > 0 and i < len(self.segment.coords) - 1)
 
-        upstream_segment = shapely.geometry.LineString(list(self.segment.coords)[0:i+1])
+        upstream_segment = shapely.geometry.LineString(list(self.segment.coords)[0:i + 1])
         downstream_segment = shapely.geometry.LineString(list(self.segment.coords)[i:])
         downstream_area_frac = downstream_segment.length / self.segment.length
 
@@ -100,14 +102,14 @@ class River(watershed_workflow.tinytree.Tree):
         downstream_props = copy.deepcopy(self.properties)
         if 'AreaSqKm' in downstream_props:
             downstream_props['AreaSqKm'] = self.properties['AreaSqKm'] * downstream_area_frac
-            self.properties['AreaSqKm'] = self.properties['AreaSqKm'] * (1 - downstream_area_frac)
+            self.properties['AreaSqKm'] = self.properties['AreaSqKm'] * (1-downstream_area_frac)
         if 'HydrologicSequence' in downstream_props:
             downstream_props['HydrologicSequence'] -= 0.5
             self.properties['DownstreamMainPathHydroSeq'] = downstream_props['HydrologicSequence']
-            
+
         ID = self.properties['ID']
-        downstream_props['ID'] = ID+'a'
-        self.properties['ID'] = ID+'b'
+        downstream_props['ID'] = ID + 'a'
+        self.properties['ID'] = ID + 'b'
 
         if 'DivergenceCode' in downstream_props:
             downstream_props['DivergenceCode'] = 0
@@ -119,13 +121,13 @@ class River(watershed_workflow.tinytree.Tree):
 
         # new node
         downstream_segment.properties = downstream_props
-        new_node = self.__class__(downstream_segment, [self,])
+        new_node = self.__class__(downstream_segment, [self, ])
         parent.addChild(new_node)
         return self, new_node
 
     def merge(self):
         """Merges this with its parent."""
-        assert(len(list(self.siblings())) == 0)
+        assert (len(list(self.siblings())) == 0)
 
         # fix properties
         if 'areasqkm' in self.properties:
@@ -136,15 +138,15 @@ class River(watershed_workflow.tinytree.Tree):
             if self.parent.properties['catchment'] is None:
                 self.parent.properties['catchment'] = self.properties['catchment']
             else:
-                self.parent.properties['catchment'] = shapely.ops.unary_union([self.properties['catchment'],
-                                                                               self.parent.properties['catchment']])
+                self.parent.properties['catchment'] = shapely.ops.unary_union(
+                    [self.properties['catchment'], self.parent.properties['catchment']])
 
         if 'DivergenceCode' in self.parent.properties:
             self.parent.properties['DivergenceCode'] = self.properties['DivergenceCode']
 
         parent = self.parent
         parent.moveCoordinate(0, self.segment.coords[0])
-   
+
         self.remove()
         for child in self.children:
             parent.addChild(child)
@@ -167,7 +169,7 @@ class River(watershed_workflow.tinytree.Tree):
 
     def appendCoordinate(self, xy):
         """Appends a coordinate at the end (downstream) of the segment."""
-        coords = list(self.segment.coords) + [xy,]
+        coords = list(self.segment.coords) + [xy, ]
         self.segment = shapely.geometry.LineString(coords)
 
     def extendCoordinates(self, xys):
@@ -185,7 +187,7 @@ class River(watershed_workflow.tinytree.Tree):
         coords = list(self.segment.coords)
         coords.pop(i)
         self.segment = shapely.geometry.LineString(coords)
-        
+
     def leaf_nodes(self):
         """Generator for all leaves of the tree."""
         for it in self.preOrder():
@@ -243,12 +245,14 @@ class River(watershed_workflow.tinytree.Tree):
         """Form a polygon of all contributing areas based on the 'catchment' property."""
         if name is None:
             name = self.properties['ID']
-        
-        catch = shapely.ops.unary_union([node.properties['catchment']
-                                         for node in self.preOrder() if node.properties['catchment'] is not None])
+
+        catch = shapely.ops.unary_union([
+            node.properties['catchment'] for node in self.preOrder()
+            if node.properties['catchment'] is not None
+        ])
         catch.properties = dict()
         catch.properties['outlet_ID'] = self.properties['ID']
-        catch.properties['ID'] = 'CA_'+self.properties['ID']
+        catch.properties['ID'] = 'CA_' + self.properties['ID']
         catch.properties['name'] = name
         catch.properties['outlet_point'] = self.segment.coords[-1]
         self.properties['contributing area name'] = name
@@ -416,9 +420,9 @@ def getNode(rivers, nid):
 
 def combineSiblings(n1, n2):
     """Combines two sibling nodes, merging catchments and metadata."""
-    assert(n1.isSiblingOf(n2))
-    beginpoint = (np.array(n1.segment.coords[0]) + np.array(n2.segment.coords[0]))/2
-    endpoint = (np.array(n1.segment.coords[-1]) + np.array(n2.segment.coords[-1]))/2
+    assert (n1.isSiblingOf(n2))
+    beginpoint = (np.array(n1.segment.coords[0]) + np.array(n2.segment.coords[0])) / 2
+    endpoint = (np.array(n1.segment.coords[-1]) + np.array(n2.segment.coords[-1])) / 2
     new_seg = shapely.geometry.LineString([beginpoint, endpoint])
     n1.segment = new_seg
 
@@ -429,7 +433,8 @@ def combineSiblings(n1, n2):
         if n1.properties['catchment'] is None:
             n1.properties['catchment'] = n2.properties['catchment']
         else:
-            n1.properties['catchment'] = shapely.ops.unary_union([n1.properties['catchment'], n2.properties['catchment']])
+            n1.properties['catchment'] = shapely.ops.unary_union(
+                [n1.properties['catchment'], n2.properties['catchment']])
 
     for child in n2.children:
         if 'DownstreamMainPathHydroSeq' in child.properties:
@@ -440,7 +445,7 @@ def combineSiblings(n1, n2):
 
     for child in n1.children:
         child.moveCoordinate(-1, n1.segment.coords[0])
-    
+
     return n1
 
 
@@ -475,7 +480,9 @@ def accumulateCatchments(rivers, outlet_IDs, names=None):
             root = river.getNode(id)
             if root is not None:
                 if found:
-                    raise RuntimeError(f'accumulateCatchments: outlet_ID {outlet_ID} appears in more than one river')
+                    raise RuntimeError(
+                        f'accumulateCatchments: outlet_ID {outlet_ID} appears in more than one river'
+                    )
                 roots.append(root)
                 catchments.append(root.accumulateCatchments(name))
                 found = True
@@ -506,9 +513,10 @@ def accumulateIncrementalCatchments(rivers, outlet_IDs, names=None):
         names = outlet_IDs
 
     roots = [getNode(rivers, out_id) for out_id in outlet_IDs]
-    assert(all(root is not None for root in roots))
+    assert (all(root is not None for root in roots))
 
     sorted_ids = sorted(outlet_IDs)
+
     def truncated_tree_iter(n):
         yield n
         for c in n.children:
@@ -516,12 +524,17 @@ def accumulateIncrementalCatchments(rivers, outlet_IDs, names=None):
                 for nn in truncated_tree_iter(c):
                     yield nn
 
-    incremental_cas = [shapely.ops.unary_union([n.properties['catchment'] for n in truncated_tree_iter(root) if n.properties['catchment'] is not None]) for root in roots]
+    incremental_cas = [
+        shapely.ops.unary_union([
+            n.properties['catchment'] for n in truncated_tree_iter(root)
+            if n.properties['catchment'] is not None
+        ]) for root in roots
+    ]
 
     for catch, root, name in zip(incremental_cas, roots, names):
         catch.properties = dict()
         catch.properties['outlet_ID'] = root.properties['ID']
-        catch.properties['ID'] = 'CA_'+root.properties['ID']
+        catch.properties['ID'] = 'CA_' + root.properties['ID']
         catch.properties['name'] = name
         catch.properties['outlet_point'] = root.segment.coords[-1]
         root.properties['incremental contributing area name'] = name

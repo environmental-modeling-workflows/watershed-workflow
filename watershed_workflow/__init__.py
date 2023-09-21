@@ -28,7 +28,6 @@ if rcParams['DEFAULT']['proj_network'] == "True":
 elif rcParams['DEFAULT']['proj_network'] == "False":
     os.environ['PROJ_NETWORK'] = 'OFF'
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
@@ -436,15 +435,21 @@ def get_reaches(source,
         logging.info(" ... done")
 
         if include_catchments:
-            catchments = [r.properties['catchment'] for r in reaches if 'catchment' in r.properties and r.properties['catchment'] is not None]
+            catchments = [
+                r.properties['catchment'] for r in reaches
+                if 'catchment' in r.properties and r.properties['catchment'] is not None
+            ]
 
             logging.info("Converting catchments to shapely")
-            catchments_shply = [watershed_workflow.utils.create_shply(catch) for catch in catchments]
+            catchments_shply = [
+                watershed_workflow.utils.create_shply(catch) for catch in catchments
+            ]
             logging.info(" ... done")
 
             if out_crs and not watershed_workflow.crs.equal(out_crs, native_crs):
                 logging.info("Converting catchments to out_crs")
-                catchments_shply = watershed_workflow.warp.shplys(catchments_shply, native_crs, out_crs)
+                catchments_shply = watershed_workflow.warp.shplys(catchments_shply, native_crs,
+                                                                  out_crs)
                 i = 0
                 for reach in reaches:
                     if 'catchment' in reach.properties and reach.properties['catchment'] is not None:
@@ -564,7 +569,6 @@ def get_waterbodies(source,
     else:
         bounds = bounds_or_shp
         bounds_or_shp = None
-    
 
     logging.info(f"         and/or bounds {bounds}")
     profile, bodies = source.get_waterbodies(huc, bounds, in_crs, **kwargs)
@@ -908,7 +912,7 @@ def reduce_rivers(rivers,
 
     """
     if ignore_small_rivers < 0:
-        rivers = sorted(rivers, key=lambda a : len(a), reverse=True)
+        rivers = sorted(rivers, key=lambda a: len(a), reverse=True)
         rivers = rivers[0:-ignore_small_rivers]
         logging.info(f"Removing all but the biggest {-ignore_small_rivers} rivers")
     elif ignore_small_rivers > 0:
@@ -922,7 +926,7 @@ def reduce_rivers(rivers,
         rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
         if len(rivers) == 0:
             return rivers
-        
+
     if remove_diversions and remove_braided_divergences:
         rivers = watershed_workflow.hydrography.removeDivergences(rivers)
     elif remove_diversions:
@@ -939,7 +943,7 @@ def reduce_rivers(rivers,
         rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
         if len(rivers) == 0:
             return rivers
-        
+
     return rivers
 
 
@@ -1052,12 +1056,9 @@ def simplify(hucs,
 
     if snap_tol > 0 or snap_triple_junctions_tol > 0 or snap_reach_endpoints_tol > 0 or cut_intersections:
         logging.info("Snapping river and HUC (nearly) coincident nodes")
-        rivers = watershed_workflow.hydrography.snap(hucs,
-                                                     rivers,
-                                                     snap_tol,
+        rivers = watershed_workflow.hydrography.snap(hucs, rivers, snap_tol,
                                                      snap_triple_junctions_tol,
-                                                     snap_reach_endpoints_tol,
-                                                     cut_intersections)
+                                                     snap_reach_endpoints_tol, cut_intersections)
 
     if simplify_waterbodies > 0 and waterbodies is not None:
         for i, wb in enumerate(waterbodies):
@@ -1384,7 +1385,8 @@ def tessalate_river_aligned(hucs,
     quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
                                                                           widths=river_width,
                                                                           enforce_convexity=True,
-                                                                          ax=ax, label=False)
+                                                                          ax=ax,
+                                                                          label=False)
 
     # adjust the HUC to match the corridor at the boundary
     logging.info('Adjusting rivers at the watershed boundaries...')
@@ -1635,4 +1637,3 @@ def color_existing_raster_from_shapes(shapes, shapes_crs, shape_colors, raster, 
                                                    raster_profile['transform'],
                                                    invert=True)
             raster[mask] = p_id
-

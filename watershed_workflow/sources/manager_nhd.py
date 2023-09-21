@@ -256,7 +256,7 @@ class _FileManagerNHD:
         if 'Plus' in self.name and properties is not None:
             for r in reaches:
                 r['properties']['ID'] = str(int(r['properties']['NHDPlusID']))
-            
+
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name and properties != None:
             reach_dict = dict((r['properties']['ID'], r) for r in reaches)

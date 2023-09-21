@@ -14,7 +14,8 @@ import watershed_workflow.sources.names
 VERSION = '20210604'
 # No API for getting NLCD locally -- must download the whole thing.
 urls = {
-    'NLCD_2016_Land_Cover_L48' : f'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_{VERSION}.zip'
+    'NLCD_2016_Land_Cover_L48':
+    f'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_{VERSION}.zip'
 }
 
 colors = {
@@ -82,7 +83,6 @@ class FileManagerNLCD:
         self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
-
 
     def validate_input(self, layer, year, location):
         """Validates input to the __init__ method."""
