@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -91,7 +91,9 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.split_hucs</span>
 
 
-<div class="viewcode-block" id="Nodes"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.Nodes">[docs]</a><span class="k">class</span> <span class="nc">Nodes</span><span class="p">:</span>
+<div class="viewcode-block" id="Nodes">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.Nodes">[docs]</a>
+<span class="k">class</span> <span class="nc">Nodes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of nodes that are indexed in the order they are added.</span>
 
 <span class="sd">    Note this uses round() for an efficient solution, which is</span>
@@ -131,14 +133,21 @@
             <span class="k">yield</span> <span class="n">k</span></div>
 
 
-<div class="viewcode-block" id="oneway_trip_connect"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.oneway_trip_connect">[docs]</a><span class="k">def</span> <span class="nf">oneway_trip_connect</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
+
+<div class="viewcode-block" id="oneway_trip_connect">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.oneway_trip_connect">[docs]</a>
+<span class="k">def</span> <span class="nf">oneway_trip_connect</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect indices in edges in a oneway fashion&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[(</span><span class="n">inds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">inds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span></div>
 
 
-<div class="viewcode-block" id="round_trip_connect"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.round_trip_connect">[docs]</a><span class="k">def</span> <span class="nf">round_trip_connect</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
+
+<div class="viewcode-block" id="round_trip_connect">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.round_trip_connect">[docs]</a>
+<span class="k">def</span> <span class="nf">round_trip_connect</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect indices in edges in a round-trip fashion&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">oneway_trip_connect</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span> <span class="o">+</span> <span class="p">[(</span><span class="n">inds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">]</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">orient</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
@@ -150,7 +159,9 @@
         <span class="k">return</span> <span class="kc">None</span>
 
 
-<div class="viewcode-block" id="NodesEdges"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges">[docs]</a><span class="k">class</span> <span class="nc">NodesEdges</span><span class="p">:</span>
+<div class="viewcode-block" id="NodesEdges">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges">[docs]</a>
+<span class="k">class</span> <span class="nc">NodesEdges</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of nodes and edges.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objlist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">Nodes</span><span class="p">()</span>
@@ -159,7 +170,9 @@
         <span class="k">if</span> <span class="n">objlist</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
             <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objlist</span><span class="p">]</span>
 
-<div class="viewcode-block" id="NodesEdges.add"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<div class="viewcode-block" id="NodesEdges.add">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.add">[docs]</a>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds nodes and edges from obj into collection.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
             <span class="n">inds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">coords</span><span class="p">]</span>
@@ -170,7 +183,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid type for add, </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="NodesEdges.check"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
+
+<div class="viewcode-block" id="NodesEdges.check">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.check">[docs]</a>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks consistency of the interal representation.&quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; checking graph consistency&quot;</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; tolerance is set to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tol</span><span class="p">))</span>
@@ -189,10 +205,14 @@
         <span class="n">min_edge_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">e</span><span class="p">)</span>
         <span class="n">max_edge_node</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">assert</span> <span class="p">(</span><span class="n">min_edge_node</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="p">(</span><span class="n">max_edge_node</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">max_edge_node</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="triangulate"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.triangulate">[docs]</a><span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="triangulate">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.triangulate">[docs]</a>
+<span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Triangulates HUCs and rivers.</span>
 
 <span class="sd">    Note, refinement of a given triangle is done if any of the provided</span>
@@ -290,7 +310,10 @@
     <span class="k">return</span> <span class="n">mesh_points</span><span class="p">,</span> <span class="n">mesh_tris</span></div>
 
 
-<div class="viewcode-block" id="refine_from_max_area"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_max_area">[docs]</a><span class="k">def</span> <span class="nf">refine_from_max_area</span><span class="p">(</span><span class="n">max_area</span><span class="p">):</span>
+
+<div class="viewcode-block" id="refine_from_max_area">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_max_area">[docs]</a>
+<span class="k">def</span> <span class="nf">refine_from_max_area</span><span class="p">(</span><span class="n">max_area</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a refinement function based on max area, for use with Triangle.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;A function for use with watershed_workflow.triangulate.triangulate&#39;s refinement_func argument based on a global max area.&quot;&quot;&quot;</span>
@@ -302,7 +325,10 @@
     <span class="k">return</span> <span class="n">refine</span></div>
 
 
-<div class="viewcode-block" id="refine_from_river_distance"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_river_distance">[docs]</a><span class="k">def</span> <span class="nf">refine_from_river_distance</span><span class="p">(</span><span class="n">near_distance</span><span class="p">,</span> <span class="n">near_area</span><span class="p">,</span> <span class="n">away_distance</span><span class="p">,</span> <span class="n">away_area</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
+
+<div class="viewcode-block" id="refine_from_river_distance">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_river_distance">[docs]</a>
+<span class="k">def</span> <span class="nf">refine_from_river_distance</span><span class="p">(</span><span class="n">near_distance</span><span class="p">,</span> <span class="n">near_area</span><span class="p">,</span> <span class="n">away_distance</span><span class="p">,</span> <span class="n">away_area</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.</span>
 
 <span class="sd">    Triangle area must be smaller than near_area when the triangle</span>
@@ -346,7 +372,10 @@
     <span class="k">return</span> <span class="n">refine</span></div>
 
 
-<div class="viewcode-block" id="refine_from_max_edge_length"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_max_edge_length">[docs]</a><span class="k">def</span> <span class="nf">refine_from_max_edge_length</span><span class="p">(</span><span class="n">edge_length</span><span class="p">):</span>
+
+<div class="viewcode-block" id="refine_from_max_edge_length">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refine_from_max_edge_length">[docs]</a>
+<span class="k">def</span> <span class="nf">refine_from_max_edge_length</span><span class="p">(</span><span class="n">edge_length</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a refinement function based on max edge length, for use with Triangle.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
         <span class="n">verts4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
@@ -356,7 +385,10 @@
     <span class="k">return</span> <span class="n">refine</span></div>
 
 
-<div class="viewcode-block" id="pick_hole_point"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.pick_hole_point">[docs]</a><span class="k">def</span> <span class="nf">pick_hole_point</span><span class="p">(</span><span class="n">poly</span><span class="p">):</span>
+
+<div class="viewcode-block" id="pick_hole_point">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.pick_hole_point">[docs]</a>
+<span class="k">def</span> <span class="nf">pick_hole_point</span><span class="p">(</span><span class="n">poly</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A function to pick a point inside a polygon&quot;&quot;&quot;</span>
     <span class="n">nodes_edges_rc</span> <span class="o">=</span> <span class="n">NodesEdges</span><span class="p">([</span><span class="n">poly</span><span class="p">])</span>
     <span class="n">p1</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nodes_edges_rc</span><span class="o">.</span><span class="n">nodes</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -365,6 +397,7 @@
     <span class="n">p4</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nodes_edges_rc</span><span class="o">.</span><span class="n">nodes</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">,</span> <span class="n">p4</span><span class="p">])</span><span class="o">.</span><span class="n">centroid</span></div>
+
 </pre></div>
 
            </div>

@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -83,9 +83,9 @@
            <div itemprop="articleBody">
              
   <section id="workflow-library-concepts">
-<h1>Workflow library Concepts<a class="headerlink" href="#workflow-library-concepts" title="Permalink to this heading"></a></h1>
+<h1>Workflow library Concepts<a class="headerlink" href="#workflow-library-concepts" title="Link to this heading"></a></h1>
 <section id="package-configuration">
-<h2>Package configuration<a class="headerlink" href="#package-configuration" title="Permalink to this heading"></a></h2>
+<h2>Package configuration<a class="headerlink" href="#package-configuration" title="Link to this heading"></a></h2>
 <p>Watershed Workflow is configured through a limited set of parameters
 specified in a file <cite>“.watershed_workflowrc</cite>”, located in the current
 working directory or the user’s home directory.  An example including
@@ -93,7 +93,7 @@ all defaults is shown in the top level directory as
 <cite>“watershed_workflowrc</cite>”.</p>
 </section>
 <section id="coordinate-reference-systems-crs">
-<h2>Coordinate Reference Systems (CRS)<a class="headerlink" href="#coordinate-reference-systems-crs" title="Permalink to this heading"></a></h2>
+<h2>Coordinate Reference Systems (CRS)<a class="headerlink" href="#coordinate-reference-systems-crs" title="Link to this heading"></a></h2>
 <p>Coordinate Reference Systems are used to locate geographic positions.
 These define a specific map projection, transforming 3D positions on
 the Earth’s surface to 2D coordinates.  Different projections can be
@@ -124,7 +124,7 @@ is especially useful for rasters that must be repeatedly interpolated
 <p>See <span class="xref std std-ref">CRS</span> for detailed documentation of working with CRSs.</p>
 </section>
 <section id="shapes-vs-shapely">
-<h2>shapes vs shapely<a class="headerlink" href="#shapes-vs-shapely" title="Permalink to this heading"></a></h2>
+<h2>shapes vs shapely<a class="headerlink" href="#shapes-vs-shapely" title="Link to this heading"></a></h2>
 <p>Watershed Workflow works with two different representations of shapes:
 fiona’s GeoJSON-like, python dictionary-based representation and
 shapely’s shape classes.  Each has advantages: the former is simple,

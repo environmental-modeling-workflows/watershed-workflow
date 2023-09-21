@@ -10,11 +10,11 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -128,7 +128,9 @@
     <span class="n">shas</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">Factory</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="FileManagerMODISAppEEARS"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS">[docs]</a><span class="k">class</span> <span class="nc">FileManagerMODISAppEEARS</span><span class="p">:</span>
+<div class="viewcode-block" id="FileManagerMODISAppEEARS">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS">[docs]</a>
+<span class="k">class</span> <span class="nc">FileManagerMODISAppEEARS</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;MODIS data through the AppEEARS data portal.</span>
 
 <span class="sd">    Note this portal requires authentication -- please enter a</span>
@@ -497,7 +499,9 @@
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">filled</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Data</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FileManagerMODISAppEEARS.get_data"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<div class="viewcode-block" id="FileManagerMODISAppEEARS.get_data">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS.get_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">polygon_or_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -612,6 +616,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_data</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">task</span></div>
 
+
     <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">tries</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Blocking -- waits for a task to end.&quot;&quot;&quot;</span>
         <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -630,6 +635,7 @@
             <span class="k">return</span> <span class="n">res</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unable to get data after </span><span class="si">{</span><span class="n">interval</span><span class="o">*</span><span class="n">tries</span><span class="si">}</span><span class="s1"> seconds.&#39;</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>

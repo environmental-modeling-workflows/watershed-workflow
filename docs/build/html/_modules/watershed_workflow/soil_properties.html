@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -95,7 +95,9 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.config</span>
 
 
-<div class="viewcode-block" id="vgm_Rosetta"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.vgm_Rosetta">[docs]</a><span class="k">def</span> <span class="nf">vgm_Rosetta</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="vgm_Rosetta">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.vgm_Rosetta">[docs]</a>
+<span class="k">def</span> <span class="nf">vgm_Rosetta</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return van Genuchten model parameters using Rosetta v3 model.</span>
 
 <span class="sd">    (Zhang and Schaap, 2017 WRR)</span>
@@ -144,7 +146,10 @@
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="vgm_from_SSURGO"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.vgm_from_SSURGO">[docs]</a><span class="k">def</span> <span class="nf">vgm_from_SSURGO</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+
+<div class="viewcode-block" id="vgm_from_SSURGO">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.vgm_from_SSURGO">[docs]</a>
+<span class="k">def</span> <span class="nf">vgm_from_SSURGO</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get van Genutchen model parameters using Rosetta v3.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -187,7 +192,10 @@
     <span class="k">return</span> <span class="n">merged</span></div>
 
 
-<div class="viewcode-block" id="to_ATS"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.to_ATS">[docs]</a><span class="k">def</span> <span class="nf">to_ATS</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_ATS">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.to_ATS">[docs]</a>
+<span class="k">def</span> <span class="nf">to_ATS</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts units from aggregated, Rosetta standard-parameters to ATS.&quot;&quot;&quot;</span>
     <span class="n">df_new</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -219,6 +227,7 @@
     <span class="k">return</span> <span class="n">df_new</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_whiten</span><span class="p">(</span><span class="n">observations</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This returns the mean/std deviation for use in unwhiten.&quot;&quot;&quot;</span>
     <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">observations</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -235,7 +244,9 @@
     <span class="k">return</span> <span class="n">observations</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="cluster"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.cluster">[docs]</a><span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="n">nbins</span><span class="p">):</span>
+<div class="viewcode-block" id="cluster">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.cluster">[docs]</a>
+<span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="n">nbins</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a bunch of raster bands, cluster into nbins.</span>
 
 <span class="sd">    Returns the coloring map of the clusters.  This is used to fill in</span>
@@ -279,7 +290,10 @@
     <span class="k">return</span> <span class="n">codebook</span><span class="p">,</span> <span class="n">codes_nan</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">in_shp</span><span class="p">),</span> <span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="alpha_from_permeability"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.alpha_from_permeability">[docs]</a><span class="k">def</span> <span class="nf">alpha_from_permeability</span><span class="p">(</span><span class="n">perm</span><span class="p">,</span> <span class="n">poro</span><span class="p">):</span>
+
+<div class="viewcode-block" id="alpha_from_permeability">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.alpha_from_permeability">[docs]</a>
+<span class="k">def</span> <span class="nf">alpha_from_permeability</span><span class="p">(</span><span class="n">perm</span><span class="p">,</span> <span class="n">poro</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute van Genuchten alpha from permeability and porosity.</span>
 
 <span class="sd">    Uses the relationship from Guarracino WRR 2007.</span>
@@ -306,8 +320,11 @@
     <span class="k">return</span> <span class="n">alpha_per_Pa</span></div>
 
 
+
 <span class="c1"># make a bedrock dataframe</span>
-<div class="viewcode-block" id="get_bedrock_properties"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.get_bedrock_properties">[docs]</a><span class="k">def</span> <span class="nf">get_bedrock_properties</span><span class="p">():</span>
+<div class="viewcode-block" id="get_bedrock_properties">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.get_bedrock_properties">[docs]</a>
+<span class="k">def</span> <span class="nf">get_bedrock_properties</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple helper function to get a one-row dataframe with bedrock properties.</span>
 
 <span class="sd">    Returns</span>
@@ -331,7 +348,10 @@
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<div class="viewcode-block" id="mangle_glhymps_properties"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.mangle_glhymps_properties">[docs]</a><span class="k">def</span> <span class="nf">mangle_glhymps_properties</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span>
+
+<div class="viewcode-block" id="mangle_glhymps_properties">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.mangle_glhymps_properties">[docs]</a>
+<span class="k">def</span> <span class="nf">mangle_glhymps_properties</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span>
                               <span class="n">min_porosity</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
                               <span class="n">max_permeability</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
                               <span class="n">max_vg_alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">):</span>
@@ -397,7 +417,10 @@
     <span class="k">return</span> <span class="n">properties</span></div>
 
 
-<div class="viewcode-block" id="drop_duplicates"><a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.drop_duplicates">[docs]</a><span class="k">def</span> <span class="nf">drop_duplicates</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+
+<div class="viewcode-block" id="drop_duplicates">
+<a class="viewcode-back" href="../../data.html#watershed_workflow.soil_properties.drop_duplicates">[docs]</a>
+<span class="k">def</span> <span class="nf">drop_duplicates</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Search for duplicate soils which differ only by ID, and rename them, returning a new df.</span>
 
 <span class="sd">    Parameters</span>
@@ -433,6 +456,7 @@
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">common_cols</span><span class="p">:</span>
             <span class="k">assert</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="n">df_new</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">new_ind</span><span class="p">,</span> <span class="n">col</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">df_new</span></div>
+
 </pre></div>
 
            </div>

@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -104,15 +104,15 @@
            <div itemprop="articleBody">
              
   <section id="data-manipulation">
-<h1>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Permalink to this heading"></a></h1>
+<h1>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Link to this heading"></a></h1>
 <section id="module-watershed_workflow.daymet">
-<span id="daymet-data-manipulation"></span><h2>DayMet data manipulation<a class="headerlink" href="#module-watershed_workflow.daymet" title="Permalink to this heading"></a></h2>
+<span id="daymet-data-manipulation"></span><h2>DayMet data manipulation<a class="headerlink" href="#module-watershed_workflow.daymet" title="Link to this heading"></a></h2>
 <p>Manipulate DayMet data structures.</p>
 <p>DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
 hdf5 files that models can read.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.daymet.daymet_to_daily_averages">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">daymet_to_daily_averages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#daymet_to_daily_averages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.daymet_to_daily_averages" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">daymet_to_daily_averages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#daymet_to_daily_averages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.daymet_to_daily_averages" title="Link to this definition"></a></dt>
 <dd><p>Convert dictionary of Daymet datasets to daily average data in standard form.</p>
 <p>This:</p>
 <ul class="simple">
@@ -124,7 +124,7 @@ hdf5 files that models can read.</p>
 
 </section>
 <section id="module-watershed_workflow.soil_properties">
-<span id="soil-properties-data-manipulation"></span><h2>Soil properties data manipulation<a class="headerlink" href="#module-watershed_workflow.soil_properties" title="Permalink to this heading"></a></h2>
+<span id="soil-properties-data-manipulation"></span><h2>Soil properties data manipulation<a class="headerlink" href="#module-watershed_workflow.soil_properties" title="Link to this heading"></a></h2>
 <p>Functions for manipulating soil properties.</p>
 <p>Computes soil properties such as permeability, porosity, and van Genutchen
 parameters given texture properties using the Rosetta model.</p>
@@ -133,7 +133,7 @@ dataframe manipulations to merge soil type regions with shared values,
 etc.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.vgm_Rosetta">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_Rosetta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_Rosetta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_Rosetta" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_Rosetta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_Rosetta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_Rosetta" title="Link to this definition"></a></dt>
 <dd><p>Return van Genuchten model parameters using Rosetta v3 model.</p>
 <p>(Zhang and Schaap, 2017 WRR)</p>
 <dl class="field-list simple">
@@ -151,7 +151,7 @@ etc.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.vgm_from_SSURGO">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_from_SSURGO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_from_SSURGO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_from_SSURGO" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_from_SSURGO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_from_SSURGO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_from_SSURGO" title="Link to this definition"></a></dt>
 <dd><p>Get van Genutchen model parameters using Rosetta v3.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -171,13 +171,13 @@ VGM) will be dropped.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.to_ATS">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">to_ATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#to_ATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.to_ATS" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">to_ATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#to_ATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.to_ATS" title="Link to this definition"></a></dt>
 <dd><p>Converts units from aggregated, Rosetta standard-parameters to ATS.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.cluster">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rasters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.cluster" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rasters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.cluster" title="Link to this definition"></a></dt>
 <dd><p>Given a bunch of raster bands, cluster into nbins.</p>
 <p>Returns the coloring map of the clusters.  This is used to fill in
 missing soil property data.</p>
@@ -202,7 +202,7 @@ observation and its nearest code.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.alpha_from_permeability">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">alpha_from_permeability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poro</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#alpha_from_permeability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.alpha_from_permeability" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">alpha_from_permeability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poro</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#alpha_from_permeability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.alpha_from_permeability" title="Link to this definition"></a></dt>
 <dd><p>Compute van Genuchten alpha from permeability and porosity.</p>
 <p>Uses the relationship from Guarracino WRR 2007.</p>
 <dl class="field-list simple">
@@ -223,7 +223,7 @@ observation and its nearest code.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.get_bedrock_properties">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">get_bedrock_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#get_bedrock_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.get_bedrock_properties" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">get_bedrock_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#get_bedrock_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.get_bedrock_properties" title="Link to this definition"></a></dt>
 <dd><p>Simple helper function to get a one-row dataframe with bedrock properties.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -237,7 +237,7 @@ observation and its nearest code.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.mangle_glhymps_properties">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">mangle_glhymps_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_porosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_permeability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vg_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#mangle_glhymps_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.mangle_glhymps_properties" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">mangle_glhymps_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_porosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_permeability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vg_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#mangle_glhymps_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.mangle_glhymps_properties" title="Link to this definition"></a></dt>
 <dd><p>GLHYMPs properties need their units changed and variables renamed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -260,7 +260,7 @@ value.  Default is 0.01.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.soil_properties.drop_duplicates">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">drop_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#drop_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.drop_duplicates" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">drop_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#drop_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.drop_duplicates" title="Link to this definition"></a></dt>
 <dd><p>Search for duplicate soils which differ only by ID, and rename them, returning a new df.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

@@ -12,11 +12,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -92,7 +92,7 @@
            <div itemprop="articleBody">
              
   <section id="Example:-mesh-a-delineated-watershed">
-<h1>Example: mesh a delineated watershed<a class="headerlink" href="#Example:-mesh-a-delineated-watershed" title="Permalink to this heading"></a></h1>
+<h1>Example: mesh a delineated watershed<a class="headerlink" href="#Example:-mesh-a-delineated-watershed" title="Link to this heading"></a></h1>
 <p>Here we mesh the <a class="reference external" href="https://www.srs.fs.usda.gov/coweeta/">Coweeta Hydrologic Laboratory</a> as an example of how to pull data in from default locations and generate a fully functional ATS mesh.</p>
 <p>This might be the worst example to use to learn how to use Watershed Workflows. But it is useful to demonstrate the breadth of problems this project was intended to solve.</p>
 <p>This includes a range of datasets:</p>
@@ -139,7 +139,7 @@
 </div>
 </div>
 <section id="Sources-and-setup">
-<h2>Sources and setup<a class="headerlink" href="#Sources-and-setup" title="Permalink to this heading"></a></h2>
+<h2>Sources and setup<a class="headerlink" href="#Sources-and-setup" title="Link to this heading"></a></h2>
 <p>Next we set up the source watershed and coordinate system and all data sources for our mesh. We will use the CRS that is included in the shapefile.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -206,7 +206,7 @@
 </div>
 </section>
 <section id="Generate-the-surface-mesh">
-<h2>Generate the surface mesh<a class="headerlink" href="#Generate-the-surface-mesh" title="Permalink to this heading"></a></h2>
+<h2>Generate the surface mesh<a class="headerlink" href="#Generate-the-surface-mesh" title="Link to this heading"></a></h2>
 <p>First we’ll generate the flattened, 2D triangulation, which builds on hydrography data. Then we download a digital elevation map from the National Elevation Dataset, and extrude that 2D triangulation to a 3D surface mesh based on interpolation between pixels of the DEM.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -631,7 +631,7 @@ max diff =  6.589355426081738
 </div>
 </section>
 <section id="Surface-properties">
-<h2>Surface properties<a class="headerlink" href="#Surface-properties" title="Permalink to this heading"></a></h2>
+<h2>Surface properties<a class="headerlink" href="#Surface-properties" title="Link to this heading"></a></h2>
 <p>Meshes interact with data to provide forcing, parameters, and more in the actual simulation. Specifically, we need vegetation type on the surface to provide information about transpiration and subsurface structure to provide information about water retention curves, etc.</p>
 <p>We’ll start by downloading and collecting land cover from the NLCD dataset, and generate sets for each land cover type that cover the surface. Likely these will be some combination of grass, deciduous forest, coniferous forest, and mixed.</p>
 <div class="nbinput docutils container">
@@ -731,11 +731,11 @@ Text(0.5, 1.0, &#39;land cover index&#39;)
 </div>
 </section>
 <section id="Subsurface-properties">
-<h2>Subsurface properties<a class="headerlink" href="#Subsurface-properties" title="Permalink to this heading"></a></h2>
+<h2>Subsurface properties<a class="headerlink" href="#Subsurface-properties" title="Link to this heading"></a></h2>
 <p>Get soil structure from SSURGO. By soil structure, here we calculate, for each formation identified in SSURGO, a soil depth, porosity, permeability, and percent sand/silt/clay (which are then handed off to Rosetta to get a van Genuchten model).</p>
 <p>Below this soil we also identify a geologic layer provided by GLHYMPS. This provides information about the deeper subsurface.</p>
 <section id="SSURGO-Soil-Properties">
-<h3>SSURGO Soil Properties<a class="headerlink" href="#SSURGO-Soil-Properties" title="Permalink to this heading"></a></h3>
+<h3>SSURGO Soil Properties<a class="headerlink" href="#SSURGO-Soil-Properties" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -1637,7 +1637,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 </div>
 </section>
 <section id="GLYHMPS-geologic-layer">
-<h3>GLYHMPS geologic layer<a class="headerlink" href="#GLYHMPS-geologic-layer" title="Permalink to this heading"></a></h3>
+<h3>GLYHMPS geologic layer<a class="headerlink" href="#GLYHMPS-geologic-layer" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
@@ -1767,7 +1767,7 @@ Text(0.5, 1.0, &#39;log permeability (Rosetta) [m^2]&#39;)
 </section>
 </section>
 <section id="Mesh-extrusion">
-<h2>Mesh extrusion<a class="headerlink" href="#Mesh-extrusion" title="Permalink to this heading"></a></h2>
+<h2>Mesh extrusion<a class="headerlink" href="#Mesh-extrusion" title="Link to this heading"></a></h2>
 <p>Given the surface mesh and material IDs on both the surface and subsurface, we can extrude the surface mesh in the vertical to make a 3D mesh.</p>
 <p>First, all integer IDs in Exodus files must be unique. This includes Material IDs, side sets, etc. We create the Material ID map and data frame. This is used to standardize IDs from multiple data sources. Traditionally, ATS numbers Material IDs/Side Sets as:</p>
 <ul class="simple">

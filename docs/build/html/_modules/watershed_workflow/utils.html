@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -106,7 +106,9 @@
 <span class="c1">#</span>
 <span class="c1"># Constructors</span>
 <span class="c1">#</span>
-<div class="viewcode-block" id="create_shply"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_shply">[docs]</a><span class="k">def</span> <span class="nf">create_shply</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flip</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="create_shply">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_shply">[docs]</a>
+<span class="k">def</span> <span class="nf">create_shply</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flip</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a fiona style shape to a shapely shape with as much collapsing as possible.</span>
 
 <span class="sd">    Note this collapses objects -- for instance, fiona MultiPolygons of length</span>
@@ -159,7 +161,10 @@
             <span class="s1">&#39;Converting to shapely got error: &quot;</span><span class="si">%s</span><span class="s1">&quot;  Maybe you forgot to do shp[&quot;geometry&quot;]?&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="deepcopy"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.deepcopy">[docs]</a><span class="k">def</span> <span class="nf">deepcopy</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+
+<div class="viewcode-block" id="deepcopy">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.deepcopy">[docs]</a>
+<span class="k">def</span> <span class="nf">deepcopy</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Deals with properties dictionary&quot;&quot;&quot;</span>
     <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">shp</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">list_of_shapes</span><span class="p">):</span>
@@ -168,7 +173,10 @@
     <span class="k">return</span> <span class="n">new_list</span></div>
 
 
-<div class="viewcode-block" id="create_bounds"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_bounds">[docs]</a><span class="k">def</span> <span class="nf">create_bounds</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+
+<div class="viewcode-block" id="create_bounds">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_bounds">[docs]</a>
+<span class="k">def</span> <span class="nf">create_bounds</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;General bounding box for fiona and shapely types.&quot;&quot;&quot;</span>
     <span class="c1"># fiona type</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">generate_coords</span><span class="p">(</span><span class="n">f</span><span class="p">)))</span>
@@ -179,7 +187,10 @@
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="create_raster_profile"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_raster_profile">[docs]</a><span class="k">def</span> <span class="nf">create_raster_profile</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="create_raster_profile">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_raster_profile">[docs]</a>
+<span class="k">def</span> <span class="nf">create_raster_profile</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a profile for a raster.</span>
 
 <span class="sd">    Parameters</span>
@@ -237,7 +248,10 @@
     <span class="k">return</span> <span class="n">out_profile</span></div>
 
 
-<div class="viewcode-block" id="create_empty_raster"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_empty_raster">[docs]</a><span class="k">def</span> <span class="nf">create_empty_raster</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="create_empty_raster">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_empty_raster">[docs]</a>
+<span class="k">def</span> <span class="nf">create_empty_raster</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates a profile and a nodata-filled array.&quot;&quot;&quot;</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">create_raster_profile</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
@@ -245,22 +259,31 @@
     <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">out</span></div>
 
 
+
 <span class="c1">#</span>
 <span class="c1"># Generic routines for manipulating shapes and rasters</span>
 <span class="c1">#</span>
-<div class="viewcode-block" id="is_empty_shapely"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.is_empty_shapely">[docs]</a><span class="k">def</span> <span class="nf">is_empty_shapely</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
+<div class="viewcode-block" id="is_empty_shapely">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.is_empty_shapely">[docs]</a>
+<span class="k">def</span> <span class="nf">is_empty_shapely</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Is shp None or empty&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">shp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">shp</span><span class="o">.</span><span class="n">is_empty</span></div>
 
 
-<div class="viewcode-block" id="round_shapes"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.round_shapes">[docs]</a><span class="k">def</span> <span class="nf">round_shapes</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+
+<div class="viewcode-block" id="round_shapes">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.round_shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">round_shapes</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rounds coordinates in things or shapes to a given digits.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_things</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">generate_rings</span><span class="p">(</span><span class="n">shp</span><span class="p">):</span>
             <span class="n">ring</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ring</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">digits</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="round_shplys"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.round_shplys">[docs]</a><span class="k">def</span> <span class="nf">round_shplys</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+
+<div class="viewcode-block" id="round_shplys">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.round_shplys">[docs]</a>
+<span class="k">def</span> <span class="nf">round_shplys</span><span class="p">(</span><span class="n">list_of_things</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rounds coordinates in things or shapes to a given digits.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">shapely</span><span class="o">.</span><span class="n">wkt</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">wkt</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">thing</span><span class="p">,</span> <span class="n">rounding_precision</span><span class="o">=</span><span class="n">digits</span><span class="p">))</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -268,7 +291,10 @@
     <span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="remove_third_dimension"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.remove_third_dimension">[docs]</a><span class="k">def</span> <span class="nf">remove_third_dimension</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
+
+<div class="viewcode-block" id="remove_third_dimension">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.remove_third_dimension">[docs]</a>
+<span class="k">def</span> <span class="nf">remove_third_dimension</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes the third dimension of a shapely object.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">geom</span>
@@ -330,7 +356,10 @@
             <span class="nb">type</span><span class="p">(</span><span class="n">geom</span><span class="p">)))</span></div>
 
 
-<div class="viewcode-block" id="flatten"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.flatten">[docs]</a><span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="n">list_of_shps</span><span class="p">):</span>
+
+<div class="viewcode-block" id="flatten">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.flatten">[docs]</a>
+<span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="n">list_of_shps</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects&quot;&quot;&quot;</span>
     <span class="n">new_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_shps</span><span class="p">:</span>
@@ -343,7 +372,10 @@
     <span class="k">return</span> <span class="n">new_list</span></div>
 
 
-<div class="viewcode-block" id="impute_holes2D"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.impute_holes2D">[docs]</a><span class="k">def</span> <span class="nf">impute_holes2D</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;cubic&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="impute_holes2D">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.impute_holes2D">[docs]</a>
+<span class="k">def</span> <span class="nf">impute_holes2D</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;cubic&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Very simple imputation algorithm to interpolate values for missing data in rasters.</span>
 
 <span class="sd">    Note, this may throw if there is a hole on the boundary?</span>
@@ -382,7 +414,10 @@
     <span class="k">return</span> <span class="n">res</span></div>
 
 
-<div class="viewcode-block" id="compute_average_year"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.compute_average_year">[docs]</a><span class="k">def</span> <span class="nf">compute_average_year</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_nyears</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="compute_average_year">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.compute_average_year">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_average_year</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_nyears</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Averages and smooths to form a &quot;typical&quot; year.</span>
 
 <span class="sd">    Parameters</span>
@@ -422,7 +457,10 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="interpolate_in_time"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.interpolate_in_time">[docs]</a><span class="k">def</span> <span class="nf">interpolate_in_time</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="interpolate_in_time">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.interpolate_in_time">[docs]</a>
+<span class="k">def</span> <span class="nf">interpolate_in_time</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate time-dependent data from times to daily data in the range start, end.</span>
 
 <span class="sd">    Parameters</span>
@@ -465,7 +503,10 @@
     <span class="k">return</span> <span class="n">new_times</span><span class="p">,</span> <span class="n">new_data</span></div>
 
 
-<div class="viewcode-block" id="smooth"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.smooth">[docs]</a><span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window_length</span><span class="o">=</span><span class="mi">61</span><span class="p">,</span> <span class="n">polyorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;wrap&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="smooth">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.smooth">[docs]</a>
+<span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window_length</span><span class="o">=</span><span class="mi">61</span><span class="p">,</span> <span class="n">polyorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;wrap&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.</span>
 
 <span class="sd">    Note that this wrapper just sets some sane default values for</span>
@@ -500,7 +541,10 @@
     <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="generate_rings"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.generate_rings">[docs]</a><span class="k">def</span> <span class="nf">generate_rings</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+
+<div class="viewcode-block" id="generate_rings">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.generate_rings">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_rings</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generator for a fiona shape&#39;s coordinates object and yield rings.</span>
 
 <span class="sd">    As long as the input is conforming, the type of the geometry doesn&#39;t matter.</span>
@@ -529,7 +573,10 @@
         <span class="k">yield</span> <span class="n">r</span></div>
 
 
-<div class="viewcode-block" id="generate_coords"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.generate_coords">[docs]</a><span class="k">def</span> <span class="nf">generate_coords</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+
+<div class="viewcode-block" id="generate_coords">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.generate_coords">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_coords</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generator for a fiona geometry&#39;s coordinates.</span>
 
 <span class="sd">    As long as the input is conforming, the type of the geometry doesn&#39;t</span>
@@ -555,12 +602,15 @@
                 <span class="k">yield</span> <span class="n">c</span></div>
 
 
+
 <span class="c1">#</span>
 <span class="c1"># Geometry</span>
 <span class="c1">#</span>
 
 
-<div class="viewcode-block" id="close"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.close">[docs]</a><span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+<div class="viewcode-block" id="close">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.close">[docs]</a>
+<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Are two shapely shapes topologically equivalent and geometrically close?</span>
 
 <span class="sd">    Note this deals with things like rotations of polygons (clock-rotating the</span>
@@ -679,12 +729,18 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not implemented for type &#39;</span><span class="si">%r</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">s1</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="contains"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.contains">[docs]</a><span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
+
+<div class="viewcode-block" id="contains">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.contains">[docs]</a>
+<span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A contains algorithm that deals with close/roundoff issues&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">s1</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">tol</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CutError"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.CutError">[docs]</a><span class="k">class</span> <span class="nc">CutError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CutError">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.CutError">[docs]</a>
+<span class="k">class</span> <span class="nc">CutError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">cutline</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
@@ -692,7 +748,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cutline</span> <span class="o">=</span> <span class="n">cutline</span></div>
 
 
-<div class="viewcode-block" id="cut"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.cut">[docs]</a><span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">cutline</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
+
+<div class="viewcode-block" id="cut">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.cut">[docs]</a>
+<span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">cutline</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Cuts a line at all intersections with cutline.  If an existing</span>
 <span class="sd">    point in line is within tol of the cutline, do not add an additional</span>
 <span class="sd">    coordinate, just move that coordinate.  Otherwise, add a new</span>
@@ -766,12 +825,18 @@
     <span class="k">return</span> <span class="n">segs</span></div>
 
 
-<div class="viewcode-block" id="distance"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.distance">[docs]</a><span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="distance">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.distance">[docs]</a>
+<span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Distance between two points in tuple form&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="in_neighborhood"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.in_neighborhood">[docs]</a><span class="k">def</span> <span class="nf">in_neighborhood</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="in_neighborhood">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.in_neighborhood">[docs]</a>
+<span class="k">def</span> <span class="nf">in_neighborhood</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Determines if two objects can possibly intersect by performing a</span>
 <span class="sd">    quick check of their bounding boxes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -785,7 +850,10 @@
     <span class="k">return</span> <span class="kc">True</span></div>
 
 
-<div class="viewcode-block" id="intersect_point_to_segment"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.intersect_point_to_segment">[docs]</a><span class="k">def</span> <span class="nf">intersect_point_to_segment</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">line_start</span><span class="p">,</span> <span class="n">line_end</span><span class="p">):</span>
+
+<div class="viewcode-block" id="intersect_point_to_segment">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.intersect_point_to_segment">[docs]</a>
+<span class="k">def</span> <span class="nf">intersect_point_to_segment</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">line_start</span><span class="p">,</span> <span class="n">line_end</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the nearest point on a line segment to a point&quot;&quot;&quot;</span>
     <span class="n">line_magnitude</span> <span class="o">=</span> <span class="n">line_end</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">line_start</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">line_magnitude</span> <span class="o">&gt;</span> <span class="n">_tol</span><span class="p">)</span>
@@ -805,7 +873,10 @@
         <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">([</span><span class="n">ix</span><span class="p">,</span> <span class="n">iy</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="nearest_point"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.nearest_point">[docs]</a><span class="k">def</span> <span class="nf">nearest_point</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">point</span><span class="p">):</span>
+
+<div class="viewcode-block" id="nearest_point">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.nearest_point">[docs]</a>
+<span class="k">def</span> <span class="nf">nearest_point</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">point</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the nearest coordinate on the line to point.  </span>
 
 <span class="sd">    Note point is expected as coordinates.&quot;&quot;&quot;</span>
@@ -814,7 +885,10 @@
     <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">nearest_points</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">line</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="triangle_area"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.triangle_area">[docs]</a><span class="k">def</span> <span class="nf">triangle_area</span><span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
+
+<div class="viewcode-block" id="triangle_area">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.triangle_area">[docs]</a>
+<span class="k">def</span> <span class="nf">triangle_area</span><span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Area of a triangle in 2D&quot;&quot;&quot;</span>
     <span class="n">xy1</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">xy2</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -825,20 +899,29 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="is_collinear"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.is_collinear">[docs]</a><span class="k">def</span> <span class="nf">is_collinear</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+
+<div class="viewcode-block" id="is_collinear">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.is_collinear">[docs]</a>
+<span class="k">def</span> <span class="nf">is_collinear</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;this function checks if three points are collinear for given tolerance value&quot;&quot;&quot;</span>
     <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">y2</span> <span class="o">-</span> <span class="n">x2</span><span class="o">*</span><span class="n">y1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span></div>
 
 
-<div class="viewcode-block" id="area"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.area">[docs]</a><span class="k">def</span> <span class="nf">area</span><span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
+
+<div class="viewcode-block" id="area">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.area">[docs]</a>
+<span class="k">def</span> <span class="nf">area</span><span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Area of polygons in 2D&quot;&quot;&quot;</span>
     <span class="n">area</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span><span class="o">.</span><span class="n">area</span>
     <span class="k">return</span> <span class="n">area</span></div>
 
 
-<div class="viewcode-block" id="angle"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.angle">[docs]</a><span class="k">def</span> <span class="nf">angle</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="angle">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.angle">[docs]</a>
+<span class="k">def</span> <span class="nf">angle</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given two 2D vectors represented as len 2 arrays or tuples, find the angle</span>
 <span class="sd">    of 2 relative to 1 in a clockwise notion.&quot;&quot;&quot;</span>
     <span class="n">x1</span> <span class="o">=</span> <span class="n">v1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -859,7 +942,10 @@
         <span class="k">return</span> <span class="n">mag</span></div>
 
 
-<div class="viewcode-block" id="midpoint"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.midpoint">[docs]</a><span class="k">def</span> <span class="nf">midpoint</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="midpoint">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.midpoint">[docs]</a>
+<span class="k">def</span> <span class="nf">midpoint</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the midpoint of two points&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">midpoint</span><span class="p">(</span><span class="n">p1</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p2</span><span class="p">)</span>
@@ -868,14 +954,20 @@
     <span class="k">return</span> <span class="p">((</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="p">(</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="closest_point_ind"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.closest_point_ind">[docs]</a><span class="k">def</span> <span class="nf">closest_point_ind</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+
+<div class="viewcode-block" id="closest_point_ind">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.closest_point_ind">[docs]</a>
+<span class="k">def</span> <span class="nf">closest_point_ind</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the index of closest point from an array of points&quot;&quot;&quot;</span>
     <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
     <span class="n">dist_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">points</span> <span class="o">-</span> <span class="n">point</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dist_2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="center"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.center">[docs]</a><span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="n">centering</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+<div class="viewcode-block" id="center">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.center">[docs]</a>
+<span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="n">centering</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Centers a collection of objects by removing their collective centroid&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">centering</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
         <span class="n">centroid</span> <span class="o">=</span> <span class="n">centering</span>
@@ -901,7 +993,10 @@
     <span class="k">return</span> <span class="n">new_objs</span><span class="p">,</span> <span class="n">centroid</span></div>
 
 
-<div class="viewcode-block" id="orientation"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.orientation">[docs]</a><span class="k">def</span> <span class="nf">orientation</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">):</span>
+
+<div class="viewcode-block" id="orientation">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.orientation">[docs]</a>
+<span class="k">def</span> <span class="nf">orientation</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;to find the orientation of an ordered triplet (p1,p2,p3) function returns the following values:</span>
 <span class="sd">      0 : Collinear points</span>
 <span class="sd">      1 : Clockwise points</span>
@@ -920,7 +1015,10 @@
         <span class="k">return</span> <span class="mi">0</span></div>
 
 
-<div class="viewcode-block" id="intersects"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.intersects">[docs]</a><span class="k">def</span> <span class="nf">intersects</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="intersects">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.intersects">[docs]</a>
+<span class="k">def</span> <span class="nf">intersects</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks whether an intersection exists.</span>
 <span class="sd">    </span>
 <span class="sd">    Note that intersection being empty and intersects are not always reliably</span>
@@ -930,7 +1028,10 @@
     <span class="k">return</span> <span class="ow">not</span> <span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="non_point_intersection"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.non_point_intersection">[docs]</a><span class="k">def</span> <span class="nf">non_point_intersection</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="non_point_intersection">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.non_point_intersection">[docs]</a>
+<span class="k">def</span> <span class="nf">non_point_intersection</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks whether an intersection is larger than a point.</span>
 <span class="sd">    </span>
 <span class="sd">    Note that intersection being empty and intersects are not always reliably</span>
@@ -941,13 +1042,19 @@
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="volumetric_intersection"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.volumetric_intersection">[docs]</a><span class="k">def</span> <span class="nf">volumetric_intersection</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="volumetric_intersection">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.volumetric_intersection">[docs]</a>
+<span class="k">def</span> <span class="nf">volumetric_intersection</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks whether an intersection includes volume and not just points and lines.&quot;&quot;&quot;</span>
     <span class="n">inter</span> <span class="o">=</span> <span class="n">shp1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">shp2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">inter</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
 
 
-<div class="viewcode-block" id="filter_to_shape"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.filter_to_shape">[docs]</a><span class="k">def</span> <span class="nf">filter_to_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">to_filter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="filter_to_shape">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.filter_to_shape">[docs]</a>
+<span class="k">def</span> <span class="nf">filter_to_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">to_filter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Filters out reaches (or reaches in rivers) not inside the HUCs provided.</span>
 
 <span class="sd">    algorithm is one of &#39;contains&#39; or &#39;intersects&#39; to indicate whether</span>
@@ -969,12 +1076,15 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">to_filter</span> <span class="k">if</span> <span class="n">op</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">is_convex</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
     <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="n">poly</span><span class="o">.</span><span class="n">convex_hull</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="cluster"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.cluster">[docs]</a><span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
+<div class="viewcode-block" id="cluster">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.cluster">[docs]</a>
+<span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of points, determine a list of clusters.</span>
 
 <span class="sd">    Each cluster is within tol of each other.</span>
@@ -989,7 +1099,10 @@
     <span class="k">return</span> <span class="n">indices</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">centroids</span></div>
 
 
-<div class="viewcode-block" id="treat_segment_collinearity"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.treat_segment_collinearity">[docs]</a><span class="k">def</span> <span class="nf">treat_segment_collinearity</span><span class="p">(</span><span class="n">segment_coords</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">):</span>
+
+<div class="viewcode-block" id="treat_segment_collinearity">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.treat_segment_collinearity">[docs]</a>
+<span class="k">def</span> <span class="nf">treat_segment_collinearity</span><span class="p">(</span><span class="n">segment_coords</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment&quot;&quot;&quot;</span>
     <span class="n">col_checks</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
@@ -1012,6 +1125,7 @@
         <span class="n">col_checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">is_collinear</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">))</span>
     <span class="k">assert</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">col_checks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">segment_coords</span></div>
+
 </pre></div>
 
            </div>

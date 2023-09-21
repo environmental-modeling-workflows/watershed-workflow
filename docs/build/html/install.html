@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -88,7 +88,7 @@
            <div itemprop="articleBody">
              
   <section id="installation-and-setup">
-<h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Permalink to this heading"></a></h1>
+<h1>Installation and Setup<a class="headerlink" href="#installation-and-setup" title="Link to this heading"></a></h1>
 <p>All code in this package is pure python3, though it can be tricky to
 get all of the dependencies to coexist because of their need for GIS
 libraries.</p>
@@ -104,7 +104,7 @@ configuration file is required.  This file is typically stored as
 This includes the path to the data library, along with other common
 settings.</p>
 <section id="summary-of-dependencies-and-their-usage">
-<h2>Summary of Dependencies and their Usage<a class="headerlink" href="#summary-of-dependencies-and-their-usage" title="Permalink to this heading"></a></h2>
+<h2>Summary of Dependencies and their Usage<a class="headerlink" href="#summary-of-dependencies-and-their-usage" title="Link to this heading"></a></h2>
 <p>Standard packages needed include <cite>argparse</cite> and <cite>subprocess</cite>, and for
 testing, <cite>pytest</cite> and <cite>dist_utils</cite>.  Standard math packages include
 <cite>numpy</cite>, <cite>matplotlib</cite>, and <cite>scipy</cite>.  Soil properties often come in
@@ -137,7 +137,7 @@ be pipelined – you develop a notebook, then use <cite>papermill</cite> to use
 the notebook as a script.</p>
 </section>
 <section id="installation-with-docker">
-<h2>Installation with Docker<a class="headerlink" href="#installation-with-docker" title="Permalink to this heading"></a></h2>
+<h2>Installation with Docker<a class="headerlink" href="#installation-with-docker" title="Link to this heading"></a></h2>
 <p>Because of this complex set of processes, the simplest form of using
 Watershed Workflow is through the provided Docker containers.  To do
 this, install the <a class="reference external" href="https://www.docker.com/products/docker-desktop/">Docker</a> or <a class="reference external" href="https://rancherdesktop.io">Rancher</a> desktop apps, then run the script
@@ -171,7 +171,7 @@ container.</p>
 top directory of this repository.</p>
 </section>
 <section id="local-installation">
-<h2>Local Installation<a class="headerlink" href="#local-installation" title="Permalink to this heading"></a></h2>
+<h2>Local Installation<a class="headerlink" href="#local-installation" title="Link to this heading"></a></h2>
 <p>It is recommended to use <a class="reference external" href="https://mamba.readthedocs.io/en/latest/">Mambaforge</a> as a package manager,
 generating a unique environment for use with this package, as this
 makes it fairly easy to get all the required packages.  Anaconda and
@@ -182,7 +182,7 @@ packages in your own base environment or elsewhere, then use this
 environment as a kernel within Jupyter.  We provide scripts that get
 the needed dependencies:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">Packages for general users.</span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="code-block-caption"><span class="caption-text">Packages for general users.</span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python3 environments/create_envs.py ENV_NAME</span>
 </pre></div>
 </div>
@@ -190,7 +190,7 @@ the needed dependencies:</p>
 <p>Developers should also install a few packages for building
 documentation, testing, etc:</p>
 <div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="code-block-caption"><span class="caption-text">Packages for developers and building documentation</span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python3 environments/create_envs.py --env-type=DEV ENV_NAME</span>
 </pre></div>
 </div>
@@ -203,7 +203,7 @@ use the watershed_workflow environment as a kernel within Jupyter.</p>
 </pre></div>
 </div>
 <section id="installing-exodusii-optional">
-<h3>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Permalink to this heading"></a></h3>
+<h3>Installing ExodusII (optional)<a class="headerlink" href="#installing-exodusii-optional" title="Link to this heading"></a></h3>
 <p>Clone the package from <a class="reference external" href="https://github.com/gsjaardema/seacas">source</a></p>
 <p>Unfortunately this package does not do semantic versioned releases
 except as part of the Trilinos project, and those releases are often
@@ -224,7 +224,7 @@ the more detailed formula in Stage 3 of the docker file,
 <cite>docker/User-Env.Dockerfile</cite>.</p>
 </section>
 <section id="installing-this-package">
-<h3>Installing this package<a class="headerlink" href="#installing-this-package" title="Permalink to this heading"></a></h3>
+<h3>Installing this package<a class="headerlink" href="#installing-this-package" title="Link to this heading"></a></h3>
 <p>Once you’ve got this environment set up, this package and the Rosetta
 dependency are installed via:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd /path/to/this/repository</span>
@@ -238,7 +238,7 @@ be modified.</p>
 </section>
 </section>
 <section id="run-the-test-suite-developers">
-<h2>Run the test suite (developers)<a class="headerlink" href="#run-the-test-suite-developers" title="Permalink to this heading"></a></h2>
+<h2>Run the test suite (developers)<a class="headerlink" href="#run-the-test-suite-developers" title="Link to this heading"></a></h2>
 <p>Given that you have activated your environment and successfully
 install the DEV environment above, the unit tests should all pass.
 They are not all fast – some download files and may be

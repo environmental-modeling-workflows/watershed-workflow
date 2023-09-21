@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -104,7 +104,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="enumerated_colors"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.enumerated_colors">[docs]</a><span class="k">def</span> <span class="nf">enumerated_colors</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="enumerated_colors">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.enumerated_colors">[docs]</a>
+<span class="k">def</span> <span class="nf">enumerated_colors</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets an enumerated list of count independent colors.&quot;&quot;&quot;</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">enumerated_palettes</span><span class="p">[</span><span class="n">palette</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
@@ -127,6 +129,7 @@
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No enumerated palettes of length </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">))</span></div>
+
 
 
 <span class="c1"># black-zero jet is jet, but with the 0-value set to black, with an immediate jump to blue</span>
@@ -196,7 +199,9 @@
 
 
 <span class="c1"># jet-by-index</span>
-<div class="viewcode-block" id="cm_mapper"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.cm_mapper">[docs]</a><span class="k">def</span> <span class="nf">cm_mapper</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_sm</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="cm_mapper">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.cm_mapper">[docs]</a>
+<span class="k">def</span> <span class="nf">cm_mapper</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_sm</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide a function that maps scalars to colors in a given colormap.</span>
 
 <span class="sd">    Parameters</span>
@@ -238,7 +243,10 @@
         <span class="k">return</span> <span class="n">mapper</span></div>
 
 
-<div class="viewcode-block" id="cm_discrete"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.cm_discrete">[docs]</a><span class="k">def</span> <span class="nf">cm_discrete</span><span class="p">(</span><span class="n">ncolors</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">jet</span><span class="p">):</span>
+
+<div class="viewcode-block" id="cm_discrete">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.cm_discrete">[docs]</a>
+<span class="k">def</span> <span class="nf">cm_discrete</span><span class="p">(</span><span class="n">ncolors</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">jet</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate a discrete colormap with N entries from the continuous colormap cmap.</span>
 
 <span class="sd">    Parameters</span>
@@ -276,7 +284,10 @@
     <span class="k">return</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">LinearSegmentedColormap</span><span class="p">(</span><span class="n">cmap</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_</span><span class="si">%d</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">ncolors</span><span class="p">,</span> <span class="n">cdict</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="float_list_type"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.float_list_type">[docs]</a><span class="k">def</span> <span class="nf">float_list_type</span><span class="p">(</span><span class="n">mystring</span><span class="p">):</span>
+
+<div class="viewcode-block" id="float_list_type">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.float_list_type">[docs]</a>
+<span class="k">def</span> <span class="nf">float_list_type</span><span class="p">(</span><span class="n">mystring</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert string-form list of doubles into list of doubles.&quot;&quot;&quot;</span>
     <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">mystring</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
@@ -285,6 +296,7 @@
         <span class="k">except</span><span class="p">:</span>
             <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">colors</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">desaturate</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">is_hsv</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -307,7 +319,9 @@
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">rgb</span> <span class="o">+</span> <span class="n">fraction</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">rgb</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="generate_indexed_colormap"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.generate_indexed_colormap">[docs]</a><span class="k">def</span> <span class="nf">generate_indexed_colormap</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="generate_indexed_colormap">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.generate_indexed_colormap">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_indexed_colormap</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates an indexed colormap and labels for imaging, e.g. soil indices.</span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -349,6 +363,7 @@
     <span class="n">norm</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">BoundaryNorm</span><span class="p">(</span><span class="n">ticks</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ticks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">ticks</span><span class="p">,</span> <span class="n">labels</span></div>
+
 
 <span class="n">_doc_template</span> <span class="o">=</span> \
 <span class="sd">&quot;&quot;&quot;Generates a colormap and labels for imaging with the {label} colors.</span>
@@ -449,7 +464,9 @@
     <span class="s1">&#39;MODIS&#39;</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">manager_modis_appeears</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="colorbar_index"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.colorbar_index">[docs]</a><span class="k">def</span> <span class="nf">colorbar_index</span><span class="p">(</span><span class="n">ncolors</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="colorbar_index">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.colorbar_index">[docs]</a>
+<span class="k">def</span> <span class="nf">colorbar_index</span><span class="p">(</span><span class="n">ncolors</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add an indexed colorbar based on a given colormap.</span>
 
 <span class="sd">    This sets ticks in the middle of each color range, adds the</span>
@@ -495,6 +512,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">colorbar</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">ncolors</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">colorbar</span></div>
+
 </pre></div>
 
            </div>

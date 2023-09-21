@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -94,7 +94,9 @@
     <span class="n">neighbors</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="fill_pits"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits">[docs]</a><span class="k">def</span> <span class="nf">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="fill_pits">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Conditions a mesh, IN PLACE, by removing pits.</span>
 <span class="sd">    </span>
 <span class="sd">    Starts at outlet and works through all coordinates in the mesh,</span>
@@ -143,7 +145,10 @@
     <span class="n">m2</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span></div>
 
 
-<div class="viewcode-block" id="fill_pits1"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits1">[docs]</a><span class="k">def</span> <span class="nf">fill_pits1</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fill_pits1">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits1">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits1</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the origional, 2-pass algorithm, and is likely inefficient.&quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">outletID</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -185,7 +190,10 @@
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="fill_pits2"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits2">[docs]</a><span class="k">def</span> <span class="nf">fill_pits2</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fill_pits2">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits2">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits2</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This is a refactored, single pass algorithm that leverages a sorted list.&quot;&quot;&quot;</span>
 
     <span class="c1"># create a sorted list of elevations, from largest to smallest</span>
@@ -211,7 +219,10 @@
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="fill_pits3"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits3">[docs]</a><span class="k">def</span> <span class="nf">fill_pits3</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fill_pits3">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits3">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits3</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This algorithm is based on a boundary marching method&quot;&quot;&quot;</span>
     <span class="c1"># Waterway is the list of things that are already conditioned and</span>
     <span class="c1"># can be reached.</span>
@@ -251,7 +262,10 @@
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="fill_pits_dual"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits_dual">[docs]</a><span class="k">def</span> <span class="nf">fill_pits_dual</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">is_waterbody</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outlet_edge</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fill_pits_dual">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits_dual">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits_dual</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">is_waterbody</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outlet_edge</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Conditions the dual of the mesh, IN PLACE, by filling pits.</span>
 
 <span class="sd">    This ensures the property that, starting with an outlet cell,</span>
@@ -436,7 +450,10 @@
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="identify_local_minima"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.identify_local_minima">[docs]</a><span class="k">def</span> <span class="nf">identify_local_minima</span><span class="p">(</span><span class="n">m2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="identify_local_minima">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.identify_local_minima">[docs]</a>
+<span class="k">def</span> <span class="nf">identify_local_minima</span><span class="p">(</span><span class="n">m2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;For all cells, identify if their centroid elevation is lower than</span>
 <span class="sd">    the elevation of all neighbors.</span>
 
@@ -476,7 +493,10 @@
     <span class="k">return</span> <span class="n">res</span></div>
 
 
-<div class="viewcode-block" id="smooth"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.smooth">[docs]</a><span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="smooth">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.smooth">[docs]</a>
+<span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Smooths an image according to an algorithm, passing kwargs on to that algorithm.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
         <span class="k">if</span> <span class="s1">&#39;method&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -488,6 +508,7 @@
         <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown smoothing algorithm: &quot;</span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">fill_gaps</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">):</span>
@@ -512,7 +533,9 @@
     <span class="k">return</span> <span class="n">interp0</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">xx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">yy</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xx</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="condition_river_mesh"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.condition_river_mesh">[docs]</a><span class="k">def</span> <span class="nf">condition_river_mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
+<div class="viewcode-block" id="condition_river_mesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.condition_river_mesh">[docs]</a>
+<span class="k">def</span> <span class="nf">condition_river_mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
                          <span class="n">river</span><span class="p">,</span>
                          <span class="n">smooth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                          <span class="n">use_parent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -640,6 +663,7 @@
                             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;raised node </span><span class="si">{</span><span class="n">node_id</span><span class="si">}</span><span class="s2"> for bank integrity&quot;</span><span class="p">)</span>
                             <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">node_id</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">profile</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mf">0.55</span>
     <span class="n">m2</span><span class="o">.</span><span class="n">clear_geometry_cache</span><span class="p">()</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
@@ -777,7 +801,9 @@
     <span class="k">return</span> <span class="n">node_id</span>
 
 
-<div class="viewcode-block" id="elevate_rivers"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.elevate_rivers">[docs]</a><span class="k">def</span> <span class="nf">elevate_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">):</span>
+<div class="viewcode-block" id="elevate_rivers">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.elevate_rivers">[docs]</a>
+<span class="k">def</span> <span class="nf">elevate_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Elevate the river using dem and store reach-bed-profile as node properties.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()):</span>
@@ -785,6 +811,7 @@
             <span class="n">node_elevs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">node_points</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">)[:,</span> <span class="mi">2</span><span class="p">]</span>
             <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_elevs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
             <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;elev_profile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_elevs</span></div>
+
 </pre></div>
 
            </div>

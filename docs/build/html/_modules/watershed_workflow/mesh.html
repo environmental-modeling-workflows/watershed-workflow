@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -132,7 +132,9 @@
     <span class="k">return</span> <span class="n">cache_func</span>
 
 
-<div class="viewcode-block" id="SideSet"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.SideSet">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">define</span>
+<div class="viewcode-block" id="SideSet">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.SideSet">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">define</span>
 <span class="k">class</span> <span class="nc">SideSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of faces in cells.&quot;&quot;&quot;</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -147,7 +149,10 @@
             <span class="k">assert</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_faces</span><span class="p">[</span><span class="n">c</span><span class="p">]))</span></div>
 
 
-<div class="viewcode-block" id="LabeledSet"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.LabeledSet">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LabeledSet">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.LabeledSet">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">LabeledSet</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A generic collection of entities.&quot;&quot;&quot;</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -169,6 +174,7 @@
                 <span class="k">assert</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">)</span></div>
 
 
+
 <span class="nd">@attr</span><span class="o">.</span><span class="n">define</span>
 <span class="k">class</span> <span class="nc">_ExtrusionHelper</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for extruding 2D --&gt; 3D&quot;&quot;&quot;</span>
@@ -188,7 +194,9 @@
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncells_tall</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncells_2D</span> <span class="o">+</span> <span class="n">z_cell</span> <span class="o">+</span> <span class="n">edge</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncells_tall</span>
 
 
-<div class="viewcode-block" id="Mesh2D"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="viewcode-block" id="Mesh2D">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">Mesh2D</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A 2D mesh class.</span>
 
@@ -256,10 +264,13 @@
     <span class="k">def</span> <span class="nf">edges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges_to_cells</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Mesh2D.edge_hash"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.edge_hash">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Mesh2D.edge_hash">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.edge_hash">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">edge_hash</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Hashes edges in a direction-independent way.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)))</span></div>
+
 
     <span class="nd">@property</span>
     <span class="nd">@cache</span>
@@ -309,7 +320,9 @@
     <span class="k">def</span> <span class="nf">boundary_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_edges</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Mesh2D.check_handedness"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.check_handedness">[docs]</a>    <span class="k">def</span> <span class="nf">check_handedness</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Mesh2D.check_handedness">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.check_handedness">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_handedness</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">:</span>
             <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">])</span>
@@ -325,6 +338,7 @@
                 <span class="n">cross</span> <span class="o">=</span> <span class="n">cross</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">cross</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span></div>
+
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># validate coords</span>
@@ -350,14 +364,19 @@
                 <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes</span>
             <span class="n">ls</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">is_tuple</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Mesh2D.next_available_labeled_setid"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.next_available_labeled_setid">[docs]</a>    <span class="k">def</span> <span class="nf">next_available_labeled_setid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Mesh2D.next_available_labeled_setid">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.next_available_labeled_setid">[docs]</a>
+    <span class="k">def</span> <span class="nf">next_available_labeled_setid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns next available LS id.&quot;&quot;&quot;</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">10000</span>
         <span class="k">while</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">ls</span><span class="o">.</span><span class="n">setid</span> <span class="k">for</span> <span class="n">ls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labeled_sets</span><span class="p">):</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Mesh2D.compute_centroid"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.compute_centroid">[docs]</a>    <span class="k">def</span> <span class="nf">compute_centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh2D.compute_centroid">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.compute_centroid">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Computes, based on coords, the centroid of a cell with ID c.</span>
 
 <span class="sd">        Note this ALWAYS recomputes the value, not using the cache.</span>
@@ -365,13 +384,16 @@
         <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="p">[</span><span class="n">c</span><span class="p">]])</span>
         <span class="k">return</span> <span class="n">points</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
+
     <span class="nd">@property</span>
     <span class="nd">@cache</span>
     <span class="k">def</span> <span class="nf">centroids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate surface mesh centroids.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">compute_centroid</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_cells</span><span class="p">)])</span>
 
-<div class="viewcode-block" id="Mesh2D.clear_geometry_cache"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.clear_geometry_cache">[docs]</a>    <span class="k">def</span> <span class="nf">clear_geometry_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Mesh2D.clear_geometry_cache">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.clear_geometry_cache">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear_geometry_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;If coordinates are changed, any computed, cached geometry must be</span>
 <span class="sd">        recomputed.  It is the USER&#39;s responsibility to call this</span>
 <span class="sd">        function if any coords are changed!</span>
@@ -380,7 +402,10 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_centroids&#39;</span><span class="p">):</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_centroids</span></div>
 
-<div class="viewcode-block" id="Mesh2D.plot"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh2D.plot">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.plot">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot the flattened 2D mesh.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cm</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">cm_mapper</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cells</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
@@ -397,12 +422,18 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">gons</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Mesh2D.write_vtk"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.write_vtk">[docs]</a>    <span class="k">def</span> <span class="nf">write_vtk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh2D.write_vtk">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.write_vtk">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_vtk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Writes to VTK.&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="p">))</span>
         <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">vtk_io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span> <span class="p">{</span> <span class="s1">&#39;triangle&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="p">)</span> <span class="p">})</span></div>
 
-<div class="viewcode-block" id="Mesh2D.transform"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh2D.transform">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.transform">[docs]</a>
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform a 2D mesh&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">mat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
@@ -422,7 +453,10 @@
         <span class="c1"># toss geometry cache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clear_geometry_cache</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Mesh2D.read_VTK"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="Mesh2D.read_VTK">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">read_VTK</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor from a VTK file.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -430,7 +464,10 @@
         <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">read_VTK_Unstructured</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Mesh2D.read_VTK_Unstructured"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK_Unstructured">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="Mesh2D.read_VTK_Unstructured">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK_Unstructured">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">read_VTK_Unstructured</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor from an unstructured VTK file.&quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
@@ -497,7 +534,10 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unstructured VTK must contain sections &#39;POLYGONS&#39;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">gons</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Mesh2D.read_VTK_Simplices"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK_Simplices">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="Mesh2D.read_VTK_Simplices">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.read_VTK_Simplices">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">read_VTK_Simplices</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor from an structured VTK file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -534,7 +574,10 @@
 
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">gons</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Mesh2D.from_Transect"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.from_Transect">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="Mesh2D.from_Transect">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.from_Transect">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_Transect</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a 2D surface strip mesh from transect data&quot;&quot;&quot;</span>
         <span class="c1"># coordinates</span>
@@ -566,7 +609,10 @@
         <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">Xc</span><span class="p">,</span> <span class="n">Yc</span><span class="p">,</span> <span class="n">Zc</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span> <span class="n">conn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Mesh2D.to_dual"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.to_dual">[docs]</a>    <span class="k">def</span> <span class="nf">to_dual</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh2D.to_dual">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh2D.to_dual">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dual</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a 2D surface mesh from a primal 2D triangular surface mesh.</span>
 
 <span class="sd">        Returns</span>
@@ -873,10 +919,14 @@
                 <span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">compression_map</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span>
             <span class="k">assert</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">dual_nodes</span><span class="p">,</span> <span class="n">dual_cells</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dual_from_primal_mapping</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">dual_nodes</span><span class="p">,</span> <span class="n">dual_cells</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dual_from_primal_mapping</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Mesh3D"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Mesh3D">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">Mesh3D</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A 3D mesh class.</span>
 
@@ -947,7 +997,9 @@
     <span class="k">def</span> <span class="nf">num_faces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">face_to_node_conn</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Mesh3D.validate"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Mesh3D.validate">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.validate">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks the validity of the mesh, or throws an AssertionError.&quot;&quot;&quot;</span>
         <span class="c1"># validate coords</span>
         <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">))</span>
@@ -983,7 +1035,10 @@
         <span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">material_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">material_ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_to_face_conn</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Mesh3D.next_available_labeled_setid"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.next_available_labeled_setid">[docs]</a>    <span class="k">def</span> <span class="nf">next_available_labeled_setid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh3D.next_available_labeled_setid">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.next_available_labeled_setid">[docs]</a>
+    <span class="k">def</span> <span class="nf">next_available_labeled_setid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns next available LS id.&quot;&quot;&quot;</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">10000</span>
         <span class="k">while</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">ls</span><span class="o">.</span><span class="n">setid</span> <span class="k">for</span> <span class="n">ls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labeled_sets</span><span class="p">)</span> <span class="ow">or</span> \
@@ -991,7 +1046,10 @@
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">i</span></div>
 
-<div class="viewcode-block" id="Mesh3D.write_vtk"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.write_vtk">[docs]</a>    <span class="k">def</span> <span class="nf">write_vtk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh3D.write_vtk">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.write_vtk">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_vtk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Writes to VTK.</span>
 
 <span class="sd">        Note, this just writes the topology/geometry information, for</span>
@@ -1009,7 +1067,10 @@
             <span class="n">wedges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">face_to_node_conn</span><span class="p">[</span><span class="n">fup</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_to_node_conn</span><span class="p">[</span><span class="n">fdn</span><span class="p">])</span>
         <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">vtk_io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span> <span class="p">{</span> <span class="s1">&#39;wedge&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wedges</span><span class="p">)</span> <span class="p">})</span></div>
 
-<div class="viewcode-block" id="Mesh3D.write_exodus"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.write_exodus">[docs]</a>    <span class="k">def</span> <span class="nf">write_exodus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">face_block_mode</span><span class="o">=</span><span class="s2">&quot;one block&quot;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Mesh3D.write_exodus">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.write_exodus">[docs]</a>
+    <span class="k">def</span> <span class="nf">write_exodus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">face_block_mode</span><span class="o">=</span><span class="s2">&quot;one block&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the 3D mesh to ExodusII using arbitrary polyhedra spec&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">exodus</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
@@ -1177,7 +1238,10 @@
         <span class="c1"># finish and close</span>
         <span class="n">e</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Mesh3D.summarize_extrusion"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.summarize_extrusion">[docs]</a>    <span class="nd">@staticmethod</span>
+
+<div class="viewcode-block" id="Mesh3D.summarize_extrusion">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.summarize_extrusion">[docs]</a>
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">summarize_extrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> <span class="n">ncells_per_layer</span><span class="p">,</span> <span class="n">mat_ids</span><span class="p">,</span> <span class="n">surface_cell_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Summarizes extruded data by printing info to log file.</span>
@@ -1202,7 +1266,10 @@
                 <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">rep_z</span> <span class="o">+=</span> <span class="n">thick</span> <span class="o">/</span> <span class="n">ncells_per_layer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Mesh3D.extruded_Mesh2D"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.extruded_Mesh2D">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="Mesh3D.extruded_Mesh2D">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.Mesh3D.extruded_Mesh2D">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">extruded_Mesh2D</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mesh2D</span><span class="p">,</span> <span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> <span class="n">ncells_per_layer</span><span class="p">,</span> <span class="n">mat_ids</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Uniformly extrude a 2D mesh to make a 3D mesh.</span>
 
@@ -1509,10 +1576,14 @@
                  <span class="n">side_sets</span><span class="o">=</span><span class="n">side_sets</span><span class="p">,</span>
                  <span class="n">labeled_sets</span><span class="o">=</span><span class="n">labeled_sets</span><span class="p">,</span>
                  <span class="n">crs</span><span class="o">=</span><span class="n">mesh2D</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">m3</span></div></div>
+        <span class="k">return</span> <span class="n">m3</span></div>
+</div>
 
 
-<div class="viewcode-block" id="telescope_factor"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.telescope_factor">[docs]</a><span class="k">def</span> <span class="nf">telescope_factor</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">):</span>
+
+<div class="viewcode-block" id="telescope_factor">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.telescope_factor">[docs]</a>
+<span class="k">def</span> <span class="nf">telescope_factor</span><span class="p">(</span><span class="n">ncells</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">layer_dz</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates a telescoping factor to fill a given layer.</span>
 
 <span class="sd">    Calculates a constant geometric factor, such that a layer of thickness</span>
@@ -1554,7 +1625,10 @@
     <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">root</span></div>
 
 
-<div class="viewcode-block" id="optimize_dzs"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.optimize_dzs">[docs]</a><span class="k">def</span> <span class="nf">optimize_dzs</span><span class="p">(</span><span class="n">dz_begin</span><span class="p">,</span>
+
+<div class="viewcode-block" id="optimize_dzs">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.optimize_dzs">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_dzs</span><span class="p">(</span><span class="n">dz_begin</span><span class="p">,</span>
                  <span class="n">dz_end</span><span class="p">,</span>
                  <span class="n">thickness</span><span class="p">,</span>
                  <span class="n">num_cells</span><span class="p">,</span>
@@ -1600,12 +1674,15 @@
     <span class="k">return</span> <span class="n">dzs</span><span class="p">,</span> <span class="n">res</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">transform_rotation</span><span class="p">(</span><span class="n">radians</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">),</span>
                                                              <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
 
 
-<div class="viewcode-block" id="create_submesh"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.create_submesh">[docs]</a><span class="k">def</span> <span class="nf">create_submesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
+<div class="viewcode-block" id="create_submesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.create_submesh">[docs]</a>
+<span class="k">def</span> <span class="nf">create_submesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">shp</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a shape that contains some cells of m2, create the submesh.&quot;&quot;&quot;</span>
     <span class="c1"># create the new coordinates and a map</span>
     <span class="n">new_coords_i</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1643,6 +1720,7 @@
     <span class="c1"># create the new mesh</span>
     <span class="n">new_mesh</span> <span class="o">=</span> <span class="n">Mesh2D</span><span class="p">(</span><span class="n">new_coords</span><span class="p">,</span> <span class="n">new_conns</span><span class="p">,</span> <span class="n">new_labeled_sets</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_coords_map</span><span class="p">,</span> <span class="n">new_conn_map</span><span class="p">,</span> <span class="n">new_mesh</span></div>
+
 </pre></div>
 
            </div>

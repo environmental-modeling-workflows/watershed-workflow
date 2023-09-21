@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -119,12 +119,17 @@
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="is_native"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.is_native">[docs]</a><span class="k">def</span> <span class="nf">is_native</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+<div class="viewcode-block" id="is_native">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.is_native">[docs]</a>
+<span class="k">def</span> <span class="nf">is_native</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Is this crs in the native format?&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="from_proj"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_proj">[docs]</a><span class="k">def</span> <span class="nf">from_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_proj">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_proj">[docs]</a>
+<span class="k">def</span> <span class="nf">from_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a Proj CRS to the workflow CRS standard.</span>
 
 <span class="sd">    Parameters</span>
@@ -147,7 +152,10 @@
     <span class="k">return</span> <span class="n">crs</span></div>
 
 
-<div class="viewcode-block" id="to_proj"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_proj">[docs]</a><span class="k">def</span> <span class="nf">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_proj">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_proj">[docs]</a>
+<span class="k">def</span> <span class="nf">to_proj</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a workflow CRS standard to a Proj4 CRS.</span>
 
 <span class="sd">    Parameters</span>
@@ -164,7 +172,10 @@
     <span class="k">return</span> <span class="n">crs</span></div>
 
 
-<div class="viewcode-block" id="from_fiona"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_fiona">[docs]</a><span class="k">def</span> <span class="nf">from_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_fiona">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_fiona">[docs]</a>
+<span class="k">def</span> <span class="nf">from_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a fiona CRS to the workflow CRS standard.</span>
 
 <span class="sd">    Parameters</span>
@@ -189,7 +200,10 @@
         <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="to_fiona"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_fiona">[docs]</a><span class="k">def</span> <span class="nf">to_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_fiona">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_fiona">[docs]</a>
+<span class="k">def</span> <span class="nf">to_fiona</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
 
 <span class="sd">    Parameters</span>
@@ -206,7 +220,10 @@
     <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="from_rasterio"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_rasterio">[docs]</a><span class="k">def</span> <span class="nf">from_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_rasterio">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_rasterio">[docs]</a>
+<span class="k">def</span> <span class="nf">from_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts from rasterio CRS to the workflow CRS standard.</span>
 
 <span class="sd">    Parameters</span>
@@ -227,7 +244,10 @@
         <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="to_rasterio"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_rasterio">[docs]</a><span class="k">def</span> <span class="nf">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_rasterio">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_rasterio">[docs]</a>
+<span class="k">def</span> <span class="nf">to_rasterio</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a fiona CRS.</span>
 
 <span class="sd">    Parameters</span>
@@ -245,7 +265,10 @@
     <span class="k">return</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="from_epsg"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_epsg">[docs]</a><span class="k">def</span> <span class="nf">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_epsg">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_epsg">[docs]</a>
+<span class="k">def</span> <span class="nf">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts from an EPSG code to a workflow CRS.</span>
 
 <span class="sd">    Parameters</span>
@@ -262,7 +285,10 @@
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="to_epsg"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_epsg">[docs]</a><span class="k">def</span> <span class="nf">to_epsg</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_epsg">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_epsg">[docs]</a>
+<span class="k">def</span> <span class="nf">to_epsg</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Attempts to conver to an EPSG code.</span>
 
 <span class="sd">    Parameters</span>
@@ -283,7 +309,10 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot convert CRS to EPSG code.&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="from_cartopy"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_cartopy">[docs]</a><span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_cartopy">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_cartopy">[docs]</a>
+<span class="k">def</span> <span class="nf">from_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a cartopy CRS to a workflow CRS.</span>
 
 <span class="sd">    Parameters</span>
@@ -298,10 +327,13 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs</span></div>
+
     <span class="c1">#return CRS.from_dict(crs.proj4_params)</span>
 
 
-<div class="viewcode-block" id="to_cartopy"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_cartopy">[docs]</a><span class="k">def</span> <span class="nf">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+<div class="viewcode-block" id="to_cartopy">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_cartopy">[docs]</a>
+<span class="k">def</span> <span class="nf">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a workflow CRS to a cartopy.crs.Projection.</span>
 
 <span class="sd">    Parameters</span>
@@ -389,22 +421,34 @@
     <span class="k">return</span> <span class="n">cl</span><span class="p">(</span><span class="o">**</span><span class="n">kw_proj</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="from_string"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_string">[docs]</a><span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_string">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_string">[docs]</a>
+<span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a CRS from a proj string&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="from_wkt"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_wkt">[docs]</a><span class="k">def</span> <span class="nf">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+
+<div class="viewcode-block" id="from_wkt">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.from_wkt">[docs]</a>
+<span class="k">def</span> <span class="nf">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a CRS from a WKT string specification&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_wkt</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="to_wkt"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_wkt">[docs]</a><span class="k">def</span> <span class="nf">to_wkt</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="to_wkt">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.to_wkt">[docs]</a>
+<span class="k">def</span> <span class="nf">to_wkt</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the WKT string of a CRS.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="default_crs"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.default_crs">[docs]</a><span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
+
+<div class="viewcode-block" id="default_crs">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.default_crs">[docs]</a>
+<span class="k">def</span> <span class="nf">default_crs</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for North America.</span>
 
 <span class="sd">    Returns</span>
@@ -417,7 +461,10 @@
     <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">5070</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="default_alaska_crs"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.default_alaska_crs">[docs]</a><span class="k">def</span> <span class="nf">default_alaska_crs</span><span class="p">():</span>
+
+<div class="viewcode-block" id="default_alaska_crs">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.default_alaska_crs">[docs]</a>
+<span class="k">def</span> <span class="nf">default_alaska_crs</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a default CRS that is functionally useful for Alaska.</span>
 
 <span class="sd">    Returns</span>
@@ -430,7 +477,10 @@
     <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">3338</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="daymet_crs"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.daymet_crs">[docs]</a><span class="k">def</span> <span class="nf">daymet_crs</span><span class="p">():</span>
+
+<div class="viewcode-block" id="daymet_crs">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.daymet_crs">[docs]</a>
+<span class="k">def</span> <span class="nf">daymet_crs</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the CRS used by DayMet files, but in m, not km.</span>
 
 <span class="sd">    Returns</span>
@@ -446,7 +496,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="daymet_crs_native"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.daymet_crs_native">[docs]</a><span class="k">def</span> <span class="nf">daymet_crs_native</span><span class="p">():</span>
+
+<div class="viewcode-block" id="daymet_crs_native">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.daymet_crs_native">[docs]</a>
+<span class="k">def</span> <span class="nf">daymet_crs_native</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the CRS used by DayMet files natively, in km, not in m.</span>
 
 <span class="sd">    Returns</span>
@@ -460,7 +513,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="latlon_crs"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.latlon_crs">[docs]</a><span class="k">def</span> <span class="nf">latlon_crs</span><span class="p">():</span>
+
+<div class="viewcode-block" id="latlon_crs">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.latlon_crs">[docs]</a>
+<span class="k">def</span> <span class="nf">latlon_crs</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the default latitude-longitude CRS.</span>
 
 <span class="sd">    Returns</span>
@@ -472,7 +528,10 @@
     <span class="k">return</span> <span class="n">from_epsg</span><span class="p">(</span><span class="mi">4269</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="equal"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.equal">[docs]</a><span class="k">def</span> <span class="nf">equal</span><span class="p">(</span><span class="n">crs1</span><span class="p">,</span> <span class="n">crs2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="equal">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.crs.equal">[docs]</a>
+<span class="k">def</span> <span class="nf">equal</span><span class="p">(</span><span class="n">crs1</span><span class="p">,</span> <span class="n">crs2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Tries to guess at the equality of two CRS objects.</span>
 
 <span class="sd">    Note this is not trivial, just checking strings or dicts results</span>
@@ -492,6 +551,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">crs1</span> <span class="o">==</span> <span class="n">crs2</span></div>
+
 </pre></div>
 
            </div>

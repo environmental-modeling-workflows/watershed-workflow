@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -87,7 +87,9 @@
 <span class="kn">import</span> <span class="nn">watershed_workflow.utils</span>
 
 
-<div class="viewcode-block" id="add_nlcd_labeled_sets"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_nlcd_labeled_sets">[docs]</a><span class="k">def</span> <span class="nf">add_nlcd_labeled_sets</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">nlcd_colors</span><span class="p">,</span> <span class="n">nlcd_names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="add_nlcd_labeled_sets">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_nlcd_labeled_sets">[docs]</a>
+<span class="k">def</span> <span class="nf">add_nlcd_labeled_sets</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">nlcd_colors</span><span class="p">,</span> <span class="n">nlcd_names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add labeled sets to a mesh -- one per unique color.</span>
 
 <span class="sd">    Parameters</span>
@@ -111,6 +113,7 @@
         <span class="n">m2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_get_labels</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;polygon&#39;</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">):</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">prop</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">polygons</span><span class="o">.</span><span class="n">properties</span><span class="p">]</span>
@@ -119,7 +122,9 @@
     <span class="k">return</span> <span class="n">labels</span>
 
 
-<div class="viewcode-block" id="add_polygonal_regions"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_polygonal_regions">[docs]</a><span class="k">def</span> <span class="nf">add_polygonal_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;watershed&#39;</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="add_polygonal_regions">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_polygonal_regions">[docs]</a>
+<span class="k">def</span> <span class="nf">add_polygonal_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;watershed&#39;</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Label m2 with region(s) for each polygon.</span>
 
 <span class="sd">    Always adds a surface region; if volume also adds a volume region</span>
@@ -171,12 +176,18 @@
     <span class="k">return</span> <span class="n">partitions</span></div>
 
 
-<div class="viewcode-block" id="add_watershed_regions"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_watershed_regions">[docs]</a><span class="k">def</span> <span class="nf">add_watershed_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="add_watershed_regions">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_watershed_regions">[docs]</a>
+<span class="k">def</span> <span class="nf">add_watershed_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated -- kept for backward compatibility.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">add_polygonal_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="add_watershed_regions_and_outlets"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_watershed_regions_and_outlets">[docs]</a><span class="k">def</span> <span class="nf">add_watershed_regions_and_outlets</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
+
+<div class="viewcode-block" id="add_watershed_regions_and_outlets">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_watershed_regions_and_outlets">[docs]</a>
+<span class="k">def</span> <span class="nf">add_watershed_regions_and_outlets</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
                                       <span class="n">hucs</span><span class="p">,</span>
                                       <span class="n">outlets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                       <span class="n">outlet_width</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
@@ -289,7 +300,10 @@
         <span class="n">m2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="add_river_corridor_regions"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_river_corridor_regions">[docs]</a><span class="k">def</span> <span class="nf">add_river_corridor_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="add_river_corridor_regions">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_river_corridor_regions">[docs]</a>
+<span class="k">def</span> <span class="nf">add_river_corridor_regions</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add labeled sets to m2 for each river corridor.</span>
 <span class="sd">     </span>
 <span class="sd">    Parameters:</span>
@@ -329,7 +343,10 @@
             <span class="n">m2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="add_regions_by_stream_order_rivers"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_regions_by_stream_order_rivers">[docs]</a><span class="k">def</span> <span class="nf">add_regions_by_stream_order_rivers</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="add_regions_by_stream_order_rivers">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_regions_by_stream_order_rivers">[docs]</a>
+<span class="k">def</span> <span class="nf">add_regions_by_stream_order_rivers</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add labeled sets to m2 for reaches of each stream order for each river.</span>
 <span class="sd">     </span>
 <span class="sd">    Parameters:</span>
@@ -353,7 +370,10 @@
         <span class="n">add_regions_by_stream_order</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_id</span><span class="o">=</span><span class="n">label</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="add_regions_by_stream_order"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_regions_by_stream_order">[docs]</a><span class="k">def</span> <span class="nf">add_regions_by_stream_order</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+
+<div class="viewcode-block" id="add_regions_by_stream_order">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_regions_by_stream_order">[docs]</a>
+<span class="k">def</span> <span class="nf">add_regions_by_stream_order</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add labeled sets to m2 for reaches of each stream order .</span>
 <span class="sd">     </span>
 <span class="sd">    Parameters:</span>
@@ -403,7 +423,10 @@
             <span class="n">m2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="add_region_by_reach_id"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_region_by_reach_id">[docs]</a><span class="k">def</span> <span class="nf">add_region_by_reach_id</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">reach_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="add_region_by_reach_id">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.add_region_by_reach_id">[docs]</a>
+<span class="k">def</span> <span class="nf">add_region_by_reach_id</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">reach_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add labeled sets to m2 for reaches of each stream order .</span>
 <span class="sd">     </span>
 <span class="sd">    Parameters:</span>
@@ -443,10 +466,14 @@
                 <span class="n">m2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="getNode"><a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.getNode">[docs]</a><span class="k">def</span> <span class="nf">getNode</span><span class="p">(</span><span class="n">nhd_id</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
+
+<div class="viewcode-block" id="getNode">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.regions.getNode">[docs]</a>
+<span class="k">def</span> <span class="nf">getNode</span><span class="p">(</span><span class="n">nhd_id</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;return node given NHDID&quot;&quot;&quot;</span>
     <span class="n">node</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">getNode</span><span class="p">(</span><span class="n">nhd_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">if</span> <span class="n">river</span><span class="o">.</span><span class="n">getNode</span><span class="p">(</span><span class="n">nhd_id</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">node</span></div>
+
 </pre></div>
 
            </div>

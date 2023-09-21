@@ -10,11 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -147,7 +147,9 @@
 <span class="c1"># -----------------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="get_huc"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_huc">[docs]</a><span class="k">def</span> <span class="nf">get_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_huc">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_huc">[docs]</a>
+<span class="k">def</span> <span class="nf">get_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a HUC shape object from a given code.</span>
 
 <span class="sd">    Parameters</span>
@@ -181,7 +183,10 @@
     <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">hu_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="get_hucs"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_hucs">[docs]</a><span class="k">def</span> <span class="nf">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="get_hucs">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_hucs">[docs]</a>
+<span class="k">def</span> <span class="nf">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get shape objects for all HUCs at a level contained in huc.</span>
 
 <span class="sd">    Parameters</span>
@@ -243,7 +248,10 @@
     <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">hu_shapes</span></div>
 
 
-<div class="viewcode-block" id="get_split_form_hucs"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_split_form_hucs">[docs]</a><span class="k">def</span> <span class="nf">get_split_form_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="get_split_form_hucs">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_split_form_hucs">[docs]</a>
+<span class="k">def</span> <span class="nf">get_split_form_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">huc</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a SplitHUCs object for all HUCs at level contained in huc.</span>
 
 <span class="sd">    A SplitHUCs object is an object which stores a collection of polygons which</span>
@@ -276,7 +284,10 @@
     <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">hu_shapes</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_shapes"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+
+<div class="viewcode-block" id="get_shapes">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
                <span class="n">index_or_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                <span class="n">in_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -367,7 +378,10 @@
         <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">shplys</span></div>
 
 
-<div class="viewcode-block" id="get_split_form_shapes"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_split_form_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_split_form_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">in_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="get_split_form_shapes">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_split_form_shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">get_split_form_shapes</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">index_or_bounds</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">in_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a shapefile.</span>
 
 <span class="sd">    Note that if index_or_bounds is a bounding box, in_crs must not be</span>
@@ -401,7 +415,10 @@
     <span class="k">return</span> <span class="n">crs</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_reaches"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_reaches">[docs]</a><span class="k">def</span> <span class="nf">get_reaches</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+
+<div class="viewcode-block" id="get_reaches">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_reaches">[docs]</a>
+<span class="k">def</span> <span class="nf">get_reaches</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
                 <span class="n">huc</span><span class="p">,</span>
                 <span class="n">bounds_or_shp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">in_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -577,7 +594,10 @@
     <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">reaches</span></div>
 
 
-<div class="viewcode-block" id="get_waterbodies"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_waterbodies">[docs]</a><span class="k">def</span> <span class="nf">get_waterbodies</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+
+<div class="viewcode-block" id="get_waterbodies">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_waterbodies">[docs]</a>
+<span class="k">def</span> <span class="nf">get_waterbodies</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
                     <span class="n">huc</span><span class="p">,</span>
                     <span class="n">bounds_or_shp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">in_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -691,7 +711,10 @@
     <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">bodies</span></div>
 
 
-<div class="viewcode-block" id="get_raster_on_shape"><a class="viewcode-back" href="../hilev.html#watershed_workflow.get_raster_on_shape">[docs]</a><span class="k">def</span> <span class="nf">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+
+<div class="viewcode-block" id="get_raster_on_shape">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.get_raster_on_shape">[docs]</a>
+<span class="k">def</span> <span class="nf">get_raster_on_shape</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
                         <span class="n">shape</span><span class="p">,</span>
                         <span class="n">in_crs</span><span class="p">,</span>
                         <span class="n">out_crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -792,10 +815,13 @@
     <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">raster</span></div>
 
 
+
 <span class="c1">#</span>
 <span class="c1"># functions for relating objects</span>
 <span class="c1"># -----------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="find_huc"><a class="viewcode-back" href="../hilev.html#watershed_workflow.find_huc">[docs]</a><span class="k">def</span> <span class="nf">find_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">in_crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">shrink_factor</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
+<div class="viewcode-block" id="find_huc">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.find_huc">[docs]</a>
+<span class="k">def</span> <span class="nf">find_huc</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">in_crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">,</span> <span class="n">shrink_factor</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the smallest HUC containing shp.</span>
 
 <span class="sd">    Parameters</span>
@@ -878,10 +904,13 @@
     <span class="k">return</span> <span class="n">result</span></div>
 
 
+
 <span class="c1">#</span>
 <span class="c1"># functions for manipulating objects</span>
 <span class="c1"># -----------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="construct_rivers"><a class="viewcode-back" href="../hilev.html#watershed_workflow.construct_rivers">[docs]</a><span class="k">def</span> <span class="nf">construct_rivers</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span>
+<div class="viewcode-block" id="construct_rivers">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.construct_rivers">[docs]</a>
+<span class="k">def</span> <span class="nf">construct_rivers</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span>
                      <span class="n">method</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span><span class="p">,</span>
                      <span class="n">ignore_small_rivers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                      <span class="n">prune_by_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -944,6 +973,7 @@
 
     <span class="k">return</span> <span class="n">reduce_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">ignore_small_rivers</span><span class="p">,</span> <span class="n">prune_by_area</span><span class="p">,</span> <span class="n">area_property</span><span class="p">,</span>
                          <span class="n">remove_diversions</span><span class="p">,</span> <span class="n">remove_braided_divergences</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">reduce_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span>
@@ -1024,7 +1054,9 @@
     <span class="k">return</span> <span class="n">rivers</span>
 
 
-<div class="viewcode-block" id="simplify"><a class="viewcode-back" href="../hilev.html#watershed_workflow.simplify">[docs]</a><span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+<div class="viewcode-block" id="simplify">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.simplify">[docs]</a>
+<span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
              <span class="n">rivers</span><span class="p">,</span>
              <span class="n">waterbodies</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">simplify_hucs</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -1185,7 +1217,10 @@
     <span class="k">return</span> <span class="n">rivers</span></div>
 
 
-<div class="viewcode-block" id="densify"><a class="viewcode-back" href="../hilev.html#watershed_workflow.densify">[docs]</a><span class="k">def</span> <span class="nf">densify</span><span class="p">(</span><span class="n">objct</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">objct_orig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="densify">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.densify">[docs]</a>
+<span class="k">def</span> <span class="nf">densify</span><span class="p">(</span><span class="n">objct</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">objct_orig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Redensify a river, huc, or waterbodies object, meeting a provided target or target resolution function.</span>
 
 <span class="sd">    Parameters</span>
@@ -1216,6 +1251,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;densify() currently only supports list(River) and SplitHUC objects.&quot;</span><span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">simplify_and_prune</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
                        <span class="n">reaches</span><span class="p">,</span>
                        <span class="n">simplify_hucs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1232,7 +1268,9 @@
     <span class="k">return</span> <span class="n">rivers</span>
 
 
-<div class="viewcode-block" id="triangulate"><a class="viewcode-back" href="../hilev.html#watershed_workflow.triangulate">[docs]</a><span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+<div class="viewcode-block" id="triangulate">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.triangulate">[docs]</a>
+<span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
                 <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1409,7 +1447,10 @@
     <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span></div>
 
 
-<div class="viewcode-block" id="tessalate_river_aligned"><a class="viewcode-back" href="../hilev.html#watershed_workflow.tessalate_river_aligned">[docs]</a><span class="k">def</span> <span class="nf">tessalate_river_aligned</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+
+<div class="viewcode-block" id="tessalate_river_aligned">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.tessalate_river_aligned">[docs]</a>
+<span class="k">def</span> <span class="nf">tessalate_river_aligned</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
                             <span class="n">rivers</span><span class="p">,</span>
                             <span class="n">river_width</span><span class="p">,</span>
                             <span class="n">river_n_quads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -1491,7 +1532,10 @@
         <span class="k">return</span> <span class="n">tri_verts</span><span class="p">,</span> <span class="n">conn_list</span></div>
 
 
-<div class="viewcode-block" id="elevate"><a class="viewcode-back" href="../hilev.html#watershed_workflow.elevate">[docs]</a><span class="k">def</span> <span class="nf">elevate</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">mesh_crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;piecewise bilinear&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="elevate">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.elevate">[docs]</a>
+<span class="k">def</span> <span class="nf">elevate</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">mesh_crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;piecewise bilinear&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Elevate mesh_points onto the provided dem.</span>
 
 <span class="sd">    Parameters</span>
@@ -1531,7 +1575,10 @@
     <span class="k">return</span> <span class="n">out</span></div>
 
 
-<div class="viewcode-block" id="values_from_raster"><a class="viewcode-back" href="../hilev.html#watershed_workflow.values_from_raster">[docs]</a><span class="k">def</span> <span class="nf">values_from_raster</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">points_crs</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_profile</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="values_from_raster">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.values_from_raster">[docs]</a>
+<span class="k">def</span> <span class="nf">values_from_raster</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">points_crs</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_profile</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate a raster onto a collection of unstructured points.</span>
 
 <span class="sd">    Parameters</span>
@@ -1595,7 +1642,10 @@
     <span class="k">return</span> <span class="n">out</span></div>
 
 
-<div class="viewcode-block" id="color_raster_from_shapes"><a class="viewcode-back" href="../hilev.html#watershed_workflow.color_raster_from_shapes">[docs]</a><span class="k">def</span> <span class="nf">color_raster_from_shapes</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span>
+
+<div class="viewcode-block" id="color_raster_from_shapes">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.color_raster_from_shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">color_raster_from_shapes</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span>
                              <span class="n">shapes_crs</span><span class="p">,</span>
                              <span class="n">shape_colors</span><span class="p">,</span>
                              <span class="n">raster_bounds</span><span class="p">,</span>
@@ -1672,7 +1722,10 @@
     <span class="k">return</span> <span class="n">raster_profile</span><span class="p">,</span> <span class="n">raster</span></div>
 
 
-<div class="viewcode-block" id="color_existing_raster_from_shapes"><a class="viewcode-back" href="../hilev.html#watershed_workflow.color_existing_raster_from_shapes">[docs]</a><span class="k">def</span> <span class="nf">color_existing_raster_from_shapes</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">shapes_crs</span><span class="p">,</span> <span class="n">shape_colors</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_profile</span><span class="p">):</span>
+
+<div class="viewcode-block" id="color_existing_raster_from_shapes">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.color_existing_raster_from_shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">color_existing_raster_from_shapes</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">shapes_crs</span><span class="p">,</span> <span class="n">shape_colors</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">raster_profile</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Color in a raster by filling in a collection of shapes.</span>
 
 <span class="sd">    Given a canvas, find the intersection of that shape with the canvas and</span>
@@ -1714,6 +1767,7 @@
                                                    <span class="n">raster_profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span>
                                                    <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">raster</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_id</span></div>
+
 </pre></div>
 
            </div>

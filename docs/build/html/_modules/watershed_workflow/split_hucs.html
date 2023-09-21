@@ -10,11 +10,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -93,11 +93,16 @@
 <span class="n">_rel_tol</span> <span class="o">=</span> <span class="mf">1.e-5</span>
 
 
-<div class="viewcode-block" id="GeometryError"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.GeometryError">[docs]</a><span class="k">class</span> <span class="nc">GeometryError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="GeometryError">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.GeometryError">[docs]</a>
+<span class="k">class</span> <span class="nc">GeometryError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="HandledCollection"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection">[docs]</a><span class="k">class</span> <span class="nc">HandledCollection</span><span class="p">:</span>
+
+<div class="viewcode-block" id="HandledCollection">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection">[docs]</a>
+<span class="k">class</span> <span class="nc">HandledCollection</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of of objects and handles for those objects.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create&quot;&quot;&quot;</span>
@@ -115,20 +120,29 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set an object&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
-<div class="viewcode-block" id="HandledCollection.add"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<div class="viewcode-block" id="HandledCollection.add">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add">[docs]</a>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a object, returning a handle to that object&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">ret</span></div>
 
-<div class="viewcode-block" id="HandledCollection.add_many"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add_many">[docs]</a>    <span class="k">def</span> <span class="nf">add_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+
+<div class="viewcode-block" id="HandledCollection.add_many">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add_many">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add many objects, returning a list of handles.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="HandledCollection.pop"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+
+<div class="viewcode-block" id="HandledCollection.pop">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.pop">[docs]</a>
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a handle and its object.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for the collection.&quot;&quot;&quot;</span>
@@ -138,10 +152,13 @@
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
 
-<div class="viewcode-block" id="HandledCollection.handles"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.handles">[docs]</a>    <span class="k">def</span> <span class="nf">handles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="HandledCollection.handles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.handles">[docs]</a>
+    <span class="k">def</span> <span class="nf">handles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for handles&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">yield</span> <span class="n">k</span></div>
+
 
     <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -152,7 +169,10 @@
             <span class="k">yield</span> <span class="n">it</span></div>
 
 
-<div class="viewcode-block" id="SplitHUCs"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs">[docs]</a><span class="k">class</span> <span class="nc">SplitHUCs</span><span class="p">:</span>
+
+<div class="viewcode-block" id="SplitHUCs">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs">[docs]</a>
+<span class="k">class</span> <span class="nc">SplitHUCs</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for dealing with the multiple interacting views of HUCs</span>
 
 <span class="sd">    Parameters</span>
@@ -265,7 +285,9 @@
         <span class="c1"># the list of shapes, each entry in the list is a tuple</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gons</span> <span class="o">=</span> <span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">boundary_gon</span><span class="p">,</span> <span class="n">intersection_gon</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="SplitHUCs.polygon"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygon">[docs]</a>    <span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<div class="viewcode-block" id="SplitHUCs.polygon">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygon">[docs]</a>
+    <span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct polygon i and return a copy.&quot;&quot;&quot;</span>
         <span class="n">segs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">boundary</span><span class="p">,</span> <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -283,19 +305,28 @@
         <span class="n">poly</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">poly</span></div>
 
-<div class="viewcode-block" id="SplitHUCs.polygons"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygons">[docs]</a>    <span class="k">def</span> <span class="nf">polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SplitHUCs.polygons">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygons">[docs]</a>
+    <span class="k">def</span> <span class="nf">polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the polygons.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">)):</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">polygon</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SplitHUCs.spines"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.spines">[docs]</a>    <span class="k">def</span> <span class="nf">spines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SplitHUCs.spines">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.spines">[docs]</a>
+    <span class="k">def</span> <span class="nf">spines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over spines.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">b</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">i</span></div>
 
-<div class="viewcode-block" id="SplitHUCs.exterior"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.exterior">[docs]</a>    <span class="k">def</span> <span class="nf">exterior</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SplitHUCs.exterior">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.exterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">exterior</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct boundary polygon and return a copy.&quot;&quot;&quot;</span>
         <span class="n">segs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
@@ -307,22 +338,32 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">([</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">ml</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="SplitHUCs.deep_copy"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.deep_copy">[docs]</a>    <span class="k">def</span> <span class="nf">deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SplitHUCs.deep_copy">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.deep_copy">[docs]</a>
+    <span class="k">def</span> <span class="nf">deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a deep copy&quot;&quot;&quot;</span>
         <span class="n">cp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cp</span></div>
+
 
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="simplify"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.simplify">[docs]</a><span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="simplify">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.simplify">[docs]</a>
+<span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplify, IN PLACE, all segments in the polygon representation.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="removeHoles"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.removeHoles">[docs]</a><span class="k">def</span> <span class="nf">removeHoles</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span> <span class="n">remove_all_interior</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+<div class="viewcode-block" id="removeHoles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.removeHoles">[docs]</a>
+<span class="k">def</span> <span class="nf">removeHoles</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span> <span class="n">remove_all_interior</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes interior small holes between the boundaries of polygons.</span>
 
 <span class="sd">    Note this assumes the polygons are mostly disjoint.</span>
@@ -387,7 +428,10 @@
     <span class="k">return</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">big_holes</span></div>
 
 
-<div class="viewcode-block" id="partition"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.partition">[docs]</a><span class="k">def</span> <span class="nf">partition</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">):</span>
+
+<div class="viewcode-block" id="partition">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.partition">[docs]</a>
+<span class="k">def</span> <span class="nf">partition</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which mostly share boundaries, make sure</span>
 <span class="sd">    they partition the space.  Often HUC boundaries have minor</span>
 <span class="sd">    overlaps and underlaps -- here we try to account for wiggles.</span>
@@ -425,7 +469,10 @@
     <span class="k">return</span> <span class="n">list_of_shapes</span></div>
 
 
-<div class="viewcode-block" id="intersectAndSplit"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.intersectAndSplit">[docs]</a><span class="k">def</span> <span class="nf">intersectAndSplit</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+
+<div class="viewcode-block" id="intersectAndSplit">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.intersectAndSplit">[docs]</a>
+<span class="k">def</span> <span class="nf">intersectAndSplit</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which share boundaries (i.e. they partition</span>
 <span class="sd">    some space), return a compilation of their segments.</span>
 
@@ -523,7 +570,10 @@
     <span class="k">return</span> <span class="n">uniques_r</span><span class="p">,</span> <span class="n">intersections</span></div>
 
 
-<div class="viewcode-block" id="find_outlets_by_crossings"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_crossings">[docs]</a><span class="k">def</span> <span class="nf">find_outlets_by_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug_plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="find_outlets_by_crossings">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_crossings">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug_plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;For each HUC, find all outlets using a river network&#39;s crossing points.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">tol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tol</span> <span class="o">=</span> <span class="mi">10</span>
@@ -668,7 +718,10 @@
     <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">outlet_locs</span></div>
 
 
-<div class="viewcode-block" id="find_outlets_by_elevation"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_elevation">[docs]</a><span class="k">def</span> <span class="nf">find_outlets_by_elevation</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">elev_raster</span><span class="p">,</span> <span class="n">elev_raster_profile</span><span class="p">):</span>
+
+<div class="viewcode-block" id="find_outlets_by_elevation">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_elevation">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_elevation</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">elev_raster</span><span class="p">,</span> <span class="n">elev_raster_profile</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Find outlets by the minimum elevation on the boundary.&quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">watershed_workflow</span>
     <span class="n">exterior</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">exterior</span>
@@ -686,7 +739,10 @@
     <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">outlets</span></div>
 
 
-<div class="viewcode-block" id="find_outlets_by_hydroseq"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_hydroseq">[docs]</a><span class="k">def</span> <span class="nf">find_outlets_by_hydroseq</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+
+<div class="viewcode-block" id="find_outlets_by_hydroseq">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_hydroseq">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_hydroseq</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Find outlets using the HydroSequence VAA of NHDPlus.</span>
 
 <span class="sd">    Finds the minimum hydroseq reach in each HUC, and intersects that</span>
@@ -733,7 +789,10 @@
     <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">polygon_outlets</span></div>
 
 
-<div class="viewcode-block" id="computeNonOverlappingPolygons"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.computeNonOverlappingPolygons">[docs]</a><span class="k">def</span> <span class="nf">computeNonOverlappingPolygons</span><span class="p">(</span><span class="n">polys</span><span class="p">,</span>
+
+<div class="viewcode-block" id="computeNonOverlappingPolygons">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.computeNonOverlappingPolygons">[docs]</a>
+<span class="k">def</span> <span class="nf">computeNonOverlappingPolygons</span><span class="p">(</span><span class="n">polys</span><span class="p">,</span>
                                   <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span>
                                   <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span>
                                   <span class="n">remove_all_interior</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -812,6 +871,7 @@
     <span class="n">partition</span><span class="p">,</span> <span class="n">holes</span> <span class="o">=</span> <span class="n">removeHoles</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">,</span> <span class="n">remove_all_interior</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">partition</span><span class="p">,</span> <span class="n">holes</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">biggest</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>

@@ -10,11 +10,11 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -87,7 +87,9 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 
 
-<div class="viewcode-block" id="FileManagerRaster"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster">[docs]</a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
+<div class="viewcode-block" id="FileManagerRaster">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster">[docs]</a>
+<span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
 <span class="k">class</span> <span class="nc">FileManagerRaster</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple class for reading rasters.</span>
 
@@ -99,7 +101,9 @@
     <span class="n">_filename</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;raster&#39;</span>
 
-<div class="viewcode-block" id="FileManagerRaster.get_raster"><a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster.get_raster">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="FileManagerRaster.get_raster">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_raster.FileManagerRaster.get_raster">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_raster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Download and read a DEM for this shape, clipping to the shape.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -185,7 +189,9 @@
 
         <span class="k">if</span> <span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">window_profile</span> <span class="ow">and</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">],</span> <span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">window_profile</span><span class="p">,</span> <span class="n">raster</span></div></div>
+        <span class="k">return</span> <span class="n">window_profile</span><span class="p">,</span> <span class="n">raster</span></div>
+</div>
+
 </pre></div>
 
            </div>
