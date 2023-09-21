@@ -91,6 +91,7 @@
 <span class="kn">import</span> <span class="nn">scipy.interpolate</span>
 <span class="kn">import</span> <span class="nn">shapely.geometry</span>
 <span class="kn">import</span> <span class="nn">shapely.ops</span>
+<span class="kn">import</span> <span class="nn">shapely.wkt</span>
 <span class="kn">import</span> <span class="nn">shapely.prepared</span>
 <span class="kn">import</span> <span class="nn">shapely.affinity</span>
 <span class="kn">import</span> <span class="nn">rasterio</span>
@@ -160,12 +161,12 @@
 
 <div class="viewcode-block" id="deepcopy"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.deepcopy">[docs]</a><span class="k">def</span> <span class="nf">deepcopy</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Deals with properties dictionary&quot;&quot;&quot;</span>
-    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">shp</span><span class="p">)(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
+    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">shp</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="n">list_of_shapes</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
             <span class="n">new</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">properties</span>
     <span class="k">return</span> <span class="n">new_list</span></div>
-    
+
 
 <div class="viewcode-block" id="create_bounds"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.create_bounds">[docs]</a><span class="k">def</span> <span class="nf">create_bounds</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;General bounding box for fiona and shapely types.&quot;&quot;&quot;</span>
@@ -683,6 +684,14 @@
     <span class="k">return</span> <span class="n">s1</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">tol</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="CutError"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.CutError">[docs]</a><span class="k">class</span> <span class="nc">CutError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">cutline</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seg</span> <span class="o">=</span> <span class="n">seg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cutline</span> <span class="o">=</span> <span class="n">cutline</span></div>
+
+
 <div class="viewcode-block" id="cut"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.cut">[docs]</a><span class="k">def</span> <span class="nf">cut</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">cutline</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Cuts a line at all intersections with cutline.  If an existing</span>
 <span class="sd">    point in line is within tol of the cutline, do not add an additional</span>
@@ -748,8 +757,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dual/multiple section: type = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">point</span><span class="p">)))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; point = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">point</span><span class="p">))</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Dual/multiple intersection in a single seg... ugh!  &quot;</span>
-                               <span class="o">+</span> <span class="s2">&quot;Intersection is of type &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">point</span><span class="p">)))</span>
+            <span class="k">raise</span> <span class="n">CutError</span><span class="p">(</span>
+                <span class="s2">&quot;Dual/multiple intersection in a single seg... ugh!  &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;Intersection is of type &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">point</span><span class="p">)),</span> <span class="n">line</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">cutline</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">segcoords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">segcoords</span><span class="p">))</span>
@@ -835,8 +845,13 @@
     <span class="n">y1</span> <span class="o">=</span> <span class="n">v1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">x2</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">y2</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">mag</span> <span class="o">=</span> <span class="mf">180.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">((</span><span class="n">x1</span><span class="o">*</span><span class="n">x2</span> <span class="o">+</span> <span class="n">y1</span><span class="o">*</span><span class="n">y2</span><span class="p">)</span> <span class="o">/</span>
-                                   <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x1</span> <span class="o">+</span> <span class="n">y1</span><span class="o">*</span><span class="n">y1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x2</span><span class="o">*</span><span class="n">x2</span> <span class="o">+</span> <span class="n">y2</span><span class="o">*</span><span class="n">y2</span><span class="p">)))</span>
+    <span class="n">numer</span> <span class="o">=</span> <span class="n">x1</span><span class="o">*</span><span class="n">x2</span> <span class="o">+</span> <span class="n">y1</span><span class="o">*</span><span class="n">y2</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x1</span> <span class="o">+</span> <span class="n">y1</span><span class="o">*</span><span class="n">y1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x2</span><span class="o">*</span><span class="n">x2</span> <span class="o">+</span> <span class="n">y2</span><span class="o">*</span><span class="n">y2</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">arg</span> <span class="o">=</span> <span class="n">numer</span> <span class="o">/</span> <span class="n">denom</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">arg</span> <span class="o">&lt;</span> <span class="mf">1.1</span> <span class="ow">and</span> <span class="n">arg</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">1.1</span><span class="p">)</span>  <span class="c1"># roundoff problems</span>
+    <span class="n">arg</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">numer</span> <span class="o">/</span> <span class="n">denom</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">mag</span> <span class="o">=</span> <span class="mf">180.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
     <span class="n">sign</span> <span class="o">=</span> <span class="n">x1</span><span class="o">*</span><span class="n">y2</span> <span class="o">-</span> <span class="n">x2</span><span class="o">*</span><span class="n">y1</span>
     <span class="k">if</span> <span class="n">sign</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">mag</span>
@@ -922,7 +937,14 @@
 <span class="sd">    the same... we avoid using intersects() for this reason.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">inter</span> <span class="o">=</span> <span class="n">shp1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">shp2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">or</span> \
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="volumetric_intersection"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.volumetric_intersection">[docs]</a><span class="k">def</span> <span class="nf">volumetric_intersection</span><span class="p">(</span><span class="n">shp1</span><span class="p">,</span> <span class="n">shp2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks whether an intersection includes volume and not just points and lines.&quot;&quot;&quot;</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="n">shp1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">shp2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inter</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
 
 
 <div class="viewcode-block" id="filter_to_shape"><a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.filter_to_shape">[docs]</a><span class="k">def</span> <span class="nf">filter_to_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">to_filter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">):</span>

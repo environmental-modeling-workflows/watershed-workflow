@@ -80,6 +80,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.plot">Plotting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.plot.Labeler"><code class="docutils literal notranslate"><span class="pre">Labeler</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.plot.get_ax"><code class="docutils literal notranslate"><span class="pre">get_ax()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.plot.huc"><code class="docutils literal notranslate"><span class="pre">huc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.plot.hucs"><code class="docutils literal notranslate"><span class="pre">hucs()</span></code></a></li>
@@ -123,6 +124,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.generate_coords"><code class="docutils literal notranslate"><span class="pre">generate_coords()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.close"><code class="docutils literal notranslate"><span class="pre">close()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.contains"><code class="docutils literal notranslate"><span class="pre">contains()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.CutError"><code class="docutils literal notranslate"><span class="pre">CutError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.cut"><code class="docutils literal notranslate"><span class="pre">cut()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.distance"><code class="docutils literal notranslate"><span class="pre">distance()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.in_neighborhood"><code class="docutils literal notranslate"><span class="pre">in_neighborhood()</span></code></a></li>
@@ -138,6 +140,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.orientation"><code class="docutils literal notranslate"><span class="pre">orientation()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.intersects"><code class="docutils literal notranslate"><span class="pre">intersects()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.non_point_intersection"><code class="docutils literal notranslate"><span class="pre">non_point_intersection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.volumetric_intersection"><code class="docutils literal notranslate"><span class="pre">volumetric_intersection()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.filter_to_shape"><code class="docutils literal notranslate"><span class="pre">filter_to_shape()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.cluster"><code class="docutils literal notranslate"><span class="pre">cluster()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.treat_segment_collinearity"><code class="docutils literal notranslate"><span class="pre">treat_segment_collinearity()</span></code></a></li>
@@ -516,6 +519,63 @@ simple wrapper to write a shapely polygon as a matplotlib patch.</p>
 layers of objects.  In this case, all plotting functions accept matplotlib’s
 zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.plot.Labeler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">Labeler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#Labeler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.Labeler" title="Permalink to this definition"></a></dt>
+<dd><p>A labeling widget that can be attached to matplotlib figures to display info on-click.</p>
+<p>When an geometry item (e.g. point, line, or polygon) is clicked on
+the figure, that is mapped into the original WW object that
+generated the geometry, and then run through a function to
+generate a label that is written to the title of the figure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.Axes object</em>) – The axes to work with.</p></li>
+<li><p><strong>items</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>artist</em><em>, </em><em>metadata</em><em>, </em><em>formatter</em><em>]</em><em>]</em>) – See documentation of the addItem() method.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.plot.Labeler.addItem">
+<span class="sig-name descname"><span class="pre">addItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">artist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formatter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#Labeler.addItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.Labeler.addItem" title="Permalink to this definition"></a></dt>
+<dd><p>Adds an item to the list of things to label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>List</em><em>[</em><em>*</em><em>]</em>) – A list of objects being labeled.  This is likely the
+underlying data, with properties, that was passed to
+a ww.plot function.</p></li>
+<li><p><strong>artist</strong> (<em>matplotlib collection</em>) – A matplotlib Collection, likely the return value of
+a ww.plot call or similar.</p></li>
+<li><p><strong>formatter</strong> (<em>function</em><em> or </em><em>str</em>) – A function that accepts an entry in data and returns a
+string to label the item selected.  If this is a string,
+it is assumed to be a formattable string to which the
+item’s properties dictionary is passed.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.plot.Labeler.deselect">
+<span class="sig-name descname"><span class="pre">deselect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#Labeler.deselect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.Labeler.deselect" title="Permalink to this definition"></a></dt>
+<dd><p>Clears anything plotted in the last click</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.plot.Labeler.select">
+<span class="sig-name descname"><span class="pre">select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#Labeler.select"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.Labeler.select" title="Permalink to this definition"></a></dt>
+<dd><p>Selects item i, collection index j, with a click at xy</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.plot.Labeler.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#Labeler.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.Labeler.update" title="Permalink to this definition"></a></dt>
+<dd><p>Acts on click.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.plot.get_ax">
 <span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">get_ax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axgrid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#get_ax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.get_ax" title="Permalink to this definition"></a></dt>
@@ -663,7 +723,7 @@ matplotlib.collections.LineCollection.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.plot.rivers">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'b'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.rivers" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">rivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#rivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.rivers" title="Permalink to this definition"></a></dt>
 <dd><p>Plot an itereable collection of river Tree objects.</p>
 <p>A wrapper for plot.shply()</p>
 <dl class="field-list simple">
@@ -1333,6 +1393,11 @@ you from just comparing coordinates.</p>
 <dd><p>A contains algorithm that deals with close/roundoff issues</p>
 </dd></dl>
 
+<dl class="py exception">
+<dt class="sig sig-object py" id="watershed_workflow.utils.CutError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">CutError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutline</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#CutError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.CutError" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.utils.cut">
 <span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">cut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#cut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.cut" title="Permalink to this definition"></a></dt>
@@ -1434,6 +1499,12 @@ the same… we avoid using shapely.intersects() for this reason.</p>
 <dd><p>Checks whether an intersection is larger than a point.</p>
 <p>Note that intersection being empty and intersects are not always reliably
 the same… we avoid using intersects() for this reason.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.utils.volumetric_intersection">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">volumetric_intersection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shp1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shp2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#volumetric_intersection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.volumetric_intersection" title="Permalink to this definition"></a></dt>
+<dd><p>Checks whether an intersection includes volume and not just points and lines.</p>
 </dd></dl>
 
 <dl class="py function">

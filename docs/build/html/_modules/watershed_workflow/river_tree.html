@@ -123,26 +123,148 @@
             <span class="nb">super</span><span class="p">(</span><span class="n">River</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">segment</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="River.removePreserveProperties"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.removePreserveProperties">[docs]</a>    <span class="k">def</span> <span class="nf">removePreserveProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a reach, preserving catchments and area properties.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="River.getSegment"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.getSegment">[docs]</a>    <span class="k">def</span> <span class="nf">getSegment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Used if one needs segments with properties.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">segment</span></div>
+
+<div class="viewcode-block" id="River.prune"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.prune">[docs]</a>    <span class="k">def</span> <span class="nf">prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preserve_catchments</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a reach all the way to the leaf node.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot prune a branch with no parent.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">preserve_catchments</span><span class="p">:</span>
             <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
-            <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span>
+
+            <span class="c1"># accumulate the sub-catchments</span>
+            <span class="n">catches</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">n</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="n">n</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">catches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ca</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">catches</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ca</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">ca</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">properties</span> <span class="ow">or</span> <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ca</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span>
-                        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">],</span> <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]])</span>
+                        <span class="p">[</span><span class="n">ca</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]])</span>
 
+            <span class="c1"># accumulate the area</span>
             <span class="k">if</span> <span class="s1">&#39;area&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
-                <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span>
+                <span class="n">total_area</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">())</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">total_area</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="River.prune"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.prune">[docs]</a>    <span class="k">def</span> <span class="nf">prune</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a reach all the way to the leaf node.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">postOrder</span><span class="p">():</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">removePreserveProperties</span><span class="p">()</span></div>
+<div class="viewcode-block" id="River.split"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split the reach at the ith coordinate of the segment.</span>
+
+<span class="sd">        Note that this could, but does not, split the catchment!</span>
+
+<span class="sd">        Returns upstream_node, downstream_node</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">upstream_segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">downstream_segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="n">i</span><span class="p">:])</span>
+        <span class="n">downstream_area_frac</span> <span class="o">=</span> <span class="n">downstream_segment</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span>
+
+        <span class="c1"># fix properties</span>
+        <span class="n">downstream_props</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;AreaSqKm&#39;</span> <span class="ow">in</span> <span class="n">downstream_props</span><span class="p">:</span>
+            <span class="n">downstream_props</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">downstream_area_frac</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">downstream_area_frac</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;HydrologicSequence&#39;</span> <span class="ow">in</span> <span class="n">downstream_props</span><span class="p">:</span>
+            <span class="n">downstream_props</span><span class="p">[</span><span class="s1">&#39;HydrologicSequence&#39;</span><span class="p">]</span> <span class="o">-=</span> <span class="mf">0.5</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DownstreamMainPathHydroSeq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">downstream_props</span><span class="p">[</span><span class="s1">&#39;HydrologicSequence&#39;</span><span class="p">]</span>
+
+        <span class="n">ID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
+        <span class="n">downstream_props</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ID</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ID</span> <span class="o">+</span> <span class="s1">&#39;b&#39;</span>
+
+        <span class="k">if</span> <span class="s1">&#39;DivergenceCode&#39;</span> <span class="ow">in</span> <span class="n">downstream_props</span><span class="p">:</span>
+            <span class="n">downstream_props</span><span class="p">[</span><span class="s1">&#39;DivergenceCode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># fix self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">upstream_segment</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+        <span class="c1"># new node</span>
+        <span class="n">downstream_segment</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">downstream_props</span>
+        <span class="n">new_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">downstream_segment</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="p">])</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">new_node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">,</span> <span class="n">new_node</span></div>
+
+<div class="viewcode-block" id="River.merge"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merges this with its parent.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">siblings</span><span class="p">()))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># fix properties</span>
+        <span class="k">if</span> <span class="s1">&#39;areasqkm&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;areasqkm&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;areasqkm&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;AreaSqKm&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span>
+                    <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]])</span>
+
+        <span class="k">if</span> <span class="s1">&#39;DivergenceCode&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DivergenceCode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DivergenceCode&#39;</span><span class="p">]</span>
+
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">moveCoordinate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.moveCoordinate"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.moveCoordinate">[docs]</a>    <span class="k">def</span> <span class="nf">moveCoordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">xy</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Moves the ith coordinate of self.segment to a new location.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">xy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.insertCoordinate"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.insertCoordinate">[docs]</a>    <span class="k">def</span> <span class="nf">insertCoordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">xy</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inserts a new coordinate before the ith coordinate.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="n">coords</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">xy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.appendCoordinate"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.appendCoordinate">[docs]</a>    <span class="k">def</span> <span class="nf">appendCoordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xy</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Appends a coordinate at the end (downstream) of the segment.&quot;&quot;&quot;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">xy</span><span class="p">,</span> <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.extendCoordinates"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.extendCoordinates">[docs]</a>    <span class="k">def</span> <span class="nf">extendCoordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xys</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Appends multiple coordinates at the end (downstream) of the segment.&quot;&quot;&quot;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">+</span> <span class="n">xys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.prependCoordinates"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.prependCoordinates">[docs]</a>    <span class="k">def</span> <span class="nf">prependCoordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xys</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepends multiple coordinates at the beginning (upstream) of the segment.&quot;&quot;&quot;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">xys</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="River.popCoordinate"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.popCoordinate">[docs]</a>    <span class="k">def</span> <span class="nf">popCoordinate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes the ith coordinate and returns its value.&quot;&quot;&quot;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="River.leaf_nodes"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.leaf_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">leaf_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for all leaves of the tree.&quot;&quot;&quot;</span>
@@ -197,22 +319,25 @@
             <span class="n">node</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">node</span></div>
 
-<div class="viewcode-block" id="River.accumulateContributingArea"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.accumulateContributingArea">[docs]</a>    <span class="k">def</span> <span class="nf">accumulateContributingArea</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="River.accumulateCatchments"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.accumulateCatchments">[docs]</a>    <span class="k">def</span> <span class="nf">accumulateCatchments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Form a polygon of all contributing areas based on the &#39;catchment&#39; property.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
-        
-        <span class="n">catch</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span><span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>
-                                         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+
+        <span class="n">catch</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">])</span>
         <span class="n">catch</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;outlet_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;CA_&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
         <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
         <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;outlet_point&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;contributing area name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">return</span> <span class="n">catch</span></div>
 
 <div class="viewcode-block" id="River.depthFirst"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.depthFirst">[docs]</a>    <span class="k">def</span> <span class="nf">depthFirst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterates of reaches in the river in an &quot;upstream-first&quot; or &quot;depth-first&quot; ordering.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterates of reaches in the river in an &quot;depth-first&quot; ordering.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span></div>
@@ -232,9 +357,9 @@
 
 <div class="viewcode-block" id="River.is_locally_continuous"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.is_locally_continuous">[docs]</a>    <span class="k">def</span> <span class="nf">is_locally_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Is this node continuous with its parent and children?&quot;&quot;&quot;</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_is_continuous</span><span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_is_continuous</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">res</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_is_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">res</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_is_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
 
 <div class="viewcode-block" id="River.is_continuous"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.is_continuous">[docs]</a>    <span class="k">def</span> <span class="nf">is_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
@@ -273,7 +398,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validity checking of the tree.&quot;&quot;&quot;</span>
         <span class="n">good</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;HydrologicSequence&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
-            <span class="n">good</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_hydroseq_consistent</span><span class="p">()</span>
+            <span class="n">good</span> <span class="o">&amp;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_hydroseq_consistent</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">good</span></div>
 
     <span class="c1">#</span>
@@ -354,7 +479,7 @@
                 <span class="n">roots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">roots</span></div>
 
-<div class="viewcode-block" id="River.deep_copy"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.deep_copy">[docs]</a>    <span class="k">def</span> <span class="nf">deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="River.deepcopy"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.River.deepcopy">[docs]</a>    <span class="k">def</span> <span class="nf">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a copy of self  including properties&quot;&quot;&quot;</span>
         <span class="n">cp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">preOrder</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()):</span>
@@ -362,7 +487,47 @@
         <span class="k">return</span> <span class="n">cp</span></div></div>
 
 
-<div class="viewcode-block" id="accumulateContributingArea"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.accumulateContributingArea">[docs]</a><span class="k">def</span> <span class="nf">accumulateContributingArea</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">outlet_IDs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="getNode"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.getNode">[docs]</a><span class="k">def</span> <span class="nf">getNode</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">nid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the node, by ID, in a list of rivers&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">getNode</span><span class="p">(</span><span class="n">nid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="combineSiblings"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.combineSiblings">[docs]</a><span class="k">def</span> <span class="nf">combineSiblings</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combines two sibling nodes, merging catchments and metadata.&quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">n1</span><span class="o">.</span><span class="n">isSiblingOf</span><span class="p">(</span><span class="n">n2</span><span class="p">))</span>
+    <span class="n">beginpoint</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">n1</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">n2</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">endpoint</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">n1</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">n2</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">new_seg</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">beginpoint</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">])</span>
+    <span class="n">n1</span><span class="o">.</span><span class="n">segment</span> <span class="o">=</span> <span class="n">new_seg</span>
+
+    <span class="k">if</span> <span class="s1">&#39;AreaSqKm&#39;</span> <span class="ow">in</span> <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+        <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">n2</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;AreaSqKm&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s1">&#39;catchment&#39;</span> <span class="ow">in</span> <span class="n">n2</span><span class="o">.</span><span class="n">properties</span> <span class="ow">and</span> <span class="n">n2</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">],</span> <span class="n">n2</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]])</span>
+
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">n2</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;DownstreamMainPathHydroSeq&#39;</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;DownstreamMainPathHydroSeq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HydrologicSequence&#39;</span><span class="p">]</span>
+        <span class="n">n1</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+    <span class="n">n2</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n2</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">n1</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="n">child</span><span class="o">.</span><span class="n">moveCoordinate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n1</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">n1</span></div>
+
+
+<div class="viewcode-block" id="accumulateCatchments"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.accumulateCatchments">[docs]</a><span class="k">def</span> <span class="nf">accumulateCatchments</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">outlet_IDs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of outlet_IDs, find the reach in rivers and form its contributing area.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters:</span>
@@ -393,11 +558,66 @@
             <span class="n">root</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">getNode</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;accumulateContributingArea: outlet_ID </span><span class="si">{</span><span class="n">outlet_ID</span><span class="si">}</span><span class="s1"> appears in more than one river&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;accumulateCatchments: outlet_ID </span><span class="si">{</span><span class="n">outlet_ID</span><span class="si">}</span><span class="s1"> appears in more than one river&#39;</span>
+                    <span class="p">)</span>
                 <span class="n">roots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-                <span class="n">catchments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">accumulateContributingArea</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                <span class="n">catchments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">accumulateCatchments</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
                 <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="n">roots</span><span class="p">,</span> <span class="n">catchments</span></div>
+
+
+<div class="viewcode-block" id="accumulateIncrementalCatchments"><a class="viewcode-back" href="../../geometry.html#watershed_workflow.river_tree.accumulateIncrementalCatchments">[docs]</a><span class="k">def</span> <span class="nf">accumulateIncrementalCatchments</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">outlet_IDs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of outlet_IDs, form the incremental contributing areas.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    rivers: list(watershed_workflow.river_tree.RiverTree)</span>
+<span class="sd">      Rivers from which outlet reaches are potentially from </span>
+<span class="sd">    outlet_IDs: list(str)</span>
+<span class="sd">      List of IDs of the outlet reaches</span>
+<span class="sd">    names: list(str), optional</span>
+<span class="sd">      Names for the catchments</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list(river_tree.RiverTree)</span>
+<span class="sd">      The trunks of the rivers at outlet_IDs</span>
+<span class="sd">    list(shapely.geometry.Polygon)</span>
+<span class="sd">      The contributing areas to those trunks.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">outlet_IDs</span>
+
+    <span class="n">roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">getNode</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">out_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">out_id</span> <span class="ow">in</span> <span class="n">outlet_IDs</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">))</span>
+
+    <span class="n">sorted_ids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">outlet_IDs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">truncated_tree_iter</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">n</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sorted_ids</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">nn</span> <span class="ow">in</span> <span class="n">truncated_tree_iter</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">nn</span>
+
+    <span class="n">incremental_cas</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span>
+            <span class="n">n</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">truncated_tree_iter</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;catchment&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">])</span> <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">catch</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">incremental_cas</span><span class="p">,</span> <span class="n">roots</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;outlet_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;CA_&#39;</span> <span class="o">+</span> <span class="n">root</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">catch</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;outlet_point&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;incremental contributing area name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">return</span> <span class="n">roots</span><span class="p">,</span> <span class="n">incremental_cas</span></div>
 </pre></div>
 
            </div>

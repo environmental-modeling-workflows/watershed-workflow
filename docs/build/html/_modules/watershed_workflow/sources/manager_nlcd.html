@@ -92,7 +92,8 @@
 <span class="n">VERSION</span> <span class="o">=</span> <span class="s1">&#39;20210604&#39;</span>
 <span class="c1"># No API for getting NLCD locally -- must download the whole thing.</span>
 <span class="n">urls</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;NLCD_2016_Land_Cover_L48&#39;</span> <span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_</span><span class="si">{</span><span class="n">VERSION</span><span class="si">}</span><span class="s1">.zip&#39;</span>
+    <span class="s1">&#39;NLCD_2016_Land_Cover_L48&#39;</span><span class="p">:</span>
+    <span class="sa">f</span><span class="s1">&#39;https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_</span><span class="si">{</span><span class="n">VERSION</span><span class="si">}</span><span class="s1">.zip&#39;</span>
 <span class="p">}</span>
 
 <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span>
@@ -160,7 +161,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;Land_Cover&#39;</span><span class="p">,</span>
                                                             <span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">,</span>
                                                             <span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span> <span class="o">+</span> <span class="s1">&#39;.img&#39;</span><span class="p">)</span>
-
 
     <span class="k">def</span> <span class="nf">validate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates input to the __init__ method.&quot;&quot;&quot;</span>

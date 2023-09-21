@@ -135,7 +135,8 @@
         <span class="s1">&#39;MinimumElevationRaw&#39;</span><span class="p">:</span> <span class="s1">&#39;MinElevRaw&#39;</span><span class="p">,</span>
         <span class="s1">&#39;MaximumElevationRaw&#39;</span><span class="p">:</span> <span class="s1">&#39;MaxElevRaw&#39;</span><span class="p">,</span>
         <span class="s1">&#39;CatchmentAreaSqKm&#39;</span><span class="p">:</span> <span class="s1">&#39;AreaSqKm&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">:</span> <span class="s1">&#39;TotDASqKm&#39;</span>
+        <span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">:</span> <span class="s1">&#39;TotDASqKm&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;DivergenceRoutedDrainAreaSqKm&#39;</span><span class="p">:</span> <span class="s1">&#39;DivDASqKm&#39;</span><span class="p">,</span>
     <span class="p">})</span>
     <span class="n">_nhdplus_eromma</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">({</span>
         <span class="s1">&#39;MeanAnnualFlow&#39;</span><span class="p">:</span> <span class="s1">&#39;QAMA&#39;</span><span class="p">,</span>
@@ -333,7 +334,7 @@
         <span class="k">if</span> <span class="s1">&#39;Plus&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">properties</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">:</span>
                 <span class="n">r</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;NHDPlusID&#39;</span><span class="p">]))</span>
-            
+
         <span class="c1"># associate catchment areas with the reaches if NHDPlus</span>
         <span class="k">if</span> <span class="s1">&#39;Plus&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">properties</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">reach_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;ID&#39;</span><span class="p">],</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">)</span>

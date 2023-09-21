@@ -95,6 +95,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
@@ -112,12 +113,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.accumulate">accumulate() (watershed_workflow.river_tree.River method)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.river_tree.accumulateContributingArea">accumulateContributingArea() (in module watershed_workflow.river_tree)</a>
+      <li><a href="geometry.html#watershed_workflow.river_tree.accumulateCatchments">accumulateCatchments() (in module watershed_workflow.river_tree)</a>
 
       <ul>
-        <li><a href="geometry.html#watershed_workflow.river_tree.River.accumulateContributingArea">(watershed_workflow.river_tree.River method)</a>
+        <li><a href="geometry.html#watershed_workflow.river_tree.River.accumulateCatchments">(watershed_workflow.river_tree.River method)</a>
 </li>
       </ul></li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.accumulateIncrementalCatchments">accumulateIncrementalCatchments() (in module watershed_workflow.river_tree)</a>
+</li>
       <li><a href="geometry.html#watershed_workflow.split_hucs.HandledCollection.add">add() (watershed_workflow.split_hucs.HandledCollection method)</a>
 
       <ul>
@@ -130,15 +133,23 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_polygonal_regions">add_polygonal_regions() (in module watershed_workflow.regions)</a>
 </li>
-      <li><a href="mesh.html#watershed_workflow.regions.add_river_corridor_regions">add_river_corridor_regions() (in module watershed_workflow.regions)</a>
+      <li><a href="mesh.html#watershed_workflow.regions.add_region_by_reach_id">add_region_by_reach_id() (in module watershed_workflow.regions)</a>
+</li>
+      <li><a href="mesh.html#watershed_workflow.regions.add_regions_by_stream_order">add_regions_by_stream_order() (in module watershed_workflow.regions)</a>
+</li>
+      <li><a href="mesh.html#watershed_workflow.regions.add_regions_by_stream_order_rivers">add_regions_by_stream_order_rivers() (in module watershed_workflow.regions)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mesh.html#watershed_workflow.regions.add_river_corridor_regions">add_river_corridor_regions() (in module watershed_workflow.regions)</a>
+</li>
       <li><a href="mesh.html#watershed_workflow.regions.add_watershed_regions">add_watershed_regions() (in module watershed_workflow.regions)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_watershed_regions_and_outlets">add_watershed_regions_and_outlets() (in module watershed_workflow.regions)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.addChild">addChild() (watershed_workflow.river_tree.River method)</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.plot.Labeler.addItem">addItem() (watershed_workflow.plot.Labeler method)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor">adjust_hucs_for_river_corridor() (in module watershed_workflow.river_mesh)</a>
 </li>
@@ -151,6 +162,8 @@
       <li><a href="utilities.html#watershed_workflow.utils.angle">angle() (in module watershed_workflow.utils)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.river_mesh.angle_rivers_segs">angle_rivers_segs() (in module watershed_workflow.river_mesh)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.appendCoordinate">appendCoordinate() (watershed_workflow.river_tree.River method)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.area">area() (in module watershed_workflow.utils)</a>
 </li>
@@ -206,14 +219,16 @@
 </li>
       <li><a href="utilities.html#watershed_workflow.colors.colorbar_index">colorbar_index() (in module watershed_workflow.colors)</a>
 </li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.combineSiblings">combineSiblings() (in module watershed_workflow.river_tree)</a>
+</li>
       <li><a href="utilities.html#watershed_workflow.utils.compute_average_year">compute_average_year() (in module watershed_workflow.utils)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.mesh.Mesh2D.compute_centroid">compute_centroid() (watershed_workflow.mesh.Mesh2D method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="geometry.html#watershed_workflow.split_hucs.computeNonOverlappingPolygons">computeNonOverlappingPolygons() (in module watershed_workflow.split_hucs)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mesh.html#watershed_workflow.condition.condition_river_mesh">condition_river_mesh() (in module watershed_workflow.condition)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.mesh.Mesh2D.conn">conn (watershed_workflow.mesh.Mesh2D property)</a>
@@ -244,9 +259,13 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.mesh.create_submesh">create_submesh() (in module watershed_workflow.mesh)</a>
 </li>
+      <li><a href="geometry.html#watershed_workflow.hydrography.createGlobalTree">createGlobalTree() (in module watershed_workflow.hydrography)</a>
+</li>
       <li><a href="utilities.html#watershed_workflow.utils.cut">cut() (in module watershed_workflow.utils)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.hydrography.cut_and_snap_crossings">cut_and_snap_crossings() (in module watershed_workflow.hydrography)</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.utils.CutError">CutError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -260,18 +279,18 @@
 </li>
       <li><a href="data.html#watershed_workflow.daymet.daymet_to_daily_averages">daymet_to_daily_averages() (in module watershed_workflow.daymet)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.river_tree.River.deep_copy">deep_copy() (watershed_workflow.river_tree.River method)</a>
+      <li><a href="geometry.html#watershed_workflow.split_hucs.SplitHUCs.deep_copy">deep_copy() (watershed_workflow.split_hucs.SplitHUCs method)</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.utils.deepcopy">deepcopy() (in module watershed_workflow.utils)</a>
 
       <ul>
-        <li><a href="geometry.html#watershed_workflow.split_hucs.SplitHUCs.deep_copy">(watershed_workflow.split_hucs.SplitHUCs method)</a>
+        <li><a href="geometry.html#watershed_workflow.river_tree.River.deepcopy">(watershed_workflow.river_tree.River method)</a>
 </li>
       </ul></li>
-      <li><a href="utilities.html#watershed_workflow.utils.deepcopy">deepcopy() (in module watershed_workflow.utils)</a>
+      <li><a href="utilities.html#watershed_workflow.crs.default_alaska_crs">default_alaska_crs() (in module watershed_workflow.crs)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="utilities.html#watershed_workflow.crs.default_alaska_crs">default_alaska_crs() (in module watershed_workflow.crs)</a>
-</li>
       <li><a href="utilities.html#watershed_workflow.crs.default_crs">default_crs() (in module watershed_workflow.crs)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.plot.dem">dem() (in module watershed_workflow.plot)</a>
@@ -279,6 +298,8 @@
       <li><a href="hilev.html#watershed_workflow.densify">densify() (in module watershed_workflow)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.depthFirst">depthFirst() (watershed_workflow.river_tree.River method)</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.plot.Labeler.deselect">deselect() (watershed_workflow.plot.Labeler method)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.distance">distance() (in module watershed_workflow.utils)</a>
 </li>
@@ -296,11 +317,13 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.condition.elevate_rivers">elevate_rivers() (in module watershed_workflow.condition)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utilities.html#watershed_workflow.colors.enumerated_colors">enumerated_colors() (in module watershed_workflow.colors)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utilities.html#watershed_workflow.crs.equal">equal() (in module watershed_workflow.crs)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.extendCoordinates">extendCoordinates() (watershed_workflow.river_tree.River method)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.split_hucs.SplitHUCs.exterior">exterior() (watershed_workflow.split_hucs.SplitHUCs method)</a>
 </li>
@@ -344,9 +367,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geometry.html#watershed_workflow.hydrography.filter_small_rivers">filter_small_rivers() (in module watershed_workflow.hydrography)</a>
-</li>
       <li><a href="utilities.html#watershed_workflow.utils.filter_to_shape">filter_to_shape() (in module watershed_workflow.utils)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.hydrography.filterSmallRivers">filterSmallRivers() (in module watershed_workflow.hydrography)</a>
 </li>
       <li><a href="hilev.html#watershed_workflow.find_huc">find_huc() (in module watershed_workflow)</a>
 </li>
@@ -391,6 +414,8 @@
       <li><a href="utilities.html#watershed_workflow.colors.generate_nlcd_colormap">generate_nlcd_colormap() (in module watershed_workflow.colors)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.generate_rings">generate_rings() (in module watershed_workflow.utils)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.split_hucs.GeometryError">GeometryError</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.plot.get_ax">get_ax() (in module watershed_workflow.plot)</a>
 </li>
@@ -460,7 +485,15 @@
 </li>
       <li><a href="hilev.html#watershed_workflow.get_waterbodies">get_waterbodies() (in module watershed_workflow)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.river_tree.River.getNode">getNode() (watershed_workflow.river_tree.River method)</a>
+      <li><a href="mesh.html#watershed_workflow.regions.getNode">getNode() (in module watershed_workflow.regions)</a>
+
+      <ul>
+        <li><a href="geometry.html#watershed_workflow.river_tree.getNode">(in module watershed_workflow.river_tree)</a>
+</li>
+        <li><a href="geometry.html#watershed_workflow.river_tree.River.getNode">(watershed_workflow.river_tree.River method)</a>
+</li>
+      </ul></li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.getSegment">getSegment() (watershed_workflow.river_tree.River method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -492,18 +525,22 @@
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.in_neighborhood">in_neighborhood() (in module watershed_workflow.utils)</a>
 </li>
-      <li><a href="utilities.html#watershed_workflow.utils.interpolate_in_time">interpolate_in_time() (in module watershed_workflow.utils)</a>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.insertCoordinate">insertCoordinate() (watershed_workflow.river_tree.River method)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.split_hucs.intersect_and_split">intersect_and_split() (in module watershed_workflow.split_hucs)</a>
+      <li><a href="utilities.html#watershed_workflow.utils.interpolate_in_time">interpolate_in_time() (in module watershed_workflow.utils)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.intersect_point_to_segment">intersect_point_to_segment() (in module watershed_workflow.utils)</a>
 </li>
-      <li><a href="utilities.html#watershed_workflow.utils.intersects">intersects() (in module watershed_workflow.utils)</a>
+      <li><a href="geometry.html#watershed_workflow.split_hucs.intersectAndSplit">intersectAndSplit() (in module watershed_workflow.split_hucs)</a>
 </li>
-      <li><a href="utilities.html#watershed_workflow.utils.is_collinear">is_collinear() (in module watershed_workflow.utils)</a>
+      <li><a href="mesh.html#watershed_workflow.river_mesh.IntersectionError">IntersectionError</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.utils.intersects">intersects() (in module watershed_workflow.utils)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utilities.html#watershed_workflow.utils.is_collinear">is_collinear() (in module watershed_workflow.utils)</a>
+</li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.is_consistent">is_consistent() (watershed_workflow.river_tree.River method)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.is_continuous">is_continuous() (watershed_workflow.river_tree.River method)</a>
@@ -530,6 +567,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mesh.html#watershed_workflow.mesh.LabeledSet">LabeledSet (class in watershed_workflow.mesh)</a>
 </li>
+      <li><a href="utilities.html#watershed_workflow.plot.Labeler">Labeler (class in watershed_workflow.plot)</a>
+</li>
       <li><a href="utilities.html#watershed_workflow.crs.latlon_crs">latlon_crs() (in module watershed_workflow.crs)</a>
 </li>
   </ul></td>
@@ -550,12 +589,14 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.river_mesh.make_convex_by_nudge">make_convex_by_nudge() (in module watershed_workflow.river_mesh)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.make_global_tree">make_global_tree() (in module watershed_workflow.hydrography)</a>
-</li>
       <li><a href="data.html#watershed_workflow.soil_properties.mangle_glhymps_properties">mangle_glhymps_properties() (in module watershed_workflow.soil_properties)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.hydrography.merge">merge() (in module watershed_workflow.hydrography)</a>
+
+      <ul>
+        <li><a href="geometry.html#watershed_workflow.river_tree.River.merge">(watershed_workflow.river_tree.River method)</a>
 </li>
+      </ul></li>
       <li><a href="utilities.html#watershed_workflow.plot.mesh">mesh() (in module watershed_workflow.plot)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.mesh.Mesh2D">Mesh2D (class in watershed_workflow.mesh)</a>
@@ -604,6 +645,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mesh.html#watershed_workflow.river_mesh.move_to_target_separation">move_to_target_separation() (in module watershed_workflow.river_mesh)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.moveCoordinate">moveCoordinate() (watershed_workflow.river_tree.River method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -661,17 +704,17 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.popCoordinate">popCoordinate() (watershed_workflow.river_tree.River method)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.prependCoordinates">prependCoordinates() (watershed_workflow.river_tree.River method)</a>
+</li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River.prune">prune() (watershed_workflow.river_tree.River method)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.prune_by_area">prune_by_area() (in module watershed_workflow.hydrography)</a>
+      <li><a href="geometry.html#watershed_workflow.hydrography.pruneByArea">pruneByArea() (in module watershed_workflow.hydrography)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.prune_by_fractional_contributing_area">prune_by_fractional_contributing_area() (in module watershed_workflow.hydrography)</a>
+      <li><a href="geometry.html#watershed_workflow.hydrography.pruneBySegmentLength">pruneBySegmentLength() (in module watershed_workflow.hydrography)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.prune_by_segment_length">prune_by_segment_length() (in module watershed_workflow.hydrography)</a>
-</li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.prune_river_by_area">prune_river_by_area() (in module watershed_workflow.hydrography)</a>
-</li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.prune_river_by_fractional_contributing_area">prune_river_by_fractional_contributing_area() (in module watershed_workflow.hydrography)</a>
+      <li><a href="geometry.html#watershed_workflow.hydrography.pruneRiverByArea">pruneRiverByArea() (in module watershed_workflow.hydrography)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -695,13 +738,17 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.triangulation.refine_from_river_distance">refine_from_river_distance() (in module watershed_workflow.triangulation)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geometry.html#watershed_workflow.hydrography.remove_divergences">remove_divergences() (in module watershed_workflow.hydrography)</a>
-</li>
       <li><a href="utilities.html#watershed_workflow.utils.remove_third_dimension">remove_third_dimension() (in module watershed_workflow.utils)</a>
 </li>
-      <li><a href="geometry.html#watershed_workflow.river_tree.River.removePreserveProperties">removePreserveProperties() (watershed_workflow.river_tree.River method)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="geometry.html#watershed_workflow.hydrography.removeBraids">removeBraids() (in module watershed_workflow.hydrography)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.hydrography.removeDivergences">removeDivergences() (in module watershed_workflow.hydrography)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.hydrography.removeDiversions">removeDiversions() (in module watershed_workflow.hydrography)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.split_hucs.removeHoles">removeHoles() (in module watershed_workflow.split_hucs)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.river_tree.River">River (class in watershed_workflow.river_tree)</a>
 </li>
@@ -721,6 +768,8 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utilities.html#watershed_workflow.plot.Labeler.select">select() (watershed_workflow.plot.Labeler method)</a>
+</li>
       <li><a href="mesh.html#watershed_workflow.river_mesh.set_width_by_order">set_width_by_order() (in module watershed_workflow.river_mesh)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.plot.shapes">shapes() (in module watershed_workflow.plot)</a>
@@ -739,16 +788,14 @@
         <li><a href="geometry.html#watershed_workflow.split_hucs.simplify">(in module watershed_workflow.split_hucs)</a>
 </li>
       </ul></li>
-      <li><a href="geometry.html#watershed_workflow.hydrography.simplify_and_merge">simplify_and_merge() (in module watershed_workflow.hydrography)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mesh.html#watershed_workflow.condition.smooth">smooth() (in module watershed_workflow.condition)</a>
 
       <ul>
         <li><a href="utilities.html#watershed_workflow.utils.smooth">(in module watershed_workflow.utils)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="geometry.html#watershed_workflow.hydrography.snap">snap() (in module watershed_workflow.hydrography)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.hydrography.snap_endpoints">snap_endpoints() (in module watershed_workflow.hydrography)</a>
@@ -760,6 +807,8 @@
       <li><a href="mesh.html#watershed_workflow.river_mesh.sort_children_by_angle">sort_children_by_angle() (in module watershed_workflow.river_mesh)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.split_hucs.SplitHUCs.spines">spines() (watershed_workflow.split_hucs.SplitHUCs method)</a>
+</li>
+      <li><a href="geometry.html#watershed_workflow.river_tree.River.split">split() (watershed_workflow.river_tree.River method)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.split_hucs.SplitHUCs">SplitHUCs (class in watershed_workflow.split_hucs)</a>
 </li>
@@ -812,6 +861,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utilities.html#watershed_workflow.plot.Labeler.update">update() (watershed_workflow.plot.Labeler method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -824,6 +881,8 @@
       <li><a href="data.html#watershed_workflow.soil_properties.vgm_from_SSURGO">vgm_from_SSURGO() (in module watershed_workflow.soil_properties)</a>
 </li>
       <li><a href="data.html#watershed_workflow.soil_properties.vgm_Rosetta">vgm_Rosetta() (in module watershed_workflow.soil_properties)</a>
+</li>
+      <li><a href="utilities.html#watershed_workflow.utils.volumetric_intersection">volumetric_intersection() (in module watershed_workflow.utils)</a>
 </li>
   </ul></td>
 </tr></table>

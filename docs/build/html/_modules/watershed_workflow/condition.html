@@ -86,6 +86,7 @@
 
 <span class="kn">import</span> <span class="nn">watershed_workflow</span>
 
+
 <span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
 <span class="k">class</span> <span class="nc">_Point</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;POD struct of coordinate and set of neighbors&quot;&quot;&quot;</span>
@@ -582,7 +583,7 @@
     <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>  <span class="c1"># reachwise smoothing</span>
             <span class="c1"># adds smooth profile in node properties</span>
-            <span class="n">_smooth_profile</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">use_parent</span><span class="o">=</span><span class="n">use_parent</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">)</span>  
+            <span class="n">_smooth_profile</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">use_parent</span><span class="o">=</span><span class="n">use_parent</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">)</span>
 
         <span class="n">_network_sweep</span><span class="p">(</span><span class="n">river</span><span class="p">,</span>
                        <span class="n">depress_upstream_by</span><span class="o">=</span><span class="n">depress_upstream_by</span><span class="p">,</span>
@@ -597,7 +598,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># only centerline elevation is to be used, without any</span>
             <span class="c1"># conditioning</span>
-            <span class="n">profile</span> <span class="o">=</span> <span class="n">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>  
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">network_burn_in_depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -726,11 +727,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ignore_in_sweep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ignore_in_sweep</span> <span class="o">=</span> <span class="p">[]</span>
-    
+
     <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">leaf_nodes</span><span class="p">():</span>  <span class="c1">#starting from one of the leaf nodes</span>
         <span class="c1"># providing extra depression at the upstream end</span>
         <span class="k">if</span> <span class="n">depress_upstream_by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">leaf</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">depress_upstream_by</span>  
+            <span class="n">leaf</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">depress_upstream_by</span>
 
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">leaf</span><span class="o">.</span><span class="n">pathToRoot</span><span class="p">():</span>
             <span class="c1"># traversing from leaf node (headwater) catchment to the root node</span>
