@@ -247,7 +247,7 @@ def create_river_mesh(river,
     # redraw the debug plot with updated elems
     if ax is not None:
         coords = list(corr.exterior.coords)
-        shapes = [shapely.geometry.Polygon([coords[e] for e in elem]) for elem in elems]
+        shapes = [shapely.geometry.Polygon([coords[e-gid_shift] for e in elem]) for elem in elems]
         watershed_workflow.plot.shplys(shapes, None, 'r', ax)
 
     oc = _isOverlappingCorridor(corr, river)
@@ -843,6 +843,8 @@ def angle_rivers_segs(ref_seg, seg):
     ref_seg_tan = np.array(ref_seg.coords[1]) - np.array(ref_seg.coords[0])
     if type(seg) is shapely.geometry.LineString:
         intersection_point = ref_seg.intersection(seg)
+        if not isinstance(intersection_point, shapely.geometry.Point):
+            logging.info(f"  HUC segment and river reach has two intersection points {intersection_point}")
         seg_orientation_flag = np.argmin([
             watershed_workflow.utils.distance(seg_end, intersection_point.coords[0])
             for seg_end in [seg.coords[0], seg.coords[-1]]
@@ -936,11 +938,13 @@ def adjust_hucs_for_river_corridors(hucs, rivers, river_corrs, integrate_rc=True
         with a rc as a whole 
         if true, will extend the hucs-segments alogn the edge of quads 
     """
+    gid_shift=0
     for river, river_corr in zip(rivers, river_corrs):
-        adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=integrate_rc, ax=ax)
+        adjust_hucs_for_river_corridor(hucs, river, river_corr, gid_shift = gid_shift, integrate_rc=integrate_rc, ax=ax)
+        gid_shift=gid_shift+len(river_corr.exterior.coords)-1
 
 
-def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, ax=None):
+def adjust_hucs_for_river_corridor(hucs, river, river_corr, gid_shift = 0, integrate_rc=True, ax=None):
     """Adjusts hucs to accomodate river corridor polygon.
 
     Parameters
@@ -1022,12 +1026,17 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, a
             if outlet_junction:
                 logging.info('  found outlet junction')
                 elem = parent_node.elements[0]
+
+                elem = [int(id - gid_shift) for id in elem]
+
                 # rc points at junction
                 rc_points = [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]]
 
                 # reference segment for angles
-                ref_seg = shapely.geometry.LineString(
-                    parent_node.segment.coords[ind_intersection_point - 2:])
+                if len(parent_node.segment.coords)>2:
+                    ref_seg = shapely.geometry.LineString(parent_node.segment.coords[ind_intersection_point - 2:])
+                else:
+                    ref_seg = parent_node.segment
 
                 # orientations of hucs-segments
                 seg_angles = [
@@ -1079,6 +1088,7 @@ def adjust_hucs_for_river_corridor(hucs, river, river_corr, integrate_rc=True, a
             # snapped leaf node intersecting with this with this
             # huc segment, we create local river corridor polygon
             elem = parent_node.elements[0]
+            elem = [int(id - gid_shift) for id in elem]
             river_corr_part = shapely.geometry.Polygon(
                 [river_corr.exterior.coords[ind] for ind in [elem[0], elem[-1]]] + rc_points)
 
