@@ -566,7 +566,7 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
     corr : shapely.geometry.Polygon
       a river corridor polygon for the river    
     widths: float or dict
-      Width of the river, as constant or {stream-order: width}
+      Width of the river, as constant or {stream-order: width} or as a function of drainage area.
 
     Returns
     -------
@@ -590,6 +590,9 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
         if type(widths) == dict:
             order = node.properties[stream_order]
             target_width = width_by_order(widths, order)
+        elif callable(widths):
+            DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
+            target_width = widths(DA_sqm)
         else:
             target_width = widths
 
