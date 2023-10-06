@@ -78,7 +78,7 @@ class FileManagerNLCD:
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
         self.version = VERSION
 
-        self.layer_name = 'nlcd_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
+        self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
         self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
