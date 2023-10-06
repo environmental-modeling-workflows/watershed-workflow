@@ -17,16 +17,6 @@ USER ${user}
 WORKDIR /home/${user}/tmp
 RUN mkdir /home/${user}/environments
 
-#
-# Old approaach : create the env on the fly
-#
-# RUN mkdir environments
-# COPY environments/create_envs.py /home/${user}/tmp/create_envs.py 
-# RUN --mount=type=cache,uid=1000,gid=100,target=/opt/conda/pkgs \
-#     python create_envs.py --env-name=${env_name} \
-#         --with-tools-env --tools-env-name=watershed_workflow_tools \
-#         --with-user-env --user-env-name=default Linux
-
 # # dump the environments to disk so they can be recovered if desired
 # RUN ${CONDA_BIN} env export -n ${env_name} > /home/${user}/environments/environment-Linux.yml
 
