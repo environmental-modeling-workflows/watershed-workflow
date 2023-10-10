@@ -219,7 +219,7 @@ if __name__ == '__main__':
     if not args.without_ww_env:
         # create the workflow environment
         packages = get_packages(args.env_type, args.OS)
-        create_and_dump_env_local(args.env_type, args.OS, packages, args.name, args.dump_only)
+        create_and_dump_env_local(args.env_type, args.OS, packages, args.ENV_NAME, args.dump_only)
 
     if args.with_user_env is not None:
         # create the user environment

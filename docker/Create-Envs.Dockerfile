@@ -12,12 +12,12 @@ ENV CONDA_BIN=mamba
 RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=watershed_workflow_ci --env-type=CI Linux
+    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-type=CI --OS=Linux watershed_workflow_ci 
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=watershed_workflow --env-type=STANDARD Linux
+    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-type=STANDARD --OS=Linux watershed_workflow 
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=watershed_workflow_dev --env-type=DEV Linux
+    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-type=DEV --OS=Linux watershed_workflow_dev
 
 
