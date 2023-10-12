@@ -15,6 +15,8 @@ import watershed_workflow.sources.names
 urls = {
     'NLCD_2016_Land_Cover_L48':
     'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_20210604.zip'
+    'NLCD_2019_Land_Cover_L48':
+    'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2019_land_cover_l48_20210604.zip'
 }
 
 colors = {
@@ -95,7 +97,7 @@ class FileManagerNLCD:
                 location, valid_locations))
 
         valid_years = {
-            'L48': [2016, 2013, 2011, 2008, 2006, 2004, 2001],
+            'L48': [2019, 2016, 2013, 2011, 2008, 2006, 2004, 2001],
             'AK': [2011, 2001],
             'HI': [2001, ],
             'PR': [2001, ],
