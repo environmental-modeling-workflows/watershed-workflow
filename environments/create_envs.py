@@ -150,6 +150,7 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
     args = ['env', 'export',]
     if PACKAGE_MANAGER == 'conda':
         args.append('--no-builds')
+
     result = subprocess.run([PACKAGE_MANAGER,]+args+['--name',env_name],
                             check=True, capture_output=True)
 
@@ -160,7 +161,7 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
     with open(env_filename, 'w') as fid:
         fid.write('\n'.join(lines))
 
-def create_env_local(env_type, os_name, packages, env_name=None):
+def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
     """Creates the environment locally."""
     if env_name is None:
         env_prefix = get_env_prefix(env_type)
@@ -174,6 +175,8 @@ def create_env_local(env_type, os_name, packages, env_name=None):
     cmd.extend(packages)
 
     # call conda env create
+    if dry_run:
+        return print(cmd)
     subprocess.run(cmd, check=True)
 
     # set an environment variable so the user can figure out what we just made
@@ -183,9 +186,9 @@ def create_env_local(env_type, os_name, packages, env_name=None):
         os.environ[f'WATERSHED_WORKFLOW_{env_type}_ENV'] = env_name
     return env_name
 
-def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False):
+def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False, dry_run=False):
     if not dump_only:
-        create_env_local(env_type, os_name, packages, env_name)
+        create_env_local(env_type, os_name, packages, env_name, dry_run)
     dump_env_local(env_type, os_name, env_name)
 
 
@@ -202,6 +205,7 @@ if __name__ == '__main__':
     parser.add_argument('--with-tools-env', default=None, metavar='TOOLS_ENV_NAME',
                         help='Build a tools environment for compiling ExodusII.')
     parser.add_argument('--dump-only', action='store_true', help='Only write the .yml file')
+    parser.add_argument('--dry-run', action='store_true', help='Only print the environment creation command')
     parser.add_argument('--manager', default='mamba', type=str,
                         help='Package manager, likely one of mamba or conda, defaults to mamba')
     parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
@@ -213,21 +217,20 @@ if __name__ == '__main__':
     if args.OS is None:
         import platform
         args.OS = platform.system()
-    
+
     if args.env_type == 'STANDARD':
         args.env_type = None
     if not args.without_ww_env:
         # create the workflow environment
         packages = get_packages(args.env_type, args.OS)
-        create_and_dump_env_local(args.env_type, args.OS, packages, args.ENV_NAME, args.dump_only)
+        create_and_dump_env_local(args.env_type, args.OS, packages, args.ENV_NAME, args.dump_only, args.dry_run)
 
     if args.with_user_env is not None:
         # create the user environment
         packages = get_packages('USER', args.OS, args.user_env_extras)
-        create_and_dump_env_local('USER', args.OS, packages, args.with_user_env, args.dump_only)
+        create_and_dump_env_local('USER', args.OS, packages, args.with_user_env, args.dump_only, args.dry_run)
 
     if args.with_tools_env is not None:
         # create the tools environment
         packages = get_packages('TOOLS', args.OS)
-        create_and_dump_env_local('TOOLS', args.OS, packages, args.with_tools_env, args.dump_only)
-        
+        create_and_dump_env_local('TOOLS', args.OS, packages, args.with_tools_env, args.dump_only, args.dry_run)
