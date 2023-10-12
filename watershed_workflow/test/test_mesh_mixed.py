@@ -42,7 +42,7 @@ def reaches():
 def watershed_rivers():
     my_hucs = [watershed_poly()]
     watershed = watershed_workflow.split_hucs.SplitHUCs(my_hucs)
-    rivers = watershed_workflow.construct_rivers(watershed, reaches(), method='geometry')
+    rivers = watershed_workflow.construct_rivers(reaches(), method='geometry')
     return watershed, rivers
 
 
@@ -52,7 +52,7 @@ def river_small():
     reach2 = shapely.geometry.LineString([(1, 19), (2, 15.01), (4, 10)])
     reach3 = shapely.geometry.LineString([(8, 19), (6, 15.01), (4, 10)])
     reaches = [reach1, reach2, reach3]
-    rivers = watershed_workflow.construct_rivers(hucs=None, reaches=reaches, method='geometry')
+    rivers = watershed_workflow.construct_rivers(reaches, method='geometry')
     return rivers[0]
 
 
@@ -93,7 +93,7 @@ def test_densification(watershed_rivers):
                                                   limit_scales=[0, 25, 100, 50])
     watershed_workflow.densification.densify_rivers(rivers, rivers, limit=14)
 
-    assert (49 == len(watershed.exterior().exterior.coords))
+    assert (51 == len(watershed.exterior().exterior.coords))
     assert (16 == len(rivers[0].segment.coords))
     assert (12 == len(rivers[1].segment.coords))
 

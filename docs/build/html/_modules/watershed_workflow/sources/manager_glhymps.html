@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.sources.manager_glhymps &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.sources.manager_glhymps</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.sources.manager_glhymps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Manager for interacting with GLHYMPS v2.0 dataset.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+
+<span class="kn">import</span> <span class="nn">watershed_workflow.sources.manager_shape</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.sources.names</span>
+<span class="kn">import</span> <span class="nn">watershed_workflow.soil_properties</span>
+
+<span class="c1"># No API for getting GLHYMPS locally -- must download the whole thing.</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;GLHYMPS version 2.0&#39;</span><span class="p">:</span> <span class="s1">&#39;https://doi.org/10.5683/SP2/TTJNIU&#39;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="FileManagerGLHYMPS">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS">[docs]</a>
+<span class="k">class</span> <span class="nc">FileManagerGLHYMPS</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">manager_shape</span><span class="o">.</span><span class="n">FileManagerShape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The [GLHYMPS]_ global hydrogeology map provides global values of a</span>
+<span class="sd">    two-layer (unconsolidated, consolidated) structure.</span>
+
+<span class="sd">    .. note:: GLHYMPS does not have an API, and is a large (~4GB)</span>
+<span class="sd">       download.  Download the file from the below citation DOI and</span>
+<span class="sd">       unzip the file into:</span>
+<span class="sd">       </span>
+<span class="sd">       &lt;data_directory&gt;/soil_structure/GLHYMPS/</span>
+
+<span class="sd">       which should yield GLHYMPS.shp (amongst other files).</span>
+
+<span class="sd">    .. [GLHYMPS] Huscroft, J.; Gleeson, T.; Hartmann, J.; Börker, J.,</span>
+<span class="sd">       2018, &quot;Compiling and mapping global permeability of the</span>
+<span class="sd">       unconsolidated and consolidated Earth: GLobal HYdrogeology MaPS</span>
+<span class="sd">       2.0 (GLHYMPS 2.0). [Supporting Data]&quot;,</span>
+<span class="sd">       https://doi.org/10.5683/SP2/TTJNIU, Scholars Portal Dataverse,</span>
+<span class="sd">       V1</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;GLHYMPS version 2.0&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">Names</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;soil_structure&#39;</span><span class="p">,</span> <span class="s1">&#39;GLHYMPS&#39;</span><span class="p">),</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;GLHYMPS.shp&#39;</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">FileManagerGLHYMPS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">filename</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">FileManagerGLHYMPS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FileManagerGLHYMPS.get_shapes">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS.get_shapes">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the shapes in bounds provided by shape object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bounds : bounds tuple [x_min, y_min, x_max, y_max]</span>
+<span class="sd">          bounds in which to find GLHYMPS shapes.</span>
+<span class="sd">        crs : CRS</span>
+<span class="sd">          CRS of the bounds</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Fiona profile of the shapefile.</span>
+<span class="sd">        shapes : list</span>
+<span class="sd">            List of fiona shapes that match the bounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Getting shapes of GLHYMPS on bounds: </span><span class="si">{</span><span class="n">bounds</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">FileManagerGLHYMPS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download the files, returning downloaded filename.&quot;&quot;&quot;</span>
+        <span class="c1"># check directory structure</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">file_name</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  from file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;GLHYMPS download file </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1"> not found.&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;See download instructions below</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;GLHYMPS download file </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1"> not found.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filename</span>
+
+<div class="viewcode-block" id="FileManagerGLHYMPS.get_shapes_and_properties">
+<a class="viewcode-back" href="../../../sources.html#watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS.get_shapes_and_properties">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_shapes_and_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read shapes and process properties.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bounds : bounds tuple [x_min, y_min, x_max, y_max]</span>
+<span class="sd">          bounds in which to find GLHYMPS shapes.</span>
+<span class="sd">        crs : CRS</span>
+<span class="sd">          CRS of the bounds.</span>
+<span class="sd">        min_porosity : optional, double in [0,1]</span>
+<span class="sd">          Some GLHYMPs formations have zero porosity, and this breaks</span>
+<span class="sd">          most codes.  This allows the user to set the minimum valid</span>
+<span class="sd">          porosity.  Defaults to 0.01 (1%).</span>
+<span class="sd">        max_permeability : optional, double &gt; 0</span>
+<span class="sd">          Some GLHYMPs formations (fractured bedrock?) have very </span>
+<span class="sd">          high permeability, and this results in very slow runs.  This</span>
+<span class="sd">          allows the user to set a maximum valid permeability [m^2].</span>
+<span class="sd">          Defaults to inf.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Fiona profile of the shapefile.</span>
+<span class="sd">        shapes : list</span>
+<span class="sd">            List of fiona shapes that match the index or bounds.</span>
+<span class="sd">        properties : pandas dataframe</span>
+<span class="sd">            Dataframe including geologic properties.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">profile</span><span class="p">,</span> <span class="n">shapes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_shapes</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">soil_properties</span><span class="o">.</span><span class="n">mangle_glhymps_properties</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">props</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

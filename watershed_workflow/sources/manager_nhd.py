@@ -20,8 +20,8 @@ class _FileManagerNHD:
     Note that this includes NHD, NHDPlus, and WBD -- this class should not
     be used directly but instead use one of the derived classes:
 
-    * `manager_nhd.FileManagerNHD`
-    * `manager_nhd.FileManagerNHDPlus`
+    * `manager_nhd.FileManagerNHD` (Hi Res)
+    * `manager_nhd.FileManagerNHDPlus` (Hi Res)
     * `manager_nhd.FileManagerWBD`
 
     Watershed Workflow leverages the Watershed Boundary Dataset (WBD) and the
@@ -44,7 +44,6 @@ class _FileManagerNHD:
     file_level = attr.ib(type=int)
     lowest_level = attr.ib(type=int)
     name_manager = attr.ib()
-    #name_manager_shp = attr.ib()
 
     _nhdplus_vaa = dict({
         'StreamOrder': 'StreamOrde',
@@ -58,7 +57,8 @@ class _FileManagerNHD:
         'MinimumElevationRaw': 'MinElevRaw',
         'MaximumElevationRaw': 'MaxElevRaw',
         'CatchmentAreaSqKm': 'AreaSqKm',
-        'TotalDrainageAreaSqKm': 'TotDASqKm'
+        'TotalDrainageAreaSqKm': 'TotDASqKm',
+        'DivergenceRoutedDrainAreaSqKm': 'DivDASqKm',
     })
     _nhdplus_eromma = dict({
         'MeanAnnualFlow': 'QAMA',
@@ -73,6 +73,11 @@ class _FileManagerNHD:
         ----------
         huc : int or str
           The USGS Hydrologic Unit Code
+        force_download : bool, optional
+          If true, delete any file and redownload.
+        exclude_hu_types : list[str], optional
+          List of HUtypes to exclude.  Likely this is None or ['W',]
+          to exclude water HUCs for e.g. a bay, great lake, or ocean.
 
         Returns
         -------
@@ -247,9 +252,14 @@ class _FileManagerNHD:
                 if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1
             ]
 
+        # associate IDs
+        if 'Plus' in self.name and properties is not None:
+            for r in reaches:
+                r['properties']['ID'] = str(int(r['properties']['NHDPlusID']))
+
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name and properties != None:
-            reach_dict = dict((r['properties']['NHDPlusID'], r) for r in reaches)
+            reach_dict = dict((r['properties']['ID'], r) for r in reaches)
 
             # validation of properties
             valid_props = list(self._nhdplus_vaa.keys()) + list(
@@ -270,10 +280,12 @@ class _FileManagerNHD:
                     r['properties']['catchment'] = None
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for catchment in fid.values():
-                        reach = reach_dict.get(catchment['properties']['NHDPlusID'])
+                        reach = reach_dict.get(str(int(catchment['properties']['NHDPlusID'])))
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
+            # turn off logging -- fiona errors crash otherwise!
+            logging.disable(logging.CRITICAL)
             if len(set(self._nhdplus_vaa.keys()).intersection(set(properties))) > 0:
                 layer = 'NHDPlusFlowlineVAA'
                 logging.info(
@@ -281,7 +293,7 @@ class _FileManagerNHD:
                 )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(flowline['properties']['NHDPlusID'])
+                        reach = reach_dict.get(str(int(flowline['properties']['NHDPlusID'])))
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_vaa.keys()):
@@ -295,12 +307,13 @@ class _FileManagerNHD:
                 )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(flowline['properties']['NHDPlusID'])
+                        reach = reach_dict.get(str(int(flowline['properties']['NHDPlusID'])))
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_eromma.keys()):
                                     prop_code = self._nhdplus_eromma[prop]
                                     reach['properties'][prop] = flowline['properties'][prop_code]
+            logging.disable(logging.NOTSET)
 
         return profile, reaches
 
@@ -384,7 +397,7 @@ class _FileManagerNHD:
         hucstr = hucstr[0:self.file_level]
 
         def attempt(params):
-            r = requests.get(rest_url, params=params)
+            r = requests.get(rest_url, params=params, verify=source_utils.get_verify_option())
             logging.info(f'  REST URL: {r.url}')
             try:
                 r.raise_for_status()

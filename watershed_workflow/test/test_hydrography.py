@@ -10,25 +10,9 @@ import watershed_workflow.river_tree
 import watershed_workflow.plot
 
 
-def test_null_cleanup(rivers):
-    """Tests that cleanup on nice river network does nothing"""
-    riversc = watershed_workflow.hydrography.simplify_and_merge(rivers)
-    print(type(rivers))
-    print(type(riversc))
-    assert_close(riversc, rivers)
-
-
-def test_close_cleanup(rivers):
-    """Tests that cleanup can remove close points"""
-    extra = shapely.geometry.LineString([(15, -3.00000001), (15, -3)])
-    rivers_wextra = shapely.geometry.MultiLineString(list(rivers) + [extra, ])
-    rivers_clean = watershed_workflow.hydrography.simplify_and_merge(rivers_wextra)
-    assert_close(rivers_clean, rivers, 0.1)
-
-
 def data(poly_hucs, river_segs):
     hucs = watershed_workflow.split_hucs.SplitHUCs(poly_hucs)
-    rivers = watershed_workflow.hydrography.make_global_tree(river_segs, method='geometry')
+    rivers = watershed_workflow.hydrography.createGlobalTree(river_segs, method='geometry')
     for tree in rivers:
         assert (tree.is_consistent())
     return hucs, rivers
@@ -484,11 +468,11 @@ def test_snap8():
 
 
 def test_remove_divergences(braided_stream):
-    rivers = watershed_workflow.hydrography.make_global_tree(braided_stream, 'hydroseq')
+    rivers = watershed_workflow.hydrography.createGlobalTree(braided_stream, 'hydroseq')
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 6)
 
-    rivers = watershed_workflow.hydrography.remove_divergences(rivers)
+    rivers = watershed_workflow.hydrography.removeBraids(rivers)
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 4)
 

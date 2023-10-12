@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Structures and Shape Manipulation &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Meshing" href="mesh.html" />
+    <link rel="prev" title="Data Sources" href="sources.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Geometry and Shape Manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.split_hucs">SplitHUCs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.GeometryError"><code class="docutils literal notranslate"><span class="pre">GeometryError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.HandledCollection"><code class="docutils literal notranslate"><span class="pre">HandledCollection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.SplitHUCs"><code class="docutils literal notranslate"><span class="pre">SplitHUCs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.simplify"><code class="docutils literal notranslate"><span class="pre">simplify()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.removeHoles"><code class="docutils literal notranslate"><span class="pre">removeHoles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.partition"><code class="docutils literal notranslate"><span class="pre">partition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.intersectAndSplit"><code class="docutils literal notranslate"><span class="pre">intersectAndSplit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.find_outlets_by_crossings"><code class="docutils literal notranslate"><span class="pre">find_outlets_by_crossings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.find_outlets_by_elevation"><code class="docutils literal notranslate"><span class="pre">find_outlets_by_elevation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.find_outlets_by_hydroseq"><code class="docutils literal notranslate"><span class="pre">find_outlets_by_hydroseq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.split_hucs.computeNonOverlappingPolygons"><code class="docutils literal notranslate"><span class="pre">computeNonOverlappingPolygons()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.river_tree">RiverTree</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_tree.River"><code class="docutils literal notranslate"><span class="pre">River</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_tree.getNode"><code class="docutils literal notranslate"><span class="pre">getNode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_tree.combineSiblings"><code class="docutils literal notranslate"><span class="pre">combineSiblings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_tree.accumulateCatchments"><code class="docutils literal notranslate"><span class="pre">accumulateCatchments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_tree.accumulateIncrementalCatchments"><code class="docutils literal notranslate"><span class="pre">accumulateIncrementalCatchments()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.hydrography">Hydrography</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.createGlobalTree"><code class="docutils literal notranslate"><span class="pre">createGlobalTree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.snap"><code class="docutils literal notranslate"><span class="pre">snap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.snap_waterbodies"><code class="docutils literal notranslate"><span class="pre">snap_waterbodies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.cut_and_snap_crossings"><code class="docutils literal notranslate"><span class="pre">cut_and_snap_crossings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.snap_polygon_endpoints"><code class="docutils literal notranslate"><span class="pre">snap_polygon_endpoints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.snap_endpoints"><code class="docutils literal notranslate"><span class="pre">snap_endpoints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.cleanup"><code class="docutils literal notranslate"><span class="pre">cleanup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.pruneBySegmentLength"><code class="docutils literal notranslate"><span class="pre">pruneBySegmentLength()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.pruneRiverByArea"><code class="docutils literal notranslate"><span class="pre">pruneRiverByArea()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.pruneByArea"><code class="docutils literal notranslate"><span class="pre">pruneByArea()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.removeDiversions"><code class="docutils literal notranslate"><span class="pre">removeDiversions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.removeBraids"><code class="docutils literal notranslate"><span class="pre">removeBraids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.removeDivergences"><code class="docutils literal notranslate"><span class="pre">removeDivergences()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.filterSmallRivers"><code class="docutils literal notranslate"><span class="pre">filterSmallRivers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.merge"><code class="docutils literal notranslate"><span class="pre">merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.hydrography.simplify"><code class="docutils literal notranslate"><span class="pre">simplify()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">Data Structures and Shape Manipulation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/geometry.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-structures-and-shape-manipulation">
+<h1>Data Structures and Shape Manipulation<a class="headerlink" href="#data-structures-and-shape-manipulation" title="Link to this heading"></a></h1>
+<p>Several custom data structures are used in the manipulation of
+geometry to form a consistent mesh.  Two are the most important: the
+SplitHUC object defines a set of polygons that partition the domain
+into sub-catchments of the full domain (e.g. HUC 12s in a a HUC8
+domain, or differential contributing areas to a series of gages).  The
+RiverTree object defines a tree data structure defined by a
+child-parent relationship where children of a reach are all reaches
+that flow into that reach.</p>
+<section id="module-watershed_workflow.split_hucs">
+<span id="splithucs"></span><h2>SplitHUCs<a class="headerlink" href="#module-watershed_workflow.split_hucs" title="Link to this heading"></a></h2>
+<p>A module for working with multi-polys, a MultiLine that together forms a Polygon</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.GeometryError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">GeometryError</span></span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#GeometryError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.GeometryError" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.HandledCollection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">HandledCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#HandledCollection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.HandledCollection" title="Link to this definition"></a></dt>
+<dd><p>A collection of of objects and handles for those objects.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.HandledCollection.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#HandledCollection.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.HandledCollection.add" title="Link to this definition"></a></dt>
+<dd><p>Adds a object, returning a handle to that object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.HandledCollection.add_many">
+<span class="sig-name descname"><span class="pre">add_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#HandledCollection.add_many"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.HandledCollection.add_many" title="Link to this definition"></a></dt>
+<dd><p>Add many objects, returning a list of handles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.HandledCollection.pop">
+<span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#HandledCollection.pop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.HandledCollection.pop" title="Link to this definition"></a></dt>
+<dd><p>Removes a handle and its object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.HandledCollection.handles">
+<span class="sig-name descname"><span class="pre">handles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#HandledCollection.handles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.HandledCollection.handles" title="Link to this definition"></a></dt>
+<dd><p>Generator for handles</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">SplitHUCs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exterior_outlet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygon_outlets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs" title="Link to this definition"></a></dt>
+<dd><p>Class for dealing with the multiple interacting views of HUCs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shapes</strong> (<em>list</em><em>[</em><em>Polygon</em><em>]</em>) – The shapes to be split, one per subcatchment to be delineated.</p></li>
+<li><p><strong>abs_tol</strong> (<em>float</em>) – Distance used in defining small holes at intersections to
+ignore.</p></li>
+<li><p><strong>rel_tol</strong> (<em>float</em>) – Relative to the shapes area, a tolerance for defining small
+holes on intersections.</p></li>
+<li><p><strong>exterior_outlet</strong> (<em>np.array</em><em>(</em><em>(</em><em>2</em><em>,</em><em>)</em><em>)</em>) – Location of the outlet of the entire domain.</p></li>
+<li><p><strong>polygon_outlets</strong> (<em>np.array</em><em>(</em><em>(</em><em>len</em><em>(</em><em>shapes</em><em>)</em><em>, </em><em>2</em><em>)</em><em>)</em>) – Location of the outlets of each polygon.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The resulting class instance includes the following views into
+data:</p>
+<dl class="simple">
+<dt>segments<span class="classifier">HandledCollection[LineString]</span></dt><dd><p>unique list of all segments, a HandledCollection of LineStrings</p>
+</dd>
+<dt>boundaries<span class="classifier">HandledCollection[int]</span></dt><dd><p>A HandledCollection of handles into segments, identifying those
+segments on the outer boundary of the collection.</p>
+</dd>
+<dt>intersections<span class="classifier">HandledCollection[int]</span></dt><dd><p>A HandledCollection of handles into segments, identifying those
+segments on the shared, inner boundaries.</p>
+</dd>
+<dt>gons<span class="classifier">list[HandledCollection[int], HandledCollection[int]]</span></dt><dd><p>One per polygon provided, a pair of HandledCollections,
+identifying the collection of handles into intersetctions and
+boudaries that make up thos polygon.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs.polygon">
+<span class="sig-name descname"><span class="pre">polygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs.polygon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs.polygon" title="Link to this definition"></a></dt>
+<dd><p>Construct polygon i and return a copy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs.polygons">
+<span class="sig-name descname"><span class="pre">polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs.polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs.polygons" title="Link to this definition"></a></dt>
+<dd><p>Iterate over the polygons.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs.spines">
+<span class="sig-name descname"><span class="pre">spines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs.spines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs.spines" title="Link to this definition"></a></dt>
+<dd><p>Iterate over spines.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs.exterior">
+<span class="sig-name descname"><span class="pre">exterior</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs.exterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs.exterior" title="Link to this definition"></a></dt>
+<dd><p>Construct boundary polygon and return a copy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.SplitHUCs.deep_copy">
+<span class="sig-name descname"><span class="pre">deep_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#SplitHUCs.deep_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.SplitHUCs.deep_copy" title="Link to this definition"></a></dt>
+<dd><p>Return a deep copy</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.simplify">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">simplify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#simplify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.simplify" title="Link to this definition"></a></dt>
+<dd><p>Simplify, IN PLACE, all segments in the polygon representation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.removeHoles">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">removeHoles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polygons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_all_interior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#removeHoles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.removeHoles" title="Link to this definition"></a></dt>
+<dd><p>Removes interior small holes between the boundaries of polygons.</p>
+<p>Note this assumes the polygons are mostly disjoint.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.partition">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">partition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.partition" title="Link to this definition"></a></dt>
+<dd><p>Given a list of shapes which mostly share boundaries, make sure
+they partition the space.  Often HUC boundaries have minor
+overlaps and underlaps – here we try to account for wiggles.</p>
+<p>Modifies the list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.intersectAndSplit">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">intersectAndSplit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_shapes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#intersectAndSplit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.intersectAndSplit" title="Link to this definition"></a></dt>
+<dd><p>Given a list of shapes which share boundaries (i.e. they partition
+some space), return a compilation of their segments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>list_of_shapes</strong> (<em>list</em><em>[</em><em>shapely.geometry.Polygon</em><em>]</em>) – The polygons to intersect and split, of length N.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>uniques</strong> (<em>list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]</em>) – An N-length-list of the entities describing the exterior boundary.</p></li>
+<li><p><strong>intersections</strong> (<em>list[list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]]</em>) – An NxN list of lists of the entities describing the interior boundary.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.find_outlets_by_crossings">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">find_outlets_by_crossings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#find_outlets_by_crossings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.find_outlets_by_crossings" title="Link to this definition"></a></dt>
+<dd><p>For each HUC, find all outlets using a river network’s crossing points.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.find_outlets_by_elevation">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">find_outlets_by_elevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elev_raster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elev_raster_profile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#find_outlets_by_elevation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.find_outlets_by_elevation" title="Link to this definition"></a></dt>
+<dd><p>Find outlets by the minimum elevation on the boundary.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.find_outlets_by_hydroseq">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">find_outlets_by_hydroseq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#find_outlets_by_hydroseq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.find_outlets_by_hydroseq" title="Link to this definition"></a></dt>
+<dd><p>Find outlets using the HydroSequence VAA of NHDPlus.</p>
+<p>Finds the minimum hydroseq reach in each HUC, and intersects that
+with the boundary to find the outlet.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.split_hucs.computeNonOverlappingPolygons">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.split_hucs.</span></span><span class="sig-name descname"><span class="pre">computeNonOverlappingPolygons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_all_interior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/split_hucs.html#computeNonOverlappingPolygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.split_hucs.computeNonOverlappingPolygons" title="Link to this definition"></a></dt>
+<dd><p>Given a list of overlapping contributing area polygons, compute a nonoverlapping set.</p>
+<p>Often we wish to use SplitHucs constructed from the “delta
+contributing area”, e.g. the full domain is defined by a single
+polygon, then multiple gages on the river network CAs are used to
+form the subdomains.</p>
+<p>This splits the overlapping contributing areas into the delta
+contributing area for each gage, returning a non-overlapping set
+of polygons, one per original polygon.</p>
+<p>Properties are presereved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>polys</strong> (<em>list</em><em>[</em><em>shapely.geometry.Polygon</em><em>]</em>) – The overlapping CAs</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>partition</strong> (<em>list[shapely.geometry.Polygon]</em>) – The non-overlapping delta CAs.</p></li>
+<li><p><strong>holes</strong> (<em>list[shapely.geometry.Polygon]</em>) – Holes in the partition that are bigger than the tolerance.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.river_tree">
+<span id="rivertree"></span><h2>RiverTree<a class="headerlink" href="#module-watershed_workflow.river_tree" title="Link to this heading"></a></h2>
+<p>Module for working with tree data structures, built on watershed_workflow.tinytree</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_tree.</span></span><span class="sig-name descname"><span class="pre">River</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">children</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River" title="Link to this definition"></a></dt>
+<dd><p>A tree node data structure</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.addChild">
+<span class="sig-name descname"><span class="pre">addChild</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.addChild"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.addChild" title="Link to this definition"></a></dt>
+<dd><p>Append a child (upstream) reach to this reach.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.getSegment">
+<span class="sig-name descname"><span class="pre">getSegment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.getSegment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.getSegment" title="Link to this definition"></a></dt>
+<dd><p>Used if one needs segments with properties.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.prune">
+<span class="sig-name descname"><span class="pre">prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.prune"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.prune" title="Link to this definition"></a></dt>
+<dd><p>Removes a reach all the way to the leaf node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.split">
+<span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.split" title="Link to this definition"></a></dt>
+<dd><p>Split the reach at the ith coordinate of the segment.</p>
+<p>Note that this could, but does not, split the catchment!</p>
+<p>Returns upstream_node, downstream_node</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.merge" title="Link to this definition"></a></dt>
+<dd><p>Merges this with its parent.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.moveCoordinate">
+<span class="sig-name descname"><span class="pre">moveCoordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.moveCoordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.moveCoordinate" title="Link to this definition"></a></dt>
+<dd><p>Moves the ith coordinate of self.segment to a new location.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.insertCoordinate">
+<span class="sig-name descname"><span class="pre">insertCoordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.insertCoordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.insertCoordinate" title="Link to this definition"></a></dt>
+<dd><p>Inserts a new coordinate before the ith coordinate.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.appendCoordinate">
+<span class="sig-name descname"><span class="pre">appendCoordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.appendCoordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.appendCoordinate" title="Link to this definition"></a></dt>
+<dd><p>Appends a coordinate at the end (downstream) of the segment.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.extendCoordinates">
+<span class="sig-name descname"><span class="pre">extendCoordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.extendCoordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.extendCoordinates" title="Link to this definition"></a></dt>
+<dd><p>Appends multiple coordinates at the end (downstream) of the segment.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.prependCoordinates">
+<span class="sig-name descname"><span class="pre">prependCoordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.prependCoordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.prependCoordinates" title="Link to this definition"></a></dt>
+<dd><p>Prepends multiple coordinates at the beginning (upstream) of the segment.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.popCoordinate">
+<span class="sig-name descname"><span class="pre">popCoordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.popCoordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.popCoordinate" title="Link to this definition"></a></dt>
+<dd><p>Removes the ith coordinate and returns its value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.leaf_nodes">
+<span class="sig-name descname"><span class="pre">leaf_nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.leaf_nodes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.leaf_nodes" title="Link to this definition"></a></dt>
+<dd><p>Generator for all leaves of the tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.leaves">
+<span class="sig-name descname"><span class="pre">leaves</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.leaves"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.leaves" title="Link to this definition"></a></dt>
+<dd><p>Generator for all leaf reaches of the tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.iter_streamlevel">
+<span class="sig-name descname"><span class="pre">iter_streamlevel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.iter_streamlevel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.iter_streamlevel" title="Link to this definition"></a></dt>
+<dd><p>Generator to iterate over all reachs of the same streamlevel.</p>
+<p>streamlevel is a concept defined by NHDPlus attributes, so
+this is only valid if the VAA was loaded.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.iter_stream_children">
+<span class="sig-name descname"><span class="pre">iter_stream_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.iter_stream_children"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.iter_stream_children" title="Link to this definition"></a></dt>
+<dd><p>Find all roots of next-level streams that flow into this reach.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.iter_stream_roots">
+<span class="sig-name descname"><span class="pre">iter_stream_roots</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.iter_stream_roots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.iter_stream_roots" title="Link to this definition"></a></dt>
+<dd><p>Generator to iterate over all roots of streamlevels.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.accumulate">
+<span class="sig-name descname"><span class="pre">accumulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_accumulate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_save=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op=&lt;built-in</span> <span class="pre">function</span> <span class="pre">sum&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.accumulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.accumulate" title="Link to this definition"></a></dt>
+<dd><p>Accumulates a property across the river tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.getNode">
+<span class="sig-name descname"><span class="pre">getNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.getNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.getNode" title="Link to this definition"></a></dt>
+<dd><p>return node for a given ID</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.accumulateCatchments">
+<span class="sig-name descname"><span class="pre">accumulateCatchments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.accumulateCatchments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.accumulateCatchments" title="Link to this definition"></a></dt>
+<dd><p>Form a polygon of all contributing areas based on the ‘catchment’ property.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.depthFirst">
+<span class="sig-name descname"><span class="pre">depthFirst</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.depthFirst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.depthFirst" title="Link to this definition"></a></dt>
+<dd><p>Iterates of reaches in the river in an “depth-first” ordering.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.breadthFirst">
+<span class="sig-name descname"><span class="pre">breadthFirst</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.breadthFirst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.breadthFirst" title="Link to this definition"></a></dt>
+<dd><p>Iterates of reaches in the river in an “breadth-first” ordering.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.is_locally_continuous">
+<span class="sig-name descname"><span class="pre">is_locally_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.is_locally_continuous"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.is_locally_continuous" title="Link to this definition"></a></dt>
+<dd><p>Is this node continuous with its parent and children?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.is_continuous">
+<span class="sig-name descname"><span class="pre">is_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.is_continuous"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.is_continuous" title="Link to this definition"></a></dt>
+<dd><p>Checks geometric continuity of the river.</p>
+<p>Confirms that all upstream children’s downstream coordinate
+coincides with self’s upstream coordinate.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.make_continuous">
+<span class="sig-name descname"><span class="pre">make_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.make_continuous"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.make_continuous" title="Link to this definition"></a></dt>
+<dd><p>Sometimes there can be small gaps between segments of river tree if river is constructed using
+HydrologicSequence and Snap option is not used. Here we make them consistent</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.is_hydroseq_consistent">
+<span class="sig-name descname"><span class="pre">is_hydroseq_consistent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.is_hydroseq_consistent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.is_hydroseq_consistent" title="Link to this definition"></a></dt>
+<dd><p>Confirms that hydrosequence is valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.is_consistent">
+<span class="sig-name descname"><span class="pre">is_consistent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.is_consistent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.is_consistent" title="Link to this definition"></a></dt>
+<dd><p>Validity checking of the tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.construct_rivers_by_geometry">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_rivers_by_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.construct_rivers_by_geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.construct_rivers_by_geometry" title="Link to this definition"></a></dt>
+<dd><p>Forms a list of River trees from a list of reaches by looking for
+close endpoints of those reaches.</p>
+<p>Note that this expects that endpoints of a reach coincide with
+beginpoints of their downstream reach, and does not work for
+cases where the junction is at a midpoint of a reach.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.construct_rivers_by_hydroseq">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_rivers_by_hydroseq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.construct_rivers_by_hydroseq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.construct_rivers_by_hydroseq" title="Link to this definition"></a></dt>
+<dd><p>Given a list of segments, create a list of rivers using the
+HydroSeq maps provided in NHDPlus datasets.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.River.deepcopy">
+<span class="sig-name descname"><span class="pre">deepcopy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.deepcopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.deepcopy" title="Link to this definition"></a></dt>
+<dd><p>Creates a copy of self  including properties</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.getNode">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_tree.</span></span><span class="sig-name descname"><span class="pre">getNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#getNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.getNode" title="Link to this definition"></a></dt>
+<dd><p>Finds the node, by ID, in a list of rivers</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.combineSiblings">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_tree.</span></span><span class="sig-name descname"><span class="pre">combineSiblings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#combineSiblings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.combineSiblings" title="Link to this definition"></a></dt>
+<dd><p>Combines two sibling nodes, merging catchments and metadata.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.accumulateCatchments">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_tree.</span></span><span class="sig-name descname"><span class="pre">accumulateCatchments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlet_IDs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#accumulateCatchments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.accumulateCatchments" title="Link to this definition"></a></dt>
+<dd><p>Given a list of outlet_IDs, find the reach in rivers and form its contributing area.</p>
+<section id="parameters">
+<h3>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>rivers: list(watershed_workflow.river_tree.RiverTree)</dt><dd><p>Rivers from which outlet reaches are potentially from</p>
+</dd>
+<dt>outlet_IDs: list(str)</dt><dd><p>List of IDs of the outlet reaches</p>
+</dd>
+<dt>names: list(str), optional</dt><dd><p>Names for the catchments</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>list(river_tree.RiverTree)</em> – The trunks of the rivers at outlet_IDs</p></li>
+<li><p><em>list(shapely.geometry.Polygon)</em> – The contributing areas to those trunks.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_tree.accumulateIncrementalCatchments">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_tree.</span></span><span class="sig-name descname"><span class="pre">accumulateIncrementalCatchments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlet_IDs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#accumulateIncrementalCatchments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.accumulateIncrementalCatchments" title="Link to this definition"></a></dt>
+<dd><p>Given a list of outlet_IDs, form the incremental contributing areas.</p>
+<section id="id1">
+<h3>Parameters:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>rivers: list(watershed_workflow.river_tree.RiverTree)</dt><dd><p>Rivers from which outlet reaches are potentially from</p>
+</dd>
+<dt>outlet_IDs: list(str)</dt><dd><p>List of IDs of the outlet reaches</p>
+</dd>
+<dt>names: list(str), optional</dt><dd><p>Names for the catchments</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>list(river_tree.RiverTree)</em> – The trunks of the rivers at outlet_IDs</p></li>
+<li><p><em>list(shapely.geometry.Polygon)</em> – The contributing areas to those trunks.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.hydrography">
+<span id="hydrography"></span><h2>Hydrography<a class="headerlink" href="#module-watershed_workflow.hydrography" title="Link to this heading"></a></h2>
+<p>Functions for manipulating hydrography and river_tree.River objects</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.createGlobalTree">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">createGlobalTree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reaches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'geometry'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#createGlobalTree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.createGlobalTree" title="Link to this definition"></a></dt>
+<dd><p>Constructs River objects from a list of reaches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reaches</strong> (<em>list</em><em>[</em><em>LineString</em><em>]</em>) – List of reaches</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional='geometry'</em>) – <p>Provide the method for constructing rivers.  Valid are:</p>
+<ul>
+<li><p>’geometry’ looks at coincident coordinates</p></li>
+<li><p>’hydroseq’ Valid only for NHDPlus data, this uses the
+NHDPlus VAA tables Hydrologic Sequence.  If using this
+method, get_reaches() must have been called with both
+‘HydrologicSequence’ and ‘DownstreamMainPathHydroSeq’
+properties requested (or properties=True).</p></li>
+</ul>
+</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional=0.1</em>) – Defines what close is in the case of method == ‘geometry’</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.snap">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">snap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">triple_junctions_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reach_endpoints_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_intersections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#snap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.snap" title="Link to this definition"></a></dt>
+<dd><p>Snap HUCs to rivers.</p>
+<p>Attempts to make rivers that intersect, or are close to
+intersecting with HUC boundaries intersect discretely, in that
+they share a common point on the boundary.</p>
+<p>This is the highest level function – it calls many of the other
+functions in this namespace.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.snap_waterbodies">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">snap_waterbodies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waterbodies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_intersections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#snap_waterbodies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.snap_waterbodies" title="Link to this definition"></a></dt>
+<dd><p>Snap waterbodies to HUCs.</p>
+<p>Attempts to make waterbodies that intersect or nearly intersect
+hucs intersect discretely, in that they share common point(s).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.cut_and_snap_crossings">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">cut_and_snap_crossings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#cut_and_snap_crossings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.cut_and_snap_crossings" title="Link to this definition"></a></dt>
+<dd><p>If any reach crosses a HUC boundary:</p>
+<ol class="arabic simple">
+<li><p>If it crosses an external boundary, cut the reach in two and
+discard the portion outside of the domain.</p></li>
+<li><p>If it crosses an internal boundary, ensure there is a
+coordinate the reach that is on the internal boundary.</p></li>
+</ol>
+<p>Either way, also ensure there is a coordinate on the HUC
+boundary at the crossing point.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.snap_polygon_endpoints">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">snap_polygon_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#snap_polygon_endpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.snap_polygon_endpoints" title="Link to this definition"></a></dt>
+<dd><p>Snaps the endpoints of HUC segments to endpoints of rivers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.snap_endpoints">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">snap_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#snap_endpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.snap_endpoints" title="Link to this definition"></a></dt>
+<dd><p>Snap river endpoints to huc segments and insert that point into
+the boundary.</p>
+<p>Note this is O(n^2), and could be made more efficient.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.cleanup">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simp_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#cleanup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.cleanup" title="Link to this definition"></a></dt>
+<dd><p>Cleans rivers in place by:</p>
+<ol class="arabic simple">
+<li><p>simplifying to tol</p></li>
+<li><p>pruning all leaf nodes of length &lt; prune_tol</p></li>
+<li><p>merging all internal nodes of length &lt; merge_tol</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.pruneBySegmentLength">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">pruneBySegmentLength</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#pruneBySegmentLength"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.pruneBySegmentLength" title="Link to this definition"></a></dt>
+<dd><p>Removes any leaf segments that are shorter than prune_tol</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.pruneRiverByArea">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">pruneRiverByArea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DivergenceRoutedDrainAreaSqKm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#pruneRiverByArea"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.pruneRiverByArea" title="Link to this definition"></a></dt>
+<dd><p>Removes, IN PLACE, reaches whose total contributing area is less than area km^2.</p>
+<p>Note this requires NHDPlus data to have been used and the
+‘DivergenceRoutedDrainAreaSqKm’ property (or whatever is selected) to have been set.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.pruneByArea">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">pruneByArea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DivergenceRoutedDrainAreaSqKm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#pruneByArea"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.pruneByArea" title="Link to this definition"></a></dt>
+<dd><p>Removes, IN PLACE, reaches whose total contributing area is less than area km^2.</p>
+<p>Note this requires NHDPlus data to have been used and the
+‘DivergenceRoutedDrainAreaSqKm’ property to have been set.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.removeDiversions">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">removeDiversions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#removeDiversions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.removeDiversions" title="Link to this definition"></a></dt>
+<dd><p>Removes diversions, but not braids.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.removeBraids">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">removeBraids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#removeBraids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.removeBraids" title="Link to this definition"></a></dt>
+<dd><p>Remove braids, but not diversions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.removeDivergences">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">removeDivergences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preserve_catchments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#removeDivergences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.removeDivergences" title="Link to this definition"></a></dt>
+<dd><p>Removes both diversions and braids.</p>
+<p>Braids are divergences that return to the river network, and so
+look like branches of a river tree whose upstream entity is in the
+river (in another branch).</p>
+<p>Diversions are divergences that do not return to the stream
+network, and so their upstream entity is in another river.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.filterSmallRivers">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">filterSmallRivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#filterSmallRivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.filterSmallRivers" title="Link to this definition"></a></dt>
+<dd><p>Remove any rivers with fewer than count reaches.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.merge">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.merge" title="Link to this definition"></a></dt>
+<dd><p>Remove inner branches that are short, combining branchpoints as needed.</p>
+<p>This function merges the “short” segment into the parent segment</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.hydrography.simplify">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">simplify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#simplify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.simplify" title="Link to this definition"></a></dt>
+<dd><p>Simplify, IN PLACE, all reaches.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sources.html" class="btn btn-neutral float-left" title="Data Sources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mesh.html" class="btn btn-neutral float-right" title="Meshing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

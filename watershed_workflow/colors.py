@@ -136,6 +136,8 @@ def cm_mapper(vmin=0., vmax=1., cmap=None, norm=None, get_sm=False):
 
     Example
     -------
+    .. code:: python
+    
         # plot 4 lines
         x = np.arange(10)
         cm = cm_mapper(0,3,'jet')
@@ -174,6 +176,8 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
 
     Example
     -------
+    .. code:: python
+
         # plot 4 lines
         x = np.arange(10)
         colors = cmap_discretize('jet', 4)

@@ -88,11 +88,11 @@ class FileManagerMODISAppEEARS:
     _PRODUCTS = {
         'LAI': {
             "layer": "Lai_500m",
-            "product": "MCD15A3H.006"
+            "product": "MCD15A3H.061"
         },
         'LULC': {
             "layer": "LC_Type1",
-            "product": "MCD12Q1.006"
+            "product": "MCD12Q1.061"
         },
     }
 
@@ -208,7 +208,7 @@ class FileManagerMODISAppEEARS:
         (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
         json_vars = [self._PRODUCTS[var] for var in variables]
 
-        task = {
+        task_data = {
             "task_type": "area",
             "task_name": "Area LAI",
             "params": {
@@ -245,7 +245,7 @@ class FileManagerMODISAppEEARS:
         # submit the task request
         logging.info('Constructing Task:')
         r = requests.post(self._TASK_URL,
-                          json=task,
+                          json=task_data,
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
         r.raise_for_status()
 
@@ -269,7 +269,8 @@ class FileManagerMODISAppEEARS:
 
         logging.info(f'Checking status of task: {task.task_id}')
         r = requests.get(self._STATUS_URL,
-                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
+                         verify=source_utils.get_verify_option())
         try:
             r.raise_for_status()
         except requests.HTTPError:
@@ -299,7 +300,9 @@ class FileManagerMODISAppEEARS:
 
         logging.info(f'Checking for bundle of task: {task.task_id}')
         r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
-                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) })
+                         headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
+                         verify=source_utils.get_verify_option())
+
         try:
             r.raise_for_status()
         except requests.HTTPError:

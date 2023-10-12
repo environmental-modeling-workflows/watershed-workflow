@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.condition &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.condition</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.condition</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">attr</span>
+<span class="kn">import</span> <span class="nn">sortedcontainers</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">scipy.ndimage</span>
+
+<span class="kn">import</span> <span class="nn">watershed_workflow</span>
+
+
+<span class="nd">@attr</span><span class="o">.</span><span class="n">s</span>
+<span class="k">class</span> <span class="nc">_Point</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;POD struct of coordinate and set of neighbors&quot;&quot;&quot;</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="fill_pits">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">outlet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Conditions a mesh, IN PLACE, by removing pits.</span>
+<span class="sd">    </span>
+<span class="sd">    Starts at outlet and works through all coordinates in the mesh,</span>
+<span class="sd">    ensuring that there is a path to all nodes of the mesh from the</span>
+<span class="sd">    outlet that monotonically increases in elevation.</span>
+
+<span class="sd">    Available algorithms (likely all should be equivalent):</span>
+<span class="sd">     1: original, 2-pass algorithm</span>
+<span class="sd">     2: refactored single-pass algorithm based on sorted lists</span>
+<span class="sd">     3: boundary marching method.  Should be the fastest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m2 : mesh.Mesh2D object</span>
+<span class="sd">      The mesh to condition.</span>
+<span class="sd">    outlet : int, optional</span>
+<span class="sd">      If provided, the ID of the point to start conditioning from.  If</span>
+<span class="sd">      not provided, will use the boundary node with minimal elevation.</span>
+<span class="sd">    algorithm : int</span>
+<span class="sd">      See above, defaults to 3.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># generate a dictionary of ID,Point for all points of the mesh</span>
+    <span class="n">points_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">_Point</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">points_dict</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">neighbors</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="c1"># set the outlet as minimal boundary elevation</span>
+    <span class="k">if</span> <span class="n">outlet</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">boundary_nodes</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">boundary_nodes</span>
+        <span class="n">outlet</span> <span class="o">=</span> <span class="n">boundary_nodes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">boundary_nodes</span><span class="p">,</span> <span class="mi">2</span><span class="p">])]</span>
+
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">fill_pits1</span><span class="p">(</span><span class="n">points_dict</span><span class="p">,</span> <span class="n">outlet</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">fill_pits2</span><span class="p">(</span><span class="n">points_dict</span><span class="p">,</span> <span class="n">outlet</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">fill_pits3</span><span class="p">(</span><span class="n">points_dict</span><span class="p">,</span> <span class="n">outlet</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Unknown algorithm &quot;</span><span class="si">%r</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">algorithm</span><span class="p">))</span>
+
+    <span class="n">m2</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span></div>
+
+
+
+<div class="viewcode-block" id="fill_pits1">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits1">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits1</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the origional, 2-pass algorithm, and is likely inefficient.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">outletID</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">outletID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))]))</span>
+
+    <span class="c1"># create a sorted list of elevations, from largest to smallest</span>
+    <span class="n">elev</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">id_p</span><span class="p">:</span> <span class="o">-</span><span class="n">id_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">outletID</span><span class="p">,</span> <span class="p">])</span>
+    <span class="n">pits</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">waterway</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">outletID</span><span class="p">,</span> <span class="p">])</span>
+
+    <span class="c1"># loop over elevation list from small to large</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">elev</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">current</span><span class="p">,</span> <span class="n">current_p</span> <span class="o">=</span> <span class="n">elev</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+            <span class="c1"># still in the waterway</span>
+            <span class="n">waterway</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+            <span class="n">visited</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">current_p</span><span class="o">.</span><span class="n">neighbors</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># not in the waterway, add to pits</span>
+            <span class="n">pits</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+
+    <span class="c1"># post-conditions</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pits</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">waterway</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+
+    <span class="c1"># loop over waterway and raise up pits as they touch the waterway</span>
+    <span class="n">waterway</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([(</span><span class="n">ID</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">ID</span><span class="p">])</span> <span class="k">for</span> <span class="n">ID</span> <span class="ow">in</span> <span class="n">waterway</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">id_p</span><span class="p">:</span> <span class="o">-</span><span class="n">id_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">waterway</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">current</span><span class="p">,</span> <span class="n">current_p</span> <span class="o">=</span> <span class="n">waterway</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current_p</span><span class="o">.</span><span class="n">neighbors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pits</span><span class="p">:</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">current_p</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">pits</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">waterway</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]))</span>
+
+    <span class="c1"># post-conditions</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+
+<div class="viewcode-block" id="fill_pits2">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits2">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits2</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is a refactored, single pass algorithm that leverages a sorted list.&quot;&quot;&quot;</span>
+
+    <span class="c1"># create a sorted list of elevations, from largest to smallest</span>
+    <span class="n">elev</span> <span class="o">=</span> <span class="n">sortedcontainers</span><span class="o">.</span><span class="n">SortedList</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">id_p</span><span class="p">:</span> <span class="n">id_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">waterway</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">outletID</span><span class="p">,</span> <span class="p">])</span>
+
+    <span class="c1"># loop over elevation list from small to large</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">elev</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">current</span><span class="p">,</span> <span class="n">current_p</span> <span class="o">=</span> <span class="n">elev</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">waterway</span><span class="p">:</span>
+            <span class="c1"># still in the waterway</span>
+            <span class="n">waterway</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">current_p</span><span class="o">.</span><span class="n">neighbors</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># not in the waterway, fill</span>
+            <span class="n">ww_neighbors</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current_p</span><span class="o">.</span><span class="n">neighbors</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">waterway</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ww_neighbors</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">current_p</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ww_neighbors</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">current_p</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">current_p</span><span class="o">.</span><span class="n">neighbors</span><span class="p">)</span>
+
+            <span class="c1"># push back into elev list with new, higher elevation</span>
+            <span class="n">elev</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">current</span><span class="p">,</span> <span class="n">current_p</span><span class="p">))</span>
+    <span class="k">return</span></div>
+
+
+
+<div class="viewcode-block" id="fill_pits3">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits3">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits3</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">outletID</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This algorithm is based on a boundary marching method&quot;&quot;&quot;</span>
+    <span class="c1"># Waterway is the list of things that are already conditioned and</span>
+    <span class="c1"># can be reached.</span>
+    <span class="n">waterway</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="c1"># Boundary is an elevation-sorted list of (ID, point) tuples which</span>
+    <span class="c1"># are NOT yet in the waterway, but have a neighbor in the</span>
+    <span class="c1"># waterway.  Additionally, points in the boundary have been</span>
+    <span class="c1"># conditioned such that all boundary points must be at least as</span>
+    <span class="c1"># high as the highest elevation in the waterway.</span>
+    <span class="n">boundary</span> <span class="o">=</span> <span class="n">sortedcontainers</span><span class="o">.</span><span class="n">SortedList</span><span class="p">([(</span><span class="n">outletID</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">outletID</span><span class="p">]),</span> <span class="p">],</span>
+                                           <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">id_p</span><span class="p">:</span> <span class="n">id_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">waterway_max</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e10</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">boundary</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># pop the lowest boundary point and stick it in the waterway</span>
+        <span class="n">next_p</span> <span class="o">=</span> <span class="n">boundary</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">waterway</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">next_p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># increment the waterway elevation</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">next_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">waterway_max</span><span class="p">)</span>
+        <span class="n">waterway_max</span> <span class="o">=</span> <span class="n">next_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># Insert all neighbors (that aren&#39;t in the waterway already)</span>
+        <span class="c1"># into the boundary, first checking that their elevation is at</span>
+        <span class="c1"># least as high as the new waterway elevation.  Note that</span>
+        <span class="c1"># there can be no &quot;alternate&quot; pathway to the waterway, as this</span>
+        <span class="c1"># pathway would already be in the boundary (somewhere along</span>
+        <span class="c1"># that pathway) and therefore would have been popped before</span>
+        <span class="c1"># this path due to our sorted elevation boundary list.</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">next_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">neighbors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">waterway</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">boundary</span><span class="p">:</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">waterway_max</span><span class="p">)</span>
+                <span class="n">boundary</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">n</span><span class="p">]))</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waterway</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+    <span class="k">return</span></div>
+
+
+
+<div class="viewcode-block" id="fill_pits_dual">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.fill_pits_dual">[docs]</a>
+<span class="k">def</span> <span class="nf">fill_pits_dual</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">is_waterbody</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outlet_edge</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Conditions the dual of the mesh, IN PLACE, by filling pits.</span>
+
+<span class="sd">    This ensures the property that, starting with an outlet cell,</span>
+<span class="sd">    there is a path to every cell by way of faces that is</span>
+<span class="sd">    monotonically increasing in elevation (except in cells which are a</span>
+<span class="sd">    part of waterbodies).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m2 : mesh.Mesh2D object</span>
+<span class="sd">      The mesh to condition.</span>
+<span class="sd">    is_waterbody : np.ndarray(int, shape=ncells), optional</span>
+<span class="sd">      A boolean/integer mask of length m2.num_cells, with True</span>
+<span class="sd">      values indicating that the given cell is a part of a waterbody</span>
+<span class="sd">      that may be a depression.  This is important for</span>
+<span class="sd">      reservoirs/lakes/etc where bathymetry is known and pits are</span>
+<span class="sd">      physical.</span>
+<span class="sd">    outlet_edge : (int,int), optional</span>
+<span class="sd">      If provided, the point to start conditioning from.  If not</span>
+<span class="sd">      provided, will use the edge on the boundary of m2 with the</span>
+<span class="sd">      lowest elevation.</span>
+<span class="sd">    eps : float, optional=1e-3</span>
+<span class="sd">      A small vertical displacement for soft tolerances.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">outlet_edge</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># determine the outlet edge -- the lowest edge point</span>
+        <span class="n">boundary_edges</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">boundary_edges</span>
+        <span class="n">outlet_edge</span> <span class="o">=</span> <span class="n">boundary_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">be_elev</span> <span class="o">=</span> <span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">outlet_edge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">outlet_edge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">boundary_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">eh</span> <span class="o">=</span> <span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span>
+            <span class="k">if</span> <span class="n">eh</span> <span class="o">&lt;</span> <span class="n">be_elev</span><span class="p">:</span>
+                <span class="n">be_elev</span> <span class="o">=</span> <span class="n">eh</span>
+                <span class="n">outlet_edge</span> <span class="o">=</span> <span class="n">e</span>
+    <span class="n">outlet_edge</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">edge_hash</span><span class="p">(</span><span class="o">*</span><span class="n">outlet_edge</span><span class="p">)</span>
+
+    <span class="n">outlet_cell</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">edges_to_cells</span><span class="p">[</span><span class="n">outlet_edge</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">outlet_cell</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">outlet_cell</span> <span class="o">=</span> <span class="n">outlet_cell</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">class</span> <span class="nc">Waterway</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Waterway is the set of cells that are already conditioned and can be reached.&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cells</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="c1"># Waterway edges is the set of edges whose cells are all in waterway</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_z</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e10</span>
+
+        <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">be</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Add BoundaryEntry object to the waterway&quot;&quot;&quot;</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;adding cell </span><span class="si">{</span><span class="n">be</span><span class="o">.</span><span class="n">cell</span><span class="si">}</span><span class="s2"> (z = </span><span class="si">{</span><span class="n">be</span><span class="o">.</span><span class="n">z</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cells</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">cell</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">be</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_z</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_z</span> <span class="o">=</span> <span class="n">be</span><span class="o">.</span><span class="n">z</span>
+
+    <span class="n">waterway</span> <span class="o">=</span> <span class="n">Waterway</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">BoundaryEntry</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A cell that is not yet in the waterway, but has at least one edge whose other cell is in the waterway.&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">edges</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">cell</span> <span class="o">&lt;</span> <span class="n">m2</span><span class="o">.</span><span class="n">num_cells</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cell</span> <span class="o">=</span> <span class="n">cell</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="o">=</span> <span class="n">edges</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">compute_centroid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">boundary</span> <span class="o">=</span> <span class="n">sortedcontainers</span><span class="o">.</span><span class="n">SortedList</span><span class="p">([</span><span class="n">BoundaryEntry</span><span class="p">(</span><span class="n">outlet_cell</span><span class="p">,</span> <span class="p">[</span><span class="n">outlet_edge</span><span class="p">,</span> <span class="p">]),</span> <span class="p">],</span>
+                                           <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">be</span><span class="p">:</span> <span class="n">be</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+
+    <span class="c1"># masked cells are always in the boundary, allowing them to be picked up as we reach that elevation.</span>
+    <span class="k">if</span> <span class="n">is_waterbody</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">is_waterbody</span><span class="p">)</span> <span class="o">==</span> <span class="n">m2</span><span class="o">.</span><span class="n">num_cells</span><span class="p">)</span>
+        <span class="n">masked_cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">BoundaryEntry</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">is_waterbody</span><span class="p">)</span> <span class="k">if</span> <span class="n">mask</span><span class="p">]</span>
+        <span class="n">boundary</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">masked_cells</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">boundary</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># pop the lowest boundary cell and stick its edge and cell</span>
+        <span class="n">next_be</span> <span class="o">=</span> <span class="n">boundary</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">waterway</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">next_be</span><span class="p">)</span>
+
+        <span class="c1"># find all other edges of the cell just added</span>
+        <span class="k">for</span> <span class="n">other_e</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">[</span><span class="n">next_be</span><span class="o">.</span><span class="n">cell</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">other_e</span> <span class="ow">in</span> <span class="n">waterway</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span> <span class="k">continue</span>
+
+            <span class="c1"># find the cell on the other side of other_e</span>
+            <span class="n">other_e_cells</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">edges_to_cells</span><span class="p">[</span><span class="n">other_e</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_e_cells</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># boundary edge, add it to the waterway</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="n">next_be</span><span class="o">.</span><span class="n">cell</span> <span class="o">==</span> <span class="n">other_e_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">waterway</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other_e</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other_e_cells</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">next_be</span><span class="o">.</span><span class="n">cell</span> <span class="ow">in</span> <span class="n">other_e_cells</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">next_be</span><span class="o">.</span><span class="n">cell</span> <span class="o">==</span> <span class="n">other_e_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">other_c</span> <span class="o">=</span> <span class="n">other_e_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="n">next_be</span><span class="o">.</span><span class="n">cell</span> <span class="o">==</span> <span class="n">other_e_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">other_c</span> <span class="o">=</span> <span class="n">other_e_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># this would break assumption of what it means to be</span>
+            <span class="c1"># in boundary.</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">other_c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">waterway</span><span class="o">.</span><span class="n">cells</span><span class="p">)</span>
+
+            <span class="c1"># now we have an other_e, other_c pair to add into</span>
+            <span class="c1"># boundary.  But first we may need to condition.</span>
+            <span class="n">other_c_centroid</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">compute_centroid</span><span class="p">(</span><span class="n">other_c</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">other_c_centroid</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">waterway</span><span class="o">.</span><span class="n">max_z</span><span class="p">:</span>
+                <span class="n">other_c_nodes</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">[</span><span class="n">other_c</span><span class="p">]</span>
+
+                <span class="c1"># for this to be possible, there must be at least</span>
+                <span class="c1"># one free node in the nodes of next_c.  By free,</span>
+                <span class="c1"># we mean that its elevation can be changed</span>
+                <span class="c1"># without breaking everything.  This means that</span>
+                <span class="c1"># neither of that node&#39;s edges can be in</span>
+                <span class="c1"># waterway.edges or boundary.</span>
+                <span class="c1">#</span>
+                <span class="c1"># we also need the fixed (non-free) node elevations</span>
+                <span class="n">fixed_node_elevs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">other_c_nodes</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">==</span> <span class="n">other_e</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">e</span> <span class="ow">in</span> <span class="n">waterway</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">e</span> <span class="o">==</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">be</span> <span class="ow">in</span> <span class="n">boundary</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">be</span><span class="o">.</span><span class="n">edges</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_node_elevs</span><span class="p">:</span>
+                            <span class="n">fixed_node_elevs</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_node_elevs</span><span class="p">:</span>
+                            <span class="n">fixed_node_elevs</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span>
+                <span class="n">free_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">other_c_nodes</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_node_elevs</span><span class="p">]</span>
+
+                <span class="c1"># should not be possible to be both lower</span>
+                <span class="c1"># elevation and not have a free node, or it would</span>
+                <span class="c1"># already be in boundary, and therefore have no</span>
+                <span class="c1"># free nodes</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+                <span class="c1"># calculate the z of the free node required to</span>
+                <span class="c1"># make the triangle&#39;s centroid == waterway_max</span>
+                <span class="c1">#</span>
+                <span class="c1"># this formula is likely triangle-only?</span>
+                <span class="n">z_free</span> <span class="o">=</span> <span class="p">(</span><span class="n">waterway</span><span class="o">.</span><span class="n">max_z</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_c_nodes</span><span class="p">)</span>
+                          <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fixed_node_elevs</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">free_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span>
+
+                <span class="c1"># for now, we&#39;ll assume triangular.  I&#39;m not sure</span>
+                <span class="c1"># what to do if this is bigger than length</span>
+                <span class="c1"># 1... something like evenly raise up all free</span>
+                <span class="c1"># nodes?  But with triangles, there can only be</span>
+                <span class="c1"># one free node so it is easy.</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;  moving z node </span><span class="si">{</span><span class="n">free_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> from </span><span class="si">{</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">free_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">z_free</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+                <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">free_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">z_free</span>
+
+            <span class="c1"># now it is conditioned, add it to the boundary</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># is it already in the boundary?</span>
+                <span class="n">other_be</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">be</span> <span class="k">for</span> <span class="n">be</span> <span class="ow">in</span> <span class="n">boundary</span> <span class="k">if</span> <span class="n">be</span><span class="o">.</span><span class="n">cell</span> <span class="o">==</span> <span class="n">other_c</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="c1"># no, add it</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  adding to boundary: edge: </span><span class="si">{</span><span class="n">other_e</span><span class="si">}</span><span class="s1">  cell: </span><span class="si">{</span><span class="n">other_c</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">boundary</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">BoundaryEntry</span><span class="p">(</span><span class="n">other_c</span><span class="p">,</span> <span class="p">[</span><span class="n">other_e</span><span class="p">,</span> <span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># yes, just add this edge to that entry</span>
+                <span class="k">if</span> <span class="n">other_e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">other_be</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+                    <span class="n">other_be</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other_e</span><span class="p">)</span>
+
+    <span class="c1"># when this is done, all cells should be in waterway</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waterway</span><span class="o">.</span><span class="n">cells</span><span class="p">)</span> <span class="o">==</span> <span class="n">m2</span><span class="o">.</span><span class="n">num_cells</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waterway</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">==</span> <span class="n">m2</span><span class="o">.</span><span class="n">num_edges</span><span class="p">)</span>
+
+    <span class="c1"># delete the centroid info to force recalculation</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">clear_geometry_cache</span><span class="p">()</span>
+    <span class="k">return</span></div>
+
+
+
+<div class="viewcode-block" id="identify_local_minima">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.identify_local_minima">[docs]</a>
+<span class="k">def</span> <span class="nf">identify_local_minima</span><span class="p">(</span><span class="n">m2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For all cells, identify if their centroid elevation is lower than</span>
+<span class="sd">    the elevation of all neighbors.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m2 : mesh.Mesh2D object</span>
+<span class="sd">      The mesh to check.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.array</span>
+<span class="sd">      Array of 0s and 1s, where 1 indicates a local minima.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m2</span><span class="o">.</span><span class="n">num_cells</span><span class="p">,</span> <span class="p">),</span> <span class="p">)</span>
+    <span class="k">for</span> <span class="n">cell</span><span class="p">,</span> <span class="n">conn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">):</span>
+        <span class="n">higher</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">conn</span><span class="p">):</span>
+            <span class="c1"># find the other cell</span>
+            <span class="n">e_cells</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">edges_to_cells</span><span class="p">[</span><span class="n">e</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_cells</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">cell</span><span class="p">:</span>
+                    <span class="n">other_cell</span> <span class="o">=</span> <span class="n">e_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">e_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">cell</span><span class="p">:</span>
+                    <span class="n">other_cell</span> <span class="o">=</span> <span class="n">e_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Mismatch, cell not in edges_to_cells?&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">other_cell</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">m2</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">cell</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">higher</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">higher</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">higher</span><span class="p">):</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">cell</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="smooth">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.smooth">[docs]</a>
+<span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Smooths an image according to an algorithm, passing kwargs on to that algorithm.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;method&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;sigma&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;sigma&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown smoothing algorithm: &quot;</span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">fill_gaps</span><span class="p">(</span><span class="n">img_in</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">scipy.interpolate</span>
+
+    <span class="k">if</span> <span class="n">nodata</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">img_in</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">img_in</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">)</span>
+
+    <span class="c1"># array of (number of points, 2) containing the x,y coordinates of the valid values only</span>
+    <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">img_in</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">img_in</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">xym</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">xx</span><span class="p">[</span><span class="n">mask</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">yy</span><span class="p">[</span><span class="n">mask</span><span class="p">])))</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># the valid values, as 1D arrays (in the same order as their coordinates in xym)</span>
+    <span class="n">img_in0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">img_in</span><span class="p">[:,</span> <span class="p">:][</span><span class="n">mask</span><span class="p">])</span>
+
+    <span class="c1"># interpolator</span>
+    <span class="n">interp0</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">interpolate</span><span class="o">.</span><span class="n">NearestNDInterpolator</span><span class="p">(</span><span class="n">xym</span><span class="p">,</span> <span class="n">img_in0</span><span class="p">)</span>
+
+    <span class="c1"># interpolate the whole image</span>
+    <span class="k">return</span> <span class="n">interp0</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">xx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">yy</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xx</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="condition_river_mesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.condition_river_mesh">[docs]</a>
+<span class="k">def</span> <span class="nf">condition_river_mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
+                         <span class="n">river</span><span class="p">,</span>
+                         <span class="n">smooth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">use_parent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">use_nhd_elev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">treat_banks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">depress_upstream_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">network_burn_in_depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">ignore_in_sweep</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Condition, IN PLACE, the elevations of stream-corridor elements</span>
+<span class="sd">   to ensure connectivity throgh culverts, skips ponds, maintain</span>
+<span class="sd">   monotonicity, or otherwise enforce depths of constructed channels.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    m2: watershed_workflow.mesh.Mesh2D object</span>
+<span class="sd">        2D mesh with 3D coordinates.</span>
+<span class="sd">    river: watershed_workflow.river_tree.River object</span>
+<span class="sd">        River tree with node.elements added for quads</span>
+<span class="sd">    smooth: boolean, optional</span>
+<span class="sd">        If true, smooth the profile of each reach using a gaussian</span>
+<span class="sd">        filter (mainly to pass through railroads and avoid reservoirs).</span>
+<span class="sd">    use_parent: boolean, optional</span>
+<span class="sd">        If true, use the segment from the original parent reach while</span>
+<span class="sd">        smoothing (seems to be not making a huge difference).</span>
+<span class="sd">    lower: boolean, optional</span>
+<span class="sd">        If true, lower the smoothed bed profile to match the lower</span>
+<span class="sd">        points on the raw bed profile. This is useful particularly for</span>
+<span class="sd">        narrow ag. ditches where NHDPLus flowlines often do not</span>
+<span class="sd">        coincide with the DEM depressions and so stream-elements</span>
+<span class="sd">        intermitently fall into them.</span>
+<span class="sd">    use_nhd_elev: boolean, optional</span>
+<span class="sd">        If true, enforce maximum and minimum elevation for each</span>
+<span class="sd">        reach provided in NHDPlus.</span>
+<span class="sd">    treat_banks: boolean, optional</span>
+<span class="sd">        Where the river is passing right next to the reservoir or</span>
+<span class="sd">        NHDline is misplaced into the reservoir, banks may fall into</span>
+<span class="sd">        the reservoir. If true, this will enforce that the bank node</span>
+<span class="sd">        is at a higher elevation than the stream bed elevation.</span>
+<span class="sd">    depress_upstream_by: float, optional</span>
+<span class="sd">        If the depression is not captured well in the DEM, the</span>
+<span class="sd">        river-mesh elements (streambed) headwater reaches may be</span>
+<span class="sd">        lowered by this number.  The effect of propogated downstream</span>
+<span class="sd">        only upto where it is needed to maintain topographic gradients</span>
+<span class="sd">        on the network scale in the network sweep step.</span>
+<span class="sd">    network_burn_in_depth: float, dict, or function</span>
+<span class="sd">        Like depress_upstream_by, this also lowers river-mesh elements</span>
+<span class="sd">        by this value, but this variant lowers all reaches.  The depth</span>
+<span class="sd">        may be provided as a float (uniform lowering), dictionary</span>
+<span class="sd">        {stream order : depth to depress by}, or as a function of</span>
+<span class="sd">        drainage area.</span>
+<span class="sd">    ignore_in_sweep: list, optional</span>
+<span class="sd">        If provided, a list of IDs to not be burned in via the network</span>
+<span class="sd">        sweep.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">river_corr_ids</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># collecting IDs of all nodes in the river/stream</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
+            <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">river_corr_ids</span><span class="p">:</span>
+                    <span class="n">river_corr_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+
+    <span class="c1"># conditioning of stream-bed profiles to enforce typical channel</span>
+    <span class="c1"># depths, large-scale topographic gradients in the streambeds, and</span>
+    <span class="c1"># connectivity through culverts that pass under road and railway</span>
+    <span class="c1"># embankments</span>
+    <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>  <span class="c1"># reachwise smoothing</span>
+            <span class="c1"># adds smooth profile in node properties</span>
+            <span class="n">_smooth_profile</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">use_parent</span><span class="o">=</span><span class="n">use_parent</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">)</span>
+
+        <span class="n">_network_sweep</span><span class="p">(</span><span class="n">river</span><span class="p">,</span>
+                       <span class="n">depress_upstream_by</span><span class="o">=</span><span class="n">depress_upstream_by</span><span class="p">,</span>
+                       <span class="n">use_nhd_elev</span><span class="o">=</span><span class="n">use_nhd_elev</span><span class="p">,</span>
+                       <span class="n">ignore_in_sweep</span><span class="o">=</span><span class="n">ignore_in_sweep</span><span class="p">)</span>  <span class="c1"># network-wide conditioning</span>
+
+    <span class="c1"># transferring network-scale-conditioned stream-bed elevations</span>
+    <span class="c1"># onto the mesh</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;SmoothProfile&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># only centerline elevation is to be used, without any</span>
+            <span class="c1"># conditioning</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">network_burn_in_depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">order</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;StreamOrder&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="n">burn_in_depth</span> <span class="o">=</span> <span class="n">network_burn_in_depth</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
+                <span class="k">elif</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="n">burn_in_depth</span> <span class="o">=</span> <span class="n">network_burn_in_depth</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">burn_in_depth</span> <span class="o">=</span> <span class="n">network_burn_in_depth</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">network_burn_in_depth</span><span class="p">):</span>
+                <span class="c1"># can we pass such user-defined functions for channel width</span>
+                <span class="c1"># and depth as a function of drainage area W or D =</span>
+                <span class="c1"># f(Drainage_area)</span>
+                <span class="n">DA_sqm</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;TotalDrainageAreaSqKm&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span>
+                <span class="n">burn_in_depth</span> <span class="o">=</span> <span class="n">network_burn_in_depth</span><span class="p">(</span><span class="n">DA_sqm</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">burn_in_depth</span> <span class="o">=</span> <span class="n">network_burn_in_depth</span>
+
+            <span class="n">profile</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">burn_in_depth</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># for the first point</span>
+                <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="c1"># assign elevations to the upstream points of each</span>
+            <span class="c1"># river-corridor element (quads)</span>
+            <span class="k">for</span> <span class="n">coord_id</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">coord_id</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="c1"># this to ensure that a diked channel passing over/around</span>
+            <span class="c1"># a pond or reservoirs does not have bank-nodes fall into</span>
+            <span class="c1"># the depression</span>
+            <span class="k">if</span> <span class="n">treat_banks</span><span class="p">:</span>
+                <span class="n">bank_node_ids</span> <span class="o">=</span> <span class="n">_bank_nodes_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">bank_node_ids</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">river_corr_ids</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">node_id</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">profile</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]):</span>
+                            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;raised node </span><span class="si">{</span><span class="n">node_id</span><span class="si">}</span><span class="s2"> for bank integrity&quot;</span><span class="p">)</span>
+                            <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">node_id</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">profile</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mf">0.55</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">clear_geometry_cache</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For a given node, generate a bedprofile using elevations on the node.segment.&quot;&quot;&quot;</span>
+    <span class="c1"># Note that node_elems are downstream to upstream, while segment coords are upstream to downstream.</span>
+    <span class="n">stream_bed_coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">dist</span><span class="p">(</span><span class="n">stream_bed_coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">point</span><span class="p">)</span> <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">stream_bed_coords</span><span class="p">]</span>
+    <span class="n">elevs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;elev_profile&#39;</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># reversed</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dists</span><span class="p">,</span> <span class="n">elevs</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">profile</span>
+
+
+<span class="k">def</span> <span class="nf">_smooth_profile</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">use_parent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies gaussian filter smoothing to the bed-profile obtained from DEM.</span>
+
+<span class="sd">    This option becomes important in ag. watersheds when NHDPLus is</span>
+<span class="sd">    inconsistent with the depression in the DEM.  One can also include</span>
+<span class="sd">    elevation profile of the parent node for better continuity,</span>
+<span class="sd">    although, subsequent network sweep option makes using parent</span>
+<span class="sd">    profile redundant.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">_get_profile</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">profile_new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">use_parent</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">profile</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parent_profile</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">]</span>
+            <span class="n">profile_to_smooth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">parent_profile</span><span class="p">,</span> <span class="n">profile_new</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:]))</span>
+            <span class="n">profile_to_smooth</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">parent_profile</span><span class="p">):,</span>
+                              <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_to_smooth</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">parent_profile</span><span class="p">):,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">profile_to_smooth</span><span class="p">[</span>
+                                  <span class="nb">len</span><span class="p">(</span><span class="n">parent_profile</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># shift the distances</span>
+            <span class="n">profile_to_smooth</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">profile_to_smooth</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                                                    <span class="mi">5</span><span class="p">,</span>
+                                                                    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>  <span class="c1"># smooth filter</span>
+            <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_to_smooth</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">profile</span><span class="p">):,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">gaussian_filter</span><span class="p">(</span><span class="n">profile</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">lower</span><span class="p">:</span>
+        <span class="c1"># NHDPlus flowlines may not fall on the DEM depression of the</span>
+        <span class="c1"># narrow ditch, hence the smoothed bed profile will</span>
+        <span class="c1"># underestimate the depression In this step, the smoothed bed</span>
+        <span class="c1"># propfile is depressed by a median of one-sided difference</span>
+        <span class="c1"># between the raw and smoothed profile</span>
+        <span class="n">diffs</span> <span class="o">=</span> <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">profile</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">diffs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_new</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">diffs</span><span class="p">[</span><span class="n">diffs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;SmoothProfile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_new</span>
+    <span class="k">return</span> <span class="n">profile_new</span>
+
+
+<span class="k">def</span> <span class="nf">_enforce_monotonicity</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">moving</span><span class="o">=</span><span class="s1">&#39;upstream&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensures that the streambed-profile elevations are monotonically</span>
+<span class="sd">    increasing as we move upstream, or decreasing as we move</span>
+<span class="sd">    downstream.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">profile_new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">moving</span> <span class="o">==</span> <span class="s1">&#39;upstream&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">profile_new</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">moving</span> <span class="o">==</span> <span class="s1">&#39;downstream&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">profile_new</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile_new</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid value &#39;</span><span class="si">{</span><span class="n">moving</span><span class="si">}</span><span class="s2">&#39; for enforce_monotonicity()&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">profile_new</span>
+
+
+<span class="k">def</span> <span class="nf">_network_sweep</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">depress_upstream_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_nhd_elev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_in_sweep</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sweep the river network from each headwater reach (leaf node)</span>
+<span class="sd">    to the watershed outlet (root node), removing aritificial</span>
+<span class="sd">    obstructions in the river mesh and enforcing depths of constructed</span>
+<span class="sd">    channels.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ignore_in_sweep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ignore_in_sweep</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">leaf_nodes</span><span class="p">():</span>  <span class="c1">#starting from one of the leaf nodes</span>
+        <span class="c1"># providing extra depression at the upstream end</span>
+        <span class="k">if</span> <span class="n">depress_upstream_by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">leaf</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">depress_upstream_by</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">leaf</span><span class="o">.</span><span class="n">pathToRoot</span><span class="p">():</span>
+            <span class="c1"># traversing from leaf node (headwater) catchment to the root node</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_enforce_monotonicity</span><span class="p">(</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">],</span> <span class="s1">&#39;downstream&#39;</span><span class="p">)</span>  <span class="c1"># making monotonous</span>
+            <span class="n">junction_elevs</span> <span class="o">=</span> <span class="p">[</span><span class="n">sib</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">sib</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">()]</span>
+
+            <span class="k">if</span> <span class="n">use_nhd_elev</span><span class="p">:</span>
+                <span class="n">junction_elevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;MinimumElevationSmoothed&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore_in_sweep</span><span class="p">:</span>
+                <span class="n">junction_elevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="n">junction_elevs</span><span class="p">)</span>  <span class="c1"># giving min junction elevation to both the siblings</span>
+            <span class="k">for</span> <span class="n">sib</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">():</span>
+                <span class="n">sib</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SmoothProfile&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">junction_elevs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_bank_nodes_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For a given m2 mesh and id of river-corridor element, returns</span>
+<span class="sd">    longitudinal edges of the river-corridor element.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># edge on the right as we look from the downstream direction</span>
+    <span class="n">edge_r</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">elem</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># edge on the left as we look from the downstream direction</span>
+    <span class="n">edge_l</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">elem</span><span class="p">))[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">_bank_nodes_from_edge</span><span class="p">(</span><span class="n">edge_r</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">),</span> <span class="n">_bank_nodes_from_edge</span><span class="p">(</span><span class="n">edge_l</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">)]</span>
+
+
+<span class="k">def</span> <span class="nf">_bank_nodes_from_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For a given m2 mesh, id of river-corridor element, and edge,</span>
+<span class="sd">    returns the bank-node id, i.e., for the triangle attached to the</span>
+<span class="sd">    river-corridor, node that does not form the river corridor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cell_ids</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">edges_to_cells</span><span class="p">[</span><span class="n">edge</span><span class="p">]</span>
+    <span class="n">cells_to_edge</span> <span class="o">=</span> <span class="p">[</span><span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">[</span><span class="n">cell_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">cell_id</span> <span class="ow">in</span> <span class="n">cell_ids</span><span class="p">]</span>
+    <span class="n">cells_to_edge</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+    <span class="n">bank_tri</span> <span class="o">=</span> <span class="n">cells_to_edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">bank_tri</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">edge</span><span class="p">))</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">node_id</span>
+
+
+<div class="viewcode-block" id="elevate_rivers">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.elevate_rivers">[docs]</a>
+<span class="k">def</span> <span class="nf">elevate_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Elevate the river using dem and store reach-bed-profile as node properties.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()):</span>
+            <span class="n">node_points</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">xy</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">node_elevs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">node_points</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="n">dem_profile</span><span class="p">)[:,</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_elevs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;elev_profile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_elevs</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

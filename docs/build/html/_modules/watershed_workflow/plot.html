@@ -1,159 +1,80 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.plot &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../index.html" class="icon icon-home"> Watershed Workflow
           
-
-          
+          <a href="../../index.html" class="icon icon-home">
+            Watershed Workflow
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sources.html">Data Sources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Watershed Workflow</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-        
-      <li>watershed_workflow.plot</li>
-    
-    
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.plot</li>
       <li class="wy-breadcrumbs-aside">
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <h1>Source code for watershed_workflow.plot</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Plotting relies on cartopy to ensure that coordinate projections are dealt</span>
 <span class="sd">with reasonably within matplotlib.  The preferred usage for plotting is similar</span>
@@ -191,21 +112,129 @@
     <span class="k">return</span> <span class="kc">True</span>
 
 
-<span class="k">class</span> <span class="nc">PolyCollectionWithArray</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poly</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">poly</span> <span class="o">=</span> <span class="n">poly</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arr</span> <span class="o">=</span> <span class="n">arr</span>
-        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="c1"># plot reaches and modify...</span>
+<span class="c1">#</span>
+<span class="c1"># This uses the annotated axes</span>
+<div class="viewcode-block" id="Labeler">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.Labeler">[docs]</a>
+<span class="k">class</span> <span class="nc">Labeler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A labeling widget that can be attached to matplotlib figures to display info on-click.</span>
 
-    <span class="k">def</span> <span class="nf">get_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">arr</span>
+<span class="sd">    When an geometry item (e.g. point, line, or polygon) is clicked on</span>
+<span class="sd">    the figure, that is mapped into the original WW object that</span>
+<span class="sd">    generated the geometry, and then run through a function to</span>
+<span class="sd">    generate a label that is written to the title of the figure.</span>
 
-    <span class="k">def</span> <span class="nf">autoscale_None</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ax : matplotlib.Axes object</span>
+<span class="sd">        The axes to work with.</span>
+<span class="sd">    items : list[tuple[artist, metadata, formatter]]</span>
+<span class="sd">        See documentation of the addItem() method.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="o">*</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Labeler.addItem">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.Labeler.addItem">[docs]</a>
+    <span class="k">def</span> <span class="nf">addItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">artist</span><span class="p">,</span> <span class="n">formatter</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds an item to the list of things to label.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : List[*]</span>
+<span class="sd">            A list of objects being labeled.  This is likely the</span>
+<span class="sd">            underlying data, with properties, that was passed to</span>
+<span class="sd">            a ww.plot function.</span>
+<span class="sd">        artist : matplotlib collection</span>
+<span class="sd">            A matplotlib Collection, likely the return value of</span>
+<span class="sd">            a ww.plot call or similar.</span>
+<span class="sd">        formatter : function or str</span>
+<span class="sd">            A function that accepts an entry in data and returns a</span>
+<span class="sd">            string to label the item selected.  If this is a string,</span>
+<span class="sd">            it is assumed to be a formattable string to which the</span>
+<span class="sd">            item&#39;s properties dictionary is passed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formatter</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+
+            <span class="k">def</span> <span class="nf">format_this</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">item</span><span class="p">)),</span> <span class="nb">list</span><span class="p">()</span>
+
+            <span class="n">formatter</span> <span class="o">=</span> <span class="n">format_this</span>
+
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">artist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">artist</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">formatter</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_format</span> <span class="o">=</span> <span class="nb">format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selected</span> <span class="o">=</span> <span class="p">[]</span></div>
 
 
-<div class="viewcode-block" id="get_ax"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.get_ax">[docs]</a><span class="k">def</span> <span class="nf">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axgrid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns an axis with a given projection.</span>
+<div class="viewcode-block" id="Labeler.deselect">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.Labeler.deselect">[docs]</a>
+    <span class="k">def</span> <span class="nf">deselect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clears anything plotted in the last click&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">artist</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selected</span><span class="p">:</span>
+            <span class="n">artist</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selected</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Labeler.select">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.Labeler.select">[docs]</a>
+    <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">xy</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Selects item i, collection index j, with a click at xy&quot;&quot;&quot;</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">artist</span><span class="p">,</span> <span class="n">formatter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">dat</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseGeometry</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
+                <span class="n">dat</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">dat</span><span class="p">,</span> <span class="o">**</span><span class="n">dat</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">formatter</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">formatter</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+        <span class="c1"># redraw LineStrings with markers</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">artist</span><span class="p">,</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">LineCollection</span><span class="p">):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">artist</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">artist</span><span class="o">.</span><span class="n">get_colors</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">line</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Labeler.update">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.Labeler.update">[docs]</a>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acts on click.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;event loc:&#39;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">mouseevent</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">mouseevent</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;event dict:&#39;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="n">event</span><span class="o">.</span><span class="n">artist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">mouseevent</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">mouseevent</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">get_figure</span><span class="p">()</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_ax">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.get_ax">[docs]</a>
+<span class="k">def</span> <span class="nf">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span>
+           <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">nrow</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+           <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+           <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+           <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">axgrid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">ax_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns an axis with a given projection.</span>
 <span class="sd">    </span>
 <span class="sd">    Note this forwards extra kwargs for plt.figure().</span>
 
@@ -230,6 +259,8 @@
 <span class="sd">      Figure size in inches.</span>
 <span class="sd">    dpi : int, optional</span>
 <span class="sd">      Dots per inch for figures.</span>
+<span class="sd">    ax_kwargs : dict</span>
+<span class="sd">      Other arguments provided to the axes creation call.</span>
 <span class="sd">    kwargs : dict</span>
 <span class="sd">      Additional arguments to plt.figure()</span>
 
@@ -242,6 +273,8 @@
 <span class="sd">    fig : matplotlib figure object</span>
 <span class="sd">    ax : matplotlib ax object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="c1"># make a figure</span>
     <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -257,13 +290,15 @@
 
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># no crs, just get an ax -- you deal with it.</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">)</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">crs</span> <span class="o">==</span> <span class="s1">&#39;3d&#39;</span><span class="p">:</span>
             <span class="c1"># 3d plot</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="n">ax_kwargs</span><span class="p">[</span><span class="s1">&#39;projection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;3d&#39;</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">projection</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">)</span>
+            <span class="n">ax_kwargs</span><span class="p">[</span><span class="s1">&#39;projection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">projection</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="o">*</span><span class="n">axargs</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_kwargs</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -284,8 +319,11 @@
         <span class="k">return</span> <span class="n">ax</span></div>
 
 
-<div class="viewcode-block" id="huc"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.huc">[docs]</a><span class="k">def</span> <span class="nf">huc</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot a HUC polygon.</span>
+
+<div class="viewcode-block" id="huc">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.huc">[docs]</a>
+<span class="k">def</span> <span class="nf">huc</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot a HUC polygon.</span>
 
 <span class="sd">    A wrapper for plot.shply()</span>
 <span class="sd">    </span>
@@ -310,8 +348,18 @@
     <span class="k">return</span> <span class="n">shply</span><span class="p">([</span><span class="n">huc</span><span class="p">,</span> <span class="p">],</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="hucs"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.hucs">[docs]</a><span class="k">def</span> <span class="nf">hucs</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot a SplitHUCs object.</span>
+
+<div class="viewcode-block" id="hucs">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.hucs">[docs]</a>
+<span class="k">def</span> <span class="nf">hucs</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+         <span class="n">crs</span><span class="p">,</span>
+         <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span>
+         <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">outlet_marker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">outlet_markersize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+         <span class="n">outlet_markercolor</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span>
+         <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot a SplitHUCs object.</span>
 <span class="sd">    </span>
 <span class="sd">    A wrapper for plot.shply()</span>
 <span class="sd">    </span>
@@ -325,6 +373,12 @@
 <span class="sd">      See https://matplotlib.org/tutorials/colors/colors.html</span>
 <span class="sd">    ax : matplotib axes object, optional</span>
 <span class="sd">      Axes to plot on.  Calls get_ax() if not provided.</span>
+<span class="sd">    outlet_marker : matplotlib marker string, optional</span>
+<span class="sd">      If provided, also plots the actual points that make up the shape.</span>
+<span class="sd">    outlet_markersize : float, optional</span>
+<span class="sd">      Size of the outlet marker.</span>
+<span class="sd">    outlet_markercolor : matplotlib color string, optional</span>
+<span class="sd">      Color of the outlet marker.</span>
 <span class="sd">    kwargs : dict</span>
 <span class="sd">      Extra arguments passed to the plotting method, which is likely</span>
 <span class="sd">      descartes.PolygonPatch.</span>
@@ -334,37 +388,29 @@
 <span class="sd">    patches : matplotib PatchCollection</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
-
-    <span class="n">kwargs_scatter</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">if</span> <span class="s1">&#39;markersize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs_scatter</span><span class="p">[</span><span class="s1">&#39;markersize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;markersize&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs_scatter</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;marker&#39;</span><span class="p">)</span>
-
     <span class="n">polys</span> <span class="o">=</span> <span class="n">shply</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">outlet_marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
             <span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="p">])</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
             <span class="n">p</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="p">])</span>
         <span class="n">c</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">c</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">c</span> <span class="k">for</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">outlet_markercolor</span><span class="p">,</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="p">]</span>
-        <span class="k">if</span> <span class="s1">&#39;markersize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;markersize&#39;</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="mi">100</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_scatter</span><span class="p">)</span></div>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">outlet_markersize</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="n">outlet_marker</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="shapes"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shapes">[docs]</a><span class="k">def</span> <span class="nf">shapes</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot an itereable collection of fiona shapes.</span>
+
+<div class="viewcode-block" id="shapes">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.shapes">[docs]</a>
+<span class="k">def</span> <span class="nf">shapes</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot an itereable collection of fiona shapes.</span>
 
 <span class="sd">    A wrapper for plot.shply()</span>
 
@@ -386,12 +432,15 @@
 <span class="sd">    -------</span>
 <span class="sd">    patches : matplotib PatchCollection</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
+    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">create_shply</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
     <span class="n">shply</span><span class="p">(</span><span class="n">shplys</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="river"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.river">[docs]</a><span class="k">def</span> <span class="nf">river</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot an itereable collection of reaches.</span>
+
+<div class="viewcode-block" id="river">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.river">[docs]</a>
+<span class="k">def</span> <span class="nf">river</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot an itereable collection of reaches.</span>
 
 <span class="sd">    A wrapper for plot.shply()</span>
 
@@ -416,8 +465,11 @@
     <span class="n">shplys</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="rivers"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.rivers">[docs]</a><span class="k">def</span> <span class="nf">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot an itereable collection of river Tree objects.</span>
+
+<div class="viewcode-block" id="rivers">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.rivers">[docs]</a>
+<span class="k">def</span> <span class="nf">rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot an itereable collection of river Tree objects.</span>
 
 <span class="sd">    A wrapper for plot.shply()</span>
 
@@ -439,8 +491,8 @@
 <span class="sd">    -------</span>
 <span class="sd">    lines : matplotib LineCollection</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">river</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">enumerated_colors</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
@@ -450,16 +502,22 @@
             <span class="n">river</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="shply"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shply">[docs]</a><span class="k">def</span> <span class="nf">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot a single shapely object.  See shplys() for options.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="shply">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.shply">[docs]</a>
+<span class="k">def</span> <span class="nf">shply</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot a single shapely object.  See shplys() for options.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">shplys</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">shplys</span><span class="p">([</span><span class="n">shp</span><span class="p">,</span> <span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="shplys"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.shplys">[docs]</a><span class="k">def</span> <span class="nf">shplys</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot shapely objects.</span>
+
+<div class="viewcode-block" id="shplys">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.shplys">[docs]</a>
+<span class="k">def</span> <span class="nf">shplys</span><span class="p">(</span><span class="n">shps</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot shapely objects.</span>
 
 <span class="sd">    Currently this assumes shps is an iterable collection of Points, Lines, or</span>
 <span class="sd">    Polygons.  So while a single MultiPolygon is allowed, lists of</span>
@@ -477,6 +535,8 @@
 <span class="sd">      See https://matplotlib.org/tutorials/colors/colors.html</span>
 <span class="sd">    ax : matplotib axes object, optional</span>
 <span class="sd">      Axes to plot on.  Calls get_ax() if not provided.</span>
+<span class="sd">    marker : matplotlib marker string</span>
+<span class="sd">      If provided, also plots the actual points that make up the shape.</span>
 <span class="sd">    kwargs : dict</span>
 <span class="sd">      Extra arguments passed to the plotting method, which can be:</span>
 <span class="sd">      * pyplot.scatter() (if shps are Point objects)</span>
@@ -495,32 +555,43 @@
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">shps</span><span class="p">,</span> <span class="p">]</span>
 
-    <span class="k">if</span> <span class="s1">&#39;facecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
-
+    <span class="c1"># get an axis and projection to work on</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">get_ax</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s1">&#39;projection&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">projection</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">projection</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_cartopy</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
 
+    <span class="c1"># set default colors</span>
+    <span class="k">if</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">enumerated_colors</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shps</span><span class="p">))</span>
+
+    <span class="c1"># update keyword arguments</span>
+    <span class="k">if</span> <span class="s1">&#39;facecolor&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+
+    <span class="c1"># markers cannot be used in collections, so we scatter them separately</span>
+    <span class="n">marker_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">marker_kwargs</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="k">if</span> <span class="s1">&#39;markersize&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">marker_kwargs</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;markersize&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
         <span class="c1"># plot points</span>
-        <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span>
+        <span class="n">marker_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;marker&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">marker_kwargs</span><span class="p">:</span>
+            <span class="n">marker_kwargs</span><span class="p">[</span><span class="s1">&#39;marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;o&#39;</span>
 
         <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">coords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">])[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
         <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
         <span class="c1"># plot lines</span>
-        <span class="k">if</span> <span class="s1">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">style</span>
         <span class="k">if</span> <span class="s1">&#39;colors&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
 
@@ -544,25 +615,46 @@
             <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors</span>
 
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">coords</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">]</span>
-        <span class="n">lc</span> <span class="o">=</span> <span class="n">pltc</span><span class="o">.</span><span class="n">LineCollection</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">pltc</span><span class="o">.</span><span class="n">LineCollection</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">lc</span><span class="o">.</span><span class="n">set_transform</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">set_transform</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Axes3D</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection3d</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection3d</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">lc</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
 
-    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">in</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="s1">&#39;linestyle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">style</span>
+        <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">l</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="n">point_colors</span> <span class="o">=</span> <span class="n">color</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">point_colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">color</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">l</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">point_colors</span><span class="p">,</span> <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                           <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                           <span class="n">c</span><span class="o">=</span><span class="n">point_colors</span><span class="p">,</span>
+                           <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+                           <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
 
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))</span> <span class="ow">in</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;facecolor&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="s1">&#39;edge&#39;</span><span class="p">]:</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;facecolor&#39;</span><span class="p">)</span>
             <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">face_is_edge</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;elevation&#39;</span><span class="p">:</span>
+            <span class="c1"># compute colors from the mean elevation</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;area&#39;</span><span class="p">:</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">area</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="ow">and</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;log10area&#39;</span><span class="p">:</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">area</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)]))</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">color_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
@@ -587,6 +679,7 @@
                     <span class="k">return</span> <span class="p">[</span><span class="n">thing</span><span class="p">,</span> <span class="p">]</span>
 
             <span class="n">multi_poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">([</span><span class="n">l</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">listify</span><span class="p">(</span><span class="n">shp</span><span class="p">)])</span>
+
             <span class="n">patch</span> <span class="o">=</span> <span class="n">descartes</span><span class="o">.</span><span class="n">PolygonPatch</span><span class="p">(</span><span class="n">multi_poly</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">patch</span><span class="o">.</span><span class="n">set_transform</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
@@ -595,6 +688,17 @@
                 <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_collection3d</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">multi_poly</span><span class="o">.</span><span class="n">geoms</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">pnts_res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pnts_res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                          <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                          <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                                          <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+                                          <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
             <span class="c1"># list of colors</span>
@@ -609,6 +713,19 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">res</span><span class="o">.</span><span class="n">set_edgecolor</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">shps</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
+                <span class="n">pcolors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">color</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shps</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">pnts_res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">pcolors</span><span class="p">,</span> <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pnts_res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                          <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                          <span class="n">c</span><span class="o">=</span><span class="n">pcolors</span><span class="p">,</span>
+                                          <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+                                          <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># list of scalars that will be used with cmap to define a color</span>
@@ -637,6 +754,18 @@
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;kwargs = &#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;setting face color = &#39;</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
             <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">multi_poly</span><span class="o">.</span><span class="n">geoms</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">projection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                     <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                     <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                                     <span class="n">transform</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+                                     <span class="o">**</span><span class="n">marker_kwargs</span><span class="p">)</span>
+
         <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Unknown shply type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">shps</span><span class="p">)))))</span>
@@ -644,8 +773,11 @@
     <span class="k">return</span> <span class="n">res</span></div>
 
 
-<div class="viewcode-block" id="triangulation"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.triangulation">[docs]</a><span class="k">def</span> <span class="nf">triangulation</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plots a triangulation.</span>
+
+<div class="viewcode-block" id="triangulation">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.triangulation">[docs]</a>
+<span class="k">def</span> <span class="nf">triangulation</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">tris</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plots a triangulation.</span>
 
 <span class="sd">    A wrapper for matplotlib&#39;s plot_trisurf() or tripcolor()</span>
 
@@ -729,8 +861,11 @@
     <span class="k">return</span> <span class="n">col</span></div>
 
 
-<div class="viewcode-block" id="mesh"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.mesh">[docs]</a><span class="k">def</span> <span class="nf">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plots a watershed_workflow.mesh.Mesh2D object.</span>
+
+<div class="viewcode-block" id="mesh">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.mesh">[docs]</a>
+<span class="k">def</span> <span class="nf">mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plots a watershed_workflow.mesh.Mesh2D object.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -754,12 +889,15 @@
 <span class="sd">      Collection of patches representing the triangles.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">shplys</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">shply</span><span class="p">(</span><span class="n">shplys</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">shplys</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="raster"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.raster">[docs]</a><span class="k">def</span> <span class="nf">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plots a raster.</span>
+
+<div class="viewcode-block" id="raster">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.raster">[docs]</a>
+<span class="k">def</span> <span class="nf">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plots a raster.</span>
 
 <span class="sd">    A wrapper for matplotlib imshow()</span>
 
@@ -804,12 +942,18 @@
     <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="dem"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.dem">[docs]</a><span class="k">def</span> <span class="nf">dem</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;See raster documentation&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="dem">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.dem">[docs]</a>
+<span class="k">def</span> <span class="nf">dem</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;See raster documentation&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">raster</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="basemap"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.basemap">[docs]</a><span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+
+<div class="viewcode-block" id="basemap">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.basemap">[docs]</a>
+<span class="k">def</span> <span class="nf">basemap</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">resolution</span><span class="o">=</span><span class="s1">&#39;50m&#39;</span><span class="p">,</span>
             <span class="n">land_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -817,7 +961,7 @@
             <span class="n">state_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">country_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">coastline_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Add a basemap to the axis.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a basemap to the axis.</span>
 
 <span class="sd">    Uses cartopy to add political and natural boundaries and shapes to the axes</span>
 <span class="sd">    image.</span>
@@ -905,8 +1049,11 @@
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="feather_axis_limits"><a class="viewcode-back" href="../../api.html#watershed_workflow.plot.feather_axis_limits">[docs]</a><span class="k">def</span> <span class="nf">feather_axis_limits</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Adds a small delta to the axis limits to provide a bit of buffer.</span>
+
+<div class="viewcode-block" id="feather_axis_limits">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.plot.feather_axis_limits">[docs]</a>
+<span class="k">def</span> <span class="nf">feather_axis_limits</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a small delta to the axis limits to provide a bit of buffer.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -929,45 +1076,34 @@
     <span class="n">dy</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dx</span><span class="p">,</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span><span class="p">))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">dy</span><span class="p">,</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dy</span><span class="p">))</span></div>
+
 </pre></div>
 
            </div>
-           
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2019-202X, UT Battelle, Ethan Coon
-
-    </p>
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

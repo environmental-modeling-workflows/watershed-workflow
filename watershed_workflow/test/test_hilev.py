@@ -5,7 +5,7 @@ import fiona
 import shapely.geometry
 import numpy as np
 import watershed_workflow.crs
-import watershed_workflow.hilev
+import watershed_workflow
 
 from source_fixtures import datadir, sources, sources_download
 
@@ -31,7 +31,7 @@ def test_find_raises(datadir, sources):
     radius = np.sqrt(shp.area / np.pi)
     shp = shp.buffer(-.001 * radius)
     with pytest.raises(ValueError):
-        watershed_workflow.hilev.find_huc(nhd, shp, crs, '06')
+        watershed_workflow.find_huc(nhd, shp, crs, '06')
 
 
 def test_find12(datadir, sources):
@@ -42,7 +42,7 @@ def test_find12(datadir, sources):
     radius = np.sqrt(shp.area / np.pi)
     shp = shp.buffer(-.001 * radius)
     print(shp.area)
-    assert ('060102020103' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601'))
+    assert ('060102020103' == watershed_workflow.find_huc(nhd, shp, crs, '0601'))
 
 
 def test_find12_exact(datadir, sources):
@@ -53,7 +53,7 @@ def test_find12_exact(datadir, sources):
     radius = np.sqrt(shp.area / np.pi)
     shp = shp.buffer(-.001 * radius)
     print(shp.area)
-    assert ('060102020103' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '060102020103'))
+    assert ('060102020103' == watershed_workflow.find_huc(nhd, shp, crs, '060102020103'))
 
 
 def test_find12_raises(datadir, sources):
@@ -66,7 +66,7 @@ def test_find12_raises(datadir, sources):
     shp = shp.buffer(-.001 * radius)
     print(shp.area)
     with pytest.raises(RuntimeError):
-        watershed_workflow.hilev.find_huc(nhd, shp, crs, '060101080204')
+        watershed_workflow.find_huc(nhd, shp, crs, '060101080204')
 
 
 def test_find8(datadir, sources):
@@ -74,7 +74,7 @@ def test_find8(datadir, sources):
 
     testshpfile = datadir.join('test_polygon.shp')
     crs, shp = get_fiona(testshpfile)
-    assert ('06010202' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601'))
+    assert ('06010202' == watershed_workflow.find_huc(nhd, shp, crs, '0601'))
 
 
 def test_find8_exact(datadir, sources):
@@ -82,7 +82,7 @@ def test_find8_exact(datadir, sources):
 
     testshpfile = datadir.join('test_polygon.shp')
     crs, shp = get_fiona(testshpfile)
-    assert ('06010202' == watershed_workflow.hilev.find_huc(nhd, shp, crs, '06010202'))
+    assert ('06010202' == watershed_workflow.find_huc(nhd, shp, crs, '06010202'))
 
 
 def test_find8_raises(datadir, sources):
@@ -91,7 +91,7 @@ def test_find8_raises(datadir, sources):
     testshpfile = datadir.join('copper_creek.shp')
     crs, shp = get_fiona(testshpfile)
     with pytest.raises(RuntimeError):
-        watershed_workflow.hilev.find_huc(nhd, shp, crs, '0601')
+        watershed_workflow.find_huc(nhd, shp, crs, '0601')
 
 
 def test_river_tree_properties(sources_download):
@@ -105,7 +105,7 @@ def test_river_tree_properties(sources_download):
                                                 crs,
                                                 properties=True)
 
-    rivers = watershed_workflow.construct_rivers(cc, reaches, method='hydroseq')
+    rivers = watershed_workflow.construct_rivers(reaches, method='hydroseq')
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
     assert (len(rivers[0]) == 97)
@@ -122,13 +122,12 @@ def test_river_tree_properties_prune(sources_download):
                                                 crs,
                                                 properties=True)
 
-    rivers = watershed_workflow.construct_rivers(cc,
-                                                 reaches,
+    rivers = watershed_workflow.construct_rivers(reaches,
                                                  method='hydroseq',
-                                                 prune_by_area_fraction=0.03)
+                                                 prune_by_area=0.03 * cc.exterior().area * 1.e-6)
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
-    assert (len(rivers[0]) == 27)
+    assert (len(rivers[0]) == 50)
 
 
 def test_river_tree_geometry(sources):
@@ -142,7 +141,7 @@ def test_river_tree_geometry(sources):
                                                 crs,
                                                 properties=False)
 
-    rivers = watershed_workflow.construct_rivers(cc, reaches)
+    rivers = watershed_workflow.construct_rivers(reaches)
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
     assert (len(rivers[0]) == 98)

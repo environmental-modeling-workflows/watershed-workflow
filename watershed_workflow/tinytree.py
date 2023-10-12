@@ -197,11 +197,10 @@ class Tree(object):
             Generator yielding all siblings of this node, including this
             node itself.
         """
-        if not self.parent:
-            yield self
-        else:
+        if self.parent:
             for i in self.parent.children:
-                yield i
+                if i is not self:
+                    yield i
 
     def pathToRoot(self):
         """

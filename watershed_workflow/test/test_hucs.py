@@ -28,7 +28,7 @@ def test_hc():
 
 
 def test_intersect_and_split(two_boxes):
-    boundaries, intersections = watershed_workflow.split_hucs.intersect_and_split(two_boxes)
+    boundaries, intersections = watershed_workflow.split_hucs.intersectAndSplit(two_boxes)
     assert (len(boundaries) is 2)
 
     for b in boundaries:

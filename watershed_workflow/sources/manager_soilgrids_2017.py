@@ -78,6 +78,12 @@ class FileManagerSoilGrids2017:
           Shape to provide bounds of the raster.
         crs : CRS
           CRS of the shape.
+        variable : str
+          The SoilGrids variable, see class-level documentation for
+          choices.
+        layer : int, optional
+          Soil layer, from 0 (top) to 7 (bottom).  Only valid for
+          vertically distributed quantities.
         force_download : bool, optional
           Download or re-download the file if true.
 
@@ -90,10 +96,11 @@ class FileManagerSoilGrids2017:
 
         Note that the raster provided is in SoilGrids native CRS
         (which is in the rasterio profile), not the shape's CRS.
+
         """
         # download (or hopefully don't) the file
         filename, profile = self._download(variable, layer)
-        logging.info(f"CRS: {profile['crs']}")
+        logging.info(f"SoilGrids CRS: {profile['crs']}")
 
         # load the raster
         logging.info(f"filename: {filename}")

@@ -43,6 +43,17 @@ def huc_str(huc):
     return huc
 
 
+def get_verify_option():
+    """Returns the 'verify' option for requests as provided in config files."""
+    verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
+    logging.debug('       cert: "%s"' % verify)
+    if verify == "True":
+        verify = True
+    elif verify == "False":
+        verify = False
+    return verify
+
+
 def download(url, location, force=False, **kwargs):
     """Download a file from a URL to a location.  If force, clobber whatever is there.
 
@@ -54,20 +65,8 @@ def download(url, location, force=False, **kwargs):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"' % url)
         logging.info('         to: "%s"' % location)
-        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
-        logging.info('       cert: "%s"' % verify)
-        if verify == "True":
-            verify = True
-        elif verify == "False":
-            verify = False
 
-        # with requests.get(url, stream=True, verify=verify) as r:
-        #     r.raise_for_status()
-        #     with open(location, 'wb') as f:
-        #         for chunk in r.iter_content(chunk_size=128):
-        #             f.write(chunk)
-
-        with requests.get(url, stream=True, verify=verify, **kwargs) as r:
+        with requests.get(url, stream=True, verify=get_verify_option(), **kwargs) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
@@ -114,45 +113,8 @@ def unzip(filename, to_location, format=None):
     logging.info(f'Unzipping: "{filename}"')
     logging.info(f'       to: "{to_location}"')
 
-    if format is None:
-        if filename.endswith('.zip'):
-            format = 'zip'
-        elif filename.endswith('.gz'):
-            format = 'zip'
-        elif filename.endswith('.7z'):
-            format = '7z'
-        elif filename.endswith('.bz2'):
-            format = 'bz2'
-        else:
-            raise RuntimeError(f'Cannot detect the zip format of file: {filename}')
-    logging.info(f'   as fmt: "{format}"')
-
-    if format == 'zip':
-        import zipfile
-        try:
-            with zipfile.ZipFile(filename, 'r') as zip_ref:
-                zip_ref.extractall(to_location)
-        except zipfile.BadZipFile as err:
-            logging.error('Failed to unzip: "{}"'.format(filename))
-            logging.error(
-                'Likely this is the result of a previous job failing, partial download, internet connection issues, or other failed download.  Try removing the file, which will result in it being re-downloaded.'
-            )
-            raise err
-    elif format == '7z':
-        import libarchive
-        cwd = os.getcwd()
-        try:
-            os.chdir(to_location)
-            libarchive.extract_file(filename)
-        except Exception as err:
-            os.chdir(cwd)
-            raise err
-        else:
-            os.chdir(cwd)
-
-    else:
-        raise NotImplementedError('Unzipping file of format {format} is not yet implemented.')
-
+    import shutil
+    shutil.unpack_archive(filename, to_location, format)
     return to_location
 
 
