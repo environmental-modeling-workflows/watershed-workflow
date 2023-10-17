@@ -78,10 +78,10 @@ class FileManagerNLCD:
         self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
-        self.url = self.url_pattern.format({'YEAR' : self.year,
-                                            'PRODUCT' : self.layer.lower(),
-                                            'LOCATION' : self.location.lower(),
-                                            'VERSION' : self.version})
+        self.url = self.url_pattern.format(YEAR=self.year,
+                                           PRODUCT=self.layer.lower(),
+                                           LOCATION=self.location.lower(),
+                                           VERSION=self.version)
 
     def validate_input(self, layer, year, location):
         """Validates input to the __init__ method."""
