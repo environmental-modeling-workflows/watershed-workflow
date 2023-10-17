@@ -11,13 +11,6 @@ import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
 
-VERSION = '20210604'
-# No API for getting NLCD locally -- must download the whole thing.
-urls = {
-    'NLCD_2016_Land_Cover_L48':
-    f'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_2016_land_cover_l48_{VERSION}.zip'
-}
-
 colors = {
     0: ('None', (0.00000000000, 0.00000000000, 0.00000000000)),
     11: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
@@ -73,16 +66,22 @@ class FileManagerNLCD:
     """
     colors = colors
     indices = indices
-
-    def __init__(self, layer='Land_Cover', year=None, location='L48'):
+    url_pattern = 'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_{YEAR}_{PRODUCT}_{LOCATION}_{VERSION}.zip'
+    
+    def __init__(self, layer='Land_Cover', year=None, location='L48', version='20210604'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
-        self.version = VERSION
+        self.version = version
 
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
+        
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
         self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
+        self.url = self.url_pattern.format(YEAR=self.year,
+                                           PRODUCT=self.layer.lower(),
+                                           LOCATION=self.location.lower(),
+                                           VERSION=self.version)
 
     def validate_input(self, layer, year, location):
         """Validates input to the __init__ method."""
@@ -97,7 +96,7 @@ class FileManagerNLCD:
                 location, valid_locations))
 
         valid_years = {
-            'L48': [2016, 2013, 2011, 2008, 2006, 2004, 2001],
+            'L48': [2019, 2016, 2013, 2011, 2008, 2006, 2004, 2001],
             'AK': [2011, 2001],
             'HI': [2001, ],
             'PR': [2001, ],
@@ -174,15 +173,8 @@ class FileManagerNLCD:
         filename = self.names.file_name()
         logging.info('  filename: {}'.format(filename))
         if not os.path.exists(filename) or force:
-            try:
-                url = urls[self.layer_name]
-            except KeyError:
-                raise NotImplementedError(
-                    'Not yet implemented (but trivial to add, just ask!): {}'.format(
-                        self.layer_name))
-
-            downloadfile = os.path.join(work_folder, url.split("/")[-1])
-            source_utils.download(url, downloadfile, force)
+            downloadfile = os.path.join(work_folder, self.url.split("/")[-1])
+            source_utils.download(self.url, downloadfile, force)
             source_utils.unzip(downloadfile, work_folder)
 
             # hope we can find it?
