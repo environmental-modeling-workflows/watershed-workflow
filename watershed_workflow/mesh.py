@@ -1565,3 +1565,86 @@ def create_submesh(m2, shp):
     # create the new mesh
     new_mesh = Mesh2D(new_coords, new_conns, new_labeled_sets, m2.crs, m2.eps, False, True)
     return new_coords_map, new_conn_map, new_mesh
+
+
+def merge_meshes(meshes):
+    """ Combines multiple 2D meshes into a single mesh. 
+
+    It is assumed that the meshes to be combined have common vertices
+    on the shared edge (no steiner points). labeledsets should be added
+    after merging the mesh. Option of merging pre-existing labeledsets 
+    in the to-be-merged meshes will be added soon
+    
+    Parameters
+    ----------
+    meshes : list(mesh.Mesh2D)
+      The list of meshes to be merged
+
+    Returns
+    -------
+    mesh.Mesh2D
+      combined mesh
+    """
+    # ## identify base mesh
+    # meshes = list(sorted(meshes, key=lambda m : -m.num_cells)) ##FIX ME##
+
+    m2_combined = meshes[0]
+    for mesh in meshes[1:]:
+        m2_combined = merge_mesh(m2_combined, mesh)
+
+    return m2_combined
+
+
+def merge_mesh(mesh1, mesh2):  # --THIS OPTION TO BE ADDED LATER-- #transfer_labeled_sets=True
+    """merge two meshes (mesh.Mesh2D objects)"""
+   
+    assert len(mesh1.labeled_sets) + len(mesh2.labeled_sets) == 0, "to-be-merged meshes should not have labeled sets, they must be added after merging"
+    combined_coords = mesh1.coords.tolist()
+    # mapping for adjusting coord indices
+    mapping = { i: i for i in range(mesh2.num_nodes) }
+
+    # adjust connection indices for the second mesh using the mapping
+    def map_conn(conn, mapping):
+        return [mapping[idx] for idx in conn]
+
+    for idx, coord in enumerate(mesh2.coords):
+        # check if the point is close enough to any point in combined_coords
+        found = False
+        for i, existing_coord in enumerate(combined_coords):
+            if close_enough(coord[:2], existing_coord[:2], tolerance=1e-3):
+                mapping[idx] = i
+                found = True
+                break
+        # if the point is not close enough to any existing point, add to combined_coords
+        if not found:
+            combined_coords.append(coord.tolist())
+            mapping[idx] = len(combined_coords) - 1
+
+    adjusted_conn2 = [map_conn(conn, mapping) for conn in mesh2.conn]
+
+    # merge conn lists
+    combined_conn = mesh1.conn + adjusted_conn2
+
+    # merged mesh creation
+    m2_combined = watershed_workflow.mesh.Mesh2D(coords=np.array(combined_coords),
+                                                 conn=combined_conn)
+
+    # # trasferring labeled sets ##--FIX ME--##
+    # if transfer_labeled_sets:
+    #     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh1.labeled_sets
+
+    #     for ls in mesh2.labeled_sets:
+    #         if ls.entity == 'CELL':
+    #             new_ent_ids = [mesh1.num_cells + c for c in ls.ent_ids]
+    #             ls.ent_ids = new_ent_ids
+    #         elif ls.entity == 'FACE':
+    #             new_ent_ids = [(mapping(e[0]), mapping(e[1])) for e in ls.ent_ids]
+    #             ls.ent_ids = new_ent_ids
+
+    #     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh2.labeled_sets
+
+    return m2_combined
+
+
+def close_enough(p1, p2, tolerance):
+    return np.linalg.norm(np.array(p1) - np.array(p2)) < tolerance

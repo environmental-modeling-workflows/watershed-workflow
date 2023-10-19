@@ -1159,6 +1159,7 @@ def triangulate(hucs,
                 rivers=None,
                 river_corrs=None,
                 internal_boundaries=None,
+                hole_points=None,
                 diagnostics=True,
                 verbosity=1,
                 tol=1,
@@ -1185,6 +1186,8 @@ def triangulate(hucs,
         List of objects, whose boundary (in the case of
         polygons/waterbodies) or reaches (in the case of River) will
         be present in the edges of the triangulation.
+    hole_points : list(shapely.Point), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh)
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     tol : float, optional
@@ -1266,9 +1269,9 @@ def triangulate(hucs,
 
     vertices, triangles = watershed_workflow.triangulation.triangulate(
         hucs,
-        rivers,
         river_corrs,
         internal_boundaries=internal_boundaries,
+        hole_points=hole_points,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,
@@ -1337,6 +1340,7 @@ def tessalate_river_aligned(hucs,
                             river_width,
                             river_n_quads=1,
                             internal_boundaries=None,
+                            hole_points=None,
                             diagnostics=False,
                             ax=None,
                             **kwargs):
@@ -1355,6 +1359,8 @@ def tessalate_river_aligned(hucs,
     river_n_quads : int, optional
        Number of quads across the river.  Currently only 1 is
        supported (the default).
+    hole_points : list(shapely.Point), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh)
     internal_boundaries : list[shapely.Polygon], optional
        List of internal boundaries to embed in the domain, e.g. waterbodies.
     diagnostics : bool, optional
@@ -1399,13 +1405,20 @@ def tessalate_river_aligned(hucs,
 
     # triangulate the rest
     tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
-                                             internal_boundaries, diagnostics, **kwargs)
+                                             internal_boundaries, hole_points,
+                                             diagnostics, **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]
 
     # merge into a single output
     tri_conn_list = [conn.tolist() for conn in tri_conn]
     conn_list = tri_conn_list + quad_conn
+
+    river_gid_start = len(tri_conn_list)
+    for river in rivers:
+        river.properties['gid_start'] = river_gid_start
+        all_elems = [elem for node in river.preOrder() for elem in node.elements]
+        river_gid_start = river_gid_start + len(all_elems)
 
     # note, all quad verts are in the tri_verts, and hopefully in the right order!
     if len(tri_res) > 2:

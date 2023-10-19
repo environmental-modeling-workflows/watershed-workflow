@@ -435,31 +435,31 @@ def fill_gaps(img_in, nodata=np.nan):
 
 
 def condition_river_meshes(m2,
-                         rivers,
-                         smooth=False,
-                         use_parent=False,
-                         lower=False,
-                         use_nhd_elev=False,
-                         treat_banks=False,
-                         depress_upstream_by=None,
-                         network_burn_in_depth=None,
-                         ignore_in_sweep=None):
+                           rivers,
+                           smooth=False,
+                           use_parent=False,
+                           lower=False,
+                           use_nhd_elev=False,
+                           treat_banks=False,
+                           depress_upstream_by=None,
+                           network_burn_in_depth=None,
+                           ignore_in_sweep=None):
     """For multile rivers, condition, IN PLACE, the elevations of stream-corridor elements
     to ensure connectivity throgh culverts, skips ponds, maintain
     monotonicity, or otherwise enforce depths of constructed channels."""
-    
+
     for river in rivers:
         condition_river_mesh(m2,
-                         river,
-                         smooth=smooth,
-                         use_parent=use_parent,
-                         lower=lower,
-                         use_nhd_elev=use_nhd_elev,
-                         treat_banks=treat_banks,
-                         depress_upstream_by=depress_upstream_by,
-                         network_burn_in_depth=network_burn_in_depth,
-                         ignore_in_sweep=ignore_in_sweep)
-    
+                             river,
+                             smooth=smooth,
+                             use_parent=use_parent,
+                             lower=lower,
+                             use_nhd_elev=use_nhd_elev,
+                             treat_banks=treat_banks,
+                             depress_upstream_by=depress_upstream_by,
+                             network_burn_in_depth=network_burn_in_depth,
+                             ignore_in_sweep=ignore_in_sweep)
+
 
 def condition_river_mesh(m2,
                          river,

@@ -114,7 +114,12 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, tol=1, **kwargs):
+def triangulate(hucs,
+                river_corrs=None,
+                internal_boundaries=None,
+                hole_points=None,
+                tol=1,
+                **kwargs):
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -124,6 +129,8 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
+    river_corrs : list(shapely.geometry.Polygons), optional
+        A list of river corridor polygons for each river
     refinement_polygon : list, optional
         List of RiverTrees or other iterable collections of
         coordinates used to refine the mesh given the distance
@@ -132,8 +139,8 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
         List of shapely objects or RiverTrees or other iterable
         collections of coordinates used as internal boundaries that
         must be included in the mesh.
-    river_corrs : list(shapely.geometry.Polygons)
-        A list of river corridor polygons for each river
+    hole_points : list(shapely.Point), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh).
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit
         is the same as that of the watershed's CRS. The default is 1.
@@ -146,6 +153,16 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
     logging.info("Triangulating...")
     segments = list(hucs.segments)
 
+    if internal_boundaries != None:
+        if type(internal_boundaries) is list:
+            for item in list:
+                if isinstance(item, shapely.geometry.LineString) or isinstance(item, shapely.geometry.Polygon):
+                    segments = [item, ] + segments
+                elif isinstance(item, watershed_workflow.river_tree.River):
+                    segments = list(item) + segments
+        elif isinstance(internal_boundaries, shapely.geometry.Polygon):
+            segments = [internal_boundaries, ] + segments
+
     if river_corrs != None:
         if type(river_corrs) is list:
             segments = river_corrs + segments
@@ -154,12 +171,6 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
         else:
             raise RuntimeError("Triangulate not implemented for container of type '%r'"
                                % type(hucs))
-
-    if internal_boundaries != None:
-        if type(internal_boundaries) is list:
-            segments = internal_boundaries + segments
-        elif type(internal_boundaries) is shapely.geometry.Polygon:
-            segments = [internal_boundaries, ] + segments
 
     nodes_edges = NodesEdges(segments)
 
@@ -178,11 +189,15 @@ def triangulate(hucs, rivers=None, river_corrs=None, internal_boundaries=None, t
     if river_corrs is not None:
         # adding hole in the river corridor for quad elements
         logging.info("defining hole..")
-        hole_points = []
+        rc_hole_points = []
         for river_corr in river_corrs:
-            hole_point = pick_hole_point(river_corr)
-            hole_points.append(hole_point.coords[0])  # a point inside the river corridor
-            assert (river_corr.contains(hole_point))
+            rc_hole_point = pick_hole_point(river_corr)
+            rc_hole_points.append(rc_hole_point.coords[0])  # a point inside the river corridor
+            assert (river_corr.contains(rc_hole_point))
+        if hole_points != None:
+            hole_points = hole_points + rc_hole_points
+        else:
+            hole_points = rc_hole_points
         info.set_holes(hole_points)
 
     logging.info(" triangle.build...")
