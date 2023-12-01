@@ -42,6 +42,7 @@ PACKAGES_EXTRAS_DEV=[
 PACKAGES_USER_BASE=['ipython',
                'jupyterlab',
                'ipykernel',
+               'notebook<7.0.0',
                'nb_conda',
                'nb_conda_kernels',
                'papermill',
