@@ -38,7 +38,7 @@ def hucs_rivers():
 
 def test_triangulate_nofunc(hucs_rivers):
     hucs, rivers = hucs_rivers
-    points, tris = watershed_workflow.triangulation.triangulate(hucs, rivers)
+    points, tris = watershed_workflow.triangulation.triangulate(hucs)
     # watershed_workflow.plot.triangulation(points,tris)
     # watershed_workflow.plot.hucs(hucs,'r')
     # watershed_workflow.plot.rivers(rivers,'b')
@@ -48,7 +48,7 @@ def test_triangulate_nofunc(hucs_rivers):
 def test_triangulate_max_area(hucs_rivers):
     hucs, rivers = hucs_rivers
     func = watershed_workflow.triangulation.refine_from_max_area(1.)
-    points, tris = watershed_workflow.triangulation.triangulate(hucs, rivers, refinement_func=func)
+    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
     # watershed_workflow.plot.triangulation(points,tris)
     # watershed_workflow.plot.hucs(hucs,'r')
     # watershed_workflow.plot.rivers(rivers,'b')
@@ -58,7 +58,7 @@ def test_triangulate_max_area(hucs_rivers):
 def test_triangulate_distance(hucs_rivers):
     hucs, rivers = hucs_rivers
     func = watershed_workflow.triangulation.refine_from_river_distance(1., 0.5, 4, 2, rivers)
-    points, tris = watershed_workflow.triangulation.triangulate(hucs, rivers, refinement_func=func)
+    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
     # watershed_workflow.plot.triangulation(points,tris)
     # watershed_workflow.plot.hucs(hucs,'r')
     # watershed_workflow.plot.rivers(rivers,'b')

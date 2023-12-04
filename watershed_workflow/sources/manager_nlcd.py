@@ -67,13 +67,13 @@ class FileManagerNLCD:
     colors = colors
     indices = indices
     url_pattern = 'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_{YEAR}_{PRODUCT}_{LOCATION}_{VERSION}.zip'
-    
+
     def __init__(self, layer='Land_Cover', year=None, location='L48', version='20210604'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
         self.version = version
 
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
-        
+
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
         self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
                                                             self.layer_name,
