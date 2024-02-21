@@ -44,7 +44,7 @@ def densify_river(river, river_raw=None, limit=100):
     if 'ID' in river.properties.keys() and river_raw is not None:
         NHD_ids_raw = []
         for node in river_raw.preOrder():
-            NHD_ids_raw.append(str(int(node.properties['ID'])))
+            NHD_ids_raw.append(node.properties['ID'])
     elif river_raw is not None:
         assert (len(river) == len(river_raw))
 
@@ -370,8 +370,9 @@ def _remove_sharp_angles(river,
 
         assert (river.is_continuous())
 
-    # checks angle betweebn huc segment and river at the outlets and rotate the part of huc segment as needed
-    treat_small_angle_btw_river_huc(river, hucs, angle_limit=huc_seg_river_angle_limit)
+    if huc_seg_river_angle_limit > 0:
+        # checks angle betweebn huc segment and river at the outlets and rotate the part of huc segment as needed
+        treat_small_angle_btw_river_huc(river, hucs, angle_limit=huc_seg_river_angle_limit)
 
 
 def remove_sharp_angles_from_seg(node, angle_limit=10):
@@ -533,70 +534,87 @@ def treat_small_angle_btw_river_huc(river, hucs, angle_limit=20):
 
     river_mls = shapely.geometry.MultiLineString(list(river))
 
+    # the intersection_point might be a MultiPoint with intersections at leaf tips
+    # find all leaf tip points and exclude coinciding intersection points
+    leaf_tips = [shapely.geometry.Point(leaf.segment.coords[0]) for leaf in river.leaf_nodes()]
+    
     for i, seg in enumerate(hucs.segments):
 
         if seg.intersects(river_mls):  # does huc segment intersect with the river
             intersection_point = seg.intersection(river_mls)
-            parent_node = watershed_workflow.river_mesh.node_at_intersection(
-                intersection_point, river)
-            if parent_node.parent == None:  # check if it is the outlet node for this river
-                outlet_junction = True
-            else:
-                outlet_junction = False
-            ind_intersection_point = watershed_workflow.river_mesh._indexPointInSeg(
-                parent_node.segment, intersection_point)
+            intersection_found = True
+            if isinstance(intersection_point, shapely.geometry.multipoint.MultiPoint):
+                non_coinciding_points = [p for p in intersection_point if not any(p.distance(point) < 1e-6 for point in leaf_tips)]
+                # Check if there's exactly one point left after filtering
+                if len(non_coinciding_points) == 1:
+                    intersection_point = non_coinciding_points[0]
+                elif len(non_coinciding_points) > 1:
+                    raise ValueError("The intersection_point must be a single shapely.geometry.Point object")
+                elif not non_coinciding_points:
+                    intersection_found = False
 
-            # reference segment for angles
-            if outlet_junction:
-                if len(parent_node.segment.coords) > 2:
-                    ref_seg = shapely.geometry.LineString(
-                        parent_node.segment.coords[ind_intersection_point - 2:])
+            if intersection_found:
+                parent_node = watershed_workflow.river_mesh.node_at_intersection(
+                    intersection_point, river)
+                if parent_node.parent == None:  # check if it is the outlet node for this river
+                    outlet_junction = True
                 else:
-                    ref_seg = parent_node.segment
-            else:
-                if len(parent_node.segment.coords) > 2:
-                    ref_seg = shapely.geometry.LineString(
-                        parent_node.segment.coords[ind_intersection_point:ind_intersection_point
-                                                   + 2])
+                    outlet_junction = False
+
+                ind_intersection_point = watershed_workflow.river_mesh._indexPointInSeg(
+                    parent_node.segment, intersection_point)
+
+                # reference segment for angles
+                if outlet_junction:
+                    if len(parent_node.segment.coords) > 2:
+                        ref_seg = shapely.geometry.LineString(
+                            parent_node.segment.coords[ind_intersection_point - 2:])
+                    else:
+                        ref_seg = parent_node.segment
                 else:
-                    ref_seg = parent_node.segment
+                    if len(parent_node.segment.coords) > 2:
+                        ref_seg = shapely.geometry.LineString(
+                            parent_node.segment.coords[ind_intersection_point:ind_intersection_point
+                                                    + 2])
+                    else:
+                        ref_seg = parent_node.segment
 
-            # angle of huc segment with the ref segment
-            huc_seg_angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, seg)
-            # angles of river with the huc segment
-            river_angles = [
-                watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, _seg) - huc_seg_angle
-                for _seg in parent_node.children
-            ]
+                # angle of huc segment with the ref segment
+                huc_seg_angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, seg)
+                # angles of river with the huc segment
+                river_angles = [
+                    watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, _seg) - huc_seg_angle
+                    for _seg in parent_node.children
+                ]
 
-            angle_check = check_abs_smaller(
-                river_angles,
-                angle_limit)  # is any angle between river and huc segment smaller than the limit?
+                angle_check = check_abs_smaller(
+                    river_angles,
+                    angle_limit)  # is any angle between river and huc segment smaller than the limit?
 
-            if angle_check[0]:
-                river_angle = river_angles[angle_check[1]]
-                logging.info(f"removing sharp angle: {river_angle}")
-                if river_angle > 0:
-                    rotate_angle = angle_limit - river_angle + 5
-                else:
-                    rotate_angle = -(angle_limit - abs(river_angle) + 5)
-                rotated_seg = shapely.affinity.rotate(
-                    seg, rotate_angle,
-                    origin=intersection_point)  # rotated such that the angle is increased
+                if angle_check[0]:
+                    river_angle = river_angles[angle_check[1]]
+                    logging.info(f"removing sharp angle: {river_angle}")
+                    if river_angle > 0:
+                        rotate_angle = angle_limit - river_angle + 5
+                    else:
+                        rotate_angle = -(angle_limit - abs(river_angle) + 5)
+                    rotated_seg = shapely.affinity.rotate(
+                        seg, rotate_angle,
+                        origin=intersection_point)  # rotated such that the angle is increased
 
-                seg_orientation_flag = np.argmin([
-                    watershed_workflow.utils.distance(seg_end, intersection_point.coords[0])
-                    for seg_end in [seg.coords[0], seg.coords[-1]]
-                ])
-                if seg_orientation_flag == 0:
-                    seg_new_coords = seg.coords[:]
-                    seg_new_coords[1] = rotated_seg.coords[1]
-                    seg = shapely.geometry.LineString(seg_new_coords)
-                elif seg_orientation_flag == 1:
-                    seg_new_coords = seg.coords[:]
-                    seg_new_coords[-2] = rotated_seg.coords[-2]
-                    seg = shapely.geometry.LineString(seg_new_coords)
-                hucs.segments[i] = seg
+                    seg_orientation_flag = np.argmin([
+                        watershed_workflow.utils.distance(seg_end, intersection_point.coords[0])
+                        for seg_end in [seg.coords[0], seg.coords[-1]]
+                    ])
+                    if seg_orientation_flag == 0:
+                        seg_new_coords = seg.coords[:]
+                        seg_new_coords[1] = rotated_seg.coords[1]
+                        seg = shapely.geometry.LineString(seg_new_coords)
+                    elif seg_orientation_flag == 1:
+                        seg_new_coords = seg.coords[:]
+                        seg_new_coords[-2] = rotated_seg.coords[-2]
+                        seg = shapely.geometry.LineString(seg_new_coords)
+                    hucs.segments[i] = seg
 
 
 def check_abs_smaller(numbers, value):
