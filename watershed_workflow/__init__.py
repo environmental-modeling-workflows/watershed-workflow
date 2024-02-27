@@ -1390,6 +1390,7 @@ def tessalate_river_aligned(hucs,
     logging.info('Creating stream-aligned mesh...')
     quad_conn, corrs = watershed_workflow.river_mesh.create_rivers_meshes(rivers=rivers,
                                                                           widths=river_width,
+                                                                          width_prop = 'StreamOrder',
                                                                           enforce_convexity=True,
                                                                           ax=ax,
                                                                           label=False)
