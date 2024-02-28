@@ -77,7 +77,7 @@ def _isExpectedNumPoints(corr, river):
     return (len(corr.exterior.coords) - 1 == n)
 
 
-def create_rivers_meshes(rivers, widths=8, width_prop = 'StreamOrder', enforce_convexity=True, ax=None, label=True):
+def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
@@ -166,7 +166,6 @@ def create_rivers_meshes(rivers, widths=8, width_prop = 'StreamOrder', enforce_c
             gid_shift = np.max([max(map(int, elem)) for elem in elems]) + 1
         elems_river, corr = create_river_mesh(river,
                                               widths=widths,
-                                              width_prop = width_prop,
                                               enforce_convexity=enforce_convexity,
                                               gid_shift=gid_shift,
                                               ax=ax)
@@ -182,7 +181,6 @@ def create_rivers_meshes(rivers, widths=8, width_prop = 'StreamOrder', enforce_c
 
 def create_river_mesh(river,
                       widths=8,
-                      width_prop = 'StreamOrder',
                       enforce_convexity=True,
                       gid_shift=0,
                       dilation_width=4,
@@ -232,12 +230,11 @@ def create_river_mesh(river,
     elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
 
     # setting river_widths in the river corridor polygon
-    corr = set_width_by_prop(river,
-                              corr,
-                              widths=widths,
-                              width_prop = width_prop, 
-                              dilation_width=dilation_width,
-                              gid_shift=gid_shift)
+    corr = set_width(river,
+                    corr,
+                    widths=widths,
+                    dilation_width=dilation_width,
+                    gid_shift=gid_shift)
 
     # treating non-convexity at junctions
     if enforce_convexity:
@@ -559,7 +556,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
     return elems
 
 
-def set_width_by_prop(river, corr, widths=8,  width_prop = 'StreamOrder', dilation_width=8, gid_shift=0):
+def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
     """Adjust the river-corridor polygon width by order.
 
     Parameters
@@ -581,21 +578,24 @@ def set_width_by_prop(river, corr, widths=8,  width_prop = 'StreamOrder', dilati
     corr_coords = corr.exterior.coords[:-1]
 
     if type(widths) == dict:
-        prop = next((value for key, value in river.properties.items() if key == width_prop), None)
-
-        if prop is None:
-            raise RuntimeError(
-                f'set_width_by_prop requested widths by {width_prop} property name, but cannot find this property'
+        stream_order = next(
+            (i for i in ['StreamOrder', 'streamorder', 'streamorde'] if i in river.properties),
+            None)
+        if stream_order is None:
+             raise RuntimeError(
+                'set_width_by_order requested widths by stream order, but cannot guess stream order property name'
             )
-
 
     for j, node in enumerate(river.preOrder()):
         if type(widths) == dict:
-            prop_value = node.properties[prop]
-            target_width = width_by_prop(widths, prop_value)
+            order = node.properties[stream_order]
+            target_width = width_by_order(widths, order)
         elif callable(widths):
-            DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
-            target_width = widths(DA_sqm)
+            ## DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
+            # genralized, the above calclations should be done in the function itself 
+            # widths here is a function of node, where 
+            # widths wil be calculated based on some properties in the node
+            target_width = widths(node)
         else:
             target_width = widths
 
@@ -700,17 +700,14 @@ def move_to_target_separation(p1, p2, target, dilation_width=8):
     return [p1_, p2_]
 
 
-def width_by_order(width_dict, prop_value):
-    """Returns the reach width based using the {prop:width dictionary}"""
-    if type(prop_value) == int:
-        if prop_value > max(width_dict.keys()):
-            width = width_dict[max(width_dict.keys())]
-        elif prop_value < min(width_dict.keys()):
-            width = width_dict[min(width_dict.keys())]
-        else:
-            width = width_dict[prop_value]
+def width_by_order(width_dict, order):
+    """Returns the reach width based using the {order:width dictionary}"""
+    if order > max(width_dict.keys()):
+        width = width_dict[max(width_dict.keys())]
+    elif order < min(width_dict.keys()):
+        width = width_dict[min(width_dict.keys())]
     else:
-        width = width_dict[prop_value]
+        width = width_dict[order]
     return width
 
 
@@ -754,7 +751,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                     # hull might have incorrectly oriented points
                     points = [coords[id] for id in elem]
                     logging.info(
-                        f"  could not make these: {points} convex using convex hull, trying nudging...."
+                        f" for node {node.properties['ID']} could not make these: {points} convex using convex hull, trying nudging...."
                     )
                     points = make_convex_by_nudge(points)
 

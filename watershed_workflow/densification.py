@@ -384,7 +384,7 @@ def remove_sharp_angles_from_seg(node, angle_limit=10):
         seg_down = shapely.geometry.LineString([seg_coords[i + 1], seg_coords[i + 2]])
         angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
         if angle > 360 - angle_limit or angle < angle_limit:
-            logging.info(f"removing sharp angle: {angle}")
+            logging.info(f"removing sharp angle in segment: {angle} for node {node.properties['ID']}")
             if len(seg_coords) > 3:
                 new_point = shapely.geometry.Polygon(
                     [seg_coords[i], seg_coords[i + 1], seg_coords[i + 2]]).centroid
@@ -427,7 +427,8 @@ def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
         seg2 = child.segment
         is_changed, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1,
                                                                         seg2,
-                                                                        angle_limit=angle_limit)
+                                                                        angle_limit=angle_limit, 
+                                                                        id=node.properties['ID'])
 
         if is_changed:
             node.segment = seg1
@@ -438,7 +439,7 @@ def treat_node_junctions_for_sharp_angles(node, angle_limit=10):
                 sibling.segment = shapely.geometry.LineString(sibling_coords)
 
 
-def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10):
+def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10, id=None):
     """Moves the common shared point of seg1 and seg2 to the centroid
     of the triangle formed by the junction point and the two
     neighboring points.  This is done recursively until the tolerance
@@ -449,7 +450,7 @@ def remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=10):
     seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
     angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
     if angle > 360 - angle_limit or angle < angle_limit:
-        logging.info(f"removing sharp angle: {angle}")
+        logging.info(f"removing sharp angle at junction: {angle} for node {id}")
         new_point = shapely.geometry.Polygon([seg2.coords[-2], seg2.coords[-1],
                                               seg1.coords[1]]).centroid
         if len(seg1.coords) < 3:
@@ -549,6 +550,7 @@ def treat_small_angle_btw_river_huc(river, hucs, angle_limit=20):
                 if len(non_coinciding_points) == 1:
                     intersection_point = non_coinciding_points[0]
                 elif len(non_coinciding_points) > 1:
+                    print([point.coords[:] for point in non_coinciding_points])
                     raise ValueError("The intersection_point must be a single shapely.geometry.Point object")
                 elif not non_coinciding_points:
                     intersection_found = False
@@ -593,7 +595,7 @@ def treat_small_angle_btw_river_huc(river, hucs, angle_limit=20):
 
                 if angle_check[0]:
                     river_angle = river_angles[angle_check[1]]
-                    logging.info(f"removing sharp angle: {river_angle}")
+                    logging.info(f"removing sharp angle between river and huc: {river_angle} for node {parent_node.properties['ID']}")
                     if river_angle > 0:
                         rotate_angle = angle_limit - river_angle + 5
                     else:
