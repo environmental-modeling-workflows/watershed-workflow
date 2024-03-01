@@ -82,11 +82,21 @@ def densify_node_segments(node, node_raw, limit=100):
 
     seg_coords = list(node.segment.coords)  # coordinates of node.segment to be densified
     seg_coords_densified = seg_coords.copy()  # segment coordinates densified
+
+
+    if isinstance(limit, bool):
+        if limit and 'target_length' in node.properties:
+            target_length = node.properties['target_length']
+        else: 
+            raise RuntimeError('not a valid option to provide width')
+    else:
+            target_length = limit
+            
     j = 0
     for i in range(len(seg_coords) - 1):
         section_length = watershed_workflow.utils.distance(seg_coords[i], seg_coords[i + 1])
-        if section_length > limit:
-            number_new_points = int(section_length // limit)
+        if section_length > target_length:
+            number_new_points = int(section_length // target_length)
             end_points = [seg_coords[i],
                           seg_coords[i + 1]]  # points betwen which more points will be added
             if node_raw is not None:

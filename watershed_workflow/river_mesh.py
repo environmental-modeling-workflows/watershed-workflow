@@ -84,8 +84,11 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
     -----------
     rivers: list(watershed_workflow.river_tree.River object)
         List of river tree along which river meshes are to be created
-    widths: float or a dictionary
-        Width of streams, as constant or {stream-order: width}
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
     enforce_convexity: boolean 
         If true, enforce convexity of the pentagons/hexagons at the
         junctions.
@@ -191,8 +194,11 @@ def create_river_mesh(river,
     -----------
     river: watershed_workflow.river_tree.River object)
       River tree along which mesh is to be created
-    widths: float or a dictionary
-      Width of streams, as constant or {stream-order: width}
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
     enforce_convexity: boolean 
       If true, enforce convexity of the pentagons/hexagons at the
       junctions.
@@ -240,8 +246,6 @@ def create_river_mesh(river,
     if enforce_convexity:
         corr = convexity_enforcement(river,
                                      corr,
-                                     widths=widths,
-                                     dilation_width=dilation_width,
                                      gid_shift=gid_shift)
 
     # redraw the debug plot with updated elems
@@ -565,8 +569,11 @@ def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
       river tree along which mesh is to be created
     corr : shapely.geometry.Polygon
       a river corridor polygon for the river    
-    widths: float or dict
-      Width of the river, as constant or {stream-order: width} or as a function of drainage area.
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
 
     Returns
     -------
@@ -596,6 +603,11 @@ def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
             # widths here is a function of node, where 
             # widths wil be calculated based on some properties in the node
             target_width = widths(node)
+        elif isinstance(widths, bool):
+            if widths:
+                target_width = node.properties['width']
+            else: 
+                raise RuntimeError('not a valid option to provide width')
         else:
             target_width = widths
 
@@ -711,7 +723,7 @@ def width_by_order(width_dict, order):
     return width
 
 
-def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
+def convexity_enforcement(river, corr, gid_shift):
     """Ensure convexity of each river-corridor element.
 
     Moves nodes onto the convex hull of the element if needed.
@@ -739,12 +751,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                     elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
-                    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-                    for i, point in enumerate(points):
-                        # replace point with nearest point on convex hull
-                        p = shapely.geometry.Point(point)
-                        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
-                        points[i] = new_point
+                   points = make_convex_using_hull(points)
 
                 if not (watershed_workflow.utils.is_convex(points)):
                     # go back to original set of points as snapping on
@@ -761,6 +768,72 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
 
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
+
+
+
+from shapely.geometry import MultiPoint, Point, Polygon, LineString
+from scipy.optimize import linear_sum_assignment
+
+# def make_convex_using_hull(points):
+#     # Compute the convex hull
+#     convex_hull = MultiPoint(points).convex_hull
+#     hull_coords = list(convex_hull.exterior.coords[:-1])  # exclude the closing point which is same as the first
+
+#     # Create a dictionary to map point coordinates to their nearest points on the convex hull
+#     point_to_hull_point = {}
+#     for point in points:
+#         shapely_point = Point(point)
+#         if not shapely_point.within(convex_hull):
+#             # Find the nearest point on the convex hull
+#             nearest_point = min(hull_coords, key=lambda hull_point: shapely_point.distance(Point(hull_point)))
+#             point_to_hull_point[point] = nearest_point
+
+#     # Create the new list of points, replacing non-hull points with their nearest hull points
+#     new_points = [point_to_hull_point.get(point, point) for point in points]
+
+#     return new_points
+
+from scipy.optimize import minimize
+from shapely.geometry import MultiPoint, Point, Polygon
+from shapely.ops import nearest_points
+
+def make_convex_using_hull(points):
+    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
+    for i, point in enumerate(points):
+        # replace point with nearest point on convex hull
+        p = shapely.geometry.Point(point)
+        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
+        points[i] = new_point
+        return points
+    # convex_hull = MultiPoint(points).convex_hull
+    # original_polygon = Polygon(points)
+    
+    # # Using the convex hull as a continuous geometry
+    # hull_line = LineString(convex_hull.exterior.coords)
+    
+    # adjusted_points = []
+    # for point in points:
+    #     shapely_point = Point(point)
+    #     # Find the nearest point on the hull to this point
+    #     nearest_point_on_hull = nearest_points(shapely_point, hull_line)[1]
+        
+    #     # If the point is a vertex of the convex hull, it should not be moved
+    #     if shapely_point.equals(nearest_point_on_hull):
+    #         adjusted_points.append(point)
+    #     else:
+    #         # Move points not on the hull to the nearest location on the hull
+    #         adjusted_point = nearest_point_on_hull.coords[0]
+    #         adjusted_points.append(adjusted_point)
+
+    # if watershed_workflow.utils.is_convex(adjusted_points):
+    #     return adjusted_points
+    # else:
+    #     # In rare cases, adjustments might still not yield a convex polygon
+    #     # Further analysis or manual intervention may be required.
+    #     raise ValueError(f"Adjusted polygon is not convex. Further optimization needed. {adjusted_points}")
+
+
+
 
 
 def make_convex_by_nudge(points):
@@ -810,7 +883,7 @@ def make_convex_by_nudge(points):
         logging.debug(f"... element was adjusted {i} times")
 
     else:
-        raise NotImplementedError("Case with {len(points)} nodes is not yet treated... good luck!")
+        raise NotImplementedError(f"Case with {len(points)} nodes is not yet treated... good luck!")
     assert (watershed_workflow.utils.is_convex(points))
     return points
 
