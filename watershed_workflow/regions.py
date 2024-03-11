@@ -304,7 +304,7 @@ def add_regions_by_stream_order(m2, river, river_id=0):
             m2.labeled_sets.append(ls2)
 
 
-def add_region_by_reach_id(m2, river, reach_ids=None):
+def add_region_by_reach_id(m2, river, reach_ids=None, labels = None):
     """Add labeled sets to m2 for reaches of each stream order .
      
     Parameters:
@@ -319,7 +319,7 @@ def add_region_by_reach_id(m2, river, reach_ids=None):
 
     from collections import defaultdict
 
-    if reach_ids != None:
+    if labels == None:
         labels = []
         for id in reach_ids:
             label = f'reach with id {id}'

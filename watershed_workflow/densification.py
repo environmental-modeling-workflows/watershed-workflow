@@ -12,7 +12,7 @@ import shapely
 import watershed_workflow.utils
 
 
-def densify_rivers(rivers, rivers_raw=None, **kwargs):
+def densify_rivers_old(rivers, rivers_raw=None, **kwargs):
     """Returns a list for densified rivers"""
     if rivers_raw is None:
         rivers_raw = [None, ] * len(rivers)
@@ -27,6 +27,30 @@ def densify_rivers(rivers, rivers_raw=None, **kwargs):
             mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
+
+
+def densify_rivers(rivers, limit=50):
+    """Returns a list for densified rivers"""
+    for river in rivers:
+        for node in river.preOrder():
+            if isinstance(limit, bool):
+                if limit and 'target_length' in node.properties:
+                    target_length = node.properties['target_length']
+                else: 
+                    raise RuntimeError('not a valid option to provide width')
+            else:
+                    target_length = limit 
+            node.segment = resample_linestring_preserve_ends(node.segment, target_length)
+
+    mins = []
+    for river in rivers:
+        for line in river.depthFirst():
+            coords = np.array(line.coords[:])
+            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+            mins.append(np.min(dz))
+    logging.info(f"  river min seg length: {min(mins)}")
+    logging.info(f"  river median seg length: {np.median(np.array(mins))}")
+
 
 
 def densify_river(river, river_raw=None, limit=100):
@@ -241,6 +265,28 @@ def _densify_hucs(coords, coords_raw=None, rivers=None, limit_scales=None):
         j += 1
 
     return coords_densified
+
+
+def resample_linestring_preserve_ends(seg, spacing):
+    """resamples linestring at a desired resolution"""
+
+    length = seg.length
+    redensified_points = [seg.coords[0]]  
+    
+    current_distance = spacing
+    while current_distance < length - spacing: 
+        point = seg.interpolate(current_distance)
+        redensified_points.append(point.coords[0])
+        current_distance += spacing
+
+    if shapely.geometry.LineString(redensified_points[-1:]+[seg.coords[-1]]).length < spacing:
+        # If too close, remove the last interpolated point
+        redensified_points.pop(-1)
+    
+    redensified_points.append(seg.coords[-1])  # Append the original end point
+    
+    new_linestring = shapely.geometry.LineString(redensified_points)
+    return new_linestring
 
 
 def _interpolate_with_orig(end_points, interp_data, n):

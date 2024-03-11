@@ -723,6 +723,7 @@ def width_by_order(width_dict, order):
     return width
 
 
+
 def convexity_enforcement(river, corr, gid_shift):
     """Ensure convexity of each river-corridor element.
 
@@ -751,14 +752,19 @@ def convexity_enforcement(river, corr, gid_shift):
                     elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
-                   points = make_convex_using_hull(points)
+                    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
+                    for i, point in enumerate(points):
+                        # replace point with nearest point on convex hull
+                        p = shapely.geometry.Point(point)
+                        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
+                        points[i] = new_point
 
                 if not (watershed_workflow.utils.is_convex(points)):
                     # go back to original set of points as snapping on
                     # hull might have incorrectly oriented points
                     points = [coords[id] for id in elem]
                     logging.info(
-                        f" for node {node.properties['ID']} could not make these: {points} convex using convex hull, trying nudging...."
+                        f"  could not make these: {points} convex using convex hull, trying nudging...."
                     )
                     points = make_convex_by_nudge(points)
 
@@ -768,6 +774,8 @@ def convexity_enforcement(river, corr, gid_shift):
 
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
+
+
 
 
 
@@ -1066,9 +1074,7 @@ def adjust_hucs_for_river_corridor(hucs,
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
                 parent_node = node_at_intersection(intersection_point, river)
-                print(parent_node.properties['ID'])
-
-                # making sure it is not a leaf node, though this check
+                 # making sure it is not a leaf node, though this check
                 # fails if there is only one reach in the domain. So
                 # this may fail for a single reach that begins and
                 # ends on the boundary. -- fix me!
