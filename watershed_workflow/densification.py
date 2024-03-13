@@ -12,7 +12,7 @@ import shapely
 import watershed_workflow.utils
 
 
-def densify_rivers_old(rivers, rivers_raw=None, **kwargs):
+def densify_rivers(rivers, rivers_raw=None, **kwargs):
     """Returns a list for densified rivers"""
     if rivers_raw is None:
         rivers_raw = [None, ] * len(rivers)
@@ -29,7 +29,7 @@ def densify_rivers_old(rivers, rivers_raw=None, **kwargs):
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
 
-def densify_rivers(rivers, limit=50):
+def densify_rivers_new(rivers, limit=50):
     """Returns a list for densified rivers"""
     for river in rivers:
         for node in river.preOrder():
@@ -50,7 +50,6 @@ def densify_rivers(rivers, limit=50):
             mins.append(np.min(dz))
     logging.info(f"  river min seg length: {min(mins)}")
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
-
 
 
 def densify_river(river, river_raw=None, limit=100):
@@ -267,26 +266,18 @@ def _densify_hucs(coords, coords_raw=None, rivers=None, limit_scales=None):
     return coords_densified
 
 
-def resample_linestring_preserve_ends(seg, spacing):
-    """resamples linestring at a desired resolution"""
-
+def resample_linestring_preserve_ends(seg, initial_spacing):
+    """redensifies linestring at a desired resolution"""
     length = seg.length
-    redensified_points = [seg.coords[0]]  
-    
-    current_distance = spacing
-    while current_distance < length - spacing: 
-        point = seg.interpolate(current_distance)
-        redensified_points.append(point.coords[0])
-        current_distance += spacing
 
-    if shapely.geometry.LineString(redensified_points[-1:]+[seg.coords[-1]]).length < spacing:
-        # If too close, remove the last interpolated point
-        redensified_points.pop(-1)
+    num_segments = max(int(round(length / initial_spacing)), 1)
+
+    adjusted_spacing = length / num_segments
     
-    redensified_points.append(seg.coords[-1])  # Append the original end point
+    redensified_points = [seg.interpolate(distance).coords[0] for distance in [i * adjusted_spacing for i in range(num_segments + 1)]]
     
-    new_linestring = shapely.geometry.LineString(redensified_points)
-    return new_linestring
+    new_seg = shapely.geometry.LineString(redensified_points)
+    return new_seg
 
 
 def _interpolate_with_orig(end_points, interp_data, n):
