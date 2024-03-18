@@ -17,11 +17,12 @@ class IntersectionError(Exception):
 
 
 def _indexPointInSeg(segment, point, tol=1.e-2):
-    ind = segment.coords[:].index(point.coords[0])
-    # except ValueError:
-    #     ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
-    #                 key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
-    #     assert(shapely.geometry.Point(p).distance(point) < tol)
+    try:
+        ind = segment.coords[:].index(point.coords[0])
+    except ValueError:
+        ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
+                    key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
+        assert(shapely.geometry.Point(p).distance(point) < tol)
     return ind
 
 
@@ -74,7 +75,7 @@ def _isExpectedNumPoints(corr, river):
     for node in river.preOrder():
         n = n + 2 * (len(node.segment.coords) - 1)
     n = n - n_child.count(0) + n_child.count(2) + 2 * n_child.count(3) + 3 * n_child.count(4)
-    return (len(corr.exterior.coords) - 1 == n)
+    return (len(corr.exterior.coords) - 1 == n), n
 
 
 def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
@@ -228,8 +229,7 @@ def create_river_mesh(river,
     # creating a polygon for river corridor by dilating the river tree
     if type(widths) == dict:
         dilation_width = min(dilation_width, min(widths.values()))
-    else:
-        dilation_width = min(dilation_width, widths)
+  
     corr = create_river_corridor(river, dilation_width)
 
     # defining special elements in the mesh
@@ -305,6 +305,8 @@ def create_river_corridor(river, width):
 
     logging.info(f"  -- river min seg length: {min(mins)}")
 
+    print('delta', delta)
+
     # Currently this same for the whole river, should we change it reachwise?
     length_scale = max(2.1 * delta, min(mins) - 8*delta)
     logging.info(f"  -- merging points closer than {length_scale} m along the river corridor")
@@ -366,6 +368,7 @@ def create_river_corridor(river, width):
     corr3 = shapely.geometry.Polygon(corr3_p)
 
     # check if the points on the river corridor are same as calculated theoretically
+    is_broken, n = _isExpectedNumPoints(corr3, river)
     if not _isExpectedNumPoints(corr3, river):
         raise RuntimeError(
             f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}"
@@ -752,12 +755,7 @@ def convexity_enforcement(river, corr, gid_shift):
                     elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
-                    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-                    for i, point in enumerate(points):
-                        # replace point with nearest point on convex hull
-                        p = shapely.geometry.Point(point)
-                        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
-                        points[i] = new_point
+                    points = make_convex_using_hull(points)
 
                 if not (watershed_workflow.utils.is_convex(points)):
                     # go back to original set of points as snapping on
@@ -766,7 +764,7 @@ def convexity_enforcement(river, corr, gid_shift):
                     logging.info(
                         f"  could not make these: {points} convex using convex hull, trying nudging...."
                     )
-                    points = make_convex_by_nudge(points)
+                    # points = make_convex_by_nudge(points)
 
                 assert ((watershed_workflow.utils.is_convex(points)))
                 for id, point in zip(elem, points):
@@ -775,15 +773,39 @@ def convexity_enforcement(river, corr, gid_shift):
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
 
-
+from scipy.spatial import ConvexHull
 def make_convex_using_hull(points):
-    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-    for i, point in enumerate(points):
-        # replace point with nearest point on convex hull
-        p = shapely.geometry.Point(point)
-        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
-        points[i] = new_point
-        return points
+    # find points that do not lie on the hull
+    hull = ConvexHull(points)
+    hull_indices = set(hull.vertices)
+    non_hull_points_inds = [i for i in range(len(points)) if i not in hull_indices]
+    # non_hull_points_coordinates = points[non_hull_points_inds]
+
+    # for each non-hull point, get the linestring connecting it's preceding point and suceeding point
+    hull_edges = []
+    n = len(points)
+    for index in non_hull_points_inds:
+        prev_index = (index - 1) % n
+        next_index = (index + 1) % n
+        
+        edge = (points[prev_index], points[next_index])
+        hull_edges.append(shapely.geometry.LineString(edge))
+
+    # for each pair of non-hull point find nearest point on the corresponding hull_edge 
+    for ind, hull_edge in zip(non_hull_points_inds, hull_edges):
+        nearest_point_on_hull_edge, _ = shapely.ops.nearest_points(hull_edge, shapely.geometry.Point(points[ind]))
+        points[ind]=nearest_point_on_hull_edge.coords[0]
+    
+    return points
+
+# def make_convex_using_hull(points):
+#     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
+#     for i, point in enumerate(points):
+#         # replace point with nearest point on convex hull
+#         p = shapely.geometry.Point(point)
+#         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
+#         points[i] = new_point
+#         return points
 
 def make_convex_by_nudge(points):
     """Nudges the neck-points of the junction until the element is convex.
