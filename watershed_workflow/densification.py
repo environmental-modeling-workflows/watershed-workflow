@@ -550,7 +550,7 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
             new_node_coords = watershed_workflow.utils.treat_segment_collinearity(new_node_coords)
             node.segment = shapely.geometry.LineString(new_node_coords)
 
-            for child in node.children:
+            for child in list(node.children):
                 child_coords = child.segment.coords[:]
                 if len(child_coords) > 2:
                     # reach has > 2 points, so we can safely remove the last one
