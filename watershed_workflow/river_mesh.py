@@ -227,8 +227,10 @@ def create_river_mesh(river,
 
     """
     # creating a polygon for river corridor by dilating the river tree
-    if type(widths) == dict:
+    if isinstance(widths, dict):
         dilation_width = min(dilation_width, min(widths.values()))
+    elif isinstance(widths, int):
+        dilation_width = min(dilation_width, widths)
   
     corr = create_river_corridor(river, dilation_width)
 
@@ -305,10 +307,9 @@ def create_river_corridor(river, width):
 
     logging.info(f"  -- river min seg length: {min(mins)}")
 
-    print('delta', delta)
-
     # Currently this same for the whole river, should we change it reachwise?
     length_scale = max(2.1 * delta, min(mins) - 8*delta)
+  
     logging.info(f"  -- merging points closer than {length_scale} m along the river corridor")
 
     # buffer by the width
