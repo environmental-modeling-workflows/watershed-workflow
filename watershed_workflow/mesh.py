@@ -1597,8 +1597,10 @@ def merge_meshes(meshes):
 
 def merge_mesh(mesh1, mesh2):  # --THIS OPTION TO BE ADDED LATER-- #transfer_labeled_sets=True
     """merge two meshes (mesh.Mesh2D objects)"""
-   
-    assert len(mesh1.labeled_sets) + len(mesh2.labeled_sets) == 0, "to-be-merged meshes should not have labeled sets, they must be added after merging"
+
+    assert len(mesh1.labeled_sets) + len(
+        mesh2.labeled_sets
+    ) == 0, "to-be-merged meshes should not have labeled sets, they must be added after merging"
     combined_coords = mesh1.coords.tolist()
     # mapping for adjusting coord indices
     mapping = { i: i for i in range(mesh2.num_nodes) }

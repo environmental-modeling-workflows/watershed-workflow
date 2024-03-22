@@ -100,13 +100,13 @@ class NodesEdges:
         coords = np.array(list(self.nodes))
         kdtree = scipy.spatial.cKDTree(coords)
         bad_pairs = kdtree.query_pairs(tol)
-        
+
         # Retrieve the coordinates for each bad pair
         bad_pair_coords = [(coords[i], coords[j]) for i, j in bad_pairs]
 
         if len(bad_pairs) != 0:
-            raise ValueError('tol= {} is too large, try decrease tolerance!'.format(tol)+
-                             'or check bad pairs={}'.format(bad_pair_coords))
+            raise ValueError('tol= {} is too large, try decrease tolerance!'.format(tol)
+                             + 'or check bad pairs={}'.format(bad_pair_coords))
 
         min_node = min(self.nodes[n] for n in self.nodes)
         max_node = max(self.nodes[n] for n in self.nodes)
@@ -161,7 +161,8 @@ def triangulate(hucs,
     if internal_boundaries != None:
         if type(internal_boundaries) is list:
             for item in list:
-                if isinstance(item, shapely.geometry.LineString) or isinstance(item, shapely.geometry.Polygon):
+                if isinstance(item, shapely.geometry.LineString) or isinstance(
+                        item, shapely.geometry.Polygon):
                     segments = [item, ] + segments
                 elif isinstance(item, watershed_workflow.river_tree.River):
                     segments = list(item) + segments

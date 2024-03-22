@@ -20,9 +20,9 @@ def _indexPointInSeg(segment, point, tol=1.e-2):
     try:
         ind = segment.coords[:].index(point.coords[0])
     except ValueError:
-        ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
-                    key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
-        assert(shapely.geometry.Point(p).distance(point) < tol)
+        ind, p = min(((i, p) for (i, p) in enumerate(segment.coords[:])),
+                     key=lambda ip: shapely.geometry.Point(ip[1]).distance(point))
+        assert (shapely.geometry.Point(p).distance(point) < tol)
     return ind
 
 
@@ -231,24 +231,18 @@ def create_river_mesh(river,
         dilation_width = min(dilation_width, min(widths.values()))
     elif isinstance(widths, int):
         dilation_width = min(dilation_width, widths)
-  
+
     corr = create_river_corridor(river, dilation_width)
 
     # defining special elements in the mesh
     elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
 
     # setting river_widths in the river corridor polygon
-    corr = set_width(river,
-                    corr,
-                    widths=widths,
-                    dilation_width=dilation_width,
-                    gid_shift=gid_shift)
+    corr = set_width(river, corr, widths=widths, dilation_width=dilation_width, gid_shift=gid_shift)
 
     # treating non-convexity at junctions
     if enforce_convexity:
-        corr = convexity_enforcement(river,
-                                     corr,
-                                     gid_shift=gid_shift)
+        corr = convexity_enforcement(river, corr, gid_shift=gid_shift)
 
     # redraw the debug plot with updated elems
     if ax is not None:
@@ -309,7 +303,7 @@ def create_river_corridor(river, width):
 
     # Currently this same for the whole river, should we change it reachwise?
     length_scale = max(2.1 * delta, min(mins) - 8*delta)
-  
+
     logging.info(f"  -- merging points closer than {length_scale} m along the river corridor")
 
     # buffer by the width
@@ -593,7 +587,7 @@ def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
             (i for i in ['StreamOrder', 'streamorder', 'streamorde'] if i in river.properties),
             None)
         if stream_order is None:
-             raise RuntimeError(
+            raise RuntimeError(
                 'set_width_by_order requested widths by stream order, but cannot guess stream order property name'
             )
 
@@ -603,14 +597,14 @@ def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
             target_width = width_by_order(widths, order)
         elif callable(widths):
             ## DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
-            # genralized, the above calclations should be done in the function itself 
-            # widths here is a function of node, where 
+            # genralized, the above calclations should be done in the function itself
+            # widths here is a function of node, where
             # widths wil be calculated based on some properties in the node
             target_width = widths(node)
         elif isinstance(widths, bool):
             if widths:
                 target_width = node.properties['width']
-            else: 
+            else:
                 raise RuntimeError('not a valid option to provide width')
         else:
             target_width = widths
@@ -727,7 +721,6 @@ def width_by_order(width_dict, order):
     return width
 
 
-
 def convexity_enforcement(river, corr, gid_shift):
     """Ensure convexity of each river-corridor element.
 
@@ -774,7 +767,10 @@ def convexity_enforcement(river, corr, gid_shift):
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
 
+
 from scipy.spatial import ConvexHull
+
+
 def make_convex_using_hull(points):
     # find points that do not lie on the hull
     hull = ConvexHull(points)
@@ -786,18 +782,20 @@ def make_convex_using_hull(points):
     hull_edges = []
     n = len(points)
     for index in non_hull_points_inds:
-        prev_index = (index - 1) % n
-        next_index = (index + 1) % n
-        
+        prev_index = (index-1) % n
+        next_index = (index+1) % n
+
         edge = (points[prev_index], points[next_index])
         hull_edges.append(shapely.geometry.LineString(edge))
 
-    # for each pair of non-hull point find nearest point on the corresponding hull_edge 
+    # for each pair of non-hull point find nearest point on the corresponding hull_edge
     for ind, hull_edge in zip(non_hull_points_inds, hull_edges):
-        nearest_point_on_hull_edge, _ = shapely.ops.nearest_points(hull_edge, shapely.geometry.Point(points[ind]))
-        points[ind]=nearest_point_on_hull_edge.coords[0]
-    
+        nearest_point_on_hull_edge, _ = shapely.ops.nearest_points(
+            hull_edge, shapely.geometry.Point(points[ind]))
+        points[ind] = nearest_point_on_hull_edge.coords[0]
+
     return points
+
 
 # def make_convex_using_hull(points):
 #     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
@@ -807,6 +805,7 @@ def make_convex_using_hull(points):
 #         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
 #         points[i] = new_point
 #         return points
+
 
 def make_convex_by_nudge(points):
     """Nudges the neck-points of the junction until the element is convex.
@@ -1038,7 +1037,7 @@ def adjust_hucs_for_river_corridor(hucs,
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
                 parent_node = node_at_intersection(intersection_point, river)
-                 # making sure it is not a leaf node, though this check
+                # making sure it is not a leaf node, though this check
                 # fails if there is only one reach in the domain. So
                 # this may fail for a single reach that begins and
                 # ends on the boundary. -- fix me!
