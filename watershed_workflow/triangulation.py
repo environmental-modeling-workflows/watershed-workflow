@@ -160,7 +160,7 @@ def triangulate(hucs,
 
     if internal_boundaries != None:
         if type(internal_boundaries) is list:
-            for item in list:
+            for item in internal_boundaries:
                 if isinstance(item, shapely.geometry.LineString) or isinstance(
                         item, shapely.geometry.Polygon):
                     segments = [item, ] + segments

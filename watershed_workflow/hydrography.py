@@ -723,7 +723,8 @@ def filterSmallRivers(rivers, count):
 def merge(river, tol=_tol):
     """Remove inner branches that are short, combining branchpoints as needed.
 
-    This function merges the "short" segment into the parent segment
+    This function merges the "short" segment into the child segment if it is a junction tributary with one child
+    or into the parent segment otherwise
 
     """
     for node in list(river.preOrder()):
@@ -731,14 +732,19 @@ def merge(river, tol=_tol):
             logging.info(
                 "  ...cleaned inner segment of length %g at centroid %r with id %r" %
                 (node.segment.length, node.segment.centroid.coords[0], node.properties['ID']))
+            
+            if len(list(node.siblings()))>0 and len(node.children)==1: # non junction tributary with one child
+                node.merge_with_child()  
+            elif len(node.children)==0: # if the leaf node is too small
+                node.remove()       
+            else: 
+                for sibling in list(node.siblings()):
+                    sibling.moveCoordinate(-1, node.segment.coords[0])
+                    sibling.remove()
+                    node.addChild(sibling)
 
-            for sibling in list(node.siblings()):
-                sibling.moveCoordinate(-1, node.segment.coords[0])
-                sibling.remove()
-                node.addChild(sibling)
-
-            assert (len(list(node.siblings())) == 0)
-            node.merge()
+                assert (len(list(node.siblings())) == 0)
+                node.merge()
 
 
 def simplify(river, tol=_tol):

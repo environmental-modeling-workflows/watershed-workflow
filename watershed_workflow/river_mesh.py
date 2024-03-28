@@ -226,10 +226,11 @@ def create_river_mesh(river,
         The polygon of all elements, stores the coordinates.
 
     """
+
     # creating a polygon for river corridor by dilating the river tree
     if isinstance(widths, dict):
         dilation_width = min(dilation_width, min(widths.values()))
-    elif isinstance(widths, int):
+    elif isinstance(widths, int) and not isinstance(widths, bool):
         dilation_width = min(dilation_width, widths)
 
     corr = create_river_corridor(river, dilation_width)
