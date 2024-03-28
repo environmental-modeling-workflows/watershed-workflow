@@ -151,6 +151,34 @@ class River(watershed_workflow.tinytree.Tree):
         for child in self.children:
             parent.addChild(child)
 
+    def merge_with_child(self):
+        """Merges this with its one and only child."""
+        assert (len(self.children) == 1)
+
+        # fix properties
+        if 'areasqkm' in self.properties:
+            self.children[0].properties['areasqkm'] += self.properties['areasqkm']
+        if 'AreaSqKm' in self.properties:
+            self.children[0].properties['AreaSqKm'] += self.properties['AreaSqKm']
+        if 'catchment' in self.properties and self.properties['catchment'] is not None:
+            if self.children[0].properties['catchment'] is None:
+                self.children[0].properties['catchment'] = self.properties['catchment']
+            else:
+                self.parent.properties['catchment'] = shapely.ops.unary_union(
+                    [self.properties['catchment'], self.parent.properties['catchment']])
+
+        if 'DivergenceCode' in self.parent.properties:
+            self.children[0].properties['DivergenceCode'] = self.properties['DivergenceCode']
+
+        child = self.children[0]
+        child.moveCoordinate(-1, self.segment.coords[-1])
+
+        parent = self.parent
+        
+        self.remove()
+        for child in self.children:
+            parent.addChild(child)
+
     def moveCoordinate(self, i, xy):
         """Moves the ith coordinate of self.segment to a new location."""
         if i < 0:

@@ -121,7 +121,7 @@ def test_to_quads(river_small, corr_small):
 
 def test_triangulate(watershed_small, river_small):
     points, elems = watershed_workflow.tessalate_river_aligned(watershed_small, [river_small],
-                                                               1,
+                                                               river_width=1,
                                                                tol=0.1,
                                                                refine_min_angle=32,
                                                                refine_distance=[2, 5, 5, 10],
