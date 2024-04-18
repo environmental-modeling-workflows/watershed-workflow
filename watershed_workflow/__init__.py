@@ -1406,7 +1406,7 @@ def tessalate_river_aligned(hucs,
                                                                   ax=ax)
 
     # triangulate the rest
-    tri_res = watershed_workflow.triangulate(hucs_without_outlets,
+    tri_res = watershed_workflow.triangulate(hucs_without_outlet,
                                              rivers,
                                              corrs,
                                              internal_boundaries,
