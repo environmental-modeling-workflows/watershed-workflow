@@ -1342,7 +1342,6 @@ def tessalate_river_aligned(hucs,
                             internal_boundaries=None,
                             hole_points=None,
                             diagnostics=False,
-                            tol=1,
                             ax=None,
                             **kwargs):
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
@@ -1407,13 +1406,12 @@ def tessalate_river_aligned(hucs,
                                                                   ax=ax)
 
     # triangulate the rest
-    tri_res = watershed_workflow.triangulate(hucs_without_outlet,
+    tri_res = watershed_workflow.triangulate(hucs_without_outlets,
                                              rivers,
                                              corrs,
                                              internal_boundaries,
                                              hole_points,
                                              diagnostics,
-                                             tol=tol,
                                              **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]

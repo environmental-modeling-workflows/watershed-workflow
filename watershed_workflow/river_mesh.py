@@ -6,6 +6,7 @@ import logging
 
 import shapely.geometry
 import shapely.ops
+from scipy.spatial import ConvexHull
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
@@ -759,7 +760,7 @@ def convexity_enforcement(river, corr, gid_shift):
                     logging.info(
                         f"  could not make these: {points} convex using convex hull, trying nudging...."
                     )
-                    # points = make_convex_by_nudge(points)
+                    points = make_convex_by_nudge(points)
 
                 assert ((watershed_workflow.utils.is_convex(points)))
                 for id, point in zip(elem, points):
@@ -769,15 +770,12 @@ def convexity_enforcement(river, corr, gid_shift):
     return shapely.geometry.Polygon(corr_coords_new)
 
 
-from scipy.spatial import ConvexHull
-
-
 def make_convex_using_hull(points):
+    """Snaps non-convex points to the corresonding edge on the convex hull for the non-convex element"""
     # find points that do not lie on the hull
     hull = ConvexHull(points)
     hull_indices = set(hull.vertices)
     non_hull_points_inds = [i for i in range(len(points)) if i not in hull_indices]
-    # non_hull_points_coordinates = points[non_hull_points_inds]
 
     # for each non-hull point, get the linestring connecting it's preceding point and suceeding point
     hull_edges = []
@@ -796,16 +794,6 @@ def make_convex_using_hull(points):
         points[ind] = nearest_point_on_hull_edge.coords[0]
 
     return points
-
-
-# def make_convex_using_hull(points):
-#     convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-#     for i, point in enumerate(points):
-#         # replace point with nearest point on convex hull
-#         p = shapely.geometry.Point(point)
-#         new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
-#         points[i] = new_point
-#         return points
 
 
 def make_convex_by_nudge(points):

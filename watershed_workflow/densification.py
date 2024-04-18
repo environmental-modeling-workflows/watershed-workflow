@@ -417,7 +417,7 @@ def _remove_sharp_angles(river,
                                                                    angle_limit=junction_angle_limit)
                     if not node.is_locally_continuous():
                         print(node.properties['ID'])
-                    #assert (node.is_locally_continuous())
+                    assert (node.is_locally_continuous())
 
         assert (river.is_continuous())
 
@@ -570,7 +570,6 @@ def treat_small_angle_between_child_nodes(node, angle_limit=10):
                         grandchild_seg_coords[-1] = new_junction
                         grandchild.segment = shapely.geometry.LineString(grandchild_seg_coords)
                         node.addChild(grandchild)
-                        print('this was executed')
                     child.remove()
 
             # we changed things -- return True so this can be called
