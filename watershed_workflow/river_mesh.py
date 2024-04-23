@@ -49,7 +49,8 @@ def _isOverlappingCorridor(corr, river):
         # there is an overlap upstream of the junction of two tributaries,
         # creating a hole
         return 2
-    if not _isExpectedNumPoints(corr, river):
+    n=0
+    if not _isExpectedNumPoints(corr, river, n):
         # overlaps at the junction result in losing points in the corridor polygon.
         return 1
     return 0
