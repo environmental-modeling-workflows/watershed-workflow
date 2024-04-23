@@ -244,6 +244,11 @@ class _FileManagerNHD:
             reaches = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(reaches)} in bounds.")
 
+        ## TEMPORARY FIX ## NHDPlus dataset changed their id name
+        if ('NHDPlusID' not in reaches[0]['properties'].keys()) and ('nhdplusid' in reaches[0]['properties'].keys()):
+            for reach in reaches:
+                reach['properties']['NHDPlusID'] = reach['properties'].pop('nhdplusid')
+
         # filter not in network
         if 'NHDPlus' in self.name and in_network:
             logging.info("  Filtering reaches not in-network")

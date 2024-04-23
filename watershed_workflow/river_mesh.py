@@ -67,7 +67,7 @@ def _isOverlappingCorridors(corrs, rivers):
     return False
 
 
-def _isExpectedNumPoints(corr, river):
+def _isExpectedNumPoints(corr, river, n):
     """Check if the points on the corridor are same as calculated theoretically"""
     n_child = []
     for node in river.preOrder():
@@ -76,8 +76,7 @@ def _isExpectedNumPoints(corr, river):
     for node in river.preOrder():
         n = n + 2 * (len(node.segment.coords) - 1)
     n = n - n_child.count(0) + n_child.count(2) + 2 * n_child.count(3) + 3 * n_child.count(4)
-    return (len(corr.exterior.coords) - 1 == n), n
-
+    return len(corr.exterior.coords) - 1 == n
 
 def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees
@@ -363,10 +362,9 @@ def create_river_corridor(river, width):
 
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
-
+    n = 0
     # check if the points on the river corridor are same as calculated theoretically
-    is_broken, n = _isExpectedNumPoints(corr3, river)
-    if not _isExpectedNumPoints(corr3, river):
+    if not _isExpectedNumPoints(corr3, river, n):
         raise RuntimeError(
             f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}"
             " -- recommend running with ax argument to tessalate_river_aligned() to debug!")
