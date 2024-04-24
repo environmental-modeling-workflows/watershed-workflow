@@ -125,10 +125,11 @@ class River(watershed_workflow.tinytree.Tree):
         parent.addChild(new_node)
         return self, new_node
 
-    def merge(self, properties_from='parent'):
-        """Merges this node with its parent or merge parent with this node."""
-        assert (len(list(self.siblings())) == 0)
-        if properties_from == 'parent': # merging this node into parent
+
+    def merge(self, to = 'parent'):
+        """Merges this to its parent or to its one and only child."""
+        if to == 'parent':
+            assert (len(list(self.siblings())) == 0)
             # fix properties
             if 'areasqkm' in self.properties:
                 self.parent.properties['areasqkm'] += self.properties['areasqkm']
@@ -146,31 +147,30 @@ class River(watershed_workflow.tinytree.Tree):
 
             parent = self.parent
             parent.moveCoordinate(0, self.segment.coords[0])
+            self.remove()
+            for child in self.children:
+                parent.addChild(child)
+        elif to == 'child':
+            assert (len(self.children) == 1)
+            # fix properties
+            if 'areasqkm' in self.properties:
+                self.children[0].properties['areasqkm'] += self.properties['areasqkm']
+            if 'AreaSqKm' in self.properties:
+                self.children[0].properties['AreaSqKm'] += self.properties['AreaSqKm']
+            if 'catchment' in self.properties and self.properties['catchment'] is not None:
+                if self.children[0].properties['catchment'] is None:
+                    self.children[0].properties['catchment'] = self.properties['catchment']
+                else:
+                    self.children[0].properties['catchment'] = shapely.ops.unary_union(
+                        [self.properties['catchment'], self.children[0].properties['catchment']])
 
+            child = self.children[0]
+            child.moveCoordinate(-1, self.segment.coords[-1])
+            parent = self.parent
             self.remove()
             for child in self.children:
                 parent.addChild(child)
 
-        elif properties_from == 'self':
-            # merging parent into this node
-            if 'areasqkm' in self.properties:
-                self.properties['areasqkm'] += self.parent.properties['areasqkm']
-            if 'AreaSqKm' in self.properties:
-                self.properties['AreaSqKm'] += self.parent.properties['AreaSqKm']
-            if 'catchment' in self.properties and self.properties['catchment'] is not None:
-                if self.properties['catchment'] is None:
-                    self.properties['catchment'] = self.parent.properties['catchment']
-                else:
-                    self.properties['catchment'] = shapely.ops.unary_union(
-                        [self.properties['catchment'], self.parent.properties['catchment']])
-
-            # no update to divergence code is needed
-            self.moveCoordinate(-1, self.parent.segment.coords[-1])
-
-            parent = self.parent.parent
-            self.parent.remove()
-
-            parent.addChild(self)
 
     def moveCoordinate(self, i, xy):
         """Moves the ith coordinate of self.segment to a new location."""
