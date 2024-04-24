@@ -245,15 +245,19 @@ class _FileManagerNHD:
             logging.info(f"  Found total of {len(reaches)} in bounds.")
     
         # check if the dataset is in old NHD Format (title case) or new format (lower case)
-        to_lower = 'nhdplusid' in reaches[0]['properties']
+        to_lower ='nhdplusid' in reaches[0]['properties']
 
         # filter not in network
-        id_key = 'NHDPlusID' if not to_lower else 'nhdplusid'
-        if id_key in self.name and in_network:
+        prop_key = 'InNetwork' if not to_lower else 'innetwork'
+        if 'NHDPlus' in self.name and in_network:
             logging.info("Filtering reaches not in-network")
-            reaches = [r for r in reaches if r['properties'].get('InNetwork' if not to_lower else 'innetwork') == 1]
+            reaches = [
+                r for r in reaches 
+                if prop_key in r['properties'] and r['properties'][prop_key] == 1
+            ]
 
         # associate IDs
+        id_key = 'NHDPlusID' if not to_lower else 'nhdplusid'
         if 'Plus' in self.name and properties is not None:
             for r in reaches:
                 r['properties']['ID'] = str(int(r['properties'][id_key]))
