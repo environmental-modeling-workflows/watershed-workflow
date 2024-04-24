@@ -733,8 +733,8 @@ def merge(river, tol=_tol):
                 "  ...cleaned inner segment of length %g at centroid %r with id %r" %
                 (node.segment.length, node.segment.centroid.coords[0], node.properties['ID']))
             
-            if len(list(node.siblings()))>0 and len(node.children)==1: # non junction tributary with one child
-                node.merge_with_child()  
+            if len(list(node.siblings()))>0 and len(node.children)==1: # junction tributary with one child
+                node.children[0].merge(properties_from = 'self')  
             elif len(node.children)==0: # if the leaf node is too small
                 node.remove()       
             else: 
