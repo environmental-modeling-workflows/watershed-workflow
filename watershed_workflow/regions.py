@@ -62,6 +62,11 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
       If true, also add the volumetric region below the polygon that
       will be extruded in a 3D mesh eventually.
 
+    Returns
+    -------
+    partitions : list[list[int]]
+      A list of length polygons, each entry of which is the list of
+      cell indices in that polygon.
     """
     if labels is None:
         labels = _get_labels(polygons)
@@ -164,8 +169,8 @@ def add_watershed_regions_and_outlets(m2,
         close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
         return close
 
-    for label, tris, outlet in zip(labels, partitions, outlets):
-        subdomain_conn = [list(m2.conn[tri]) for tri in tris]
+    for label, partition, outlet in zip(labels, partitions, outlets):
+        subdomain_conn = [list(m2.conn[cell]) for cell in partition]
         subdomain_nodes = set([c for e in subdomain_conn for c in e])
         subdomain_coords = np.array([m2.coords[c] for c in subdomain_nodes])
         m2h = watershed_workflow.mesh.Mesh2D(subdomain_coords,
@@ -184,6 +189,8 @@ def add_watershed_regions_and_outlets(m2,
         if outlet is not None:
             outlet_faces = [e for e in m2h.boundary_edges if inside_ball(outlet, e)]
             edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
+            if (len(edges) == 0):
+                warnings.warn(f'Outlet region found 0 faces for polygon {label}')
             ls = watershed_workflow.mesh.LabeledSet(label + ' outlet',
                                                     m2.next_available_labeled_setid(), 'FACE',
                                                     edges)

@@ -148,6 +148,10 @@ class _FileManagerNHD:
             profile = fid.profile
         profile['always_xy'] = True
 
+        for hu in hus:
+            if 'huc'+str(level) in hu['properties']:
+                hu['properties']['ID'] = str(int(hu['properties']['huc'+str(level)]))
+
         if exclude_hu_types is not None:
             hus = [hu for hu in hus if hu['properties']['hutype'] not in exclude_hu_types]
         return profile, hus

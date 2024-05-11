@@ -483,7 +483,7 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         if projection is None:
             res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
         else:
-            res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **kwargs)
+            res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **marker_kwargs)
 
     elif type(next(iter(shps))) is shapely.geometry.LineString:
         # plot lines
@@ -816,9 +816,9 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
         nnd = len(np.where(data == profile['nodata'])[0])
         data = np.ma.array(data, mask=(data == profile['nodata']))
 
-    if vmin is None:
+    if vmin is None and 'norm' not in kwargs:
         vmin = np.nanmin(data)
-    if vmax is None:
+    if vmax is None and 'norm' not in kwargs:
         vmax = np.nanmax(data)
 
     bounds = rasterio.transform.array_bounds(profile['height'], profile['width'],

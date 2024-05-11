@@ -191,7 +191,7 @@ def raster(src_profile,
     return dst_profile, dst_array
 
 
-def dataset_collection(dataset, **kwargs):
+def dataset(dataset, **kwargs):
     """Warp a dataset collection.  Note this works in place!"""
     new_dataset = None
     for k, v in dataset.items():
@@ -206,6 +206,6 @@ def state(state, **kwargs):
     """Warp a state."""
     new_state = watershed_workflow.datasets.State()
     for col in state.collections:
-        new_col = dataset_collection(col, **kwargs)
+        new_col = dataset(col, **kwargs)
         new_state.collections.append(new_col)
     return new_state
