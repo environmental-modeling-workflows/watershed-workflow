@@ -8,7 +8,7 @@ import shapely.geometry
 import collections
 import logging
 import h5py
-import datetime
+import datetime, cftime
 
 import watershed_workflow.crs
 
@@ -86,7 +86,7 @@ def write_to_shapefile(filename, shps, crs, extra_properties=None):
             c.write({ 'geometry': shapely.geometry.mapping(shp), 'properties': props })
 
 
-def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None):
+def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None, calendar='noleap'):
     """Writes a DatasetCollection and attributes to an HDF5 file.
 
     Parameters
@@ -128,7 +128,8 @@ def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None):
         time0 = times[0]
 
     if type(time0) is str:
-        time0 = datetime.datetime.strptime(time0, '%Y-%m-%d').date()
+        time0_split = time0.split('-')
+        time0 = cftime.datetime(int(time0_split[0]), int(time0_split[1]), int(time0_split[2]), calendar=calendar)
     if attributes is None:
         attributes = dict()
     attributes['origin date'] = str(time0)

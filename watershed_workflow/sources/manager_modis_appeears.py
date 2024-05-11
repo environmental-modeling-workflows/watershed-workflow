@@ -4,7 +4,7 @@ import os, sys
 import logging
 import requests
 import time
-import datetime
+import cftime, datetime
 import shapely
 import numpy as np
 import netCDF4
@@ -19,27 +19,32 @@ import watershed_workflow.crs
 import watershed_workflow.datasets
 
 colors = {
-    -1: ('Unclassified', (0.00000000000, 0.00000000000, 0.00000000000)),
-    0: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
-    1: ('Evergreen Needleleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
-    2: ('Evergreen Broadleaf Forests', (0.10980392157, 0.38823529412, 0.18823529412)),
-    3: ('Deciduous Needleleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
-    4: ('Deciduous Broadleaf Forests', (0.40784313726, 0.66666666667, 0.38823529412)),
-    5: ('Mixed Forests', (0.70980392157, 0.78823529412, 0.55686274510)),
-    6: ('Closed Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
-    7: ('Open Shrublands', (0.80000000000, 0.72941176471, 0.48627450980)),
-    8: ('Woody Savannas', (0.40784313726, 0.66666666667, 0.38823529412)),
-    9: ('Savannas', (0.70980392157, 0.78823529412, 0.55686274510)),
-    10: ('Grasslands', (0.88627450980, 0.88627450980, 0.75686274510)),
-    11: ('Permanent Wetlands', (0.43921568628, 0.63921568628, 0.72941176471)),
-    12: ('Croplands', (0.66666666667, 0.43921568628, 0.15686274510)),
-    13: ('Urban and Built up lands', (0.86666666667, 0.78823529412, 0.78823529412)),
-    14: ('Cropland Natural Vegetation Mosaics', (0.66666666667, 0.43921568628, 0.15686274510)),
-    15: ('Permanent Snow and Ice', (0.81960784314, 0.86666666667, 0.97647058824)),
-    16: ('Barren Land', (0.69803921569, 0.67843137255, 0.63921568628)),
-    17: ('Water Bodies', (0.27843137255, 0.41960784314, 0.62745098039)),
+    -1: ('Unclassified', (0,0,0)),
+    0: ('Open Water', (140, 219, 255)),
+    1: ('Evergreen Needleleaf Forests', (38, 115, 0)),
+    2: ('Evergreen Broadleaf Forests', (82, 204, 77)),
+    3: ('Deciduous Needleleaf Forests', (150, 196, 20)),
+    4: ('Deciduous Broadleaf Forests', (122, 250, 166)),
+    5: ('Mixed Forests', (137, 205, 102)),
+    6: ('Closed Shrublands', (215, 158, 158)),
+    7: ('Open Shrublands', (255, 240, 196)),
+    8: ('Woody Savannas', (233, 255, 190)),
+    9: ('Savannas', (255, 216, 20)),
+    10: ('Grasslands', (255, 196, 120)),
+    11: ('Permanent Wetlands', (0, 132, 168)),
+    12: ('Croplands', (255, 255, 115)),
+    13: ('Urban and Built up lands', (255, 0, 0)),
+    14: ('Cropland Natural Vegetation Mosaics', (168, 168, 0)),
+    15: ('Permanent Snow and Ice', (255, 255, 255)),
+    16: ('Barren Land', (130, 130, 130)),
+    17: ('Water Bodies', (140, 209, 245)),
 }
 
+for k,v in colors.items():
+    colors[k] = (v[0], tuple(float(i) / 255.0 for i in v[1]))
+
+indices = dict([(pars[0], id) for (id, pars) in colors.items()])
+    
 
 @attr.define
 class Task:
@@ -96,7 +101,10 @@ class FileManagerMODISAppEEARS:
         },
     }
 
-    def __init__(self, login_token=None):
+    colors = colors
+    indices = indices
+    
+    def __init__(self, login_token=None, remove_leap_day=True):
         """Create a new manager for MODIS data."""
         self.name = 'MODIS'
         self.names = watershed_workflow.sources.names.Names(
@@ -305,7 +313,9 @@ class FileManagerMODISAppEEARS:
 
         try:
             r.raise_for_status()
-        except requests.HTTPError:
+        except requests.HTTPError as err:
+            logging.info('... HTTPError checking for bundle:')
+            logging.info(f'{err}')
             return False
         else:
             # does the bundle exist?
@@ -401,7 +411,8 @@ class FileManagerMODISAppEEARS:
             profile['layer'] = varname
 
             times = nc.variables['time'][:].filled(-1)
-            time_origin = datetime.date(2000, 1, 1)
+            print(times[0])
+            time_origin = cftime.datetime(2000, 1, 1)
             times = np.array([time_origin + datetime.timedelta(days=int(t)) for t in times])
 
             data = nc.variables[varname][:]
@@ -545,6 +556,7 @@ class FileManagerMODISAppEEARS:
                 success = True
                 break
             else:
+                logging.info('sleeping...')
                 time.sleep(interval)
                 count += 1
 

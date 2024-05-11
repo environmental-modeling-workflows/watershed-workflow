@@ -108,7 +108,9 @@ class FileManagerSoilGrids2017:
         return manager.get_raster(shply, crs)
 
     def get_depth_to_bedrock(self, shply, crs, force_download=False):
-        return self.get_raster(shply, crs, 'BDTICM', None, force_download)
+        profile, raster = self.get_raster(shply, crs, 'BDTICM', None, force_download)
+        raster = raster / 100 # cm --> m
+        return profile, raster
 
     def get_soil_texture(self, shply, crs, layer, force_download=False):
         rasters = []
@@ -152,7 +154,7 @@ class FileManagerSoilGrids2017:
         data = dict()
         prof, data['bulk density [kg m^-3]'] = self.get_all_bulk_density(shply, crs, force_download)
         _, data['texture [%]'] = self.get_all_soil_texture(shply, crs, force_download)
-        _, data['depth to bedrock [cm]'] = self.get_depth_to_bedrock(shply, crs, force_download)
+        _, data['depth to bedrock [m]'] = self.get_depth_to_bedrock(shply, crs, force_download)
         return prof, data
 
     def _download(self, variable, layer=None, force=False):
