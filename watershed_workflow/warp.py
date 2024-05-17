@@ -139,7 +139,10 @@ def raster(src_profile,
 
     if dst_crs is None:
         dst_crs = src_crs
-    dst_crs_rio = watershed_workflow.crs.to_rasterio(dst_crs)
+    if watershed_workflow.crs.is_native(dst_crs):
+        dst_crs_rio = watershed_workflow.crs.to_rasterio(dst_crs)
+    else:
+        dst_crs_rio = dst_crs
 
     src_bounds = rasterio.transform.array_bounds(src_profile['height'], src_profile['width'],
                                                  src_profile['transform'])
@@ -162,7 +165,8 @@ def raster(src_profile,
         'crs': dst_crs_rio,
         'transform': dst_transform,
         'width': dst_width,
-        'height': dst_height
+        'height': dst_height,
+        'dtype': src_profile['dtype']
     })
 
     # Reproject and return

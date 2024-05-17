@@ -840,7 +840,8 @@ def basemap(crs=None,
             ocean_kwargs=None,
             state_kwargs=None,
             country_kwargs=None,
-            coastline_kwargs=None):
+            coastline_kwargs=None,
+            lake_kwargs=None):
     """Add a basemap to the axis.
 
     Uses cartopy to add political and natural boundaries and shapes to the axes
@@ -886,6 +887,30 @@ def basemap(crs=None,
         land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
         ax.add_feature(land)
 
+    if ocean_kwargs is not False:
+        if ocean_kwargs is None:
+            ocean_kwargs = dict()
+        if 'edgecolor' not in ocean_kwargs:
+            ocean_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in ocean_kwargs:
+            ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
+        ax.add_feature(ocean)
+
+    if lake_kwargs is not None and lake_kwargs is not False:
+        if 'edgecolor' not in lake_kwargs:
+            lake_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in lake_kwargs:
+            lake_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+        lake = cartopy.feature.NaturalEarthFeature('physical', 'lakes', resolution, **lake_kwargs)
+        ax.add_feature(lake)
+
+    if coastline_kwargs is not None and coastline_kwargs is not False:
+        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
+        kwargs.update(**coastline_kwargs)
+        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline', resolution, **kwargs)
+        ax.add_feature(states)
+
     if state_kwargs is not None and state_kwargs is not False:
         kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
         kwargs.update(**state_kwargs)
@@ -910,22 +935,8 @@ def basemap(crs=None,
         else:
             ax.add_feature(country)
 
-    if ocean_kwargs is not False:
-        if ocean_kwargs is None:
-            ocean_kwargs = dict()
-        if 'edgecolor' not in ocean_kwargs:
-            ocean_kwargs['edgecolor'] = 'face'
-        if 'facecolor' not in ocean_kwargs:
-            ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
-        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
-        ax.add_feature(ocean)
 
-    if coastline_kwargs is not None and coastline_kwargs is not False:
-        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
-        kwargs.update(**coastline_kwargs)
-        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline', resolution, **kwargs)
-        ax.add_feature(states)
-
+        
     return
 
 
