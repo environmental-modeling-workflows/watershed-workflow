@@ -243,17 +243,16 @@ class _FileManagerNHD:
                 bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
             reaches = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(reaches)} in bounds.")
-    
+
         # check if the dataset is in old NHD Format (title case) or new format (lower case)
-        to_lower ='nhdplusid' in reaches[0]['properties']
+        to_lower = 'nhdplusid' in reaches[0]['properties']
 
         # filter not in network
         prop_key = 'InNetwork' if not to_lower else 'innetwork'
         if 'NHDPlus' in self.name and in_network:
             logging.info("Filtering reaches not in-network")
             reaches = [
-                r for r in reaches 
-                if prop_key in r['properties'] and r['properties'][prop_key] == 1
+                r for r in reaches if prop_key in r['properties'] and r['properties'][prop_key] == 1
             ]
 
         # associate IDs

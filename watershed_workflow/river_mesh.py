@@ -49,7 +49,7 @@ def _isOverlappingCorridor(corr, river):
         # there is an overlap upstream of the junction of two tributaries,
         # creating a hole
         return 2
-    n=0
+    n = 0
     if not _isExpectedNumPoints(corr, river, n):
         # overlaps at the junction result in losing points in the corridor polygon.
         return 1
@@ -78,6 +78,7 @@ def _isExpectedNumPoints(corr, river, n):
         n = n + 2 * (len(node.segment.coords) - 1)
     n = n - n_child.count(0) + n_child.count(2) + 2 * n_child.count(3) + 3 * n_child.count(4)
     return len(corr.exterior.coords) - 1 == n
+
 
 def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
     """Returns list of elems and river corridor polygons for a given list of river trees

@@ -188,6 +188,7 @@ def get_ax(crs,
         newfig = False
 
     if window is None:
+
         def _get_ax(axargs, ax_kwargs):
             if crs is None:
                 # no crs, just get an ax -- you deal with it.
@@ -201,12 +202,13 @@ def get_ax(crs,
                 ax_kwargs['projection'] = projection
                 ax = fig.add_subplot(*axargs, **ax_kwargs)
             return ax
-        
+
         if axgrid is None:
             if nrow == 1 and ncol == 1:
                 index = 1
             if index is None:
-                ax = [[_get_ax([nrow, ncol, i*(ncol)+j+1], ax_kwargs) for j in range(ncol)] for i in range(nrow)]
+                ax = [[_get_ax([nrow, ncol, i * (ncol) + j + 1], ax_kwargs) for j in range(ncol)]
+                      for i in range(nrow)]
                 if nrow == 1:
                     ax = ax[0]
                 elif ncol == 1:
@@ -214,7 +216,7 @@ def get_ax(crs,
             else:
                 ax = _get_ax([nrow, ncol, index], ax_kwargs)
         else:
-            ax = _get_ax([axgrid,], ax_kwargs)
+            ax = _get_ax([axgrid, ], ax_kwargs)
 
     else:
         if crs is None:

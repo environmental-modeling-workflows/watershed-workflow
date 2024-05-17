@@ -125,8 +125,7 @@ class River(watershed_workflow.tinytree.Tree):
         parent.addChild(new_node)
         return self, new_node
 
-
-    def merge(self, to = 'parent'):
+    def merge(self, to='parent'):
         """Merges this to its parent or to its one and only child."""
         if to == 'parent':
             assert (len(list(self.siblings())) == 0)
@@ -170,7 +169,6 @@ class River(watershed_workflow.tinytree.Tree):
             self.remove()
             for child in self.children:
                 parent.addChild(child)
-
 
     def moveCoordinate(self, i, xy):
         """Moves the ith coordinate of self.segment to a new location."""
