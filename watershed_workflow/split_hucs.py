@@ -15,21 +15,40 @@ _abs_tol = 1
 _rel_tol = 1.e-5
 
 
-class GeometryError(Exception):
-    pass
-
-
 class HandledCollection:
-    """A collection of of objects and handles for those objects."""
-    def __init__(self, objs=None):
-        """Create"""
+    """A collection of of objects and handles for those objects.
+
+    Semantics of this are a bit odd -- it is somewhat like a list and
+    somewhat like a dict.
+    """
+    def __init__(self, *args):
+        """Create the HandledCollection
+
+        May be called with 0, 1, or 2 args:
+
+        - If 0, an empty HandledCollection is created.
+        - If 1, the argument is the handled objects, and handles are
+          generated on the fly.
+        - If 2, both handles (which must be unique) and objects are
+          provided, in that order.
+        """        
         self._store = dict()
         self._key = 0
 
-        if objs is not None:
-            self.add_many(objs)
+        if len(args) == 2:
+            handles = args[0]
+            objs = args[1]
+            for h,o in zip(handles, objs):
+                self[h] = o
+
+        elif len(args) == 1:
+            self.extend(args[0])
+
+        elif len(args) > 2:
+            raise RuntimeError("HandledCollection takes 0, 1 or 2 arguments")
 
     def __getitem__(self, key):
+
         """Get an object"""
         return self._store[key]
 
@@ -37,16 +56,16 @@ class HandledCollection:
         """Set an object"""
         self._store[key] = val
 
-    def add(self, value):
+    def append(self, value):
         """Adds a object, returning a handle to that object"""
         self._store[self._key] = value
         ret = self._key
         self._key += 1
         return ret
 
-    def add_many(self, values):
+    def extend(self, values):
         """Add many objects, returning a list of handles."""
-        return [self.add(v) for v in values]
+        return [self.append(v) for v in values]
 
     def pop(self, key):
         """Removes a handle and its object."""
@@ -64,10 +83,6 @@ class HandledCollection:
         """Generator for handles"""
         for k in self._store.keys():
             yield k
-
-    def keys(self):
-        for it in self._store.keys():
-            yield it
 
     def items(self):
         for it in self._store.items():
@@ -111,11 +126,12 @@ class SplitHUCs:
 
     """
     def __init__(self,
-                 shapes,
+                 df,
                  abs_tol=_abs_tol,
                  rel_tol=_rel_tol,
-                 exterior_outlet=None,
-                 polygon_outlets=None):
+                 exterior_outlet=None):
+        self.df = df
+
         # all shapes are stored as a collection of collections of segments
         self.segments = HandledCollection()  # stores segments
 
@@ -125,21 +141,13 @@ class SplitHUCs:
         self.boundaries = HandledCollection()  # stores handles into segments
         self.intersections = HandledCollection()  # stores handles into segments
 
-        # save the property dictionaries to give back upon request
-        self.properties = [s.properties if hasattr(s, 'properties') else None for s in shapes]
-
-        # save outlets
-        if polygon_outlets is not None:
-            assert len(shapes) == len(polygon_outlets)
-            for out in polygon_outlets:
-                assert type(out) is shapely.geometry.Point
-        self.polygon_outlets = polygon_outlets
-
+        # save the exterior outlet
         if exterior_outlet is not None:
             assert type(exterior_outlet) is shapely.geometry.Point
         self.exterior_outlet = exterior_outlet
 
         # initialize
+        shapes = df['geometry']
         assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
         shapes = partition(shapes, abs_tol, rel_tol)
         assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
@@ -150,13 +158,13 @@ class SplitHUCs:
             if watershed_workflow.utils.is_empty_shapely(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
-                handle = self.segments.add(u)
-                bhandle = self.boundaries.add(HandledCollection([handle, ]))
-                boundary_gon[i].add(bhandle)
+                handle = self.segments.append(u)
+                bhandle = self.boundaries.append(HandledCollection([handle, ]))
+                boundary_gon[i].append(bhandle)
             elif type(u) is shapely.geometry.MultiLineString:
-                handles = self.segments.add_many(u)
-                bhandles = self.boundaries.add_many([HandledCollection([h, ]) for h in handles])
-                boundary_gon[i].add_many(bhandles)
+                handles = self.segments.extend(u)
+                bhandles = self.boundaries.extend([HandledCollection([h, ]) for h in handles])
+                boundary_gon[i].extend(bhandles)
             else:
                 raise RuntimeError(
                     "Uniques from intersectAndSplit is not None, LineString, or MultiLineString?")
@@ -169,16 +177,16 @@ class SplitHUCs:
                     pass
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
-                    handle = self.segments.add(inter)
-                    ihandle = self.intersections.add(HandledCollection([handle, ]))
-                    intersection_gon[i].add(ihandle)
-                    intersection_gon[j].add(ihandle)
+                    handle = self.segments.append(inter)
+                    ihandle = self.intersections.append(HandledCollection([handle, ]))
+                    intersection_gon[i].append(ihandle)
+                    intersection_gon[j].append(ihandle)
                 elif type(inter) is shapely.geometry.MultiLineString:
-                    handles = self.segments.add_many(list(inter))
-                    ihandles = self.intersections.add_many(
+                    handles = self.segments.extend(list(inter))
+                    ihandles = self.intersections.extend(
                         [HandledCollection([h, ]) for h in handles])
-                    intersection_gon[i].add_many(ihandles)
-                    intersection_gon[j].add_many(ihandles)
+                    intersection_gon[i].extend(ihandles)
+                    intersection_gon[j].extend(ihandles)
                 else:
                     raise RuntimeError(
                         "Intersections from intersectAndSplit is not None, LineString, or MultiLineString?"
@@ -187,6 +195,24 @@ class SplitHUCs:
         # the list of shapes, each entry in the list is a tuple
         self.gons = [(u, i) for u, i in zip(boundary_gon, intersection_gon)]
 
+    @property
+    def crs(self):
+        return self.df.crs
+
+    def to_crs(self, crs):
+        self.df.to_crs(crs)
+        obj_handles = list(self.segments.handles())
+        shapes = list(self.segments)
+        tmp_df = geopandas.GeoDataFrame({'geometry':shapes}, crs=self.df.crs)
+        tmp_df.to_crs(crs, inplace=True)
+        self.segments = HandledCollection(obj_handles, tmp_df['geometry'])
+        self.update()
+        
+    def update(self):
+        """Recomputes all polygons"""
+        geom = [self.polygon(i) for i in range(len(self))]
+        self.df['geometry'] = geom
+        
     def polygon(self, i):
         """Construct polygon i and return a copy."""
         segs = []
@@ -202,13 +228,17 @@ class SplitHUCs:
         ml = shapely.ops.linemerge(segs)
         assert (type(ml) is shapely.geometry.LineString)
         poly = shapely.geometry.Polygon(ml)
-        poly.properties = self.properties[i]
         return poly
 
     def polygons(self):
         """Iterate over the polygons."""
-        for i in range(len(self.gons)):
-            yield self.polygon(i)
+        self.update()
+        for g in self.df['geometry']:
+            yield g
+
+    def to_dataframe(self):
+        self.update()
+        return self.df
 
     def spines(self):
         """Iterate over spines."""
@@ -228,8 +258,8 @@ class SplitHUCs:
             return shapely.geometry.Polygon(ml)
         else:
             return shapely.geometry.MultiPolygon([shapely.geometry.Polygon(l) for l in ml])
-
-    def deep_copy(self):
+        
+    def deepcopy(self):
         """Return a deep copy"""
         cp = copy.deepcopy(self)
         return cp
@@ -298,13 +328,6 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
                     logging.info(f'Found a big hole: area = {hole.area}, leaving it alone...')
                     big_holes.append(hole)
 
-    # for i, poly in enumerate(polygons):
-    #     if isinstance(poly,shapely.geometry.collection.GeometryCollection) or isinstance(poly,shapely.geometry.MultiPolygon):
-    #         polygons[i] = list(sorted(poly, key=lambda a : -a.area))[0]
-    #         if hasattr(poly, 'properties'):
-    #                     polygons[i].properties = poly.properties
-    # assert(all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
-
     logging.info(f'  -- complete')
     return polygons, big_holes
 
@@ -317,13 +340,6 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
     Modifies the list.
 
     """
-
-    # for i, s in enumerate(list_of_shapes):
-    #     props = s.properties
-    #     s=s.buffer(1)
-    #     s.properties = props
-    #     list_of_shapes[i]=s
-
     # deal with overlaps
     for i in range(len(list_of_shapes)):
         s1 = list_of_shapes[i]
@@ -406,7 +422,7 @@ def intersectAndSplit(list_of_shapes):
                     logging.info(
                         f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}'
                     )
-                    err = GeometryError('HUC intersection yielded collection of odd types')
+                    err = RuntimeError('HUC intersection yielded collection of odd types')
                     err.polys = list_of_shapes
                     err.i_p1 = i
                     err.p1 = s1
