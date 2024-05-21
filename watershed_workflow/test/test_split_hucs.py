@@ -1,5 +1,6 @@
 import pytest
 import shapely.geometry
+import geopandas
 import watershed_workflow.split_hucs
 
 from watershed_workflow.test.shapes import two_boxes, three_boxes
@@ -15,7 +16,7 @@ def test_hc():
         assert i == j
 
     # addition
-    hc.add('e')
+    hc.append('e')
     assert (len(hc) == 5)
 
     # removal
@@ -28,7 +29,7 @@ def test_hc():
 
 
 def test_intersect_and_split(two_boxes):
-    boundaries, intersections = watershed_workflow.split_hucs.intersectAndSplit(two_boxes)
+    boundaries, intersections = watershed_workflow.split_hucs.intersectAndSplit(two_boxes.geometry)
     assert (len(boundaries) is 2)
 
     for b in boundaries:
@@ -80,11 +81,11 @@ def test_hucs(two_boxes):
 
     p0 = tb.polygon(0)
     assert (len(p0.boundary.coords) == 5)
-    assert (watershed_workflow.utils.close(two_boxes[0], p0))
+    assert (watershed_workflow.utils.close(two_boxes.geometry[0], p0))
 
     p1 = tb.polygon(1)
     assert (len(p1.boundary.coords) == 5)
-    assert (watershed_workflow.utils.close(two_boxes[1], p1))
+    assert (watershed_workflow.utils.close(two_boxes.geometry[1], p1))
 
     # boundary gon
     p3 = tb.exterior()
@@ -109,9 +110,9 @@ def test_hucs(two_boxes):
         seg1 = shapely.geometry.LineString([seg.coords[0], (10., 0.)])
         seg2 = shapely.geometry.LineString([(10., 0.), seg.coords[1]])
         tb.segments.pop(seg_handle)
-        new_seg_handles = tb.segments.add_many([seg1, seg2])
+        new_seg_handles = tb.segments.extend([seg1, seg2])
         spine.pop(int_handle)
-        spine.add_many(new_seg_handles)
+        spine.extend(new_seg_handles)
 
     # now check that the polygons have 5 coordinates (+1 for repeated start/end)
     p0 = tb.polygon(0)
@@ -145,7 +146,9 @@ def test_hucs_triple():
         shapely.geometry.Polygon(b2),
         shapely.geometry.Polygon(b3),
     ]
-    hucs = watershed_workflow.split_hucs.SplitHUCs(boxes)
+    df = geopandas.GeoDataFrame({'index' : range(len(boxes)),
+                                 'geometry' : boxes})
+    hucs = watershed_workflow.split_hucs.SplitHUCs(df)
     assert (len(hucs) is 3)
     assert (len(hucs.segments) is 6)
     assert (len(hucs.intersections) is 3)

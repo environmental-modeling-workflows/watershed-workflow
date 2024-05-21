@@ -162,7 +162,7 @@ class SplitHUCs:
                 bhandle = self.boundaries.append(HandledCollection([handle, ]))
                 boundary_gon[i].append(bhandle)
             elif type(u) is shapely.geometry.MultiLineString:
-                handles = self.segments.extend(u)
+                handles = self.segments.extend(u.geoms)
                 bhandles = self.boundaries.extend([HandledCollection([h, ]) for h in handles])
                 boundary_gon[i].extend(bhandles)
             else:
