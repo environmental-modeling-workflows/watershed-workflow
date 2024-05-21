@@ -6,7 +6,8 @@ that code in the source.
 Acquired from: https://github.com/cortesi/tinytree/blob/master/tinytree.py
 
 Changes made to introduce several new iteration patterns which are
-useful in this application.
+useful in this application, and to remove a bunch of functions not
+used here.
 
 """
 
@@ -107,7 +108,8 @@ class Tree(object):
         """
         self.parent = parent
 
-    def index(self):
+    @property
+    def parent_child_index(self):
         """
             Return the index of this node in the parent child list, based on
             object identity.
@@ -122,7 +124,7 @@ class Tree(object):
             Remove this node from its parent. Returns the index this node had
             in the parent child list.
         """
-        idx = self.index()
+        idx = self.parent_child_index
         del self.parent.children[idx:idx + 1]
         self.parent = None
         return idx
@@ -190,8 +192,9 @@ class Tree(object):
 
             :node A Tree object
         """
-        return (self in node.siblings())
+        return (self in node.siblings)
 
+    @property
     def siblings(self):
         """
             Generator yielding all siblings of this node, including this
@@ -201,36 +204,6 @@ class Tree(object):
             for i in self.parent.children:
                 if i is not self:
                     yield i
-
-    def pathToRoot(self):
-        """
-            Generator yielding all objects on the path from this node to the
-            root of the tree, including this node itself.
-        """
-        itm = self
-        while 1:
-            yield itm
-            if itm.parent is not None:
-                itm = itm.parent
-            else:
-                break
-
-    def pathFromRoot(self):
-        """
-            Generator yielding all nodes on the path to this node from the
-            root of the tree, including this node itself.
-        """
-        l = list(self.pathToRoot())
-        for i in reversed(l):
-            yield i
-
-    def getRoot(self):
-        """
-            Return the topmost node in the tree.
-        """
-        for i in self.pathToRoot():
-            pass
-        return i
 
     def preOrder(self):
         """
@@ -276,171 +249,13 @@ class Tree(object):
                 q.put(child)
             yield obj
 
-    def _find(self, itr, *func, **kwargs):
-        for i in itr:
-            if kwargs:
-                kwpass = False
-                for k, v in list(kwargs.items()):
-                    if hasattr(i, k):
-                        if not getattr(i, k) == v:
-                            break
-                    else:
-                        break
-                else:
-                    kwpass = True
-            else:
-                kwpass = True
-            if kwpass:
-                if all([x(i) for x in func]):
-                    return i
-        return None
-
-    def findChild(self, *func, **kwargs):
-        """
-            Find the first child matching all specified selectors in a
-            pre-order traversal of this node's subnodes. Return None if no
-            matching object is found.
-
-            :func A list of selector functions, that accept a node, and return
-            a boolean.
-
-            :kwargs A dictionary of attribute selectors. Checks that matching
-            attributes exist, and that their values are equal to the specified
-            values.
-        """
-        return self._find(self.preOrder(), *func, **kwargs)
-
-    def findParent(self, *func, **kwargs):
-        """
-            Find the first node matching func in a traversal to the root of the
-            tree. Return None if no matching object is found.
-
-            :func A list of selector functions, that accept a node, and return
-            a boolean.
-
-            :kwargs A dictionary of attribute selectors. Checks that matching
-            attributes exist, and that their values are equal to the specified
-            values.
-        """
-        return self._find(itertools.islice(self.pathToRoot(), 1, None), *func, **kwargs)
-
-    def findForwards(self, *func, **kwargs):
-        """
-            Search forwards in a preOrder traversal of the whole tree (not this
-            node's subnodes). Return None if object not found.
-
-            :func A list of selector functions, that accept a node, and return
-            a boolean.
-
-            :kwargs A dictionary of attribute selectors. Checks that matching
-            attributes exist, and that their values are equal to the specified
-            values.
-        """
-        itr = self.getRoot().preOrder()
-        for i in itr:
-            if i is self:
-                break
-        return self._find(itr, *func, **kwargs)
-
-    def findBackwards(self, *func, **kwargs):
-        """
-            Search backwards in a preOrder traversal of the whole tree (not
-            this node's subnodes). Return None if object not found.
-
-            :func A list of selector functions, that accept a node, and return
-            a boolean.
-
-            :kwargs A dictionary of attribute selectors. Checks that matching
-            attributes exist, and that their values are equal to the specified
-            values.
-        """
-        # FIXME: Dreadfully inefficient...
-        lst = list(self.getRoot().preOrder())
-        lst.reverse()
-        myIndex = lst.index(self)
-        return self._find(lst[(myIndex + 1):], *func, **kwargs)
-
-    def getPrevious(self):
-        """
-            Find the previous node in the preOrder traversal of the tree.
-        """
-        return self.findBackwards(lambda x: 1)
-
-    def getNext(self):
-        """
-            Find the next node in the preOrder traversal of the tree.
-        """
-        return self.findForwards(lambda x: 1)
-
-    def getDepth(self):
-        """
-            Return the depth of this node, i.e. the number of nodes on the path
-            to the root.
-        """
-        return len(list(self.pathToRoot()))
-
-    def findAttr(self, attr, default=None):
-        """
-            Traverses the path to the root of the tree, looking for the
-            specified attribute. If it is found, return it, else return default.
-
-            :attr A string attribute name
-            :default Arbitrary default return value
-        """
-        for i in self.pathToRoot():
-            if hasattr(i, attr):
-                return getattr(i, attr)
-        return default
-
-    def attrsToRoot(self, attr):
-        """
-            Traverses the path from this node to the root of the tree, and
-            yields a value for each attribute. Nodes that do not have the
-            attribute and attribute values that test false are ignored.
-
-            :attr A string attribute name
-        """
-        lst = []
-        for i in self.pathToRoot():
-            v = getattr(i, attr, None)
-            if v:
-                yield v
-
-    @staticmethod
-    def treeProp(name):
-        """
-            Define a property whose value should be looked up on nodes between
-            this node and the root, inclusive. Returns the first matching
-            attribute. Raises ValueError if no matching attribute is found.
-
-            :name Property name
-        """
-        def fget(self):
-            if name in self.__dict__:
-                return self.__dict__[name]
-            else:
-                if not self.parent:
-                    raise ValueError("Property %s not defined." % name)
-                return getattr(self.parent, name)
-
-        def fset(self, value):
-            self.__dict__[name] = value
-
-        return property(fget, fset)
-
-    def dump(self, outf=sys.stdout):
-        """
-            Dump a formatted representation of this tree to the specified file
-            descriptor.
-
-            :outf Output file descriptor.
-        """
-        for i in self.preOrder():
-            s = "\t" * (i.getDepth() - 1)
-            s += unicodedata.normalize('NFKD', unicode(i)).encode('ascii', 'ignore')
-            outf.write(s)
-            outf.write("\n")
-
+    @property
+    def leaf_nodes(self):
+        """Generator for all leaves of the tree."""
+        for it in self.preOrder():
+            if len(it.children) == 0:
+                yield it
+            
     def __len__(self):
         """
             Number of nodes in this tree, including the root.
