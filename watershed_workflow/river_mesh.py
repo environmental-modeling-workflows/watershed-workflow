@@ -6,6 +6,7 @@ import logging
 
 import shapely.geometry
 import shapely.ops
+from scipy.spatial import ConvexHull
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
@@ -17,11 +18,12 @@ class IntersectionError(Exception):
 
 
 def _indexPointInSeg(segment, point, tol=1.e-2):
-    ind = segment.coords[:].index(point.coords[0])
-    # except ValueError:
-    #     ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),
-    #                 key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))
-    #     assert(shapely.geometry.Point(p).distance(point) < tol)
+    try:
+        ind = segment.coords[:].index(point.coords[0])
+    except ValueError:
+        ind, p = min(((i, p) for (i, p) in enumerate(segment.coords[:])),
+                     key=lambda ip: shapely.geometry.Point(ip[1]).distance(point))
+        assert (shapely.geometry.Point(p).distance(point) < tol)
     return ind
 
 
@@ -47,7 +49,8 @@ def _isOverlappingCorridor(corr, river):
         # there is an overlap upstream of the junction of two tributaries,
         # creating a hole
         return 2
-    if not _isExpectedNumPoints(corr, river):
+    n = 0
+    if not _isExpectedNumPoints(corr, river, n):
         # overlaps at the junction result in losing points in the corridor polygon.
         return 1
     return 0
@@ -65,7 +68,7 @@ def _isOverlappingCorridors(corrs, rivers):
     return False
 
 
-def _isExpectedNumPoints(corr, river):
+def _isExpectedNumPoints(corr, river, n):
     """Check if the points on the corridor are same as calculated theoretically"""
     n_child = []
     for node in river.preOrder():
@@ -74,7 +77,7 @@ def _isExpectedNumPoints(corr, river):
     for node in river.preOrder():
         n = n + 2 * (len(node.segment.coords) - 1)
     n = n - n_child.count(0) + n_child.count(2) + 2 * n_child.count(3) + 3 * n_child.count(4)
-    return (len(corr.exterior.coords) - 1 == n)
+    return len(corr.exterior.coords) - 1 == n
 
 
 def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, label=True):
@@ -84,8 +87,11 @@ def create_rivers_meshes(rivers, widths=8, enforce_convexity=True, ax=None, labe
     -----------
     rivers: list(watershed_workflow.river_tree.River object)
         List of river tree along which river meshes are to be created
-    widths: float or a dictionary
-        Width of streams, as constant or {stream-order: width}
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
     enforce_convexity: boolean 
         If true, enforce convexity of the pentagons/hexagons at the
         junctions.
@@ -191,8 +197,11 @@ def create_river_mesh(river,
     -----------
     river: watershed_workflow.river_tree.River object)
       River tree along which mesh is to be created
-    widths: float or a dictionary
-      Width of streams, as constant or {stream-order: width}
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
     enforce_convexity: boolean 
       If true, enforce convexity of the pentagons/hexagons at the
       junctions.
@@ -219,30 +228,24 @@ def create_river_mesh(river,
         The polygon of all elements, stores the coordinates.
 
     """
+
     # creating a polygon for river corridor by dilating the river tree
-    if type(widths) == dict:
+    if isinstance(widths, dict):
         dilation_width = min(dilation_width, min(widths.values()))
-    else:
+    elif isinstance(widths, int) and not isinstance(widths, bool):
         dilation_width = min(dilation_width, widths)
+
     corr = create_river_corridor(river, dilation_width)
 
     # defining special elements in the mesh
     elems = to_quads(river, corr, dilation_width, gid_shift=gid_shift, ax=ax)
 
     # setting river_widths in the river corridor polygon
-    corr = set_width_by_order(river,
-                              corr,
-                              widths=widths,
-                              dilation_width=dilation_width,
-                              gid_shift=gid_shift)
+    corr = set_width(river, corr, widths=widths, dilation_width=dilation_width, gid_shift=gid_shift)
 
     # treating non-convexity at junctions
     if enforce_convexity:
-        corr = convexity_enforcement(river,
-                                     corr,
-                                     widths=widths,
-                                     dilation_width=dilation_width,
-                                     gid_shift=gid_shift)
+        corr = convexity_enforcement(river, corr, gid_shift=gid_shift)
 
     # redraw the debug plot with updated elems
     if ax is not None:
@@ -303,6 +306,7 @@ def create_river_corridor(river, width):
 
     # Currently this same for the whole river, should we change it reachwise?
     length_scale = max(2.1 * delta, min(mins) - 8*delta)
+
     logging.info(f"  -- merging points closer than {length_scale} m along the river corridor")
 
     # buffer by the width
@@ -360,9 +364,9 @@ def create_river_corridor(river, width):
 
     # create the polgyon
     corr3 = shapely.geometry.Polygon(corr3_p)
-
+    n = 0
     # check if the points on the river corridor are same as calculated theoretically
-    if not _isExpectedNumPoints(corr3, river):
+    if not _isExpectedNumPoints(corr3, river, n):
         raise RuntimeError(
             f"Broken dilation -- expected {n} coords, got {len(corr3.exterior.coords[:])}"
             " -- recommend running with ax argument to tessalate_river_aligned() to debug!")
@@ -556,7 +560,7 @@ def to_quads(river, corr, width, gid_shift=0, ax=None):
     return elems
 
 
-def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
+def set_width(river, corr, widths=8, dilation_width=8, gid_shift=0):
     """Adjust the river-corridor polygon width by order.
 
     Parameters
@@ -565,8 +569,11 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
       river tree along which mesh is to be created
     corr : shapely.geometry.Polygon
       a river corridor polygon for the river    
-    widths: float or dict
-      Width of the river, as constant or {stream-order: width} or as a function of drainage area.
+    widths: float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
 
     Returns
     -------
@@ -591,8 +598,16 @@ def set_width_by_order(river, corr, widths=8, dilation_width=8, gid_shift=0):
             order = node.properties[stream_order]
             target_width = width_by_order(widths, order)
         elif callable(widths):
-            DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
-            target_width = widths(DA_sqm)
+            ## DA_sqm = node.properties['TotalDrainageAreaSqKm'] * 1e6
+            # genralized, the above calclations should be done in the function itself
+            # widths here is a function of node, where
+            # widths wil be calculated based on some properties in the node
+            target_width = widths(node)
+        elif isinstance(widths, bool):
+            if widths:
+                target_width = node.properties['width']
+            else:
+                raise RuntimeError('not a valid option to provide width')
         else:
             target_width = widths
 
@@ -708,7 +723,7 @@ def width_by_order(width_dict, order):
     return width
 
 
-def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
+def convexity_enforcement(river, corr, gid_shift):
     """Ensure convexity of each river-corridor element.
 
     Moves nodes onto the convex hull of the element if needed.
@@ -736,12 +751,7 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
                     elem) == 7:  # checking and treating this pentagon/hexagon
                 points = [coords[id] for id in elem]  # element points
                 if not watershed_workflow.utils.is_convex(points):
-                    convex_ring = shapely.geometry.Polygon(points).convex_hull.exterior
-                    for i, point in enumerate(points):
-                        # replace point with nearest point on convex hull
-                        p = shapely.geometry.Point(point)
-                        new_point = shapely.ops.nearest_points(convex_ring, p)[0].coords[0]
-                        points[i] = new_point
+                    points = make_convex_using_hull(points)
 
                 if not (watershed_workflow.utils.is_convex(points)):
                     # go back to original set of points as snapping on
@@ -758,6 +768,32 @@ def convexity_enforcement(river, corr, widths, dilation_width, gid_shift):
 
     corr_coords_new = coords + [coords[0]]
     return shapely.geometry.Polygon(corr_coords_new)
+
+
+def make_convex_using_hull(points):
+    """Snaps non-convex points to the corresonding edge on the convex hull for the non-convex element"""
+    # find points that do not lie on the hull
+    hull = ConvexHull(points)
+    hull_indices = set(hull.vertices)
+    non_hull_points_inds = [i for i in range(len(points)) if i not in hull_indices]
+
+    # for each non-hull point, get the linestring connecting it's preceding point and suceeding point
+    hull_edges = []
+    n = len(points)
+    for index in non_hull_points_inds:
+        prev_index = (index-1) % n
+        next_index = (index+1) % n
+
+        edge = (points[prev_index], points[next_index])
+        hull_edges.append(shapely.geometry.LineString(edge))
+
+    # for each pair of non-hull point find nearest point on the corresponding hull_edge
+    for ind, hull_edge in zip(non_hull_points_inds, hull_edges):
+        nearest_point_on_hull_edge, _ = shapely.ops.nearest_points(
+            hull_edge, shapely.geometry.Point(points[ind]))
+        points[ind] = nearest_point_on_hull_edge.coords[0]
+
+    return points
 
 
 def make_convex_by_nudge(points):
@@ -807,7 +843,7 @@ def make_convex_by_nudge(points):
         logging.debug(f"... element was adjusted {i} times")
 
     else:
-        raise NotImplementedError("Case with {len(points)} nodes is not yet treated... good luck!")
+        raise NotImplementedError(f"Case with {len(points)} nodes is not yet treated... good luck!")
     assert (watershed_workflow.utils.is_convex(points))
     return points
 
@@ -990,7 +1026,6 @@ def adjust_hucs_for_river_corridor(hucs,
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
                 parent_node = node_at_intersection(intersection_point, river)
-
                 # making sure it is not a leaf node, though this check
                 # fails if there is only one reach in the domain. So
                 # this may fail for a single reach that begins and

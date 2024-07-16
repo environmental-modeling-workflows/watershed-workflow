@@ -1353,9 +1353,11 @@ def tessalate_river_aligned(hucs,
        required by the river corridor.
     rivers : list[River]
        The rivers to mesh with quads
-    river_width : float or dict
+    river_width : float or dict or callable or boolean 
        Width of the quads, either a float or a dictionary providing a
        {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
     river_n_quads : int, optional
        Number of quads across the river.  Currently only 1 is
        supported (the default).
@@ -1405,8 +1407,8 @@ def tessalate_river_aligned(hucs,
 
     # triangulate the rest
     tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
-                                             internal_boundaries, hole_points,
-                                             diagnostics, **kwargs)
+                                             internal_boundaries, hole_points, diagnostics,
+                                             **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]
 

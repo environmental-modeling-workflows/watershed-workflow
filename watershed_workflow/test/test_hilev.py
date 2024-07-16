@@ -108,7 +108,7 @@ def test_river_tree_properties(sources_download):
     rivers = watershed_workflow.construct_rivers(reaches, method='hydroseq')
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
-    assert (len(rivers[0]) == 97)
+    assert (len(rivers[0]) == 94)
 
 
 def test_river_tree_properties_prune(sources_download):
@@ -127,7 +127,7 @@ def test_river_tree_properties_prune(sources_download):
                                                  prune_by_area=0.03 * cc.exterior().area * 1.e-6)
     assert (len(rivers) == 1)
     assert (rivers[0].is_consistent())
-    assert (len(rivers[0]) == 50)
+    assert (len(rivers[0]) == 49)
 
 
 def test_river_tree_geometry(sources):

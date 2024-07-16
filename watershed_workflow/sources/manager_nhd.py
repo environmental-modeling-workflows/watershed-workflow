@@ -244,18 +244,22 @@ class _FileManagerNHD:
             reaches = [r for (i, r) in fid.items(bbox=bounds)]
             logging.info(f"  Found total of {len(reaches)} in bounds.")
 
+        # check if the dataset is in old NHD Format (title case) or new format (lower case)
+        to_lower = 'nhdplusid' in reaches[0]['properties']
+
         # filter not in network
+        prop_key = 'InNetwork' if not to_lower else 'innetwork'
         if 'NHDPlus' in self.name and in_network:
-            logging.info("  Filtering reaches not in-network")
+            logging.info("Filtering reaches not in-network")
             reaches = [
-                r for r in reaches
-                if 'InNetwork' in r['properties'] and r['properties']['InNetwork'] == 1
+                r for r in reaches if prop_key in r['properties'] and r['properties'][prop_key] == 1
             ]
 
         # associate IDs
+        id_key = 'NHDPlusID' if not to_lower else 'nhdplusid'
         if 'Plus' in self.name and properties is not None:
             for r in reaches:
-                r['properties']['ID'] = str(int(r['properties']['NHDPlusID']))
+                r['properties']['ID'] = str(int(r['properties'][id_key]))
 
         # associate catchment areas with the reaches if NHDPlus
         if 'Plus' in self.name and properties != None:
@@ -279,8 +283,9 @@ class _FileManagerNHD:
                 for r in reaches:
                     r['properties']['catchment'] = None
                 with fiona.open(filename, mode='r', layer=layer) as fid:
+                    id_key = 'NHDPlusID' if not to_lower else 'nhdplusid'
                     for catchment in fid.values():
-                        reach = reach_dict.get(str(int(catchment['properties']['NHDPlusID'])))
+                        reach = reach_dict.get(str(int(catchment['properties'][id_key])))
                         if reach is not None:
                             reach['properties']['catchment'] = catchment
 
@@ -293,11 +298,13 @@ class _FileManagerNHD:
                 )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(str(int(flowline['properties']['NHDPlusID'])))
+                        reach = reach_dict.get(str(int(flowline['properties'][id_key])))
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_vaa.keys()):
                                     prop_code = self._nhdplus_vaa[prop]
+                                    if to_lower:
+                                        prop_code = prop_code.lower()
                                     reach['properties'][prop] = flowline['properties'][prop_code]
 
             if len(set(self._nhdplus_eromma.keys()).intersection(set(properties))) > 0:
@@ -307,11 +314,13 @@ class _FileManagerNHD:
                 )
                 with fiona.open(filename, mode='r', layer=layer) as fid:
                     for flowline in fid.values():
-                        reach = reach_dict.get(str(int(flowline['properties']['NHDPlusID'])))
+                        reach = reach_dict.get(str(int(flowline['properties'][id_key])))
                         if reach is not None:
                             for prop in properties:
                                 if prop in list(self._nhdplus_eromma.keys()):
                                     prop_code = self._nhdplus_eromma[prop]
+                                    if to_lower:
+                                        prop_code = prop_code.lower()
                                     reach['properties'][prop] = flowline['properties'][prop_code]
             logging.disable(logging.NOTSET)
 

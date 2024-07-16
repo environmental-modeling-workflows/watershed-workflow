@@ -134,7 +134,7 @@ def get_ax(crs,
            fig=None,
            nrow=1,
            ncol=1,
-           index=1,
+           index=None,
            window=None,
            axgrid=None,
            ax_kwargs=None,
@@ -188,22 +188,35 @@ def get_ax(crs,
         newfig = False
 
     if window is None:
-        if axgrid is None:
-            axargs = [nrow, ncol, index]
-        else:
-            axargs = [axgrid, ]
 
-        if crs is None:
-            # no crs, just get an ax -- you deal with it.
-            ax = fig.add_subplot(*axargs, **ax_kwargs)
-        elif crs == '3d':
-            # 3d plot
-            ax_kwargs['projection'] = '3d'
-            ax = fig.add_subplot(*axargs, **ax_kwargs)
+        def _get_ax(axargs, ax_kwargs):
+            if crs is None:
+                # no crs, just get an ax -- you deal with it.
+                ax = fig.add_subplot(*axargs, **ax_kwargs)
+            elif crs == '3d':
+                # 3d plot
+                ax_kwargs['projection'] = '3d'
+                ax = fig.add_subplot(*axargs, **ax_kwargs)
+            else:
+                projection = watershed_workflow.crs.to_cartopy(crs)
+                ax_kwargs['projection'] = projection
+                ax = fig.add_subplot(*axargs, **ax_kwargs)
+            return ax
+
+        if axgrid is None:
+            if nrow == 1 and ncol == 1:
+                index = 1
+            if index is None:
+                ax = [[_get_ax([nrow, ncol, i * (ncol) + j + 1], ax_kwargs) for j in range(ncol)]
+                      for i in range(nrow)]
+                if nrow == 1:
+                    ax = ax[0]
+                elif ncol == 1:
+                    ax = [a[0] for a in ax]
+            else:
+                ax = _get_ax([nrow, ncol, index], ax_kwargs)
         else:
-            projection = watershed_workflow.crs.to_cartopy(crs)
-            ax_kwargs['projection'] = projection
-            ax = fig.add_subplot(*axargs, **ax_kwargs)
+            ax = _get_ax([axgrid, ], ax_kwargs)
 
     else:
         if crs is None:
