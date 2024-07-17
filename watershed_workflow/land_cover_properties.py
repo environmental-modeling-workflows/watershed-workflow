@@ -180,6 +180,12 @@ def computeCrosswalkCorrelation(modis_profile,
     return crosswalk
 
 
+def computeMaximalCrosswalkCorrelation(*args, **kwargs):
+    """Calls connputeCrosswalkCorrelation, then takes the maximum correlation to just return a map from one to the other."""
+    cw = computeCrosswalkCorrelation(*args, **kwargs)
+    return dict((k,max(v, key=lambda a : a[1])[0]) for (k, v) in cw.items())
+
+
 def plotLAI(df, indices='NLCD', ax=None):
     """Plots time series of land cover data."""
     # are we using NLCD or MODIS?

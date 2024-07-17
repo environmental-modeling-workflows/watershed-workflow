@@ -10,9 +10,9 @@ def test_crosswalk():
     modis = np.array([[1, 2], [2, 2], [2, 3]])
     nlcd = np.array([[4, 6], [4, 5], [4, 7]])
 
-    crosswalk = watershed_workflow.land_cover_properties.compute_crosswalk_correlation(dict(),
+    crosswalk = watershed_workflow.land_cover_properties.computeMaximalCrosswalkCorrelation(dict(nodata=-1),
                                                                                        modis,
-                                                                                       dict(),
+                                                                                       dict(nodata=-1),
                                                                                        nlcd,
                                                                                        plot=False,
                                                                                        warp=False)
