@@ -50,7 +50,10 @@ class FileManagerRaster:
             profile = fid.profile
 
             # some raster profiles end up with inconsistent dtype and type(nodata)?
-            profile['nodata'] = np.array([profile['nodata'],], dtype=profile['dtype'])[0]
+            if 'nodata' in profile and profile['nodata'] is not None:
+                profile['nodata'] = np.array([profile['nodata'],], dtype=profile['dtype'])[0]
+            else:
+                profile['nodata'] = None
 
             inv_transform = ~profile['transform']
 

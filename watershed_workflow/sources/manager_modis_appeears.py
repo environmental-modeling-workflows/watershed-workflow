@@ -139,9 +139,15 @@ class FileManagerMODISAppEEARS:
             raise ValueError(
                 "Username or password for AppEEARS are not set in watershed_workflowrc.")
 
-        lr = requests.post(self._LOGIN_URL, auth=(username, password))
-        lr.raise_for_status()
-        return lr.json()['token']
+        try:
+            lr = requests.post(self._LOGIN_URL, auth=(username, password))
+            lr.raise_for_status()
+            return lr.json()['token']
+        except Exception as err:
+            logging.warn('Unable to authenticate at Appeears database:')
+            logging.warn('Message: {err}')
+            return None
+            
 
     def _filename(self, bounds_ll, start, end, variable):
         (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
