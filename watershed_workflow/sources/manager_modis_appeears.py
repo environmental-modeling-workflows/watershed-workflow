@@ -19,7 +19,7 @@ import watershed_workflow.crs
 import watershed_workflow.datasets
 
 colors = {
-    -1: ('Unclassified', (0,0,0)),
+    -1: ('Unclassified', (0, 0, 0)),
     0: ('Open Water', (140, 219, 255)),
     1: ('Evergreen Needleleaf Forests', (38, 115, 0)),
     2: ('Evergreen Broadleaf Forests', (82, 204, 77)),
@@ -40,11 +40,11 @@ colors = {
     17: ('Water Bodies', (140, 209, 245)),
 }
 
-for k,v in colors.items():
+for k, v in colors.items():
     colors[k] = (v[0], tuple(float(i) / 255.0 for i in v[1]))
 
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
-    
+
 
 @attr.define
 class Task:
@@ -103,7 +103,7 @@ class FileManagerMODISAppEEARS:
 
     colors = colors
     indices = indices
-    
+
     def __init__(self, login_token=None, remove_leap_day=True):
         """Create a new manager for MODIS data."""
         self.name = 'MODIS'
@@ -147,7 +147,6 @@ class FileManagerMODISAppEEARS:
             logging.warn('Unable to authenticate at Appeears database:')
             logging.warn('Message: {err}')
             return None
-            
 
     def _filename(self, bounds_ll, start, end, variable):
         (xmin, ymin, xmax, ymax) = tuple(bounds_ll)

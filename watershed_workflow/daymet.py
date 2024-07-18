@@ -50,10 +50,9 @@ def convertToATS(dat):
     precip_ms = dat['prcp'].data / 1.e3 / 86400.  # mm/day --> m/s
 
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
-    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'].data * dat['dayl'].data / 86400# Wm2
+    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'].data * dat[
+        'dayl'].data / 86400  # Wm2
     dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
     dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
     dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
     return dout
-
-

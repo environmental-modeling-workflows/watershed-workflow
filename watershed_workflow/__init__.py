@@ -1078,14 +1078,14 @@ def simplify(hucs,
         logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
         watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, snap_waterbodies_tol)
 
-    assert(all(r.is_locally_continuous() for r in rivers))
-        
+    assert (all(r.is_locally_continuous() for r in rivers))
+
     if cut_intersections:
         logging.info("Cutting crossings and removing external segments")
         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, snap_tol)
 
-    assert(all(r.is_locally_continuous() for r in rivers))
-        
+    assert (all(r.is_locally_continuous() for r in rivers))
+
     logging.info("")
     logging.info("Simplification Diagnostics")
     logging.info("-" * 30)

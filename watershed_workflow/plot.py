@@ -485,7 +485,11 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         if projection is None:
             res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
         else:
-            res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **marker_kwargs)
+            res = ax.scatter(points[:, 0],
+                             points[:, 1],
+                             c=color,
+                             transform=projection,
+                             **marker_kwargs)
 
     elif type(next(iter(shps))) is shapely.geometry.LineString:
         # plot lines
@@ -937,8 +941,6 @@ def basemap(crs=None,
         else:
             ax.add_feature(country)
 
-
-        
     return
 
 

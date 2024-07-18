@@ -7,6 +7,7 @@ import cftime, datetime
 
 import watershed_workflow.utils
 
+
 def np_array_convertor(thing, *args, **kwargs):
     if isinstance(thing, np.ndarray):
         return thing
@@ -112,17 +113,30 @@ def removeLeapDay(dataset):
     not_leap = np.array([t.dayofyr != 366 for t in times])
 
     # convert times to cftime with noleap calendar
-    times = np.array([cftime.datetime(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond, calendar='noleap') for t in times[not_leap]])
+    times = np.array([
+        cftime.datetime(t.year,
+                        t.month,
+                        t.day,
+                        t.hour,
+                        t.minute,
+                        t.second,
+                        t.microsecond,
+                        calendar='noleap') for t in times[not_leap]
+    ])
     dataset.times = times
 
     for k in dataset:
         print(type(dataset), type(k), k)
         dataset[k] = dataset[k].data[not_leap]
 
-    
-def computeAverageYear(dataset, output_nyears=1, start_year=2000,
-                       smooth=False, smooth_kwargs=None,
-                       interpolate=True, interpolate_kwargs=None):
+
+def computeAverageYear(dataset,
+                       output_nyears=1,
+                       start_year=2000,
+                       smooth=False,
+                       smooth_kwargs=None,
+                       interpolate=True,
+                       interpolate_kwargs=None):
     """Interpolates, averages and smooths to form a "typical" year.
 
     Parameters
@@ -157,11 +171,11 @@ def computeAverageYear(dataset, output_nyears=1, start_year=2000,
     if dataset.times[0].calendar != 'noleap':
         raise ValueError('Calendar of the incoming dataset must be "noleap"')
     dt = datetime.timedelta(days=1)
-    
+
     if interpolate:
         if interpolate_kwargs is None:
             interpolate_kwargs = dict()
-        
+
         t0 = dataset.times[0]
         if (t0 - dt).year < t0.year:
             start = t0.year
@@ -175,7 +189,7 @@ def computeAverageYear(dataset, output_nyears=1, start_year=2000,
             end = t1.year
 
         new_start = cftime.datetime(start, 1, 1, calendar='noleap')
-        new_times = np.array([new_start + i * dt for i in range(365*(end-start))])
+        new_times = np.array([new_start + i*dt for i in range(365 * (end-start))])
 
         dataset_interp = Dataset(dataset.profile, new_times)
         for k in dataset:
@@ -188,18 +202,12 @@ def computeAverageYear(dataset, output_nyears=1, start_year=2000,
     else:
         dataset_interp = dataset
 
-
     if smooth_kwargs is None:
         smooth_kwargs = dict()
     start = cftime.datetime(2000, 1, 1, calendar='noleap')
-    times_out = np.array([start + i * dt for i in range(365*output_nyears)])
+    times_out = np.array([start + i*dt for i in range(365 * output_nyears)])
     dataset_out = Dataset(dataset_interp.profile, times_out)
     for k in dataset_interp:
-        dataset_out[k] = watershed_workflow.utils.compute_average_year(dataset_interp[k].data,
-                                                                       output_nyears,
-                                                                       smooth,
-                                                                       **smooth_kwargs)
+        dataset_out[k] = watershed_workflow.utils.compute_average_year(
+            dataset_interp[k].data, output_nyears, smooth, **smooth_kwargs)
     return dataset_out
-        
-                                                                             
-        

@@ -82,8 +82,8 @@ def snap(hucs,
     for r in rivers:
         assert (len(r) > 0)
 
-    assert(all(r.is_locally_continuous() for r in rivers))
-        
+    assert (all(r.is_locally_continuous() for r in rivers))
+
     # snap boundary triple junctions to river endpoints
     if triple_junctions_tol is not None:
         logging.info("  snapping polygon segment boundaries to river endpoints")
@@ -97,7 +97,7 @@ def snap(hucs,
             logging.info("    ...resulted in inconsistent HUCs")
             return False
 
-    assert(all(r.is_locally_continuous() for r in rivers))
+    assert (all(r.is_locally_continuous() for r in rivers))
 
     # snap endpoints of all rivers to the boundary if close
     # note this is a null-op on cases dealt with above
@@ -114,15 +114,15 @@ def snap(hucs,
             logging.info("    ...resulted in inconsistent HUCs")
             return False
 
-    assert(all(r.is_locally_continuous() for r in rivers))
+    assert (all(r.is_locally_continuous() for r in rivers))
 
     if cut_intersections:
         cut_and_snap_crossings(hucs, rivers, tol)
-    assert(all(r.is_locally_continuous() for r in rivers))
+    assert (all(r.is_locally_continuous() for r in rivers))
 
     # snapping can result in 0-length reaches
     cleanup(rivers)
-    assert(all(r.is_locally_continuous() for r in rivers))
+    assert (all(r.is_locally_continuous() for r in rivers))
     return rivers
 
 

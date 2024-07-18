@@ -150,7 +150,10 @@ class FileManagerDaymet:
         """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
             date_split = date.split('-')
-            date = cftime.datetime(int(date_split[0]), int(date_split[1]), int(date_split[2]), calendar='noleap')
+            date = cftime.datetime(int(date_split[0]),
+                                   int(date_split[1]),
+                                   int(date_split[2]),
+                                   calendar='noleap')
         if date < self._START:
             raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:

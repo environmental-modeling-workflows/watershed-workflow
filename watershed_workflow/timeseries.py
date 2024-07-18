@@ -19,9 +19,13 @@ def removeLeapDay(df):
     return df
 
 
-def computeAverageYear(df, output_nyears=1, start_year=2000,
-                       smooth=False, smooth_kwargs=None,
-                       interpolate=True, interpolate_kwargs=None):
+def computeAverageYear(df,
+                       output_nyears=1,
+                       start_year=2000,
+                       smooth=False,
+                       smooth_kwargs=None,
+                       interpolate=True,
+                       interpolate_kwargs=None):
     """Interpolates, averages and smooths to form a "typical" year.
 
     Parameters
@@ -61,7 +65,7 @@ def computeAverageYear(df, output_nyears=1, start_year=2000,
     if interpolate:
         if interpolate_kwargs is None:
             interpolate_kwargs = dict()
-        
+
         t0 = times[0]
         if (t0 - dt).year < t0.year:
             start = t0.year
@@ -75,7 +79,7 @@ def computeAverageYear(df, output_nyears=1, start_year=2000,
             end = t1.year
 
         new_start = cftime.datetime(start, 1, 1, calendar='noleap')
-        new_times = np.array([new_start + i * dt for i in range(365*(end-start))])
+        new_times = np.array([new_start + i*dt for i in range(365 * (end-start))])
 
         df_interp = pandas.DataFrame()
         df_interp['time [datetime]'] = new_times
@@ -90,17 +94,15 @@ def computeAverageYear(df, output_nyears=1, start_year=2000,
                                                                  **interpolate_kwargs)
     else:
         df_interp = df
-    
+
     if smooth_kwargs is None:
         smooth_kwargs = dict()
     start = cftime.datetime(2000, 1, 1, calendar='noleap')
-    times_out = np.array([start + i * dt for i in range(365*output_nyears)])
+    times_out = np.array([start + i*dt for i in range(365 * output_nyears)])
     df_out = pandas.DataFrame()
     df_out['time [datetime]'] = times_out
     for k in df_interp.keys():
         if k != 'time [datetime]':
-            df_out[k] = watershed_workflow.utils.compute_average_year(df_interp[k],
-                                                                      output_nyears,
-                                                                      smooth,
-                                                                      **smooth_kwargs)
+            df_out[k] = watershed_workflow.utils.compute_average_year(df_interp[k], output_nyears,
+                                                                      smooth, **smooth_kwargs)
     return df_out

@@ -12,6 +12,7 @@ import watershed_workflow.plot
 from watershed_workflow.sources.manager_nlcd import colors as nlcd_colors
 from watershed_workflow.sources.manager_modis_appeears import colors as modis_colors
 
+
 def computeTimeSeries(lai, lc, unique_lc=None, lc_idx=-1, polygon=None, polygon_crs=None, **kwargs):
     """Computes a time-series of LAI for each land cover type that appears
     in the raster.
@@ -43,7 +44,10 @@ def computeTimeSeries(lai, lc, unique_lc=None, lc_idx=-1, polygon=None, polygon_
     if polygon:
         if polygon_crs:
             polygon = watershed_workflow.warp.shply(polygon, polygon_crs, lai.profile['crs'])
-        mask = rasterio.features.geometry_mask([polygon,], lc.data.shape[-2:], lc.profile['transform'], invert=True)
+        mask = rasterio.features.geometry_mask([polygon, ],
+                                               lc.data.shape[-2:],
+                                               lc.profile['transform'],
+                                               invert=True)
     else:
         mask = np.ones(lc.data.shape[-2:], 'i')
 
@@ -150,11 +154,11 @@ def computeCrosswalkCorrelation(modis_profile,
                 where_modis = np.where(np.bitwise_and(nlcd_lc == nlcd, modis_lc == modis))[0]
                 count_modis_and_nlcd = len(where_modis)
                 correlation_matrix[i, j] = count_modis_and_nlcd / count_nlcd
-            assert(abs(correlation_matrix[i,:].sum() - 1) < 1.e-8)
-                         
+            assert (abs(correlation_matrix[i, :].sum() - 1) < 1.e-8)
+
     if plot:
         fig = plt.figure()
-        ax = fig.add_axes(rect=[0.2,0.3,0.7,0.6])
+        ax = fig.add_axes(rect=[0.2, 0.3, 0.7, 0.6])
         cb = ax.imshow(correlation_matrix, cmap='magma')
 
         ax.set_xticks(range(len(unique_modis)))
@@ -169,13 +173,13 @@ def computeCrosswalkCorrelation(modis_profile,
     crosswalk = dict()
     for i, nlcd in enumerate(unique_nlcd):
         if method == 'maximal area':
-            crosswalk[nlcd] = [(unique_modis[np.argmax(correlation_matrix[i])],1.0),]
+            crosswalk[nlcd] = [(unique_modis[np.argmax(correlation_matrix[i])], 1.0), ]
         elif method == 'fractional area':
-            crosswalk[nlcd] = [(unique_modis[j], correlation_matrix[i,j])
-                               for j in range(len(unique_modis)) if correlation_matrix[i,j] > 0]
+            crosswalk[nlcd] = [(unique_modis[j], correlation_matrix[i, j])
+                               for j in range(len(unique_modis)) if correlation_matrix[i, j] > 0]
         else:
-            raise ValueError(f'Unknown method: {method}, valid are "fractional area" and "maximal area"')
-
+            raise ValueError(
+                f'Unknown method: {method}, valid are "fractional area" and "maximal area"')
 
         rowsum = sum(v[1] for v in crosswalk[nlcd])
         if rowsum > 0:
@@ -186,7 +190,8 @@ def computeCrosswalkCorrelation(modis_profile,
 def computeMaximalCrosswalkCorrelation(*args, **kwargs):
     """Calls connputeCrosswalkCorrelation, then takes the maximum correlation to just return a map from one to the other."""
     cw = computeCrosswalkCorrelation(*args, **kwargs)
-    return dict((k, ((max(v, key=lambda a : a[1])[0]) if len(v) > 0 else None)) for (k, v) in cw.items())
+    return dict(
+        (k, ((max(v, key=lambda a: a[1])[0]) if len(v) > 0 else None)) for (k, v) in cw.items())
 
 
 def plotLAI(df, indices='NLCD', ax=None):
@@ -215,6 +220,3 @@ def plotLAI(df, indices='NLCD', ax=None):
     ax.set_xlabel('time')
     ax.legend()
     plt.show()
-
-        
-

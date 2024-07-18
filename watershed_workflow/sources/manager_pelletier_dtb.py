@@ -9,7 +9,10 @@ import watershed_workflow.sources.names
 import watershed_workflow.soil_properties
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
-urls = { 'Pelletier at NASA DAAC': 'https://daac.ornl.gov/SOILS/guides/Global_Soil_Regolith_Sediment.html'}
+urls = {
+    'Pelletier at NASA DAAC':
+    'https://daac.ornl.gov/SOILS/guides/Global_Soil_Regolith_Sediment.html'
+}
 
 
 class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileManagerRaster):
@@ -38,9 +41,8 @@ class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileMana
             self.name = 'Pelletier DTB'
             self.names = watershed_workflow.sources.names.Names(
                 self.name,
-                os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304', 'data'),
-                '',
-                'average_soil_and_sedimentary-deposit_thickness.tif')
+                os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
+                             'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
             super(FileManagerPelletierDTB, self).__init__(self.names.file_name())
         else:
             self.name = filename
@@ -67,10 +69,12 @@ class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileMana
         logging.info(f'Getting raster of Pelletier DTB on bounds: {shape.bounds}')
         filename = self._download()
         profile, raster = super(FileManagerPelletierDTB, self).get_raster(shape, crs, band)
-        logging.info(f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
+        logging.info(
+            f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
         raster = raster.astype(float)
         profile['dtype'] = float
-        logging.info(f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
+        logging.info(
+            f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
         return profile, raster
 
     def _download(self):
@@ -86,4 +90,3 @@ class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileMana
             logging.error(self.__doc__)
             raise RuntimeError(f'PelletierDTB download file {filename} not found.')
         return filename
-

@@ -129,7 +129,10 @@ def write_dataset_to_hdf5(filename, dataset, attributes=None, time0=None, calend
 
     if type(time0) is str:
         time0_split = time0.split('-')
-        time0 = cftime.datetime(int(time0_split[0]), int(time0_split[1]), int(time0_split[2]), calendar=calendar)
+        time0 = cftime.datetime(int(time0_split[0]),
+                                int(time0_split[1]),
+                                int(time0_split[2]),
+                                calendar=calendar)
     if attributes is None:
         attributes = dict()
     attributes['origin date'] = str(time0)

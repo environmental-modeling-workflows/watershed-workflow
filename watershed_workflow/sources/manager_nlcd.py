@@ -37,6 +37,7 @@ colors = {
 
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
+
 class FileManagerNLCD:
     """National Land Cover Database provides a raster for indexed land cover types
     [NLCD]_.

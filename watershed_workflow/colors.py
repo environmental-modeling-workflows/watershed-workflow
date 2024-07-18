@@ -32,7 +32,7 @@ def enumerated_colors(count, palette=1, chain=True):
         p = enumerated_palettes[palette]
     else:
         p = palette
-        
+
     if count <= len(p):
         return p[0:count]
     else:

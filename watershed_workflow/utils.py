@@ -349,16 +349,20 @@ def compute_average_year(data, output_nyears=1, smooth=False, **kwargs):
 
     # repeat the data if requested
     if output_nyears != 1:
-        tiled_data_shape = (output_nyears,)
+        tiled_data_shape = (output_nyears, )
         for i in range(len(original_shape) - 1):
-            tiled_data_shape = tiled_data_shape + (1,)
+            tiled_data_shape = tiled_data_shape + (1, )
         data = np.tile(data, tiled_data_shape)
     return data
 
 
-def interpolate_in_time_regular(times, data, start, end,
+def interpolate_in_time_regular(times,
+                                data,
+                                start,
+                                end,
                                 dt=datetime.timedelta(days=1),
-                                axis=0, **kwargs):
+                                axis=0,
+                                **kwargs):
     """Interpolate time-dependent data to a regularly spaced time array.
 
     Parameters
@@ -440,7 +444,7 @@ def interpolate_in_time(times, data, new_times, axis=0, units="days since 2000",
     new_x = cftime.date2num(new_times, units)
     new_data = interp(new_x)
     return new_data
-    
+
 
 def smooth_array(data, method, axis=0, **kwargs):
     """Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.
@@ -491,13 +495,14 @@ def smooth_array(data, method, axis=0, **kwargs):
 
         win = scipy.signal.windows.get_window(**kwargs)
         win = win / win.sum()
-        assert(len(data.shape) == 3 and axis == 0)
+        assert (len(data.shape) == 3 and axis == 0)
         data_new = np.empty_like(data)
         for i in range(data.shape[1]):
             for j in range(data.shape[2]):
-                data_new[:,i,j] = scipy.signal.convolve(data[:,i,j], win)[len(win)//2:-len(win)//2+1]
+                data_new[:, i, j] = scipy.signal.convolve(data[:, i, j],
+                                                          win)[len(win) // 2:-len(win) // 2 + 1]
         return data_new
-    
+
     else:
         raise ValueError(f'Invalid smooth method {method}')
 

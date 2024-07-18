@@ -109,7 +109,7 @@ class FileManagerSoilGrids2017:
 
     def get_depth_to_bedrock(self, shply, crs, force_download=False):
         profile, raster = self.get_raster(shply, crs, 'BDTICM', None, force_download)
-        raster = raster / 100 # cm --> m
+        raster = raster / 100  # cm --> m
         return profile, raster
 
     def get_soil_texture(self, shply, crs, layer, force_download=False):
