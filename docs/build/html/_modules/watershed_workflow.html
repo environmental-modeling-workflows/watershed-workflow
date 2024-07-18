@@ -193,8 +193,8 @@
 <span class="sd">    ----------</span>
 <span class="sd">    source : source-type</span>
 <span class="sd">        source object providing `get_hucs()`</span>
-<span class="sd">    huc : str</span>
-<span class="sd">        hydrologic unit code</span>
+<span class="sd">    huc : str or list[str]</span>
+<span class="sd">        hydrologic unit code or codes</span>
 <span class="sd">    level : int</span>
 <span class="sd">        HUC level of the requested sub-basins</span>
 <span class="sd">    out_crs : crs-type</span>
@@ -212,6 +212,14 @@
 <span class="sd">        List of shapely polygons for the subbasins.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">huc</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># deal with list case recursively</span>
+        <span class="n">out_hucs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">huc</span><span class="p">:</span>
+            <span class="n">out_crs</span><span class="p">,</span> <span class="n">out_huc</span> <span class="o">=</span> <span class="n">get_hucs</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">digits</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">out_hucs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">out_huc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out_crs</span><span class="p">,</span> <span class="n">out_hucs</span>
+
     <span class="c1"># get the hu from source</span>
     <span class="n">huc</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">huc_str</span><span class="p">(</span><span class="n">huc</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1179,9 +1187,13 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Snapping waterbodies and HUC (nearly) coincident nodes&quot;</span><span class="p">)</span>
         <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">snap_waterbodies</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">waterbodies</span><span class="p">,</span> <span class="n">snap_waterbodies_tol</span><span class="p">)</span>
 
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
+
     <span class="k">if</span> <span class="n">cut_intersections</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Cutting crossings and removing external segments&quot;</span><span class="p">)</span>
         <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">cut_and_snap_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">snap_tol</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Simplification Diagnostics&quot;</span><span class="p">)</span>
@@ -1274,6 +1286,7 @@
                 <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">hole_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -1300,6 +1313,8 @@
 <span class="sd">        List of objects, whose boundary (in the case of</span>
 <span class="sd">        polygons/waterbodies) or reaches (in the case of River) will</span>
 <span class="sd">        be present in the edges of the triangulation.</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
 <span class="sd">    diagnostics : bool, optional</span>
 <span class="sd">        Plot diagnostics graphs of the triangle refinement.</span>
 <span class="sd">    tol : float, optional</span>
@@ -1381,9 +1396,9 @@
 
     <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span>
         <span class="n">hucs</span><span class="p">,</span>
-        <span class="n">rivers</span><span class="p">,</span>
         <span class="n">river_corrs</span><span class="p">,</span>
         <span class="n">internal_boundaries</span><span class="o">=</span><span class="n">internal_boundaries</span><span class="p">,</span>
+        <span class="n">hole_points</span><span class="o">=</span><span class="n">hole_points</span><span class="p">,</span>
         <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
         <span class="n">refinement_func</span><span class="o">=</span><span class="n">my_refine_func</span><span class="p">,</span>
@@ -1455,6 +1470,7 @@
                             <span class="n">river_width</span><span class="p">,</span>
                             <span class="n">river_n_quads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                             <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">hole_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="n">diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                             <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1467,12 +1483,16 @@
 <span class="sd">       required by the river corridor.</span>
 <span class="sd">    rivers : list[River]</span>
 <span class="sd">       The rivers to mesh with quads</span>
-<span class="sd">    river_width : float or dict</span>
+<span class="sd">    river_width : float or dict or callable or boolean </span>
 <span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
 <span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
 <span class="sd">    river_n_quads : int, optional</span>
 <span class="sd">       Number of quads across the river.  Currently only 1 is</span>
 <span class="sd">       supported (the default).</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
 <span class="sd">    internal_boundaries : list[shapely.Polygon], optional</span>
 <span class="sd">       List of internal boundaries to embed in the domain, e.g. waterbodies.</span>
 <span class="sd">    diagnostics : bool, optional</span>
@@ -1517,13 +1537,20 @@
 
     <span class="c1"># triangulate the rest</span>
     <span class="n">tri_res</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">hucs_without_outlet</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span>
-                                             <span class="n">internal_boundaries</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                             <span class="n">internal_boundaries</span><span class="p">,</span> <span class="n">hole_points</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span>
+                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">tri_verts</span> <span class="o">=</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">tri_conn</span> <span class="o">=</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="c1"># merge into a single output</span>
     <span class="n">tri_conn_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">conn</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">tri_conn</span><span class="p">]</span>
     <span class="n">conn_list</span> <span class="o">=</span> <span class="n">tri_conn_list</span> <span class="o">+</span> <span class="n">quad_conn</span>
+
+    <span class="n">river_gid_start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_conn_list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">river</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;gid_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">river_gid_start</span>
+        <span class="n">all_elems</span> <span class="o">=</span> <span class="p">[</span><span class="n">elem</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elements</span><span class="p">]</span>
+        <span class="n">river_gid_start</span> <span class="o">=</span> <span class="n">river_gid_start</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_elems</span><span class="p">)</span>
 
     <span class="c1"># note, all quad verts are in the tri_verts, and hopefully in the right order!</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>

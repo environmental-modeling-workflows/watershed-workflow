@@ -365,8 +365,8 @@ of polygons, one per original polygon.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="watershed_workflow.river_tree.River.merge">
-<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.merge" title="Link to this definition"></a></dt>
-<dd><p>Merges this with its parent.</p>
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'parent'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_tree.html#River.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_tree.River.merge" title="Link to this definition"></a></dt>
+<dd><p>Merges this to its parent or to its one and only child.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -728,7 +728,8 @@ network, and so their upstream entity is in another river.</p>
 <dt class="sig sig-object py" id="watershed_workflow.hydrography.merge">
 <span class="sig-prename descclassname"><span class="pre">watershed_workflow.hydrography.</span></span><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/hydrography.html#merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.hydrography.merge" title="Link to this definition"></a></dt>
 <dd><p>Remove inner branches that are short, combining branchpoints as needed.</p>
-<p>This function merges the “short” segment into the parent segment</p>
+<p>This function merges the “short” segment into the child segment if it is a junction tributary with one child
+or into the parent segment otherwise</p>
 </dd></dl>
 
 <dl class="py function">

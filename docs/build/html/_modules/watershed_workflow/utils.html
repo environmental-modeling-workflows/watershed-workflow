@@ -84,6 +84,9 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">cftime</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -417,14 +420,13 @@
 
 <div class="viewcode-block" id="compute_average_year">
 <a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.compute_average_year">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_average_year</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_nyears</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">compute_average_year</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output_nyears</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Averages and smooths to form a &quot;typical&quot; year.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    data : np.ndarray[NTIMES, NX, NY]</span>
-<span class="sd">      Data to smooth.  Note this data will be truncated</span>
-<span class="sd">      floor(NTIMES/365).</span>
+<span class="sd">    data : np.ndarray(shape=(NTIMES, ...))</span>
+<span class="sd">      Daily array to average, note that NTIMES &gt; 365.</span>
 <span class="sd">    output_nyears : int, optional</span>
 <span class="sd">      Number of years to repeat the output.  Default is 1.</span>
 <span class="sd">    filter : bool, optional</span>
@@ -432,47 +434,65 @@
 
 <span class="sd">    All other parameters are passed to the filter.  See</span>
 <span class="sd">    scipy.signal.savgol_filter, but sane default values are used if</span>
-<span class="sd">    these are not provided.</span>
+<span class="sd">    these are not provided.  Note that if NTIMES % 365 != 0, the data</span>
+<span class="sd">    is truncated.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    np.ndarray[365*output_nyears, NX, NY]</span>
-<span class="sd">      The smoothed data.</span>
+<span class="sd">    np.ndarray(shape=(365*output_nyears, ...))</span>
+<span class="sd">      The averaged data.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">nyears</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">365</span>
     <span class="k">if</span> <span class="n">nyears</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not enough data to compute average year. Need at least 365 days.&#39;</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nyears</span> <span class="o">*</span> <span class="mi">365</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nyears</span><span class="p">,</span> <span class="mi">365</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># reshape the data to (nyears, 365, ...)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nyears</span> <span class="o">*</span> <span class="mi">365</span><span class="p">][:])</span>
+    <span class="n">original_shape</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">new_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">nyears</span><span class="p">,</span> <span class="mi">365</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">new_shape</span> <span class="o">+</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
-        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;window_length&#39;</span><span class="p">:</span> <span class="mi">61</span><span class="p">,</span> <span class="s1">&#39;polyorder&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;axis&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;wrap&#39;</span><span class="p">}</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="c1"># smooth if requested</span>
+    <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">smooth_array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">smooth</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">data</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># repeat the data if requested</span>
     <span class="k">if</span> <span class="n">output_nyears</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">output_nyears</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">tiled_data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">output_nyears</span><span class="p">,</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">tiled_data_shape</span> <span class="o">=</span> <span class="n">tiled_data_shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">tiled_data_shape</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data</span></div>
 
 
 
-<div class="viewcode-block" id="interpolate_in_time">
-<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.interpolate_in_time">[docs]</a>
-<span class="k">def</span> <span class="nf">interpolate_in_time</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate time-dependent data from times to daily data in the range start, end.</span>
+<div class="viewcode-block" id="interpolate_in_time_regular">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.interpolate_in_time_regular">[docs]</a>
+<span class="k">def</span> <span class="nf">interpolate_in_time_regular</span><span class="p">(</span><span class="n">times</span><span class="p">,</span>
+                                <span class="n">data</span><span class="p">,</span>
+                                <span class="n">start</span><span class="p">,</span>
+                                <span class="n">end</span><span class="p">,</span>
+                                <span class="n">dt</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+                                <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate time-dependent data to a regularly spaced time array.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    times : np.array([NTIMES,], dtype=datetime.datetime)</span>
-<span class="sd">      The list of times, as a date or time.</span>
-<span class="sd">    data : np.ndarray([NTIMES, NX, NY])</span>
-<span class="sd">      Data to interpolate</span>
-<span class="sd">    start, end : datetime.date</span>
-<span class="sd">      Dates to begin and end (inclusive) the daily data range.</span>
+<span class="sd">    times : np.1darray(dtype=cftime.datetime)</span>
+<span class="sd">      An array of times, of length NTIMES.</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">      Data to interpolate, data.shape[axis] == NTIMES.</span>
+<span class="sd">    start, end : cftime.datetime</span>
+<span class="sd">      Times to begin and end (inclusive) the interpolated array.</span>
 <span class="sd">    dt : datetime.timedelta, optional</span>
 <span class="sd">      Delta to interpolate to.  Defaults to 1 day.</span>
+<span class="sd">    axis : int, optional</span>
+<span class="sd">      Axis of data that corresponds to time.  Default is 0.</span>
 <span class="sd">    </span>
 <span class="sd">    All other parameters are passed to scipy.interpolate.interp1d.  Of</span>
 <span class="sd">    use particularly is &#39;kind&#39; which can be &#39;linear&#39; (default) or</span>
@@ -480,33 +500,75 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    new_times : np.1darray([end-start+1,], dtype=datetime.date)</span>
-<span class="sd">      Times interpolated, as datetime.date objects.</span>
-<span class="sd">    new_data : np.ndarray([end-start+1, NX,NY])</span>
+<span class="sd">    new_times : np.1darray(dtype=datetime.date)</span>
+<span class="sd">      Times of the new array.</span>
+<span class="sd">    new_data : np.ndarray</span>
 <span class="sd">      The data interpolated.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">origin</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValuerError</span><span class="p">(</span><span class="s2">&quot;Data and times array are not of the expected shape.&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">t</span><span class="o">-</span><span class="n">origin</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">])</span>
-    <span class="n">interp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">assume_sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># new_times for interpolation</span>
+    <span class="n">new_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt</span><span class="p">))</span>
+    <span class="n">new_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">start</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="n">dt</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">new_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
 
-    <span class="n">new_origin</span> <span class="o">=</span> <span class="n">start</span>
-    <span class="n">new_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span>
-    <span class="n">new_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">new_origin</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="n">dt</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">new_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
-
-    <span class="n">start_rel_origin</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="o">-</span><span class="n">origin</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt</span>
-    <span class="n">new_rel_origin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start_rel_origin</span><span class="p">,</span> <span class="n">start_rel_origin</span> <span class="o">+</span> <span class="n">new_count</span><span class="p">)</span>
-    <span class="n">new_data</span> <span class="o">=</span> <span class="n">interp</span><span class="p">(</span><span class="n">new_rel_origin</span><span class="p">)</span>
+    <span class="c1"># interpolate onto new_times</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">interpolate_in_time</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">new_times</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_times</span><span class="p">,</span> <span class="n">new_data</span></div>
 
 
 
-<div class="viewcode-block" id="smooth">
-<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.smooth">[docs]</a>
-<span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window_length</span><span class="o">=</span><span class="mi">61</span><span class="p">,</span> <span class="n">polyorder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;wrap&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="interpolate_in_time">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.interpolate_in_time">[docs]</a>
+<span class="k">def</span> <span class="nf">interpolate_in_time</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">new_times</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;days since 2000&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate time-dependent data to an arbitrary other time array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    times : np.1darray(dtype=cftime.datetime)</span>
+<span class="sd">      An array of times, of length NTIMES.</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">      Data to interpolate, data.shape[axis] == NTIMES.</span>
+<span class="sd">    new_times : np.1darray(dtype=cftime.datetime)</span>
+<span class="sd">      An array of times to interpolate to.</span>
+<span class="sd">    axis : int, optional</span>
+<span class="sd">      Axis of data that corresponds to time.  Default is 0.</span>
+<span class="sd">    units : str, optional</span>
+<span class="sd">      Interpolation must happen in a numeric coordinate -- this unit</span>
+<span class="sd">      is used to convert from dates to numbers using</span>
+<span class="sd">      cftime.date2num. Valid cfunits for time are strings like &quot;days since</span>
+<span class="sd">      2000-1-1&quot;, which is the default.</span>
+<span class="sd">    </span>
+<span class="sd">    All other parameters are passed to scipy.interpolate.interp1d.  Of</span>
+<span class="sd">    use particularly is &#39;kind&#39; which can be &#39;linear&#39; (default) or</span>
+<span class="sd">    &#39;quadratic&#39;, &#39;cubic&#39; or others.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    new_data : np.ndarray</span>
+<span class="sd">      The data interpolated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data and times array are not of the expected shape.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">calendar</span> <span class="o">!=</span> <span class="n">new_times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">calendar</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;times and new_times must have the same calendar.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># create an interpolator in a modified coordinate system</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">units</span><span class="p">)</span>
+    <span class="n">interp</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">assume_sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># interpolate at new_times in the modified coordinate system</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">new_times</span><span class="p">,</span> <span class="n">units</span><span class="p">)</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">interp</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_data</span></div>
+
+
+
+<div class="viewcode-block" id="smooth_array">
+<a class="viewcode-back" href="../../utilities.html#watershed_workflow.utils.smooth_array">[docs]</a>
+<span class="k">def</span> <span class="nf">smooth_array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.</span>
 
 <span class="sd">    Note that this wrapper just sets some sane default values for</span>
@@ -515,30 +577,56 @@
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    data : np.ndarray-like</span>
-<span class="sd">      The data to smooth.  Note that the expectation is that the time</span>
-<span class="sd">      axis is the 0th axis.</span>
-<span class="sd">    window_length : int, 61</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">      The data to smooth.</span>
+<span class="sd">    window_length : int, optional</span>
 <span class="sd">      Length of the moving window over which to fit the polynomial.</span>
-<span class="sd">    polyorder : int, 2</span>
-<span class="sd">      Order of the fitting polynomial.</span>
-<span class="sd">    axis : int, 0</span>
-<span class="sd">      Time axis over which to smooth.</span>
-<span class="sd">    mode : str, &#39;wrap&#39;</span>
+<span class="sd">      Default is 61.</span>
+<span class="sd">    polyorder : int, optional</span>
+<span class="sd">      Order of the fitting polynomial. Default is 2.</span>
+<span class="sd">    axis : int, optional</span>
+<span class="sd">      Time axis over which to smooth. Default is 0.</span>
+<span class="sd">    mode : str, optional</span>
 <span class="sd">      See scipy.signal.savgol_filter documentation, but &#39;wrap&#39; is the</span>
-<span class="sd">      best bet for data in multiples of years.</span>
-<span class="sd">    **kwargs : see scipy.signal.savgol_filter</span>
+<span class="sd">      best bet for data in multiples of years. Default is &#39;wrap.&#39;</span>
+
+<span class="sd">    Any additional kwargs are passed to scipy.signal.savgol_filter</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    np.ndarray</span>
 <span class="sd">      Smoothed data in the same shape as data</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;window_length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">window_length</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;polyorder&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">polyorder</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;axis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
-    <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;savgol_filter&#39;</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;savgol_filter&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;window_length&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;window_length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">61</span>
+        <span class="k">if</span> <span class="s1">&#39;polyorder&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;polyorder&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="s1">&#39;mode&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;wrap&#39;</span>
+        <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;convolve&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;window&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hann&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;Nx&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;Nx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">get_window</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">win</span> <span class="o">/</span> <span class="n">win</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">axis</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">data_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="n">data_new</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span>
+                                                          <span class="n">win</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">win</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">win</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">data_new</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid smooth method </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
 
 

@@ -469,7 +469,7 @@ parameters.  Additionally, leaf area index (LAI) is used frequently in
 determining potential evapotranspiration.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_nlcd.FileManagerNLCD">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_nlcd.</span></span><span class="sig-name descname"><span class="pre">FileManagerNLCD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Land_Cover'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'L48'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nlcd.html#FileManagerNLCD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nlcd.FileManagerNLCD" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_nlcd.</span></span><span class="sig-name descname"><span class="pre">FileManagerNLCD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Land_Cover'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'L48'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'20210604'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nlcd.html#FileManagerNLCD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nlcd.FileManagerNLCD" title="Link to this definition"></a></dt>
 <dd><p>National Land Cover Database provides a raster for indexed land cover types
 <span id="id9">[NLCD]</span>.</p>
 <div class="admonition note">
@@ -521,7 +521,7 @@ least imperviousness, maybe others?</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_modis_appeears.</span></span><span class="sig-name descname"><span class="pre">FileManagerMODISAppEEARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">login_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_modis_appeears.html#FileManagerMODISAppEEARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_modis_appeears.</span></span><span class="sig-name descname"><span class="pre">FileManagerMODISAppEEARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">login_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_leap_day</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_modis_appeears.html#FileManagerMODISAppEEARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS" title="Link to this definition"></a></dt>
 <dd><p>MODIS data through the AppEEARS data portal.</p>
 <p>Note this portal requires authentication – please enter a
 username and password in your .watershed_workflowrc file.  For
@@ -916,13 +916,10 @@ documentation for choices.  Default is
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>profile</strong> (<em>dict</em>) – Metadata including spatial info, as for a raster.</p></li>
-<li><p><strong>times</strong> (<em>np.array((NTIMES,), dtype=datetime.date)</em>) – Array of date objects.</p></li>
-<li><p><strong>data</strong> (<em>dict{ str : np.ndarray((NTIMES, NX, NY), float)</em>) – Dictionary with keys of variables and values storing the
-actual data.</p></li>
-</ul>
-</p>
+<dd class="field-even"><p>Dataset object containing the met data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datasets.Dataset</p>
 </dd>
 </dl>
 </dd></dl>

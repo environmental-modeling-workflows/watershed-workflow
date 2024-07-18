@@ -85,7 +85,7 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">requests.exceptions</span>
 <span class="kn">import</span> <span class="nn">shapely.geometry</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">cftime</span><span class="o">,</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">netCDF4</span>
 <span class="kn">import</span> <span class="nn">rasterio.transform</span>
 
@@ -104,7 +104,7 @@
     <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">year</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">month</span> <span class="o">=</span> <span class="mi">12</span>
-    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;noleap&#39;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FileManagerDaymet">
@@ -148,7 +148,7 @@
 <span class="sd">    .. [Daymet] https://daymet.ornl.gov</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_START</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1980</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">_START</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1980</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;noleap&#39;</span><span class="p">)</span>
     <span class="n">_END</span> <span class="o">=</span> <span class="n">_previous_month</span><span class="p">()</span>
     <span class="n">VALID_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">,</span> <span class="s1">&#39;tmax&#39;</span><span class="p">,</span> <span class="s1">&#39;prcp&#39;</span><span class="p">,</span> <span class="s1">&#39;srad&#39;</span><span class="p">,</span> <span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="s1">&#39;swe&#39;</span><span class="p">,</span> <span class="s1">&#39;dayl&#39;</span><span class="p">]</span>
     <span class="n">DEFAULT_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmin&#39;</span><span class="p">,</span> <span class="s1">&#39;tmax&#39;</span><span class="p">,</span> <span class="s1">&#39;prcp&#39;</span><span class="p">,</span> <span class="s1">&#39;srad&#39;</span><span class="p">,</span> <span class="s1">&#39;vp&#39;</span><span class="p">,</span> <span class="s1">&#39;dayl&#39;</span><span class="p">]</span>
@@ -229,7 +229,11 @@
     <span class="k">def</span> <span class="nf">_clean_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a string of the format needed for use in the filename and request.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-            <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="n">date_split</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                                   <span class="nb">int</span><span class="p">(</span><span class="n">date_split</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                                   <span class="nb">int</span><span class="p">(</span><span class="n">date_split</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+                                   <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;noleap&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">date</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_START</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid date </span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">, must be after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_START</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">date</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_END</span><span class="p">:</span>
@@ -268,8 +272,8 @@
             <span class="c1"># stuff in the right spot</span>
             <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="mi">365</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">365</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">v</span>
 
-        <span class="c1"># times is a range</span>
-        <span class="n">origin</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># times is a range -- note that DayMet works on a noleap calendar</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;noleap&#39;</span><span class="p">)</span>
         <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">origin</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">365</span> <span class="o">*</span> <span class="n">nyears</span><span class="p">)])</span>
 
         <span class="c1"># trim to start, end</span>
@@ -329,14 +333,8 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        profile : dict</span>
-<span class="sd">          Metadata including spatial info, as for a raster.</span>
-<span class="sd">        times : np.array((NTIMES,), dtype=datetime.date)</span>
-<span class="sd">          Array of date objects.</span>
-<span class="sd">        data : dict{ str : np.ndarray((NTIMES, NX, NY), float)</span>
-<span class="sd">          Dictionary with keys of variables and values storing the</span>
-<span class="sd">          actual data.</span>
-
+<span class="sd">        datasets.Dataset</span>
+<span class="sd">          Dataset object containing the met data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_START</span>
@@ -371,10 +369,13 @@
             <span class="n">filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename_var</span><span class="p">)</span>
 
         <span class="c1"># open files</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">State</span><span class="p">()</span>
+        <span class="n">dset</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">fnames</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
-            <span class="n">s</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_files</span><span class="p">(</span><span class="n">fnames</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">s</span></div>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_files</span><span class="p">(</span><span class="n">fnames</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dset</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">times</span><span class="p">)</span>
+            <span class="n">dset</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">dset</span></div>
 </div>
 
 </pre></div>

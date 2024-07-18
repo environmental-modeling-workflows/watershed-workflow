@@ -56,7 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="mesh.html">Meshes</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Data Manipulation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.daymet">DayMet data manipulation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.daymet.daymet_to_daily_averages"><code class="docutils literal notranslate"><span class="pre">daymet_to_daily_averages()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.daymet.convertToATS"><code class="docutils literal notranslate"><span class="pre">convertToATS()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.soil_properties">Soil properties data manipulation</a><ul>
@@ -111,8 +111,8 @@
 <p>DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
 hdf5 files that models can read.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.daymet.daymet_to_daily_averages">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">daymet_to_daily_averages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#daymet_to_daily_averages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.daymet_to_daily_averages" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="watershed_workflow.daymet.convertToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">convertToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#convertToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.convertToATS" title="Link to this definition"></a></dt>
 <dd><p>Convert dictionary of Daymet datasets to daily average data in standard form.</p>
 <p>This:</p>
 <ul class="simple">

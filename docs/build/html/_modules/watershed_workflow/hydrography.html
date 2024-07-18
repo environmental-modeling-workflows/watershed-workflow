@@ -165,6 +165,8 @@
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
         <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
+
     <span class="c1"># snap boundary triple junctions to river endpoints</span>
     <span class="k">if</span> <span class="n">triple_junctions_tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  snapping polygon segment boundaries to river endpoints&quot;</span><span class="p">)</span>
@@ -177,6 +179,8 @@
         <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent HUCs&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
 
     <span class="c1"># snap endpoints of all rivers to the boundary if close</span>
     <span class="c1"># note this is a null-op on cases dealt with above</span>
@@ -193,11 +197,15 @@
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;    ...resulted in inconsistent HUCs&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
 
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
+
     <span class="k">if</span> <span class="n">cut_intersections</span><span class="p">:</span>
         <span class="n">cut_and_snap_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
 
     <span class="c1"># snapping can result in 0-length reaches</span>
     <span class="n">cleanup</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">is_locally_continuous</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">rivers</span></div>
 
 
@@ -845,20 +853,30 @@
 <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">_tol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove inner branches that are short, combining branchpoints as needed.</span>
 
-<span class="sd">    This function merges the &quot;short&quot; segment into the parent segment</span>
+<span class="sd">    This function merges the &quot;short&quot; segment into the child segment if it is a junction tributary with one child</span>
+<span class="sd">    or into the parent segment otherwise</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="n">tol</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...cleaned inner segment of length </span><span class="si">%g</span><span class="s2"> at centroid </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
-                         <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;  ...cleaned inner segment of length </span><span class="si">%g</span><span class="s2"> at centroid </span><span class="si">%r</span><span class="s2"> with id </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]))</span>
 
-            <span class="k">for</span> <span class="n">sibling</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">():</span>
-                <span class="n">sibling</span><span class="o">.</span><span class="n">moveCoordinate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="n">sibling</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
-                <span class="n">node</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">sibling</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">()))</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># junction tributary with one child</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;child&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># if the leaf node is too small</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">sibling</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">()):</span>
+                    <span class="n">sibling</span><span class="o">.</span><span class="n">moveCoordinate</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">sibling</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">addChild</span><span class="p">(</span><span class="n">sibling</span><span class="p">)</span>
 
-            <span class="n">node</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span></div>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">siblings</span><span class="p">()))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span></div>
 
 
 

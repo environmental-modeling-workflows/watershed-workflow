@@ -533,6 +533,36 @@
     <span class="k">return</span> <span class="n">interp0</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">xx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">yy</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xx</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="condition_river_meshes">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.condition_river_meshes">[docs]</a>
+<span class="k">def</span> <span class="nf">condition_river_meshes</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
+                           <span class="n">rivers</span><span class="p">,</span>
+                           <span class="n">smooth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">use_parent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">use_nhd_elev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">treat_banks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">depress_upstream_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                           <span class="n">network_burn_in_depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                           <span class="n">ignore_in_sweep</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For multile rivers, condition, IN PLACE, the elevations of stream-corridor elements</span>
+<span class="sd">    to ensure connectivity throgh culverts, skips ponds, maintain</span>
+<span class="sd">    monotonicity, or otherwise enforce depths of constructed channels.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">condition_river_mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>
+                             <span class="n">river</span><span class="p">,</span>
+                             <span class="n">smooth</span><span class="o">=</span><span class="n">smooth</span><span class="p">,</span>
+                             <span class="n">use_parent</span><span class="o">=</span><span class="n">use_parent</span><span class="p">,</span>
+                             <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span>
+                             <span class="n">use_nhd_elev</span><span class="o">=</span><span class="n">use_nhd_elev</span><span class="p">,</span>
+                             <span class="n">treat_banks</span><span class="o">=</span><span class="n">treat_banks</span><span class="p">,</span>
+                             <span class="n">depress_upstream_by</span><span class="o">=</span><span class="n">depress_upstream_by</span><span class="p">,</span>
+                             <span class="n">network_burn_in_depth</span><span class="o">=</span><span class="n">network_burn_in_depth</span><span class="p">,</span>
+                             <span class="n">ignore_in_sweep</span><span class="o">=</span><span class="n">ignore_in_sweep</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="condition_river_mesh">
 <a class="viewcode-back" href="../../mesh.html#watershed_workflow.condition.condition_river_mesh">[docs]</a>
 <span class="k">def</span> <span class="nf">condition_river_mesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span>

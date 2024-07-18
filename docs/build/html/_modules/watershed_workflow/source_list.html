@@ -96,6 +96,7 @@
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_nrcs</span> <span class="kn">import</span> <span class="n">FileManagerNRCS</span>
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_glhymps</span> <span class="kn">import</span> <span class="n">FileManagerGLHYMPS</span>
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_soilgrids_2017</span> <span class="kn">import</span> <span class="n">FileManagerSoilGrids2017</span>
+<span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_pelletier_dtb</span> <span class="kn">import</span> <span class="n">FileManagerPelletierDTB</span>
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_nlcd</span> <span class="kn">import</span> <span class="n">FileManagerNLCD</span>
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_daymet</span> <span class="kn">import</span> <span class="n">FileManagerDaymet</span>
 <span class="kn">from</span> <span class="nn">watershed_workflow.sources.manager_modis_appeears</span> <span class="kn">import</span> <span class="n">FileManagerMODISAppEEARS</span>
@@ -130,6 +131,7 @@
     <span class="s1">&#39;NRCS SSURGO&#39;</span><span class="p">:</span> <span class="n">FileManagerNRCS</span><span class="p">(),</span>
     <span class="s1">&#39;GLHYMPS&#39;</span><span class="p">:</span> <span class="n">FileManagerGLHYMPS</span><span class="p">(),</span>
     <span class="s1">&#39;SoilGrids2017&#39;</span><span class="p">:</span> <span class="n">FileManagerSoilGrids2017</span><span class="p">(),</span>
+    <span class="s1">&#39;Pelletier DTB&#39;</span><span class="p">:</span> <span class="n">FileManagerPelletierDTB</span><span class="p">(),</span>
 <span class="p">}</span>
 <span class="n">default_structure_source</span> <span class="o">=</span> <span class="s1">&#39;NRCS SSURGO&#39;</span>
 
@@ -164,7 +166,7 @@
     <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;geologic structure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">structure_sources</span><span class="p">[</span><span class="s1">&#39;GLHYMPS&#39;</span><span class="p">]</span>
     <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;land cover&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">land_cover_sources</span><span class="p">[</span><span class="n">default_land_cover</span><span class="p">]</span>
     <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lai_sources</span><span class="p">[</span><span class="n">default_lai</span><span class="p">]</span>
-    <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;soil thickness&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;depth to bedrock&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">structure_sources</span><span class="p">[</span><span class="s1">&#39;Pelletier DTB&#39;</span><span class="p">]</span>
     <span class="n">sources</span><span class="p">[</span><span class="s1">&#39;meteorology&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">met_sources</span><span class="p">[</span><span class="n">default_met</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">sources</span></div>
 

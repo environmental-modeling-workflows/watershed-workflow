@@ -118,8 +118,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.flatten"><code class="docutils literal notranslate"><span class="pre">flatten()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.impute_holes2D"><code class="docutils literal notranslate"><span class="pre">impute_holes2D()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.compute_average_year"><code class="docutils literal notranslate"><span class="pre">compute_average_year()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.interpolate_in_time_regular"><code class="docutils literal notranslate"><span class="pre">interpolate_in_time_regular()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.interpolate_in_time"><code class="docutils literal notranslate"><span class="pre">interpolate_in_time()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.smooth"><code class="docutils literal notranslate"><span class="pre">smooth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.smooth_array"><code class="docutils literal notranslate"><span class="pre">smooth_array()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.generate_rings"><code class="docutils literal notranslate"><span class="pre">generate_rings()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.generate_coords"><code class="docutils literal notranslate"><span class="pre">generate_coords()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.utils.close"><code class="docutils literal notranslate"><span class="pre">close()</span></code></a></li>
@@ -578,7 +579,7 @@ item’s properties dictionary is passed.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.plot.get_ax">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">get_ax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axgrid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#get_ax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.get_ax" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">get_ax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axgrid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#get_ax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.get_ax" title="Link to this definition"></a></dt>
 <dd><p>Returns an axis with a given projection.</p>
 <p>Note this forwards extra kwargs for plt.figure().</p>
 <dl class="field-list simple">
@@ -872,7 +873,7 @@ z coordinate.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.plot.basemap">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">basemap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'50m'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coastline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#basemap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.basemap" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.plot.</span></span><span class="sig-name descname"><span class="pre">basemap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'50m'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coastline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/plot.html#basemap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.plot.basemap" title="Link to this definition"></a></dt>
 <dd><p>Add a basemap to the axis.</p>
 <p>Uses cartopy to add political and natural boundaries and shapes to the axes
 image.</p>
@@ -1243,42 +1244,44 @@ metadata to create a raster.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.utils.compute_average_year">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">compute_average_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#compute_average_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.compute_average_year" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">compute_average_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#compute_average_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.compute_average_year" title="Link to this definition"></a></dt>
 <dd><p>Averages and smooths to form a “typical” year.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>np.ndarray</em><em>[</em><em>NTIMES</em><em>, </em><em>NX</em><em>, </em><em>NY</em><em>]</em>) – Data to smooth.  Note this data will be truncated
-floor(NTIMES/365).</p></li>
+<li><p><strong>data</strong> (<em>the</em>) – Daily array to average, note that NTIMES &gt; 365.</p></li>
 <li><p><strong>output_nyears</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of years to repeat the output.  Default is 1.</p></li>
 <li><p><strong>filter</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, filters the data using a Sav-Gol filter from Scipy</p></li>
 <li><p><strong>See</strong> (<em>All other parameters are passed to the filter.</em>) – </p></li>
 <li><p><strong>scipy.signal.savgol_filter</strong> – </p></li>
 <li><p><strong>if</strong> (<em>but sane default values are used</em>) – </p></li>
-<li><p><strong>provided.</strong> (<em>these are not</em>) – </p></li>
+<li><p><strong>0</strong> (<em>these are not provided.  Note that if NTIMES % 365 !=</em>) – </p></li>
+<li><p><strong>data</strong> – </p></li>
+<li><p><strong>truncated.</strong> (<em>is</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The smoothed data.</p>
+<dd class="field-even"><p>The averaged data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray[365*output_nyears, NX, NY]</p>
+<dd class="field-odd"><p>np.ndarray(shape=(365*output_nyears, …))</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.utils.interpolate_in_time">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">interpolate_in_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#interpolate_in_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.interpolate_in_time" title="Link to this definition"></a></dt>
-<dd><p>Interpolate time-dependent data from times to daily data in the range start, end.</p>
+<dt class="sig sig-object py" id="watershed_workflow.utils.interpolate_in_time_regular">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">interpolate_in_time_regular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">datetime.timedelta(days=1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#interpolate_in_time_regular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.interpolate_in_time_regular" title="Link to this definition"></a></dt>
+<dd><p>Interpolate time-dependent data to a regularly spaced time array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>times</strong> (<em>np.array</em><em>(</em><em>[</em><em>NTIMES</em><em>,</em><em>]</em><em>, </em><em>dtype=datetime.datetime</em><em>)</em>) – The list of times, as a date or time.</p></li>
-<li><p><strong>data</strong> (<em>np.ndarray</em><em>(</em><em>[</em><em>NTIMES</em><em>, </em><em>NX</em><em>, </em><em>NY</em><em>]</em><em>)</em>) – Data to interpolate</p></li>
-<li><p><strong>start</strong> (<em>datetime.date</em>) – Dates to begin and end (inclusive) the daily data range.</p></li>
-<li><p><strong>end</strong> (<em>datetime.date</em>) – Dates to begin and end (inclusive) the daily data range.</p></li>
+<li><p><strong>times</strong> (<em>np.1darray</em><em>(</em><em>dtype=cftime.datetime</em><em>)</em>) – An array of times, of length NTIMES.</p></li>
+<li><p><strong>data</strong> (<em>np.ndarray</em>) – Data to interpolate, data.shape[axis] == NTIMES.</p></li>
+<li><p><strong>start</strong> (<em>cftime.datetime</em>) – Times to begin and end (inclusive) the interpolated array.</p></li>
+<li><p><strong>end</strong> (<em>cftime.datetime</em>) – Times to begin and end (inclusive) the interpolated array.</p></li>
 <li><p><strong>dt</strong> (<em>datetime.timedelta</em><em>, </em><em>optional</em>) – Delta to interpolate to.  Defaults to 1 day.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis of data that corresponds to time.  Default is 0.</p></li>
 <li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>) – </p></li>
 <li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>) – </p></li>
 <li><p><strong>'quadratic'</strong> – </p></li>
@@ -1287,8 +1290,8 @@ floor(NTIMES/365).</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>new_times</strong> (<em>np.1darray([end-start+1,], dtype=datetime.date)</em>) – Times interpolated, as datetime.date objects.</p></li>
-<li><p><strong>new_data</strong> (<em>np.ndarray([end-start+1, NX,NY])</em>) – The data interpolated.</p></li>
+<li><p><strong>new_times</strong> (<em>np.1darray(dtype=datetime.date)</em>) – Times of the new array.</p></li>
+<li><p><strong>new_data</strong> (<em>np.ndarray</em>) – The data interpolated.</p></li>
 </ul>
 </p>
 </dd>
@@ -1296,8 +1299,38 @@ floor(NTIMES/365).</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.utils.smooth">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">smooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">61</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polyorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'wrap'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#smooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.smooth" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="watershed_workflow.utils.interpolate_in_time">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">interpolate_in_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'days</span> <span class="pre">since</span> <span class="pre">2000'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#interpolate_in_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.interpolate_in_time" title="Link to this definition"></a></dt>
+<dd><p>Interpolate time-dependent data to an arbitrary other time array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>times</strong> (<em>np.1darray</em><em>(</em><em>dtype=cftime.datetime</em><em>)</em>) – An array of times, of length NTIMES.</p></li>
+<li><p><strong>data</strong> (<em>np.ndarray</em>) – Data to interpolate, data.shape[axis] == NTIMES.</p></li>
+<li><p><strong>new_times</strong> (<em>np.1darray</em><em>(</em><em>dtype=cftime.datetime</em><em>)</em>) – An array of times to interpolate to.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis of data that corresponds to time.  Default is 0.</p></li>
+<li><p><strong>units</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation must happen in a numeric coordinate – this unit
+is used to convert from dates to numbers using
+cftime.date2num. Valid cfunits for time are strings like “days since
+2000-1-1”, which is the default.</p></li>
+<li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>) – </p></li>
+<li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>) – </p></li>
+<li><p><strong>'quadratic'</strong> – </p></li>
+<li><p><strong>others.</strong> (<em>'cubic' or</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_data</strong> – The data interpolated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.utils.smooth_array">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.utils.</span></span><span class="sig-name descname"><span class="pre">smooth_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/utils.html#smooth_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.utils.smooth_array" title="Link to this definition"></a></dt>
 <dd><p>Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.</p>
 <p>Note that this wrapper just sets some sane default values for
 daily data – one could just as easily call
@@ -1305,14 +1338,14 @@ scipy.signal.savgol_filter themselves.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>np.ndarray-like</em>) – The data to smooth.  Note that the expectation is that the time
-axis is the 0th axis.</p></li>
-<li><p><strong>window_length</strong> (<em>int</em><em>, </em><em>61</em>) – Length of the moving window over which to fit the polynomial.</p></li>
-<li><p><strong>polyorder</strong> (<em>int</em><em>, </em><em>2</em>) – Order of the fitting polynomial.</p></li>
-<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>0</em>) – Time axis over which to smooth.</p></li>
-<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>'wrap'</em>) – See scipy.signal.savgol_filter documentation, but ‘wrap’ is the
-best bet for data in multiples of years.</p></li>
-<li><p><strong>**kwargs</strong> (<em>see scipy.signal.savgol_filter</em>) – </p></li>
+<li><p><strong>data</strong> (<em>np.ndarray</em>) – The data to smooth.</p></li>
+<li><p><strong>window_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the moving window over which to fit the polynomial.
+Default is 61.</p></li>
+<li><p><strong>polyorder</strong> (<em>int</em><em>, </em><em>optional</em>) – Order of the fitting polynomial. Default is 2.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Time axis over which to smooth. Default is 0.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – See scipy.signal.savgol_filter documentation, but ‘wrap’ is the
+best bet for data in multiples of years. Default is ‘wrap.’</p></li>
+<li><p><strong>scipy.signal.savgol_filter</strong> (<em>Any additional kwargs are passed to</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

@@ -84,6 +84,7 @@
 
 <span class="kn">import</span> <span class="nn">shapely.geometry</span>
 <span class="kn">import</span> <span class="nn">shapely.ops</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">ConvexHull</span>
 
 <span class="kn">import</span> <span class="nn">watershed_workflow.utils</span>
 <span class="kn">import</span> <span class="nn">watershed_workflow.tinytree</span>
@@ -98,11 +99,12 @@
 
 
 <span class="k">def</span> <span class="nf">_indexPointInSeg</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1.e-2</span><span class="p">):</span>
-    <span class="n">ind</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">point</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="c1"># except ValueError:</span>
-    <span class="c1">#     ind, p = min(((i,p) for (i,p) in enumerate(segment.coords[:])),</span>
-    <span class="c1">#                 key=lambda ip : shapely.geometry.Point(ip[1]).distance(point))</span>
-    <span class="c1">#     assert(shapely.geometry.Point(p).distance(point) &lt; tol)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">point</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">ind</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(((</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[:])),</span>
+                     <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ip</span><span class="p">:</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">ip</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">point</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">point</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ind</span>
 
 
@@ -131,7 +133,8 @@
         <span class="c1"># there is an overlap upstream of the junction of two tributaries,</span>
         <span class="c1"># creating a hole</span>
         <span class="k">return</span> <span class="mi">2</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">river</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="c1"># overlaps at the junction result in losing points in the corridor polygon.</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="mi">0</span>
@@ -149,7 +152,7 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span> <span class="nf">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">river</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the points on the corridor are same as calculated theoretically&quot;&quot;&quot;</span>
     <span class="n">n_child</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
@@ -158,7 +161,7 @@
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">n_child</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_child</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_child</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">n_child</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">n</span>
 
 
 <div class="viewcode-block" id="create_rivers_meshes">
@@ -170,8 +173,11 @@
 <span class="sd">    -----------</span>
 <span class="sd">    rivers: list(watershed_workflow.river_tree.River object)</span>
 <span class="sd">        List of river tree along which river meshes are to be created</span>
-<span class="sd">    widths: float or a dictionary</span>
-<span class="sd">        Width of streams, as constant or {stream-order: width}</span>
+<span class="sd">    widths: float or dict or callable or boolean </span>
+<span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
+<span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
 <span class="sd">    enforce_convexity: boolean </span>
 <span class="sd">        If true, enforce convexity of the pentagons/hexagons at the</span>
 <span class="sd">        junctions.</span>
@@ -280,8 +286,11 @@
 <span class="sd">    -----------</span>
 <span class="sd">    river: watershed_workflow.river_tree.River object)</span>
 <span class="sd">      River tree along which mesh is to be created</span>
-<span class="sd">    widths: float or a dictionary</span>
-<span class="sd">      Width of streams, as constant or {stream-order: width}</span>
+<span class="sd">    widths: float or dict or callable or boolean </span>
+<span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
+<span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
 <span class="sd">    enforce_convexity: boolean </span>
 <span class="sd">      If true, enforce convexity of the pentagons/hexagons at the</span>
 <span class="sd">      junctions.</span>
@@ -308,35 +317,29 @@
 <span class="sd">        The polygon of all elements, stores the coordinates.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># creating a polygon for river corridor by dilating the river tree</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">dilation_width</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dilation_width</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">widths</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">else</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="n">dilation_width</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dilation_width</span><span class="p">,</span> <span class="n">widths</span><span class="p">)</span>
+
     <span class="n">corr</span> <span class="o">=</span> <span class="n">create_river_corridor</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">dilation_width</span><span class="p">)</span>
 
     <span class="c1"># defining special elements in the mesh</span>
     <span class="n">elems</span> <span class="o">=</span> <span class="n">to_quads</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">dilation_width</span><span class="p">,</span> <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 
     <span class="c1"># setting river_widths in the river corridor polygon</span>
-    <span class="n">corr</span> <span class="o">=</span> <span class="n">set_width_by_order</span><span class="p">(</span><span class="n">river</span><span class="p">,</span>
-                              <span class="n">corr</span><span class="p">,</span>
-                              <span class="n">widths</span><span class="o">=</span><span class="n">widths</span><span class="p">,</span>
-                              <span class="n">dilation_width</span><span class="o">=</span><span class="n">dilation_width</span><span class="p">,</span>
-                              <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">)</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">set_width</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="n">widths</span><span class="p">,</span> <span class="n">dilation_width</span><span class="o">=</span><span class="n">dilation_width</span><span class="p">,</span> <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">)</span>
 
     <span class="c1"># treating non-convexity at junctions</span>
     <span class="k">if</span> <span class="n">enforce_convexity</span><span class="p">:</span>
-        <span class="n">corr</span> <span class="o">=</span> <span class="n">convexity_enforcement</span><span class="p">(</span><span class="n">river</span><span class="p">,</span>
-                                     <span class="n">corr</span><span class="p">,</span>
-                                     <span class="n">widths</span><span class="o">=</span><span class="n">widths</span><span class="p">,</span>
-                                     <span class="n">dilation_width</span><span class="o">=</span><span class="n">dilation_width</span><span class="p">,</span>
-                                     <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">)</span>
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">convexity_enforcement</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">)</span>
 
     <span class="c1"># redraw the debug plot with updated elems</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
-        <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">([</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">])</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">]</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">([</span><span class="n">coords</span><span class="p">[</span><span class="n">e</span> <span class="o">-</span> <span class="n">gid_shift</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">])</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">]</span>
         <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">shplys</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
 
     <span class="n">oc</span> <span class="o">=</span> <span class="n">_isOverlappingCorridor</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">river</span><span class="p">)</span>
@@ -395,6 +398,7 @@
 
     <span class="c1"># Currently this same for the whole river, should we change it reachwise?</span>
     <span class="n">length_scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">2.1</span> <span class="o">*</span> <span class="n">delta</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">mins</span><span class="p">)</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">delta</span><span class="p">)</span>
+
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -- merging points closer than </span><span class="si">{</span><span class="n">length_scale</span><span class="si">}</span><span class="s2"> m along the river corridor&quot;</span><span class="p">)</span>
 
     <span class="c1"># buffer by the width</span>
@@ -452,9 +456,9 @@
 
     <span class="c1"># create the polgyon</span>
     <span class="n">corr3</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">corr3_p</span><span class="p">)</span>
-
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="c1"># check if the points on the river corridor are same as calculated theoretically</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr3</span><span class="p">,</span> <span class="n">river</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_isExpectedNumPoints</span><span class="p">(</span><span class="n">corr3</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Broken dilation -- expected </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> coords, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">corr3</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">[:])</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="s2">&quot; -- recommend running with ax argument to tessalate_river_aligned() to debug!&quot;</span><span class="p">)</span>
@@ -652,9 +656,9 @@
 
 
 
-<div class="viewcode-block" id="set_width_by_order">
-<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.set_width_by_order">[docs]</a>
-<span class="k">def</span> <span class="nf">set_width_by_order</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">dilation_width</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">gid_shift</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="set_width">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.set_width">[docs]</a>
+<span class="k">def</span> <span class="nf">set_width</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">widths</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">dilation_width</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">gid_shift</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust the river-corridor polygon width by order.</span>
 
 <span class="sd">    Parameters</span>
@@ -663,8 +667,11 @@
 <span class="sd">      river tree along which mesh is to be created</span>
 <span class="sd">    corr : shapely.geometry.Polygon</span>
 <span class="sd">      a river corridor polygon for the river    </span>
-<span class="sd">    widths: float or dict</span>
-<span class="sd">      Width of the river, as constant or {stream-order: width}</span>
+<span class="sd">    widths: float or dict or callable or boolean </span>
+<span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
+<span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -688,6 +695,17 @@
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span>
             <span class="n">order</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">stream_order</span><span class="p">]</span>
             <span class="n">target_width</span> <span class="o">=</span> <span class="n">width_by_order</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">widths</span><span class="p">):</span>
+            <span class="c1">## DA_sqm = node.properties[&#39;TotalDrainageAreaSqKm&#39;] * 1e6</span>
+            <span class="c1"># genralized, the above calclations should be done in the function itself</span>
+            <span class="c1"># widths here is a function of node, where</span>
+            <span class="c1"># widths wil be calculated based on some properties in the node</span>
+            <span class="n">target_width</span> <span class="o">=</span> <span class="n">widths</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">widths</span><span class="p">:</span>
+                <span class="n">target_width</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;not a valid option to provide width&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">target_width</span> <span class="o">=</span> <span class="n">widths</span>
 
@@ -812,7 +830,7 @@
 
 <div class="viewcode-block" id="convexity_enforcement">
 <a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.convexity_enforcement">[docs]</a>
-<span class="k">def</span> <span class="nf">convexity_enforcement</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">dilation_width</span><span class="p">,</span> <span class="n">gid_shift</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">convexity_enforcement</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">gid_shift</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure convexity of each river-corridor element.</span>
 
 <span class="sd">    Moves nodes onto the convex hull of the element if needed.</span>
@@ -840,12 +858,7 @@
                     <span class="n">elem</span><span class="p">)</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>  <span class="c1"># checking and treating this pentagon/hexagon</span>
                 <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">]</span>  <span class="c1"># element points</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_convex</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
-                    <span class="n">convex_ring</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="o">.</span><span class="n">convex_hull</span><span class="o">.</span><span class="n">exterior</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">point</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
-                        <span class="c1"># replace point with nearest point on convex hull</span>
-                        <span class="n">p</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
-                        <span class="n">new_point</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">nearest_points</span><span class="p">(</span><span class="n">convex_ring</span><span class="p">,</span> <span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_point</span>
+                    <span class="n">points</span> <span class="o">=</span> <span class="n">make_convex_using_hull</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_convex</span><span class="p">(</span><span class="n">points</span><span class="p">)):</span>
                     <span class="c1"># go back to original set of points as snapping on</span>
@@ -862,6 +875,35 @@
 
     <span class="n">corr_coords_new</span> <span class="o">=</span> <span class="n">coords</span> <span class="o">+</span> <span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
     <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">corr_coords_new</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_convex_using_hull">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.make_convex_using_hull">[docs]</a>
+<span class="k">def</span> <span class="nf">make_convex_using_hull</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snaps non-convex points to the corresonding edge on the convex hull for the non-convex element&quot;&quot;&quot;</span>
+    <span class="c1"># find points that do not lie on the hull</span>
+    <span class="n">hull</span> <span class="o">=</span> <span class="n">ConvexHull</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">hull_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">hull</span><span class="o">.</span><span class="n">vertices</span><span class="p">)</span>
+    <span class="n">non_hull_points_inds</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hull_indices</span><span class="p">]</span>
+
+    <span class="c1"># for each non-hull point, get the linestring connecting it&#39;s preceding point and suceeding point</span>
+    <span class="n">hull_edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">non_hull_points_inds</span><span class="p">:</span>
+        <span class="n">prev_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span>
+        <span class="n">next_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span>
+
+        <span class="n">edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">prev_index</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="n">next_index</span><span class="p">])</span>
+        <span class="n">hull_edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">edge</span><span class="p">))</span>
+
+    <span class="c1"># for each pair of non-hull point find nearest point on the corresponding hull_edge</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">hull_edge</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">non_hull_points_inds</span><span class="p">,</span> <span class="n">hull_edges</span><span class="p">):</span>
+        <span class="n">nearest_point_on_hull_edge</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">nearest_points</span><span class="p">(</span>
+            <span class="n">hull_edge</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">ind</span><span class="p">]))</span>
+        <span class="n">points</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">nearest_point_on_hull_edge</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">points</span></div>
 
 
 
@@ -914,7 +956,7 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;... element was adjusted </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> times&quot;</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Case with {len(points)} nodes is not yet treated... good luck!&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Case with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes is not yet treated... good luck!&quot;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_convex</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">points</span></div>
 
@@ -959,6 +1001,9 @@
     <span class="n">ref_seg_tan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
         <span class="n">intersection_point</span> <span class="o">=</span> <span class="n">ref_seg</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intersection_point</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  HUC segment and river reach has two intersection points </span><span class="si">{</span><span class="n">intersection_point</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">seg_orientation_flag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">([</span>
             <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">seg_end</span><span class="p">,</span> <span class="n">intersection_point</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">seg_end</span> <span class="ow">in</span> <span class="p">[</span><span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seg</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
@@ -1061,14 +1106,26 @@
 <span class="sd">        with a rc as a whole </span>
 <span class="sd">        if true, will extend the hucs-segments alogn the edge of quads </span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gid_shift</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_corr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">):</span>
-        <span class="n">adjust_hucs_for_river_corridor</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_corr</span><span class="p">,</span> <span class="n">integrate_rc</span><span class="o">=</span><span class="n">integrate_rc</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span></div>
+        <span class="n">adjust_hucs_for_river_corridor</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+                                       <span class="n">river</span><span class="p">,</span>
+                                       <span class="n">river_corr</span><span class="p">,</span>
+                                       <span class="n">gid_shift</span><span class="o">=</span><span class="n">gid_shift</span><span class="p">,</span>
+                                       <span class="n">integrate_rc</span><span class="o">=</span><span class="n">integrate_rc</span><span class="p">,</span>
+                                       <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+        <span class="n">gid_shift</span> <span class="o">=</span> <span class="n">gid_shift</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">river_corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
 
 
 
 <div class="viewcode-block" id="adjust_hucs_for_river_corridor">
 <a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor">[docs]</a>
-<span class="k">def</span> <span class="nf">adjust_hucs_for_river_corridor</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">river_corr</span><span class="p">,</span> <span class="n">integrate_rc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">adjust_hucs_for_river_corridor</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+                                   <span class="n">river</span><span class="p">,</span>
+                                   <span class="n">river_corr</span><span class="p">,</span>
+                                   <span class="n">gid_shift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                   <span class="n">integrate_rc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                   <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts hucs to accomodate river corridor polygon.</span>
 
 <span class="sd">    Parameters</span>
@@ -1100,7 +1157,6 @@
             <span class="n">intersection_point</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">river_mls</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">intersection_point</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">:</span>
                 <span class="n">parent_node</span> <span class="o">=</span> <span class="n">node_at_intersection</span><span class="p">(</span><span class="n">intersection_point</span><span class="p">,</span> <span class="n">river</span><span class="p">)</span>
-
                 <span class="c1"># making sure it is not a leaf node, though this check</span>
                 <span class="c1"># fails if there is only one reach in the domain. So</span>
                 <span class="c1"># this may fail for a single reach that begins and</span>
@@ -1150,12 +1206,18 @@
             <span class="k">if</span> <span class="n">outlet_junction</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  found outlet junction&#39;</span><span class="p">)</span>
                 <span class="n">elem</span> <span class="o">=</span> <span class="n">parent_node</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">elem</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">id</span> <span class="o">-</span> <span class="n">gid_shift</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">]</span>
+
                 <span class="c1"># rc points at junction</span>
                 <span class="n">rc_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">river_corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">elem</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]]</span>
 
                 <span class="c1"># reference segment for angles</span>
-                <span class="n">ref_seg</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span>
-                    <span class="n">parent_node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">ind_intersection_point</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent_node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">ref_seg</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span>
+                        <span class="n">parent_node</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">ind_intersection_point</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ref_seg</span> <span class="o">=</span> <span class="n">parent_node</span><span class="o">.</span><span class="n">segment</span>
 
                 <span class="c1"># orientations of hucs-segments</span>
                 <span class="n">seg_angles</span> <span class="o">=</span> <span class="p">[</span>
@@ -1207,6 +1269,7 @@
             <span class="c1"># snapped leaf node intersecting with this with this</span>
             <span class="c1"># huc segment, we create local river corridor polygon</span>
             <span class="n">elem</span> <span class="o">=</span> <span class="n">parent_node</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">id</span> <span class="o">-</span> <span class="n">gid_shift</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">]</span>
             <span class="n">river_corr_part</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">river_corr</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">elem</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]]</span> <span class="o">+</span> <span class="n">rc_points</span><span class="p">)</span>
 

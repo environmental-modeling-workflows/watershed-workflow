@@ -194,8 +194,13 @@
         <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">))</span>
         <span class="n">kdtree</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">cKDTree</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
         <span class="n">bad_pairs</span> <span class="o">=</span> <span class="n">kdtree</span><span class="o">.</span><span class="n">query_pairs</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+
+        <span class="c1"># Retrieve the coordinates for each bad pair</span>
+        <span class="n">bad_pair_coords</span> <span class="o">=</span> <span class="p">[(</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">bad_pairs</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_pairs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tol= </span><span class="si">{}</span><span class="s1"> is too large, try decrease tolerance!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tol</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tol= </span><span class="si">{}</span><span class="s1"> is too large, try decrease tolerance!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+                             <span class="o">+</span> <span class="s1">&#39;or check bad pairs=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bad_pair_coords</span><span class="p">))</span>
 
         <span class="n">min_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
         <span class="n">max_node</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
@@ -212,7 +217,12 @@
 
 <div class="viewcode-block" id="triangulate">
 <a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.triangulate">[docs]</a>
-<span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span>
+                <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">hole_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Triangulates HUCs and rivers.</span>
 
 <span class="sd">    Note, refinement of a given triangle is done if any of the provided</span>
@@ -222,6 +232,8 @@
 <span class="sd">    ----------</span>
 <span class="sd">    hucs : SplitHUCs</span>
 <span class="sd">        A split-form HUC object from, e.g., get_split_form_hucs()</span>
+<span class="sd">    river_corrs : list(shapely.geometry.Polygons), optional</span>
+<span class="sd">        A list of river corridor polygons for each river</span>
 <span class="sd">    refinement_polygon : list, optional</span>
 <span class="sd">        List of RiverTrees or other iterable collections of</span>
 <span class="sd">        coordinates used to refine the mesh given the distance</span>
@@ -230,8 +242,8 @@
 <span class="sd">        List of shapely objects or RiverTrees or other iterable</span>
 <span class="sd">        collections of coordinates used as internal boundaries that</span>
 <span class="sd">        must be included in the mesh.</span>
-<span class="sd">    river_corrs : list(shapely.geometry.Polygons)</span>
-<span class="sd">        A list of river corridor polygons for each river</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh).</span>
 <span class="sd">    tol : float, optional</span>
 <span class="sd">        Set tolerance for minimum distance between two nodes. The unit</span>
 <span class="sd">        is the same as that of the watershed&#39;s CRS. The default is 1.</span>
@@ -244,6 +256,17 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Triangulating...&quot;</span><span class="p">)</span>
     <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">internal_boundaries</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">internal_boundaries</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">internal_boundaries</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+                        <span class="n">item</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+                    <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="n">segments</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">River</span><span class="p">):</span>
+                    <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">segments</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">internal_boundaries</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span><span class="n">internal_boundaries</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="n">segments</span>
+
     <span class="k">if</span> <span class="n">river_corrs</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">river_corrs</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
             <span class="n">segments</span> <span class="o">=</span> <span class="n">river_corrs</span> <span class="o">+</span> <span class="n">segments</span>
@@ -252,12 +275,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Triangulate not implemented for container of type &#39;</span><span class="si">%r</span><span class="s2">&#39;&quot;</span>
                                <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">hucs</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">internal_boundaries</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">internal_boundaries</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
-            <span class="n">segments</span> <span class="o">=</span> <span class="n">internal_boundaries</span> <span class="o">+</span> <span class="n">segments</span>
-        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">internal_boundaries</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">:</span>
-            <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span><span class="n">internal_boundaries</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="n">segments</span>
 
     <span class="n">nodes_edges</span> <span class="o">=</span> <span class="n">NodesEdges</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
 
@@ -276,11 +293,15 @@
     <span class="k">if</span> <span class="n">river_corrs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># adding hole in the river corridor for quad elements</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;defining hole..&quot;</span><span class="p">)</span>
-        <span class="n">hole_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">rc_hole_points</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">river_corr</span> <span class="ow">in</span> <span class="n">river_corrs</span><span class="p">:</span>
-            <span class="n">hole_point</span> <span class="o">=</span> <span class="n">pick_hole_point</span><span class="p">(</span><span class="n">river_corr</span><span class="p">)</span>
-            <span class="n">hole_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hole_point</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># a point inside the river corridor</span>
-            <span class="k">assert</span> <span class="p">(</span><span class="n">river_corr</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">hole_point</span><span class="p">))</span>
+            <span class="n">rc_hole_point</span> <span class="o">=</span> <span class="n">pick_hole_point</span><span class="p">(</span><span class="n">river_corr</span><span class="p">)</span>
+            <span class="n">rc_hole_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rc_hole_point</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># a point inside the river corridor</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">river_corr</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">rc_hole_point</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">hole_points</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hole_points</span> <span class="o">=</span> <span class="n">hole_points</span> <span class="o">+</span> <span class="n">rc_hole_points</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hole_points</span> <span class="o">=</span> <span class="n">rc_hole_points</span>
         <span class="n">info</span><span class="o">.</span><span class="n">set_holes</span><span class="p">(</span><span class="n">hole_points</span><span class="p">)</span>
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; triangle.build...&quot;</span><span class="p">)</span>

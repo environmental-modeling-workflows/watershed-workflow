@@ -130,6 +130,13 @@
 
         <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
             <span class="n">profile</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">profile</span>
+
+            <span class="c1"># some raster profiles end up with inconsistent dtype and type(nodata)?</span>
+            <span class="k">if</span> <span class="s1">&#39;nodata&#39;</span> <span class="ow">in</span> <span class="n">profile</span> <span class="ow">and</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">],</span> <span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
             <span class="n">inv_transform</span> <span class="o">=</span> <span class="o">~</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
 
             <span class="c1"># warp to my crs</span>
@@ -168,6 +175,7 @@
                 <span class="c1"># create a new raster and set this raster in the right place</span>
                 <span class="n">raster_fullsize</span> <span class="o">=</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
                     <span class="p">(</span><span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">],</span> <span class="n">window_profile</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]),</span> <span class="n">raster</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
                 <span class="k">if</span> <span class="n">x0</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">x0_off</span> <span class="o">=</span> <span class="o">-</span><span class="n">x0</span>
                 <span class="k">else</span><span class="p">:</span> <span class="n">x0_off</span> <span class="o">=</span> <span class="mi">0</span>
 

@@ -1721,6 +1721,97 @@
     <span class="n">new_mesh</span> <span class="o">=</span> <span class="n">Mesh2D</span><span class="p">(</span><span class="n">new_coords</span><span class="p">,</span> <span class="n">new_conns</span><span class="p">,</span> <span class="n">new_labeled_sets</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_coords_map</span><span class="p">,</span> <span class="n">new_conn_map</span><span class="p">,</span> <span class="n">new_mesh</span></div>
 
+
+
+<div class="viewcode-block" id="merge_meshes">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.merge_meshes">[docs]</a>
+<span class="k">def</span> <span class="nf">merge_meshes</span><span class="p">(</span><span class="n">meshes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Combines multiple 2D meshes into a single mesh. </span>
+
+<span class="sd">    It is assumed that the meshes to be combined have common vertices</span>
+<span class="sd">    on the shared edge (no steiner points). labeledsets should be added</span>
+<span class="sd">    after merging the mesh. Option of merging pre-existing labeledsets </span>
+<span class="sd">    in the to-be-merged meshes will be added soon</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meshes : list(mesh.Mesh2D)</span>
+<span class="sd">      The list of meshes to be merged</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mesh.Mesh2D</span>
+<span class="sd">      combined mesh</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># ## identify base mesh</span>
+    <span class="c1"># meshes = list(sorted(meshes, key=lambda m : -m.num_cells)) ##FIX ME##</span>
+
+    <span class="n">m2_combined</span> <span class="o">=</span> <span class="n">meshes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">mesh</span> <span class="ow">in</span> <span class="n">meshes</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">m2_combined</span> <span class="o">=</span> <span class="n">merge_mesh</span><span class="p">(</span><span class="n">m2_combined</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">m2_combined</span></div>
+
+
+
+<div class="viewcode-block" id="merge_mesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.mesh.merge_mesh">[docs]</a>
+<span class="k">def</span> <span class="nf">merge_mesh</span><span class="p">(</span><span class="n">mesh1</span><span class="p">,</span> <span class="n">mesh2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;merge two meshes (mesh.Mesh2D objects)&quot;&quot;&quot;</span>
+    <span class="c1"># --THIS OPTION TO BE ADDED LATER-- #transfer_labeled_sets=True</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">mesh1</span><span class="o">.</span><span class="n">labeled_sets</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">labeled_sets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> \
+        <span class="s1">&#39;to-be-merged meshes should not have labeled sets, they must be added after merging&#39;</span>
+
+    <span class="n">combined_coords</span> <span class="o">=</span> <span class="n">mesh1</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="c1"># mapping for adjusting coord indices</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">)</span> <span class="p">}</span>
+
+    <span class="c1"># adjust connection indices for the second mesh using the mapping</span>
+    <span class="k">def</span> <span class="nf">map_conn</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">coords</span><span class="p">):</span>
+        <span class="c1"># check if the point is close enough to any point in combined_coords</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">existing_coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">close_enough</span><span class="p">(</span><span class="n">coord</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">existing_coord</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+                <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="c1"># if the point is not close enough to any existing point, add to combined_coords</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="n">combined_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">adjusted_conn2</span> <span class="o">=</span> <span class="p">[</span><span class="n">map_conn</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">mesh2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
+
+    <span class="c1"># merge conn lists</span>
+    <span class="n">combined_conn</span> <span class="o">=</span> <span class="n">mesh1</span><span class="o">.</span><span class="n">conn</span> <span class="o">+</span> <span class="n">adjusted_conn2</span>
+
+    <span class="c1"># merged mesh creation</span>
+    <span class="n">m2_combined</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">),</span>
+                                                 <span class="n">conn</span><span class="o">=</span><span class="n">combined_conn</span><span class="p">)</span>
+
+    <span class="c1"># # trasferring labeled sets ##--FIX ME--##</span>
+    <span class="c1"># if transfer_labeled_sets:</span>
+    <span class="c1">#     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh1.labeled_sets</span>
+
+    <span class="c1">#     for ls in mesh2.labeled_sets:</span>
+    <span class="c1">#         if ls.entity == &#39;CELL&#39;:</span>
+    <span class="c1">#             new_ent_ids = [mesh1.num_cells + c for c in ls.ent_ids]</span>
+    <span class="c1">#             ls.ent_ids = new_ent_ids</span>
+    <span class="c1">#         elif ls.entity == &#39;FACE&#39;:</span>
+    <span class="c1">#             new_ent_ids = [(mapping(e[0]), mapping(e[1])) for e in ls.ent_ids]</span>
+    <span class="c1">#             ls.ent_ids = new_ent_ids</span>
+
+    <span class="c1">#     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh2.labeled_sets</span>
+
+    <span class="k">return</span> <span class="n">m2_combined</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">close_enough</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p2</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">tolerance</span>
 </pre></div>
 
            </div>

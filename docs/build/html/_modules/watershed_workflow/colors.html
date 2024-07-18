@@ -108,7 +108,11 @@
 <a class="viewcode-back" href="../../utilities.html#watershed_workflow.colors.enumerated_colors">[docs]</a>
 <span class="k">def</span> <span class="nf">enumerated_colors</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets an enumerated list of count independent colors.&quot;&quot;&quot;</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">enumerated_palettes</span><span class="p">[</span><span class="n">palette</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">palette</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">enumerated_palettes</span><span class="p">[</span><span class="n">palette</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">palette</span>
+
     <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">count</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>

@@ -62,6 +62,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.telescope_factor"><code class="docutils literal notranslate"><span class="pre">telescope_factor()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.optimize_dzs"><code class="docutils literal notranslate"><span class="pre">optimize_dzs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.create_submesh"><code class="docutils literal notranslate"><span class="pre">create_submesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.merge_meshes"><code class="docutils literal notranslate"><span class="pre">merge_meshes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.mesh.merge_mesh"><code class="docutils literal notranslate"><span class="pre">merge_mesh()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.river_mesh">River-aligned Mesh</a><ul>
@@ -71,10 +73,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.create_river_mesh"><code class="docutils literal notranslate"><span class="pre">create_river_mesh()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.create_river_corridor"><code class="docutils literal notranslate"><span class="pre">create_river_corridor()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.to_quads"><code class="docutils literal notranslate"><span class="pre">to_quads()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.set_width_by_order"><code class="docutils literal notranslate"><span class="pre">set_width_by_order()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.set_width"><code class="docutils literal notranslate"><span class="pre">set_width()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.move_to_target_separation"><code class="docutils literal notranslate"><span class="pre">move_to_target_separation()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.width_by_order"><code class="docutils literal notranslate"><span class="pre">width_by_order()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.convexity_enforcement"><code class="docutils literal notranslate"><span class="pre">convexity_enforcement()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.make_convex_using_hull"><code class="docutils literal notranslate"><span class="pre">make_convex_using_hull()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.make_convex_by_nudge"><code class="docutils literal notranslate"><span class="pre">make_convex_by_nudge()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.hucsegs_at_intersection"><code class="docutils literal notranslate"><span class="pre">hucsegs_at_intersection()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.river_mesh.angle_rivers_segs"><code class="docutils literal notranslate"><span class="pre">angle_rivers_segs()</span></code></a></li>
@@ -104,6 +107,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.fill_pits_dual"><code class="docutils literal notranslate"><span class="pre">fill_pits_dual()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.identify_local_minima"><code class="docutils literal notranslate"><span class="pre">identify_local_minima()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.smooth"><code class="docutils literal notranslate"><span class="pre">smooth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.condition_river_meshes"><code class="docutils literal notranslate"><span class="pre">condition_river_meshes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.condition_river_mesh"><code class="docutils literal notranslate"><span class="pre">condition_river_mesh()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.condition.elevate_rivers"><code class="docutils literal notranslate"><span class="pre">elevate_rivers()</span></code></a></li>
 </ul>
@@ -475,6 +479,33 @@ factor.</p>
 <dd><p>Given a shape that contains some cells of m2, create the submesh.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.merge_meshes">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">merge_meshes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meshes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#merge_meshes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.merge_meshes" title="Link to this definition"></a></dt>
+<dd><p>Combines multiple 2D meshes into a single mesh.</p>
+<p>It is assumed that the meshes to be combined have common vertices
+on the shared edge (no steiner points). labeledsets should be added
+after merging the mesh. Option of merging pre-existing labeledsets
+in the to-be-merged meshes will be added soon</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>meshes</strong> (<em>list</em><em>(</em><a class="reference internal" href="#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.Mesh2D"><em>mesh.Mesh2D</em></a><em>)</em>) – The list of meshes to be merged</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>combined mesh</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.Mesh2D">mesh.Mesh2D</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.mesh.merge_mesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.mesh.</span></span><span class="sig-name descname"><span class="pre">merge_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/mesh.html#merge_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.mesh.merge_mesh" title="Link to this definition"></a></dt>
+<dd><p>merge two meshes (mesh.Mesh2D objects)</p>
+</dd></dl>
+
 </section>
 <section id="module-watershed_workflow.river_mesh">
 <span id="river-aligned-mesh"></span><h2>River-aligned Mesh<a class="headerlink" href="#module-watershed_workflow.river_mesh" title="Link to this heading"></a></h2>
@@ -499,7 +530,10 @@ factor.</p>
 <dl class="simple">
 <dt>rivers: list(watershed_workflow.river_tree.River object)</dt><dd><p>List of river tree along which river meshes are to be created</p>
 </dd>
-<dt>widths: float or a dictionary</dt><dd><p>Width of streams, as constant or {stream-order: width}</p>
+<dt>widths: float or dict or callable or boolean</dt><dd><p>Width of the quads, either a float or a dictionary providing a
+{StreamOrder : width} mapping.
+Or a function (callable) that computer width using node properties
+Or boolean, where True means, width for each reach is explicitely provided properties as “width”</p>
 </dd>
 <dt>enforce_convexity: boolean</dt><dd><p>If true, enforce convexity of the pentagons/hexagons at the
 junctions.</p>
@@ -534,7 +568,10 @@ coordinates used in elems.</p></li>
 <dl class="simple">
 <dt>river: watershed_workflow.river_tree.River object)</dt><dd><p>River tree along which mesh is to be created</p>
 </dd>
-<dt>widths: float or a dictionary</dt><dd><p>Width of streams, as constant or {stream-order: width}</p>
+<dt>widths: float or dict or callable or boolean</dt><dd><p>Width of the quads, either a float or a dictionary providing a
+{StreamOrder : width} mapping.
+Or a function (callable) that computer width using node properties
+Or boolean, where True means, width for each reach is explicitely provided properties as “width”</p>
 </dd>
 <dt>enforce_convexity: boolean</dt><dd><p>If true, enforce convexity of the pentagons/hexagons at the
 junctions.</p>
@@ -613,15 +650,18 @@ mesh, necessary in the case of multiple rivers.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="watershed_workflow.river_mesh.set_width_by_order">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">set_width_by_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#set_width_by_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.set_width_by_order" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.set_width">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">set_width</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#set_width"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.set_width" title="Link to this definition"></a></dt>
 <dd><p>Adjust the river-corridor polygon width by order.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>river</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.river_tree.River" title="watershed_workflow.river_tree.River"><em>watershed_workflow.river_tree.River</em></a>) – river tree along which mesh is to be created</p></li>
 <li><p><strong>corr</strong> (<em>shapely.geometry.Polygon</em>) – a river corridor polygon for the river</p></li>
-<li><p><strong>widths</strong> (<em>float</em><em> or </em><em>dict</em>) – Width of the river, as constant or {stream-order: width}</p></li>
+<li><p><strong>widths</strong> (<em>float</em><em> or </em><em>dict</em><em> or </em><em>callable</em><em> or </em><em>boolean</em>) – Width of the quads, either a float or a dictionary providing a
+{StreamOrder : width} mapping.
+Or a function (callable) that computer width using node properties
+Or boolean, where True means, width for each reach is explicitely provided properties as “width”</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -647,7 +687,7 @@ mesh, necessary in the case of multiple rivers.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.river_mesh.convexity_enforcement">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">convexity_enforcement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#convexity_enforcement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.convexity_enforcement" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">convexity_enforcement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#convexity_enforcement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.convexity_enforcement" title="Link to this definition"></a></dt>
 <dd><p>Ensure convexity of each river-corridor element.</p>
 <p>Moves nodes onto the convex hull of the element if needed.</p>
 <dl class="field-list simple">
@@ -664,6 +704,12 @@ mesh, necessary in the case of multiple rivers.</p></li>
 <dd class="field-odd"><p>shapely.geometry.Polygon</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.river_mesh.make_convex_using_hull">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">make_convex_using_hull</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#make_convex_using_hull"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.make_convex_using_hull" title="Link to this definition"></a></dt>
+<dd><p>Snaps non-convex points to the corresonding edge on the convex hull for the non-convex element</p>
 </dd></dl>
 
 <dl class="py function">
@@ -720,7 +766,7 @@ if true, will extend the hucs-segments alogn the edge of quads</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.river_mesh.adjust_hucs_for_river_corridor">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">adjust_hucs_for_river_corridor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrate_rc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#adjust_hucs_for_river_corridor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.river_mesh.</span></span><span class="sig-name descname"><span class="pre">adjust_hucs_for_river_corridor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrate_rc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/river_mesh.html#adjust_hucs_for_river_corridor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.river_mesh.adjust_hucs_for_river_corridor" title="Link to this definition"></a></dt>
 <dd><p>Adjusts hucs to accomodate river corridor polygon.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -790,7 +836,7 @@ things cleaner.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.triangulation.triangulate">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">triangulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal_boundaries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#triangulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.triangulate" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.triangulation.</span></span><span class="sig-name descname"><span class="pre">triangulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_corrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal_boundaries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hole_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/triangulation.html#triangulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulation.triangulate" title="Link to this definition"></a></dt>
 <dd><p>Triangulates HUCs and rivers.</p>
 <p>Note, refinement of a given triangle is done if any of the provided
 criteria is met.</p>
@@ -798,13 +844,14 @@ criteria is met.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hucs</strong> (<a class="reference internal" href="geometry.html#watershed_workflow.split_hucs.SplitHUCs" title="watershed_workflow.split_hucs.SplitHUCs"><em>SplitHUCs</em></a>) – A split-form HUC object from, e.g., get_split_form_hucs()</p></li>
+<li><p><strong>river_corrs</strong> (<em>list</em><em>(</em><em>shapely.geometry.Polygons</em><em>)</em><em>, </em><em>optional</em>) – A list of river corridor polygons for each river</p></li>
 <li><p><strong>refinement_polygon</strong> (<em>list</em><em>, </em><em>optional</em>) – List of RiverTrees or other iterable collections of
 coordinates used to refine the mesh given the distance
 function refinement.</p></li>
 <li><p><strong>internal_boundaries</strong> (<em>list</em><em>, </em><em>optional</em>) – List of shapely objects or RiverTrees or other iterable
 collections of coordinates used as internal boundaries that
 must be included in the mesh.</p></li>
-<li><p><strong>river_corrs</strong> (<em>list</em><em>(</em><em>shapely.geometry.Polygons</em><em>)</em>) – A list of river corridor polygons for each river</p></li>
+<li><p><strong>hole_points</strong> (<em>list</em><em>(</em><em>shapely.Point</em><em>)</em><em>, </em><em>optional</em>) – List of points inside the polygons to be left as holes/voids (excluded from mesh).</p></li>
 <li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Set tolerance for minimum distance between two nodes. The unit
 is the same as that of the watershed’s CRS. The default is 1.</p></li>
 <li><p><strong>meshpy.triangle.build</strong><strong>(</strong><strong>)</strong> (<em>Additional keyword arguments include all options for</em>) – </p></li>
@@ -942,6 +989,14 @@ the elevation of all neighbors.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.condition.condition_river_meshes">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">condition_river_meshes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nhd_elev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treat_banks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depress_upstream_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_burn_in_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_in_sweep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#condition_river_meshes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.condition_river_meshes" title="Link to this definition"></a></dt>
+<dd><p>For multile rivers, condition, IN PLACE, the elevations of stream-corridor elements
+to ensure connectivity throgh culverts, skips ponds, maintain
+monotonicity, or otherwise enforce depths of constructed channels.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.condition.condition_river_mesh">
 <span class="sig-prename descclassname"><span class="pre">watershed_workflow.condition.</span></span><span class="sig-name descname"><span class="pre">condition_river_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nhd_elev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treat_banks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depress_upstream_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_burn_in_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_in_sweep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/condition.html#condition_river_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.condition.condition_river_mesh" title="Link to this definition"></a></dt>
 <dd><p>Condition, IN PLACE, the elevations of stream-corridor elements
@@ -1035,6 +1090,13 @@ labels.  Default is ‘watershed’.</p></li>
 will be extruded in a 3D mesh eventually.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>partitions</strong> – A list of length polygons, each entry of which is the list of
+cell indices in that polygon.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[list[int]]</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1127,14 +1189,14 @@ include regions around that outlet as well.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.regions.add_region_by_reach_id">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_region_by_reach_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reach_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_region_by_reach_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_region_by_reach_id" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.regions.</span></span><span class="sig-name descname"><span class="pre">add_region_by_reach_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reach_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/regions.html#add_region_by_reach_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.regions.add_region_by_reach_id" title="Link to this definition"></a></dt>
 <dd><p>Add labeled sets to m2 for reaches of each stream order .</p>
 <section id="id5">
 <h3>Parameters:<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <dl class="simple">
 <dt>m2: watershed_workflow.mesh.Mesh2D object</dt><dd><p>2D mesh elevated on DEMs</p>
 </dd>
-<dt>rivers: list(watershed_workflow.river_tree.RiverTree)</dt><dd><p>List of rivers used to create the river corridors.</p>
+<dt>river: watershed_workflow.river_tree.RiverTree</dt><dd><p>List of rivers used to create the river corridors.</p>
 </dd>
 <dt>reaches: list(str)</dt><dd><p>list of NHDID IDs to be labeled.</p>
 </dd>
