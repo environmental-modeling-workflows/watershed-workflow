@@ -20,13 +20,17 @@ PACKAGES_BASE=['python=3.10',
               'libarchive',
               'h5py',
               'netCDF4',
+              'cftime',
               'pytest',
               'nbmake',
-              ]
+              'ipympl',
+              'ipython',
+               ]
 
 # extra packages needed in the WW env when building for a user
 PACKAGES_EXTRAS_USER=['ipykernel',
                       'papermill',
+                      'ipympl'
                       ]
 
 # extras packages needed in the WW env when building for development

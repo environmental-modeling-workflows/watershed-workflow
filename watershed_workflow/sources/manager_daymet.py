@@ -7,7 +7,7 @@ import pyproj
 import requests
 import requests.exceptions
 import shapely.geometry
-import datetime
+import cftime, datetime
 import netCDF4
 import rasterio.transform
 
@@ -26,7 +26,7 @@ def _previous_month():
     if month == 0:
         year = year - 1
         month = 12
-    return datetime.date(year, month, 1)
+    return cftime.datetime(year, month, 1, calendar='noleap')
 
 
 class FileManagerDaymet:
@@ -68,7 +68,7 @@ class FileManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    _START = datetime.date(1980, 1, 1)
+    _START = cftime.datetime(1980, 1, 1, calendar='noleap')
     _END = _previous_month()
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
     DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
@@ -149,7 +149,11 @@ class FileManagerDaymet:
     def _clean_date(self, date):
         """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
-            date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+            date_split = date.split('-')
+            date = cftime.datetime(int(date_split[0]),
+                                   int(date_split[1]),
+                                   int(date_split[2]),
+                                   calendar='noleap')
         if date < self._START:
             raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
@@ -188,8 +192,8 @@ class FileManagerDaymet:
             # stuff in the right spot
             data[i * 365:(i+1) * 365, :, :] = v
 
-        # times is a range
-        origin = datetime.date(start.year, 1, 1)
+        # times is a range -- note that DayMet works on a noleap calendar
+        origin = cftime.datetime(start.year, 1, 1, calendar='noleap')
         times = np.array([origin + datetime.timedelta(days=i) for i in range(365 * nyears)])
 
         # trim to start, end
@@ -247,14 +251,8 @@ class FileManagerDaymet:
 
         Returns
         -------
-        profile : dict
-          Metadata including spatial info, as for a raster.
-        times : np.array((NTIMES,), dtype=datetime.date)
-          Array of date objects.
-        data : dict{ str : np.ndarray((NTIMES, NX, NY), float)
-          Dictionary with keys of variables and values storing the
-          actual data.
-
+        datasets.Dataset
+          Dataset object containing the met data.
         """
         if start is None:
             start = self._START
@@ -289,7 +287,10 @@ class FileManagerDaymet:
             filenames.append(filename_var)
 
         # open files
-        s = watershed_workflow.datasets.State()
+        dset = None
         for fnames, var in zip(filenames, variables):
-            s[var] = self._open_files(fnames, var, start, end)
-        return s
+            data = self._open_files(fnames, var, start, end)
+            if dset is None:
+                dset = watershed_workflow.datasets.Dataset(data.profile, data.times)
+            dset[var] = data.data
+        return dset

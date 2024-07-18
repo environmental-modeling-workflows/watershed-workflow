@@ -28,7 +28,11 @@ enumerated_palettes = {
 
 def enumerated_colors(count, palette=1, chain=True):
     """Gets an enumerated list of count independent colors."""
-    p = enumerated_palettes[palette]
+    if isinstance(palette, int):
+        p = enumerated_palettes[palette]
+    else:
+        p = palette
+
     if count <= len(p):
         return p[0:count]
     else:

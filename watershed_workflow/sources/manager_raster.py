@@ -48,6 +48,13 @@ class FileManagerRaster:
 
         with rasterio.open(self._filename, 'r') as fid:
             profile = fid.profile
+
+            # some raster profiles end up with inconsistent dtype and type(nodata)?
+            if 'nodata' in profile and profile['nodata'] is not None:
+                profile['nodata'] = np.array([profile['nodata'], ], dtype=profile['dtype'])[0]
+            else:
+                profile['nodata'] = None
+
             inv_transform = ~profile['transform']
 
             # warp to my crs
@@ -86,6 +93,7 @@ class FileManagerRaster:
                 # create a new raster and set this raster in the right place
                 raster_fullsize = window_profile['nodata'] * np.ones(
                     (window_profile['height'], window_profile['width']), raster.dtype)
+
                 if x0 < 0: x0_off = -x0
                 else: x0_off = 0
 

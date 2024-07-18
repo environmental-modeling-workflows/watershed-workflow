@@ -485,7 +485,11 @@ def shplys(shps, crs, color=None, ax=None, marker=None, **kwargs):
         if projection is None:
             res = ax.scatter(points[:, 0], points[:, 1], c=color, **marker_kwargs)
         else:
-            res = ax.scatter(points[:, 0], points[:, 1], c=color, transform=projection, **kwargs)
+            res = ax.scatter(points[:, 0],
+                             points[:, 1],
+                             c=color,
+                             transform=projection,
+                             **marker_kwargs)
 
     elif type(next(iter(shps))) is shapely.geometry.LineString:
         # plot lines
@@ -818,9 +822,9 @@ def raster(profile, data, ax=None, vmin=None, vmax=None, mask=True, **kwargs):
         nnd = len(np.where(data == profile['nodata'])[0])
         data = np.ma.array(data, mask=(data == profile['nodata']))
 
-    if vmin is None:
+    if vmin is None and 'norm' not in kwargs:
         vmin = np.nanmin(data)
-    if vmax is None:
+    if vmax is None and 'norm' not in kwargs:
         vmax = np.nanmax(data)
 
     bounds = rasterio.transform.array_bounds(profile['height'], profile['width'],
@@ -842,7 +846,8 @@ def basemap(crs=None,
             ocean_kwargs=None,
             state_kwargs=None,
             country_kwargs=None,
-            coastline_kwargs=None):
+            coastline_kwargs=None,
+            lake_kwargs=None):
     """Add a basemap to the axis.
 
     Uses cartopy to add political and natural boundaries and shapes to the axes
@@ -888,6 +893,30 @@ def basemap(crs=None,
         land = cartopy.feature.NaturalEarthFeature('physical', 'land', resolution, **land_kwargs)
         ax.add_feature(land)
 
+    if ocean_kwargs is not False:
+        if ocean_kwargs is None:
+            ocean_kwargs = dict()
+        if 'edgecolor' not in ocean_kwargs:
+            ocean_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in ocean_kwargs:
+            ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
+        ax.add_feature(ocean)
+
+    if lake_kwargs is not None and lake_kwargs is not False:
+        if 'edgecolor' not in lake_kwargs:
+            lake_kwargs['edgecolor'] = 'face'
+        if 'facecolor' not in lake_kwargs:
+            lake_kwargs['facecolor'] = cartopy.feature.COLORS['water']
+        lake = cartopy.feature.NaturalEarthFeature('physical', 'lakes', resolution, **lake_kwargs)
+        ax.add_feature(lake)
+
+    if coastline_kwargs is not None and coastline_kwargs is not False:
+        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
+        kwargs.update(**coastline_kwargs)
+        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline', resolution, **kwargs)
+        ax.add_feature(states)
+
     if state_kwargs is not None and state_kwargs is not False:
         kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
         kwargs.update(**state_kwargs)
@@ -911,22 +940,6 @@ def basemap(crs=None,
             shplys(country, watershed_workflow.crs.latlon_crs(), ax=ax, **country_kwargs)
         else:
             ax.add_feature(country)
-
-    if ocean_kwargs is not False:
-        if ocean_kwargs is None:
-            ocean_kwargs = dict()
-        if 'edgecolor' not in ocean_kwargs:
-            ocean_kwargs['edgecolor'] = 'face'
-        if 'facecolor' not in ocean_kwargs:
-            ocean_kwargs['facecolor'] = cartopy.feature.COLORS['water']
-        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean', resolution, **ocean_kwargs)
-        ax.add_feature(ocean)
-
-    if coastline_kwargs is not None and coastline_kwargs is not False:
-        kwargs = { 'facecolor': 'none', 'edgecolor': 'k', 'linewidth': 0.5 }
-        kwargs.update(**coastline_kwargs)
-        states = cartopy.feature.NaturalEarthFeature('physical', 'coastline', resolution, **kwargs)
-        ax.add_feature(states)
 
     return
 

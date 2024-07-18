@@ -46,13 +46,13 @@ def test_collection(dc):
     b = dc['b']
     assert (all(b.data == [4, 5]))
 
-    assert (dc.can_contain(a))
+    assert (dc.canContain(a))
 
     another = dsets.Dataset(profile('profile2'), np.array([0, 1]), { 'c': np.array([6, 7]) })
-    assert (not dc.can_contain(another))  # wrong profile
+    assert (not dc.canContain(another))  # wrong profile
 
     another2 = dsets.Dataset(profile('profile1'), np.array([1, 2]), { 'c': np.array([6, 7]) })
-    assert (not dc.can_contain(another2))  # wrong times
+    assert (not dc.canContain(another2))  # wrong times
 
 
 def test_state(s):

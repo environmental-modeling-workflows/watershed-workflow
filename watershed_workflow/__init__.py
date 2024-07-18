@@ -111,8 +111,8 @@ def get_hucs(source, huc, level, out_crs=None, digits=None, **kwargs):
     ----------
     source : source-type
         source object providing `get_hucs()`
-    huc : str
-        hydrologic unit code
+    huc : str or list[str]
+        hydrologic unit code or codes
     level : int
         HUC level of the requested sub-basins
     out_crs : crs-type
@@ -130,6 +130,14 @@ def get_hucs(source, huc, level, out_crs=None, digits=None, **kwargs):
         List of shapely polygons for the subbasins.
 
     """
+    if isinstance(huc, list):
+        # deal with list case recursively
+        out_hucs = []
+        for h in huc:
+            out_crs, out_huc = get_hucs(source, h, level, out_crs, digits, **kwargs)
+            out_hucs.extend(out_huc)
+        return out_crs, out_hucs
+
     # get the hu from source
     huc = watershed_workflow.sources.utils.huc_str(huc)
     if level is None:
@@ -1070,9 +1078,13 @@ def simplify(hucs,
         logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
         watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, snap_waterbodies_tol)
 
+    assert (all(r.is_locally_continuous() for r in rivers))
+
     if cut_intersections:
         logging.info("Cutting crossings and removing external segments")
         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, snap_tol)
+
+    assert (all(r.is_locally_continuous() for r in rivers))
 
     logging.info("")
     logging.info("Simplification Diagnostics")

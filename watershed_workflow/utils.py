@@ -6,6 +6,9 @@ likely not useful to users.
 
 """
 
+import calendar
+import datetime
+import cftime
 import logging
 import subprocess
 import numpy as np
@@ -304,14 +307,13 @@ def impute_holes2D(arr, nodata=np.nan, method='cubic'):
     return res
 
 
-def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
+def compute_average_year(data, output_nyears=1, smooth=False, **kwargs):
     """Averages and smooths to form a "typical" year.
 
     Parameters
     ----------
-    data : np.ndarray[NTIMES, NX, NY]
-      Data to smooth.  Note this data will be truncated
-      floor(NTIMES/365).
+    data : np.ndarray(shape=(NTIMES, ...))
+      Daily array to average, note that NTIMES > 365.
     output_nyears : int, optional
       Number of years to repeat the output.  Default is 1.
     filter : bool, optional
@@ -319,44 +321,62 @@ def compute_average_year(data, output_nyears=1, filter=False, **kwargs):
 
     All other parameters are passed to the filter.  See
     scipy.signal.savgol_filter, but sane default values are used if
-    these are not provided.
+    these are not provided.  Note that if NTIMES % 365 != 0, the data
+    is truncated.
 
     Returns
     -------
-    np.ndarray[365*output_nyears, NX, NY]
-      The smoothed data.
+    np.ndarray(shape=(365*output_nyears, ...))
+      The averaged data.
 
     """
     nyears = data.shape[0] // 365
     if nyears == 0:
         raise ValueError('Not enough data to compute average year. Need at least 365 days.')
-    data = data[0:nyears * 365, :, :].reshape(nyears, 365, data.shape[1], data.shape[2])
+
+    # reshape the data to (nyears, 365, ...)
+    data = np.array(data[0:nyears * 365][:])
+    original_shape = data.shape
+    new_shape = (nyears, 365)
+    if len(original_shape) > 1:
+        new_shape = new_shape + original_shape[1:]
+    data = data.reshape(new_shape)
     data = data.mean(axis=0)
 
-    if filter:
-        defaults = { 'window_length': 61, 'polyorder': 2, 'axis': 0, 'mode': 'wrap'}
-        for (k, v) in defaults.items():
-            kwargs.setdefault(k, v)
+    # smooth if requested
+    if smooth:
+        data = smooth_array(data, smooth, axis=0, **kwargs)
 
-        data = scipy.signal.savgol_filter(data, **kwargs)
+    # repeat the data if requested
     if output_nyears != 1:
-        data = np.tile(data, (output_nyears, 1, 1))
+        tiled_data_shape = (output_nyears, )
+        for i in range(len(original_shape) - 1):
+            tiled_data_shape = tiled_data_shape + (1, )
+        data = np.tile(data, tiled_data_shape)
     return data
 
 
-def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
-    """Interpolate time-dependent data from times to daily data in the range start, end.
+def interpolate_in_time_regular(times,
+                                data,
+                                start,
+                                end,
+                                dt=datetime.timedelta(days=1),
+                                axis=0,
+                                **kwargs):
+    """Interpolate time-dependent data to a regularly spaced time array.
 
     Parameters
     ----------
-    times : np.array([NTIMES,], dtype=datetime.datetime)
-      The list of times, as a date or time.
-    data : np.ndarray([NTIMES, NX, NY])
-      Data to interpolate
-    start, end : datetime.date
-      Dates to begin and end (inclusive) the daily data range.
+    times : np.1darray(dtype=cftime.datetime)
+      An array of times, of length NTIMES.
+    data : np.ndarray
+      Data to interpolate, data.shape[axis] == NTIMES.
+    start, end : cftime.datetime
+      Times to begin and end (inclusive) the interpolated array.
     dt : datetime.timedelta, optional
       Delta to interpolate to.  Defaults to 1 day.
+    axis : int, optional
+      Axis of data that corresponds to time.  Default is 0.
     
     All other parameters are passed to scipy.interpolate.interp1d.  Of
     use particularly is 'kind' which can be 'linear' (default) or
@@ -364,30 +384,69 @@ def interpolate_in_time(times, data, start, end, dt=None, **kwargs):
 
     Returns
     -------
-    new_times : np.1darray([end-start+1,], dtype=datetime.date)
-      Times interpolated, as datetime.date objects.
-    new_data : np.ndarray([end-start+1, NX,NY])
+    new_times : np.1darray(dtype=datetime.date)
+      Times of the new array.
+    new_data : np.ndarray
       The data interpolated.
 
     """
-    origin = times[0]
+    if data.shape[axis] != len(times):
+        raise ValuerError("Data and times array are not of the expected shape.")
 
-    if dt is None:
-        dt = datetime.timedelta(days=1)
-    x = np.array([(t-origin) / dt for t in times])
-    interp = scipy.interpolate.interp1d(x, data, axis=0, assume_sorted=True, **kwargs)
+    # new_times for interpolation
+    new_count = int(np.ceil((end-start) / dt))
+    new_times = np.array([start + i*dt for i in range(new_count + 1)])
 
-    new_origin = start
-    new_count = np.ceil((end-start) / dt)
-    new_times = np.array([new_origin + i*dt for i in range(new_count + 1)])
-
-    start_rel_origin = (start-origin) / dt
-    new_rel_origin = np.arange(start_rel_origin, start_rel_origin + new_count)
-    new_data = interp(new_rel_origin)
+    # interpolate onto new_times
+    new_data = interpolate_in_time(times, data, new_times, axis, **kwargs)
     return new_times, new_data
 
 
-def smooth(data, window_length=61, polyorder=2, axis=0, mode='wrap', **kwargs):
+def interpolate_in_time(times, data, new_times, axis=0, units="days since 2000", **kwargs):
+    """Interpolate time-dependent data to an arbitrary other time array.
+
+    Parameters
+    ----------
+    times : np.1darray(dtype=cftime.datetime)
+      An array of times, of length NTIMES.
+    data : np.ndarray
+      Data to interpolate, data.shape[axis] == NTIMES.
+    new_times : np.1darray(dtype=cftime.datetime)
+      An array of times to interpolate to.
+    axis : int, optional
+      Axis of data that corresponds to time.  Default is 0.
+    units : str, optional
+      Interpolation must happen in a numeric coordinate -- this unit
+      is used to convert from dates to numbers using
+      cftime.date2num. Valid cfunits for time are strings like "days since
+      2000-1-1", which is the default.
+    
+    All other parameters are passed to scipy.interpolate.interp1d.  Of
+    use particularly is 'kind' which can be 'linear' (default) or
+    'quadratic', 'cubic' or others.
+
+    Returns
+    -------
+    new_data : np.ndarray
+      The data interpolated.
+    """
+    if data.shape[axis] != len(times):
+        raise ValueError("Data and times array are not of the expected shape.")
+
+    if times[0].calendar != new_times[0].calendar:
+        raise ValueError("times and new_times must have the same calendar.")
+
+    # create an interpolator in a modified coordinate system
+    x = cftime.date2num(times, units)
+    interp = scipy.interpolate.interp1d(x, data, axis=axis, assume_sorted=True, **kwargs)
+
+    # interpolate at new_times in the modified coordinate system
+    new_x = cftime.date2num(new_times, units)
+    new_data = interp(new_x)
+    return new_data
+
+
+def smooth_array(data, method, axis=0, **kwargs):
     """Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.
 
     Note that this wrapper just sets some sane default values for
@@ -396,30 +455,56 @@ def smooth(data, window_length=61, polyorder=2, axis=0, mode='wrap', **kwargs):
     
     Parameters
     ----------
-    data : np.ndarray-like
-      The data to smooth.  Note that the expectation is that the time
-      axis is the 0th axis.
-    window_length : int, 61
+    data : np.ndarray
+      The data to smooth.
+    window_length : int, optional
       Length of the moving window over which to fit the polynomial.
-    polyorder : int, 2
-      Order of the fitting polynomial.
-    axis : int, 0
-      Time axis over which to smooth.
-    mode : str, 'wrap'
+      Default is 61.
+    polyorder : int, optional
+      Order of the fitting polynomial. Default is 2.
+    axis : int, optional
+      Time axis over which to smooth. Default is 0.
+    mode : str, optional
       See scipy.signal.savgol_filter documentation, but 'wrap' is the
-      best bet for data in multiples of years.
-    **kwargs : see scipy.signal.savgol_filter
+      best bet for data in multiples of years. Default is 'wrap.'
+
+    Any additional kwargs are passed to scipy.signal.savgol_filter
 
     Returns
     -------
     np.ndarray
       Smoothed data in the same shape as data
+
     """
-    kwargs['window_length'] = window_length
-    kwargs['polyorder'] = polyorder
-    kwargs['axis'] = axis
-    kwargs['mode'] = mode
-    return scipy.signal.savgol_filter(data, **kwargs)
+    if method is True:
+        method = 'savgol_filter'
+
+    if method == 'savgol_filter':
+        if 'window_length' not in kwargs:
+            kwargs['window_length'] = 61
+        if 'polyorder' not in kwargs:
+            kwargs['polyorder'] = 2
+        if 'mode' not in kwargs:
+            kwargs['mode'] = 'wrap'
+        return scipy.signal.savgol_filter(data, axis=axis, **kwargs)
+    elif method == 'convolve':
+        if 'window' not in kwargs:
+            kwargs['window'] = 'hann'
+        if 'Nx' not in kwargs:
+            kwargs['Nx'] = 50
+
+        win = scipy.signal.windows.get_window(**kwargs)
+        win = win / win.sum()
+        assert (len(data.shape) == 3 and axis == 0)
+        data_new = np.empty_like(data)
+        for i in range(data.shape[1]):
+            for j in range(data.shape[2]):
+                data_new[:, i, j] = scipy.signal.convolve(data[:, i, j],
+                                                          win)[len(win) // 2:-len(win) // 2 + 1]
+        return data_new
+
+    else:
+        raise ValueError(f'Invalid smooth method {method}')
 
 
 def generate_rings(obj):

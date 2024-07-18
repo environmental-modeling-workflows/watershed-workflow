@@ -75,7 +75,7 @@ class FileManagerNLCD:
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
 
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
-        self.names = watershed_workflow.sources.names.Names(self.name, 'Land_Cover',
+        self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
         self.url = self.url_pattern.format(YEAR=self.year,

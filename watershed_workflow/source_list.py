@@ -18,6 +18,7 @@ from watershed_workflow.sources.manager_ned import FileManagerNED
 from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
 from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
 from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
+from watershed_workflow.sources.manager_pelletier_dtb import FileManagerPelletierDTB
 from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
 from watershed_workflow.sources.manager_daymet import FileManagerDaymet
 from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAppEEARS
@@ -52,6 +53,7 @@ structure_sources = {
     'NRCS SSURGO': FileManagerNRCS(),
     'GLHYMPS': FileManagerGLHYMPS(),
     'SoilGrids2017': FileManagerSoilGrids2017(),
+    'Pelletier DTB': FileManagerPelletierDTB(),
 }
 default_structure_source = 'NRCS SSURGO'
 
@@ -84,7 +86,7 @@ def get_default_sources():
     sources['geologic structure'] = structure_sources['GLHYMPS']
     sources['land cover'] = land_cover_sources[default_land_cover]
     sources['lai'] = lai_sources[default_lai]
-    sources['soil thickness'] = None
+    sources['depth to bedrock'] = structure_sources['Pelletier DTB']
     sources['meteorology'] = met_sources[default_met]
     return sources
 

@@ -17,7 +17,6 @@ def _axes_to_lonlat(ax, coords):
     display = ax.transAxes.transform(coords)
     data = ax.transData.inverted().transform(display)
     lonlat = ccrs.PlateCarree().transform_point(*data, ax.projection)
-
     return lonlat
 
 
@@ -46,7 +45,6 @@ def _upper_bound(start, direction, distance, dist_func):
     # greater than the given limit.
     length = 0.1
     end = start + length*direction
-
     while dist_func(start, end) < distance:
         length *= 2
         end = start + length*direction
@@ -120,7 +118,7 @@ def _point_along_line(ax, start, distance, angle=0, tol=0.01):
 
         # Geodesic().inverse returns a NumPy MemoryView like [[distance,
         # start azimuth, end azimuth]].
-        return geodesic.inverse(a_phys, b_phys).base[0, 0]
+        return geodesic.inverse(a_phys, b_phys)[0, 0]
 
     end = _upper_bound(start, direction, distance, dist_func)
 

@@ -139,7 +139,10 @@ def raster(src_profile,
 
     if dst_crs is None:
         dst_crs = src_crs
-    dst_crs_rio = watershed_workflow.crs.to_rasterio(dst_crs)
+    if watershed_workflow.crs.is_native(dst_crs):
+        dst_crs_rio = watershed_workflow.crs.to_rasterio(dst_crs)
+    else:
+        dst_crs_rio = dst_crs
 
     src_bounds = rasterio.transform.array_bounds(src_profile['height'], src_profile['width'],
                                                  src_profile['transform'])
@@ -162,7 +165,8 @@ def raster(src_profile,
         'crs': dst_crs_rio,
         'transform': dst_transform,
         'width': dst_width,
-        'height': dst_height
+        'height': dst_height,
+        'dtype': src_profile['dtype']
     })
 
     # Reproject and return
@@ -191,7 +195,7 @@ def raster(src_profile,
     return dst_profile, dst_array
 
 
-def dataset_collection(dataset, **kwargs):
+def dataset(dataset, **kwargs):
     """Warp a dataset collection.  Note this works in place!"""
     new_dataset = None
     for k, v in dataset.items():
@@ -206,6 +210,6 @@ def state(state, **kwargs):
     """Warp a state."""
     new_state = watershed_workflow.datasets.State()
     for col in state.collections:
-        new_col = dataset_collection(col, **kwargs)
+        new_col = dataset(col, **kwargs)
         new_state.collections.append(new_col)
     return new_state
