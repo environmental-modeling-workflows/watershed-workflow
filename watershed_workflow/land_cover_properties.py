@@ -145,11 +145,12 @@ def computeCrosswalkCorrelation(modis_profile,
         where = np.where(np.bitwise_and(nlcd_lc == nlcd, modis_lc != modis_profile['nodata']))[0]
         count_nlcd = len(where)
 
-        for j, modis in enumerate(unique_modis):
-            where_modis = np.where(np.bitwise_and(nlcd_lc == nlcd, modis_lc == modis))[0]
-            count_modis_and_nlcd = len(where_modis)
-            correlation_matrix[i, j] = count_modis_and_nlcd / count_nlcd
-        assert(abs(correlation_matrix[i,:].sum() - 1) < 1.e-8)
+        if count_nlcd > 0:
+            for j, modis in enumerate(unique_modis):
+                where_modis = np.where(np.bitwise_and(nlcd_lc == nlcd, modis_lc == modis))[0]
+                count_modis_and_nlcd = len(where_modis)
+                correlation_matrix[i, j] = count_modis_and_nlcd / count_nlcd
+            assert(abs(correlation_matrix[i,:].sum() - 1) < 1.e-8)
                          
     if plot:
         fig = plt.figure()
@@ -176,14 +177,16 @@ def computeCrosswalkCorrelation(modis_profile,
             raise ValueError(f'Unknown method: {method}, valid are "fractional area" and "maximal area"')
 
 
-        assert(abs(sum(v[1] for v in crosswalk[nlcd]) - 1.) < 1.e-10)
+        rowsum = sum(v[1] for v in crosswalk[nlcd])
+        if rowsum > 0:
+            assert abs(sum(v[1] for v in crosswalk[nlcd]) - 1.) < 1.e-10
     return crosswalk
 
 
 def computeMaximalCrosswalkCorrelation(*args, **kwargs):
     """Calls connputeCrosswalkCorrelation, then takes the maximum correlation to just return a map from one to the other."""
     cw = computeCrosswalkCorrelation(*args, **kwargs)
-    return dict((k,max(v, key=lambda a : a[1])[0]) for (k, v) in cw.items())
+    return dict((k, ((max(v, key=lambda a : a[1])[0]) if len(v) > 0 else None)) for (k, v) in cw.items())
 
 
 def plotLAI(df, indices='NLCD', ax=None):
