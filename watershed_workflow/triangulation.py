@@ -123,6 +123,7 @@ def triangulate(hucs,
                 river_corrs=None,
                 internal_boundaries=None,
                 hole_points=None,
+                additional_points=None,  
                 tol=1,
                 **kwargs):
     """Triangulates HUCs and rivers.
@@ -187,6 +188,10 @@ def triangulate(hucs,
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
 
+    # Add additional points if provided
+    if additional_points is not None:
+        nodes = np.vstack((nodes, additional_points))
+
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
@@ -229,6 +234,8 @@ def triangulate(hucs,
 
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
+    
+     
     logging.info("  ...built: %i mesh points and %i triangles" % (len(mesh_points), len(mesh_tris)))
     return mesh_points, mesh_tris
 
@@ -296,6 +303,14 @@ def refine_from_max_edge_length(edge_length):
         edge_lengths = la.norm(verts4[1:] - verts4[:-1], 2, 1)
         return bool(edge_lengths.max() > edge_length)
 
+    return refine
+
+
+def refine_stream_triangles(river_corrs):
+    """Returns a refinement function for triangles that have all three vertices on stream mesh."""
+    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+    def refine(vertices, area):
+        return all(riv_corr.intersects(shapely.geometry.Point(p)) for p in vertices)
     return refine
 
 
