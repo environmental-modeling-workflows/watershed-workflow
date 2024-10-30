@@ -10,7 +10,6 @@ from scipy.spatial import ConvexHull
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
-import watershed_workflow.plot
 
 
 class IntersectionError(Exception):

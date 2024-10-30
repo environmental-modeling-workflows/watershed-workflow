@@ -5,8 +5,6 @@ import numpy as np
 import logging
 
 import pyproj
-import fiona
-import fiona.crs
 import rasterio.warp
 import shapely.geometry
 

@@ -22,6 +22,7 @@ DownstreamMainpathHydroSeq : int
 import logging
 import numpy as np
 import copy
+import itertools
 from scipy.spatial import cKDTree
 
 import shapely.geometry

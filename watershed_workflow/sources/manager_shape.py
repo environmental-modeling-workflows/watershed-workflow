@@ -2,13 +2,6 @@
 """
 
 import attr
-import fiona
-
-import watershed_workflow.warp
-import watershed_workflow.utils
-import watershed_workflow.config
-import watershed_workflow.crs
-
 
 @attr.s
 class FileManagerShape:
@@ -32,18 +25,13 @@ class FileManagerShape:
 
         Returns
         -------
-        profile : dict
-            Fiona profile of the shapefile.
-        shapes : list(dict)
-            List of fiona shapes that match the index or bounds.
+        shapes : geopandas.GeoDataFrame
+            Shapes in the file.
 
         """
-        profile, shps = self.get_shapes(*args, **kwargs)
-        if len(shps) != 1:
-            raise RuntimeError("Filtered shapefile contains more than one match.")
-        return profile, shps[0]
+        return self.get_shapes(*args, **kwargs)
 
-    def get_shapes(self, index_or_bounds=-1, crs=None):
+    def get_shapes(self, bounds=None, bounds_crs=None):
         """Read the file and filter to get shapes.
 
         This accepts either an index, which is the integer index of the desired
@@ -51,39 +39,19 @@ class FileManagerShape:
 
         Parameters
         ----------
-        index_or_bounds : int or [xmin, ymin, xmax, ymax]
-            Index of the requested shape in filename, or bounding box to filter 
-            shapes, or defaults to -1 to get them all.
-
-        crs : crs-type
-            Coordinate system of the bounding box (or None if index).
+        bounds : [xmin, ymin, xmax, ymax], optional
+            Bounding box to filter shapes.
+        bounds_crs : crs-type
+            Coordinate system of the bounding box.
 
         Returns
         -------
-        profile : dict
-            Fiona profile of the shapefile.
-        shapes : list(dict)
-            List of fiona shapes that match the index or bounds.
+        shapes : geopandas.GeoDataFrame
+            Shapes in the file.
         
         """
-        with fiona.open(self._filename, 'r') as fid:
-            profile = fid.profile
-
-            if index_or_bounds is None or type(index_or_bounds) is int:
-                if index_or_bounds != None and index_or_bounds >= 0:
-                    shps = [fid[index_or_bounds], ]
-                else:
-                    shps = [s for s in fid]
-            else:
-                crs_file = profile['crs']
-                try:
-                    crs_file = watershed_workflow.crs.from_fiona(profile['crs'])
-                except watershed_workflow.crs.CRSError:
-                    # try to read a damaged file with only wkt
-                    crs_file = watershed_workflow.crs.from_wkt(profile['crs_wkt'])
-                    profile['crs'] = watershed_workflow.crs.to_fiona(crs_file)
-
-                bounds = watershed_workflow.warp.bounds(index_or_bounds, crs, crs_file)
-                shps = [s for (i, s) in fid.items(bbox=bounds)]
-
-        return profile, shps
+        if bounds is not None:
+            info = pyogrio.read_info(self._filename)
+            file_crs = watershed_workflow.crs.from_string(info['crs'])
+            bounds = watershed_workflow.warp.bounds(bounds, bounds_crs, file_crs)
+        return geopandas.read_file(self._filename, bounds)

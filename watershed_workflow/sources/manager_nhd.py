@@ -1,3 +1,4 @@
+
 import os, sys
 import logging
 import fiona
@@ -11,6 +12,26 @@ import watershed_workflow.config
 import watershed_workflow.sources.names
 import watershed_workflow.utils
 import watershed_workflow.warp
+
+
+_nhdplus_vaa = dict({
+    'StreamOrder': 'StreamOrde',
+    'StreamLevel': 'StreamLeve',
+    'HydrologicSequence': 'HydroSeq',
+    'DownstreamMainPathHydroSeq': 'DnHydroSeq',
+    'UpstreamMainPathHydroSeq': 'UpHydroSeq',
+    'DivergenceCode': 'Divergence',
+    'MinimumElevationSmoothed': 'MinElevSmo',
+    'MaximumElevationSmoothed': 'MaxElevSmo',
+    'MinimumElevationRaw': 'MinElevRaw',
+    'MaximumElevationRaw': 'MaxElevRaw',
+    'CatchmentAreaSqKm': 'AreaSqKm',
+    'TotalDrainageAreaSqKm': 'TotDASqKm',
+    'DivergenceRoutedDrainAreaSqKm': 'DivDASqKm',
+    'MeanAnnualFlow': 'QAMA',
+    'MeanAnnualVelocity': 'VAMA',
+    'MeanAnnualFlowGaugeAdj': 'QEMA'
+})
 
 
 @attr.s
@@ -37,7 +58,6 @@ class _FileManagerNHD:
     2-digit (WBD), 4-digit (NHD Plus HR) and 8-digit (NHD) HUCs.
 
     .. [NHD] https://www.usgs.gov/core-science-systems/ngp/national-hydrography
-    .. [TNM] https://viewer.nationalmap.gov/help/documents/TNMAccessAPIDocumentation/TNMAccessAPIDocumentation.pdf
 
     """
     name = attr.ib(type=str)
@@ -45,56 +65,25 @@ class _FileManagerNHD:
     lowest_level = attr.ib(type=int)
     name_manager = attr.ib()
 
-    _nhdplus_vaa = dict({
-        'StreamOrder': 'StreamOrde',
-        'StreamLevel': 'StreamLeve',
-        'HydrologicSequence': 'HydroSeq',
-        'DownstreamMainPathHydroSeq': 'DnHydroSeq',
-        'UpstreamMainPathHydroSeq': 'UpHydroSeq',
-        'DivergenceCode': 'Divergence',
-        'MinimumElevationSmoothed': 'MinElevSmo',
-        'MaximumElevationSmoothed': 'MaxElevSmo',
-        'MinimumElevationRaw': 'MinElevRaw',
-        'MaximumElevationRaw': 'MaxElevRaw',
-        'CatchmentAreaSqKm': 'AreaSqKm',
-        'TotalDrainageAreaSqKm': 'TotDASqKm',
-        'DivergenceRoutedDrainAreaSqKm': 'DivDASqKm',
-    })
-    _nhdplus_eromma = dict({
-        'MeanAnnualFlow': 'QAMA',
-        'MeanAnnualVelocity': 'VAMA',
-        'MeanAnnualFlowGaugeAdj': 'QEMA'
-    })
 
-    def get_huc(self, huc, force_download=False, exclude_hu_types=None):
+    def get_huc(self, huc):
         """Get the specified HUC in its native CRS.
 
         Parameters
         ----------
         huc : int or str
           The USGS Hydrologic Unit Code
-        force_download : bool, optional
-          If true, delete any file and redownload.
-        exclude_hu_types : list[str], optional
-          List of HUtypes to exclude.  Likely this is None or ['W',]
-          to exclude water HUCs for e.g. a bay, great lake, or ocean.
 
         Returns
         -------
-        profile : dict
-          The fiona shapefile profile (see Fiona documentation).
-        hu : dict
-          Fiona shape object representing the hydrologic unit.
-
-        Note this finds and downloads files as needed.
+        shapes : geopandas.GeoDataFrame
+            Shapes in the file.
 
         """
-        huc = source_utils.huc_str(huc)
-        profile, hus = self.get_hucs(huc, len(huc), force_download)
-        assert (len(hus) == 1)
-        return profile, hus[0]
+        return self.get_hucs(huc)
 
-    def get_hucs(self, huc, level, force_download=False, exclude_hu_types=None):
+
+    def get_hucs(self, huc, level=None):
         """Get all sub-catchments of a given HUC level within a given HUC.
 
         Parameters
@@ -104,23 +93,16 @@ class _FileManagerNHD:
         level : int
           Level of requested sub-catchments.  Must be larger or equal to the
           level of the input huc.
-        force_download : bool
-          Download or re-download the file if true.
-        exclude_hu_types : list[str]
-          List of HUtypes to exclude.  Likely this is None or ['W',]
-          to exclude water HUCs for e.g. a bay, great lake, or ocean.
 
         Returns
         -------
-        profile : dict
-          The fiona shapefile profile (see Fiona documentation).
-        hus : list(dict)
-          List of fiona shape objects representing the hydrologic units.
+        shapes : geopandas.GeoDataFrame
+            Shapes in the file.
 
-        Note this finds and downloads files as needed.
         """
         huc = source_utils.huc_str(huc)
-        huc_level = len(huc)
+        if level is None:
+            level = len(huc)
 
         # error checking on the levels, require file_level <= huc_level <= level <= lowest_level
         if self.lowest_level < level:
@@ -157,99 +139,46 @@ class _FileManagerNHD:
         return profile, hus
 
     def get_hydro(self,
-                  huc,
-                  bounds=None,
+                  huc_or_bounds=None,
                   bounds_crs=None,
-                  in_network=True,
-                  properties=None,
-                  include_catchments=False,
-                  force_download=False):
+                  in_network=False,
+                  include_catchments=False):
         """Get all reaches within a given HUC and/or coordinate bounds.
 
         Parameters
         ----------
-        huc : int or str
-          The USGS Hydrologic Unit Code
-        bounds : [xmin, ymin, xmax, ymax], optional
-          Coordinate bounds to filter reaches returned.  If this is provided,
-          bounds_crs must also be provided.
+        huc_or_bounds : int or str or [xmin, ymin, xmax, ymax]
+          The USGS Hydrologic Unit Code, or coordinate bounds to
+          filter reaches returned.  If bounds are provided, bounds_crs
+          must also be provided.
         bounds_crs : CRS, optional
           CRS of the above bounds.
         in_network : bool, optional
-          If True (default), remove reaches that are not "in" the NHD network
-
-        properties : list(str) or bool, optional
-          A list of property aliases to be added to reaches.  See
-          alias names in Table 16 (NHDPlusFlowlineVAA) or 17
-          (NHDPlusEROMMA) of NHDPlus User Guide).  This is only
-          supported for NHDPlus.  Commonly used properties include: 
-
-           - 'TotalDrainageAreaKmSq' : total drainage area
-           - 'CatchmentAreaKmSq' : differential catchment contributing area
-           - 'HydrologicSequence' : VAA sequence information
-           - 'DownstreamMainPathHydroSeq' : VAA sequence information
-           - 'UpstreamMainPathHydroSeq' : VAA sequence information
-           - 'catchment' : catchment polygon geometry
-
-          If bool is provided and the value is True, a standard
-          default set of VAA and EROMMA attributes are added as
-          properties.
-
+          If True, remove reaches that are not "in" the NHD network.
         include_catchments : bool, optional 
-          If True, adds catchment polygons for each reach in the river tree from 'NHDPlusCatchment' layer
-        force_download : bool Download
-          or re-download the file if true.
+          If True, adds catchment polygons for each reach in the river tree.
 
+        Note that one of huc or bounds must be provided.
+        
         Returns
         -------
-        profile : dict
-          The fiona shapefile profile (see Fiona documentation).
-        reaches : list(dict)
-          List of fiona shape objects representing the stream reaches.
-
-        Note this finds and downloads files as needed.
+        shapes : geopandas.GeoDataFrame
+            Shapes in the file.
 
         """
-        if properties is True:
-            properties = list(self._nhdplus_vaa.keys()) + list(self._nhdplus_eromma.keys())
-
         if 'WBD' in self.name:
             raise RuntimeError(f'{self.name}: does not provide hydrographic data.')
+        
+        if bounds_crs is None:
+            # we were given a huc or list of hucs -- find a bounds
+            if isinstance(huc_or_bounds, list):
+                hucs = geopandas.concat([get_huc(h) for h in huc_or_bounds])
+            else:
+                hucs = get_huc(huc_or_bounds)
+            bounds = hucs.geometry.union().bounds
 
-        huc = source_utils.huc_str(huc)
-        hint_level = len(huc)
-
-        # try to get bounds if not provided
-        if bounds is None:
-            # can we infer a bounds by getting the HUC?
-            profile, hu = self.get_huc(huc)
-            bounds = watershed_workflow.utils.create_bounds(hu)
-            bounds_crs = watershed_workflow.crs.from_fiona(profile['crs'])
-
-        # error checking on the levels, require file_level <= huc_level <= lowest_level
-        if hint_level < self.file_level:
-            raise ValueError(
-                f"{self.name}: files are organized at HUC level {self.file_level}, so cannot ask for a larger HUC level."
-            )
-
-        # download the file
-        filename = self._download(huc[0:self.file_level], force=force_download)
-        logging.info('  Using Hydrography file "{}"'.format(filename))
-
-        # find and open the hydrography layer
-        filename = self.name_manager.file_name(huc[0:self.file_level])
-        layer = 'NHDFlowline'
-        logging.info(
-            f"  {self.name}: opening '{filename}' layer '{layer}' for streams in '{bounds}'")
-        with fiona.open(filename, mode='r', layer=layer) as fid:
-            profile = fid.profile
-            bounds = watershed_workflow.warp.bounds(
-                bounds, bounds_crs, watershed_workflow.crs.from_fiona(profile['crs']))
-            reaches = [r for (i, r) in fid.items(bbox=bounds)]
-            logging.info(f"  Found total of {len(reaches)} in bounds.")
-
-        # check if the dataset is in old NHD Format (title case) or new format (lower case)
-        to_lower = 'nhdplusid' in reaches[0]['properties']
+        # pass in bounds, use bygeom
+        pynhd.NHD.bygeom(huc_or_bounds, bounds_crs)
 
         # filter not in network
         prop_key = 'InNetwork' if not to_lower else 'innetwork'

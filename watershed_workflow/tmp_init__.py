@@ -43,7 +43,6 @@ import shapely
 import watershed_workflow.config
 import watershed_workflow.triangulation
 import watershed_workflow.warp
-import watershed_workflow.plot
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
