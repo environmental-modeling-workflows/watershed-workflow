@@ -166,7 +166,7 @@ def add_watershed_regions_and_outlets(m2,
         n1 = m2.coords[edge[0]]
         n2 = m2.coords[edge[1]]
         c = (n1+n2) / 2.
-        close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+        close = watershed_workflow.utils.isClose(outlet, tuple(c[0:2]), outlet_width)
         return close
 
     for label, partition, outlet in zip(labels, partitions, outlets):

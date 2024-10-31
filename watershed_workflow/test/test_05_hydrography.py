@@ -1,5 +1,6 @@
 import pytest
 import shapely.geometry
+import geopandas
 
 from watershed_workflow.test.shapes import *
 
@@ -7,22 +8,26 @@ import watershed_workflow.utils
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
 import watershed_workflow.river_tree
-import watershed_workflow.plot
 
 
 def data(poly_hucs, river_segs):
+    if isinstance(poly_hucs, list):
+        poly_hucs = geopandas.GeoDataFrame(geometry=poly_hucs)
     hucs = watershed_workflow.split_hucs.SplitHUCs(poly_hucs)
-    rivers = watershed_workflow.hydrography.createGlobalTree(river_segs, method='geometry')
+
+    if isinstance(river_segs, list):
+        river_segs = geopandas.GeoDataFrame(geometry=river_segs)
+    rivers = watershed_workflow.river_tree.createRiverTrees(river_segs, method='geometry')
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
     return hucs, rivers
 
 
 def check1(hucs, rivers):
     assert (len(hucs) is 1)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
 
     # gon0b, gon0i = hucs.gons[0]
@@ -43,21 +48,21 @@ def check1(hucs, rivers):
     # assert(len(hucs.segments) is 1)
     # assert(0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].depthFirst())
+    riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
-    print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[0],
+    print(riverlist[0].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
                                            shapely.geometry.LineString([(5, 0), (10, 0)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def check1b(hucs, rivers):
     assert (len(hucs) is 1)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 0.001), (10, 5),
                                          (0, 5)])))
 
@@ -79,21 +84,21 @@ def check1b(hucs, rivers):
     assert (len(hucs.segments) is 1)
     assert (0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].depthFirst())
+    riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[0],
+    assert (watershed_workflow.utils.isClose(riverlist[0],
                                            shapely.geometry.LineString([(5, 0), (10, 0)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def check1c(hucs, rivers):
     assert (len(hucs) is 1)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
 
     gon0b, gon0i = hucs.gons[0]
@@ -114,119 +119,119 @@ def check1c(hucs, rivers):
     assert (len(hucs.segments) is 1)
     assert (0 in hucs.segments.keys())
 
-    riverlist = list(rivers[0].depthFirst())
+    riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
     print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         riverlist[0], shapely.geometry.LineString([(5, 0), (10, 0), (15, 0.001)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def check2(hucs, rivers):
     assert (len(hucs) is 2)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
-    poly1 = hucs.polygon(1)
+    poly1 = hucs.computePolygon(1)
     print(poly1.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
+    riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 1)
-    print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[0],
+    print(riverlist[0].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
                                            shapely.geometry.LineString([(5, 0), (10, 0), (15, 0)])))
 
 
 def check2b(hucs, rivers):
     assert (len(hucs) is 2)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
-    poly1 = hucs.polygon(1)
+    poly1 = hucs.computePolygon(1)
     print(poly1.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
+    riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 3)
-    print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(
-        riverlist[0], shapely.geometry.LineString([(10, 0), (11, 0), (12, 0), (15, 0)])))
-    print(riverlist[1].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[1],
+    print(riverlist[0].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
+                                             shapely.geometry.LineString([(10, 0), (11, 0), (12, 0), (15, 0)])))
+    print(riverlist[1].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[1].segment,
                                            shapely.geometry.LineString([(5, 2), (10, 0)])))
-    print(riverlist[2].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[2],
+    print(riverlist[2].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[2].segment,
                                            shapely.geometry.LineString([(5, -2), (10, 0)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def check2b_nullop(hucs, rivers):
     assert (len(hucs) is 2)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
-    poly1 = hucs.polygon(1)
+    poly1 = hucs.computePolygon(1)
     print(poly1.boundary.coords[:])
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
-    riverlist = list(rivers[0].depthFirst())  # dfs, preOrdered
+    riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 3)
-    print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(
+    print(riverlist[0].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(
         riverlist[0], shapely.geometry.LineString([(10.1001, 0), (11, 0), (12, 0), (15, 0)])))
-    print(riverlist[1].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[1],
+    print(riverlist[1].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[1],
                                            shapely.geometry.LineString([(5, 2), (10.1001, 0)])))
-    print(riverlist[2].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[2],
+    print(riverlist[2].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[2],
                                            shapely.geometry.LineString([(5, -2), (10.1001, 0)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def check3(hucs, rivers):
     assert (len(hucs) is 3)
-    poly0 = hucs.polygon(0)
-    assert (watershed_workflow.utils.close(
+    poly0 = hucs.computePolygon(0)
+    assert (watershed_workflow.utils.isClose(
         poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 5), (0, 5)])))
-    poly1 = hucs.polygon(1)
-    assert (watershed_workflow.utils.close(
+    poly1 = hucs.computePolygon(1)
+    assert (watershed_workflow.utils.isClose(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5)])))
-    poly2 = hucs.polygon(2)
+    poly2 = hucs.computePolygon(2)
     print(list(poly2.boundary.coords))
     print(
         list(
             shapely.geometry.Polygon([(0, 5), (10, 5), (20, 5), (20, 10), (10, 10),
                                       (0, 10)]).boundary.coords))
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         poly2, shapely.geometry.Polygon([(0, 5), (10, 5), (20, 5), (20, 10), (10, 10), (0, 10)])))
 
     assert (len(rivers[0]) is 3)
-    riverlist = list(rivers[0].depthFirst())
-    print(riverlist[0].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[0],
+    riverlist = list(rivers[0].preOrder())
+    print(riverlist[0].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
                                            shapely.geometry.LineString([(10., 5.), (10., 10.)])))
-    print(riverlist[1].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[1],
+    print(riverlist[1].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[1].segment,
                                            shapely.geometry.LineString([(5., 0.), (10., 5.)])))
-    print(riverlist[2].coords[:])
-    assert (watershed_workflow.utils.close(riverlist[2],
+    print(riverlist[2].segment.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[2].segment,
                                            shapely.geometry.LineString([(15., 0.), (10., 5.)])))
 
     for tree in rivers:
-        assert (tree.is_consistent())
+        assert (tree.isConsistent())
 
 
 def test_snap0():
@@ -377,7 +382,7 @@ def test_snap3(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0), (15, 0)]), ]
     hucs, rivers = data(two_boxes, rs)
     rivers = watershed_workflow.hydrography.snap(hucs, rivers, 0.1, cut_intersections=True)
-    poly0 = hucs.polygon(0)
+    poly0 = hucs.computePolygon(0)
     check2(hucs, rivers)
 
 
@@ -468,7 +473,7 @@ def test_snap8():
 
 
 def test_remove_divergences(braided_stream):
-    rivers = watershed_workflow.hydrography.createGlobalTree(braided_stream, 'hydroseq')
+    rivers = watershed_workflow.river_tree.createRiverTrees(braided_stream, 'hydroseq')
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 6)
 

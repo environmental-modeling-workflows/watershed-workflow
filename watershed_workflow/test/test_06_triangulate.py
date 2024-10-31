@@ -7,6 +7,7 @@ Not sure how to test them..."""
 
 import pytest
 import shapely
+import geopandas
 from matplotlib import pyplot as plt
 
 import watershed_workflow.triangulation
@@ -24,14 +25,15 @@ def hucs_rivers():
     tb.append(shapely.geometry.Polygon(b1))
     tb.append(shapely.geometry.Polygon(b2))
     tb.append(shapely.geometry.Polygon(b3))
-    hucs = watershed_workflow.split_hucs.SplitHUCs(tb)
+    df = geopandas.GeoDataFrame(geometry=tb)
+    hucs = watershed_workflow.split_hucs.SplitHUCs(df)
 
-    rs = [
+    rs = geopandas.GeoDataFrame(geometry=[
         shapely.geometry.LineString([(5., 0.), (10., 5), ]),
         shapely.geometry.LineString([(15., 0.), (10., 5), ]),
         shapely.geometry.LineString([(10., 5.), (10, 10)]),
-    ]
-    rivers = watershed_workflow.hydrography.createGlobalTree(rs)
+    ])
+    rivers = watershed_workflow.river_tree.createRiverTrees(rs)
     watershed_workflow.hydrography.snap(hucs, rivers, 0.1)
     return hucs, rivers
 
@@ -47,7 +49,7 @@ def test_triangulate_nofunc(hucs_rivers):
 
 def test_triangulate_max_area(hucs_rivers):
     hucs, rivers = hucs_rivers
-    func = watershed_workflow.triangulation.refine_from_max_area(1.)
+    func = watershed_workflow.triangulation.refineByMaxArea(1.)
     points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
     # watershed_workflow.plot.triangulation(points,tris)
     # watershed_workflow.plot.hucs(hucs,'r')
@@ -57,7 +59,7 @@ def test_triangulate_max_area(hucs_rivers):
 
 def test_triangulate_distance(hucs_rivers):
     hucs, rivers = hucs_rivers
-    func = watershed_workflow.triangulation.refine_from_river_distance(1., 0.5, 4, 2, rivers)
+    func = watershed_workflow.triangulation.refineByRiverDistance(1., 0.5, 4, 2, rivers)
     points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
     # watershed_workflow.plot.triangulation(points,tris)
     # watershed_workflow.plot.hucs(hucs,'r')

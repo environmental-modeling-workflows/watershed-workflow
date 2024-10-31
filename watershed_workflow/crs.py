@@ -219,8 +219,7 @@ def from_cartopy(crs):
         Equivalent workflow CRS.
 
     """
-    return crs
-    #return CRS.from_dict(crs.proj4_params)
+    return CRS.from_user_input(crs)
 
 
 def to_cartopy(crs):
@@ -237,79 +236,11 @@ def to_cartopy(crs):
 
     Adopted from: https://pyproj4.github.io/pyproj/stable/crs_compatibility.html
     """
+    import packaging.version
+    assert packaging.version.Version(cartopy.__version__) >= packaging.version.Version('0.20.0')
     import cartopy.crs as ccrs
-
-    # this is more robust, as srs could be anything (espg, etc.)
-    #s1 = osr.SpatialReference()
-    #s1.ImportFromProj4(crs.to_proj4())
-    #srs = s1.ExportToProj4()
-    srs = crs.to_dict()
-    # if 'zone' in srs:
-    #     print(f'found a zone: it is {srs["zone"]} of type {type(srs["zone"])}')
-
-    km_proj = {
-        'lon_0': 'central_longitude',
-        'lat_0': 'central_latitude',
-        'x_0': 'false_easting',
-        'y_0': 'false_northing',
-        'k': 'scale_factor',
-        'zone': 'zone',
-    }
-    km_globe = { 'a': 'semimajor_axis', 'b': 'semiminor_axis', }
-    km_std = { 'lat_1': 'lat_1', 'lat_2': 'lat_2', }
-    kw_proj = dict()
-    kw_globe = dict()
-    kw_std = dict()
-
-    for k, v in srs.items():
-        try:
-            v = int(v)
-        except:
-            try:
-                v = float(v)
-            except:
-                pass
-        if k == 'proj':
-            if v == 'tmerc':
-                cl = ccrs.TransverseMercator
-            elif v == 'lcc':
-                cl = ccrs.LambertConformal
-            elif v == 'merc':
-                cl = ccrs.Mercator
-            elif v == 'utm':
-                cl = ccrs.UTM
-            elif v == 'aea':
-                cl = ccrs.AlbersEqualArea
-            elif v == 'laea':
-                cl = ccrs.LambertAzimuthalEqualArea
-            elif v == 'longlat':
-                cl = ccrs.PlateCarree
-            elif v == 'cea':
-                cl = ccrs.LambertCylindrical
-                kw_globe = None
-            else:
-                raise NotImplementedError('Proj4-to-Cartopy needs to be updated.')
-        if k in km_proj:
-            kw_proj[km_proj[k]] = v
-        if k in km_globe:
-            kw_globe[km_globe[k]] = v
-        if k in km_std:
-            kw_std[km_std[k]] = v
-
-    globe = None
-    if kw_globe:
-        globe = ccrs.Globe(**kw_globe)
-        kw_proj['globe'] = globe
-    if kw_std:
-        kw_proj['standard_parallels'] = (kw_std['lat_1'], kw_std['lat_2'])
-
-    # mercator
-    if cl.__name__ == 'Mercator' or cl.__name__ == 'LambertCylindrical':
-        kw_proj.pop('false_easting', None)
-        kw_proj.pop('false_northing', None)
-
-    return cl(**kw_proj)
-
+    return ccrs.CRS(crs)
+    
 
 def from_string(string):
     """Returns a CRS from a proj string"""

@@ -365,16 +365,6 @@ def _indexed_colormap(label, all_colors):
     return _generate_colormap
 
 
-import watershed_workflow.sources.manager_nlcd
-
-generate_nlcd_colormap = _indexed_colormap('NLCD', watershed_workflow.sources.manager_nlcd.colors)
-
-import watershed_workflow.sources.manager_modis_appeears
-
-generate_modis_colormap = _indexed_colormap(
-    'MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
-
-
 def colorbar_index(ncolors, cmap, labels=None, **kwargs):
     """Add an indexed colorbar based on a given colormap.
 

@@ -53,14 +53,14 @@ class Nodes:
             yield k
 
 
-def oneway_trip_connect(inds):
+def connectOnewayTrip(inds):
     """Connect indices in edges in a oneway fashion"""
     return [(inds[i], inds[i + 1]) for i in range(len(inds) - 1)]
 
 
-def round_trip_connect(inds):
+def connectRoundTrip(inds):
     """Connect indices in edges in a round-trip fashion"""
-    return oneway_trip_connect(inds) + [(inds[-1], inds[0]), ]
+    return connectOnewayTrip(inds) + [(inds[-1], inds[0]), ]
 
 
 def orient(e):
@@ -85,15 +85,15 @@ class NodesEdges:
         """Adds nodes and edges from obj into collection."""
         if type(obj) is shapely.geometry.LineString:
             inds = [self.nodes[c] for c in obj.coords]
-            [self.edges.add(orient(e)) for e in oneway_trip_connect(inds) if orient(e)]
+            [self.edges.add(orient(e)) for e in connectOnewayTrip(inds) if orient(e)]
         elif type(obj) is shapely.geometry.Polygon:
             inds = [self.nodes[c] for c in obj.boundary.coords]
-            [self.edges.add(orient(e)) for e in round_trip_connect(inds) if orient(e)]
+            [self.edges.add(orient(e)) for e in connectRoundTrip(inds) if orient(e)]
         else:
             raise TypeError("Invalid type for add, %r" % type(obj))
 
     def check(self, tol):
-        """Checks consistency of the interal representation."""
+        """Checks consistency of the internal representation."""
         logging.info(" checking graph consistency")
         logging.info(" tolerance is set to {}".format(tol))
         min_dist = 1.e10
@@ -233,7 +233,7 @@ def triangulate(hucs,
     return mesh_points, mesh_tris
 
 
-def refine_from_max_area(max_area):
+def refineByMaxArea(max_area):
     """Returns a refinement function based on max area, for use with Triangle."""
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on a global max area."""
@@ -245,7 +245,7 @@ def refine_from_max_area(max_area):
     return refine
 
 
-def refine_from_river_distance(near_distance, near_area, away_distance, away_area, rivers):
+def refineByRiverDistance(near_distance, near_area, away_distance, away_area, rivers):
     """Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.
 
     Triangle area must be smaller than near_area when the triangle
@@ -274,7 +274,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
     if type(rivers[0]) == shapely.geometry.Polygon:
         river_multiline = shapely.geometry.MultiPolygon(rivers)
     else:
-        river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
+        river_multiline = shapely.geometry.MultiLineString([r.segment for river in rivers for r in river])
 
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
@@ -289,7 +289,7 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
     return refine
 
 
-def refine_from_max_edge_length(edge_length):
+def refineByMaxEdgeLength(edge_length):
     """Returns a refinement function based on max edge length, for use with Triangle."""
     def refine(vertices, area):
         verts4 = np.array([vertices[0], vertices[1], vertices[2], vertices[0]])
@@ -299,7 +299,7 @@ def refine_from_max_edge_length(edge_length):
     return refine
 
 
-def pick_hole_point(poly):
+def pickHolePoint(poly):
     """A function to pick a point inside a polygon"""
     nodes_edges_rc = NodesEdges([poly])
     p1 = list(nodes_edges_rc.nodes)[0]

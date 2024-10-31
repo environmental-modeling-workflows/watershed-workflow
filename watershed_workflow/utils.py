@@ -28,83 +28,7 @@ import watershed_workflow.crs
 _tol = 1.e-7
 
 
-#
-# Constructors
-#
-def create_shply(shape, properties=None, flip=False):
-    """Converts a fiona style shape to a shapely shape with as much collapsing as possible.
-
-    Note this collapses objects -- for instance, fiona MultiPolygons of length
-    1 are turned into shapely Polygons.
-
-    Parameters
-    ----------
-    shape : fiona shape
-      Fiona shape to convert to shapely.
-    properties : dict, optional
-      A dictionary of parameters to associate with the object.  Defaults to
-      shape['properties'] if it exists, None otherwise.
-    flip : bool, optional
-      Flip x,y coordinates while making the translation.  This helps if files
-      provide lat-long ordered coordinates (note that is y,x) as opposed to
-      long-lat (x,y).  Default is False.
-
-    Returns
-    -------
-    thing : shapely shape
-    """
-    if 'geometry' in shape:
-        if properties is None:
-            if 'properties' in shape:
-                properties = shape['properties']
-            else:
-                properties = dict()
-        shape = shape['geometry']
-
-    try:
-        thing = shapely.geometry.shape(shape)
-        if type(thing) is shapely.geometry.MultiPoint and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-        elif type(thing) is shapely.geometry.MultiLineString and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-        elif type(thing) is shapely.geometry.MultiPolygon and len(thing.geoms) == 1:
-            thing = thing.geoms[0]
-
-        # first check for latlon instead of lonlat
-        if flip:
-            thing = shapely.ops.transform(lambda x, y: (y, x), thing)
-
-        thing.properties = properties
-        thing_2D = remove_third_dimension(thing)
-        thing_2D.properties = thing.properties
-        return thing_2D
-
-    except ValueError:
-        raise ValueError(
-            'Converting to shapely got error: "%s"  Maybe you forgot to do shp["geometry"]?')
-
-
-def deepcopy(list_of_shapes):
-    """Deals with properties dictionary"""
-    new_list = [shp.__class__(shp) for shp in list_of_shapes]
-    for new, old in zip(new_list, list_of_shapes):
-        if hasattr(old, 'properties'):
-            new.properties = old.properties
-    return new_list
-
-
-def create_bounds(f):
-    """General bounding box for fiona and shapely types."""
-    # fiona type
-    x, y = zip(*list(generate_coords(f)))
-    # except TypeError:
-    #     # shapely type
-    #     return f.bounds
-    # else:
-    return min(x), min(y), max(x), max(y)
-
-
-def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, count=1):
+def createRasterProfile(bounds, crs, resolution, dtype=None, nodata=None, count=1):
     """Creates a profile for a raster.
 
     Parameters
@@ -162,7 +86,7 @@ def create_raster_profile(bounds, crs, resolution, dtype=None, nodata=None, coun
     return out_profile
 
 
-def create_empty_raster(bounds, crs, resolution, nodata, count=1):
+def createEmptyRaster(bounds, crs, resolution, nodata, count=1):
     """Generates a profile and a nodata-filled array."""
     profile = create_raster_profile(bounds, crs, resolution, nodata=nodata, count=count)
     out = profile['nodata'] * np.ones(
@@ -170,70 +94,56 @@ def create_empty_raster(bounds, crs, resolution, nodata, count=1):
     return profile, out
 
 
-#
-# Generic routines for manipulating shapes and rasters
-#
-def is_empty_shapely(shp):
-    """Is shp None or empty"""
-    return shp is None or shp.is_empty
-
-
-def round_shapes(list_of_things, digits):
+def roundShplys(df, digits):
     """Rounds coordinates in things or shapes to a given digits."""
-    for shp in list_of_things:
-        for ring in generate_rings(shp):
-            ring[:] = list(np.array(ring).round(digits))
-
-
-def round_shplys(list_of_things, digits):
-    """Rounds coordinates in things or shapes to a given digits."""
-    return [
+    new_geom = [
         shapely.wkt.loads(shapely.wkt.dumps(thing, rounding_precision=digits)).simplify(0)
-        for thing in list_of_things
+        for thing in df.geometry
     ]
+    df['geometry'] = new_geom
+    
 
-
-def remove_third_dimension(geom):
+def _removeThirdDimension(shply):
     """Removes the third dimension of a shapely object."""
-    if geom.is_empty:
-        return geom
+    if shply.is_empty:
+        return shply
 
-    if isinstance(geom, shapely.geometry.Polygon):
-        exterior = geom.exterior
+    if isinstance(shply, shapely.geometry.Polygon):
+        exterior = shply.exterior
         new_exterior = remove_third_dimension(exterior)
-        interiors = geom.interiors
+        interiors = shply.interiors
         new_interiors = []
         for int in interiors:
             new_interiors.append(remove_third_dimension(int))
         return shapely.geometry.Polygon(new_exterior, new_interiors)
 
-    elif isinstance(geom, shapely.geometry.LinearRing):
-        return shapely.geometry.LinearRing([xy[0:2] for xy in list(geom.coords)])
+    elif isinstance(shply, shapely.geometry.LinearRing):
+        return shapely.geometry.LinearRing([xy[0:2] for xy in list(shply.coords)])
 
-    elif isinstance(geom, shapely.geometry.LineString):
-        return shapely.geometry.LineString([xy[0:2] for xy in list(geom.coords)])
+    elif isinstance(shply, shapely.geometry.LineString):
+        return shapely.geometry.LineString([xy[0:2] for xy in list(shply.coords)])
 
-    elif isinstance(geom, shapely.geometry.Point):
-        return shapely.geometry.Point([xy[0:2] for xy in list(geom.coords)])
+    elif isinstance(shply, shapely.geometry.Point):
+        return shapely.geometry.Point([xy[0:2] for xy in list(shply.coords)])
 
-    elif isinstance(geom, shapely.geometry.MultiPoint):
-        points = list(geom.geoms)
+    elif isinstance(shply, shapely.geometry.MultiPoint):
+        points = list(shply.geoms)
         new_points = []
         for point in points:
             new_points.append(remove_third_dimension(point))
 
         return shapely.geometry.MultiPoint(new_points)
 
-    elif isinstance(geom, shapely.geometry.MultiLineString):
-        lines = list(geom.geoms)
+    elif isinstance(shply, shapely.geometry.MultiLineString):
+        lines = list(shply.geoms)
         new_lines = []
         for line in lines:
             new_lines.append(remove_third_dimension(line))
 
         return shapely.geometry.MultiLineString(new_lines)
 
-    elif isinstance(geom, shapely.geometry.MultiPolygon):
-        pols = list(geom.geoms)
+    elif isinstance(shply, shapely.geometry.MultiPolygon):
+        pols = list(shply.geoms)
 
         new_pols = []
         for pol in pols:
@@ -241,19 +151,24 @@ def remove_third_dimension(geom):
 
         return shapely.geometry.MultiPolygon(new_pols)
 
-    elif isinstance(geom, shapely.geometry.GeometryCollection):
-        geoms = list(geom.geoms)
+    elif isinstance(shply, shapely.geometry.GeometryCollection):
+        shplys = list(shply.geoms)
 
-        new_geoms = []
-        for geom in geoms:
-            new_geoms.append(remove_third_dimension(geom))
+        new_shplys = []
+        for shply in shplys:
+            new_shplys.append(remove_third_dimension(shply))
 
-        return shapely.geometry.GeometryCollection(new_geoms)
+        return shapely.geometry.GeometryCollection(new_shplys)
 
     else:
         raise RuntimeError("Currently this type of geometry is not supported: {}".format(
-            type(geom)))
+            type(shply)))
 
+
+def removeThirdDimension(df):
+    df['geometry'] = [_removeThirdDimension(g) for g in df['geometry']]
+    return
+    
 
 def flatten(list_of_shps):
     """Flattens a list of shapes, that may contain Multi-objects, into  list without multi-objects"""
@@ -268,7 +183,7 @@ def flatten(list_of_shps):
     return new_list
 
 
-def impute_holes2D(arr, nodata=np.nan, method='cubic'):
+def imputeHoles2D(arr, nodata=np.nan, method='cubic'):
     """Very simple imputation algorithm to interpolate values for missing data in rasters.
 
     Note, this may throw if there is a hole on the boundary?
@@ -307,7 +222,7 @@ def impute_holes2D(arr, nodata=np.nan, method='cubic'):
     return res
 
 
-def compute_average_year(data, output_nyears=1, smooth=False, **kwargs):
+def computeAverageYear(data, output_nyears=1, smooth=False, **kwargs):
     """Averages and smooths to form a "typical" year.
 
     Parameters
@@ -356,10 +271,7 @@ def compute_average_year(data, output_nyears=1, smooth=False, **kwargs):
     return data
 
 
-def interpolate_in_time_regular(times,
-                                data,
-                                start,
-                                end,
+def interpolateInTimeRegular(times, data, start, end,
                                 dt=datetime.timedelta(days=1),
                                 axis=0,
                                 **kwargs):
@@ -402,7 +314,7 @@ def interpolate_in_time_regular(times,
     return new_times, new_data
 
 
-def interpolate_in_time(times, data, new_times, axis=0, units="days since 2000", **kwargs):
+def interpolateInTime(times, data, new_times, axis=0, units="days since 2000", **kwargs):
     """Interpolate time-dependent data to an arbitrary other time array.
 
     Parameters
@@ -446,7 +358,7 @@ def interpolate_in_time(times, data, new_times, axis=0, units="days since 2000",
     return new_data
 
 
-def smooth_array(data, method, axis=0, **kwargs):
+def smoothArray(data, method, axis=0, **kwargs):
     """Smooths fixed-interval time-series data using a Sav-Gol filter from scipy.
 
     Note that this wrapper just sets some sane default values for
@@ -507,7 +419,7 @@ def smooth_array(data, method, axis=0, **kwargs):
         raise ValueError(f'Invalid smooth method {method}')
 
 
-def generate_rings(obj):
+def generateRings(obj):
     """Generator for a fiona shape's coordinates object and yield rings.
 
     As long as the input is conforming, the type of the geometry doesn't matter.
@@ -521,22 +433,22 @@ def generate_rings(obj):
     rings : iterator
       Iterates over rings, each of which is a list of coordinate tuples.    
     """
-    def _generate_rings(coords):
+    def _generateRings(coords):
         for e in coords:
             if isinstance(e[0], (float, int)):
                 yield coords
                 break
             else:
-                for r in _generate_rings(e):
+                for r in _generateRings(e):
                     yield r
 
     if 'geometry' in obj:
         obj = obj['geometry']
-    for r in _generate_rings(obj['coordinates']):
+    for r in _generateRings(obj['coordinates']):
         yield r
 
 
-def generate_coords(obj):
+def generateCoords(obj):
     """Generator for a fiona geometry's coordinates.
 
     As long as the input is conforming, the type of the geometry doesn't
@@ -557,7 +469,7 @@ def generate_coords(obj):
     if obj['type'] == 'Point':
         yield obj['coordinates']
     else:
-        for ring in generate_rings(obj):
+        for ring in generateRings(obj):
             for c in ring:
                 yield c
 
@@ -567,7 +479,7 @@ def generate_coords(obj):
 #
 
 
-def close(s1, s2, tol=_tol):
+def isClose(s1, s2, tol=_tol):
     """Are two shapely shapes topologically equivalent and geometrically close?
 
     Note this deals with things like rotations of polygons (clock-rotating the
@@ -616,22 +528,22 @@ def close(s1, s2, tol=_tol):
 
     if is_multi(s1):
         if local_len(s1) == 1:
-            return close(next(iter(s1)), s2, tol)
+            return isClose(next(iter(s1)), s2, tol)
 
     if is_multi(s2):
         if local_len(s2) == 1:
-            return close(s1, next(iter(s2)), tol)
+            return isClose(s1, next(iter(s2)), tol)
 
     if is_multi(s1) and is_multi(s2):
         if local_len(s1) != local_len(s2):
             return False
-        return all(close(i1, i2, tol) for (i1, i2) in zip(s1, s2))
+        return all(isClose(i1, i2, tol) for (i1, i2) in zip(s1, s2))
 
     # points get compared as tuples
     if isinstance(s1, shapely.geometry.Point):
-        return close(s1.coords[0], s2, tol)
+        return isClose(s1.coords[0], s2, tol)
     if isinstance(s2, shapely.geometry.Point):
-        return close(s1, s2.coords[0], tol)
+        return isClose(s1, s2.coords[0], tol)
 
     # types should be the same now
     if type(s1) != type(s2):
@@ -675,7 +587,7 @@ def close(s1, s2, tol=_tol):
             found = False
             for i, l2 in enumerate(s2):
                 if not good2[i]:
-                    if close(l1, l2, tol):
+                    if isClose(l1, l2, tol):
                         good2[i] = True
                         found = True
                         break
@@ -730,8 +642,8 @@ def cut(line, cutline, tol=1.e-5):
             #logging.debug("Cut intersected at point")
             #logging.debug("  inter point: %r"%list(point.coords[0]))
             #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-            #logging.debug("  close? = %r"%(close(point, seg.coords[-1], tol)))
-            if close(point, seg.coords[-1], tol):
+            #logging.debug("  close? = %r"%(isClose(point, seg.coords[-1], tol)))
+            if isClose(point, seg.coords[-1], tol):
                 # intersects at the far point
                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
                 #logging.debug("  appended full segment: %r"%(list(segs[-1].coords)))
@@ -744,7 +656,7 @@ def cut(line, cutline, tol=1.e-5):
                     segcoords = [point, ]
                 i += 2  # also skip the next seg, which would also
                 # intersect at that seg's start point
-            elif close(point, seg.coords[0], tol):
+            elif isClose(point, seg.coords[0], tol):
                 # intersects at the near point
                 if i != 0:
                     assert (len(segcoords) > 1)
@@ -773,12 +685,12 @@ def cut(line, cutline, tol=1.e-5):
     return segs
 
 
-def distance(p1, p2):
+def computeDistance(p1, p2):
     """Distance between two points in tuple form"""
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
-def in_neighborhood(obj1, obj2, tol=0.1):
+def inNeighborhood(obj1, obj2, tol=0.1):
     """Determines if two objects can possibly intersect by performing a
     quick check of their bounding boxes.
     """
@@ -792,7 +704,7 @@ def in_neighborhood(obj1, obj2, tol=0.1):
     return True
 
 
-def intersect_point_to_segment(point, line_start, line_end):
+def intersectPointToSegment(point, line_start, line_end):
     """Finds the nearest point on a line segment to a point"""
     line_magnitude = line_end.distance(line_start)
     assert (line_magnitude > _tol)
@@ -812,16 +724,30 @@ def intersect_point_to_segment(point, line_start, line_end):
         return shapely.geometry.Point([ix, iy])
 
 
-def nearest_point(line, point):
+def findNearestPoint(point, line, tol=None):
     """Returns the nearest coordinate on the line to point.  
 
     Note point is expected as coordinates."""
-    if isinstance(point, tuple):
-        point = shapely.geometry.Point(point)
-    return shapely.ops.nearest_points(point, line)[1].coords[0]
+    if tol is None:
+        if isinstance(point, tuple):
+            point = shapely.geometry.Point(point)
+        return shapely.ops.nearest_points(point, line)[1].coords[0]
+    else:
+        if inNeighborhood(shapely.geometry.Point(point), line, tol):
+            logging.debug("  - in neighborhood")
+            nearest_p = findNearestPoint(point, line, None)
+            dist = computeDistance(nearest_p, point)
+            logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
+            if dist < tol:
+                if dist < 1.e-7:
+                    # filter case where the point is already there
+                    if any(isClose(point, c) for c in line.coords):
+                        return None
+                return nearest_p
+        return None
 
 
-def triangle_area(vertices):
+def computeTriangleArea(vertices):
     """Area of a triangle in 2D"""
     xy1 = vertices[0]
     xy2 = vertices[1]
@@ -832,20 +758,20 @@ def triangle_area(vertices):
     return A
 
 
-def is_collinear(p0, p1, p2, tol=1e-6):
+def isCollinear(p0, p1, p2, tol=1e-6):
     """this function checks if three points are collinear for given tolerance value"""
     x1, y1 = p1[0] - p0[0], p1[1] - p0[1]
     x2, y2 = p2[0] - p0[0], p2[1] - p0[1]
     return abs(x1*y2 - x2*y1) < tol
 
 
-def area(vertices):
+def computeArea(vertices):
     """Area of polygons in 2D"""
     area = shapely.geometry.Polygon(vertices).area
     return area
 
 
-def angle(v1, v2):
+def computeAngle(v1, v2):
     """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
     of 2 relative to 1 in a clockwise notion."""
     x1 = v1[0]
@@ -866,7 +792,7 @@ def angle(v1, v2):
         return mag
 
 
-def midpoint(p1, p2):
+def computeMidpoint(p1, p2):
     """Returns the midpoint of two points"""
     if isinstance(p1, shapely.geometry.Point):
         return midpoint(p1.coords[0], p2)
@@ -875,14 +801,14 @@ def midpoint(p1, p2):
     return ((p1[0] + p2[0]) / 2., (p1[1] + p2[1]) / 2.)
 
 
-def closest_point_ind(point, points):
+def findClosestPointInd(point, points):
     """Returns the index of closest point from an array of points"""
     points = np.asarray(points)
     dist_2 = np.sum((points - point)**2, axis=1)
     return np.argmin(dist_2)
 
 
-def center(objects, centering=True):
+def recenter(objects, centering=True):
     """Centers a collection of objects by removing their collective centroid"""
     if type(centering) is shapely.geometry.Point:
         centroid = centering
@@ -908,7 +834,7 @@ def center(objects, centering=True):
     return new_objs, centroid
 
 
-def orientation(p1, p2, p3):
+def computeOrientation(p1, p2, p3):
     """to find the orientation of an ordered triplet (p1,p2,p3) function returns the following values:
       0 : Collinear points
       1 : Clockwise points
@@ -934,27 +860,27 @@ def intersects(shp1, shp2):
     the same... we avoid using shapely.intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not is_empty_shapely(inter)
+    return not isEmptyShapely(inter)
 
 
-def non_point_intersection(shp1, shp2):
+def isNonPointIntersection(shp1, shp2):
     """Checks whether an intersection is larger than a point.
     
     Note that intersection being empty and intersects are not always reliably
     the same... we avoid using intersects() for this reason.
     """
     inter = shp1.intersection(shp2)
-    return not (is_empty_shapely(inter) or \
+    return not (isEmpty(inter) or \
                 isinstance(inter, shapely.geometry.Point))
 
 
-def volumetric_intersection(shp1, shp2):
+def isVolumetricIntersection(shp1, shp2):
     """Checks whether an intersection includes volume and not just points and lines."""
     inter = shp1.intersection(shp2)
     return inter.area > 0
 
 
-def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):
+def filterToShape(shape, to_filter, tol=None, algorithm='intersects'):
     """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
 
     algorithm is one of 'contains' or 'intersects' to indicate whether
@@ -976,7 +902,10 @@ def filter_to_shape(shape, to_filter, tol=None, algorithm='intersects'):
     return [s for s in to_filter if op(s)]
 
 
-def is_convex(points):
+def isEmpty(shply):
+    return shply is None or shply.is_empty
+
+def isConvex(points):
     poly = shapely.geometry.Polygon(points)
     return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
 
@@ -996,7 +925,7 @@ def cluster(points, tol):
     return indices - 1, centroids
 
 
-def treat_segment_collinearity(segment_coords, tol=1e-5):
+def breakSegmentCollinearity(segment_coords, tol=1e-5):
     """This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment"""
     col_checks = []
     for i in range(0,
@@ -1005,7 +934,7 @@ def treat_segment_collinearity(segment_coords, tol=1e-5):
         p0 = segment_coords[i]
         p1 = segment_coords[i + 1]
         p2 = segment_coords[i + 2]
-        if watershed_workflow.utils.is_collinear(
+        if watershed_workflow.utils.isCollinear(
                 p0, p1, p2, tol=tol):  # treating collinearity through a small pertubation
             del_ortho = 10 * tol  # shift in the middle point
             if (p2[0] - p0[0]) == 0:
@@ -1016,6 +945,6 @@ def treat_segment_collinearity(segment_coords, tol=1e-5):
             del_x = -1 * del_ortho * m / (1 + m**2)**0.5
             p1 = (p1[0] + del_x, p1[1] + del_y)
             segment_coords[i + 1] = p1
-        col_checks.append(is_collinear(p0, p1, p2))
+        col_checks.append(isCollinear(p0, p1, p2))
     assert (sum(col_checks) == 0)
     return segment_coords

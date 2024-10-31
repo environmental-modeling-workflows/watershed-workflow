@@ -19,6 +19,7 @@ def check_2D_geometry(m2):
 
 def test_2D(two_boxes):
     """Create a 2D mesh, extrude, write."""
+    two_boxes = list(two_boxes.geometry)
     coords1 = np.array(two_boxes[0].exterior.coords)[:-1]
     coords2 = np.array(two_boxes[1].exterior.coords)[:-1]
     coords_xy = np.concatenate([coords1, coords2[1:3]], axis=0)
@@ -67,6 +68,6 @@ def test_write():
     else:
         assert (os.path.isfile('./mesh.exo'))
 
-        import netCDF4
-        with netCDF4.Dataset('./mesh.exo', 'r') as fid:
-            assert (20 == fid.dimensions['num_elem'].size)
+        import xarray
+        with xarray.open_dataset('./mesh.exo') as fid:
+            assert 20 == fid.sizes['num_el_in_blk1']

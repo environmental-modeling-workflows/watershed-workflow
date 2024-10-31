@@ -9,7 +9,7 @@ _tol = 1.e-7
 
 
 def assert_close(s1, s2, tol=_tol):
-    assert (watershed_workflow.utils.close(s1, s2, tol))
+    assert (watershed_workflow.utils.isClose(s1, s2, tol))
 
 
 # ===== river shapes =====
@@ -114,3 +114,27 @@ def three_boxes():
     shps.append(shapely.geometry.Polygon(b2))
     shps.append(shapely.geometry.Polygon(b3))
     return shps
+
+
+@pytest.fixture
+@to_dataframe
+def watershed_poly():
+    """Create watershed polygon, mocking NHDPLus dataset"""
+    ws1 = shapely.geometry.Polygon(
+        100 * np.array([[0, 0], [1, 0], [3, 0], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [3, 4.5],
+                        [2, 5], [1, 4.5], [0, 4], [0, 3], [0, 2], [0, 1]], 'd'))
+    return [ws1,]
+
+
+@pytest.fixture
+@to_dataframe
+def watershed_reaches():
+    """Create a list of reaches, mocking NHDPLus dataset"""
+    reach1 = shapely.geometry.LineString([(200, 200), (200, 0)])
+    reach2 = shapely.geometry.LineString([(50, 300), (100, 300), (100, 200), (200, 200)])
+    reach3 = shapely.geometry.LineString([(350, 400), (350, 300), (300, 300), (300, 200),
+                                          (200, 200)])
+    reach4 = shapely.geometry.LineString([(100, 400), (200, 300)])
+    reaches = [reach1, reach2, reach3, reach4]
+    return reaches
+

@@ -42,8 +42,8 @@ def test_simplify():
         ls = shapely.geometry.LineString(newc)
         ls_s = ls.simplify(.01)
         mygood = ((len(ls_s.coords) == 2)
-                  and watershed_workflow.utils.close(ls_s.coords[0], ls.coords[0], 1.e-10)
-                  and watershed_workflow.utils.close(ls_s.coords[-1], ls.coords[-1], 1.e-10))
+                  and watershed_workflow.utils.isClose(ls_s.coords[0], ls.coords[0], 1.e-10)
+                  and watershed_workflow.utils.isClose(ls_s.coords[-1], ls.coords[-1], 1.e-10))
         good.append(mygood)
 
     print("Good % = ", sum(1 for i in good if i) / 100.0)
@@ -61,7 +61,7 @@ def test_snap():
     ls = shapely.ops.snap(l, l2, 1)
     print(list(ls.coords))
     assert (len(ls.coords) is 3)
-    assert (watershed_workflow.utils.close(l2.coords[1], ls.coords[0], 1.e-8))
+    assert (watershed_workflow.utils.isClose(l2.coords[1], ls.coords[0], 1.e-8))
 
 
 def test_snap2():
@@ -75,7 +75,7 @@ def test_snap2():
     ls = shapely.ops.snap(l, l2, 1)
     print(list(ls.coords))
     assert (len(ls.coords) is 2)
-    assert (watershed_workflow.utils.close(ls.coords[0], l.coords[0], 1.e-8))
+    assert (watershed_workflow.utils.isClose(ls.coords[0], l.coords[0], 1.e-8))
 
 
 def test_kdtree():

@@ -16,7 +16,7 @@ import watershed_workflow.crs
 def epsg_harness(epsg, test_cartopy=True):
     gold = watershed_workflow.crs.from_epsg(epsg)
 
-    fcrs = watershed_workflow.crs.from_fiona(fiona.crs.from_epsg(epsg))
+    fcrs = watershed_workflow.crs.from_fiona(fiona.crs.CRS.from_epsg(epsg))
     rcrs = watershed_workflow.crs.from_rasterio(rasterio.crs.CRS.from_string(
         'EPSG:{}'.format(epsg)))
     ppcrs2 = watershed_workflow.crs.from_proj(pyproj.crs.CRS('EPSG:{}'.format(epsg)))

@@ -35,34 +35,35 @@ _tol = 1.e-7
 class _RowView:
     """A helper class, this is what is returned in a call to node.properties.
 
-    This behaves like a dictionary and represents the row of the
-    pandas DataFrame that stores the underlying data in the tree.  Why
-    we can't just return a row is because of pandas Copy-on-Write
-    mechanism.
+    This behaves like a dictionary and represents a reference/view to
+    the row of the pandas DataFrame that stores the underlying data in
+    the tree.  Why we can't just return a row is because of pandas
+    Copy-on-Write mechanism.
+
     """
     def __init__(self, df, index):
         self._df = df
         self._index = index
 
     def __len__(self):
-        return len(df.keys())
+        return len(self._df.keys())
         
     def __getitem__(self, k):
-        return df.at[self._index, k]
+        return self._df.at[self._index, k]
 
     def __setitem__(self, k, v):
         df.loc[self._index, k] = v
 
     def __iter__(self):
-        return df.keys()
+        return self._df.keys()
 
     def keys(self):
-        return df.keys()
+        return self._df.keys()
 
     
 class River(watershed_workflow.tinytree.Tree):
-
     """A tree structure whose node data is stored in a pandas DataFrame, accessed by an index."""
+
     def __init__(self, index, df, children=None):
         """Do not call me.  Instead use the class factory methods, one of:
 
@@ -196,7 +197,7 @@ class River(watershed_workflow.tinytree.Tree):
             parent.addChild(child)
 
     def prune(self):
-        """Removes this node and all below it."""
+        """Removes this node and all below it, merging properties."""
         if self.parent is None:
             raise ValueError("Cannot prune a branch with no parent.")
 
@@ -256,9 +257,16 @@ class River(watershed_workflow.tinytree.Tree):
             node = None
         return node
 
+    def findNode(self, lambd):
+        """Find a node, returning the first whose lambda application is true, or None"""
+        try:
+            return next(n for n in self.preOrder() if lambd(n))
+        except StopIteration:
+            return None
+
     def _isContinuous(self, child, tol=_tol):
         """Is a given child continuous with self?"""
-        return watershed_workflow.utils.close(child.segment.coords[-1], self.segment.coords[0], tol)
+        return watershed_workflow.utils.isClose(child.segment.coords[-1], self.segment.coords[0], tol)
 
     def isLocallyContinuous(self, tol=_tol):
         """Is this node continuous with its parent and children?"""
@@ -300,7 +308,7 @@ class River(watershed_workflow.tinytree.Tree):
 
         self.children = sorted(self.children, key=lambda c: c.HydrologicSequence)
         return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
-            all(child.is_hydroseq_consistent() for child in self.children)
+            all(child.isHydroseqConsistent() for child in self.children)
 
     def isConsistent(self, tol=_tol):
         """Validity checking of the tree."""
@@ -309,6 +317,12 @@ class River(watershed_workflow.tinytree.Tree):
             good &= self.isHydroseqConsistent()
         return good
 
+    def pathToRoot(self):
+        if self.parent is not None:
+            yield self.parent
+            for n in self.parent.pathToRoot():
+                yield n
+    
     def to_crs(self, crs):
         """Warp the coordinate system."""
         self.df.to_crs(crs, inplace=True)
@@ -329,7 +343,11 @@ class River(watershed_workflow.tinytree.Tree):
         self.df['children'] = dict([(n.index, [c.index for c in n.children]) for n in self.preOrder()])
         self.df['children'] = self.df['children'].convert_dtypes()
         return self.df
-        
+
+    def to_mls(self):
+        """Represent this as a shapely.geometry.MultiLineString"""
+        return shapely.geometry.MultiLineString([r.segment for r in self.preOrder()])
+    
     def _copy(self, df):
         """Shallow copy using a provided DataFrame"""
         if df is None:
@@ -564,3 +582,34 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
                                    'outlet_point' : outlet_points,
                                    'geometry' : incremental_cas},
                                   crs=rivers[0].crs)
+
+
+def createRiverTrees(reaches, method='geometry', tol=_tol):
+    """Constructs River objects from a list of reaches.
+
+    Parameters
+    ----------
+    reaches : list[LineString]
+      List of reaches
+    method : str, optional='geometry'
+        Provide the method for constructing rivers.  Valid are:
+
+        * 'geometry' looks at coincident coordinates
+        * 'hydroseq' Valid only for NHDPlus data, this uses the
+          NHDPlus VAA tables Hydrologic Sequence.  If using this
+          method, get_reaches() must have been called with both
+          'HydrologicSequence' and 'DownstreamMainPathHydroSeq'
+          properties requested (or properties=True).
+    tol : float, optional=0.1
+        Defines what close is in the case of method == 'geometry'
+    
+    """
+    if method == 'hydroseq':
+        return watershed_workflow.river_tree.River.constructRiversByHydroseq(reaches)
+    elif method == 'geometry':
+        return watershed_workflow.river_tree.River.constructRiversByGeometry(reaches, tol)
+    else:
+        raise ValueError(
+            "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
+
+

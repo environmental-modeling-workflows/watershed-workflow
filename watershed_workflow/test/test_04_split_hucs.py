@@ -46,8 +46,8 @@ def test_intersect_and_split(two_boxes):
             else:
                 assert type(entry) is shapely.geometry.LineString
                 assert len(entry.coords) is 2
-                watershed_workflow.utils.close(entry.coords[0], (10, -5))
-                watershed_workflow.utils.close(entry.coords[1], (10, 5))
+                watershed_workflow.utils.isClose(entry.coords[0], (10, -5))
+                watershed_workflow.utils.isClose(entry.coords[1], (10, 5))
 
 
 def test_hucs(two_boxes):
@@ -79,25 +79,25 @@ def test_hucs(two_boxes):
     assert (list(b) == [1, ])
     assert (list(i) == [0, ])
 
-    p0 = tb.polygon(0)
+    p0 = tb.computePolygon(0)
     assert (len(p0.boundary.coords) == 5)
-    assert (watershed_workflow.utils.close(two_boxes.geometry[0], p0))
+    assert (watershed_workflow.utils.isClose(two_boxes.geometry[0], p0))
 
-    p1 = tb.polygon(1)
+    p1 = tb.computePolygon(1)
     assert (len(p1.boundary.coords) == 5)
-    assert (watershed_workflow.utils.close(two_boxes.geometry[1], p1))
+    assert (watershed_workflow.utils.isClose(two_boxes.geometry[1], p1))
 
     # boundary gon
-    p3 = tb.exterior()
+    p3 = tb.exterior
     assert (len(p3.boundary.coords) == 7)  # closed polygon
     bndry_c = [(0, -5), (10, -5), (20, -5), (20, 5), (10, 5), (0, 5)]
     poly = shapely.geometry.Polygon(bndry_c)
-    assert (watershed_workflow.utils.close(poly, p3))
+    assert (watershed_workflow.utils.isClose(poly, p3))
 
     # should check that these are close to those in two_boxes, but
     # they are shifted, so this check would be difficult.
     # for b1,b2 in zip(tb.polygons(), two_boxes):
-    #     assert(watershed_workflow.utils.close(b1,b2))
+    #     assert(watershed_workflow.utils.isClose(b1,b2))
 
     # now split the middle
     # one could imagine iterating over the spine and smoothing/doing something
@@ -115,8 +115,8 @@ def test_hucs(two_boxes):
         spine.extend(new_seg_handles)
 
     # now check that the polygons have 5 coordinates (+1 for repeated start/end)
-    p0 = tb.polygon(0)
-    p1 = tb.polygon(1)
+    p0 = tb.computePolygon(0)
+    p1 = tb.computePolygon(1)
     assert (len(p0.boundary.coords) == 6)
     assert (len(p1.boundary.coords) == 6)
     print(list(p0.boundary.coords))
@@ -157,25 +157,25 @@ def test_hucs_triple():
     # note order is not required here, but I don't have a good way of checking without order
     boundaries = [shandle for b in hucs.boundaries for shandle in b]
     bound1 = hucs.segments[boundaries[0]]
-    assert (watershed_workflow.utils.close(bound1,
+    assert (watershed_workflow.utils.isClose(bound1,
                                            shapely.geometry.LineString([(0, 5), (0, -5),
                                                                         (10, -5)])))
 
     bound2 = hucs.segments[boundaries[1]]
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         bound2, shapely.geometry.LineString([(10, -5), (20, -5), (20, 5)])))
 
     bound3 = hucs.segments[boundaries[2]]
-    assert (watershed_workflow.utils.close(
+    assert (watershed_workflow.utils.isClose(
         bound3, shapely.geometry.LineString([(20, 5), (20, 10), (0, 10), (0, 5)])))
 
     intersections = [shandle for b in hucs.intersections for shandle in b]
     spine1 = hucs.segments[intersections[0]]
-    assert (watershed_workflow.utils.close(spine1, shapely.geometry.LineString([(10, 5),
+    assert (watershed_workflow.utils.isClose(spine1, shapely.geometry.LineString([(10, 5),
                                                                                 (10, -5)])))
 
     spine2 = hucs.segments[intersections[1]]
-    assert (watershed_workflow.utils.close(spine2, shapely.geometry.LineString([(0, 5), (10, 5)])))
+    assert (watershed_workflow.utils.isClose(spine2, shapely.geometry.LineString([(0, 5), (10, 5)])))
 
     spine3 = hucs.segments[intersections[2]]
-    assert (watershed_workflow.utils.close(spine3, shapely.geometry.LineString([(10, 5), (20, 5)])))
+    assert (watershed_workflow.utils.isClose(spine3, shapely.geometry.LineString([(10, 5), (20, 5)])))

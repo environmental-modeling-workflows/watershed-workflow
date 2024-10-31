@@ -24,7 +24,6 @@ import shapely
 import warnings
 import functools
 
-import watershed_workflow.vtk_io
 import watershed_workflow.utils
 import watershed_workflow.plot
 import watershed_workflow.colors
@@ -321,6 +320,7 @@ class Mesh2D:
 
     def write_vtk(self, filename):
         """Writes to VTK."""
+        import watershed_workflow.vtk_io
         assert (all(len(c) == 3 for c in self.conn))
         watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
 
@@ -423,6 +423,7 @@ class Mesh2D:
     def read_VTK_Simplices(cls, filename):
         """Constructor from an structured VTK file.
         """
+        import watershed_workflow.vtk_io
         with open(filename, 'rb') as fid:
             data = watershed_workflow.vtk_io.read_buffer(fid)
 
@@ -922,6 +923,7 @@ class Mesh3D:
         mesh.
 
         """
+        import watershed_workflow.vtk_io
         assert (all(len(c) == 5 for c in self.cell_to_face_conn))
         wedges = []
         for c2f in self.cell_to_face_conn:
