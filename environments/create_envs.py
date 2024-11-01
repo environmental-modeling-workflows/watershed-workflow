@@ -18,7 +18,10 @@ PACKAGES_BASE=['python',
                'nbmake',
                'ipympl',
                'ipython',
-               'pynhd', # ... what others?
+               'pynhd',
+               'pygeohydro',
+               'py3dep',
+               'pydaymet',
                ]
 
 # extra packages needed in the WW env when building for a user
