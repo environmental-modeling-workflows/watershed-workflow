@@ -1,30 +1,24 @@
 """A script to help (re-)generate conda environments for Watershed Workflow."""
 
 # packages required for running WW
-PACKAGES_BASE=['python=3.10',
-              'numpy',
-              'matplotlib',
-              'scipy',
-              'pandas',
-              'meshpy',
-              'fiona',
-              'rasterio',
-              'shapely<2',
-              'cartopy',
-              'descartes',
-              'pyproj',
-              'requests',
-              'sortedcontainers',
-              'attrs',
-              'pip',
-              'libarchive',
-              'h5py',
-              'netCDF4',
-              'cftime',
-              'pytest',
-              'nbmake',
-              'ipympl',
-              'ipython',
+PACKAGES_BASE=['python',
+               'numpy',
+               'matplotlib',
+               'scipy',
+               'geopandas',
+               'meshpy',
+               'xarray',
+               'rioxarray',
+               'requests',
+               'sortedcontainers',
+               'attrs',
+               'h5py',
+               'cftime',
+               'pytest',
+               'nbmake',
+               'ipympl',
+               'ipython',
+               'pynhd', # ... what others?
                ]
 
 # extra packages needed in the WW env when building for a user
@@ -72,7 +66,6 @@ PACKAGES_TOOLS=['cmake',
 
 # channels needed to find these packages
 CHANNELS=['conda-forge',
-#          'defaults',
           ]
 
 PACKAGE_MANAGER = 'mamba'

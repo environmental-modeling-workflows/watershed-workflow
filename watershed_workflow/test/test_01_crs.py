@@ -4,36 +4,42 @@ making sure they are the same.
 """
 
 import pytest
-
-import fiona.crs
-import rasterio.crs
 import pyproj
-import cartopy.crs
 
 import watershed_workflow.crs
 
 
-def epsg_harness(epsg, test_cartopy=True):
+def epsg_harness(epsg):
     gold = watershed_workflow.crs.from_epsg(epsg)
 
-    fcrs = watershed_workflow.crs.from_fiona(fiona.crs.CRS.from_epsg(epsg))
-    rcrs = watershed_workflow.crs.from_rasterio(rasterio.crs.CRS.from_string(
-        'EPSG:{}'.format(epsg)))
     ppcrs2 = watershed_workflow.crs.from_proj(pyproj.crs.CRS('EPSG:{}'.format(epsg)))
-
-    # print(f'gold: {gold}')
-    # print(f'fiona: {fcrs}')
-    # print(f'rasterio: {rcrs}')
-    # print(f'proj: {ppcrs2}')
-
-    assert (watershed_workflow.crs.isEqual(gold, fcrs))
-    assert (watershed_workflow.crs.isEqual(gold, rcrs))
     assert (watershed_workflow.crs.isEqual(gold, ppcrs2))
+    
+    try:
+        import fiona
+    except ImportError:
+        pass
+    else:
+        fcrs = watershed_workflow.crs.from_fiona(fiona.crs.CRS.from_epsg(epsg))
+        assert (watershed_workflow.crs.isEqual(gold, fcrs))
 
-    if test_cartopy:
+    try:
+        import rasterio
+    except ImportError:
+        pass
+    else:
+        rcrs = watershed_workflow.crs.from_rasterio(rasterio.crs.CRS.from_string(
+            'EPSG:{}'.format(epsg)))
+        assert (watershed_workflow.crs.isEqual(gold, rcrs))
+
+    try:
+        import cartopy
+    except ImportError:
+        pass
+    else:
         cartopy_crs = cartopy.crs.epsg(epsg)
         ccrs = watershed_workflow.crs.from_cartopy(cartopy_crs)
-        #assert(watershed_workflow.crs.isEqual(gold, ccrs))
+        assert(watershed_workflow.crs.isEqual(gold, ccrs))
 
 
 def test_default():
@@ -45,4 +51,4 @@ def test_alaska():
 
 
 def test_latlon():
-    epsg_harness(4269, False)
+    epsg_harness(4269)

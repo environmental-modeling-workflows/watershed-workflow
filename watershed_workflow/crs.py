@@ -248,7 +248,7 @@ def from_xarray(array):
     """Tries to find a CRS from the xarray DataSet or DataArray."""
     try:
         return from_wkt(array.spatial_ref['crs_wkt'])
-    except AttributeError, KeyError:
+    except (AttributeError, KeyError):
         return None
 
 def to_wkt(crs):

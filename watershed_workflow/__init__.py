@@ -35,16 +35,103 @@ import math
 import scipy
 
 import watershed_workflow.config
-import watershed_workflow.triangulation
+import watershed_workflow.utils
 import watershed_workflow.warp
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
-import watershed_workflow.sources.utils
-import watershed_workflow.sources.manager_shape
-import watershed_workflow.utils
+import watershed_workflow.triangulation
 import watershed_workflow.densification
 import watershed_workflow.river_mesh
+
+#import watershed_workflow.sources.utils
+#import watershed_workflow.sources.manager_shape
+
+
+#
+# functions for relating objects
+# -----------------------------------------------------------------------------
+def findHUC(source, shape, in_crs, hint, shrink_factor=1.e-5):
+    """Finds the smallest HUC containing shp.
+
+    Parameters
+    ----------
+    source : source-type
+        Source object providing a get_hucs() method.
+    shape : Polygon
+        Shapely or fiona polygon on which to get the raster.
+    in_crs : crs-type
+        CRS of shape.
+    hint : str
+        HUC in which to start searching.  This should be at least as long as
+        the indexing file size -- HUC 2 or longer for WBD, 4 or longer for NHD
+        Plus, or 8 or longer for NHD.
+    shrink_factor : float, optional
+        A fraction of the radius of shape to shrink prior for checking
+        containment within HUCs.  This fixes cases where shape is on a HUC
+        boundary with potentially some numerical error.
+
+    Returns
+    ------- 
+    out : str
+        The smallest containing HUC.
+
+    """
+    def _in_huc(shply, huc_shply):
+        """Checks whether shp is in HUC"""
+        if huc_shply.contains(shply):
+            return 2
+        elif huc_shply.intersects(shply):
+            return 1
+        else:
+            return 0
+
+    def _findHUC(source, shply, crs, hint):
+        """Searches in hint to find shp."""
+        logging.debug('searching: %s' % hint)
+        hint_level = len(hint)
+        search_level = hint_level + 2
+        if search_level > source.lowest_level:
+            return hint
+
+        _, subhus = get_hucs(source, hint, search_level, crs)
+
+        for subhu in subhus:
+            inhuc = _in_huc(shply, subhu)
+
+            if inhuc == 2:
+                # fully contained in try_huc, recurse
+                hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
+                logging.debug('  subhuc: %s contains' % hname)
+                return _findHUC(source, shply, crs, hname)
+            elif inhuc == 1:
+                hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
+                logging.debug('  subhuc: %s partially contains' % hname)
+                # partially contained in try_huc, return this
+                return hint
+            else:
+                hname = watershed_workflow.sources.utils.get_code(subhu, search_level)
+                logging.debug('  subhuc: %s does not contain' % hname)
+        assert (False)
+
+    if type(shape) is shapely.geometry.Polygon:
+        shply = shape
+    else:
+        shply = watershed_workflow.utils.create_shply(shape)
+
+    # must shrink the poly a bit in case it is close to or on a boundary
+    radius = np.sqrt(shply.area / np.pi)
+    shply_s = shply.buffer(-shrink_factor * radius)
+
+    hint = watershed_workflow.sources.utils.huc_str(hint)
+
+    _, hint_hu = get_huc(source, hint, in_crs)
+    inhuc = _in_huc(shply_s, hint_hu)
+    if inhuc != 2:
+        raise RuntimeError("{}: shape not found in hinted HUC '{}'".format(source.name, hint))
+
+    result = _findHUC(source, shply_s, in_crs, hint)
+    return result
 
 
 def reduceRivers(rivers,
