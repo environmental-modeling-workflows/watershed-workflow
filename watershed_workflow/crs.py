@@ -41,7 +41,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def is_native(crs):
+def isNative(crs):
     """Is this crs in the native format?"""
     return type(crs) == type(to_proj(crs))
 
@@ -59,13 +59,6 @@ def from_proj(crs):
     out : crs-type
         Equivalent workflow CRS.
     """
-    # try:
-    #     # if a proj.6 CRS object or a proj.4 Proj object
-    #     wkt_str = crs.to_wkt()
-    # except AttributeError:
-    #     # if a proj.6 Proj object
-    #     wkt_str = crs.crs.to_wkt()
-    # return CRS.from_wkt(wkt_str)
     return crs
 
 
@@ -82,7 +75,6 @@ def to_proj(crs):
     out : pyproj.crs.CRS
         Equivalent object.
     """
-    #return pyproj.crs.CRS.from_wkt(crs.to_wkt())
     return crs
 
 
@@ -252,80 +244,39 @@ def from_wkt(string):
     return CRS.from_wkt(string)
 
 
+def from_xarray(array):
+    """Tries to find a CRS from the xarray DataSet or DataArray."""
+    try:
+        return from_wkt(array.spatial_ref['crs_wkt'])
+    except AttributeError, KeyError:
+        return None
+
 def to_wkt(crs):
     """Returns the WKT string of a CRS."""
     return crs.to_wkt()
 
 
-def default_crs():
-    """Returns a default CRS that is functionally useful for North America.
+# a default UTM based CRS that is functionally useful for North America.
+default_crs = from_epsg(5070)
 
-    Returns
-    -------
-    out : crs-type
-        The default CRS.  The user should not care what this is (if
-        you do, don't use the default!) but it is EPSG:5070.
+# a default UTM based CRS that is functionally useful for Alaska
+default_alaska_crs = from_epsg(3338)
 
-    """
-    return from_epsg(5070)
+# DayMet's CRS, in m
+daymet_crs = from_string(
+    '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
+)
 
+# DayMet's native CRS, which is in km, not m
+daymet_crs_km = from_string(
+    '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs'
+)
 
-def default_alaska_crs():
-    """Returns a default CRS that is functionally useful for Alaska.
-
-    Returns
-    -------
-    out : crs-type
-        The default CRS.  The user should not care what this is (if
-        you do, don't use the default!) but it is EPSG:3338.
-
-    """
-    return from_epsg(3338)
+# default lat-lon CRS
+latlon_crs = from_epsg(4269)
 
 
-def daymet_crs():
-    """Returns the CRS used by DayMet files, but in m, not km.
-
-    Returns
-    -------
-    out : crs-type
-        The DayMet CRS.  The user should not care what this is.
-
-    """
-    # old proj: return from_string('+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ')
-    # new proj...
-    return from_string(
-        '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
-    )
-
-
-def daymet_crs_native():
-    """Returns the CRS used by DayMet files natively, in km, not in m.
-
-    Returns
-    -------
-    out : crs-type
-        The DayMet CRS.  The user should not care what this is.
-
-    """
-    return from_string(
-        '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=km +no_defs'
-    )
-
-
-def latlon_crs():
-    """Returns the default latitude-longitude CRS.
-
-    Returns
-    -------
-    out : crs-type
-        The default CRS.  The user should not care what this is (if
-        you do, don't use the default!) but it is EPSG:4269.
-    """
-    return from_epsg(4269)
-
-
-def equal(crs1, crs2):
+def isEqual(crs1, crs2):
     """Tries to guess at the equality of two CRS objects.
 
     Note this is not trivial, just checking strings or dicts results

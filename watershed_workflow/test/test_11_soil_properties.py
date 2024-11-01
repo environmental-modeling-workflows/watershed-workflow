@@ -7,7 +7,7 @@ def test_vgm():
     # headers: sand %, silt %, clay %, bulk dens
     data = np.array([70, 15, 15, 1.4])
 
-    vgm = watershed_workflow.soil_properties.vgm_Rosetta(data)
+    vgm = watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta(data)
     print(vgm)
 
 
@@ -15,8 +15,8 @@ def test_vgm2():
     # headers: sand %, silt %, clay %, bulk dens
     data = np.array([[70, 15, 15, 1.4], [50, 25, 25, 1.4]]).transpose()
 
-    vgm = watershed_workflow.soil_properties.vgm_Rosetta(data)
-    ats = watershed_workflow.soil_properties.to_ATS(vgm)
+    vgm = watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta(data)
+    ats = watershed_workflow.soil_properties.convertRosettaToATS(vgm)
     print(ats.keys())
     assert (all(ats['residual saturation [-]'] < 1))
     assert (all(ats['residual saturation [-]'] >= 0))

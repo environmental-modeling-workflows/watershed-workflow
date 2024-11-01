@@ -612,7 +612,7 @@ def snapEndpoints(tree, hucs, tol=_tol):
         to_add_dict[seg_handle].append((component, endpoint, node))
 
     # find the set of points to add to each given segment
-    def equal(p1, p2):
+    def isEqual(p1, p2):
         if watershed_workflow.utils.isClose(p1[2].segment.coords[p1[1]], p2[2].segment.coords[p2[1]],
                                           1.e-5):
             assert (p1[0] == p2[0])
@@ -624,7 +624,7 @@ def snapEndpoints(tree, hucs, tol=_tol):
     for seg_handle, insert_list in to_add_dict.items():
         new_list = []
         for p1 in insert_list:
-            if (all(not equal(p1, p2) for p2 in new_list)):
+            if (all(not isEqual(p1, p2) for p2 in new_list)):
                 new_list.append(p1)
         to_add_dict2[seg_handle] = new_list
 

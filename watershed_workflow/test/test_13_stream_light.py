@@ -44,7 +44,7 @@ def sl_data():
     # Run pyton implementation of StreamLight
 
     ## Channel characteristics
-    sl.set_channel_properties(lat=lat,
+    sl.setChannelProperties(lat=lat,
                               lon=lon,
                               channel_azimuth=channel_azimuth,
                               bottom_width=bottom_width,
@@ -57,10 +57,10 @@ def sl_data():
                               x_LAD=x_LAD)
 
     # Energy drivers
-    sl.set_energy_drivers(doy=doy, hour=hour, tz_offset=tz_offset, sw_inc=sw_inc, lai=lai)
+    sl.setEnergyDrivers(doy=doy, hour=hour, tz_offset=tz_offset, sw_inc=sw_inc, lai=lai)
 
     # Run StreamLight
-    sl.run_streamlight()
+    sl.run()
     #sl.data_comparison = data_comparison
 
     return sl, data_ts, path_data_test

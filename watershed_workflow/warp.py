@@ -16,7 +16,7 @@ pyproj_version = int(pyproj.__version__[0])
 
 def xy(x, y, old_crs, new_crs):
     """Warp a set of points from old_crs to new_crs."""
-    if watershed_workflow.crs.equal(old_crs, new_crs):
+    if watershed_workflow.crs.isEqual(old_crs, new_crs):
         return x, y
 
     old_crs_proj = watershed_workflow.crs.to_proj(old_crs)
@@ -34,7 +34,7 @@ def bounds(bounds, old_crs, new_crs):
 
 def shply(shp, old_crs, new_crs):
     """Warp a shapely object from old_crs to new_crs."""
-    if watershed_workflow.crs.equal(old_crs, new_crs):
+    if watershed_workflow.crs.isEqual(old_crs, new_crs):
         return shp
     old_crs_proj = watershed_workflow.crs.to_proj(old_crs)
     new_crs_proj = watershed_workflow.crs.to_proj(new_crs)
@@ -47,7 +47,7 @@ def shply(shp, old_crs, new_crs):
 
 def shplys(shps, old_crs, new_crs):
     """Warp a collection of shapely objects from old_crs to new_crs."""
-    if watershed_workflow.crs.equal(old_crs, new_crs):
+    if watershed_workflow.crs.isEqual(old_crs, new_crs):
         return shps
     old_crs_proj = watershed_workflow.crs.to_proj(old_crs)
     new_crs_proj = watershed_workflow.crs.to_proj(new_crs)
@@ -126,7 +126,7 @@ def raster(src_profile,
         src_crs = watershed_workflow.crs.from_rasterio(src_crs_rio)
 
     if dst_resolution is None and dst_height is None and dst_width is None and \
-       (dst_crs is None or watershed_workflow.crs.equal(dst_crs, src_crs)):
+       (dst_crs is None or watershed_workflow.crs.isEqual(dst_crs, src_crs)):
         # nothing to do
         return src_profile, src_array
 

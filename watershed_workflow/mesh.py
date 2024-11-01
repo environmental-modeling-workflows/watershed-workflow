@@ -146,7 +146,7 @@ class Mesh2D:
 
     def __attrs_post_init__(self):
         if self._check_handedness:
-            self.check_handedness()
+            self.checkHandedness()
         if self._validate:
             self.validate()
         del self._validate
@@ -230,7 +230,7 @@ class Mesh2D:
     def boundary_nodes(self):
         return [e[0] for e in self.boundary_edges]
 
-    def check_handedness(self):
+    def checkHandedness(self):
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
         for conn in self._conn:
             points = np.array([self.coords[c] for c in conn])

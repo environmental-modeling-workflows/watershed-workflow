@@ -26,14 +26,14 @@ def epsg_harness(epsg, test_cartopy=True):
     # print(f'rasterio: {rcrs}')
     # print(f'proj: {ppcrs2}')
 
-    assert (watershed_workflow.crs.equal(gold, fcrs))
-    assert (watershed_workflow.crs.equal(gold, rcrs))
-    assert (watershed_workflow.crs.equal(gold, ppcrs2))
+    assert (watershed_workflow.crs.isEqual(gold, fcrs))
+    assert (watershed_workflow.crs.isEqual(gold, rcrs))
+    assert (watershed_workflow.crs.isEqual(gold, ppcrs2))
 
     if test_cartopy:
         cartopy_crs = cartopy.crs.epsg(epsg)
         ccrs = watershed_workflow.crs.from_cartopy(cartopy_crs)
-        #assert(watershed_workflow.crs.equal(gold, ccrs))
+        #assert(watershed_workflow.crs.isEqual(gold, ccrs))
 
 
 def test_default():

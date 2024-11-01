@@ -17,7 +17,7 @@ import rosetta
 import watershed_workflow.config
 
 
-def vgm_Rosetta(data):
+def computeVanGenuchtenModel_Rosetta(data):
     """Return van Genuchten model parameters using Rosetta v3 model.
 
     (Zhang and Schaap, 2017 WRR)
@@ -66,7 +66,7 @@ def vgm_Rosetta(data):
     return df
 
 
-def vgm_from_SSURGO(df):
+def computeVanGenuchtenModelFromSSURGO(df):
     """Get van Genutchen model parameters using Rosetta v3.
     
     Parameters
@@ -90,7 +90,7 @@ def vgm_from_SSURGO(df):
 
     # need to transpose the data so that the array have the shape (nvar, nsample)
     data = df_rosetta[rosetta_input_header].values.T
-    vgm = vgm_Rosetta(data)
+    vgm =  computeVanGenuchtenModel_Rosetta(data)
 
     n_shapes = len(df_rosetta)
     n_resp = len(vgm["Rosetta residual volumetric water content [cm^3 cm^-3]"])
@@ -109,7 +109,7 @@ def vgm_from_SSURGO(df):
     return merged
 
 
-def to_ATS(df):
+def convertRosettaToATS(df):
     """Converts units from aggregated, Rosetta standard-parameters to ATS."""
     df_new = pandas.DataFrame()
     for k in df.keys():
@@ -201,7 +201,7 @@ def cluster(rasters, nbins):
     return codebook, codes_nan.reshape(in_shp), (dist1, dist2)
 
 
-def alpha_from_permeability(perm, poro):
+def computeVGAlphaFromPermeability(perm, poro):
     """Compute van Genuchten alpha from permeability and porosity.
 
     Uses the relationship from Guarracino WRR 2007.
@@ -229,7 +229,7 @@ def alpha_from_permeability(perm, poro):
 
 
 # make a bedrock dataframe
-def get_bedrock_properties():
+def getDefaultBedrockProperties():
     """Simple helper function to get a one-row dataframe with bedrock properties.
 
     Returns
@@ -253,10 +253,10 @@ def get_bedrock_properties():
     return df
 
 
-def mangle_glhymps_properties(shapes,
-                              min_porosity=0.01,
-                              max_permeability=np.inf,
-                              max_vg_alpha=np.inf):
+def mangleGLHYMPSProperties(shapes,
+                            min_porosity=0.01,
+                            max_permeability=np.inf,
+                            max_vg_alpha=np.inf):
     """GLHYMPs properties need their units changed and variables renamed.
 
     Parameters
@@ -299,7 +299,7 @@ def mangle_glhymps_properties(shapes,
     #descriptions = [prop['Descriptio'] for prop in shp_props]
     # derived properties
     # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-    vg_alpha = np.minimum(watershed_workflow.soil_properties.alpha_from_permeability(Ksat, poro),
+    vg_alpha = np.minimum(watershed_workflow.soil_properties.computeVGAlphaFromPermeability(Ksat, poro),
                           max_vg_alpha)
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
@@ -319,7 +319,7 @@ def mangle_glhymps_properties(shapes,
     return properties
 
 
-def drop_duplicates(df):
+def dropDuplicates(df):
     """Search for duplicate soils which differ only by ID, and rename them, returning a new df.
 
     Parameters

@@ -22,11 +22,11 @@ def make_points_1D(elevs):
 def run_test_1D(elev_in, elev_out, alg):
     points = make_points_1D(elev_in)
     if alg == 1:
-        watershed_workflow.condition.fill_pits1(points, 0)
+        watershed_workflow.condition.fillPits1(points, 0)
     elif alg == 2:
-        watershed_workflow.condition.fill_pits2(points, 0)
+        watershed_workflow.condition.fillPits2(points, 0)
     elif alg == 3:
-        watershed_workflow.condition.fill_pits3(points, 0)
+        watershed_workflow.condition.fillPits3(points, 0)
 
     print("GOT COORDS:")
     print(([points[i].coords[2] for i in range(len(points))]))
@@ -70,9 +70,3 @@ def test_bad_outlet_pit():
     run_test_1D([0, 1, 3, -1, 4, 5], [0, 1, 3, 3, 4, 5], 2)
     run_test_1D([0, 1, 3, -1, 4, 5], [0, 1, 3, 3, 4, 5], 3)
 
-
-def test_gap_filling():
-    arr_in = np.array([[1, 1, 1], [1, -1, 1], [1, 1, 1]])
-    arr_out = watershed_workflow.condition.fill_gaps(arr_in, -1)
-    arr_gd = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
-    assert (np.allclose(arr_out, arr_gd, 1e-6))

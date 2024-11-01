@@ -46,11 +46,11 @@ class StreamLight:
         # Shading response
         self.shading_response = dict.fromkeys(['fraction_shade_veg', 'fraction_shade_bank'])
 
-    def set_channel_properties(self,
-                               lat,
-                               lon,
-                               channel_azimuth,
-                               bottom_width,
+    def setChannelProperties(self,
+                             lat,
+                             lon,
+                             channel_azimuth,
+                             bottom_width,
                                bank_height,
                                bank_slope,
                                water_depth,
@@ -96,7 +96,7 @@ class StreamLight:
         self.channel_properties['overhang_height'] = overhang_height
         self.channel_properties['x_LAD'] = x_LAD
 
-    def set_energy_drivers(self, doy, hour, tz_offset, sw_inc, lai):
+    def setEnergyDrivers(self, doy, hour, tz_offset, sw_inc, lai):
         """Set the energy drivers. 
 
         Parameters
@@ -117,9 +117,8 @@ class StreamLight:
         self.energy_drivers['sw_inc'] = sw_inc
         self.energy_drivers['lai'] = lai
 
-    def get_solar_angles(self):
-
-        solar_dec, solar_altitude, sza, solar_azimuth = self._calc_solar_angles(
+    def computeSolarAngles(self):
+        solar_dec, solar_altitude, sza, solar_azimuth = self._computeSolarAngles(
             self.energy_drivers['doy'], self.energy_drivers['hour'],
             self.energy_drivers['tz_offset'], self.channel_properties['lat'],
             self.channel_properties['lon'])
@@ -129,9 +128,9 @@ class StreamLight:
         self.solar_angles['sza'] = sza
         self.solar_angles['solar_azimuth'] = solar_azimuth
 
-        self._correct_solar_azimuth()
+        self._correctSolarAzimuth()
 
-    def _calc_solar_angles(self, doy, hour, tz_offset, lat, lon):
+    def _computeSolarAngles(self, doy, hour, tz_offset, lat, lon):
         """This function calculates solar declination, altitude,
         zenith angle, and an initial estimate of azimuth. This initial estimate
         of solar azimuth is passed to the solar_c function where it is adjusted
@@ -195,7 +194,7 @@ class StreamLight:
 
         return solar_dec, solar_altitude, sza, solar_azimuth
 
-    def get_radiative_transfer_estimates_cn_1998(self):
+    def computeRadiativeTransferEstimates(self):
         """This function calculates below canopy PAR. Main references are
             1) Campbell & Norman (1998) An introduction to Environmental biophysics (abbr C&N (1998))
             2) Spitters et al. (1986) Separating the diffuse and direct component of global radiation and its implications for modeling canopy photosynthesis: Part I components of incoming radiation
@@ -262,7 +261,7 @@ class StreamLight:
             self.solar_angles['solar_altitude']) * np.sin(self.solar_angles['solar_altitude']))
         K = (1.47-R) / 1.66
 
-        frac_diff = np.array([self._diffuse_calc(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
+        frac_diff = np.array([self._computeDiffuse(at, rr, kk) for at, rr, kk in zip(atm_trns, R, K)])
 
         ## Partition into diffuse and beam radiation
 
@@ -300,7 +299,7 @@ class StreamLight:
         #-------------------------------------------------
 
         # Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
-        tau_d = np.array([self._dt_calc(ll, x_LAD=1) for ll in self.energy_drivers['lai']])
+        tau_d = np.array([self._computeDt(ll, x_LAD=1) for ll in self.energy_drivers['lai']])
 
         # Extinction coefficient for black leaves in diffuse radiation
         kd = -np.log(tau_d) / self.energy_drivers['lai']
@@ -327,7 +326,7 @@ class StreamLight:
         self.energy_response['total_trans'] = transmitted / 0.5
         self.energy_response['total_trans_PAR_ppfd'] = ppfd
 
-    def _diffuse_calc(self, atm_trns, R, K):
+    def _computeDiffuse(self, atm_trns, R, K):
         """Spitters et al. (1986) Eqs. 20a-20d
         
             So = Extra-terrestrial irradiance on a plane parallel to the earth surface [J m-2 s-1]
@@ -361,7 +360,7 @@ class StreamLight:
             fdiffuse = R
         return fdiffuse
 
-    def _integ_func(self, angle, d_sza, x_LAD, lai):
+    def _computeIntegralFunction(self, angle, d_sza, x_LAD, lai):
         '''Function to calculate the integral in Eq. 4 of Savoy et al. (2021)
         
         Parameters
@@ -382,7 +381,7 @@ class StreamLight:
         return np.exp(-(np.sqrt((x_LAD**2) + (np.tan(angle))**2)/(x_LAD + (1.774 * \
         ((x_LAD + 1.182)**(-0.733))))) * lai) * np.sin(angle) * np.cos(angle) * d_sza
 
-    def _dt_calc(self, lai, x_LAD=1):
+    def _computeDt(self, lai, x_LAD=1):
         '''Function to calculate the diffuse transmission coefficient
         
         Parameters
@@ -403,9 +402,9 @@ class StreamLight:
 
         #Diffuse transmission coefficient for the canopy (C&N (1998) Eq. 15.5)
 
-        return (2 * sum(self._integ_func(angle_seq, d_sza, x_LAD, lai)))
+        return (2 * sum(self._computeIntegralFunction(angle_seq, d_sza, x_LAD, lai)))
 
-    def get_riparian_stream_shading(self):
+    def computeRiparianStreamShading(self):
         """SHADE2 model from Li et al. (2012) Modeled riparian stream shading:
         Agreement with field measurements and sensitivity to riparian conditions
 
@@ -504,10 +503,10 @@ class StreamLight:
 
         ## Calculating shade from the "eastern" bank
 
-        east_bank_shade_length, east_veg_shade_length = self._shade_calc(delta_east)
+        east_bank_shade_length, east_veg_shade_length = self._computeShade(delta_east)
 
         # ## Calculating shade from the "western" bank
-        west_bank_shade_length, west_veg_shade_length = self._shade_calc(delta_west)
+        west_bank_shade_length, west_veg_shade_length = self._computeShade(delta_west)
 
         #-------------------------------------------------
         # Calculate the total length of bank shading
@@ -548,7 +547,7 @@ class StreamLight:
         self.shading_response['fraction_shade_veg'] = fraction_shade_veg
         self.shading_response['fraction_shade_bank'] = fraction_shade_bank
 
-    def _correct_solar_azimuth(self):
+    def _correctSolarAzimuth(self):
         '''Calculates solar geometry for use in the SHADE2 model
 
         Parameters
@@ -587,7 +586,7 @@ class StreamLight:
         # help determine the correct solar azimuth for locations where latitude is
         # greater than the solar declination angle.
 
-        _, _, _, azimuth_tmp = self._calc_solar_angles(self.energy_drivers['doy'],
+        _, _, _, azimuth_tmp = self._computeSolarAngles(self.energy_drivers['doy'],
                                                        self.energy_drivers['hour'] + (1/60/24),
                                                        self.energy_drivers['tz_offset'],
                                                        self.channel_properties['lat'],
@@ -609,7 +608,7 @@ class StreamLight:
 
         self.solar_angles['solar_azimuth_shade2'] = solar_azimuth
 
-    def _shade_calc(self, delta):
+    def _computeShade(self, delta):
         '''Calculating the percent of the wetted width shaded by banks and vegetation
 
         Parameters
@@ -698,7 +697,7 @@ class StreamLight:
 
         return stream_shade_bank, stream_shade_veg_max
 
-    def get_energy_stream(self):
+    def computeEnergyStream(self):
         #-------------------------------------------------
         # Calculating the weighted mean of light reaching the stream surface
         #-------------------------------------------------
@@ -773,11 +772,11 @@ class StreamLight:
         self.energy_response['energy_total_surface'] = energy_total_surface
         self.energy_response['energy_total_surface_PAR_ppfd'] = energy_total_surface_PAR_ppfd
 
-    def run_streamlight(self):
-        self.get_solar_angles()
-        self.get_radiative_transfer_estimates_cn_1998()
-        self.get_riparian_stream_shading()
-        self.get_energy_stream()
+    def run(self):
+        self.computeSolarAngles()
+        self.computeRadiativeTransferEstimates()
+        self.computeRiparianStreamShading()
+        self.computeEnergyStream()
 
     def __str__(self):
         return f"StreamLight Object"

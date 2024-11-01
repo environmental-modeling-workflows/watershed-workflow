@@ -7,9 +7,9 @@ import time
 import cftime, datetime
 import shapely
 import numpy as np
-import netCDF4
 import attr
 import rasterio.transform
+import xarray
 
 import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
@@ -392,7 +392,7 @@ class FileManagerMODISAppEEARS:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         profile = dict()
         logging.info(f'... reading {variable} from {filename}')
-        with netCDF4.Dataset(filename, 'r') as nc:
+        with xarray.open_dataset(filename, 'r') as nc:
             profile['crs'] = watershed_workflow.crs.from_epsg(nc.variables['crs'].epsg_code)
             profile['width'] = nc.dimensions['lon'].size
             profile['height'] = nc.dimensions['lat'].size
