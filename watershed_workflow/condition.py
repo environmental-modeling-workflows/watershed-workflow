@@ -1,3 +1,4 @@
+from typing import Optional, Iterable
 import numpy as np
 import attr
 import sortedcontainers
@@ -13,7 +14,7 @@ import watershed_workflow
 class _Point:
     """POD struct of coordinate and set of neighbors"""
     coords = attr.ib()
-    neighbors = attr.ib(factory=set)
+    neighbors : Optional[Iterable[int]] = attr.ib(factory=set)
 
 
 def fillPits(m2, outlet=None, algorithm=3):

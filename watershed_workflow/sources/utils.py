@@ -28,21 +28,6 @@ def get_code(fiona_or_shply_obj, level):
         return prop[key.lower()]
 
 
-def huc_str(huc):
-    """Converts a huc int or string to a standard-format huc string."""
-    if type(huc) is str:
-        if len(huc) % 2 == 1:
-            huc = "0" + huc
-    elif type(huc) is int:
-        digits = math.ceil(math.log10(huc))
-        if digits % 2 == 1:
-            digits += 1
-        huc = ("%%0%ii"%digits) % huc
-    else:
-        raise RuntimeError("Cannot convert type %r to huc" % type(huc))
-    return huc
-
-
 def get_verify_option():
     """Returns the 'verify' option for requests as provided in config files."""
     verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']

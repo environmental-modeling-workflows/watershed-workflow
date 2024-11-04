@@ -13,8 +13,8 @@ def check_2D_geometry(m2):
     assert (6 == m2.num_nodes)
     assert (6 == len(m2.boundary_edges))
     assert (6 == len(m2.boundary_nodes))
-    assert (np.allclose(np.array([5, 0, 0]), m2.compute_centroid(0), 1.e-6))
-    assert (np.allclose(np.array([15, 0, 0]), m2.compute_centroid(1), 1.e-6))
+    assert (np.allclose(np.array([5, 0, 0]), m2.computeCentroid(0), 1.e-6))
+    assert (np.allclose(np.array([15, 0, 0]), m2.computeCentroid(1), 1.e-6))
 
 
 def test_2D(two_boxes):
@@ -62,7 +62,7 @@ def test_write():
     if os.path.isfile('./mesh.exo'):
         os.remove('./mesh.exo')
     try:
-        m3.write_exodus('./mesh.exo')
+        m3.writeExodus('./mesh.exo')
     except ImportError:
         warnings.warn('ExodusII is not enabled with this python.')
     else:

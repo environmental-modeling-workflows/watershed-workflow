@@ -14,6 +14,8 @@ your PYTHONPATH.
 
 """
 
+from typing import Optional, List, Tuple, Dict, Any
+
 import os
 import numpy as np
 import collections
@@ -24,6 +26,7 @@ import shapely
 import warnings
 import functools
 
+import watershed_workflow.crs
 import watershed_workflow.utils
 import watershed_workflow.plot
 import watershed_workflow.colors
@@ -74,7 +77,7 @@ class LabeledSet:
     name: str
     setid: int
     entity: str
-    ent_ids: list[int]
+    ent_ids: List[Any]
     to_extrude: bool = False
 
     def validate(self, size, is_tuple=False):
@@ -138,11 +141,11 @@ class Mesh2D:
     """
     coords = attr.ib(validator=attr.validators.instance_of(np.ndarray))
     _conn = attr.ib()
-    labeled_sets = attr.ib(factory=list)
-    crs = attr.ib(default=None)
-    eps = attr.ib(default=0.001)
-    _check_handedness = attr.ib(default=True)
-    _validate = attr.ib(default=False)
+    labeled_sets : List[LabeledSet] = attr.ib(factory=list)
+    crs : Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    eps : float = attr.ib(default=0.001)
+    _check_handedness : bool = attr.ib(default=True)
+    _validate : bool = attr.ib(default=False)
 
     def __attrs_post_init__(self):
         if self._check_handedness:
@@ -247,7 +250,7 @@ class Mesh2D:
             if cross < 0:
                 conn.reverse()
 
-    def validate(self):
+    def validate(self) -> None:
         # validate coords
         assert (isinstance(self.coords, np.ndarray))
         assert (len(self.coords.shape) == 2)
@@ -271,14 +274,14 @@ class Mesh2D:
                 size = self.num_nodes
             ls.validate(size, is_tuple)
 
-    def next_available_labeled_setid(self):
+    def getNextAvailableLabeledSetID(self) -> int:
         """Returns next available LS id."""
         i = 10000
         while any(i == ls.setid for ls in self.labeled_sets):
             i += 1
         return int(i)
 
-    def compute_centroid(self, c):
+    def computeCentroid(self, c) -> np.ndarray:
         """Computes, based on coords, the centroid of a cell with ID c.
 
         Note this ALWAYS recomputes the value, not using the cache.
@@ -292,7 +295,7 @@ class Mesh2D:
         """Calculate surface mesh centroids."""
         return np.array([self.compute_centroid(c) for c in range(self.num_cells)])
 
-    def clear_geometry_cache(self):
+    def clearGeometryCache(self) -> None:
         """If coordinates are changed, any computed, cached geometry must be
         recomputed.  It is the USER's responsibility to call this
         function if any coords are changed!
@@ -301,7 +304,7 @@ class Mesh2D:
         if hasattr(self, '_centroids'):
             del self._centroids
 
-    def plot(self, color=None, ax=None):
+    def plot(self, color=None, ax=None) -> None:
         """Plot the flattened 2D mesh."""
         if color is None:
             cm = watershed_workflow.colors.cm_mapper(0, self.num_cells - 1)
@@ -318,13 +321,13 @@ class Mesh2D:
         ax.add_collection(gons)
         ax.autoscale_view()
 
-    def write_vtk(self, filename):
+    def writeVTK(self, filename) -> None:
         """Writes to VTK."""
         import watershed_workflow.vtk_io
         assert (all(len(c) == 3 for c in self.conn))
         watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
 
-    def transform(self, mat=None, shift=None):
+    def transform(self, mat=None, shift=None) -> None:
         """Transform a 2D mesh"""
         if mat is None:
             mat = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -337,12 +340,12 @@ class Mesh2D:
             tc = mat@c + shift
             assert (tc.shape == (3, ))
             new_coords.append(tc)
-        new_coords = np.array(new_coords)
-        assert (new_coords.shape == self.coords.shape)
-        self.coords = new_coords
+        new_coords_array = np.array(new_coords)
+        assert (new_coords_array.shape == self.coords.shape)
+        self.coords = new_coords_array
 
         # toss geometry cache
-        self.clear_geometry_cache()
+        self.clearGeometryCache()
 
     @classmethod
     def read_VTK(cls, filename):
@@ -830,12 +833,13 @@ class Mesh3D:
     coords = attr.ib(validator=attr.validators.instance_of(np.ndarray))
     _face_to_node_conn = attr.ib()
     _cell_to_face_conn = attr.ib()
-    labeled_sets = attr.ib(factory=list)
-    side_sets = attr.ib(factory=list)
-    material_ids = attr.ib(default=None)
-    crs = attr.ib(default=None)
-    eps = attr.ib(default=0.001)
-    _validate = attr.ib(default=False)
+
+    labeled_sets : List[LabeledSet] = attr.ib(factory=list)
+    side_sets : List[SideSet] = attr.ib(factory=list)
+    material_ids : List[np.ndarray] = attr.ib(factory=list)
+    crs : Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    eps : float = attr.ib(default=0.001)
+    _validate : bool = attr.ib(default=False)
 
     def __attrs_post_init__(self):
         if self._validate:
@@ -870,7 +874,7 @@ class Mesh3D:
     def num_faces(self):
         return len(self.face_to_node_conn)
 
-    def validate(self):
+    def validate(self) -> None:
         """Checks the validity of the mesh, or throws an AssertionError."""
         # validate coords
         assert (isinstance(self.coords, np.ndarray))
@@ -906,7 +910,7 @@ class Mesh3D:
         assert (self.material_ids is not None)
         assert (len(self.material_ids) == len(self.cell_to_face_conn))
 
-    def next_available_labeled_setid(self):
+    def getNextAvailableLabeledSetID(self) -> int:
         """Returns next available LS id."""
         i = 10000
         while any(i == ls.setid for ls in self.labeled_sets) or \
@@ -914,7 +918,7 @@ class Mesh3D:
             i += 1
         return i
 
-    def write_vtk(self, filename):
+    def writeVTK(self, filename):
         """Writes to VTK.
 
         Note, this just writes the topology/geometry information, for
@@ -933,7 +937,7 @@ class Mesh3D:
             wedges.append(self.face_to_node_conn[fup] + self.face_to_node_conn[fdn])
         watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
 
-    def write_exodus(self, filename, face_block_mode="one block"):
+    def writeExodus(self, filename, face_block_mode="one block") -> None:
         """Write the 3D mesh to ExodusII using arbitrary polyhedra spec"""
         if exodus is None:
             raise ImportError(
@@ -1096,13 +1100,13 @@ class Mesh3D:
                         f'not writing elem_set: {ls.setid} because this exodus installation does not write element sets'
                     )
             else:
-                warnings.warning(f'Cannot write labeled set of type {ls.entity}')
+                warnings.warn(f'Cannot write labeled set of type {ls.entity}')
 
         # finish and close
         e.close()
 
     @staticmethod
-    def summarize_extrusion(layer_types, layer_data, ncells_per_layer, mat_ids, surface_cell_id=0):
+    def summarizeExtrusion(layer_types, layer_data, ncells_per_layer, mat_ids, surface_cell_id=0) -> None:
         """
         Summarizes extruded data by printing info to log file.
 
@@ -1436,7 +1440,7 @@ class Mesh3D:
         return m3
 
 
-def telescope_factor(ncells, dz, layer_dz):
+def computeTelescopeFactor(ncells : int, dz : float, layer_dz : float) -> float:
     """Calculates a telescoping factor to fill a given layer.
 
     Calculates a constant geometric factor, such that a layer of thickness
@@ -1478,15 +1482,15 @@ def telescope_factor(ncells, dz, layer_dz):
     return res.root
 
 
-def optimize_dzs(dz_begin,
-                 dz_end,
-                 thickness,
-                 num_cells,
-                 p_thickness=1000,
-                 p_dz=10000,
-                 p_increasing=1000,
-                 p_smooth=10,
-                 tol=1):
+def optimizeDzs(dz_begin : float,
+                dz_end : float,
+                thickness : float,
+                num_cells : int,
+                p_thickness : float = 1000,
+                p_dz : float = 10000,
+                p_increasing : float = 1000,
+                p_smooth : float = 10,
+                tol : float = 1) -> Tuple[np.ndarray, float]:
     """Tries to optimize dzs"""
     pad_thickness = thickness + dz_begin + dz_end
 
@@ -1524,16 +1528,18 @@ def optimize_dzs(dz_begin,
     return dzs, res
 
 
-def transform_rotation(radians):
+def transformRotation(radians : float) -> np.ndarray:
     return np.array([[np.cos(radians), np.sin(radians), 0], [-np.sin(radians),
                                                              np.cos(radians), 0], [0, 0, 1]])
 
 
-def create_submesh(m2, shp):
+def createSubmesh(m2 : Mesh2D,
+                  shp : shapely.geometry.base.BaseGeometry) \
+        -> Tuple[Dict[int,int], Dict[int, int], Mesh2D]:
     """Given a shape that contains some cells of m2, create the submesh."""
     # create the new coordinates and a map
-    new_coords_i = []
-    new_coords_map = dict()
+    new_coords_i : List[int] = []
+    new_coords_map : Dict[int,int] = dict()
     for i, c in enumerate(m2.coords):
         if shp.intersects(shapely.geometry.Point(c[0], c[1])):
             new_coords_map[i] = len(new_coords_i)
@@ -1541,8 +1547,8 @@ def create_submesh(m2, shp):
     new_coords = np.array([m2.coords[i] for i in new_coords_i])
 
     # create the new conn and map
-    new_conns = []
-    new_conn_map = dict()
+    new_conns : List[List[int]] = []
+    new_conn_map : Dict[int, int] = dict()
     for j, conn in enumerate(m2.conn):
         if all(i in new_coords_i for i in conn):
             new_conn = [new_coords_map[i] for i in conn]
@@ -1550,7 +1556,7 @@ def create_submesh(m2, shp):
             new_conns.append(new_conn)
 
     # new labeled sets
-    new_labeled_sets = []
+    new_labeled_sets : List[LabeledSet] = []
     for ls in m2.labeled_sets:
         if (ls.entity == 'CELL'):
             new_ent_ids = [new_conn_map[e] for e in ls.ent_ids if e in new_conn_map.keys()]
@@ -1569,7 +1575,7 @@ def create_submesh(m2, shp):
     return new_coords_map, new_conn_map, new_mesh
 
 
-def merge_meshes(meshes):
+def mergeMeshes(meshes : List[Mesh2D]) -> Mesh2D:
     """ Combines multiple 2D meshes into a single mesh. 
 
     It is assumed that the meshes to be combined have common vertices
@@ -1592,12 +1598,12 @@ def merge_meshes(meshes):
 
     m2_combined = meshes[0]
     for mesh in meshes[1:]:
-        m2_combined = merge_mesh(m2_combined, mesh)
+        m2_combined = mergeTwoMeshes(m2_combined, mesh)
 
     return m2_combined
 
 
-def merge_mesh(mesh1, mesh2):
+def mergeTwoMeshes(mesh1 : Mesh2D, mesh2 : Mesh2D) -> Mesh2D:
     """merge two meshes (mesh.Mesh2D objects)"""
     # --THIS OPTION TO BE ADDED LATER-- #transfer_labeled_sets=True
     assert len(mesh1.labeled_sets) + len(mesh2.labeled_sets) == 0, \
@@ -1615,7 +1621,7 @@ def merge_mesh(mesh1, mesh2):
         # check if the point is close enough to any point in combined_coords
         found = False
         for i, existing_coord in enumerate(combined_coords):
-            if close_enough(coord[:2], existing_coord[:2], tolerance=1e-3):
+            if watershed_workflow.utils.isClose(coord[:2], existing_coord[:2], 1e-3):
                 mapping[idx] = i
                 found = True
                 break
@@ -1649,6 +1655,3 @@ def merge_mesh(mesh1, mesh2):
 
     return m2_combined
 
-
-def close_enough(p1, p2, tolerance):
-    return np.linalg.norm(np.array(p1) - np.array(p2)) < tolerance

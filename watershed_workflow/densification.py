@@ -301,7 +301,7 @@ def _interpolateWithOrig(end_points, interp_data, n):
         coordinates of the densified segment
     """
 
-    inds = [watershed_workflow.utils.findClosestPointInd(point, interp_data) for point in end_points
+    inds = [watershed_workflow.utils.findClosestPointIndex(point, interp_data) for point in end_points
             ]  # point-indices on original network slicing a section for interpolation
     if inds[1] < inds[0]:  # this is to deal with corner case of interpolation of the last segment
         inds[1] = -2

@@ -12,8 +12,9 @@ These dictionaries are provided as module-local (singleton) variables.
 """
 import logging
 
-from watershed_workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
-from watershed_workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
+#from watershed_workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
+from watershed_workflow.sources.manager_nhd import FileManagerWBD
+#from watershed_workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
 from watershed_workflow.sources.manager_ned import FileManagerNED
 from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
 from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
@@ -28,18 +29,18 @@ from watershed_workflow.sources.manager_raster import FileManagerRaster
 
 # available and default water boundary datasets
 huc_sources = {
-    'NHDPlus': FileManagerNHDPlusAccumulator(),
-    'NHD': FileManagerNHD(),
+    # 'NHDPlus': FileManagerNHDPlusAccumulator(),
+    # 'NHD': FileManagerNHD(),
     'WBD': FileManagerWBD()
 }
-huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for backward compatibility
-default_huc_source = 'NHDPlus'
+#huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for backward compatibility
+default_huc_source = 'WBD'#'NHDPlus'
 
 # available and default hydrography datasets
-hydrography_sources = { 'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
-hydrography_sources['NHD Plus'] = hydrography_sources[
-    'NHDPlus']  # historical typo, kept for backward compatibility
-default_hydrography_source = 'NHDPlus'
+hydrography_sources = { }#'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
+#hydrography_sources['NHD Plus'] = hydrography_sources[
+#    'NHDPlus']  # historical typo, kept for backward compatibility
+default_hydrography_source = None#'NHDPlus'
 
 # available and default digital elevation maps
 dem_sources = {
