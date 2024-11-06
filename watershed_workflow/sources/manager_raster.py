@@ -10,7 +10,7 @@ import logging
 
 
 @attr.s
-class FileManagerRaster:
+class ManagerRaster:
     """A simple class for reading rasters.
 
     Parameters

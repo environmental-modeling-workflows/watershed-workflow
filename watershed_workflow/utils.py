@@ -5,8 +5,13 @@ used by other functions, but are not included in documentation because they are
 likely not useful to users.
 
 """
-from typing import Iterable, Tuple, List, Any, Optional, Literal
-import numpy.typing as npt
+from __future__ import annotations
+import typing
+if typing.TYPE_CHECKING:
+    from typing import Iterable, Tuple, List, Any, Optional, Literal
+    import numpy.typing as npt
+    import geopandas as gpd
+    from watershed_workflow.crs import CRS
 
 import datetime, cftime
 import logging
@@ -19,6 +24,8 @@ import shapely.ops
 import shapely.prepared
 import shapely.affinity
 import rasterio.transform
+
+import watershed_workflow.warp
 
 _tol = 1.e-7
 
@@ -182,29 +189,33 @@ def isVolumetricIntersection(shp1 : BaseGeometry,
     return inter.area > 0
 
 
-def filterToShape(shape : BaseGeometry,
-                  to_filter : Iterable[BaseGeometry],
-                  tol : Optional[float] = None,
-                  method : str = 'intersects') -> List[BaseGeometry]:
+def filterToShape(df : gpd.GeoDataFrame,
+                  shape : BaseGeometry,
+                  shape_crs : CRS,
+                  method : str = 'contains',
+                  tol : Optional[float] = None) -> gpd.GeoDataFrame:
     """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
 
     method is one of 'contains' or 'intersects' to indicate whether
     to include things entirely in shape or partially in shape,
     respectively.
     """
+    if shape_crs != df.crs:
+        shape = watershed_workflow.warp.shply(shape, shape_crs, df.crs)
+
     if tol is None: tol = _tol
     if method == 'contains':
+        shape = shapely.prepared.prep(shape.buffer(2 * tol))
         op = shape.contains
-        shape = shapely.prepared.prep(shape.buffer(2 * tol))
     elif method == 'intersects':
-        op = shape.intersects
         shape = shapely.prepared.prep(shape.buffer(2 * tol))
+        op = shape.intersects
     elif method == 'non_point_intersection':
         op = lambda a: isNonPointIntersection(shape, a)
-        shape = shape.buffer(2 * tol)
     else:
-        raise ValueError("method must be one of 'intersects' or 'contains'")
-    return [s for s in to_filter if op(s)]
+        raise ValueError("method must be one of 'intersects', 'contains', or 'non_point_intersection'")
+
+    return df[df.geometry.apply(op)]
 
 
 def isEmpty(shply : BaseGeometry | None) -> bool:

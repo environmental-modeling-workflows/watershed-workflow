@@ -12,66 +12,67 @@ These dictionaries are provided as module-local (singleton) variables.
 """
 import logging
 
-#from watershed_workflow.sources.manager_nhd import FileManagerNHD, FileManagerNHDPlus, FileManagerWBD
-from watershed_workflow.sources.manager_nhd import FileManagerWBD
-#from watershed_workflow.sources.manager_nhd_accumulator import FileManagerNHDPlusAccumulator
-from watershed_workflow.sources.manager_ned import FileManagerNED
-from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
-from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
-from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
-from watershed_workflow.sources.manager_pelletier_dtb import FileManagerPelletierDTB
-from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
-from watershed_workflow.sources.manager_daymet import FileManagerDaymet
-from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAppEEARS
+from watershed_workflow.sources.manager_wbd import ManagerWBD
+from watershed_workflow.sources.manager_waterdata import ManagerWaterData
+# from watershed_workflow.sources.manager_ned import FileManagerNED
+# from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
+# from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
+# from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
+# from watershed_workflow.sources.manager_pelletier_dtb import FileManagerPelletierDTB
+# from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
+# from watershed_workflow.sources.manager_daymet import FileManagerDaymet
+# from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAppEEARS
 
-from watershed_workflow.sources.manager_shape import FileManagerShape
-from watershed_workflow.sources.manager_raster import FileManagerRaster
+from watershed_workflow.sources.manager_shapefile import ManagerShapefile
+from watershed_workflow.sources.manager_raster import ManagerRaster
 
 # available and default water boundary datasets
 huc_sources = {
     # 'NHDPlus': FileManagerNHDPlusAccumulator(),
     # 'NHD': FileManagerNHD(),
-    'WBD': FileManagerWBD()
+    'WBD' : ManagerWBD(),
+    'WaterData WBD' : ManagerWBD('WaterData'),
 }
-#huc_sources['NHD Plus'] = huc_sources['NHDPlus']  # historical typo, kept for backward compatibility
-default_huc_source = 'WBD'#'NHDPlus'
+default_huc_source = 'WaterData WBD'
 
 # available and default hydrography datasets
-hydrography_sources = { }#'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
+hydrography_sources = { 'NHDv2.1' : ManagerWaterData('nhdflowline_network'), }
+#'NHDPlus': FileManagerNHDPlus(), 'NHD': FileManagerNHD(), }
 #hydrography_sources['NHD Plus'] = hydrography_sources[
 #    'NHDPlus']  # historical typo, kept for backward compatibility
-default_hydrography_source = None#'NHDPlus'
+default_hydrography_source = 'NHDv2.1'
 
 # available and default digital elevation maps
 dem_sources = {
-    'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
-    'NED 1 arc-second': FileManagerNED('1 arc-second'),
+    # 'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
+    # 'NED 1 arc-second': FileManagerNED('1 arc-second'),
 }
-default_dem_source = 'NED 1 arc-second'
+default_dem_source = None#'NED 1 arc-second'
 
 # available and default soil survey datasets
 structure_sources = {
-    'NRCS SSURGO': FileManagerNRCS(),
-    'GLHYMPS': FileManagerGLHYMPS(),
-    'SoilGrids2017': FileManagerSoilGrids2017(),
-    'Pelletier DTB': FileManagerPelletierDTB(),
+    # 'NRCS SSURGO': FileManagerNRCS(),
+    # 'GLHYMPS': FileManagerGLHYMPS(),
+    # 'SoilGrids2017': FileManagerSoilGrids2017(),
+    # 'Pelletier DTB': FileManagerPelletierDTB(),
 }
-default_structure_source = 'NRCS SSURGO'
+default_structure_source = None#'NRCS SSURGO'
 
 # available and default land cover
 land_cover_sources = {
-    'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
-    'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK'),
-    'MODIS': FileManagerMODISAppEEARS()
+    # 'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
+    # 'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK'),
+    # 'MODIS': FileManagerMODISAppEEARS()
 }
-default_land_cover = 'NLCD (L48)'
+default_land_cover = None #'NLCD (L48)'
 
-lai_sources = { 'MODIS': FileManagerMODISAppEEARS() }
-default_lai = 'MODIS'
+lai_sources = {}
+#    'MODIS': FileManagerMODISAppEEARS() }
+default_lai = None #'MODIS'
 
 # available and default meteorology
-met_sources = { 'DayMet': FileManagerDaymet() }
-default_met = 'DayMet'
+met_sources = {} # 'DayMet': FileManagerDaymet() }
+default_met = None #'DayMet'
 
 
 def get_default_sources():
@@ -82,13 +83,13 @@ def get_default_sources():
     sources = dict()
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
-    sources['DEM'] = dem_sources[default_dem_source]
-    sources['soil structure'] = structure_sources['NRCS SSURGO']
-    sources['geologic structure'] = structure_sources['GLHYMPS']
-    sources['land cover'] = land_cover_sources[default_land_cover]
-    sources['lai'] = lai_sources[default_lai]
-    sources['depth to bedrock'] = structure_sources['Pelletier DTB']
-    sources['meteorology'] = met_sources[default_met]
+    # sources['DEM'] = dem_sources[default_dem_source]
+    # sources['soil structure'] = structure_sources['NRCS SSURGO']
+    # sources['geologic structure'] = structure_sources['GLHYMPS']
+    # sources['land cover'] = land_cover_sources[default_land_cover]
+    # sources['lai'] = lai_sources[default_lai]
+    # sources['depth to bedrock'] = structure_sources['Pelletier DTB']
+    # sources['meteorology'] = met_sources[default_met]
     return sources
 
 

@@ -2,9 +2,9 @@
 import os
 import logging
 import argparse
-import fiona
+import geopandas as gpd
 
-import watershed_workflow.config
+import watershed_workflow.crs
 import watershed_workflow.sources.utils
 import watershed_workflow.source_list
 
@@ -16,17 +16,19 @@ verb_to_level = { 0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG, 3: logg
 def file_exists(x, type=None):
     if not os.path.exists(x):
         if type is None:
-            raise argparse.ArgumentTypeError("Input file '{0}' does not exist".format(x))
+            raise argparse.ArgumentTypeError(f"Input file '{x}' does not exist")
         else:
-            raise argparse.ArgumentTypeError("Input {1} '{0}' does not exist".format(x, type))
+            raise argparse.ArgumentTypeError(f"Input {type} '{x}' does not exist")
 
 
 def shapefile(x):
-    """Type for argparse - checks that file exists and can be opened by fiona."""
+    """Type for argparse - checks that file exists and can be opened by geopandas."""
     file_exists(x, "shapefile")
-    # check now that fiona can open the file.  immediate close to avoid resource issues
-    with fiona.open(x, 'r') as fid:
-        pass
+    try:
+        layers = gpd.loadlayers()
+    except RuntimeError:
+        raise argparse.ArgumentTypeError(f"Input file '{x}' is not a valid shapefile.")
+
     return x
 
 
@@ -81,7 +83,7 @@ def projection(parser):
     def valid_epsg(x):
         """Note this validator does the work, no need for more"""
         try:
-            epsg = fiona.crs.from_epsg(x)
+            epsg = watershed_workflow.crs.from_epsg(x)
         except ValueError as err:
             raise argparse.ArgumentTypeError("In parsing EPSG: '%s'" % str(err))
         return epsg

@@ -13,9 +13,9 @@ catchment : shapely.Polygon
 area : double
   area [m^2] of catchment, the local contributing area
 
-HydrologicSequence : int
+hydroseq : int
   See documentation for NHDPlus
-DownstreamMainpathHydroSeq : int
+dnhydroseq : int
   ee documentation for NHDPlus
 
 """
@@ -145,9 +145,9 @@ class River(watershed_workflow.tinytree.Tree):
             downstream_props['area'] = self['area'] * downstream_area_frac
             self['area'] = self['area'] * (1-downstream_area_frac)
 
-        if 'HydrologicSequence' in downstream_props:
-            downstream_props['HydrologicSequence'] -= 0.5
-            self['DownstreamMainPathHydroSeq'] = downstream_props['HydrologicSequence']
+        if 'hydroseq' in downstream_props:
+            downstream_props['hydroseq'] -= 0.5
+            self['dnhydroseq'] = downstream_props['hydroseq']
 
         index = self['index']
         downstream_props['index'] = index + 'a'
@@ -292,7 +292,7 @@ class River(watershed_workflow.tinytree.Tree):
 
     def makeContinuous(self, tol=_tol):
         """Sometimes there can be small gaps between segments of river
-        tree if river is constructed using HydrologicSequence and Snap
+        tree if river is constructed using hydroseq and Snap
         option is not used. Here we make them consistent.
 
         """
@@ -307,14 +307,14 @@ class River(watershed_workflow.tinytree.Tree):
         if len(self.children) == 0:
             return True
 
-        self.children = sorted(self.children, key=lambda c: c.HydrologicSequence)
-        return self.properties['HydrologicSequence'] < self.children[0].properties['HydrologicSequence'] and \
+        self.children = sorted(self.children, key=lambda c: c.hydroseq)
+        return self.properties['hydroseq'] < self.children[0].properties['hydroseq'] and \
             all(child.isHydroseqConsistent() for child in self.children)
 
     def isConsistent(self, tol=_tol):
         """Validity checking of the tree."""
         good = self.isContinuous(tol)
-        if 'HydrologicSequence' in self:
+        if 'hydroseq' in self:
             good &= self.isHydroseqConsistent()
         return good
 
@@ -428,13 +428,13 @@ class River(watershed_workflow.tinytree.Tree):
         """Given a list of segments, create a list of rivers using the
         HydroSeq maps provided in NHDPlus datasets.
         """
-        # create a map from HydrologicSequence to node
-        hydro_seq_ids = dict(zip(df['HydrologicSequence'],
+        # create a map from hydroseq to node
+        hydro_seq_ids = dict(zip(df['hydroseq'],
                                  (cls(i,df) for i in df.index)))
 
         roots = []
         for hs_id, node in hydro_seq_ids.items():
-            down_hs_id = node['DownstreamMainPathHydroSeq']
+            down_hs_id = node['dnhydroseq']
             try:
                 hydro_seq_ids[down_hs_id].addChild(node)
             except KeyError:
@@ -488,8 +488,8 @@ def combineSiblings(n1, n2):
             n1['catchment'] = shapely.ops.unary_union([n1['catchment'], n2['catchment']])
 
     for child in n2.children:
-        if 'DownstreamMainPathHydroSeq' in child:
-            child['DownstreamMainPathHydroSeq'] = n1['HydrologicSequence']
+        if 'dnhydroseq' in child:
+            child['dnhydroseq'] = n1['hydroseq']
         n1.addChild(child)
     n2.children = []
     n2.remove()
@@ -599,7 +599,7 @@ def createRiverTrees(reaches, method='geometry', tol=_tol):
         * 'hydroseq' Valid only for NHDPlus data, this uses the
           NHDPlus VAA tables Hydrologic Sequence.  If using this
           method, get_reaches() must have been called with both
-          'HydrologicSequence' and 'DownstreamMainPathHydroSeq'
+          'hydroseq' and 'dnhydroseq'
           properties requested (or properties=True).
     tol : float, optional=0.1
         Defines what close is in the case of method == 'geometry'

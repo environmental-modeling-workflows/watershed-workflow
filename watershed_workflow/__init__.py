@@ -15,9 +15,9 @@ things like convert coordinate systems, get the data into common
 data structures, etc.
 
 """
+from __future__ import annotations
 
 from . import _version
-
 __version__ = _version.get_versions()['version']
 
 from typing import Any, Optional, Iterable
@@ -34,7 +34,33 @@ import watershed_workflow.hydrography
 import watershed_workflow.triangulation
 import watershed_workflow.densification
 import watershed_workflow.river_mesh
+import watershed_workflow.source_list
 
+
+def _coerceShapes(df : gpd.GeoDataFrame,
+                  crs : Optional[watershed_workflow.crs.CRS] = None,
+                  digits : Optional[int] = None) -> gpd.GeoDataFrame:
+    if crs is not None:
+        old_geo = df.active_geometry_name
+        for col in df.select_dtypes('geometry'):
+            df = df.set_geometry(col).to_crs(crs)
+        df = df.set_geometry(old_geo)
+        
+    if digits is not None:
+        df = df.set_precision(10**-digits)
+    return df
+
+
+def getShapes(source : Any,
+              crs : Optional[watershed_workflow.crs.CRS] = None,
+              digits : Optional[int] = None,
+              **kwargs) -> gpd.GeoDataFrame:
+    if isinstance(source, str):
+        source = watershed_workflow.source_list.ManagerShapefile(source)
+    df = source.getShapes()
+    df = _coerceShapes(df, crs, digits)
+    return df
+              
 
 def getShapesByID(source : Any,
                   ids : Any,
@@ -47,12 +73,8 @@ def getShapesByID(source : Any,
         ids = [ids,]
 
     df = source.getShapesByID(ids, **kwargs)
-    if crs is not None:
-        df = df.to_crs(crs)
-    if digits is not None:
-        df = df.set_precision(10**-digits)
+    df = _coerceShapes(df, crs, digits)
     return df
-
 
 def getShapesByGeometry(source : Any,
                         geom : shapely.geometry.base.BaseGeometry,
@@ -61,10 +83,7 @@ def getShapesByGeometry(source : Any,
                         digits : Optional[int] = None,
                         **kwargs) -> gpd.GeoDataFrame:
     df = source.getShapesByGeometry(geom, geom_crs, **kwargs)
-    if crs is not None:
-        df = df.to_crs(crs)
-    if digits is not None:
-        df = df.set_precision(10**-digits)
+    df = _coerceShapes(df, crs, digits)
     return df
 
 

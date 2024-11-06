@@ -12,5 +12,7 @@ split_before_arithmetic_operator = true
 column_limit = 100
 blank_line_before_nested_class_or_def = false
 
+[tool.mypy]
+disable_error_code = ['import-untyped', 'import-not-found']
 
 

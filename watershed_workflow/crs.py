@@ -31,109 +31,39 @@ dealing with these packages in an integrated form much simpler.
     `pyproj.Proj` objects using the provided interface.
 
 """
+from __future__ import annotations
+
 import logging
 import pyproj.crs
 from pyproj.crs import CRS
-from pyproj.crs import CRSError
+
+import typing
+if typing.TYPE_CHECKING:
+    import rasterio.crs
+    import cartopy.crs
+    import xarray
 
 import warnings
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def isNative(crs):
+def isNative(crs : CRS) -> bool:
     """Is this crs in the native format?"""
     return type(crs) == type(to_proj(crs))
 
 
-def from_proj(crs):
-    """Converts a Proj CRS to the workflow CRS standard.
-
-    Parameters
-    ----------
-    crs : pyproj.crs.CRS
-        Input proj CRS object.
-    
-    Returns
-    -------
-    out : crs-type
-        Equivalent workflow CRS.
-    """
+def from_proj(crs : CRS) -> CRS:
+    """Converts a Proj CRS to the workflow CRS standard."""
     return crs
 
 
-def to_proj(crs):
-    """Converts a workflow CRS standard to a Proj4 CRS.
-
-    Parameters
-    ----------
-    crs : crs-type
-        Workflow standard CRS.
-    
-    Returns
-    -------
-    out : pyproj.crs.CRS
-        Equivalent object.
-    """
+def to_proj(crs : CRS) -> CRS:
+    """Converts a workflow CRS standard to a Proj4 CRS."""
     return crs
 
 
-def from_fiona(crs):
-    """Converts a fiona CRS to the workflow CRS standard.
-
-    Parameters
-    ----------
-    crs : fiona-crs-dict
-        Input fiona CRS, which is a dictionary containing an EPSG
-        code.
-
-    Returns
-    -------
-    out : crs-type
-        Equivalent workflow CRS.
-
-    """
-    # if 'datum' in crs and crs['datum'] == 'WGS84' and 'epsg' not in crs and 'ellps' not in crs:
-    #     logging.warning('Old-style datum WGS84, moving to ellipse')
-    #     crs['ellps'] = crs.pop('datum')
-    if 'init' in crs and crs['init'].startswith('epsg:'):
-        epsg, code = crs['init'].split(':')
-        return CRS.from_epsg(code)
-    else:
-        return CRS.from_dict(crs)
-
-
-def to_fiona(crs):
-    """Converts a workflow CRS to a fiona CRS.
-
-    Parameters
-    ----------
-    crs : crs-type
-        A workflow CRS object.
-
-    Returns
-    -------
-    out : fiona-crs-dict
-        Equivalent fiona CRS.
-
-    """
-    return crs.to_dict()
-
-
-def from_rasterio(crs):
-    """Converts from rasterio CRS to the workflow CRS standard.
-
-    Parameters
-    ----------
-    crs : rasterio-crs-object
-        Input rasterio crs.
-
-    Returns
-    -------
-    out : crs-type
-        Equivalent workflow CRS.
-
-    """
+def from_rasterio(crs : rasterio.crs.CRS) -> CRS:
+    """Converts from rasterio CRS to the workflow CRS standard."""
     try:
         # from authority seems to get better results with bounds?
         return CRS.from_authority(*crs.to_authority())
@@ -141,55 +71,19 @@ def from_rasterio(crs):
         return CRS.from_user_input(crs)
 
 
-def to_rasterio(crs):
-    """Converts a workflow CRS to a fiona CRS.
-
-    Parameters
-    ----------
-    crs : crs-type
-        A workflow CRS object.
-
-    Returns
-    -------
-    out : rasterio.CRS
-        Equivalent rasterio object.
-
-    """
+def to_rasterio(crs : CRS) -> rasterio.crs.CRS:
+    """Converts a workflow CRS to a rasterio CRS."""
     import rasterio.crs
     return rasterio.crs.CRS.from_user_input(crs)
 
 
-def from_epsg(epsg):
-    """Converts from an EPSG code to a workflow CRS.
-
-    Parameters
-    ----------
-    epsg : int
-        An EPSG code. (see `EPSG codes <https://epsg.io>`_)
-
-    Returns
-    -------
-    out : crs-type
-        Equivalent workflow CRS.
-
-    """
+def from_epsg(epsg : int) -> CRS:
+    """Converts from an EPSG code to a workflow CRS."""
     return CRS.from_epsg(epsg)
 
 
-def to_epsg(crs):
-    """Attempts to conver to an EPSG code.
-
-    Parameters
-    ----------
-    crs : crs-type
-
-    Returns
-    -------
-    epsg : int
-      An EPSG code, if possible.
-
-    If not, this throws.
-    """
+def to_epsg(crs : CRS) -> int:
+    """Attempts to convert to an EPSG code."""
     auth, code = crs.to_authority()
     if auth == 'EPSG':
         return code
@@ -197,34 +91,13 @@ def to_epsg(crs):
         raise ValueError('Cannot convert CRS to EPSG code.')
 
 
-def from_cartopy(crs):
-    """Converts a cartopy CRS to a workflow CRS.
-
-    Parameters
-    ----------
-    epsg : int
-        An EPSG code. (see `EPSG codes <https://epsg.io>`_)
-
-    Returns
-    -------
-    out : crs-type
-        Equivalent workflow CRS.
-
-    """
+def from_cartopy(crs : cartopy.crs.CRS) -> CRS:
+    """Converts a cartopy CRS to a workflow CRS."""
     return CRS.from_user_input(crs)
 
 
-def to_cartopy(crs):
+def to_cartopy(crs : CRS) -> cartopy.crs.CRS:
     """Converts a workflow CRS to a cartopy.crs.Projection.
-
-    Parameters
-    ----------
-    crs : crs-type
-        The CRS to convert.
-
-    Returns
-    -------
-    A cartopy.crs.Projection object for plotting.
 
     Adopted from: https://pyproj4.github.io/pyproj/stable/crs_compatibility.html
     """
@@ -234,26 +107,27 @@ def to_cartopy(crs):
     return ccrs.CRS(crs)
     
 
-def from_string(string):
+def from_string(string : str) -> CRS:
     """Returns a CRS from a proj string"""
     return CRS.from_string(string)
 
 
-def from_wkt(string):
+def from_wkt(string : str) -> CRS:
     """Returns a CRS from a WKT string specification"""
     return CRS.from_wkt(string)
 
 
-def from_xarray(array):
+def to_wkt(crs : CRS) -> str:
+    """Returns the WKT string of a CRS."""
+    return crs.to_wkt()
+
+
+def from_xarray(array : xarray.DataArray) -> CRS | None:
     """Tries to find a CRS from the xarray DataSet or DataArray."""
     try:
         return from_wkt(array.spatial_ref['crs_wkt'])
     except (AttributeError, KeyError):
         return None
-
-def to_wkt(crs):
-    """Returns the WKT string of a CRS."""
-    return crs.to_wkt()
 
 
 # a default UTM based CRS that is functionally useful for North America.
@@ -276,23 +150,6 @@ daymet_crs_km = from_string(
 latlon_crs = from_epsg(4269)
 
 
-def isEqual(crs1, crs2):
-    """Tries to guess at the equality of two CRS objects.
-
-    Note this is not trivial, just checking strings or dicts results
-    in false-negatives.  Furthermore, this implementation may not be
-    perfect, but it works for all those currently tested.  Please
-    report bugs!
-    
-    Parameters
-    ----------
-    crs1,crs2 : crs-type
-        Input workflow CRS objects.
-
-    Returns
-    -------
-    out : bool
-       Are equal?
-
-    """
+def isEqual(crs1 : CRS, crs2 : CRS) -> bool:
+    """Tries to guess at the equality of two CRS objects."""
     return crs1 == crs2
