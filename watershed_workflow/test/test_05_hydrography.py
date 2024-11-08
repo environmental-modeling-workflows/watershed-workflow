@@ -481,6 +481,6 @@ def test_remove_divergences(braided_stream):
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 4)
 
-    hydroseq = [r.properties['HydrologicSequence'] for r in rivers[0]]
+    hydroseq = [r.properties['hydroseq'] for r in rivers[0]]
     expected = [1, 2, 3, 6]
     assert (all((e == h) for (e, h) in zip(expected, hydroseq)))

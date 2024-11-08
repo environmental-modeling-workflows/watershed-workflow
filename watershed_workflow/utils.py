@@ -100,7 +100,7 @@ def findClosestPointIndex(point : Tuple[float, float],
 
 
 def cluster(points : np.ndarray,
-            tol : float) -> Tuple[Any, List[Tuple[float,float]]]:
+            tol : float) -> Tuple[np.ndarray, np.ndarray]:
     """Given a list of points, determine a list of clusters.
 
     Each cluster is within tol of each other.
@@ -110,8 +110,13 @@ def cluster(points : np.ndarray,
     import scipy.cluster.hierarchy as hcluster
     if type(points) is list:
         points = np.array(points)
-    indices = hcluster.fclusterdata(points, tol, criterion='distance')
-    centroids = [points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())]
+
+    if len(points) > 1:
+        indices = hcluster.fclusterdata(points, tol, criterion='distance')
+        centroids = np.array([points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())])
+    else:
+        indices = np.array([1,]*len(points))
+        centroids = points
     return indices - 1, centroids
 
 
@@ -479,7 +484,7 @@ def intersectPointToSegment(point : shapely.geometry.Point,
 
 def findNearestPoint(point : shapely.geometry.Point,
                      line : shapely.geometry.LineString,
-                     tol : Optional[float] = None) -> shapely.geometry.Point:
+                     tol : Optional[float] = None) -> shapely.geometry.Point | None:
     """Returns the nearest coordinate on the line to point.  
 
     Note point is expected as coordinates."""
@@ -502,6 +507,15 @@ def findNearestPoint(point : shapely.geometry.Point,
         return None
 
 
+def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.geometry.base.BaseGeometry:
+    """Removes the third dimension of a shapely object."""
+    def _drop_z(*args):
+        return tuple(filter(None, [args[0],args[1]]))
+    return shapely.ops.transform(_drop_z, geom)
+
+#
+# Dataset utilities
+#
 def imputeHoles2D(arr : np.ndarray,
                   nodata : Any = np.nan,
                   method : str = 'cubic') -> np.ndarray:
@@ -545,9 +559,6 @@ def smoothRaster(img_in : np.ndarray,
         raise ValueError(f'Unknown smoothing method: "{method}"')
 
 
-#
-# Dataset utilities
-#
 def computeAverageYear(data, output_nyears=1, smooth=False, **kwargs):
     """Averages and smooths to form a "typical" year.
 

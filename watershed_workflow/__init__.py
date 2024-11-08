@@ -20,9 +20,10 @@ from __future__ import annotations
 from . import _version
 __version__ = _version.get_versions()['version']
 
-from typing import Any, Optional, Iterable
+from typing import Any, Optional, Iterable, List
 import logging
 import math
+import numpy as np
 import geopandas as gpd
 import shapely.geometry
 
@@ -40,12 +41,29 @@ import watershed_workflow.source_list
 def _coerceShapes(df : gpd.GeoDataFrame,
                   crs : Optional[watershed_workflow.crs.CRS] = None,
                   digits : Optional[int] = None) -> gpd.GeoDataFrame:
+    # often we end up with mixed data -- some 2D, some 3D, which makes
+    # it hard to deal with intersections.  Remove all z coordinates.
+    df['geometry'] = df.geometry.apply(watershed_workflow.utils.removeThirdDimension)
+
+    # often data APIs provide all MultiGeometries, when in fact they are a single LineString/Polygon
+    def _combine(shp : shapely.geometry.base.BaseGeometry) -> shapely.geometry.base.BaseGeometry:
+        if isinstance(shp, shapely.geometry.MultiLineString):
+            return shapely.line_merge(shp)
+        elif isinstance(shp, shapely.geometry.MultiPolygon):
+            return shapely.union_all(shp.geoms)
+        return shp
+    df['geometry'] = df.geometry.apply(_combine)
+
+    # change the crs
     if crs is not None:
         old_geo = df.active_geometry_name
         for col in df.select_dtypes('geometry'):
             df = df.set_geometry(col).to_crs(crs)
         df = df.set_geometry(old_geo)
-        
+
+    # round to s fixed number of digits -- this may get deprecated in
+    # favor of using the grid option to shapely 2.0's
+    # union/intersection
     if digits is not None:
         df = df.set_precision(10**-digits)
     return df
@@ -72,7 +90,9 @@ def getShapesByID(source : Any,
     elif not isinstance(ids, Iterable):
         ids = [ids,]
 
-    df = source.getShapesByID(ids, **kwargs)
+    if len(kwargs) > 0:
+        source.set(**kwargs)
+    df = source.getShapesByID(ids)
     df = _coerceShapes(df, crs, digits)
     return df
 
@@ -152,7 +172,7 @@ def findHUC(source : Any,
                 return hint
             else:
                 logging.debug(f'  subhuc: {index} does not contain')
-        assert (False)
+        assert False
 
     # must shrink the poly a bit in case it is close to or on a boundary
     radius = math.sqrt(shape.area / math.pi)
@@ -245,169 +265,165 @@ def findHUC(source : Any,
 #     return rivers
 
 
-# def simplify(hucs,
-#              rivers,
-#              waterbodies=None,
-#              simplify_hucs=0,
-#              simplify_rivers=None,
-#              simplify_waterbodies=None,
-#              prune_tol=None,
-#              merge_tol=None,
-#              snap_tol=None,
-#              snap_triple_junctions_tol=None,
-#              snap_reach_endpoints_tol=None,
-#              snap_waterbodies_tol=None,
-#              cut_intersections=False):
-#     """Simplifies the HUC and river shapes.
+def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
+             rivers : List[watershed_workflow.river_tree.River],
+             waterbodies : Optional[gpd.GeoDataFrame] = None,
+             simplify_hucs : float = -1,
+             simplify_rivers : float = -1,
+             simplify_waterbodies : float = -1,
+             prune_tol : float = -1,
+             merge_tol : float = -1,
+             snap_tol : float = -1,
+             snap_triple_junctions_tol : float = -1,
+             snap_reach_endpoints_tol : float = -1,
+             snap_waterbodies_tol : float = -1,
+             cut_intersections : Optional[bool] = False):
+    """Simplifies the HUC and river shapes.
 
-#     Parameters
-#     ----------
-#     hucs : SplitHUCs
-#         A split-form HUC object containing all reaches.
-#     rivers : list(River)
-#         A list of river objects.
-#     waterbodies : list(shply), optional
-#         A list of waterbodies.
-#     simplify_hucs : float, optional
-#         If provided, simply the hucs by moving points at most this
-#         many units (see also shapely.simplify).  Units are that of the
-#         CRS of shapes.
-#     simplify_rivers : float, optional
-#         If provided, simply the rivers by moving points at most this
-#         many units (see also shapely.simplify).  Units are that of the
-#         CRS of shapes.  If not provided, use the simplify_hucs value.
-#         Provide 0 to make no changes to the rivers.
-#     simplify_waterbodies : float, optional
-#         Simplify the waterbodies.  If not provided, uses the
-#         simplify_hucs value.  Provide 0 to make no changes to the
-#         waterbodies.
-#     prune_tol : float, optional = simplify_rivers
-#         Prune leaf reaches that are smaller than this tolerance.  If
-#         not provided, uses simplify_rivers value.  Provide 0 to not do
-#         this step.
-#     merge_tol : float, optional = simplify_rivers
-#         Merges reaches that are smaller than this tolerance with their
-#         downstream parent reach.  Note that if there is a branchpoint
-#         at the downstream node of the small reach, it will get moved
-#         to the upstream node.  If not provided, uses simplify_rivers
-#         value.  Provide 0 to not do this step.
-#     snap_tol : float, optional = 0.75 * simplify_rivers
-#         Tolerance used for snapping rivers to nearby huc boundaries.
-#         Provide 0 to not snap.
-#     snap_triple_junctions_tol : float, optional = 3 * snap_tol
-#         Tolerance used for snapping river triple junctions to huc
-#         triple junctions.
-#     snap_reach_endpoints_tol : float, optional = 2 * snap_tol
-#         Tolerance used for snapping reach junctions to huc boundaries.
-#     snap_waterbodies_tol : float, optional = snap_tol
-#         If not 0, snaps waterbody and HUC nodes that are nearly
-#         coincident to be discretely coincident.  Note this is not
-#         recommended; prefer to include major waterbodies in the HUC
-#         network.
-#     cut_intersections : bool, optional = False
-#         If true, force intersections of the river network and the HUC
-#         boundary to occur at a coincident node by adding nodes as
-#         needed.
+    Parameters
+    ----------
+    hucs : SplitHUCs
+        A split-form HUC object containing all reaches.
+    rivers : list(River)
+        A list of river objects.
+    waterbodies : list(shply), optional
+        A list of waterbodies.
+    simplify_hucs : float, optional
+        If provided, simply the hucs by moving points at most this
+        many units (see also shapely.simplify).  Units are that of the
+        CRS of shapes.
+    simplify_rivers : float, optional
+        If provided, simply the rivers by moving points at most this
+        many units (see also shapely.simplify).  Units are that of the
+        CRS of shapes.  If not provided, use the simplify_hucs value.
+        Provide 0 to make no changes to the rivers.
+    simplify_waterbodies : float, optional
+        Simplify the waterbodies.  If not provided, uses the
+        simplify_hucs value.  Provide 0 to make no changes to the
+        waterbodies.
+    prune_tol : float, optional = simplify_rivers
+        Prune leaf reaches that are smaller than this tolerance.  If
+        not provided, uses simplify_rivers value.  Provide 0 to not do
+        this step.
+    merge_tol : float, optional = simplify_rivers
+        Merges reaches that are smaller than this tolerance with their
+        downstream parent reach.  Note that if there is a branchpoint
+        at the downstream node of the small reach, it will get moved
+        to the upstream node.  If not provided, uses simplify_rivers
+        value.  Provide 0 to not do this step.
+    snap_tol : float, optional = 0.75 * simplify_rivers
+        Tolerance used for snapping rivers to nearby huc boundaries.
+        Provide 0 to not snap.
+    snap_triple_junctions_tol : float, optional = 3 * snap_tol
+        Tolerance used for snapping river triple junctions to huc
+        triple junctions.
+    snap_reach_endpoints_tol : float, optional = 2 * snap_tol
+        Tolerance used for snapping reach junctions to huc boundaries.
+    snap_waterbodies_tol : float, optional = snap_tol
+        If not 0, snaps waterbody and HUC nodes that are nearly
+        coincident to be discretely coincident.  Note this is not
+        recommended; prefer to include major waterbodies in the HUC
+        network.
+    cut_intersections : bool, optional = False
+        If true, force intersections of the river network and the HUC
+        boundary to occur at a coincident node by adding nodes as
+        needed.
 
-#     Returns
-#     -------
-#     rivers : list(River)
-#        Snap may change the rivers, so this returns the list of updated
-#        rivers.
+    Returns
+    -------
+    rivers : list(River)
+       Snap may change the rivers, so this returns the list of updated
+       rivers.
 
-#     .. note: 
-#         This also may modify the hucs and waterbody objects in-place.
+    .. note: 
+        This also may modify the hucs and waterbody objects in-place.
 
-#     """
-#     assert (type(hucs) is watershed_workflow.split_hucs.SplitHUCs)
-#     assert (type(rivers) is list)
-#     assert (all(type(r) is watershed_workflow.river_tree.River for r in rivers))
+    """
+    if simplify_rivers < 0:
+        simplify_rivers = simplify_hucs
+    if simplify_waterbodies < 0:
+        simplify_waterbodies = simplify_hucs
+    if prune_tol < 0:
+        prune_tol = simplify_rivers
+    if merge_tol < 0:
+        merge_tol = simplify_rivers
+    if snap_tol < 0:
+        snap_tol = 0.75 * simplify_rivers
+    if snap_triple_junctions_tol < 0:
+        snap_triple_junctions_tol = 3 * snap_tol
+    if snap_reach_endpoints_tol < 0:
+        snap_reach_endpoints_tol = 2 * snap_tol
+    if snap_waterbodies_tol < 0:
+        snap_waterbodies_tol = snap_tol
 
-#     if simplify_rivers is None:
-#         simplify_rivers = simplify_hucs
-#     if simplify_waterbodies is None:
-#         simplify_waterbodies = simplify_hucs
-#     if prune_tol is None:
-#         prune_tol = simplify_rivers
-#     if merge_tol is None:
-#         merge_tol = simplify_rivers
-#     if snap_tol is None:
-#         snap_tol = 0.75 * simplify_rivers
-#     if snap_triple_junctions_tol is None:
-#         snap_triple_junctions_tol = 3 * snap_tol
-#     if snap_reach_endpoints_tol is None:
-#         snap_reach_endpoints_tol = 2 * snap_tol
-#     if snap_waterbodies_tol is None:
-#         snap_waterbodies_tol = snap_tol
+    logging.info("")
+    logging.info("Simplifying")
+    logging.info("-" * 30)
 
-#     logging.info("")
-#     logging.info("Simplifying")
-#     logging.info("-" * 30)
+    if simplify_rivers >= 0:
+        logging.info("Simplifying rivers")
+        watershed_workflow.hydrography.cleanup(rivers, simplify_rivers, prune_tol, merge_tol)
 
-#     if simplify_rivers > 0:
-#         logging.info("Simplifying rivers")
-#         watershed_workflow.hydrography.cleanup(rivers, simplify_rivers, prune_tol, merge_tol)
+    if simplify_hucs >= 0:
+        logging.info("Simplifying HUCs")
+        watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
 
-#     if simplify_hucs > 0:
-#         logging.info("Simplifying HUCs")
-#         watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
+    if snap_tol > 0 or snap_triple_junctions_tol > 0 or snap_reach_endpoints_tol > 0 or cut_intersections:
+        logging.info("Snapping river and HUC (nearly) coincident nodes")
+        rivers = watershed_workflow.hydrography.snap(hucs, rivers, snap_tol,
+                                                     snap_triple_junctions_tol,
+                                                     snap_reach_endpoints_tol, cut_intersections)
 
-#     if snap_tol > 0 or snap_triple_junctions_tol > 0 or snap_reach_endpoints_tol > 0 or cut_intersections:
-#         logging.info("Snapping river and HUC (nearly) coincident nodes")
-#         rivers = watershed_workflow.hydrography.snap(hucs, rivers, snap_tol,
-#                                                      snap_triple_junctions_tol,
-#                                                      snap_reach_endpoints_tol, cut_intersections)
+    if simplify_waterbodies > 0 and waterbodies is not None:
+        for i, wb in enumerate(waterbodies):
+            wb = wb.simplify(simplify_waterbodies)
+            wb = hucs.exterior().intersection(wb)
+            waterbodies[i] = wb
 
-#     if simplify_waterbodies > 0 and waterbodies is not None:
-#         for i, wb in enumerate(waterbodies):
-#             wb = wb.simplify(simplify_waterbodies)
-#             wb = hucs.exterior().intersection(wb)
-#             waterbodies[i] = wb
+    if snap_waterbodies_tol > 0 and waterbodies is not None:
+        logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
+        watershed_workflow.hydrography.snapWaterbodies(hucs, waterbodies, snap_waterbodies_tol)
 
-#     if snap_waterbodies_tol > 0 and waterbodies is not None:
-#         logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
-#         watershed_workflow.hydrography.snap_waterbodies(hucs, waterbodies, snap_waterbodies_tol)
+    assert all(r.isLocallyContinuous() for r in rivers)
 
-#     assert (all(r.is_locally_continuous() for r in rivers))
+    if cut_intersections:
+        logging.info("Cutting crossings and removing external segments")
+        watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, snap_tol)
 
-#     if cut_intersections:
-#         logging.info("Cutting crossings and removing external segments")
-#         watershed_workflow.hydrography.cut_and_snap_crossings(hucs, rivers, snap_tol)
+    assert all(r.isLocallyContinuous() for r in rivers)
 
-#     assert (all(r.is_locally_continuous() for r in rivers))
+    logging.info("")
+    logging.info("Simplification Diagnostics")
+    logging.info("-" * 30)
+    if len(rivers) != 0:
+        mins = []
+        for river in rivers:
+            for r in river.preOrder():
+                coords = np.array(r.segment.coords[:])
+                dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+                mins.append(np.min(dz))
+        logging.info(f"  river min seg length: {min(mins)}")
+        logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
-#     logging.info("")
-#     logging.info("Simplification Diagnostics")
-#     logging.info("-" * 30)
-#     if len(rivers) != 0:
-#         mins = []
-#         for river in rivers:
-#             for line in river.depthFirst():
-#                 coords = np.array(line.coords[:])
-#                 dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-#                 mins.append(np.min(dz))
-#         logging.info(f"  river min seg length: {min(mins)}")
-#         logging.info(f"  river median seg length: {np.median(np.array(mins))}")
+    mins = []
+    watershed_workflow.split_hucs.simplify(hucs, 0)
+    for seg in hucs.segments:
+        coords = np.array(seg.coords[:])
+        dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+        mins.append(np.min(dz))
+    logging.info(f"  HUC min seg length: {min(mins)}")
+    logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
 
-#     mins = []
-#     watershed_workflow.split_hucs.simplify(hucs, 0)
-#     for line in hucs.segments:
-#         coords = np.array(line.coords[:])
-#         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-#         mins.append(np.min(dz))
-#     logging.info(f"  HUC min seg length: {min(mins)}")
-#     logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
-
-#     mins = []
-#     if waterbodies is not None:
-#         for wb in waterbodies:
-#             coords = np.array(wb.exterior.coords[:])
-#             dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-#             mins.append(np.min(dz))
-#         if len(mins) > 0:
-#             logging.info(f"  Waterbody min seg length: {min(mins)}")
-#             logging.info(f"  Waterbody median seg length: {np.median(np.array(mins))}")
-#     return rivers
+    mins = []
+    if waterbodies is not None:
+        for wb in waterbodies:
+            coords = np.array(wb.exterior.coords[:])
+            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
+            mins.append(np.min(dz))
+        if len(mins) > 0:
+            logging.info(f"  Waterbody min seg length: {min(mins)}")
+            logging.info(f"  Waterbody median seg length: {np.median(np.array(mins))}")
+    return rivers
 
 
 # def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
@@ -818,7 +834,7 @@ def findHUC(source : Any,
 #     xarray 
 
 #     """
-#     assert (len(shapes) == len(shape_colors))
+#     assert len(shapes) == len(shape_colors)
 #     if len(shapes) == 0:
 #         raise ValueError("Cannot generate raster for empty set of shapes")
 
@@ -837,7 +853,7 @@ def findHUC(source : Any,
 
 #     raster_profile, raster = watershed_workflow.utils.create_empty_raster(
 #         raster_bounds, raster_crs, raster_dx, nodata)
-#     assert (len(raster.shape) == 3 and raster.shape[0] == 1)
+#     assert len(raster.shape) == 3 and raster.shape[0] == 1
 #     raster = raster[0, :, :]
 #     logging.info(f'  of shape: {raster.shape}')
 #     logging.info(f'  and {len(set(shape_colors))} independent colors')
@@ -877,7 +893,7 @@ def findHUC(source : Any,
 #         transform.
 
 #     """
-#     assert (len(shapes) == len(shape_colors))
+#     assert len(shapes) == len(shape_colors)
 #     if len(shapes) == 0:
 #         raise ValueError("Cannot generate raster for empty set of shapes")
 

@@ -1,5 +1,8 @@
 """Functions for manipulating combinations of RiverTree and SplitHUCs objects"""
 
+from __future__ import annotations
+from typing import Dict
+
 import math
 import copy
 import logging
@@ -20,10 +23,11 @@ import watershed_workflow.split_hucs
 _tol = 0.1  # meters by default
 
 
-def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
+def findOutletsByCrossings(hucs : watershed_workflow.split_hucs.SplitHUCs,
+                           river : watershed_workflow.river_tree.River,
+                           tol : float = 10,
+                           debug_plot : bool = False) -> None:
     """For each HUC, find all outlets using a river network's crossing points."""
-    if tol is None:
-        tol = 10
     # next determine the outlet, and all boundary edges within x m of that outlet
     polygons = list(hucs.polygons())
     poly_crossings = []
@@ -34,15 +38,12 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
                 my_crossings.append(poly.exterior.intersection(reach.segment))
 
         # cluster my_crossings to make sure that multiple crossings are only counted once
-        my_crossing_centroids = []
+        mccl = []
         for crossing in my_crossings:
-            my_crossing_centroids.append([crossing.centroid.xy[0][0], crossing.centroid.xy[1][0]])
-        my_crossing_centroids = np.array(my_crossing_centroids)
-        if len(my_crossing_centroids) > 1:
-            clusters, cluster_centroids = watershed_workflow.utils.cluster(
-                my_crossing_centroids, tol)
-        else:
-            cluster_centroids = my_crossing_centroids
+            mccl.append([crossing.centroid.xy[0][0], crossing.centroid.xy[1][0]])
+        my_crossing_centroids = np.array(mccl)
+        clusters, cluster_centroids = watershed_workflow.utils.cluster(
+            my_crossing_centroids, tol)
         poly_crossings.append(cluster_centroids)
 
     logging.info("Crossings by Polygon:")
@@ -52,7 +53,8 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
             logging.info(f'    crossing: {p}')
 
     # unravel the clusters
-    all_crossings = [c for p in poly_crossings for c in p]
+    all_crossings_l = [c for p in poly_crossings for c in p]
+    all_crossings = np.array(all_crossings_l)
 
     # cluster crossings that are within tolerance across polygons
     crossings_clusters_indices, crossings_clusters_centroids = \
@@ -71,14 +73,6 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
         for ci in my_inds:
             cluster_poly_indices[ci].append(lcv_poly)
 
-    # assert equivalent
-    for pi, clusters in poly_cluster_indices.items():
-        for ci in clusters:
-            assert (pi in cluster_poly_indices[ci])
-    for ci, polys in cluster_poly_indices.items():
-        for pi in polys:
-            assert (ci in poly_cluster_indices[pi])
-
     # create a tree, recursively finding all polygons with only
     # one crossing -- this must be an outlet -- then removing it
     # from the list, hopefully leaving a downstream polygon with
@@ -86,20 +80,20 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
     # the maximal number of polygons crossed from 0th order to
     # maximal order.
     logging.info('Constructing outlet list')
-    outlets = dict()
+    outlets : Dict[int,int] = dict()
     inlets = collections.defaultdict(list)
     itercount = 0
     done = False
     while not done:
         logging.info(f'Iteration = {itercount}')
         logging.info(f'-----------------')
-        new_outlets = dict()
+        new_outlets : Dict[int,int] = dict()
 
         # look for polygons with only one crossing -- this must be an outlet.
-        for pi, clusters in poly_cluster_indices.items():
-            if len(clusters) == 1 and pi not in outlets:
+        for pi, clusters2 in poly_cluster_indices.items():
+            if len(clusters2) == 1 and pi not in outlets:
                 # only one crossing cluster, this is the outlet
-                cluster_id = clusters[0]
+                cluster_id = clusters2[0]
                 new_outlets[pi] = cluster_id
                 cluster_poly_indices[cluster_id].remove(pi)
                 logging.info(
@@ -120,10 +114,9 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
             cluster_poly_indices.pop(ci)
 
         if debug_plot and len(new_outlets) > 0:
-            import watershed_workflow.plot
-            fig, ax = watershed_workflow.plot.get_ax(None)
-            watershed_workflow.plot.shplys(polygons, None, color='k', ax=ax)
-            watershed_workflow.plot.rivers([river, ], None, color='b', ax=ax)
+            fig, ax = plt.subplots(1,1)
+            hucs.plot(color='k', ax=ax)
+            river.plot(color='b', ax=ax)
             for pi, ci in outlets.items():
                 outlet = crossings_clusters_centroids[ci]
                 ax.scatter([outlet[0], ], [outlet[1], ], s=100, c='b', marker='o')
@@ -163,7 +156,7 @@ def findOutletsByCrossings(hucs, river, tol=None, debug_plot=False):
     last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
 
     hucs.exterior_outlet = last_outlet_loc
-    hucs.polygon_outlets = outlet_locs
+    hucs.df['outlet'] = outlet_locs.values()
 
 
 def findOutletsByElevation(hucs, crs, elev_raster, elev_raster_profile):
@@ -181,7 +174,7 @@ def findOutletsByElevation(hucs, crs, elev_raster, elev_raster_profile):
         mesh_points = watershed_workflow.elevate(mesh_points, crs, elev_raster, elev_raster_profile)
         i = np.argmin(mesh_points[:, 2])
         outlets.append(shapely.geometry.Point(mesh_points[i, 0], mesh_points[i, 1]))
-    hucs.polygon_outlets = outlets
+    hucs.df['outlet'] = outlets
 
 
 def findOutletsByHydroseq(hucs, river, tol=0):
@@ -196,7 +189,7 @@ def findOutletsByHydroseq(hucs, river, tol=0):
     # iterate over the reaches, sorted by hydrosequence, looking for
     # the first one that intersects the polygon boundary.
     assert (river.is_hydroseq_consistent())
-    reaches = sorted(river.preOrder(), key=lambda r: r.properties['HydrologicSequence'])
+    reaches = sorted(river.preOrder(), key=lambda r: r.properties['hydroseq'])
     if tol > 0:
         reaches = [r.segment.buffer(tol) for r in reaches]
     else:
@@ -228,7 +221,7 @@ def findOutletsByHydroseq(hucs, river, tol=0):
         if len(poly_ids) == 0:
             break
 
-    hucs.polygon_outlets = polygon_outlets
+    hucs.df['outlet'] = polygon_outlets
 
 
 def snap(hucs,
@@ -774,9 +767,9 @@ def removeDiversions(rivers, preserve_catchments=False):
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes:
-            if leaf.properties['DivergenceCode'] == 2:
+            if leaf.properties['divergence'] == 2:
                 # is a braid or a diversion
-                if river.getNode(leaf.properties['UpstreamMainPathHydroSeq']) is None:
+                if river.getNode(leaf.properties['uphydroseq']) is None:
                     # diversion!
                     try:
                         joiner = next(n for n in leaf.pathToRoot()
@@ -808,11 +801,11 @@ def removeBraids(rivers, preserve_catchments=False):
         count_reaches = 0
 
         for leaf in river.leaf_nodes:
-            if leaf.properties['DivergenceCode'] == 2:
+            if leaf.properties['divergence'] == 2:
                 # is a braid or a diversion?
-                logging.info(f"  Found a braid with upstream = {leaf.properties['UpstreamMainPathHydroSeq']}")
-                upstream_hydroseq = leaf.properties['UpstreamMainPathHydroSeq']
-                if river.findNode(lambda n : n.properties['HydrologicSequence'] == upstream_hydroseq) is not None:
+                logging.info(f"  Found a braid with upstream = {leaf.properties['uphydroseq']}")
+                upstream_hydroseq = leaf.properties['uphydroseq']
+                if river.findNode(lambda n : n.properties['hydroseq'] == upstream_hydroseq) is not None:
                     # braid!
                     try:
                         joiner = next(n for n in leaf.pathToRoot()
@@ -850,7 +843,7 @@ def removeDivergences(rivers, preserve_catchments=False):
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes:
-            if leaf.properties['DivergenceCode'] == 2:
+            if leaf.properties['divergence'] == 2:
                 # diversion!
                 try:
                     joiner = next(n for n in leaf.pathToRoot()

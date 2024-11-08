@@ -1,4 +1,6 @@
-from typing import List, Optional
+from __future__ import annotations
+
+from typing import List, Optional, Any
 from shapely.geometry.base import BaseGeometry
 from pyproj import CRS
 import geopandas as gpd
@@ -8,17 +10,16 @@ import watershed_workflow.utils
 class ManagerHyRiver:
     def __init__(self,
                  protocol : str,
-                 layer : Optional[str] = None,
+                 layer : str = '',
                  id_name : Optional[str]= None):
+        self.name = protocol
         self._layer = layer
         if id_name is None:
             id_name = layer
         self._id_name = id_name
+        self._protocol : Any = None
 
-        if protocol == '3DHP':
-            import pynhd.pynhd
-            self._protocol = pynhd.pynhd.HP3D
-        elif protocol == 'NHD':
+        if protocol == 'NHD':
             import pynhd.pynhd
             self._protocol = pynhd.pynhd.NHD
         elif protocol == 'NHDPlusHR':
@@ -33,6 +34,8 @@ class ManagerHyRiver:
         else:
             raise ValueError(f'Invalid HyRiver protocol "{protocol}"')
 
+    def set(self, **kwargs):
+        pass
         
     def getShapesByGeometry(self,
                             geom : BaseGeometry,
@@ -51,8 +54,13 @@ class ManagerHyRiver:
         """Finds all shapes in the given dataset of a listed set of IDs."""
         if isinstance(ids, str):
             ids = [ids,]
-            
-        df = self._protocol(self._layer).byid(self._id_name, ids)
+
+        protocol = self._protocol(self._layer)
+        if hasattr(protocol, 'byid'):
+            df = protocol.byid(self._id_name, ids)
+        else:
+            df = protocol.byids(self._id_name, ids)
+
         df['ID'] = df[self._id_name]
         df = df.set_index('ID', drop=True)
         return df

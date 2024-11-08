@@ -4,6 +4,8 @@ import logging
 import numpy as np
 import collections
 import copy
+import itertools
+from matplotlib import pyplot as plt
 
 import shapely.geometry
 import shapely.ops
@@ -240,6 +242,47 @@ class SplitHUCs:
         self.update()
         return self.df
 
+    def plot(self, column=None, fill=False, **kwargs):
+        # get marker arguments, popping them from kwargs
+        markers = False
+        if 'marker' in kwargs:
+            markers = True
+            markerargs = {'marker' : kwargs.pop('marker')}
+            if 'markersize' in kwargs:
+                markerargs['s'] = kwargs.pop('markersize')
+
+        # force cycled colors as default, not all blue as default
+        if column is None and 'color' not in kwargs:
+            color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            color = [c for (ind,c) in zip(self.df.index, itertools.cycle(color_cycle))]
+            kwargs['color'] = color
+
+        # call the default plotter, which, because HUCs are all
+        # Polygons, will always add exactly one collection.
+        if fill:
+            ax = self.df.plot(**kwargs)
+            lc = ax.collections[-1]
+            colors = lc.get_facecolors()
+        else:
+            ax = self.df.boundary.plot(**kwargs)
+            lc = ax.collections[-1]
+            colors = lc.get_colors()
+
+        if markers:
+            # scatter the markers
+            for i, seg in enumerate(self.df.boundary.geometry):
+                if len(colors) == 1:
+                    color = colors[0]
+                else:
+                    color = colors[i]
+                ax.scatter(seg.xy[0], seg.xy[1], color=color, **markerargs)
+
+        return ax
+        
+
+            
+        
+    
     def spines(self):
         """Iterate over spines."""
         for b in self.boundaries:

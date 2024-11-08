@@ -19,17 +19,23 @@ dnhydroseq : int
   ee documentation for NHDPlus
 
 """
+from __future__ import annotations
+from typing import List, Optional, Any, Tuple, Callable
+
 import logging
 import numpy as np
 import copy
-import itertools
 from scipy.spatial import cKDTree
+from matplotlib import pyplot as plt
+import itertools
 
 import shapely.geometry
 import shapely.ops
+import geopandas as gpd
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
+from watershed_workflow.crs import CRS
 
 _tol = 1.e-7
 
@@ -42,30 +48,35 @@ class _RowView:
     Copy-on-Write mechanism.
 
     """
-    def __init__(self, df, index):
+    def __init__(self,
+                 df : gpd.GeoDataFrame,
+                 index : int | str):
         self._df = df
         self._index = index
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._df.keys())
         
-    def __getitem__(self, k):
+    def __getitem__(self, k : str) -> Any:
         return self._df.at[self._index, k]
 
-    def __setitem__(self, k, v):
-        df.loc[self._index, k] = v
+    def __setitem__(self, k : str, v : Any) -> None:
+        self._df.loc[self._index, k] = v
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return self._df.keys()
 
-    def keys(self):
+    def keys(self) -> Any:
         return self._df.keys()
 
     
 class River(watershed_workflow.tinytree.Tree):
     """A tree structure whose node data is stored in a pandas DataFrame, accessed by an index."""
 
-    def __init__(self, index, df, children=None):
+    def __init__(self,
+                 index : int | str,
+                 df : gpd.GeoDataFrame,
+                 children : Optional[List[River]] = None):
         """Do not call me.  Instead use the class factory methods, one of:
 
         - construct_rivers_by_geometry() # generic data
@@ -82,7 +93,7 @@ class River(watershed_workflow.tinytree.Tree):
     def __iter__(self):
         return self.preOrder()
             
-    def addChild(self, child_or_index):
+    def addChild(self, child_or_index : River | str | int) -> River:
         """Append a child (upstream) reach to this reach."""
         if isinstance(child_or_index, River):
             super(River, self).addChild(child_or_index)
@@ -91,17 +102,16 @@ class River(watershed_workflow.tinytree.Tree):
         return self.children[-1]
 
     @property
-    def segment(self):
+    def segment(self) -> shapely.geometry.LineString:
         """Returns the segment geometry."""
         return self.df.at[self.index, 'geometry']
 
     @segment.setter
-    def segment(self, value):
-        assert (isinstance(value, shapely.geometry.LineString))
+    def segment(self, value : shapely.geometry.LineString):
         self.df.loc[self.index, 'geometry'] = value
 
     @property
-    def crs(self):
+    def crs(self) -> CRS:
         return self.df.crs
         
     @property
@@ -112,18 +122,53 @@ class River(watershed_workflow.tinytree.Tree):
     def properties(self, value):
         self.df.loc[self.index, value.keys()] = tuple(value.values())
 
-    def __getitem__(self, name):
+    def __getitem__(self, name : str) -> Any:
         """Faster/preferred getter for properties"""
         return self.df.at[self.index, name]
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name : str, value : Any) -> None:
         """Faster/preferred setter for properties"""
         self.df.loc[self.index, name] = value
 
-    def __contains__(self, name):
+    def __contains__(self, name : str) -> bool:
         return self.df.__contains__(name)
+
+
+    def plot(self, column=None, **kwargs):
+        # get marker arguments, popping them from kwargs
+        markers = False
+        if 'marker' in kwargs:
+            markers = True
+            markerargs = {'marker' : kwargs.pop('marker')}
+            if 'markersize' in kwargs:
+                markerargs['s'] = kwargs.pop('markersize')
+
+        # force cycled colors as default, not all blue as default
+        if column is None and 'color' not in kwargs:
+            color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            color = [c for (ind,c) in zip(self.df.index, itertools.cycle(color_cycle))]
+            kwargs['color'] = color
+
+        # call the default plotter, which, because RiverTree is all
+        # LineStrings, will always add exactly one collection.
+        ax = self.df.plot(**kwargs)
+
+        if markers:
+            lc = ax.collections[-1]
+            colors = lc.get_colors()
+
+            # scatter the markers
+            for i, seg in enumerate(self.df.geometry):
+                if len(colors) == 1:
+                    color = colors[0]
+                else:
+                    color = colors[i]
+                ax.scatter(seg.xy[0], seg.xy[1], color=color, **markerargs)
+
+        return ax
         
-    def split(self, i):
+    
+    def split(self, i : int) -> Tuple[River, River]:
         """Split the reach at the ith coordinate of the segment.
 
         Note that this does not split the catchment!
@@ -165,11 +210,11 @@ class River(watershed_workflow.tinytree.Tree):
         # -- add the row to the dataframe
         self.df.loc[downstream_props['index']] = downstream_props
         # -- construct the node and add it to the original parent
-        new_node = self.__class__(River(downstream_props['index'], self.df, [self,]))
+        new_node = self.__class__(downstream_props['index'], self.df, [self,])
         parent.addChild(new_node)
         return self, new_node
 
-    def merge(self, merge_reach=True):
+    def merge(self, merge_reach : bool = True) -> None:
         """Merges this with its parent."""
         parent = self.parent
 
@@ -197,7 +242,7 @@ class River(watershed_workflow.tinytree.Tree):
         for child in self.children:
             parent.addChild(child)
 
-    def prune(self):
+    def prune(self) -> None:
         """Removes this node and all below it, merging properties."""
         if self.parent is None:
             raise ValueError("Cannot prune a branch with no parent.")
@@ -205,7 +250,7 @@ class River(watershed_workflow.tinytree.Tree):
         for node in self.postOrder():
             node.merge(False)
 
-    def moveCoordinate(self, i, xy):
+    def moveCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
         """Moves the ith coordinate of self.segment to a new location."""
         if i < 0:
             i = len(self.segment.coords) + i
@@ -213,7 +258,7 @@ class River(watershed_workflow.tinytree.Tree):
         coords[i] = xy
         self.segment = shapely.geometry.LineString(coords)
 
-    def insertCoordinate(self, i, xy):
+    def insertCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
         """Inserts a new coordinate before the ith coordinate."""
         if i < 0:
             i = len(self.segment.coords) + i
@@ -221,28 +266,32 @@ class River(watershed_workflow.tinytree.Tree):
         coords.insert(i, xy)
         self.segment = shapely.geometry.LineString(coords)
 
-    def appendCoordinate(self, xy):
+    def appendCoordinate(self, xy : Tuple[float,float]) -> None:
         """Appends a coordinate at the end (downstream) of the segment."""
         coords = list(self.segment.coords) + [xy, ]
         self.segment = shapely.geometry.LineString(coords)
 
-    def extendCoordinates(self, xys):
+    def extendCoordinates(self, xys : List[Tuple[float,float]]) -> None:
         """Appends multiple coordinates at the end (downstream) of the segment."""
         coords = list(self.segment.coords) + xys
         self.segment = shapely.geometry.LineString(coords)
 
-    def prependCoordinates(self, xys):
+    def prependCoordinates(self, xys : List[Tuple[float,float]]) -> None:
         """Prepends multiple coordinates at the beginning (upstream) of the segment."""
         coords = xys + list(self.segment.coords)
         self.segment = shapely.geometry.LineString(coords)
 
-    def popCoordinate(self, i):
+    def popCoordinate(self, i : int) -> Tuple[float,float]:
         """Removes the ith coordinate and returns its value."""
         coords = list(self.segment.coords)
-        coords.pop(i)
+        c = coords.pop(i)
         self.segment = shapely.geometry.LineString(coords)
+        return c
 
-    def accumulate(self, to_accumulate, to_save=None, op=sum):
+    def accumulate(self,
+                   to_accumulate : str,
+                   to_save : Optional[str] = None,
+                   op : Callable = sum):
         """Accumulates a property across the river tree."""
         val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
         val = op([val, self.properties[to_accumulate]])
@@ -250,7 +299,7 @@ class River(watershed_workflow.tinytree.Tree):
             self.properties[to_save] = val
         return val
 
-    def getNode(self, index):
+    def getNode(self, index : int | str) -> River | None:
         """return node for a given index"""
         try:
             node = next(node for node in self.preOrder() if node.index == index)
@@ -258,25 +307,25 @@ class River(watershed_workflow.tinytree.Tree):
             node = None
         return node
 
-    def findNode(self, lambd):
+    def findNode(self, lambd : Callable) -> River | None:
         """Find a node, returning the first whose lambda application is true, or None"""
         try:
             return next(n for n in self.preOrder() if lambd(n))
         except StopIteration:
             return None
 
-    def _isContinuous(self, child, tol=_tol):
+    def _isContinuous(self, child, tol : float = _tol) -> bool:
         """Is a given child continuous with self?"""
         return watershed_workflow.utils.isClose(child.segment.coords[-1], self.segment.coords[0], tol)
 
-    def isLocallyContinuous(self, tol=_tol):
+    def isLocallyContinuous(self, tol : float = _tol) -> bool:
         """Is this node continuous with its parent and children?"""
         res = all(self._isContinuous(child, tol=_tol) for child in self.children)
         if self.parent is not None:
             res = res and self.parent._isContinuous(self, tol=_tol)
         return res
 
-    def isContinuous(self, tol=_tol):
+    def isContinuous(self, tol : float = _tol) -> bool:
         """Checks geometric continuity of the river.
 
         Confirms that all upstream children's downstream coordinate
@@ -285,12 +334,12 @@ class River(watershed_workflow.tinytree.Tree):
         return all(self._isContinuous(child, tol) for child in self.children) and \
             all(child.isContinuous(tol) for child in self.children)
 
-    def _makeContinuous(self, child):
+    def _makeContinuous(self, child : River) -> None:
         child_coords = list(child.segment.coords)
         child_coords[-1] = list(self.segment.coords)[0]
         child.segment = shapely.geometry.LineString(child_coords)
 
-    def makeContinuous(self, tol=_tol):
+    def makeContinuous(self, tol : float = _tol) -> None:
         """Sometimes there can be small gaps between segments of river
         tree if river is constructed using hydroseq and Snap
         option is not used. Here we make them consistent.
@@ -302,16 +351,16 @@ class River(watershed_workflow.tinytree.Tree):
                     node._makeContinuous(child)
         assert (self.isContinuous())
 
-    def isHydroseqConsistent(self):
+    def isHydroseqConsistent(self) -> bool:
         """Confirms that hydrosequence is valid."""
         if len(self.children) == 0:
             return True
 
-        self.children = sorted(self.children, key=lambda c: c.hydroseq)
+        self.children = sorted(self.children, key=lambda c: c['hydroseq'])
         return self.properties['hydroseq'] < self.children[0].properties['hydroseq'] and \
             all(child.isHydroseqConsistent() for child in self.children)
 
-    def isConsistent(self, tol=_tol):
+    def isConsistent(self, tol : float = _tol) -> bool:
         """Validity checking of the tree."""
         good = self.isContinuous(tol)
         if 'hydroseq' in self:
@@ -324,12 +373,12 @@ class River(watershed_workflow.tinytree.Tree):
             for n in self.parent.pathToRoot():
                 yield n
     
-    def to_crs(self, crs):
+    def to_crs(self, crs : CRS) -> None:
         """Warp the coordinate system."""
         self.df.to_crs(crs, inplace=True)
 
-    def to_dataframe(self):
-        """Represent as GeoDataFrame"""
+    def to_dataframe(self) -> gpd.GeoDataFrame:
+        """Represent as GeoDataFrame, useful for pickling."""
         # move the parent into the dataframe
         def _parent_index(n):
             if n.parent is None:
@@ -345,27 +394,35 @@ class River(watershed_workflow.tinytree.Tree):
         self.df['children'] = self.df['children'].convert_dtypes()
         return self.df
 
-    def to_mls(self):
+    def to_mls(self) -> shapely.geometry.MultiLineString:
         """Represent this as a shapely.geometry.MultiLineString"""
         return shapely.geometry.MultiLineString([r.segment for r in self.preOrder()])
+
     
-    def _copy(self, df):
+    def copy(self, df : gpd.GeoDataFrame) -> River:
         """Shallow copy using a provided DataFrame"""
         if df is None:
             df = self.df
         copy_children = [child.copy(df) for child in self.children]
         return self.__class__(self.index, df, copy_children)
-    
-    def deepcopy(self):
+
+    def deepcopy(self) -> River:
         """Creates a deep copy of self"""
         df_copy = self.df.copy()
-        return self._copy(df_copy)
+        return self.copy(df_copy)
+
+    def copySubtree(self) -> River:
+        """Returns a deep copy rooted at self."""
+        inds = [r.index for r in self.preOrder()]
+        df_copy = self.df.loc[inds]
+        return self.copy(df_copy)
+        
     
     #
     # Factory functions
     #
     @classmethod
-    def constructRiversByGeometry(cls, df, tol=_tol):
+    def constructRiversByGeometry(cls, df, tol : float = _tol):
         """Forms a list of River trees from a list of reaches by looking for
         close endpoints of those reaches.
 
@@ -585,7 +642,7 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
                                   crs=rivers[0].crs)
 
 
-def createRiverTrees(reaches, method='geometry', tol=_tol):
+def createRiverTrees(reaches, method='geometry', tol : float = _tol):
     """Constructs River objects from a list of reaches.
 
     Parameters

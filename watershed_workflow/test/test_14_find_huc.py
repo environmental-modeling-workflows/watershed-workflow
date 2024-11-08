@@ -3,7 +3,7 @@ import geopandas
 import math
 import numpy as np
 import watershed_workflow.crs
-from watershed_workflow.sources.manager_nhd import FileManagerWBD
+from watershed_workflow.sources.manager_wbd import ManagerWBD
 
 from source_fixtures import datadir
 
@@ -15,7 +15,7 @@ def get_shapes(filename):
 
 
 def test_find12(datadir):
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('test_shapefile.shp')
     shp = get_shapes(testshpfile)
@@ -25,7 +25,7 @@ def test_find12(datadir):
 
 
 def test_find12_exact(datadir):
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('test_shapefile.shp')
     shp = get_shapes(testshpfile)
@@ -36,7 +36,7 @@ def test_find12_exact(datadir):
 
 def test_find12_raises(datadir):
     """This throws because the shape is not in this huc"""
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('test_shapefile.shp')
     shp = get_shapes(testshpfile)
@@ -48,7 +48,7 @@ def test_find12_raises(datadir):
 
 
 def test_find8(datadir):
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('test_polygon.shp')
     shp = get_shapes(testshpfile)
@@ -56,7 +56,7 @@ def test_find8(datadir):
 
 
 def test_find8_exact(datadir):
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('test_polygon.shp')
     shp = get_shapes(testshpfile)
@@ -64,7 +64,7 @@ def test_find8_exact(datadir):
 
 
 def test_find8_raises(datadir):
-    nhd = FileManagerWBD()
+    nhd = ManagerWBD()
 
     testshpfile = datadir.join('copper_creek.shp')
     shp = get_shapes(testshpfile)

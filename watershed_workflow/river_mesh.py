@@ -858,7 +858,7 @@ def _hucSegsAtIntersection(point, hucs):
     return intersection_segs
 
 
-def _nodeAtIntersection(point, river):
+def nodeAtIntersection(point, river):
     # for a given intersection point, find all the huc-segments (indices)
     intersection_node = None
     len_scale = watershed_workflow.utils.computeDistance(river.segment.coords[0], river.segment.coords[1])
@@ -869,7 +869,8 @@ def _nodeAtIntersection(point, river):
     return intersection_node
 
 
-def _angleRiversSegs(ref_seg, seg):
+def angleRiversSegs(ref_seg : shapely.geometry.LineString,
+                    seg : shapely.geometry.LineString) -> float:
     """Returns the angle of incoming-river-segment or huc-segment w.r.t outgoing river.
 
     The angle is measured clockwise; this is useful to sort
@@ -1022,7 +1023,7 @@ def adjustHUCsForRiverCorridor(hucs,
             logging.info("  ... found an intersection of river and huc seg")
             intersection_point = seg.intersection(river_mls)
             if type(intersection_point) is shapely.geometry.Point:
-                parent_node = _nodeAtIntersection(intersection_point, river)
+                parent_node = nodeAtIntersection(intersection_point, river)
                 # making sure it is not a leaf node, though this check
                 # fails if there is only one reach in the domain. So
                 # this may fail for a single reach that begins and
@@ -1031,7 +1032,7 @@ def adjustHUCsForRiverCorridor(hucs,
                     is_unadjusted_outlet_point = True
             elif type(intersection_point) is shapely.geometry.MultiPoint:
                 for point in intersection_point:
-                    parent_node = _nodeAtIntersection(point, river)
+                    parent_node = nodeAtIntersection(point, river)
                     if len(parent_node.children) != 0:
                         is_unadjusted_outlet_point = True
                         intersection_point = point
@@ -1049,7 +1050,7 @@ def adjustHUCsForRiverCorridor(hucs,
             # mark them as modified (in the following steps)
 
             # find the downstream node (outgoing river reach) at this junction
-            parent_node = _nodeAtIntersection(intersection_point, river)
+            parent_node = nodeAtIntersection(intersection_point, river)
             if parent_node.parent == None:  # check if it is the outlet node for this river
                 outlet_junction = True
             else:

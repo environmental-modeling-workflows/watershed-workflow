@@ -11,6 +11,7 @@ These dictionaries are provided as module-local (singleton) variables.
 
 """
 import logging
+from typing import Dict, Any
 
 from watershed_workflow.sources.manager_wbd import ManagerWBD
 from watershed_workflow.sources.manager_waterdata import ManagerWaterData
@@ -43,14 +44,14 @@ hydrography_sources = { 'NHDv2.1' : ManagerWaterData('nhdflowline_network'), }
 default_hydrography_source = 'NHDv2.1'
 
 # available and default digital elevation maps
-dem_sources = {
+dem_sources : Dict[str,Any] = {
     # 'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
     # 'NED 1 arc-second': FileManagerNED('1 arc-second'),
 }
 default_dem_source = None#'NED 1 arc-second'
 
 # available and default soil survey datasets
-structure_sources = {
+structure_sources : Dict[str,Any] = {
     # 'NRCS SSURGO': FileManagerNRCS(),
     # 'GLHYMPS': FileManagerGLHYMPS(),
     # 'SoilGrids2017': FileManagerSoilGrids2017(),
@@ -59,19 +60,19 @@ structure_sources = {
 default_structure_source = None#'NRCS SSURGO'
 
 # available and default land cover
-land_cover_sources = {
+land_cover_sources : Dict[str,Any] = {
     # 'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
     # 'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK'),
     # 'MODIS': FileManagerMODISAppEEARS()
 }
 default_land_cover = None #'NLCD (L48)'
 
-lai_sources = {}
+lai_sources : Dict[str,Any] = {}
 #    'MODIS': FileManagerMODISAppEEARS() }
 default_lai = None #'MODIS'
 
 # available and default meteorology
-met_sources = {} # 'DayMet': FileManagerDaymet() }
+met_sources : Dict[str,Any] = {} # 'DayMet': FileManagerDaymet() }
 default_met = None #'DayMet'
 
 

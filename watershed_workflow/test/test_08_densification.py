@@ -14,10 +14,11 @@ def test_densification(watershed_poly, watershed_reaches):
     rivers = watershed_workflow.river_tree.createRiverTrees(watershed_reaches)
 
     watershed_workflow.densification.densifyHUCs(huc=watershed,
+                                                 limit_scales=[0, 25, 100, 50],
                                                  huc_raw=watershed,
-                                                 rivers=rivers,
-                                                 limit_scales=[0, 25, 100, 50])
-    watershed_workflow.densification.densifyRivers(rivers, rivers, limit=14)
+                                                 rivers=rivers)
+
+    watershed_workflow.densification.densifyRivers(rivers, limit=14)
 
     assert (53 == len(watershed.exterior.exterior.coords))
     assert (16 == len(rivers[0].segment.coords))

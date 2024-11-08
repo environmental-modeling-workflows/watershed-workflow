@@ -47,8 +47,8 @@ def two_ys():
 
 
     df = geopandas.GeoDataFrame({'index' : hydroseqs,
-                                 'HydrologicSequence' : hydroseqs,
-                                 'DownstreamMainPathHydroSeq' : dnstream,
+                                 'hydroseq' : hydroseqs,
+                                 'dnhydroseq' : dnstream,
                                  'geometry' : mls}).set_index('index')
     return df
 
@@ -64,10 +64,10 @@ def braided_stream():
     divergence = [0, 0, 1, 0, 0, 2]
 
     df = geopandas.GeoDataFrame({'index' : range(len(mls)),
-                                 'HydrologicSequence' : hydroseqs,
-                                 'DownstreamMainPathHydroSeq' : dnstream,
-                                 'UpstreamMainPathHydroSeq' : upstream,
-                                 'DivergenceCode' : divergence,
+                                 'hydroseq' : hydroseqs,
+                                 'dnhydroseq' : dnstream,
+                                 'uphydroseq' : upstream,
+                                 'divergence' : divergence,
                                  'geometry' : mls}).set_index('index')
     return df
 

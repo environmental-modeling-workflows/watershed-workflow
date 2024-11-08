@@ -3,6 +3,9 @@ river network and the HUC boundary, using the original river network
 and HUC.
 
 """
+
+from typing import List, Optional, Tuple, Any, Iterable
+
 import logging
 import numpy as np
 import math
@@ -10,14 +13,18 @@ from scipy import interpolate
 import shapely
 
 import watershed_workflow.utils
+from watershed_workflow.river_tree import River
+from watershed_workflow.split_hucs import SplitHUCs
 
 
-def densifyRivers(rivers, rivers_raw=None, **kwargs):
-    """Returns a list for densified rivers"""
+def resampleRivers(rivers : List[River],
+                   limit : float,
+                   rivers_raw : Optional[List[River]]]) -> None:
+    """Resamples rivers, in place"""
     if rivers_raw is None:
         rivers_raw = [None, ] * len(rivers)
     for river, river_raw in zip(rivers, rivers_raw):
-        densifyRiver(river, river_raw, **kwargs)
+        densifyRiver(river, limit, river_raw)
 
     mins = []
     for river in rivers:
@@ -29,30 +36,9 @@ def densifyRivers(rivers, rivers_raw=None, **kwargs):
     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
 
-# def densify_rivers_new(rivers, limit=50):
-#     """Returns a list for densified rivers"""
-#     for river in rivers:
-#         for node in river.preOrder():
-#             if isinstance(limit, bool):
-#                 if limit and 'target_length' in node.properties:
-#                     target_length = node.properties['target_length']
-#                 else:
-#                     raise RuntimeError('not a valid option to provide width')
-#             else:
-#                 target_length = limit
-#             node.segment = resample_linestring_preserve_ends(node.segment, target_length)
-
-#     mins = []
-#     for river in rivers:
-#         for line in river.preOrder():
-#             coords = np.array(line.coords[:])
-#             dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-#             mins.append(np.min(dz))
-#     logging.info(f"  river min seg length: {min(mins)}")
-#     logging.info(f"  river median seg length: {np.median(np.array(mins))}")
-
-
-def densifyRiver(river, river_raw=None, limit=100):
+def densifyRiver(river : River,
+                 limit : float,
+                 river_raw : Optional[River] = None):
     """This function traverse in the river tree and densify node.segments in place.
     
     Parameters:
@@ -64,7 +50,14 @@ def densifyRiver(river, river_raw=None, limit=100):
     limit : float
       Upper bound on section length.
     """
-    if 'ID' in river.properties.keys() and river_raw is not None:
+    if river_raw is None:
+        for node in river.preOrder():
+            node.segment = densifyNodeSegments(node, limit)
+    else:
+        for node in river.preOrder():
+            
+        
+    if river_raw is not None:
         NHD_ids_raw = []
         for node in river_raw.preOrder():
             NHD_ids_raw.append(node.properties['ID'])
@@ -81,10 +74,12 @@ def densifyRiver(river, river_raw=None, limit=100):
         else:
             node_raw = None
 
-        node.segment = densifyNodeSegments(node, node_raw, limit=limit)
+        node.segment = densifyNodeSegments(node, limit, node_raw)
 
 
-def densifyNodeSegments(node, node_raw, limit=100):
+def densifyNodeSegments(node : River,
+                        limit : float,
+                        node_raw : Optional[River]) -> shapely.geometry.LineString:
     """This function adds equally-spaced points in the reach-sections longer than the limit at a desired resolution
         potentially using original river tree
      
@@ -134,7 +129,10 @@ def densifyNodeSegments(node, node_raw, limit=100):
     return node.segment
 
 
-def densifyHUCs(huc, huc_raw=None, rivers=None, limit_scales=None):
+def densifyHUCs(huc : SplitHUCs,
+                limit_scales : float | List[float],
+                huc_raw : Optional[SplitHUCs] = None,
+                rivers : Optional[List[River]] = None) -> None:
     """This function densify huc boundaries. The densification length scale either can be a constant value or a refinement 
     function where huc segment refinedment is greater for huc segments closer to the river tree
      
@@ -146,14 +144,11 @@ def densifyHUCs(huc, huc_raw=None, rivers=None, limit_scales=None):
         original huc with all the known points from NHDPlus 
       river: watershed_workflow.river_tree.River object
         to check the proximity of huc and river for refinement 
-      limit_scales: int or List 
+      limit_scales: float or List 
         limit of section length above which more points are added, either a constant value or a list for step refinement 
         [near_distance, near_length_scale, far_distance, far_length_scale]
 
-     Returns
-    -------
-    watershed_densified: watershed_workflow.split_hucs.SplitHUCs object
-        a densified huc
+    Densification is done INPLACE.
     """
     for i, seg in enumerate(huc.segments):  # densifying segment by segment
         # find which original segment is this segment part of, so we can use it to resample
@@ -180,20 +175,20 @@ def densifyHUCs(huc, huc_raw=None, rivers=None, limit_scales=None):
                         if type(limit_scales) is list:
                             # basic refine
                             coords_densified_basic = _densifyHUCs(coords,
-                                                                   coords_raw,
-                                                                   rivers,
-                                                                   limit_scales=limit_scales[-1])
+                                                                  limit_scales[-1],
+                                                                  coords_raw,
+                                                                  rivers)
                             # adaptive refine
                             coords_densified = _densifyHUCs(coords_densified_basic,
-                                                             coords_raw,
-                                                             rivers,
-                                                             limit_scales=limit_scales)
+                                                            limit_scales,
+                                                            coords_raw,
+                                                            rivers)
 
                         else:
                             coords_densified = _densifyHUCs(coords,
-                                                             coords_raw,
-                                                             rivers,
-                                                             limit_scales=limit_scales)
+                                                            limit_scales,
+                                                            coords_raw,
+                                                            rivers)
 
                         break
                 else:
@@ -203,20 +198,21 @@ def densifyHUCs(huc, huc_raw=None, rivers=None, limit_scales=None):
                 logging.debug(
                     "did not find corresponding huc.segment in original, doing simple interpolation"
                 )
-                coords_raw = None
                 coords_densified = _densifyHUCs(coords,
-                                                 coords_raw,
-                                                 rivers,
-                                                 limit_scales=limit_scales)
+                                                limit_scales,
+                                                None,
+                                                rivers)
 
         else:
-            coords_raw = None
-            coords_densified = _densifyHUCs(coords, coords_raw, rivers, limit_scales=limit_scales)
+            coords_densified = _densifyHUCs(coords, limit_scales, None, rivers)
 
         huc.segments[i] = shapely.geometry.LineString(coords_densified)
 
 
-def _densifyHUCs(coords, coords_raw=None, rivers=None, limit_scales=None):
+def _densifyHUCs(coords : List[Tuple[float,float]],
+                 limit_scales : float | List[float],
+                 coords_raw : Optional[List[Tuple[float,float]]] = None,
+                 rivers : Optional[List[River]] = None) -> List[Tuple[float,float]]:
     """This function increases the resolution of huc boundary by adding equally spaced interpolated points
 
      Parameters:
@@ -234,14 +230,12 @@ def _densifyHUCs(coords, coords_raw=None, rivers=None, limit_scales=None):
     coords_densified: List
         densified coordinates of a huc segment
     """
-    adaptive = type(limit_scales) is list  # setting up flag
-
     coords_densified = coords.copy()
     j = 0
     for i in range(len(coords) - 1):
-
         # calculation of limit for a set of point
-        if adaptive:
+        if isinstance(limit_scales, list):
+            assert rivers is not None
             limit = limitByRiverDistance([coords[i], coords[i + 1]], limit_scales, rivers)
         else:
             limit = limit_scales
@@ -250,10 +244,10 @@ def _densifyHUCs(coords, coords_raw=None, rivers=None, limit_scales=None):
 
         if section_length > limit:
             number_new_points = int(section_length // limit)
-            end_points = [coords[i],
-                          coords[i + 1]]  # points between which more points will be added
+            # points between which more points will be added
+            end_points = [coords[i], coords[i + 1]]
 
-            if adaptive:
+            if coords_raw is None:
                 new_points = _interpolateSimple(end_points, number_new_points)
             else:
                 new_points = _interpolateWithOrig(end_points, coords_raw, number_new_points)
@@ -265,31 +259,16 @@ def _densifyHUCs(coords, coords_raw=None, rivers=None, limit_scales=None):
     return coords_densified
 
 
-# def resample_linestring_preserve_ends(seg, initial_spacing):
-#     """redensifies linestring at a desired resolution"""
-#     length = seg.length
-
-#     num_segments = max(int(round(length / initial_spacing)), 1)
-
-#     adjusted_spacing = length / num_segments
-
-#     redensified_points = [
-#         seg.interpolate(distance).coords[0]
-#         for distance in [i * adjusted_spacing for i in range(num_segments + 1)]
-#     ]
-
-#     new_seg = shapely.geometry.LineString(redensified_points)
-#     return new_seg
-
-
-def _interpolateWithOrig(end_points, interp_data, n):
+def _interpolateWithOrig(end_points : List[Tuple[float,float]],
+                         interp_data : List[Tuple[float,float]],
+                         n : int) -> List[Tuple[float,float]]:
     """This function adds desired number of new points between end points a segment (huc or river)
     resampling from orinal data
 
     Parameters
     ----------
     end_points: List
-        end points of the segment whihc needs to be densified
+        end points of the segment which needs to be densified
     interp_data: List
         coordinates in the original segment, will be used to create an interpolator
     n: int
@@ -330,7 +309,7 @@ def _interpolateWithOrig(end_points, interp_data, n):
     return new_points
 
 
-def _interpolateSimple(end_points, n):
+def _interpolateSimple(end_points : List[Tuple[float,float]], n : int) -> List[Tuple[float,float]]:
     """This function does not use any original data, just adds new equally spaced points based on linear interpolation"""
     xnew = np.linspace(end_points[0][0], end_points[1][0],
                        n + 2)[1:-1]  # new xs equally space between existing points
@@ -340,7 +319,9 @@ def _interpolateSimple(end_points, n):
     return new_points
 
 
-def limitByRiverDistance(segment_ends, limit_scales, rivers):
+def limitByRiverDistance(segment_ends : List[Tuple[float,float]],
+                         limit_scales : List[float],
+                         rivers : List[River]) -> float:
     """Returns a graded refinement function based upon a distance
     function from rivers, for use with DensifyHucs function.  HUC
     segment resolution must be higher in near_distance when the HUC
@@ -372,12 +353,12 @@ def limitByRiverDistance(segment_ends, limit_scales, rivers):
     return length
 
 
-def removeSharpAngles(rivers,
-                      hucs,
-                      angle_limit=0,
-                      junction_angle_limit=0,
-                      huc_seg_river_angle_limit=0,
-                      limit=None):
+def removeSharpAngles(rivers : List[River],
+                      hucs : SplitHUCs,
+                      angle_limit : float = 0,
+                      junction_angle_limit : float = 0,
+                      huc_seg_river_angle_limit : float = 0,
+                      merge_limit : float = 0) -> None:
     """ angle_limit: float, optional
       If provided, smooth any angle formed by three consecutive points
       on the river tree smaller thea this value (degrees)
@@ -390,14 +371,14 @@ def removeSharpAngles(rivers,
                              angle_limit=angle_limit,
                              junction_angle_limit=junction_angle_limit,
                              huc_seg_river_angle_limit=huc_seg_river_angle_limit)
-        watershed_workflow.hydrography.merge(river, tol=limit * 0.6)
+        watershed_workflow.hydrography.merge(river, tol = merge_limit * 0.6)
 
 
-def _removeSharpAngles(river,
-                       hucs,
-                       angle_limit=0,
-                       junction_angle_limit=0,
-                       huc_seg_river_angle_limit=0):
+def _removeSharpAngles(river : River,
+                       hucs : SplitHUCs,
+                       angle_limit : float,
+                       junction_angle_limit : float,
+                       huc_seg_river_angle_limit : float) -> None:
     """Smooth out any sharp angles in the river tree and between
     river tree and watershed boundary
 
@@ -406,7 +387,7 @@ def _removeSharpAngles(river,
     """
     for node in river.preOrder():
         if angle_limit is not None:
-            remove_sharp_angles_from_seg(node, angle_limit=angle_limit)  # from internal segments
+            removeSharpAnglesFromSeg(node, angle_limit=angle_limit)  # from internal segments
             assert (node.is_locally_continuous())
 
         if len(node.children) != 0:
@@ -425,21 +406,22 @@ def _removeSharpAngles(river,
                         print(node.properties['ID'])
                     assert (node.is_locally_continuous())
 
-        assert (river.is_continuous())
+        assert river.isContinuous()
 
     if huc_seg_river_angle_limit > 0:
         # checks angle betweebn huc segment and river at the outlets and rotate the part of huc segment as needed
         treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=huc_seg_river_angle_limit)
 
 
-def removeSharpAnglesFromSeg(node, angle_limit=10):
+def removeSharpAnglesFromSeg(node : River,
+                             angle_limit : float = 10) -> None:
     """Smooth out any sharp angles in a reach segment."""
     seg = node.segment
     seg_coords = seg.coords[:]
     for i in range(len(seg_coords) - 2):
         seg_up = shapely.geometry.LineString([seg_coords[i], seg_coords[i + 1]])
         seg_down = shapely.geometry.LineString([seg_coords[i + 1], seg_coords[i + 2]])
-        angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
+        angle = watershed_workflow.river_mesh.angleRiversSegs(ref_seg=seg_down, seg=seg_up)
         if angle > 360 - angle_limit or angle < angle_limit:
             logging.info(
                 f"removing sharp angle in segment: {angle} for node {node.properties['ID']}")
@@ -448,7 +430,7 @@ def removeSharpAnglesFromSeg(node, angle_limit=10):
                     [seg_coords[i], seg_coords[i + 1], seg_coords[i + 2]]).centroid
                 seg_coords_new = seg_coords[:i] + new_point.coords[:] + seg_coords[i + 3:]
                 node.segment = shapely.geometry.LineString(seg_coords_new)
-                remove_sharp_angles_from_seg(node, angle_limit=angle_limit)
+                removeSharpAnglesFromSeg(node, angle_limit=angle_limit)
             else:
                 seg_coords_new = [seg_coords[0], seg_coords[2]]
                 node.segment = shapely.geometry.LineString(seg_coords_new)
@@ -467,10 +449,10 @@ def removeSharpAnglesFromSeg(node, angle_limit=10):
                     sibling_coords = sibling.segment.coords[:]
                     sibling_coords[-1] = node.segment.coords[-1]
                     sibling.segment = shapely.geometry.LineString(sibling_coords)
-            assert (node.parent.is_continuous())
+            assert node.parent.isContinuous()
 
 
-def treatNodeJunctionsForSharpAngles(node, angle_limit=10):
+def treatNodeJunctionsForSharpAngles(node : River, angle_limit : float = 10) -> None:
     """Smooth out junction angles.
 
     Moves the junction point to the centroid of the triangle formed by
@@ -483,10 +465,10 @@ def treatNodeJunctionsForSharpAngles(node, angle_limit=10):
         # the moved parent, not the original parent.
         seg1 = node.segment
         seg2 = child.segment
-        is_changed, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1,
-                                                                        seg2,
-                                                                        angle_limit=angle_limit,
-                                                                        id=node.properties['ID'])
+        is_changed, seg1, seg2 = removeSharpAnglesAtReachJunctions(seg1,
+                                                                   seg2,
+                                                                   angle_limit=angle_limit,
+                                                                   id=node.properties['ID'])
 
         if is_changed:
             node.segment = seg1
@@ -497,7 +479,11 @@ def treatNodeJunctionsForSharpAngles(node, angle_limit=10):
                 sibling.segment = shapely.geometry.LineString(sibling_coords)
 
 
-def removeSharpAnglesAtReachJunctions(seg1, seg2, angle_limit=10, id=None):
+def removeSharpAnglesAtReachJunctions(seg1 : shapely.geometry.LineString,
+                                      seg2 : shapely.geometry.LineString,
+                                      angle_limit : float = 10, 
+                                      id : Any = None) -> \
+                                      Tuple[bool, shapely.geometry.LineString, shapely.geometry.LineString]:
     """Moves the common shared point of seg1 and seg2 to the centroid
     of the triangle formed by the junction point and the two
     neighboring points.  This is done recursively until the tolerance
@@ -506,7 +492,7 @@ def removeSharpAnglesAtReachJunctions(seg1, seg2, angle_limit=10, id=None):
     is_changed = False
     seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
     seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
-    angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
+    angle = watershed_workflow.river_mesh.angleRiversSegs(ref_seg=seg_down, seg=seg_up)
     if angle > 360 - angle_limit or angle < angle_limit:
         logging.info(f"removing sharp angle at junction: {angle} for node {id}")
         new_point = shapely.geometry.Polygon([seg2.coords[-2], seg2.coords[-1],
@@ -521,12 +507,12 @@ def removeSharpAnglesAtReachJunctions(seg1, seg2, angle_limit=10, id=None):
             seg2_coords_new = seg2.coords[:-2] + new_point.coords[:]
         seg1 = shapely.geometry.LineString(seg1_coords_new)
         seg2 = shapely.geometry.LineString(seg2_coords_new)
-        _, seg1, seg2 = remove_sharp_angles_at_reach_junctions(seg1, seg2, angle_limit=angle_limit)
+        _, seg1, seg2 = removeSharpAnglesAtReachJunctions(seg1, seg2, angle_limit=angle_limit)
         is_changed = True
     return is_changed, seg1, seg2
 
 
-def treatSmallAngleBetweenChildNodes(node, angle_limit=10):
+def treatSmallAngleBetweenChildNodes(node : River, angle_limit : float = 10) -> bool:
     """Zippers up junctions that have small angles.  Returns True if a section was removed.
 
     \  |       \ /
@@ -544,7 +530,7 @@ def treatSmallAngleBetweenChildNodes(node, angle_limit=10):
             seg_up = shapely.geometry.LineString([seg2.coords[-2], seg2.coords[-1]])
             assert (watershed_workflow.utils.isClose(seg2.coords[-1], seg1.coords[0], 1.e-10))
             seg_down = shapely.geometry.LineString([seg1.coords[0], seg1.coords[1]])
-            angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg=seg_down, seg=seg_up)
+            angle = watershed_workflow.river_mesh.angleRiversSegs(ref_seg=seg_down, seg=seg_up)
             angles.append(angle)
 
         if abs(angles[1] - angles[0]) < angle_limit:
@@ -552,10 +538,10 @@ def treatSmallAngleBetweenChildNodes(node, angle_limit=10):
                 f"removing sharp angle between children: {abs(angles[1]-angles[0])} for node {node.properties['ID']}"
             )
             # zip up the last section of the two children, and give it to the parent
-            new_junction = watershed_workflow.utils.midpoint(node.children[0].segment.coords[-2],
+            new_junction = watershed_workflow.utils.computeMidpoint(node.children[0].segment.coords[-2],
                                                              node.children[1].segment.coords[-2])
             new_node_coords = np.array([new_junction, ] + node.segment.coords[:])
-            new_node_coords = watershed_workflow.utils.treat_segment_collinearity(new_node_coords)
+            new_node_coords = watershed_workflow.utils.breakSegmentCollinearity(new_node_coords)
             node.segment = shapely.geometry.LineString(new_node_coords)
 
             for child in list(node.children):
@@ -564,7 +550,7 @@ def treatSmallAngleBetweenChildNodes(node, angle_limit=10):
                     # reach has > 2 points, so we can safely remove the last one
                     child_coords = child_coords[:-1]
                     child_coords[-1] = new_junction
-                    child_coords = watershed_workflow.utils.treat_segment_collinearity(child_coords)
+                    child_coords = watershed_workflow.utils.breakSegmentCollinearity(child_coords)
                     child.segment = shapely.geometry.LineString(child_coords)
 
                 elif len(child_coords) == 2:
@@ -582,12 +568,9 @@ def treatSmallAngleBetweenChildNodes(node, angle_limit=10):
             # repeatedly until all sections that have the close angle
             # are removed.
             return True
-        else:
-            # no change -- move along
-            return False
+    return False
 
-
-def treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=20):
+def treatSmallAngleBtwRiverHUC(river : River, hucs : SplitHUCs, angle_limit : float = 20) -> None:
     """Rotates the huc segment to increase the angle between huc segment and the river tree at the outlets as needed
     """
 
@@ -618,7 +601,7 @@ def treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=20):
                     intersection_found = False
 
             if intersection_found:
-                parent_node = watershed_workflow.river_mesh.node_at_intersection(
+                parent_node = watershed_workflow.river_mesh.nodeAtIntersection(
                     intersection_point, river)
                 if parent_node.parent == None:  # check if it is the outlet node for this river
                     outlet_junction = True
@@ -644,10 +627,10 @@ def treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=20):
                         ref_seg = parent_node.segment
 
                 # angle of huc segment with the ref segment
-                huc_seg_angle = watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, seg)
+                huc_seg_angle = watershed_workflow.river_mesh.angleRiversSegs(ref_seg, seg)
                 # angles of river with the huc segment
                 river_angles = [
-                    watershed_workflow.river_mesh.angle_rivers_segs(ref_seg, _seg) - huc_seg_angle
+                    watershed_workflow.river_mesh.angleRiversSegs(ref_seg, _seg) - huc_seg_angle
                     for _seg in parent_node.children
                 ]
 
@@ -655,6 +638,7 @@ def treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=20):
                 angle_check = checkAbsSmaller(river_angles, angle_limit)
 
                 if angle_check[0]:
+                    assert isinstance(angle_check[1], int)
                     river_angle = river_angles[angle_check[1]]
                     logging.info(
                         f"removing sharp angle between river and huc: {river_angle} for node {parent_node.properties['ID']}"
@@ -682,7 +666,8 @@ def treatSmallAngleBtwRiverHUC(river, hucs, angle_limit=20):
                     hucs.segments[i] = seg
 
 
-def checkAbsSmaller(numbers, value):
+def checkAbsSmaller(numbers : Iterable[float],
+                    value : float) -> Tuple[bool, int | None]:
     for index, num in enumerate(numbers):
         if abs(num) < value:
             return True, index
