@@ -1193,59 +1193,30 @@ def triangle_split_points(stream_triangles, river_corrs):
     river_corrs : list of shapely.geometry.Polygon
         List of river corridor polygons.
     """
+    river_corr = shapely.ops.unary_union(river_corrs).buffer(1)
     additional_points = []
+
     for tri_verts in stream_triangles:
+        assert len(tri_verts) == 3
+
         # Get midpoints of each edge
         midpoints = [
-            watershed_workflow.utils.midpoint(tri_verts[0], tri_verts[1]),
-            watershed_workflow.utils.midpoint(tri_verts[1], tri_verts[2]), 
-            watershed_workflow.utils.midpoint(tri_verts[2], tri_verts[0])
+            shapely.geometry.Point(
+                watershed_workflow.utils.midpoint(tri_verts[i], tri_verts[(i+1) % 3]))
+            for i in range(3)
         ]
-        
+
         # Check which midpoints lie on river corridors
-        on_corridor = []
-        off_corridor = []
-        for i, mp in enumerate(midpoints):
-            point = shapely.geometry.Point(mp)
-            if any(corridor.intersects(point.buffer(1)) for corridor in river_corrs):
-                on_corridor.append((i, mp))
-            else:
-                off_corridor.append((i, mp))
-        
+        off_corridor = list(
+            filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
+
         # We expect exactly one midpoint to be off the corridor
-        if len(off_corridor) == 1:
-            off_edge_idx = off_corridor[0][0]
-            if off_edge_idx == 0:
-                center_point = tri_verts[2]
-                off_corridor_seg = shapely.geometry.LineString([tri_verts[0], tri_verts[1]])
-            elif off_edge_idx == 1:
-                center_point = tri_verts[0]
-                off_corridor_seg = shapely.geometry.LineString([tri_verts[1], tri_verts[2]])
-            else:  # off_edge_idx == 2
-                center_point = tri_verts[1]
-                off_corridor_seg = shapely.geometry.LineString([tri_verts[0], tri_verts[2]])
-            
-            # Find the additional point
-            additional_point = find_additional_point(off_corridor_seg, center_point, extension_factor=1)
-            additional_points.append(additional_point.coords[0])
+        assert len(off_corridor) == 1
+        edge_i = off_corridor[0][0]
+
+        # Find the additional point
+        edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
+                                                          tri_verts[(edge_i+1) % 3])
+        additional_points.append(edge_midpoint)
 
     return additional_points
-
-
-def find_additional_point(off_corridor_seg, center_point, extension_factor=1):
-    """Find an additional point on a common segment between a triangle and a river corridor.
-    
-    Parameters
-    ----------
-    off_corridor_seg : shapely.geometry.LineString
-        Triangle edge that is not on the river corridor.
-    center_point : tuple
-        Common vertex of on-corridor triangle edges.
-    extension_factor : float, optional
-        The factor by which to extend the vector from the center point to the midpoint of the off-corridor edge of the triangle.
-    """
-    mid_point = off_corridor_seg.interpolate(0.5, normalized=True)
-    vector = np.array(mid_point.coords[0]) - np.array(center_point)
-    extended_vector = vector * extension_factor
-    additional_point = shapely.geometry.Point(np.array(center_point) + extended_vector)
-    return additional_point
