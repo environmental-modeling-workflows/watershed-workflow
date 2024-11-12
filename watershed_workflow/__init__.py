@@ -1173,7 +1173,7 @@ def triangulate(hucs,
                 internal_boundaries=None,
                 treat_stream_triangles=None,
                 hole_points=None,
-                additional_points=None,  
+                additional_points=None,
                 diagnostics=True,
                 verbosity=1,
                 tol=1,
@@ -1283,7 +1283,7 @@ def triangulate(hucs,
     if refine_max_edge_length != None:
         refine_funcs.append(
             watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
-        
+
     if treat_stream_triangles != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_stream_triangles(river_corrs))
 
@@ -1295,26 +1295,32 @@ def triangulate(hucs,
         river_corrs,
         internal_boundaries=internal_boundaries,
         hole_points=hole_points,
-        additional_points=additional_points, 
+        additional_points=additional_points,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,
         min_angle=refine_min_angle,
         enforce_delaunay=enforce_delaunay,
         allow_boundary_steiner=(river_corrs is None))
-        
-    if river_corrs != None: # stream-aligned mesh
+
+    if river_corrs != None:  # stream-aligned mesh
         stream_triangles = identify_stream_triangles(vertices, triangles, river_corrs)
         if treat_stream_triangles == None:
-            logging.warning(f'Found {len(stream_triangles)} stream triangles - consider using "treat_stream_triangles" option')
+            logging.warning(
+                f'Found {len(stream_triangles)} stream triangles - consider using "treat_stream_triangles" option'
+            )
         elif treat_stream_triangles == 'moderate':
-            logging.warning(f'{len(stream_triangles)} stream triangles could not be refined - consider using treat_stream_triangles="strict"')
+            logging.warning(
+                f'{len(stream_triangles)} stream triangles could not be refined - consider using treat_stream_triangles="strict"'
+            )
         elif treat_stream_triangles == 'strict':
             if additional_points is None:
-                additional_points = watershed_workflow.river_mesh.triangle_split_points(stream_triangles, river_corrs)
+                additional_points = watershed_workflow.river_mesh.triangle_split_points(
+                    stream_triangles, river_corrs)
             else:
-                additional_points = additional_points + watershed_workflow.river_mesh.triangle_split_points(stream_triangles, river_corrs)
-            
+                additional_points = additional_points + watershed_workflow.river_mesh.triangle_split_points(
+                    stream_triangles, river_corrs)
+
             # triangulate again with additional points to split stream triangles
             logging.info('triangulating again with additional points to split stream triangles')
             vertices, triangles = watershed_workflow.triangulation.triangulate(
@@ -1322,24 +1328,25 @@ def triangulate(hucs,
                 river_corrs,
                 internal_boundaries=internal_boundaries,
                 hole_points=hole_points,
-                additional_points=additional_points, 
+                additional_points=additional_points,
                 tol=tol,
                 verbose=verbose,
                 refinement_func=my_refine_func,
                 min_angle=refine_min_angle,
                 enforce_delaunay=enforce_delaunay,
                 allow_boundary_steiner=(river_corrs is None))
-                
+
             stream_triangles = identify_stream_triangles(vertices, triangles, river_corrs)
             if len(stream_triangles) > 0:
-                logging.info('Found %d stream triangles that could not be split:', len(stream_triangles))
+                logging.info('Found %d stream triangles that could not be split:',
+                             len(stream_triangles))
                 for i, tri in enumerate(stream_triangles):
                     logging.info('  Triangle %d coordinates:', i)
                     for j, vertex in enumerate(tri):
                         logging.info('    Vertex %d: (%.2f, %.2f)', j, vertex[0], vertex[1])
             else:
                 logging.info('all stream triangles treated')
-        
+
     if diagnostics or river_region_dist is not None:
         logging.info("Plotting triangulation diagnostics")
         river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
@@ -1403,7 +1410,7 @@ def tessalate_river_aligned(hucs,
                             internal_boundaries=None,
                             hole_points=None,
                             treat_stream_triangles=None,
-                            additional_points=None,  
+                            additional_points=None,
                             diagnostics=False,
                             ax=None,
                             **kwargs):
@@ -1464,7 +1471,7 @@ def tessalate_river_aligned(hucs,
                                                                           enforce_convexity=True,
                                                                           ax=ax,
                                                                           label=False)
-    
+
     # adjust the HUC to match the corridor at the boundary
     logging.info('Adjusting rivers at the watershed boundaries...')
     hucs_without_outlet = hucs.deep_copy()
@@ -1474,10 +1481,10 @@ def tessalate_river_aligned(hucs,
                                                                   integrate_rc=False,
                                                                   ax=ax)
 
-     # triangulate the rest
-    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs, 
-                                             internal_boundaries, treat_stream_triangles, hole_points, additional_points, 
-                                             diagnostics, **kwargs)
+    # triangulate the rest
+    tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
+                                             internal_boundaries, treat_stream_triangles,
+                                             hole_points, additional_points, diagnostics, **kwargs)
     tri_verts = tri_res[0]
     tri_conn = tri_res[1]
 
@@ -1747,6 +1754,8 @@ def identify_stream_triangles(vertices, triangles, river_corrs, buffer_distance=
     for tri in triangles:
         tri_verts = vertices[tri]
         points = [shapely.geometry.Point(v[0], v[1]) for v in tri_verts]
-        if all(any(corridor.intersects(point.buffer(buffer_distance)) for corridor in river_corrs) for point in points):
+        if all(
+                any(corridor.intersects(point.buffer(buffer_distance)) for corridor in river_corrs)
+                for point in points):
             stream_triangles.append(tri_verts)
     return stream_triangles
