@@ -2,7 +2,7 @@
 #
 # Stage 1 -- setup base CI environment
 #
-FROM condaforge/mambaforge:4.12.0-0 AS ww_env_base_ci
+FROM condaforge/mambaforge:latest AS ww_env_base_ci
 LABEL Description="Base env for CI of Watershed Workflow"
 
 ARG env_name=watershed_workflow_CI
@@ -13,11 +13,11 @@ COPY environments/create_envs.py /ww/tmp/create_envs.py
 RUN mkdir environments
 
 # install a base environment with just python
-RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.10
+RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=${env_name} \
-    --env-type=CI --with-tools-env --tools-env-name=watershed_workflow_tools Linux
+    /opt/conda/bin/python create_envs.py \
+    --env-type=CI --with-tools-env=watershed_workflow_tools --OS=Linux ${env_name}
 
 #
 # Stage 2 -- add in the pip
