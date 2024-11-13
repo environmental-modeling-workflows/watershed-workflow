@@ -1751,11 +1751,9 @@ def identify_stream_triangles(vertices, triangles, river_corrs, buffer_distance=
         List of vertex arrays for triangles that are fully within river corridors
     """
     stream_triangles = []
+    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
     for tri in triangles:
         tri_verts = vertices[tri]
-        points = [shapely.geometry.Point(v[0], v[1]) for v in tri_verts]
-        if all(
-                any(corridor.intersects(point.buffer(buffer_distance)) for corridor in river_corrs)
-                for point in points):
+        if all(riv_corr.intersects(shapely.geometry.Point(p)) for p in tri_verts):
             stream_triangles.append(tri_verts)
     return stream_triangles
