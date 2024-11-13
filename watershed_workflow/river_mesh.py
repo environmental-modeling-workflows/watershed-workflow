@@ -1181,3 +1181,42 @@ def adjust_hucs_for_river_corridor(hucs,
                                                                rc_points[rc_point_ind])
                     else:
                         rc_point_ind += 1
+
+
+def triangle_split_points(stream_triangles, river_corrs):
+    """Find additional points to split stream triangles.
+    
+    Parameters
+    ----------
+    stream_triangles : list of tuples
+        List of triangle vertices.
+    river_corrs : list of shapely.geometry.Polygon
+        List of river corridor polygons.
+    """
+    river_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+    additional_points = []
+
+    for tri_verts in stream_triangles:
+        assert len(tri_verts) == 3
+
+        # Get midpoints of each edge
+        midpoints = [
+            shapely.geometry.Point(
+                watershed_workflow.utils.midpoint(tri_verts[i], tri_verts[(i+1) % 3]))
+            for i in range(3)
+        ]
+
+        # Check which midpoints lie on river corridors
+        off_corridor = list(
+            filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
+
+        # We expect exactly one midpoint to be off the corridor
+        if len(off_corridor) == 1:
+            edge_i = off_corridor[0][0]
+
+            # Find the additional point
+            edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
+                                                              tri_verts[(edge_i+1) % 3])
+            additional_points.append(edge_midpoint)
+
+    return additional_points
