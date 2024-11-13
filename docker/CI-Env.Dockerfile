@@ -43,6 +43,9 @@ WORKDIR /opt/conda/envs/${env_name}/src
 RUN apt-get install git
 RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
 
+# Exodus problems...
+RUN find seacas -name \*.c | xargs sed -i '/const int NC_SZIP_NN = 32/d'
+
 # configure
 WORKDIR /ww/tmp
 COPY docker/configure-seacas.sh /ww/tmp/configure-seacas.sh
