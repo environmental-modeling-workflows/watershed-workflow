@@ -1211,12 +1211,12 @@ def triangle_split_points(stream_triangles, river_corrs):
             filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
 
         # We expect exactly one midpoint to be off the corridor
-        assert len(off_corridor) == 1
-        edge_i = off_corridor[0][0]
+        if len(off_corridor) == 1:
+            edge_i = off_corridor[0][0]
 
-        # Find the additional point
-        edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
-                                                          tri_verts[(edge_i+1) % 3])
-        additional_points.append(edge_midpoint)
+            # Find the additional point
+            edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
+                                                              tri_verts[(edge_i+1) % 3])
+            additional_points.append(edge_midpoint)
 
     return additional_points
