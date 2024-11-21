@@ -113,14 +113,14 @@ class SplitHUCs:
     The resulting class instance includes the following views into
     data:
 
-    segments : HandledCollection[LineString]
-      unique list of all segments, a HandledCollection of LineStrings
+    linestrings : HandledCollection[LineString]
+      unique list of all linestrings, a HandledCollection of LineStrings
     boundaries : HandledCollection[int]
-      A HandledCollection of handles into segments, identifying those
-      segments on the outer boundary of the collection.
+      A HandledCollection of handles into linestrings, identifying those
+      linestrings on the outer boundary of the collection.
     intersections : HandledCollection[int]
-      A HandledCollection of handles into segments, identifying those
-      segments on the shared, inner boundaries.
+      A HandledCollection of handles into linestrings, identifying those
+      linestrings on the shared, inner boundaries.
     gons : list[HandledCollection[int], HandledCollection[int]]
       One per polygon provided, a pair of HandledCollections,
       identifying the collection of handles into intersetctions and
@@ -134,14 +134,14 @@ class SplitHUCs:
                  exterior_outlet=None):
         self.df = df
 
-        # all shapes are stored as a collection of collections of segments
-        self.segments = HandledCollection()  # stores segments
+        # all shapes are stored as a collection of collections of linestrings
+        self.linestrings = HandledCollection()  # stores linestrings
 
-        # Intersect and split the HUCs into unique segments.  Every
-        # segment in segments is referenced exactly once in either boundaries
+        # Intersect and split the HUCs into unique linestrings.  Every
+        # linestring in linestrings is referenced exactly once in either boundaries
         # or intersections.
-        self.boundaries = HandledCollection()  # stores handles into segments
-        self.intersections = HandledCollection()  # stores handles into segments
+        self.boundaries = HandledCollection()  # stores handles into linestrings
+        self.intersections = HandledCollection()  # stores handles into linestrings
 
         # save the exterior outlet
         if exterior_outlet is not None:
@@ -160,11 +160,11 @@ class SplitHUCs:
             if watershed_workflow.utils.isEmpty(u):
                 pass
             elif type(u) is shapely.geometry.LineString:
-                handle = self.segments.append(u)
+                handle = self.linestrings.append(u)
                 bhandle = self.boundaries.append(HandledCollection([handle, ]))
                 boundary_gon[i].append(bhandle)
             elif type(u) is shapely.geometry.MultiLineString:
-                handles = self.segments.extend(u.geoms)
+                handles = self.linestrings.extend(u.geoms)
                 bhandles = self.boundaries.extend([HandledCollection([h, ]) for h in handles])
                 boundary_gon[i].extend(bhandles)
             else:
@@ -179,12 +179,12 @@ class SplitHUCs:
                     pass
                 elif type(inter) is shapely.geometry.LineString:
                     #print("Adding linestring intersection")
-                    handle = self.segments.append(inter)
+                    handle = self.linestrings.append(inter)
                     ihandle = self.intersections.append(HandledCollection([handle, ]))
                     intersection_gon[i].append(ihandle)
                     intersection_gon[j].append(ihandle)
                 elif type(inter) is shapely.geometry.MultiLineString:
-                    handles = self.segments.extend(list(inter))
+                    handles = self.linestrings.extend(list(inter))
                     ihandles = self.intersections.extend(
                         [HandledCollection([h, ]) for h in handles])
                     intersection_gon[i].extend(ihandles)
@@ -203,11 +203,11 @@ class SplitHUCs:
 
     def to_crs(self, crs):
         self.df.to_crs(crs)
-        obj_handles = list(self.segments.handles())
-        shapes = list(self.segments)
+        obj_handles = list(self.linestrings.handles())
+        shapes = list(self.linestrings)
         tmp_df = geopandas.GeoDataFrame({'geometry':shapes}, crs=self.df.crs)
         tmp_df.to_crs(crs, inplace=True)
-        self.segments = HandledCollection(obj_handles, tmp_df['geometry'])
+        self.linestrings = HandledCollection(obj_handles, tmp_df['geometry'])
         self.update()
         
     def update(self):
@@ -221,11 +221,11 @@ class SplitHUCs:
         boundary, inter = self.gons[i]
         for h_boundary in boundary:
             for s in self.boundaries[h_boundary]:
-                segs.append(self.segments[s])
+                segs.append(self.linestrings[s])
 
         for h_intersection in inter:
             for s in self.intersections[h_intersection]:
-                segs.append(self.segments[s])
+                segs.append(self.linestrings[s])
 
         ml = shapely.ops.linemerge(segs)
         assert (type(ml) is shapely.geometry.LineString)
@@ -296,7 +296,7 @@ class SplitHUCs:
         segs = []
         for b in self.boundaries:
             for s in b:
-                segs.append(self.segments[s])
+                segs.append(self.linestrings[s])
         ml = shapely.ops.linemerge(segs)
         if type(ml) is shapely.geometry.LineString:
             return shapely.geometry.Polygon(ml)
@@ -313,9 +313,9 @@ class SplitHUCs:
 
 
 def simplify(hucs, tol=0.1):
-    """Simplify, IN PLACE, all segments in the polygon representation."""
-    for i, seg in hucs.segments.items():
-        hucs.segments[i] = seg.simplify(tol)
+    """Simplify, IN PLACE, all linestrings in the polygon representation."""
+    for i, seg in hucs.linestrings.items():
+        hucs.linestrings[i] = seg.simplify(tol)
 
 
 def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):
@@ -409,7 +409,7 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
 
 def intersectAndSplit(list_of_shapes):
     """Given a list of shapes which share boundaries (i.e. they partition
-    some space), return a compilation of their segments.
+    some space), return a compilation of their linestrings.
 
     Parameters
     ----------
@@ -493,7 +493,7 @@ def intersectAndSplit(list_of_shapes):
                 if i > j:
                     intersections[i][j] = inter
 
-    # merge uniques, as we have a bunch of segments.
+    # merge uniques, as we have a bunch of linestrings.
     for i, u in enumerate(uniques):
         if type(u) is shapely.geometry.MultiLineString:
             uniques[i] = shapely.ops.linemerge(uniques[i])

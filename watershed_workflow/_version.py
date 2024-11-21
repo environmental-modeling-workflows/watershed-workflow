@@ -415,10 +415,10 @@ def render_pep440_branch(pieces):
 
 
 def pep440_split_post(ver):
-    """Split pep440 version string at the post-release segment.
+    """Split pep440 version string at the post-release linestring.
 
-    Returns the release segments before the post-release and the
-    post-release version number (or -1 if no post-release segment is present).
+    Returns the release linestrings before the post-release and the
+    post-release version number (or -1 if no post-release linestring is present).
     """
     vc = str.split(ver, ".post")
     return vc[0], int(vc[1] or 0) if len(vc) == 2 else None
@@ -432,7 +432,7 @@ def render_pep440_pre(pieces):
     """
     if pieces["closest-tag"]:
         if pieces["distance"]:
-            # update the post release segment
+            # update the post release linestring
             tag_version, post_version = pep440_split_post(pieces["closest-tag"])
             rendered = tag_version
             if post_version is not None:

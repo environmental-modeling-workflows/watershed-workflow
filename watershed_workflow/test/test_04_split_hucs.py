@@ -67,8 +67,8 @@ def test_hucs(two_boxes):
     assert (len(tb.intersections) == 1)
     assert (list(tb.intersections.handles()) == [0, ])
 
-    assert (len(tb.segments) == 3)
-    assert (list(tb.segments.handles()) == [0, 1, 2])
+    assert (len(tb.linestrings) == 3)
+    assert (list(tb.linestrings.handles()) == [0, 1, 2])
 
     # gons
     b, i = tb.gons[0]
@@ -104,13 +104,13 @@ def test_hucs(two_boxes):
     for spine in tb.intersections:
         assert (len(spine) is 1)
         int_handle, seg_handle = next(spine.items())
-        seg = tb.segments[seg_handle]
+        seg = tb.linestrings[seg_handle]
         # split seg into two
         assert (len(seg.coords) == 2)
         seg1 = shapely.geometry.LineString([seg.coords[0], (10., 0.)])
         seg2 = shapely.geometry.LineString([(10., 0.), seg.coords[1]])
-        tb.segments.pop(seg_handle)
-        new_seg_handles = tb.segments.extend([seg1, seg2])
+        tb.linestrings.pop(seg_handle)
+        new_seg_handles = tb.linestrings.extend([seg1, seg2])
         spine.pop(int_handle)
         spine.extend(new_seg_handles)
 
@@ -150,32 +150,32 @@ def test_hucs_triple():
                                  'geometry' : boxes})
     hucs = watershed_workflow.split_hucs.SplitHUCs(df)
     assert (len(hucs) is 3)
-    assert (len(hucs.segments) is 6)
+    assert (len(hucs.linestrings) is 6)
     assert (len(hucs.intersections) is 3)
     assert (len(hucs.boundaries) is 3)
 
     # note order is not required here, but I don't have a good way of checking without order
     boundaries = [shandle for b in hucs.boundaries for shandle in b]
-    bound1 = hucs.segments[boundaries[0]]
+    bound1 = hucs.linestrings[boundaries[0]]
     assert (watershed_workflow.utils.isClose(bound1,
                                            shapely.geometry.LineString([(0, 5), (0, -5),
                                                                         (10, -5)])))
 
-    bound2 = hucs.segments[boundaries[1]]
+    bound2 = hucs.linestrings[boundaries[1]]
     assert (watershed_workflow.utils.isClose(
         bound2, shapely.geometry.LineString([(10, -5), (20, -5), (20, 5)])))
 
-    bound3 = hucs.segments[boundaries[2]]
+    bound3 = hucs.linestrings[boundaries[2]]
     assert (watershed_workflow.utils.isClose(
         bound3, shapely.geometry.LineString([(20, 5), (20, 10), (0, 10), (0, 5)])))
 
     intersections = [shandle for b in hucs.intersections for shandle in b]
-    spine1 = hucs.segments[intersections[0]]
+    spine1 = hucs.linestrings[intersections[0]]
     assert (watershed_workflow.utils.isClose(spine1, shapely.geometry.LineString([(10, 5),
                                                                                 (10, -5)])))
 
-    spine2 = hucs.segments[intersections[1]]
+    spine2 = hucs.linestrings[intersections[1]]
     assert (watershed_workflow.utils.isClose(spine2, shapely.geometry.LineString([(0, 5), (10, 5)])))
 
-    spine3 = hucs.segments[intersections[2]]
+    spine3 = hucs.linestrings[intersections[2]]
     assert (watershed_workflow.utils.isClose(spine3, shapely.geometry.LineString([(10, 5), (20, 5)])))

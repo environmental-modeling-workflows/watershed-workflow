@@ -45,13 +45,13 @@ def check1(hucs, rivers):
     # assert(0 in segs0.keys())
     # assert(segs0[0] == 0)
 
-    # assert(len(hucs.segments) is 1)
-    # assert(0 in hucs.segments.keys())
+    # assert(len(hucs.linestrings) is 1)
+    # assert(0 in hucs.linestrings.keys())
 
     riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
-    print(riverlist[0].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
+    print(riverlist[0].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].linestring,
                                            shapely.geometry.LineString([(5, 0), (10, 0)])))
 
     for tree in rivers:
@@ -81,8 +81,8 @@ def check1b(hucs, rivers):
     assert (0 in segs0.keys())
     assert (segs0[0] == 0)
 
-    assert (len(hucs.segments) is 1)
-    assert (0 in hucs.segments.keys())
+    assert (len(hucs.linestrings) is 1)
+    assert (0 in hucs.linestrings.keys())
 
     riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
@@ -116,8 +116,8 @@ def check1c(hucs, rivers):
     assert (0 in segs0.keys())
     assert (segs0[0] == 0)
 
-    assert (len(hucs.segments) is 1)
-    assert (0 in hucs.segments.keys())
+    assert (len(hucs.linestrings) is 1)
+    assert (0 in hucs.linestrings.keys())
 
     riverlist = list(rivers[0].preOrder())
     assert (len(riverlist) is 1)
@@ -142,8 +142,8 @@ def check2(hucs, rivers):
 
     riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 1)
-    print(riverlist[0].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
+    print(riverlist[0].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].linestring,
                                            shapely.geometry.LineString([(5, 0), (10, 0), (15, 0)])))
 
 
@@ -160,14 +160,14 @@ def check2b(hucs, rivers):
 
     riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 3)
-    print(riverlist[0].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
+    print(riverlist[0].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].linestring,
                                              shapely.geometry.LineString([(10, 0), (11, 0), (12, 0), (15, 0)])))
-    print(riverlist[1].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[1].segment,
+    print(riverlist[1].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[1].linestring,
                                            shapely.geometry.LineString([(5, 2), (10, 0)])))
-    print(riverlist[2].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[2].segment,
+    print(riverlist[2].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[2].linestring,
                                            shapely.geometry.LineString([(5, -2), (10, 0)])))
 
     for tree in rivers:
@@ -187,13 +187,13 @@ def check2b_nullop(hucs, rivers):
 
     riverlist = list(rivers[0].preOrder())  # dfs, preOrdered
     assert (len(riverlist) is 3)
-    print(riverlist[0].segment.coords[:])
+    print(riverlist[0].linestring.coords[:])
     assert (watershed_workflow.utils.isClose(
         riverlist[0], shapely.geometry.LineString([(10.1001, 0), (11, 0), (12, 0), (15, 0)])))
-    print(riverlist[1].segment.coords[:])
+    print(riverlist[1].linestring.coords[:])
     assert (watershed_workflow.utils.isClose(riverlist[1],
                                            shapely.geometry.LineString([(5, 2), (10.1001, 0)])))
-    print(riverlist[2].segment.coords[:])
+    print(riverlist[2].linestring.coords[:])
     assert (watershed_workflow.utils.isClose(riverlist[2],
                                            shapely.geometry.LineString([(5, -2), (10.1001, 0)])))
 
@@ -220,14 +220,14 @@ def check3(hucs, rivers):
 
     assert (len(rivers[0]) is 3)
     riverlist = list(rivers[0].preOrder())
-    print(riverlist[0].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[0].segment,
+    print(riverlist[0].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[0].linestring,
                                            shapely.geometry.LineString([(10., 5.), (10., 10.)])))
-    print(riverlist[1].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[1].segment,
+    print(riverlist[1].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[1].linestring,
                                            shapely.geometry.LineString([(5., 0.), (10., 5.)])))
-    print(riverlist[2].segment.coords[:])
-    assert (watershed_workflow.utils.isClose(riverlist[2].segment,
+    print(riverlist[2].linestring.coords[:])
+    assert (watershed_workflow.utils.isClose(riverlist[2].linestring,
                                            shapely.geometry.LineString([(15., 0.), (10., 5.)])))
 
     for tree in rivers:

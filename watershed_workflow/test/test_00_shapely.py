@@ -65,7 +65,7 @@ def test_snap():
 
 
 def test_snap2():
-    """How does snap work? will it snap to a midpoint of the segment?  NO"""
+    """How does snap work? will it snap to a midpoint of the linestring?  NO"""
     coords = np.array([(-.001, -.001), (100, 0)])
     l = shapely.geometry.LineString(coords)
 

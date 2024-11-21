@@ -75,7 +75,7 @@ def blackzerojet_cmap(data):
             blackzerojet_dict[color][i][0] = blackzerojet_dict[color][i][0] * (
                 1-oneminval) + oneminval
 
-    return matplotlib.colors.LinearSegmentedColormap('blackzerojet', blackzerojet_dict)
+    return matplotlib.colors.LinearLineStringedColormap('blackzerojet', blackzerojet_dict)
 
 
 # ice color map
@@ -89,7 +89,7 @@ def ice_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     ice_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearSegmentedColormap('ice', ice_dict)
+    return matplotlib.colors.LinearLineStringedColormap('ice', ice_dict)
 
 
 # water color map
@@ -103,7 +103,7 @@ def water_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     water_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearSegmentedColormap('water', water_dict)
+    return matplotlib.colors.LinearLineStringedColormap('water', water_dict)
 
 
 # water color map
@@ -118,7 +118,7 @@ def gas_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     gas_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearSegmentedColormap('gas', gas_dict)
+    return matplotlib.colors.LinearLineStringedColormap('gas', gas_dict)
 
 
 # jet-by-index
@@ -176,7 +176,7 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
 
     Returns
     -------
-    matplotlib.colors.LinearSegmentedColormap instance
+    matplotlib.colors.LinearLineStringedColormap instance
 
     Example
     -------
@@ -199,7 +199,7 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
         cdict[key] = [(indices[i], colors_rgba[i - 1, ki], colors_rgba[i, ki])
                       for i in range(ncolors + 1)]
     # Return colormap object.
-    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
+    return matplotlib.colors.LinearLineStringedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
 
 
 def float_list_type(mystring):
@@ -247,7 +247,7 @@ def generate_indexed_colormap(indices, cmap=None):
     indices_out : list(int)
         The unique, sorted list of indices found.
     cmap : cmap-type
-        A segmented map for use with plots.
+        A linestringed map for use with plots.
     norm : BoundaryNorm
         A norm for use in `plot_trisurf()` or other plotting methods
         to ensure correct NLCD colors.
@@ -290,7 +290,7 @@ Returns
 indices_out : list(int)
     The unique, sorted list of indices found.
 cmap : cmap-type
-    A segmented map for use with plots.
+    A linestringed map for use with plots.
 norm : BoundaryNorm
     A norm for use in `plot_trisurf()` or other plotting methods
     to ensure correct {label} colors.

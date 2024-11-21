@@ -186,7 +186,7 @@ def test_raises():
         watershed_workflow.utils.cut(line, cut)
 
 
-def test_intersect_point_to_segment():
+def test_intersect_point_to_linestring():
     from shapely.geometry import Point as P
 
     # test on the first point

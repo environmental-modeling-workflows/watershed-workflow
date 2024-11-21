@@ -6,7 +6,7 @@ import geopandas
 
 import watershed_workflow.mesh
 import watershed_workflow.utils
-import watershed_workflow.densification
+import watershed_workflow.resampling
 import watershed_workflow.river_tree
 import watershed_workflow.river_mesh
 import watershed_workflow.split_hucs
@@ -55,7 +55,7 @@ def watershed_small():
     watershed = watershed_workflow.split_hucs.SplitHUCs(ws)
 
     for i, seg in enumerate([seg1, seg2]):
-        watershed.segments[i] = seg
+        watershed.linestrings[i] = seg
     return watershed
 
 #

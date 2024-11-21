@@ -53,7 +53,7 @@ def _upper_bound(start, direction, distance, dist_func):
 
 
 def _distance_along_line(start, end, distance, dist_func, tol):
-    """Point at a distance from start on the segment  from start to end.
+    """Point at a distance from start on the linestring  from start to end.
 
     It doesn't matter which coordinate system start is given in, as long
     as dist_func takes points in that coordinate system.

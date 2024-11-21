@@ -231,18 +231,18 @@ def isConvex(points : Iterable[Tuple[float,float]]) -> bool:
     return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
 
 
-def breakSegmentCollinearity(segment_coords : np.ndarray,
+def breakLineStringCollinearity(linestring_coords : np.ndarray,
                              tol : float = 1e-5) -> np.ndarray:
-    """This functions removes collinearity from a node segment by making small pertubations orthogonal to the segment"""
-    # traversing along the segment, checking 3 consecutive points at a time
-    for i, (p0, p1, p2) in enumerate(zip(segment_coords, segment_coords[1:], segment_coords[2:])):
+    """This functions removes collinearity from a node linestring by making small pertubations orthogonal to the linestring"""
+    # traversing along the linestring, checking 3 consecutive points at a time
+    for i, (p0, p1, p2) in enumerate(zip(linestring_coords, linestring_coords[1:], linestring_coords[2:])):
         # treating collinearity through a small pertubation
         if isCollinear(p0, p1, p2, tol=tol):
             dp = p2 - p0
             ortho = 10 * tol * np.array([-dp[1], dp[0]]) / np.linalg.norm(dp)
 
-            segment_coords[i + 1] = p1 + ortho
-    return segment_coords
+            linestring_coords[i + 1] = p1 + ortho
+    return linestring_coords
 
 
 def isClose(s1 : BaseGeometry,
@@ -405,7 +405,7 @@ def cut(line : shapely.geometry.LineString,
             if isClose(point, seg.coords[-1], tol):
                 # intersects at the far point
                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-                #logging.debug("  appended full segment: %r"%(list(segs[-1].coords)))
+                #logging.debug("  appended full linestring: %r"%(list(segs[-1].coords)))
 
                 if (i < len(coords) - 2):
                     #logging.debug("    (not the end)")
@@ -429,7 +429,7 @@ def cut(line : shapely.geometry.LineString,
             else:
                 # intersects in the middle
                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-                #logging.debug("  appended partial segment: %r"%(list(segs[-1].coords)))
+                #logging.debug("  appended partial linestring: %r"%(list(segs[-1].coords)))
                 segcoords = [point, seg.coords[-1]]
                 i += 1
         else:
@@ -461,24 +461,24 @@ def inNeighborhood(shp1 : BaseGeometry,
 
 
 def intersectPointToSegment(point : shapely.geometry.Point,
-                            line_start : shapely.geometry.Point,
-                            line_end : shapely.geometry.Point) -> shapely.geometry.Point:
-    """Finds the nearest point on a line segment to a point"""
-    line_magnitude = line_end.distance(line_start)
-    assert (line_magnitude > _tol)
-    u = ((point.x - line_start.x) * (line_end.x - line_start.x) +
-         (point.y - line_start.y) * (line_end.y - line_start.y)) \
-         / (line_magnitude ** 2)
+                            seg_start : shapely.geometry.Point,
+                            seg_end : shapely.geometry.Point) -> shapely.geometry.Point:
+    """Finds the nearest point on a line linestring to a point"""
+    seg_magnitude = seg_end.distance(seg_start)
+    assert (seg_magnitude > _tol)
+    u = ((point.x - seg_start.x) * (seg_end.x - seg_start.x) +
+         (point.y - seg_start.y) * (seg_end.y - seg_start.y)) \
+         / (seg_magnitude ** 2)
 
-    # closest point does not fall within the line segment,
+    # closest point does not fall within the line linestring,
     # take the shorter distance to an endpoint
     if u < 0.:
-        return line_start
+        return seg_start
     elif u > 1.:
-        return line_end
+        return seg_end
     else:
-        ix = line_start.x + u * (line_end.x - line_start.x)
-        iy = line_start.y + u * (line_end.y - line_start.y)
+        ix = seg_start.x + u * (seg_end.x - seg_start.x)
+        iy = seg_start.y + u * (seg_end.y - seg_start.y)
         return shapely.geometry.Point([ix, iy])
 
 
@@ -495,7 +495,8 @@ def findNearestPoint(point : shapely.geometry.Point,
     else:
         if inNeighborhood(shapely.geometry.Point(point), line, tol):
             logging.debug("  - in neighborhood")
-            nearest_p = findNearestPoint(point, line, None)
+            nearest_p = findNearestPoint(point, line)
+            assert nearest_p is not None
             dist = computeDistance(nearest_p, point)
             logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
             if dist < tol:

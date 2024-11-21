@@ -33,7 +33,7 @@ import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
 import watershed_workflow.triangulation
-import watershed_workflow.densification
+import watershed_workflow.resampling
 import watershed_workflow.river_mesh
 import watershed_workflow.source_list
 
@@ -387,7 +387,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     assert all(r.isLocallyContinuous() for r in rivers)
 
     if cut_intersections:
-        logging.info("Cutting crossings and removing external segments")
+        logging.info("Cutting crossings and removing external linestrings")
         watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, snap_tol)
 
     assert all(r.isLocallyContinuous() for r in rivers)
@@ -399,7 +399,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
         mins = []
         for river in rivers:
             for r in river.preOrder():
-                coords = np.array(r.segment.coords[:])
+                coords = np.array(r.linestring.coords[:])
                 dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
                 mins.append(np.min(dz))
         logging.info(f"  river min seg length: {min(mins)}")
@@ -407,7 +407,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 
     mins = []
     watershed_workflow.split_hucs.simplify(hucs, 0)
-    for seg in hucs.segments:
+    for seg in hucs.linestrings:
         coords = np.array(seg.coords[:])
         dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
         mins.append(np.min(dz))
@@ -436,7 +436,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 #     target : float, list[float]
 #       Parameters for the target density -- either a float target
 #       length or a list of floats used in
-#       watershed_workflow.densification.limit_from_river_distance
+#       watershed_workflow.resampling.limit_from_river_distance
 #       object.
 #     objct_orig : same as objct, optional
 #       The object with original coordinates.  The original,
@@ -449,10 +449,10 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 #       Passed along to the densify function.
 #     """
 #     if isinstance(objct, watershed_workflow.split_hucs.SplitHUCs):
-#         return watershed_workflow.densification.densify_hucs(objct, objct_orig, rivers, target,
+#         return watershed_workflow.resampling.densify_hucs(objct, objct_orig, rivers, target,
 #                                                              **kwargs)
 #     elif isinstance(objct[0], watershed_workflow.river_tree.River):
-#         return watershed_workflow.densification.densify_rivers(objct, objct_orig, target, **kwargs)
+#         return watershed_workflow.resampling.densify_rivers(objct, objct_orig, target, **kwargs)
 #     else:
 #         raise ValueError("densify() currently only supports list(River) and SplitHUC objects.")
 

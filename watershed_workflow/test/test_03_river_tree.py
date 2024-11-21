@@ -57,20 +57,20 @@ def test_factory_empty():
 def test_factory_y(y):
     trees = watershed_workflow.river_tree.River.constructRiversByGeometry(y)
     assert (len(trees) == 1)
-    assert_list_same([n.segment for n in trees[0].preOrder()], y.geometry)
+    assert_list_same([n.linestring for n in trees[0].preOrder()], y.geometry)
 
 
 def test_factory_y2(y_with_extension):
     trees = watershed_workflow.river_tree.River.constructRiversByGeometry(y_with_extension)
     assert (len(trees) == 1)
-    assert_list_same([n.segment for n in trees[0].preOrder()], y_with_extension.geometry)
+    assert_list_same([n.linestring for n in trees[0].preOrder()], y_with_extension.geometry)
 
 
 def test_factory_ys(two_ys):
     trees = watershed_workflow.river_tree.River.constructRiversByGeometry(two_ys)
     assert (len(trees) == 2)
-    assert_list_same(itertools.chain([n.segment for n in trees[0].preOrder()],
-                                     [n.segment for n in trees[1].preOrder()]), two_ys.geometry)
+    assert_list_same(itertools.chain([n.linestring for n in trees[0].preOrder()],
+                                     [n.linestring for n in trees[1].preOrder()]), two_ys.geometry)
 
 
 def test_factory_dfs():
@@ -80,7 +80,7 @@ def test_factory_dfs():
                                  'geometry' : ml}).set_index('index')
 
     trees = watershed_workflow.river_tree.River.constructRiversByGeometry(df)
-    riverlist = [n.segment for n in trees[0].preOrder()]
+    riverlist = [n.linestring for n in trees[0].preOrder()]
     assert (riverlist[0] == ml[1])
     assert (riverlist[1] == ml[0])
 
@@ -89,8 +89,8 @@ def test_factory_two_ys_props(two_ys):
     """Creates a river using the mocked HydroSeq data"""
     trees = watershed_workflow.river_tree.River.constructRiversByHydroseq(two_ys)
     assert (len(trees) == 2)
-    assert_list_same(itertools.chain([n.segment for n in trees[0].preOrder()],
-                                     [n.segment for n in trees[1].preOrder()]), two_ys.geometry)
+    assert_list_same(itertools.chain([n.linestring for n in trees[0].preOrder()],
+                                     [n.linestring for n in trees[1].preOrder()]), two_ys.geometry)
 
 
 def test_factory_braided_geometry(braided_stream):
@@ -110,7 +110,7 @@ def test_factory_braided_geometry(braided_stream):
                        [0, 4, 5, 3, 1, 2]]
 
     assert (any(
-        is_list_same([n.segment for n in trees[0].preOrder()],
+        is_list_same([n.linestring for n in trees[0].preOrder()],
                      [braided_stream.geometry[i] for i in ordering])
         for ordering in valid_orderings))
 
@@ -127,7 +127,7 @@ def test_factory_braided_hydroseq(braided_stream):
     assert (len(trees) == 1)
     assert (type(trees[0]) is watershed_workflow.river_tree.River)
     assert (len(trees[0]) == 6)
-    assert_list_same([n.segment for n in trees[0].preOrder()],
+    assert_list_same([n.linestring for n in trees[0].preOrder()],
                       braided_stream.geometry)
 
 
@@ -140,14 +140,14 @@ def test_merge():
     n2 = watershed_workflow.river_tree.River(2, df)
     n1 = watershed_workflow.river_tree.River(1, df, [n2,])
     assert n1.isContinuous()
-    assert n1.segment.length == 1
+    assert n1.linestring.length == 1
     assert n2.parent is n1
     assert n2 in n1.preOrder()
 
     n2.merge()
     assert n2 not in n1.preOrder()
     del n2
-    assert (n1.segment.length == 2)
+    assert (n1.linestring.length == 2)
     assert (len(n1.children) == 0)
 
 
@@ -160,13 +160,13 @@ def test_prune():
     n2 = watershed_workflow.river_tree.River(2, df)
     n1 = watershed_workflow.river_tree.River(1, df, [n2,])
     assert n1.isContinuous()
-    assert n1.segment.length == 1
+    assert n1.linestring.length == 1
     assert n2.parent is n1
     assert n2 in n1.preOrder()
 
     n2.prune()
     assert n2 not in n1.preOrder()
     del n2
-    assert (n1.segment.length == 1)
+    assert (n1.linestring.length == 1)
     assert (len(n1.children) == 0)
     

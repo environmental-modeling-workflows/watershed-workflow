@@ -451,7 +451,7 @@ def conditionRiverMesh(m2,
         If true, smooth the profile of each reach using a gaussian
         filter (mainly to pass through railroads and avoid reservoirs).
     use_parent: boolean, optional
-        If true, use the segment from the original parent reach while
+        If true, use the linestring from the original parent reach while
         smoothing (seems to be not making a huge difference).
     lower: boolean, optional
         If true, lower the smoothed bed profile to match the lower
@@ -558,9 +558,9 @@ def conditionRiverMesh(m2,
 
 
 def _getProfile(node):
-    """For a given node, generate a bedprofile using elevations on the node.segment."""
-    # Note that node_elems are downstream to upstream, while segment coords are upstream to downstream.
-    stream_bed_coords = list(reversed(node.segment.coords))
+    """For a given node, generate a bedprofile using elevations on the node.linestring."""
+    # Note that node_elems are downstream to upstream, while linestring coords are upstream to downstream.
+    stream_bed_coords = list(reversed(node.linestring.coords))
     dists = [math.dist(stream_bed_coords[0], point) for point in stream_bed_coords]
     elevs = node.properties['elev_profile'][::-1]  # reversed
     profile = np.array([dists, elevs]).T
@@ -696,7 +696,7 @@ def elevateRivers(rivers, crs, dem, dem_profile):
     """Elevate the river using dem and store reach-bed-profile as node properties."""
     for river in rivers:
         for i, node in enumerate(river.preOrder()):
-            node_points = (np.array(node.segment.xy).T)
+            node_points = (np.array(node.linestring.xy).T)
             node_elevs = watershed_workflow.elevate(node_points, crs, dem, dem_profile)[:, 2]
-            assert (len(node_elevs) == len(node.segment.coords))
+            assert (len(node_elevs) == len(node.linestring.coords))
             node.properties['elev_profile'] = node_elevs

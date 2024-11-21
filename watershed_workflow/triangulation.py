@@ -156,29 +156,29 @@ def triangulate(hucs,
     import meshpy.triangle
 
     logging.info("Triangulating...")
-    segments = list(hucs.segments)
+    linestrings = list(hucs.linestrings)
 
     if internal_boundaries != None:
         if type(internal_boundaries) is list:
             for item in internal_boundaries:
                 if isinstance(item, shapely.geometry.LineString) or isinstance(
                         item, shapely.geometry.Polygon):
-                    segments = [item, ] + segments
+                    linestrings = [item, ] + linestrings
                 elif isinstance(item, watershed_workflow.river_tree.River):
-                    segments = list(item) + segments
+                    linestrings = list(item) + linestrings
         elif isinstance(internal_boundaries, shapely.geometry.Polygon):
-            segments = [internal_boundaries, ] + segments
+            linestrings = [internal_boundaries, ] + linestrings
 
     if river_corrs != None:
         if type(river_corrs) is list:
-            segments = river_corrs + segments
+            linestrings = river_corrs + linestrings
         elif type(river_corrs) is shapely.geometry.Polygon:
-            segments = [river_corrs, ] + segments
+            linestrings = [river_corrs, ] + linestrings
         else:
             raise RuntimeError("Triangulate not implemented for container of type '%r'"
                                % type(hucs))
 
-    nodes_edges = NodesEdges(segments)
+    nodes_edges = NodesEdges(linestrings)
 
     logging.info("   %i points and %i facets" % (len(nodes_edges.nodes), len(nodes_edges.edges)))
     nodes_edges.check(tol=tol)
@@ -274,7 +274,7 @@ def refineByRiverDistance(near_distance, near_area, away_distance, away_area, ri
     if type(rivers[0]) == shapely.geometry.Polygon:
         river_multiline = shapely.geometry.MultiPolygon(rivers)
     else:
-        river_multiline = shapely.geometry.MultiLineString([r.segment for river in rivers for r in river])
+        river_multiline = shapely.geometry.MultiLineString([r.linestring for river in rivers for r in river])
 
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""

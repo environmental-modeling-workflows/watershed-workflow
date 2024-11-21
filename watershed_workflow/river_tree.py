@@ -102,12 +102,12 @@ class River(watershed_workflow.tinytree.Tree):
         return self.children[-1]
 
     @property
-    def segment(self) -> shapely.geometry.LineString:
-        """Returns the segment geometry."""
+    def linestring(self) -> shapely.geometry.LineString:
+        """Returns the linestring geometry."""
         return self.df.at[self.index, 'geometry']
 
-    @segment.setter
-    def segment(self, value : shapely.geometry.LineString):
+    @linestring.setter
+    def linestring(self, value : shapely.geometry.LineString):
         self.df.loc[self.index, 'geometry'] = value
 
     @property
@@ -167,22 +167,25 @@ class River(watershed_workflow.tinytree.Tree):
 
         return ax
         
-    
+
+    #
+    # methods that act on topology and geometry -- high level API
+    #
     def split(self, i : int) -> Tuple[River, River]:
-        """Split the reach at the ith coordinate of the segment.
+        """Split the reach at the ith coordinate of the linestring.
 
         Note that this does not split the catchment!
 
         Returns upstream_node, downstream_node
         """
         if i < 0:
-            i = len(self.segment.coords) + i
-        assert (i > 0 and i < len(self.segment.coords) - 1)
+            i = len(self.linestring.coords) + i
+        assert (i > 0 and i < len(self.linestring.coords) - 1)
 
-        segment = self.segment
-        upstream_segment = shapely.geometry.LineString(list(segment.coords)[0:i + 1])
-        downstream_segment = shapely.geometry.LineString(list(segment.coords)[i:])
-        downstream_area_frac = downstream_segment.length / segment.length
+        linestring = self.linestring
+        upstream_linestring = shapely.geometry.LineString(list(linestring.coords)[0:i + 1])
+        downstream_linestring = shapely.geometry.LineString(list(linestring.coords)[i:])
+        downstream_area_frac = downstream_linestring.length / linestring.length
 
         # fix properties
         downstream_props = copy.deepcopy(self.properties)
@@ -202,7 +205,7 @@ class River(watershed_workflow.tinytree.Tree):
             downstream_props['DivergenceCode'] = 0
 
         # detach self
-        self.segment = upstream_segment
+        self.linestring = upstream_linestring
         parent = self.parent
         self.remove()
 
@@ -214,15 +217,16 @@ class River(watershed_workflow.tinytree.Tree):
         parent.addChild(new_node)
         return self, new_node
 
+
     def merge(self, merge_reach : bool = True) -> None:
         """Merges this with its parent."""
         parent = self.parent
 
         if merge_reach:
             assert (len(list(self.siblings)) == 0)
-            new_seg = shapely.geometry.LineString(list(self.segment.coords)[0:-1]+
-                                                  list(parent.segment.coords))
-            parent.segment = new_seg
+            new_seg = shapely.geometry.LineString(list(self.linestring.coords)[0:-1]+
+                                                  list(parent.linestring.coords))
+            parent.linestring = new_seg
 
         # fix properties
         if 'area' in self:
@@ -242,6 +246,7 @@ class River(watershed_workflow.tinytree.Tree):
         for child in self.children:
             parent.addChild(child)
 
+            
     def prune(self) -> None:
         """Removes this node and all below it, merging properties."""
         if self.parent is None:
@@ -250,44 +255,52 @@ class River(watershed_workflow.tinytree.Tree):
         for node in self.postOrder():
             node.merge(False)
 
+            
+    #
+    # methods that act on coordinates only
+    #
     def moveCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
-        """Moves the ith coordinate of self.segment to a new location."""
+        """Moves the ith coordinate of self.linestring to a new location."""
         if i < 0:
-            i = len(self.segment.coords) + i
-        coords = list(self.segment.coords)
+            i = len(self.linestring.coords) + i
+        coords = list(self.linestring.coords)
         coords[i] = xy
-        self.segment = shapely.geometry.LineString(coords)
+        self.linestring = shapely.geometry.LineString(coords)
 
     def insertCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
         """Inserts a new coordinate before the ith coordinate."""
         if i < 0:
-            i = len(self.segment.coords) + i
-        coords = list(self.segment.coords)
+            i = len(self.linestring.coords) + i
+        coords = list(self.linestring.coords)
         coords.insert(i, xy)
-        self.segment = shapely.geometry.LineString(coords)
+        self.linestring = shapely.geometry.LineString(coords)
 
     def appendCoordinate(self, xy : Tuple[float,float]) -> None:
-        """Appends a coordinate at the end (downstream) of the segment."""
-        coords = list(self.segment.coords) + [xy, ]
-        self.segment = shapely.geometry.LineString(coords)
+        """Appends a coordinate at the end (downstream) of the linestring."""
+        coords = list(self.linestring.coords) + [xy, ]
+        self.linestring = shapely.geometry.LineString(coords)
 
     def extendCoordinates(self, xys : List[Tuple[float,float]]) -> None:
-        """Appends multiple coordinates at the end (downstream) of the segment."""
-        coords = list(self.segment.coords) + xys
-        self.segment = shapely.geometry.LineString(coords)
+        """Appends multiple coordinates at the end (downstream) of the linestring."""
+        coords = list(self.linestring.coords) + xys
+        self.linestring = shapely.geometry.LineString(coords)
 
     def prependCoordinates(self, xys : List[Tuple[float,float]]) -> None:
-        """Prepends multiple coordinates at the beginning (upstream) of the segment."""
-        coords = xys + list(self.segment.coords)
-        self.segment = shapely.geometry.LineString(coords)
+        """Prepends multiple coordinates at the beginning (upstream) of the linestring."""
+        coords = xys + list(self.linestring.coords)
+        self.linestring = shapely.geometry.LineString(coords)
 
     def popCoordinate(self, i : int) -> Tuple[float,float]:
         """Removes the ith coordinate and returns its value."""
-        coords = list(self.segment.coords)
+        coords = list(self.linestring.coords)
         c = coords.pop(i)
-        self.segment = shapely.geometry.LineString(coords)
+        self.linestring = shapely.geometry.LineString(coords)
         return c
 
+
+    #
+    # Methods that act on the network and its properties
+    #
     def accumulate(self,
                    to_accumulate : str,
                    to_save : Optional[str] = None,
@@ -298,7 +311,7 @@ class River(watershed_workflow.tinytree.Tree):
         if to_save is not None:
             self.properties[to_save] = val
         return val
-
+    
     def getNode(self, index : int | str) -> River | None:
         """return node for a given index"""
         try:
@@ -306,17 +319,31 @@ class River(watershed_workflow.tinytree.Tree):
         except StopIteration:
             node = None
         return node
-
+    
     def findNode(self, lambd : Callable) -> River | None:
         """Find a node, returning the first whose lambda application is true, or None"""
         try:
             return next(n for n in self.preOrder() if lambd(n))
         except StopIteration:
             return None
+        
+    def assignOrder(self):
+        """Working from leave to trunk, assign stream order property"""
+        self.df[self.ORDER] = -1
+        for leaf in self.leaf_nodes:
+            leaf.properties[self.ORDER] = 1
+
+            node = leaf
+            while node.parent.properties[self.ORDER] == -1 and all(c.properties[self.ORDER] > 0 for c in node.siblings):
+                node = node.parent
+                order = max(c.properties[self.ORDER] for c in node.children)
+                if len(node.children) > 1:
+                    order += 1
+                node.properties[self.ORDER] = order
 
     def _isContinuous(self, child, tol : float = _tol) -> bool:
         """Is a given child continuous with self?"""
-        return watershed_workflow.utils.isClose(child.segment.coords[-1], self.segment.coords[0], tol)
+        return watershed_workflow.utils.isClose(child.linestring.coords[-1], self.linestring.coords[0], tol)
 
     def isLocallyContinuous(self, tol : float = _tol) -> bool:
         """Is this node continuous with its parent and children?"""
@@ -335,12 +362,12 @@ class River(watershed_workflow.tinytree.Tree):
             all(child.isContinuous(tol) for child in self.children)
 
     def _makeContinuous(self, child : River) -> None:
-        child_coords = list(child.segment.coords)
-        child_coords[-1] = list(self.segment.coords)[0]
-        child.segment = shapely.geometry.LineString(child_coords)
+        child_coords = list(child.linestring.coords)
+        child_coords[-1] = list(self.linestring.coords)[0]
+        child.linestring = shapely.geometry.LineString(child_coords)
 
     def makeContinuous(self, tol : float = _tol) -> None:
-        """Sometimes there can be small gaps between segments of river
+        """Sometimes there can be small gaps between linestrings of river
         tree if river is constructed using hydroseq and Snap
         option is not used. Here we make them consistent.
 
@@ -372,7 +399,11 @@ class River(watershed_workflow.tinytree.Tree):
             yield self.parent
             for n in self.parent.pathToRoot():
                 yield n
-    
+
+
+    #
+    # methods that convert this to another object
+    #
     def to_crs(self, crs : CRS) -> None:
         """Warp the coordinate system."""
         self.df.to_crs(crs, inplace=True)
@@ -396,9 +427,8 @@ class River(watershed_workflow.tinytree.Tree):
 
     def to_mls(self) -> shapely.geometry.MultiLineString:
         """Represent this as a shapely.geometry.MultiLineString"""
-        return shapely.geometry.MultiLineString([r.segment for r in self.preOrder()])
+        return shapely.geometry.MultiLineString([r.linestring for r in self.preOrder()])
 
-    
     def copy(self, df : gpd.GeoDataFrame) -> River:
         """Shallow copy using a provided DataFrame"""
         if df is None:
@@ -439,7 +469,7 @@ class River(watershed_workflow.tinytree.Tree):
         coords = np.array([r.coords[0] for r in df['geometry']])
         kdtree = cKDTree(coords)
 
-        # make a node for each segment
+        # make a node for each linestring
         nodes = [cls(i,df) for i in df.index]
 
         # match nodes to their parent through the kdtree
@@ -448,15 +478,15 @@ class River(watershed_workflow.tinytree.Tree):
         divergence_matches = []
         for j, n in enumerate(nodes):
             # find the closest beginpoint the this node's endpoint
-            closest = kdtree.query_ball_point(n.segment.coords[-1], tol)
+            closest = kdtree.query_ball_point(n.linestring.coords[-1], tol)
             if len(closest) > 1:
-                logging.debug("Bad multi segment:")
-                logging.debug(" connected to %d: %r" % (j, list(n.segment.coords[-1])))
+                logging.debug("Bad multi linestring:")
+                logging.debug(" connected to %d: %r" % (j, list(n.linestring.coords[-1])))
                 divergence.append(j)
                 divergence_matches.append(closest)
 
                 # end at the same point, pick the min angle deviation
-                my_tan = np.array(n.segment.coords[-1]) - np.array(n.segment.coords[-2])
+                my_tan = np.array(n.linestring.coords[-1]) - np.array(n.linestring.coords[-2])
                 my_tan = my_tan / np.linalg.norm(my_tan)
 
                 other_tans = [
@@ -482,7 +512,7 @@ class River(watershed_workflow.tinytree.Tree):
     
     @classmethod
     def constructRiversByHydroseq(cls, df):
-        """Given a list of segments, create a list of rivers using the
+        """Given a list of linestrings, create a list of rivers using the
         HydroSeq maps provided in NHDPlus datasets.
         """
         # create a map from hydroseq to node
@@ -527,13 +557,13 @@ def getNode(rivers, index):
 def combineSiblings(n1, n2):
     """Combines two sibling nodes, merging catchments and metadata.
 
-    Note the resulting reach segment only merges the beginpoint and endpoint.
+    Note the resulting reach linestring only merges the beginpoint and endpoint.
     """
     assert (n1.isSiblingOf(n2))
-    beginpoint = (np.array(n1.segment.coords[0]) + np.array(n2.segment.coords[0])) / 2
-    endpoint = (np.array(n1.segment.coords[-1]) + np.array(n2.segment.coords[-1])) / 2
+    beginpoint = (np.array(n1.linestring.coords[0]) + np.array(n2.linestring.coords[0])) / 2
+    endpoint = (np.array(n1.linestring.coords[-1]) + np.array(n2.linestring.coords[-1])) / 2
     new_seg = shapely.geometry.LineString([beginpoint, endpoint])
-    n1.segment = new_seg
+    n1.linestring = new_seg
 
     if 'area' in n1:
         n1['area'] += n2['area']
@@ -552,7 +582,7 @@ def combineSiblings(n1, n2):
     n2.remove()
 
     for child in n1.children:
-        child.moveCoordinate(-1, n1.segment.coords[0])
+        child.moveCoordinate(-1, n1.linestring.coords[0])
 
     return n1
 
@@ -581,7 +611,7 @@ def accumulateCatchments(rivers, outlet_indices, names=None):
     assert (all(root is not None for root in roots))
 
     indices = ['CA_'+index for index in outlet_indices]
-    outlet_points = [root.segment.coords[-1] for root in roots]
+    outlet_points = [root.linestring.coords[-1] for root in roots]
     contributing_areas = [root.accumulateCatchments() for root in roots]
     return geopandas.GeoDataFrame({'index' : indices,
                                    'outlet_index' : outlet_indices,
@@ -632,7 +662,7 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
     ]
 
     indices = ['CA_'+index for index in outlet_indices]
-    outlet_points = [root.segment.coords[-1] for root in roots]
+    outlet_points = [root.linestring.coords[-1] for root in roots]
 
     return geopandas.GeoDataFrame({'index' : indices,
                                    'outlet_index' : outlet_indices,
