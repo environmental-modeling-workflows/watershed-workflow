@@ -20,7 +20,7 @@ dnhydroseq : int
 
 """
 from __future__ import annotations
-from typing import List, Optional, Any, Tuple, Callable
+from typing import List, Optional, Any, Tuple, Callable, Literal
 
 import logging
 import numpy as np
@@ -36,6 +36,7 @@ import geopandas as gpd
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 from watershed_workflow.crs import CRS
+import watershed_workflow.sources.standard_names as names
 
 _tol = 1.e-7
 
@@ -149,7 +150,7 @@ class River(watershed_workflow.tinytree.Tree):
             color = [c for (ind,c) in zip(self.df.index, itertools.cycle(color_cycle))]
             kwargs['color'] = color
 
-        # call the default plotter, which, because RiverTree is all
+        # call the default plotter, which, because River is all
         # LineStrings, will always add exactly one collection.
         ax = self.df.plot(**kwargs)
 
@@ -545,6 +546,9 @@ class River(watershed_workflow.tinytree.Tree):
         return roots
 
         
+#
+# Helper functions
+#
 def getNode(rivers, index):
     """Finds the node, by index, in a list of rivers"""
     for river in rivers:
@@ -587,12 +591,46 @@ def combineSiblings(n1, n2):
     return n1
 
 
+#
+# Construction method
+#
+def createRivers(reaches : gpd.GeoDataFrame,
+                 method : Literal['geometry','hydroseq'],
+                 tol : float = _tol) -> List[River]:
+    """Constructs River objects from a list of reaches.
+
+    Parameters
+    ----------
+    :reaches: The reaches to turn into rivers.
+    :method: Provide the method for constructing rivers.  Valid are:
+
+        * 'geometry' looks at coincident coordinates
+        * 'hydroseq' Valid only for NHDPlus data, this uses the
+          NHDPlus VAA tables Hydrologic Sequence.  If using this
+          method, get_reaches() must have been called with both
+          'hydroseq' and 'dnhydroseq'
+          properties requested (or properties=True).
+    :tol: Defines what close is in the case of method == 'geometry'
+
+    """
+    if method == 'hydroseq':
+        return watershed_workflow.river_tree.River.constructRiversByHydroseq(reaches)
+    elif method == 'geometry':
+        return watershed_workflow.river_tree.River.constructRiversByGeometry(reaches, tol)
+    else:
+        raise ValueError(
+            "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
+
+
+#
+# Helper functions on lists of rivers
+#
 def accumulateCatchments(rivers, outlet_indices, names=None):
     """Given a list of outlet_indices, find the reach in rivers and form its contributing area.
     
     Parameters:
     -----------
-    rivers: list[RiverTree]
+    rivers: list[River]
       Rivers from which outlet reaches are potentially from 
     outlet_indices: list[str]
       List of indices of the outlet reaches
@@ -626,7 +664,7 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
     
     Parameters:
     -----------
-    rivers: list[RiverTree]
+    rivers: list[River]
       Rivers from which outlet reaches are potentially from 
     outlet_indices: list[str]
       List of indices of the outlet reaches
@@ -672,32 +710,243 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
                                   crs=rivers[0].crs)
 
 
-def createRiverTrees(reaches, method='geometry', tol : float = _tol):
-    """Constructs River objects from a list of reaches.
+#
+# Cleanup methods -- merge and prune
+#
+def mergeShortReaches(river : River,
+                      tol : float) -> None:
+    """Remove inner branches that are short, combining branchpoints as needed.
 
-    Parameters
-    ----------
-    reaches : list[LineString]
-      List of reaches
-    method : str, optional='geometry'
-        Provide the method for constructing rivers.  Valid are:
+    This function merges the "short" linestring into the child
+    linestring if it is a junction tributary with one child or into
+    the parent linestring otherwise.
 
-        * 'geometry' looks at coincident coordinates
-        * 'hydroseq' Valid only for NHDPlus data, this uses the
-          NHDPlus VAA tables Hydrologic Sequence.  If using this
-          method, get_reaches() must have been called with both
-          'hydroseq' and 'dnhydroseq'
-          properties requested (or properties=True).
-    tol : float, optional=0.1
-        Defines what close is in the case of method == 'geometry'
-    
+    Note if tol is None, the tol is taken from the reach property TARGET_SEGMENT_LENGTH.
+
     """
-    if method == 'hydroseq':
-        return watershed_workflow.river_tree.River.constructRiversByHydroseq(reaches)
-    elif method == 'geometry':
-        return watershed_workflow.river_tree.River.constructRiversByGeometry(reaches, tol)
-    else:
-        raise ValueError(
-            "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
+    for node in list(river.preOrder()):
+        if tol is None:
+            ltol = node.properties[names.TARGET_SEGMENT_LENGTH]
+        else:
+            ltol = tol
+        if node.linestring.length < ltol and node.parent is not None:
+            logging.info(
+                "  ...cleaned inner linestring of length %g at centroid %r with id %r" %
+                (node.linestring.length, node.linestring.centroid.coords[0], node.properties['ID']))
+
+            if len(list(node.siblings())) > 0 and len(node.children) == 1:
+                # junction tributary with one child
+                node.merge(to='child')
+            elif len(node.children) == 0:
+                # if the leaf node is too small
+                node.remove()
+            else:
+                for sibling in list(node.siblings()):
+                    sibling.moveCoordinate(-1, node.linestring.coords[0])
+                    sibling.remove()
+                    node.addChild(sibling)
+
+                assert (len(list(node.siblings())) == 0)
+                node.merge()
 
 
+def pruneByLineStringLength(river : River,
+                            prune_tol : Optional[float] = None) -> int:
+    """Removes any leaf linestrings that are shorter than prune_tol"""
+    count = 0
+    iter_count = 1
+    while iter_count > 0:
+        iter_count = 0
+        for leaf in river.leaf_nodes:
+            if prune_tol is None:
+                lprune_tol = leaf.properties[names.TARGET_SEGMENT_LENGTH]
+            else:
+                lprune_tol = prune_tol
+
+            if leaf.linestring.length < lprune_tol:
+                count += 1
+                logging.info("  ...cleaned leaf linestring of length: %g at centroid %r" %
+                             (leaf.linestring.length, leaf.linestring.centroid.coords[0]))
+                leaf.prune()
+        count += iter_count
+    return count
+
+
+def pruneByArea(river : River,
+                area : float,
+                prop : Optional[str] = None):
+    """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
+
+    Note this requires NHDPlus data to have been used and the
+    'DivergenceRoutedDrainAreaSqKm' property (or whatever is selected) to have been set.
+    """
+    count = 0
+    if prop is None:
+        prop = names.DRAINAGE_AREA
+        
+    for node in river.preOrder():
+        # note, we only ever prune children, to avoid unneeded recursive pruning
+        #
+        # make a copy of the children, as this list will be modified by potential prune calls
+        children = node.children[:]
+        for child in children:
+            if child.properties[prop] < area:
+                logging.debug(f"... removing trib with {len(child)}"
+                              f" reaches of area: {child.properties[prop]}")
+                count += len(child)
+                child.prune()
+    return count
+
+
+def pruneRiversByArea(rivers : List[River],
+                      area : float,
+                      prop : Optional[str] = None) -> List[River]:
+    """Both prunes reaches and filters rivers whose contributing area is less than area."""
+    count = 0
+    sufficiently_big_rivers = []
+    for river in rivers:
+        if river.properties[prop] >= area:
+            count += pruneByArea(river, area, prop)
+            sufficiently_big_rivers.append(river)
+        else:
+            count += len(river)
+    logging.info(f"... pruned {count}")
+    return sufficiently_big_rivers
+    
+
+def filterDiversions(rivers : List[River]) -> List[River]:
+    """Filteres diversions, but not braids."""
+    logging.info("Remove diversions...")
+    non_diversions = []
+    for river in rivers:
+        keep_river = True
+        count_tribs = 0
+        count_reaches = 0
+        for leaf in river.leaf_nodes:
+            if leaf.properties['divergence'] == 2:
+                # is a braid or a diversion
+                if river.getNode(leaf.properties['uphydroseq']) is None:
+                    # diversion!
+                    try:
+                        joiner = next(n for n in leaf.pathToRoot()
+                                      if n.parent is not None and len(n.parent.children) > 1)
+                    except StopIteration:
+                        # no joiner means kill the whole river
+                        logging.info(f'  ... remove diversion river with {len(river)} reaches.')
+                        keep_river = False
+                        break
+                    else:
+                        count_tribs += 1
+                        count_reaches += len(joiner)
+                        joiner.prune()
+
+        if keep_river:
+            logging.info(
+                f'  ... removed {count_tribs} diversion tributaries with {count_reaches} total reaches.'
+            )
+            non_diversions.append(river)
+
+    return non_diversions
+
+    
+def removeBraids(rivers : List[River]) -> None:
+    """Remove braids, but not diversions."""
+    logging.debug("Removing braided sections...")
+    for river in rivers:
+        count_tribs = 0
+        count_reaches = 0
+
+        for leaf in river.leaf_nodes:
+            if leaf.properties[names.DIVERGENCE] == 2:
+                # is a braid or a diversion?
+                logging.info(f"  Found a braid with upstream = {leaf.properties[names.UPSTREAM_HYDROSEQ]}")
+                upstream_hydroseq = leaf.properties[names.UPSTREAM_HYDROSEQ]
+                if river.findNode(lambda n : n.properties[names.HYDROSEQ] == upstream_hydroseq) is not None:
+                    # braid!
+                    try:
+                        joiner = next(n for n in leaf.pathToRoot()
+                                      if n.parent is not None and len(n.parent.children) > 1)
+                    except StopIteration:
+                        assert (False)
+                        # this should not be possible, because our braid must come back somewhere
+                    else:
+                        count_tribs += 1
+                        count_reaches += len(joiner)
+                        joiner.prune()
+
+        logging.debug(f'... removed {count_tribs} braids with {count_reaches} reaches'
+                      f' from a river of length {len(river)}')
+
+
+def filterDivergences(rivers : List[River]) -> List[River]:
+    """Removes both diversions and braids.
+
+    Braids are divergences that return to the river network, and so
+    look like branches of a river tree whose upstream entity is in the
+    river (in another branch).
+
+    Diversions are divergences that do not return to the stream
+    network, and so their upstream entity is in another river.
+
+    """
+    logging.info("Removing divergent sections...")
+    non_divergences = []
+
+    for river in rivers:
+        keep_river = True
+        count_tribs = 0
+        count_reaches = 0
+        for leaf in river.leaf_nodes:
+            if leaf.properties['divergence'] == 2:
+                # diversion!
+                try:
+                    joiner = next(n for n in leaf.pathToRoot()
+                                  if n.parent is not None and len(n.parent.children) > 1)
+                except StopIteration:
+                    # no joiner means kill the whole river
+                    logging.info(f'  ... remove divergence river with {len(river)} reaches.')
+                    keep_river = False
+                    break
+                else:
+                    count_tribs += 1
+                    count_reaches += len(joiner)
+                    joiner.prune()
+
+        if keep_river:
+            logging.info(
+                f'  ... removed {count_tribs} divergence tributaries with {count_reaches} total reaches.'
+            )
+            non_divergences.append(river)
+
+    return non_divergences
+
+    
+def filterSmallRivers(rivers : List[River],
+                      count : int) -> List[River]:
+    """Remove any rivers with fewer than count reaches."""
+    logging.info(f"Removing rivers with fewer than {count} reaches.")
+    new_rivers = []
+    for river in rivers:
+        ltree = len(river)
+        if ltree < count:
+            logging.debug(f"  ...removing river with {ltree} reaches")
+        else:
+            new_rivers.append(river)
+            logging.debug(f"  ...keeping river with {ltree} reaches")
+    logging.info(f'... removed {len(rivers) - len(new_rivers)} rivers')
+    return new_rivers
+
+
+def simplify(rivers : List[River],
+             tol : float) -> None:
+    """Simplify, IN PLACE, all reaches."""
+    if len(rivers) == 0:
+        return
+
+    rivers[0].df.simplify(tol)
+    for river in rivers[1:]:
+        if river.df is not rivers[0].df:
+            river.df.simplify(tol)
+
+
+            

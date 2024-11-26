@@ -5,7 +5,7 @@ import numpy as np
 import watershed_workflow.crs
 from watershed_workflow.sources.manager_wbd import ManagerWBD
 
-from source_fixtures import datadir
+from watershed_workflow.test.source_fixtures import datadir
 
 
 def get_shapes(filename):

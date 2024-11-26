@@ -12,6 +12,7 @@ if typing.TYPE_CHECKING:
     import numpy.typing as npt
     import geopandas as gpd
     from watershed_workflow.crs import CRS
+    import xarray.core.types
 
 import datetime, cftime
 import logging
@@ -23,7 +24,7 @@ from shapely.geometry.base import BaseGeometry
 import shapely.ops
 import shapely.prepared
 import shapely.affinity
-import rasterio.transform
+import xarray
 
 import watershed_workflow.warp
 
@@ -514,9 +515,43 @@ def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.g
         return tuple(filter(None, [args[0],args[1]]))
     return shapely.ops.transform(_drop_z, geom)
 
+
+def diagnoseMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString]) -> Tuple[float,float,float]:
+    """Computes min, median, and max segment length across all linestrings."""
+    seg_mins = []
+    seg_maxs = []
+    seg_meds = []
+    
+    for ls in iterable:
+        coords = np.array(ls.coords)
+        seg_len = np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
+        seg_mins.append(np.min(seg_len))
+        seg_maxs.append(np.max(seg_len))
+        seg_meds.append(np.median(seg_len))
+    return min(seg_mins), np.median(seg_meds), max(seg_maxs)
+
+
 #
 # Dataset utilities
 #
+def valuesFromArray(points : np.ndarray,
+                    points_crs : CRS,
+                    array : xarray.DataArray,
+                    method : xarray.core.types.InterpOptions = 'nearest'):
+    """For each point in points, interpolates a value from the array.
+
+    Valid methods include:
+    - "nearest" for nearest neighbor
+    - "linear" for bilinear interpolation
+
+    """
+    array_crs = watershed_workflow.crs.from_xarray(array)
+    xy = watershed_workflow.warp.xy(points[:,0], points[:,1], points_crs, array_crs)
+    x = xarray.DataArray(points, dims='points')
+    y = xarray.DataArray(points, dims='points')
+    return array.interp(x=x, y=y, method=method).values
+
+
 def imputeHoles2D(arr : np.ndarray,
                   nodata : Any = np.nan,
                   method : str = 'cubic') -> np.ndarray:
@@ -545,8 +580,8 @@ def imputeHoles2D(arr : np.ndarray,
 
 
 def smoothRaster(img_in : np.ndarray,
-                 method : str = 'gaussian',
-                 **kwargs) -> np.ndarray:
+                method : str = 'gaussian',
+                **kwargs) -> np.ndarray:
     """Smooths an image according to an algorithm, passing kwargs on to that algorithm."""
     if method == 'gaussian':
         if 'method' not in kwargs:
@@ -560,7 +595,10 @@ def smoothRaster(img_in : np.ndarray,
         raise ValueError(f'Unknown smoothing method: "{method}"')
 
 
-def computeAverageYear(data, output_nyears=1, smooth=False, **kwargs):
+def computeAverageYear(data,
+                       output_nyears : int = 1,
+                       smooth : bool = False,
+                       **kwargs):
     """Averages and smooths to form a "typical" year.
 
     Parameters
@@ -598,13 +636,13 @@ def computeAverageYear(data, output_nyears=1, smooth=False, **kwargs):
 
     # smooth if requested
     if smooth:
-        data = smooth_array(data, smooth, axis=0, **kwargs)
+        data = smoothArray(data, smooth, axis=0, **kwargs)
 
     # repeat the data if requested
     if output_nyears != 1:
         tiled_data_shape = (output_nyears, )
         for i in range(len(original_shape) - 1):
-            tiled_data_shape = tiled_data_shape + (1, )
+            tiled_data_shape = tiled_data_shape + (1, ) # type: ignore
         data = np.tile(data, tiled_data_shape)
     return data
 

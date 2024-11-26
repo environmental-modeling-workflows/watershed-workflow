@@ -264,28 +264,26 @@ def findHUC(source : Any,
 
 #     return rivers
 
-
 def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
              rivers : List[watershed_workflow.river_tree.River],
+             reach_segment_target_length : float,
              waterbodies : Optional[gpd.GeoDataFrame] = None,
-             simplify_hucs : float = -1,
-             simplify_rivers : float = -1,
-             simplify_waterbodies : float = -1,
-             prune_tol : float = -1,
-             merge_tol : float = -1,
-             snap_tol : float = -1,
-             snap_triple_junctions_tol : float = -1,
-             snap_reach_endpoints_tol : float = -1,
-             snap_waterbodies_tol : float = -1,
-             cut_intersections : Optional[bool] = False):
-    """Simplifies the HUC and river shapes.
+             huc_segment_target_length : Optional[float] = None,
+             river_close_distance : float = 100.0,
+             river_far_distance : float = 500.0) -> None:
+    """Simplifies the HUC and river shapes to create constrained, discrete segments.
 
     Parameters
     ----------
     hucs : SplitHUCs
-        A split-form HUC object containing all reaches.
+       A split-form HUC object containing all reaches.
     rivers : list(River)
-        A list of river objects.
+       A list of river objects.
+    huc_segment_target_length : float
+       Target length of a typical triangle edge away from the river.
+    reach_segment_target_length : float
+       Target length of a typical triangle edge at the river.
+
     waterbodies : list(shply), optional
         A list of waterbodies.
     simplify_hucs : float, optional
@@ -329,101 +327,60 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
         boundary to occur at a coincident node by adding nodes as
         needed.
 
-    Returns
-    -------
-    rivers : list(River)
-       Snap may change the rivers, so this returns the list of updated
-       rivers.
-
-    .. note: 
-        This also may modify the hucs and waterbody objects in-place.
-
     """
-    if simplify_rivers < 0:
-        simplify_rivers = simplify_hucs
-    if simplify_waterbodies < 0:
-        simplify_waterbodies = simplify_hucs
-    if prune_tol < 0:
-        prune_tol = simplify_rivers
-    if merge_tol < 0:
-        merge_tol = simplify_rivers
-    if snap_tol < 0:
-        snap_tol = 0.75 * simplify_rivers
-    if snap_triple_junctions_tol < 0:
-        snap_triple_junctions_tol = 3 * snap_tol
-    if snap_reach_endpoints_tol < 0:
-        snap_reach_endpoints_tol = 2 * snap_tol
-    if snap_waterbodies_tol < 0:
-        snap_waterbodies_tol = snap_tol
-
     logging.info("")
     logging.info("Simplifying")
     logging.info("-" * 30)
 
-    if simplify_rivers >= 0:
-        logging.info("Simplifying rivers")
-        watershed_workflow.hydrography.cleanup(rivers, simplify_rivers, prune_tol, merge_tol)
+    assert len(rivers) > 0
+    if huc_segment_target_length is None:
+        huc_segment_target_length = reach_segment_target_length
 
-    if simplify_hucs >= 0:
-        logging.info("Simplifying HUCs")
-        watershed_workflow.split_hucs.simplify(hucs, simplify_hucs)
+    logging.info(f"Presimplify to remove colinear, coincident points.")
+    presimplify = 0.01
+    watershed_workflow.river_tree.simplify(rivers, presimplify)
+    watershed_workflow.split_hucs.simplify(hucs, presimplify)
+    if waterbodies is not None:
+        waterbodies.simplify(presimplify)
 
-    if snap_tol > 0 or snap_triple_junctions_tol > 0 or snap_reach_endpoints_tol > 0 or cut_intersections:
-        logging.info("Snapping river and HUC (nearly) coincident nodes")
-        rivers = watershed_workflow.hydrography.snap(hucs, rivers, snap_tol,
-                                                     snap_triple_junctions_tol,
-                                                     snap_reach_endpoints_tol, cut_intersections)
+    logging.info(f"Pruning leaf reaches < {reach_segment_target_length}")
+    for river in rivers:
+        watershed_workflow.river_tree.pruneByLineStringLength(river, reach_segment_target_length)
 
-    if simplify_waterbodies > 0 and waterbodies is not None:
-        for i, wb in enumerate(waterbodies):
-            wb = wb.simplify(simplify_waterbodies)
-            wb = hucs.exterior().intersection(wb)
-            waterbodies[i] = wb
+    logging.info("Snapping discrete points to make rivers, HUCs, and waterbodies consistent.")
+    logging.info(" -- snapping HUC triple junctions to reaches")
+    snap_triple_junctions_tol = 3*reach_segment_target_length
+    watershed_workflow.hydrography.snapHUCsJunctions(hucs, rivers, snap_triple_junctions_tol)
 
-    if snap_waterbodies_tol > 0 and waterbodies is not None:
-        logging.info("Snapping waterbodies and HUC (nearly) coincident nodes")
-        watershed_workflow.hydrography.snapWaterbodies(hucs, waterbodies, snap_waterbodies_tol)
+    logging.info(" -- cut and snapping reach endpoints to HUC polygon")
+    watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, reach_segment_target_length)
 
-    assert all(r.isLocallyContinuous() for r in rivers)
-
-    if cut_intersections:
-        logging.info("Cutting crossings and removing external linestrings")
-        watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, snap_tol)
-
-    assert all(r.isLocallyContinuous() for r in rivers)
+    if waterbodies is not None:
+        logging.info(" -- snapping waterbodies to HUCs and reaches")
+        watershed_workflow.hydrography.snapWaterbodies(waterbodies, hucs, rivers, 2*reach_segment_target_length)
 
     logging.info("")
     logging.info("Simplification Diagnostics")
     logging.info("-" * 30)
-    if len(rivers) != 0:
-        mins = []
-        for river in rivers:
-            for r in river.preOrder():
-                coords = np.array(r.linestring.coords[:])
-                dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-                mins.append(np.min(dz))
-        logging.info(f"  river min seg length: {min(mins)}")
-        logging.info(f"  river median seg length: {np.median(np.array(mins))}")
 
-    mins = []
-    watershed_workflow.split_hucs.simplify(hucs, 0)
-    for seg in hucs.linestrings:
-        coords = np.array(seg.coords[:])
-        dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-        mins.append(np.min(dz))
-    logging.info(f"  HUC min seg length: {min(mins)}")
-    logging.info(f"  HUC median seg length: {np.median(np.array(mins))}")
+    rdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(r.linestring for river in rivers for r in river.preOrder())
+    logging.info(f"  river min seg length: {rdiags[0]}")
+    logging.info(f"  river median seg length: {rdiags[1]}")
+    logging.info(f"  river max seg length: {rdiags[2]}")
 
-    mins = []
+    hdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(hucs.linestrings)
+    logging.info('')
+    logging.info(f"  HUC min seg length: {hdiags[0]}")
+    logging.info(f"  HUC median seg length: {hdiags[1]}")
+    logging.info(f"  HUC max seg length: {hdiags[2]}")
+
     if waterbodies is not None:
-        for wb in waterbodies:
-            coords = np.array(wb.exterior.coords[:])
-            dz = np.linalg.norm(coords[1:] - coords[:-1], 2, -1)
-            mins.append(np.min(dz))
-        if len(mins) > 0:
-            logging.info(f"  Waterbody min seg length: {min(mins)}")
-            logging.info(f"  Waterbody median seg length: {np.median(np.array(mins))}")
-    return rivers
+        wbdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(wb.exterior for wb in waterbodies)
+        logging.info('')
+        logging.info(f"  HUC min seg length: {wbdiags[0]}")
+        logging.info(f"  HUC median seg length: {wbdiags[1]}")
+        logging.info(f"  HUC max seg length: {wbdiags[2]}")
+
 
 
 # def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
@@ -761,41 +718,6 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 #     out[:, 0:2] = mesh_points
 #     out[:, 2] = elev
 #     return out
-
-
-# def interpolateFromArray(array, points, points_crs=None, method='nearest'):
-#     """Interpolate a raster onto a collection of unstructured points.
-
-#     Parameters
-#     ----------
-#     array : xarray.DataArray
-#         2D array forming the raster.
-#     points : np.array((n_points, 2), 'd')
-#         Array of points to interpolate onto.
-#     points_crs : crs-type, optional
-#         Coordinate system of the points.  If not provided, it is
-#         assumed the same as array.
-#     algorithm : str, optional
-#         Algorithm used for interpolation.  One of:
-#         * "nearest" for nearest neighbor pixels (default)
-#         * "linear" for interpolation
-
-#     Returns
-#     -------
-#     out : np.array((n_points,))
-#         Array of raster values interpolated onto the points.
-
-#     """
-#     if points_crs is None:
-#         points_crs = watershed_workflow.crs.from_xarray(array)
-
-#     array_crs = watershed_workflow.crs.from_xarray(array)
-#     points_raster_crs = np.array(watershed_workflow.warp.xy(
-#         points[:, 0], points[:, 1], points_crs, array_crs))
-
-#     x = xarray.DataArray(points_raster_crs[0], dims='points')
-#     y = xarray.DataArray(points_raster_crs[1], dims='points')
-#     return array.interp(x=x, y=y, method=method).values
 
 
 # def colorRasterFromShapes(shapes,

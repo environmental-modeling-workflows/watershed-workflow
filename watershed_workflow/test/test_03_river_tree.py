@@ -170,3 +170,16 @@ def test_prune():
     assert (n1.linestring.length == 1)
     assert (len(n1.children) == 0)
     
+
+def test_remove_divergences(braided_stream):
+    rivers = watershed_workflow.river_tree.createRivers(braided_stream, 'hydroseq')
+    assert (len(rivers) == 1)
+    assert (len(rivers[0]) == 6)
+
+    watershed_workflow.river_tree.removeBraids(rivers)
+    assert (len(rivers) == 1)
+    assert (len(rivers[0]) == 4)
+
+    hydroseq = [r.properties['hydroseq'] for r in rivers[0]]
+    expected = [1, 2, 3, 6]
+    assert (all((e == h) for (e, h) in zip(expected, hydroseq)))
