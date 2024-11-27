@@ -369,80 +369,83 @@ class CutError(Exception):
         self.cutline = cutline
 
 
-def cut(line : shapely.geometry.LineString,
-        cutline : shapely.geometry.LineString,
-        tol : float = 1.e-5) -> List[shapely.geometry.LineString]:
-    """Cuts a line at all intersections with cutline.  If an existing
-    point in line is within tol of the cutline, do not add an additional
-    coordinate, just move that coordinate.  Otherwise, add a new
-    coordinate."""
-    def plot():
-        from matplotlib import pyplot as plt
-        plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
-        plt.plot(line.xy[0], line.xy[1], 'g-+', linewidth=3)
+def cut(line1 : shapely.geometry.LineString,
+        line2 : shapely.geometry.LineString) -> Tuple[List[shapely.geometry.LineString],
+                                                      List[shapely.geometry.LineString]]:
+    """Cuts two linestrings at their (one) intersection point."""
+    return shapely.ops.split(line1, line2), shapely.ops.split(line2, line1)
 
-    assert (type(line) is shapely.geometry.LineString)
-    assert (type(cutline) is shapely.geometry.LineString)
-    assert (line.intersects(cutline))
+        
+# def cut(line : shapely.geometry.LineString,
+#         cutline : shapely.geometry.LineString,
+#         tol : float = 1.e-5) -> List[shapely.geometry.LineString]:
+#     def plot():
+#         from matplotlib import pyplot as plt
+#         plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
+#         plt.plot(line.xy[0], line.xy[1], 'g-+', linewidth=3)
 
-    segs = []
-    coords = list(line.coords)
+#     assert type(line) is shapely.geometry.LineString
+#     assert type(cutline) is shapely.geometry.LineString
+#     assert line.intersects(cutline)
 
-    segcoords = [coords[0], ]
-    i = 0
-    while i < len(coords) - 1:
-        seg = shapely.geometry.LineString(coords[i:i + 2])
-        #logging.debug("Intersecting seg %d"%i)
-        point = seg.intersection(cutline)
-        if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
-            #logging.debug("Cut seg no intersection")
-            segcoords.append(seg.coords[-1])
-            i += 1
-        elif type(point) is shapely.geometry.Point:
-            #logging.debug("Cut intersected at point")
-            #logging.debug("  inter point: %r"%list(point.coords[0]))
-            #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-            #logging.debug("  close? = %r"%(isClose(point, seg.coords[-1], tol)))
-            if isClose(point, seg.coords[-1], tol):
-                # intersects at the far point
-                segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-                #logging.debug("  appended full linestring: %r"%(list(segs[-1].coords)))
+#     segs = []
+#     coords = list(line.coords)
 
-                if (i < len(coords) - 2):
-                    #logging.debug("    (not the end)")
-                    segcoords = [point, coords[i + 2]]
-                else:
-                    #logging.debug("    (the end)")
-                    segcoords = [point, ]
-                i += 2  # also skip the next seg, which would also
-                # intersect at that seg's start point
-            elif isClose(point, seg.coords[0], tol):
-                # intersects at the near point
-                if i != 0:
-                    assert (len(segcoords) > 1)
-                    segs.append(shapely.geometry.LineString(segcoords[:-1] + [point, ]))
-                    segcoords = [point, ]
-                else:
-                    assert (len(segcoords) == 1)
-                    segcoords[0] = point
-                segcoords.append(seg.coords[-1])
-                i += 1
-            else:
-                # intersects in the middle
-                segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-                #logging.debug("  appended partial linestring: %r"%(list(segs[-1].coords)))
-                segcoords = [point, seg.coords[-1]]
-                i += 1
-        else:
-            print("Dual/multiple section: type = {}".format(type(point)))
-            print(" point = {}".format(point))
-            raise CutError(
-                "Dual/multiple intersection in a single seg... ugh!  "
-                + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
+#     segcoords = [coords[0], ]
+#     i = 0
+#     while i < len(coords) - 1:
+#         seg = shapely.geometry.LineString(coords[i:i + 2])
+#         #logging.debug("Intersecting seg %d"%i)
+#         point = seg.intersection(cutline)
+#         if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
+#             #logging.debug("Cut seg no intersection")
+#             segcoords.append(seg.coords[-1])
+#             i += 1
+#         elif type(point) is shapely.geometry.Point:
+#             #logging.debug("Cut intersected at point")
+#             #logging.debug("  inter point: %r"%list(point.coords[0]))
+#             #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
+#             #logging.debug("  close? = %r"%(isClose(point, seg.coords[-1], tol)))
+#             if isClose(point, seg.coords[-1], tol):
+#                 # intersects at the far point
+#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
+#                 #logging.debug("  appended full linestring: %r"%(list(segs[-1].coords)))
 
-    if len(segcoords) > 1:
-        segs.append(shapely.geometry.LineString(segcoords))
-    return segs
+#                 if (i < len(coords) - 2):
+#                     #logging.debug("    (not the end)")
+#                     segcoords = [point, coords[i + 2]]
+#                 else:
+#                     #logging.debug("    (the end)")
+#                     segcoords = [point, ]
+#                 i += 2  # also skip the next seg, which would also
+#                 # intersect at that seg's start point
+#             elif isClose(point, seg.coords[0], tol):
+#                 # intersects at the near point
+#                 if i != 0:
+#                     assert (len(segcoords) > 1)
+#                     segs.append(shapely.geometry.LineString(segcoords[:-1] + [point, ]))
+#                     segcoords = [point, ]
+#                 else:
+#                     assert (len(segcoords) == 1)
+#                     segcoords[0] = point
+#                 segcoords.append(seg.coords[-1])
+#                 i += 1
+#             else:
+#                 # intersects in the middle
+#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
+#                 #logging.debug("  appended partial linestring: %r"%(list(segs[-1].coords)))
+#                 segcoords = [point, seg.coords[-1]]
+#                 i += 1
+#         else:
+#             print("Dual/multiple section: type = {}".format(type(point)))
+#             print(" point = {}".format(point))
+#             raise CutError(
+#                 "Dual/multiple intersection in a single seg... ugh!  "
+#                 + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
+
+#     if len(segcoords) > 1:
+#         segs.append(shapely.geometry.LineString(segcoords))
+#     return segs
 
 
 def inNeighborhood(shp1 : BaseGeometry,

@@ -250,8 +250,7 @@ def snapWaterbodies(waterbodies : List[shapely.geometry.base.Geometry],
 
 
 def cutAndSnapCrossings(hucs : SplitHUCs,
-                        rivers : List[River],
-                        tol : float):
+                        rivers : List[River]) -> None:
     """If any reach crosses a HUC boundary:
 
     1. If it crosses an external boundary, cut the reach in two and
@@ -264,15 +263,31 @@ def cutAndSnapCrossings(hucs : SplitHUCs,
     boundary at the crossing point.
     
     """
-    for tree in rivers:
-        for reach in tree.preOrder():
-            _cutAndSnapCrossing(hucs, reach, tol)
-    return rivers
+    # precondition: only trunk or leaf nodes may touch the exterior boundary of hucs
+    exterior = hucs.exterior
+    for river in rivers:
+        for reach in river:
+            # if is trunk or leaf
+            if reach.parent is None or len(reach.children) == 0:
+                assert watershed_workflow.utils.isNonPointIntersection(reach.linestring, exterior)
+            else:
+                assert exterior.contains(reach.linestring)
+
+    # check exterior crossings on trunk and leaf
+    for river in rivers:
+        _cutAndSnapExteriorCrossing(hucs, river)
+        for leaf in river.leaf_nodes:
+            _cutAndSnapExteriorCrossing(hucs, leaf)
+        
+    # check interior crossings on all
+    for river in rivers:
+        for reach in river:
+            _cutAndSnapInteriorCrossing(hucs, reach)
 
 
-def _cutAndSnapCrossing(hucs : SplitHUCs,
-                        reach : River,
-                        tol : float):
+def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
+                                reach : River,
+                                merge_tol : float) -> None:
     """Helper function for cutAndSnapCrossings()"""
     r = reach.linestring
 
@@ -280,69 +295,70 @@ def _cutAndSnapCrossing(hucs : SplitHUCs,
     # this case, the reach linestring gets split in two and the external
     # one is removed.
     for b, spine in hucs.boundaries.items():
-        for s, seg_handle in spine.items():
-            seg = hucs.linestrings[seg_handle]
+        for s, ls_handle in spine.items():
+            ls = hucs.linestrings[ls_handle]
 
-            if watershed_workflow.utils.intersects(seg, r):
+            if watershed_workflow.utils.intersects(ls, r):
                 logging.info('intersection found')
-                new_spine = watershed_workflow.utils.cut(seg, r, tol)
-                new_reach_segs = watershed_workflow.utils.cut(r, seg, tol)
+                new_spine, new_reach = watershed_workflow.utils.cut(ls, r)
+                assert len(new_reach) == 1 or len(new_reach) == 2
+                assert len(new_spine) == 1 or len(new_spine) == 2
 
-                assert (len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
-                assert (len(new_spine) == 1 or len(new_spine) == 2)
                 logging.info("  - cutting reach at external boundary of HUCs:")
-                logging.info(f"      split HUC boundary seg into {len(new_spine)} pieces")
-                logging.info(f"      split reach seg into {len(new_reach_segs)} pieces")
+                logging.info(f"      split HUC boundary ls into {len(new_spine)} pieces")
+                logging.info(f"      split reach ls into {len(new_reach)} pieces")
 
                 # which piece of the reach are we keeping?
-                if hucs.exterior.buffer(-tol).contains(
-                        shapely.geometry.Point(new_reach_segs[0].coords[0])):
-                    # keep the upstream (or only) reach seg
-                    if len(new_reach_segs) == 2:
-                        # confirm other/downstream reach is outside
-                        assert (not hucs.exterior.contains(
-                            shapely.geometry.Point(new_reach_segs[1].coords[-1])))
-                    reach.linestring = new_reach_segs[0]
+                if hucs.exterior.buffer(-1).contains(shapely.geometry.Point(new_reach[0].coords[0])):
+                    # keep the upstream (or only) reach ls
+                    if len(new_reach) == 2:
+                    # confirm other/downstream reach is outside
+                    assert not hucs.exterior.contains(shapely.geometry.Point(new_reach[1].coords[-1]))
+                    reach.linestring = new_reach[0]
 
-                elif len(new_reach_segs) == 2:
-                    if hucs.exterior.buffer(-tol).contains(
-                            shapely.geometry.Point(new_reach_segs[1].coords[-1])):
-                        # keep the downstream reach seg, confirm upstream is outside
-                        assert (not hucs.exterior.contains(
-                            shapely.geometry.Point(new_reach_segs[0].coords[0])))
-                        reach.linestring = new_reach_segs[1]
+                elif len(new_reach) == 2:
+                    if hucs.exterior.buffer(-1).contains(shapely.geometry.Point(new_reach[1].coords[-1])):
+                        # keep the downstream reach ls, confirm upstream is outside
+                        assert not hucs.exterior.contains(shapely.geometry.Point(new_reach[0].coords[0]))
+                        reach.linestring = new_reach[1]
 
                 # keep both pieces of a split huc boundary linestring
                 # -- rename the first
-                hucs.linestrings[seg_handle] = new_spine[0]
+                hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
                     # -- add the first
-                    assert (len(new_spine) == 2)
                     new_handle = hucs.linestrings.append(new_spine[1])
                     spine.append(new_handle)
 
-                break
+
+def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
+                                reach : River,
+                                merge_tol : float) -> None:
+    """Helper function for cutAndSnapCrossings()"""
+    r = reach.linestring
 
     # now deal with crossings of the HUC interior boundary -- in this
-    # case, the reach linestring is kept as one but the linestring geometry
-    # is snapped to make sure the intersection is exact
+    # case, the reach linestring cut, then potentially merged to neighbors
     for i, spine in hucs.intersections.items():
-        for s, seg_handle in spine.items():
-            seg = hucs.linestrings[seg_handle]
-
-            if watershed_workflow.utils.intersects(seg, r):
-                new_spine = watershed_workflow.utils.cut(seg, r, tol)
-                new_reach_segs = watershed_workflow.utils.cut(r, seg, tol)
-                assert (len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
-                assert (len(new_spine) == 1 or len(new_spine) == 2)
+        for s, ls_handle in spine.items():
+            ls = hucs.linestrings[ls_handle]
+                    
+            if watershed_workflow.utils.intersects(ls, r):
+                new_spine, new_reach = watershed_workflow.utils.cut(ls, r)
+                assert len(new_reach) == 1 or len(new_reach) == 2
+                assert len(new_spine) == 1 or len(new_spine) == 2
                 logging.info("  - snapping reach at internal boundary of HUCs")
-                if (len(new_reach_segs) == 2):
+                if len(new_reach) == 1:
+                    reach.linestring = new_reach[0]
+                elif len(new_reach) == 2:
                     reach.linestring = shapely.geometry.LineString(
-                        list(new_reach_segs[0].coords) + list(new_reach_segs[1].coords)[1:])
+                        list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
+                    us, ds = reach.split(len(new_reach[0].coords)-1)
+                    # potentially merge
+                    if us.linestring.length < 
                 else:
-                    reach.linestring = new_reach_segs[0]
 
-                hucs.linestrings[seg_handle] = new_spine[0]
+                hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
                     assert (len(new_spine) == 2)
                     new_handle = hucs.linestrings.append(new_spine[1])
@@ -366,30 +382,30 @@ def snapHUCsJunctions(hucs : SplitHUCs,
     kdtree = cKDTree(coords)
     # for each linestring of the HUC spine, find the river outlet that is
     # closest.  If within tolerance, move it
-    for seg_handle, seg in hucs.linestrings.items():
+    for ls_handle, ls in hucs.linestrings.items():
         # check point 0, -1
-        endpoints = np.array([seg.coords[0], seg.coords[-1]])
+        endpoints = np.array([ls.coords[0], ls.coords[-1]])
         # limit to x,y
         if (endpoints.shape[1] != 2):
             endpoints = endpoints[:, 0:2]
         dists, inds = kdtree.query(endpoints)
 
         if dists.min() < tol:
-            new_seg = list(seg.coords)
+            new_ls = list(ls.coords)
             if dists[0] < tol:
-                new_seg[0] = coords[inds[0]]
+                new_ls[0] = coords[inds[0]]
                 logging.debug(
-                    f"  Moving HUC linestring point 0,1: {list(seg.coords)[0]}, {list(seg.coords)[-1]}"
+                    f"  Moving HUC linestring point 0,1: {list(ls.coords)[0]}, {list(ls.coords)[-1]}"
                 )
-                logging.debug("        point 0 to river at %r" % list(new_seg[0]))
+                logging.debug("        point 0 to river at %r" % list(new_ls[0]))
 
             if dists[1] < tol:
-                new_seg[-1] = coords[inds[1]]
+                new_ls[-1] = coords[inds[1]]
                 logging.debug(
-                    f"  Moving HUC linestring point 0,1: {list(seg.coords)[0]}, {list(seg.coords)[-1]}"
+                    f"  Moving HUC linestring point 0,1: {list(ls.coords)[0]}, {list(ls.coords)[-1]}"
                 )
-                logging.debug("        point -1 to river at %r" % list(new_seg[-1]))
-            hucs.linestrings[seg_handle] = shapely.geometry.LineString(new_seg)
+                logging.debug("        point -1 to river at %r" % list(new_ls[-1]))
+            hucs.linestrings[ls_handle] = shapely.geometry.LineString(new_ls)
 
 
 def snapEndpoints(river : River,
@@ -406,27 +422,27 @@ def snapEndpoints(river : River,
         for b, component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
 
             # note, this is done in two stages to allow it deal with both endpoints touching
-            for s, seg_handle in component.items():
-                seg = hucs.linestrings[seg_handle]
+            for s, ls_handle in component.items():
+                ls = hucs.linestrings[ls_handle]
                 #logging.debug("SNAP P0:")
-                #logging.debug("  huc seg: %r"%seg.coords[:])
+                #logging.debug("  huc ls: %r"%ls.coords[:])
                 #logging.debug("  reach: %r"%reach.coords[:])
                 altered = False
                 logging.debug("  - checking reach coord: %r" % list(reach.coords[0]))
-                logging.debug("  - seg coords: {0}".format(list(seg.coords)))
-                new_coord = watershed_workflow.utils.findNearestPoint(reach.coords[0], seg, tol)
+                logging.debug("  - ls coords: {0}".format(list(ls.coords)))
+                new_coord = watershed_workflow.utils.findNearestPoint(reach.coords[0], ls, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord is not None:
                     logging.debug(f"    snapped reach: {reach.coords[0]} to {new_coord}")
 
                     # move new_coord onto an existing linestring coord
                     new_coord_c = np.expand_dims(new_coord, 0) # type: ignore
-                    dist = np.linalg.norm(np.array(seg.coords) - new_coord_c, axis=1)
-                    assert (len(dist) == len(seg.coords))
+                    dist = np.linalg.norm(np.array(ls.coords) - new_coord_c, axis=1)
+                    assert (len(dist) == len(ls.coords))
                     assert (len(dist.shape) == 1)
                     i = int(np.argmin(dist))
                     if (dist[i] < tol):
-                        new_coord = seg.coords[i]
+                        new_coord = ls.coords[i]
 
                     # remove points that are closer
                     coords = list(reach.coords)
@@ -438,31 +454,31 @@ def snapEndpoints(river : River,
                     coords[0] = new_coord
                     reach = shapely.geometry.LineString(coords)
                     node.linestring = reach
-                    to_add.append((seg_handle, component, 0, node))
+                    to_add.append((ls_handle, component, 0, node))
                     break
 
             # second stage
-            for s, seg_handle in component.items():
-                seg = hucs.linestrings[seg_handle]
+            for s, ls_handle in component.items():
+                ls = hucs.linestrings[ls_handle]
                 # logging.debug("SNAP P1:")
-                # logging.debug("  huc seg: %r"%seg.coords[:])
+                # logging.debug("  huc ls: %r"%ls.coords[:])
                 # logging.debug("  reach: %r"%reach.coords[:])
                 altered = False
                 logging.debug("  - checking reach coord: %r" % list(reach.coords[-1]))
-                logging.debug("  - seg coords: {0}".format(list(seg.coords)))
-                new_coord = watershed_workflow.utils.findNearestPoint(reach.coords[-1], seg, tol)
+                logging.debug("  - ls coords: {0}".format(list(ls.coords)))
+                new_coord = watershed_workflow.utils.findNearestPoint(reach.coords[-1], ls, tol)
                 logging.debug("  - new coord: {0}".format(new_coord))
                 if new_coord is not None:
                     logging.debug("  - snapped reach: %r to %r" % (reach.coords[-1], new_coord))
 
                     # move new_coord onto an existing linestring coord
                     new_coord_c = np.expand_dims(new_coord, 0) # type: ignore
-                    dist = np.linalg.norm(np.array(seg.coords) - new_coord_c, axis=1)
-                    assert (len(dist) == len(seg.coords))
+                    dist = np.linalg.norm(np.array(ls.coords) - new_coord_c, axis=1)
+                    assert (len(dist) == len(ls.coords))
                     assert (len(dist.shape) == 1)
                     i = int(np.argmin(dist))
                     if (dist[i] < tol):
-                        new_coord = seg.coords[i]
+                        new_coord = ls.coords[i]
 
                     # remove points that are closer
                     coords = list(reach.coords)
@@ -474,15 +490,15 @@ def snapEndpoints(river : River,
                     coords[-1] = new_coord
                     reach = shapely.geometry.LineString(coords)
                     node.linestring = reach
-                    to_add.append((seg_handle, component, -1, node))
+                    to_add.append((ls_handle, component, -1, node))
                     break
 
     # find the list of points to add to a given linestring
     to_add_dict : Dict[int, List[Any]] = dict()
-    for seg_handle, component, endpoint, node in to_add:
-        if seg_handle not in to_add_dict.keys():
-            to_add_dict[seg_handle] = list()
-        to_add_dict[seg_handle].append((component, endpoint, node))
+    for ls_handle, component, endpoint, node in to_add:
+        if ls_handle not in to_add_dict.keys():
+            to_add_dict[ls_handle] = list()
+        to_add_dict[ls_handle].append((component, endpoint, node))
 
     # find the set of points to add to each given linestring
     def isEqual(p1, p2):
@@ -495,65 +511,65 @@ def snapEndpoints(river : River,
             return False
 
     to_add_dict2 = dict()
-    for seg_handle, insert_list in to_add_dict.items():
+    for ls_handle, insert_list in to_add_dict.items():
         new_list : List[Any] = []
         for p1 in insert_list:
             if (all(not isEqual(p1, p2) for p2 in new_list)):
                 new_list.append(p1)
-        to_add_dict2[seg_handle] = new_list
+        to_add_dict2[ls_handle] = new_list
 
     # add these points to the linestring
-    for seg_handle, insert_list in to_add_dict2.items():
-        seg = hucs.linestrings[seg_handle]
+    for ls_handle, insert_list in to_add_dict2.items():
+        ls = hucs.linestrings[ls_handle]
         # make a list of the coords and a flag to indicate a new
         # coord, then sort it by arclength along the linestring.
         #
-        # Note this needs special care if the seg is a loop, or else the endpoint gets sorted twice
-        if not watershed_workflow.utils.isClose(seg.coords[0], seg.coords[-1]):
+        # Note this needs special care if the ls is a loop, or else the endpoint gets sorted twice
+        if not watershed_workflow.utils.isClose(ls.coords[0], ls.coords[-1]):
             new_coords = [[p[2].linestring.coords[p[1]], 1] for p in insert_list]
             old_coords = [
-                [c, 0] for c in seg.coords
+                [c, 0] for c in ls.coords
                 if not any(watershed_workflow.utils.isClose(c, nc, tol) for nc in new_coords)
             ]
-            new_seg_coords = sorted(new_coords + old_coords,
-                                    key=lambda a: seg.project(shapely.geometry.Point(a[0])))
+            new_ls_coords = sorted(new_coords + old_coords,
+                                    key=lambda a: ls.project(shapely.geometry.Point(a[0])))
 
             # determine the new coordinate indices
-            breakpoint_inds = [i for i, (c, f) in enumerate(new_seg_coords) if f == 1]
+            breakpoint_inds = [i for i, (c, f) in enumerate(new_ls_coords) if f == 1]
 
         else:
             new_coords = [[p[2].linestring.coords[p[1]], 1] for p in insert_list]
             old_coords = [
-                [c, 0] for c in seg.coords[:-1]
+                [c, 0] for c in ls.coords[:-1]
                 if not any(watershed_workflow.utils.isClose(c, nc, tol) for nc in new_coords)
             ]
-            new_seg_coords = sorted(new_coords + old_coords,
-                                    key=lambda a: seg.project(shapely.geometry.Point(a[0])))
-            breakpoint_inds = [i for i, (c, f) in enumerate(new_seg_coords) if f == 1]
+            new_ls_coords = sorted(new_coords + old_coords,
+                                    key=lambda a: ls.project(shapely.geometry.Point(a[0])))
+            breakpoint_inds = [i for i, (c, f) in enumerate(new_ls_coords) if f == 1]
             assert (len(breakpoint_inds) > 0)
-            new_seg_coords = new_seg_coords[breakpoint_inds[0]:] + new_seg_coords[
+            new_ls_coords = new_ls_coords[breakpoint_inds[0]:] + new_ls_coords[
                 0:breakpoint_inds[0] + 1]
-            new_seg_coords[0][1] = 0
-            new_seg_coords[-1][1] = 0
-            breakpoint_inds = [i for i, (c, f) in enumerate(new_seg_coords) if f == 1]
+            new_ls_coords[0][1] = 0
+            new_ls_coords[-1][1] = 0
+            breakpoint_inds = [i for i, (c, f) in enumerate(new_ls_coords) if f == 1]
 
         # now break into new linestrings
-        new_segs = []
+        new_lss = []
         ind_start = 0
         for ind_end in breakpoint_inds:
             assert (ind_end != 0)
-            new_segs.append(
+            new_lss.append(
                 shapely.geometry.LineString([c
-                                             for (c, f) in new_seg_coords[ind_start:ind_end + 1]]))
+                                             for (c, f) in new_ls_coords[ind_start:ind_end + 1]]))
             ind_start = ind_end
 
-        assert (ind_start < len(new_seg_coords) - 1)
-        new_segs.append(
-            shapely.geometry.LineString([tuple(c) for (c, f) in new_seg_coords[ind_start:]]))
+        assert (ind_start < len(new_ls_coords) - 1)
+        new_lss.append(
+            shapely.geometry.LineString([tuple(c) for (c, f) in new_ls_coords[ind_start:]]))
 
-        # put all new_segs into the huc list.  Note insert_list[0][0] is the component
-        hucs.linestrings[seg_handle] = new_segs.pop(0)
-        new_handles = hucs.linestrings.extend(new_segs)
+        # put all new_lss into the huc list.  Note insert_list[0][0] is the component
+        hucs.linestrings[ls_handle] = new_lss.pop(0)
+        new_handles = hucs.linestrings.extend(new_lss)
         insert_list[0][0].extend(new_handles)
 
 
