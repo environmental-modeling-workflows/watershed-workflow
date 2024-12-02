@@ -312,8 +312,8 @@ def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
                 if hucs.exterior.buffer(-1).contains(shapely.geometry.Point(new_reach[0].coords[0])):
                     # keep the upstream (or only) reach ls
                     if len(new_reach) == 2:
-                    # confirm other/downstream reach is outside
-                    assert not hucs.exterior.contains(shapely.geometry.Point(new_reach[1].coords[-1]))
+                        # confirm other/downstream reach is outside
+                        assert not hucs.exterior.contains(shapely.geometry.Point(new_reach[1].coords[-1]))
                     reach.linestring = new_reach[0]
 
                 elif len(new_reach) == 2:
