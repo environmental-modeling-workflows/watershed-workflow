@@ -250,7 +250,51 @@ def snapWaterbodies(waterbodies : List[shapely.geometry.base.Geometry],
 
 
 def cutAndSnapCrossings(hucs : SplitHUCs,
-                        rivers : List[River]) -> None:
+                        rivers : List[River],
+                        tol : float) -> None:
+    """Aligns river and HUC objects.
+
+    1. snaps HUC junction endpoints to reach endpoints
+
+    2. where a reach crosses an external boundary, cut in two and keep
+       only internal portion.
+
+    3. where a reach crosses an internal boundary, either:
+       - snap the internal boundary to the reach endpoint
+       - cut the reach in two
+
+    At the end of the day, we ensure that any place where a river
+    crosses a HUC boundary is a discrete point at a both a reach
+    endpoint and a HUC boundary segment.  This ensures that those
+    points will never move and will always be coincident.
+
+    """
+    # snap HUC triple-junctions to reach endpoints
+    snapHUCsJunctions(hucs, rivers, 3*tol)
+
+    # snap reach endpoints to interior boundaries
+    #
+    # This might need to change, or at least provide the option to
+    # snap HUC boundaries rather than reach endpoints?
+    for river in rivers:
+        snapEndpoints(hucs, river, tol)
+    
+    # check exterior crossings on trunk and leaf
+    for river in rivers:
+        _cutAndSnapExteriorCrossing(hucs, river, tol)
+        for leaf in river.leaf_nodes:
+            _cutAndSnapExteriorCrossing(hucs, leaf, tol)
+        
+    # check interior crossings on all
+    for river in rivers:
+        for reach in river:
+            _cutAndSnapInteriorCrossing(hucs, reach, tol)
+
+
+def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
+                                reach : River,
+                                merge_tol : float) -> None:
+
     """If any reach crosses a HUC boundary:
 
     1. If it crosses an external boundary, cut the reach in two and
@@ -263,39 +307,13 @@ def cutAndSnapCrossings(hucs : SplitHUCs,
     boundary at the crossing point.
     
     """
-    # precondition: only trunk or leaf nodes may touch the exterior boundary of hucs
-    exterior = hucs.exterior
-    for river in rivers:
-        for reach in river:
-            # if is trunk or leaf
-            if reach.parent is None or len(reach.children) == 0:
-                assert watershed_workflow.utils.isNonPointIntersection(reach.linestring, exterior)
-            else:
-                assert exterior.contains(reach.linestring)
-
-    # check exterior crossings on trunk and leaf
-    for river in rivers:
-        _cutAndSnapExteriorCrossing(hucs, river)
-        for leaf in river.leaf_nodes:
-            _cutAndSnapExteriorCrossing(hucs, leaf)
-        
-    # check interior crossings on all
-    for river in rivers:
-        for reach in river:
-            _cutAndSnapInteriorCrossing(hucs, reach)
-
-
-def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
-                                reach : River,
-                                merge_tol : float) -> None:
-    """Helper function for cutAndSnapCrossings()"""
     r = reach.linestring
 
     # first deal with crossings of the HUC exterior boundary -- in
     # this case, the reach linestring gets split in two and the external
     # one is removed.
     for b, spine in hucs.boundaries.items():
-        for s, ls_handle in spine.items():
+        for s, ls_handle in list(spine.items()):
             ls = hucs.linestrings[ls_handle]
 
             if watershed_workflow.utils.intersects(ls, r):
@@ -354,9 +372,6 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
                     reach.linestring = shapely.geometry.LineString(
                         list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
                     us, ds = reach.split(len(new_reach[0].coords)-1)
-                    # potentially merge
-                    if us.linestring.length < 
-                else:
 
                 hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -408,8 +423,8 @@ def snapHUCsJunctions(hucs : SplitHUCs,
             hucs.linestrings[ls_handle] = shapely.geometry.LineString(new_ls)
 
 
-def snapEndpoints(river : River,
-                  hucs : SplitHUCs,
+def snapEndpoints(hucs : SplitHUCs,
+                  river : River,
                   tol : float) -> None:
     """Snap river endpoints to huc linestrings and insert that point into
     the boundary.

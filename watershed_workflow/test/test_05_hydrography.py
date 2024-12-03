@@ -62,7 +62,7 @@ def test_snap0():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10., 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0a():
@@ -71,10 +71,10 @@ def test_snap0a():
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10., 0)]), ]
-    hucs, rivers1 = data(tb, rs)
-    assert (len(rivers1) == 1)
-    assert (len(rivers1[0]) == 1)
-    rivers = hydro.snap(hucs, rivers1, 0.1)
+    hucs, rivers = data(tb, rs)
+    assert (len(rivers) == 1)
+    assert (len(rivers[0]) == 1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0b():
@@ -84,7 +84,7 @@ def test_snap0b():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0c():
@@ -94,7 +94,7 @@ def test_snap0c():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0d():
@@ -104,7 +104,7 @@ def test_snap0d():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0e():
@@ -114,7 +114,7 @@ def test_snap0e():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0h():
@@ -124,7 +124,7 @@ def test_snap0h():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0i():
@@ -134,7 +134,7 @@ def test_snap0i():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
     
 def test_snap0j():
@@ -144,7 +144,7 @@ def test_snap0j():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0.), (16, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 #
@@ -187,14 +187,14 @@ def test_snap1a(two_boxes):
     """generic intersection with no movement only additions"""
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0)]), ]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, None)
 
 def test_snap1b(two_boxes):
     """generic intersection with nearby point"""
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0.), (15, 0)]), ]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, 'left')
 
 def test_snap1c(two_boxes):
@@ -202,14 +202,14 @@ def test_snap1c(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, 'left')
 
 def test_snap1d(two_boxes):
     """generic intersection with nearby point to the right"""
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0.), (15, 0)]), ]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, 'right')
 
 def test_snap1e(two_boxes):
@@ -217,7 +217,7 @@ def test_snap1e(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, 'right')
 
 def test_snap1f(two_boxes):
@@ -225,7 +225,7 @@ def test_snap1f(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (10.2, 0.)]),
           shapely.geometry.LineString([(10.2, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check1(hucs, rivers, 'reach right')
     
     
@@ -263,7 +263,7 @@ def test_snap2a(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10., 0.)]),
           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -273,7 +273,7 @@ def test_snap2b(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -283,7 +283,7 @@ def test_snap2c(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -293,7 +293,7 @@ def test_snap2d(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10.0005, -0.0005), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -303,7 +303,7 @@ def test_snap2e(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (9.9995, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -348,7 +348,7 @@ def test_snap3a(two_boxes):
           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
 
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check3(hucs, rivers, None)
 
 
@@ -361,7 +361,7 @@ def test_snap3b(two_boxes):
           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
 
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check3(hucs, rivers, None)
 
 
@@ -374,7 +374,7 @@ def test_snap3c(two_boxes):
           shapely.geometry.LineString([(10.05, 0.), (15, 0.)]),]
 
     hucs, rivers = data(two_boxes, rs)
-    hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check3(hucs, rivers, None)
     
 
@@ -439,7 +439,7 @@ def test_snap6():
     ]
 
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check6(hucs, rivers)
 
 
@@ -460,7 +460,7 @@ def test_snap6a():
     ]
 
     hucs, rivers = data(tb, rs)
-    rivers = hydro.snap(hucs, rivers, 0.1)
+    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check6(hucs, rivers)
     
     

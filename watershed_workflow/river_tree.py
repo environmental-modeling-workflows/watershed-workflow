@@ -16,7 +16,7 @@ area : double
 hydroseq : int
   See documentation for NHDPlus
 dnhydroseq : int
-  ee documentation for NHDPlus
+  See documentation for NHDPlus
 
 """
 from __future__ import annotations
@@ -32,6 +32,8 @@ import itertools
 import shapely.geometry
 import shapely.ops
 import geopandas as gpd
+import pandas
+import pandas.api.types
 
 import watershed_workflow.utils
 import watershed_workflow.tinytree
@@ -59,7 +61,10 @@ class _RowView:
         return len(self._df.keys())
         
     def __getitem__(self, k : str) -> Any:
-        return self._df.at[self._index, k]
+        if k is 'index':
+            return self._index
+        else:
+            return self._df.at[self._index, k]
 
     def __setitem__(self, k : str, v : Any) -> None:
         self._df.loc[self._index, k] = v
@@ -67,8 +72,14 @@ class _RowView:
     def __iter__(self) -> Any:
         return self._df.keys()
 
+    def __contains__(self, k : str) -> bool:
+        return k in self._df.keys()
+
     def keys(self) -> Any:
         return self._df.keys()
+
+    def __repr__(self) ->str:
+        return repr(self._df.loc[self._index])
 
     
 class River(watershed_workflow.tinytree.Tree):
@@ -125,7 +136,10 @@ class River(watershed_workflow.tinytree.Tree):
 
     def __getitem__(self, name : str) -> Any:
         """Faster/preferred getter for properties"""
-        return self.df.at[self.index, name]
+        if name == 'index':
+            return self.index
+        else:
+            return self.df.at[self.index, name]
 
     def __setitem__(self, name : str, value : Any) -> None:
         """Faster/preferred setter for properties"""
@@ -189,33 +203,48 @@ class River(watershed_workflow.tinytree.Tree):
         downstream_area_frac = downstream_linestring.length / linestring.length
 
         # fix properties
-        downstream_props = copy.deepcopy(self.properties)
-        if 'area' in downstream_props:
-            downstream_props['area'] = self['area'] * downstream_area_frac
-            self['area'] = self['area'] * (1-downstream_area_frac)
+        downstream_props = dict(self.properties)
+        if names.AREA in downstream_props:
+            downstream_props[names.AREA] = self[names.AREA] * downstream_area_frac
+            self[names.AREA] = self[names.AREA] * (1-downstream_area_frac)
 
-        if 'hydroseq' in downstream_props:
-            downstream_props['hydroseq'] -= 0.5
-            self['dnhydroseq'] = downstream_props['hydroseq']
+        if names.HYDROSEQ in downstream_props:
+            downstream_props[names.HYDROSEQ] -= 0.5
+            self[names.DOWNSTREAM_HYDROSEQ] = downstream_props[names.HYDROSEQ]
 
-        index = self['index']
-        downstream_props['index'] = index + 'a'
-        self['index'] = index + 'b'
+        if names.ID in self.properties:
+            ID = self[names.ID]
+            downstream_props[names.ID] = ID + 'a'
+            self[names.ID] = ID + 'b'
 
-        if 'DivergenceCode' in downstream_props:
-            downstream_props['DivergenceCode'] = 0
+        if names.DIVERGENCE in downstream_props:
+            downstream_props[names.DIVERGENCE] = 0
 
         # detach self
         self.linestring = upstream_linestring
         parent = self.parent
-        self.remove()
+        if parent is not None:
+            self.remove()
 
         # new node
         # -- add the row to the dataframe
-        self.df.loc[downstream_props['index']] = downstream_props
+        if pandas.api.types.is_integer_dtype(self.df.index.dtype):
+            new_index = pandas.Series(max(self.df.index)+1).astype(self.df.index.dtype)[0]
+        elif isinstance(self.index, str):
+            if self.index[-1].isalpha():
+                new_index = self.index[:-1] + chr(ord(self.index[-1])+1)
+            else:
+                new_index = self.index+'a'
+        else:
+            new_index = str(self.index) + 'a'
+
+        assert new_index not in self.df.index
+        self.df.loc[new_index] = downstream_props
+
         # -- construct the node and add it to the original parent
-        new_node = self.__class__(downstream_props['index'], self.df, [self,])
-        parent.addChild(new_node)
+        new_node = self.__class__(new_index, self.df, [self,])
+        if parent is not None:
+            parent.addChild(new_node)
         return self, new_node
 
 
@@ -230,8 +259,8 @@ class River(watershed_workflow.tinytree.Tree):
             parent.linestring = new_seg
 
         # fix properties
-        if 'area' in self:
-            self.parent['area'] += self['area']
+        if names.AREA in self:
+            self.parent[names.AREA] += self[names.AREA]
         if 'catchment' in self and self['catchment'] is not None:
             if self.parent['catchment'] is None:
                 self.parent['catchment'] = self['catchment']
@@ -239,8 +268,8 @@ class River(watershed_workflow.tinytree.Tree):
                 self.parent['catchment'] = shapely.ops.unary_union(
                     [self['catchment'], self.parent['catchment']])
 
-        if 'DivergenceCode' in self:
-            self.parent['DivergenceCode'] = self['DivergenceCode']
+        if names.DIVERGENCE in self:
+            self.parent[names.DIVERGENCE] = self[names.DIVERGENCE]
 
         # set topology
         self.remove()
@@ -308,9 +337,9 @@ class River(watershed_workflow.tinytree.Tree):
                    op : Callable = sum):
         """Accumulates a property across the river tree."""
         val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
-        val = op([val, self.properties[to_accumulate]])
+        val = op([val, self[to_accumulate]])
         if to_save is not None:
-            self.properties[to_save] = val
+            self[to_save] = val
         return val
     
     def getNode(self, index : int | str) -> River | None:
@@ -332,15 +361,15 @@ class River(watershed_workflow.tinytree.Tree):
         """Working from leave to trunk, assign stream order property"""
         self.df[self.ORDER] = -1
         for leaf in self.leaf_nodes:
-            leaf.properties[self.ORDER] = 1
+            leaf[self.ORDER] = 1
 
             node = leaf
-            while node.parent.properties[self.ORDER] == -1 and all(c.properties[self.ORDER] > 0 for c in node.siblings):
+            while node.parent[self.ORDER] == -1 and all(c[self.ORDER] > 0 for c in node.siblings):
                 node = node.parent
-                order = max(c.properties[self.ORDER] for c in node.children)
+                order = max(c[self.ORDER] for c in node.children)
                 if len(node.children) > 1:
                     order += 1
-                node.properties[self.ORDER] = order
+                node[self.ORDER] = order
 
     def _isContinuous(self, child, tol : float = _tol) -> bool:
         """Is a given child continuous with self?"""
@@ -384,14 +413,14 @@ class River(watershed_workflow.tinytree.Tree):
         if len(self.children) == 0:
             return True
 
-        self.children = sorted(self.children, key=lambda c: c['hydroseq'])
-        return self.properties['hydroseq'] < self.children[0].properties['hydroseq'] and \
+        self.children = sorted(self.children, key=lambda c: c[names.HYDROSEQ])
+        return self[names.HYDROSEQ] < self.children[0][names.HYDROSEQ] and \
             all(child.isHydroseqConsistent() for child in self.children)
 
     def isConsistent(self, tol : float = _tol) -> bool:
         """Validity checking of the tree."""
         good = self.isContinuous(tol)
-        if 'hydroseq' in self:
+        if names.HYDROSEQ in self:
             good &= self.isHydroseqConsistent()
         return good
 
@@ -517,12 +546,12 @@ class River(watershed_workflow.tinytree.Tree):
         HydroSeq maps provided in NHDPlus datasets.
         """
         # create a map from hydroseq to node
-        hydro_seq_ids = dict(zip(df['hydroseq'],
+        hydro_seq_ids = dict(zip(df[names.HYDROSEQ],
                                  (cls(i,df) for i in df.index)))
 
         roots = []
         for hs_id, node in hydro_seq_ids.items():
-            down_hs_id = node['dnhydroseq']
+            down_hs_id = node[names.DOWNSTREAM_HYDROSEQ]
             try:
                 hydro_seq_ids[down_hs_id].addChild(node)
             except KeyError:
@@ -569,8 +598,8 @@ def combineSiblings(n1, n2):
     new_seg = shapely.geometry.LineString([beginpoint, endpoint])
     n1.linestring = new_seg
 
-    if 'area' in n1:
-        n1['area'] += n2['area']
+    if names.AREA in n1:
+        n1[names.AREA] += n2[names.AREA]
 
     if 'catchment' in n2 and n2['catchment'] is not None:
         if n1['catchment'] is None:
@@ -579,8 +608,8 @@ def combineSiblings(n1, n2):
             n1['catchment'] = shapely.ops.unary_union([n1['catchment'], n2['catchment']])
 
     for child in n2.children:
-        if 'dnhydroseq' in child:
-            child['dnhydroseq'] = n1['hydroseq']
+        if names.DOWNSTREAM_HYDROSEQ in child:
+            child[names.DOWNSTREAM_HYDROSEQ] = n1[names.HYDROSEQ]
         n1.addChild(child)
     n2.children = []
     n2.remove()
@@ -651,8 +680,8 @@ def accumulateCatchments(rivers, outlet_indices, names=None):
     indices = ['CA_'+index for index in outlet_indices]
     outlet_points = [root.linestring.coords[-1] for root in roots]
     contributing_areas = [root.accumulateCatchments() for root in roots]
-    return geopandas.GeoDataFrame({'index' : indices,
-                                   'outlet_index' : outlet_indices,
+    return geopandas.GeoDataFrame({names.INDEX : indices,
+                                   'outlet_ID' : outlet_indices,
                                    'name' : names,
                                    'outlet_point' : outlet_points,
                                    'geometry' : contributing_areas},
@@ -702,8 +731,8 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
     indices = ['CA_'+index for index in outlet_indices]
     outlet_points = [root.linestring.coords[-1] for root in roots]
 
-    return geopandas.GeoDataFrame({'index' : indices,
-                                   'outlet_index' : outlet_indices,
+    return geopandas.GeoDataFrame({names.ID : indices,
+                                   'outlet_ID' : outlet_indices,
                                    'name' : names,
                                    'outlet_point' : outlet_points,
                                    'geometry' : incremental_cas},
@@ -726,13 +755,13 @@ def mergeShortReaches(river : River,
     """
     for node in list(river.preOrder()):
         if tol is None:
-            ltol = node.properties[names.TARGET_SEGMENT_LENGTH]
+            ltol = node[names.TARGET_SEGMENT_LENGTH]
         else:
             ltol = tol
         if node.linestring.length < ltol and node.parent is not None:
             logging.info(
                 "  ...cleaned inner linestring of length %g at centroid %r with id %r" %
-                (node.linestring.length, node.linestring.centroid.coords[0], node.properties['ID']))
+                (node.linestring.length, node.linestring.centroid.coords[0], node[names.ID]))
 
             if len(list(node.siblings())) > 0 and len(node.children) == 1:
                 # junction tributary with one child
@@ -759,7 +788,7 @@ def pruneByLineStringLength(river : River,
         iter_count = 0
         for leaf in river.leaf_nodes:
             if prune_tol is None:
-                lprune_tol = leaf.properties[names.TARGET_SEGMENT_LENGTH]
+                lprune_tol = leaf[names.TARGET_SEGMENT_LENGTH]
             else:
                 lprune_tol = prune_tol
 
@@ -790,9 +819,9 @@ def pruneByArea(river : River,
         # make a copy of the children, as this list will be modified by potential prune calls
         children = node.children[:]
         for child in children:
-            if child.properties[prop] < area:
+            if child[prop] < area:
                 logging.debug(f"... removing trib with {len(child)}"
-                              f" reaches of area: {child.properties[prop]}")
+                              f" reaches of area: {child[prop]}")
                 count += len(child)
                 child.prune()
     return count
@@ -805,7 +834,7 @@ def pruneRiversByArea(rivers : List[River],
     count = 0
     sufficiently_big_rivers = []
     for river in rivers:
-        if river.properties[prop] >= area:
+        if river[prop] >= area:
             count += pruneByArea(river, area, prop)
             sufficiently_big_rivers.append(river)
         else:
@@ -823,9 +852,9 @@ def filterDiversions(rivers : List[River]) -> List[River]:
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes:
-            if leaf.properties['divergence'] == 2:
+            if leaf[names.DIVERGENCE] == 2:
                 # is a braid or a diversion
-                if river.getNode(leaf.properties['uphydroseq']) is None:
+                if river.getNode(leaf[names.UPSTREAM_HYDROSEQ]) is None:
                     # diversion!
                     try:
                         joiner = next(n for n in leaf.pathToRoot()
@@ -857,11 +886,11 @@ def removeBraids(rivers : List[River]) -> None:
         count_reaches = 0
 
         for leaf in river.leaf_nodes:
-            if leaf.properties[names.DIVERGENCE] == 2:
+            if leaf[names.DIVERGENCE] == 2:
                 # is a braid or a diversion?
-                logging.info(f"  Found a braid with upstream = {leaf.properties[names.UPSTREAM_HYDROSEQ]}")
-                upstream_hydroseq = leaf.properties[names.UPSTREAM_HYDROSEQ]
-                if river.findNode(lambda n : n.properties[names.HYDROSEQ] == upstream_hydroseq) is not None:
+                logging.info(f"  Found a braid with upstream = {leaf[names.UPSTREAM_HYDROSEQ]}")
+                upstream_hydroseq = leaf[names.UPSTREAM_HYDROSEQ]
+                if river.findNode(lambda n : n[names.HYDROSEQ] == upstream_hydroseq) is not None:
                     # braid!
                     try:
                         joiner = next(n for n in leaf.pathToRoot()
@@ -897,7 +926,7 @@ def filterDivergences(rivers : List[River]) -> List[River]:
         count_tribs = 0
         count_reaches = 0
         for leaf in river.leaf_nodes:
-            if leaf.properties['divergence'] == 2:
+            if leaf[names.DIVERGENCE] == 2:
                 # diversion!
                 try:
                     joiner = next(n for n in leaf.pathToRoot()

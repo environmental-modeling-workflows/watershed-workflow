@@ -373,7 +373,8 @@ def cut(line1 : shapely.geometry.LineString,
         line2 : shapely.geometry.LineString) -> Tuple[List[shapely.geometry.LineString],
                                                       List[shapely.geometry.LineString]]:
     """Cuts two linestrings at their (one) intersection point."""
-    return shapely.ops.split(line1, line2), shapely.ops.split(line2, line1)
+    return list(shapely.ops.split(line1, line2).geoms), \
+        list(shapely.ops.split(line2, line1).geoms)
 
         
 # def cut(line : shapely.geometry.LineString,
