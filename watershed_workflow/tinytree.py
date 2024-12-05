@@ -58,15 +58,26 @@ def _isSequenceLike(anobj):
     return 1
 
 
+class _MyList(list):
+    """This is defined to extend list's API to match that of sortedcontainers.SortedList"""
+    def add(self, arg):
+        return self.append(arg)
+
+    def update(self, args):
+        return self.extend(args)
+
+
 class Tree(object):
     """
         A simple implementation of an ordered tree
     """
+    ListType = _MyList
+    
     def __init__(self, children=None):
         """
             :children A nested list specifying a tree of children
         """
-        self.children = []
+        self.children = self.__class__.ListType()
         if children:
             self.addChildrenFromList(children)
         self.parent = None
@@ -97,8 +108,8 @@ class Tree(object):
         if not isinstance(node, Tree):
             s = "Invalid tree specification: %s is not a Tree object." % repr(node)
             raise ValueError(s)
-        self.children.append(node)
-        node.register(self)
+        node.register(self) # must do this first for add() to be sorted
+        self.children.add(node)
 
     def register(self, parent):
         """
@@ -114,7 +125,7 @@ class Tree(object):
             Return the index of this node in the parent child list, based on
             object identity.
         """
-        if not self.parent:
+        if self.parent is None:
             raise ValueError("Can not retrieve index of a node with no parent.")
         lst = [id(i) for i in self.parent.children]
         return lst.index(id(self))

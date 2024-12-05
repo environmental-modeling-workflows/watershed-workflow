@@ -32,6 +32,15 @@ def check_twoboxes(hucs):
     assert (watershed_workflow.utils.isClose(
         poly1, shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5), (10, 0)])))
 
+
+def hilevSnap(hucs, rivers, tol):
+    """This helper function simply does all three hydro operations."""
+    hydro.snapHUCsJunctions(hucs, rivers, 3*tol)
+    for river in rivers:
+        hydro.snapEndpoints(hucs, river, tol)
+    hydro.cutAndSnapCrossings(hucs, rivers, tol)
+    
+    
 #
 # test0:
 # one box, one reach with outlet on the boundary
@@ -62,7 +71,7 @@ def test_snap0():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10., 0.)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0a():
@@ -74,7 +83,7 @@ def test_snap0a():
     hucs, rivers = data(tb, rs)
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 1)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hydro.snapEndpoints(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0b():
@@ -84,25 +93,25 @@ def test_snap0b():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hydro.snapEndpoints(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0c():
-    """cut reach and keep half, small snip"""
+    """snap reach endpoint to huc (from right)"""
     b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hydro.snapEndpoints(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0d():
-    """snap a river endpoint onto a huc, near point on river, point on huc"""
-    b1 = [(0, -5), (10, -5), (10, 0.), (10, 5), (0, 5)]
+    """cut, not snap"""
+    b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
-    rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0.)]), ]
+    rs = [shapely.geometry.LineString([(5., 0.), (10.2, 0)]), ]
     hucs, rivers = data(tb, rs)
     hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
@@ -114,11 +123,11 @@ def test_snap0e():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0h():
-    """cut a river at huc exterior boundary, point already exists"""
+    """cut a river at huc exterior boundary, point already exists (no duplicate point)"""
     b1 = [(0, -5), (10, -5), (10, 0.), (10, 5), (0, 5)]
     tb = []
     tb.append(shapely.geometry.Polygon(b1))
@@ -127,16 +136,6 @@ def test_snap0h():
     hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
-def test_snap0i():
-    """cut a river at huc exterior boundary, add point to huc"""
-    b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
-    tb = []
-    tb.append(shapely.geometry.Polygon(b1))
-    rs = [shapely.geometry.LineString([(5., 0.), (15, 0.)]), ]
-    hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
-    check0(hucs, rivers)
-    
 def test_snap0j():
     """cut a river at huc exterior boundary with an extra external point"""
     b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
@@ -157,7 +156,10 @@ def check1(hucs, rivers, extra_point=None):
     check_twoboxes(hucs)
     
     riverlist = [r.linestring for r in rivers[0]]
-    assert len(riverlist) == 2
+    if extra_point == 'reach right':
+        assert len(riverlist) == 3
+    else:
+        assert len(riverlist) == 2
 
     # note preorder!
     i = 0
@@ -187,7 +189,7 @@ def test_snap1a(two_boxes):
     """generic intersection with no movement only additions"""
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0)]), ]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check1(hucs, rivers, None)
 
 def test_snap1b(two_boxes):
@@ -202,8 +204,9 @@ def test_snap1c(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
-    check1(hucs, rivers, 'left')
+    for river in rivers:
+        hydro.snapEndpoints(hucs, river, 0.1)
+    check1(hucs, rivers)
 
 def test_snap1d(two_boxes):
     """generic intersection with nearby point to the right"""
@@ -217,8 +220,9 @@ def test_snap1e(two_boxes):
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
-    check1(hucs, rivers, 'right')
+    for river in rivers:
+        hydro.snapEndpoints(hucs, river, 0.1)
+    check1(hucs, rivers)
 
 def test_snap1f(two_boxes):
     """an extra reach is added to the right because the upstream reach gets cut and the downstream portion is above threshold"""
@@ -250,11 +254,11 @@ def check2(hucs, rivers, extra_point=None):
 
     # - paddlers left
     assert watershed_workflow.utils.isClose(riverlist[1],
-                                            shapely.geometry.LineString([(5,2.5), (10,0)]))
+                                            shapely.geometry.LineString([(5,-2.5), (10,0)]))
 
     # - paddlers right
     assert watershed_workflow.utils.isClose(riverlist[2],
-                                            shapely.geometry.LineString([(5,-2.5), (10,0)]))
+                                            shapely.geometry.LineString([(5,2.5), (10,0)]))
 
 
 def test_snap2a(two_boxes):
@@ -263,7 +267,7 @@ def test_snap2a(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10., 0.)]),
           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -273,7 +277,7 @@ def test_snap2b(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -283,7 +287,7 @@ def test_snap2c(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -293,7 +297,7 @@ def test_snap2d(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (10.0005, -0.0005), (10.001, 0.)]),
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -303,7 +307,7 @@ def test_snap2e(two_boxes):
           shapely.geometry.LineString([(5., -2.5), (9.999, 0.)]),
           shapely.geometry.LineString([(9.999, 0.), (9.9995, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check2(hucs, rivers, None)
 
 
@@ -329,7 +333,7 @@ def check3(hucs, rivers, extra_point=None):
 
     # - paddlers left
     assert watershed_workflow.utils.isClose(riverlist[1],
-                                            shapely.geometry.LineString([(5,2.5), (10,0)]))
+                                            shapely.geometry.LineString([(5,-2.5), (10,0)]))
 
     # - paddlers center
     assert watershed_workflow.utils.isClose(riverlist[2],
@@ -337,7 +341,7 @@ def check3(hucs, rivers, extra_point=None):
 
     # - paddlers right
     assert watershed_workflow.utils.isClose(riverlist[3],
-                                            shapely.geometry.LineString([(5,-2.5), (10,0)]))
+                                            shapely.geometry.LineString([(5,2.5), (10,0)]))
 
 
 def test_snap3a(two_boxes):
@@ -348,34 +352,38 @@ def test_snap3a(two_boxes):
           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
 
     hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check3(hucs, rivers, None)
 
 
-def test_snap3b(two_boxes):
-    """Remove a short between-junction segment to the left"""
-    rs = [shapely.geometry.LineString([(5., 2.5), (9.95, 0.)]),
-          shapely.geometry.LineString([(5., 0.), (9.95, 0.)]),
-          shapely.geometry.LineString([(9.95, 0.), (10, 0.)]),
-          shapely.geometry.LineString([(5., -2.5), (10., 0.)]),
-          shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
+#
+# NOTE: these actually should be caught by mergeShortReaches(), not
+# cutAndSnapCrossings()
+#
+# def test_snap3b(two_boxes):
+#     """Remove a short between-junction segment to the left"""
+#     rs = [shapely.geometry.LineString([(5., 2.5), (9.95, 0.)]),
+#           shapely.geometry.LineString([(5., 0.), (9.95, 0.)]),
+#           shapely.geometry.LineString([(9.95, 0.), (10, 0.)]),
+#           shapely.geometry.LineString([(5., -2.5), (10., 0.)]),
+#           shapely.geometry.LineString([(10., 0.), (15, 0.)]),]
 
-    hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
-    check3(hucs, rivers, None)
+#     hucs, rivers = data(two_boxes, rs)
+#     hilevSnap(hucs, rivers, 0.1)
+#     check3(hucs, rivers, None)
 
 
-def test_snap3c(two_boxes):
-    """Remove a short between-junction segment, to the right"""
-    rs = [shapely.geometry.LineString([(5., 2.5), (10., 0.)]),
-          shapely.geometry.LineString([(5., 0.), (10., 0.)]),
-          shapely.geometry.LineString([(10., 0.), (10.05, 0.)]),
-          shapely.geometry.LineString([(5., -2.5), (10.05, 0.)]),
-          shapely.geometry.LineString([(10.05, 0.), (15, 0.)]),]
+# def test_snap3c(two_boxes):
+#     """Remove a short between-junction segment, to the right"""
+#     rs = [shapely.geometry.LineString([(5., 2.5), (10., 0.)]),
+#           shapely.geometry.LineString([(5., 0.), (10., 0.)]),
+#           shapely.geometry.LineString([(10., 0.), (10.05, 0.)]),
+#           shapely.geometry.LineString([(5., -2.5), (10.05, 0.)]),
+#           shapely.geometry.LineString([(10.05, 0.), (15, 0.)]),]
 
-    hucs, rivers = data(two_boxes, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
-    check3(hucs, rivers, None)
+#     hucs, rivers = data(two_boxes, rs)
+#     hilevSnap(hucs, rivers, 0.1)
+#     check3(hucs, rivers, None)
     
 
     
@@ -413,10 +421,10 @@ def check6(hucs, rivers):
                                            shapely.geometry.LineString([(10., 5.), (10., 10.)])))
     print(riverlist[1].coords[:])
     assert (watershed_workflow.utils.isClose(riverlist[1],
-                                           shapely.geometry.LineString([(5., 0.), (10., 5.)])))
+                                           shapely.geometry.LineString([(15., 0.), (10., 5.)])))
     print(riverlist[2].coords[:])
     assert (watershed_workflow.utils.isClose(riverlist[2],
-                                           shapely.geometry.LineString([(15., 0.), (10., 5.)])))
+                                           shapely.geometry.LineString([(5., 0.), (10., 5.)])))
 
     for tree in rivers:
         assert (tree.isConsistent())
@@ -439,7 +447,7 @@ def test_snap6():
     ]
 
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check6(hucs, rivers)
 
 
@@ -460,7 +468,7 @@ def test_snap6a():
     ]
 
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check6(hucs, rivers)
     
     

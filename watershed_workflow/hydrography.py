@@ -254,12 +254,10 @@ def cutAndSnapCrossings(hucs : SplitHUCs,
                         tol : float) -> None:
     """Aligns river and HUC objects.
 
-    1. snaps HUC junction endpoints to reach endpoints
-
-    2. where a reach crosses an external boundary, cut in two and keep
+    1. where a reach crosses an external boundary, cut in two and keep
        only internal portion.
 
-    3. where a reach crosses an internal boundary, either:
+    2. where a reach crosses an internal boundary, either:
        - snap the internal boundary to the reach endpoint
        - cut the reach in two
 
@@ -269,16 +267,6 @@ def cutAndSnapCrossings(hucs : SplitHUCs,
     points will never move and will always be coincident.
 
     """
-    # snap HUC triple-junctions to reach endpoints
-    snapHUCsJunctions(hucs, rivers, 3*tol)
-
-    # snap reach endpoints to interior boundaries
-    #
-    # This might need to change, or at least provide the option to
-    # snap HUC boundaries rather than reach endpoints?
-    for river in rivers:
-        snapEndpoints(hucs, river, tol)
-    
     # check exterior crossings on trunk and leaf
     for river in rivers:
         _cutAndSnapExteriorCrossing(hucs, river, tol)
@@ -287,7 +275,9 @@ def cutAndSnapCrossings(hucs : SplitHUCs,
         
     # check interior crossings on all
     for river in rivers:
-        for reach in river:
+        # make a copy as river is modified in-place
+        reaches = list(river)
+        for reach in reaches:
             _cutAndSnapInteriorCrossing(hucs, reach, tol)
 
 
@@ -313,7 +303,9 @@ def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
     # this case, the reach linestring gets split in two and the external
     # one is removed.
     for b, spine in hucs.boundaries.items():
-        for s, ls_handle in list(spine.items()):
+        # make a copy as spine is modified in-place
+        spine_list = list(spine.items())
+        for s, ls_handle in spine_list:
             ls = hucs.linestrings[ls_handle]
 
             if watershed_workflow.utils.intersects(ls, r):
@@ -358,7 +350,9 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
     # now deal with crossings of the HUC interior boundary -- in this
     # case, the reach linestring cut, then potentially merged to neighbors
     for i, spine in hucs.intersections.items():
-        for s, ls_handle in spine.items():
+        # make a copy as spine is modified in-place
+        spine_list = list(spine.items())
+        for s, ls_handle in spine_list:
             ls = hucs.linestrings[ls_handle]
                     
             if watershed_workflow.utils.intersects(ls, r):
@@ -378,7 +372,6 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
                     assert (len(new_spine) == 2)
                     new_handle = hucs.linestrings.append(new_spine[1])
                     spine.append(new_handle)
-                break
 
 
 def snapHUCsJunctions(hucs : SplitHUCs,
@@ -432,7 +425,8 @@ def snapEndpoints(hucs : SplitHUCs,
     Note this is O(n^2), and could be made more efficient.
     """
     to_add = []
-    for node in river.preOrder():
+    nodes = list(river)
+    for node in nodes:
         reach = node.linestring
         for b, component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
 
@@ -508,6 +502,16 @@ def snapEndpoints(hucs : SplitHUCs,
                     to_add.append((ls_handle, component, -1, node))
                     break
 
+        if node.linestring.length == 0.:
+            # snapped both endpoints to the same internal boundary, remove the reach
+            # note we can safely merge this with either parent or child
+            if len(list(node.siblings)) == 0:
+                node.merge()
+            else:
+                assert len(node.children) == 1
+                node.children[0].merge()
+                
+
     # find the list of points to add to a given linestring
     to_add_dict : Dict[int, List[Any]] = dict()
     for ls_handle, component, endpoint, node in to_add:
@@ -544,7 +548,7 @@ def snapEndpoints(hucs : SplitHUCs,
             new_coords = [[p[2].linestring.coords[p[1]], 1] for p in insert_list]
             old_coords = [
                 [c, 0] for c in ls.coords
-                if not any(watershed_workflow.utils.isClose(c, nc, tol) for nc in new_coords)
+                if not any(watershed_workflow.utils.isClose(c, nc[0], tol) for nc in new_coords)
             ]
             new_ls_coords = sorted(new_coords + old_coords,
                                     key=lambda a: ls.project(shapely.geometry.Point(a[0])))
@@ -556,7 +560,7 @@ def snapEndpoints(hucs : SplitHUCs,
             new_coords = [[p[2].linestring.coords[p[1]], 1] for p in insert_list]
             old_coords = [
                 [c, 0] for c in ls.coords[:-1]
-                if not any(watershed_workflow.utils.isClose(c, nc, tol) for nc in new_coords)
+                if not any(watershed_workflow.utils.isClose(c, nc[0], tol) for nc in new_coords)
             ]
             new_ls_coords = sorted(new_coords + old_coords,
                                     key=lambda a: ls.project(shapely.geometry.Point(a[0])))
@@ -583,6 +587,8 @@ def snapEndpoints(hucs : SplitHUCs,
             shapely.geometry.LineString([tuple(c) for (c, f) in new_ls_coords[ind_start:]]))
 
         # put all new_lss into the huc list.  Note insert_list[0][0] is the component
+        watershed_workflow.utils.logMinMaxMedianSegment(new_lss, "new_lss")
+
         hucs.linestrings[ls_handle] = new_lss.pop(0)
         new_handles = hucs.linestrings.extend(new_lss)
         insert_list[0][0].extend(new_handles)

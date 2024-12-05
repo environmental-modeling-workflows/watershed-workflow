@@ -157,8 +157,7 @@ def _cutAndSnapCrossing(hucs, reach_node, tol=_tol):
 
             if seg.intersects(r):
                 logging.info('intersection found')
-                new_spine = watershed_workflow.utils.cut(seg, r, tol)
-                new_reach_segs = watershed_workflow.utils.cut(r, seg, tol)
+                new_spine, new_reach_segs = watershed_workflow.utils.cut(seg, r)
                 try:
                     assert (len(new_reach_segs) == 1 or len(new_reach_segs) == 2)
                     assert (len(new_spine) == 1 or len(new_spine) == 2)

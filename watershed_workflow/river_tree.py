@@ -28,6 +28,7 @@ import copy
 from scipy.spatial import cKDTree
 from matplotlib import pyplot as plt
 import itertools
+import sortedcontainers
 
 import shapely.geometry
 import shapely.ops
@@ -61,7 +62,7 @@ class _RowView:
         return len(self._df.keys())
         
     def __getitem__(self, k : str) -> Any:
-        if k is 'index':
+        if k == 'index':
             return self._index
         else:
             return self._df.at[self._index, k]
@@ -81,9 +82,18 @@ class _RowView:
     def __repr__(self) ->str:
         return repr(self._df.loc[self._index])
 
+
+class _MySortedList(sortedcontainers.SortedKeyList):
+    def __init__(self, iterable=None):
+        # note, SortedKeyList requires a total ordering.  Since angle
+        # can be equal for two different linestrings (if they share
+        # the same first segment angle), we also order (secondarily)
+        # by id to make an arbitrary but now total ordering of nodes.
+        return super(_MySortedList, self).__init__(iterable, key=lambda node : (node.angle,id(node)))
     
 class River(watershed_workflow.tinytree.Tree):
     """A tree structure whose node data is stored in a pandas DataFrame, accessed by an index."""
+    ListType = _MySortedList
 
     def __init__(self,
                  index : int | str,
@@ -98,9 +108,9 @@ class River(watershed_workflow.tinytree.Tree):
         representing one reach and its upstream children.
 
         """
-        super(River, self).__init__(children)
         self.index = index
         self.df = df
+        super(River, self).__init__(children)
 
     def __iter__(self):
         return self.preOrder()
@@ -148,6 +158,13 @@ class River(watershed_workflow.tinytree.Tree):
     def __contains__(self, name : str) -> bool:
         return self.df.__contains__(name)
 
+    @property
+    def angle(self):
+        """Returns the angle, in radians, from node.parent.linestring to node.linestring, in a clockwise sense."""
+        if self.parent is None:
+            return 0.0
+        else:
+            return watershed_workflow.utils.computeAngle(self.parent.linestring, self.linestring)
 
     def plot(self, column=None, **kwargs):
         # get marker arguments, popping them from kwargs
@@ -191,7 +208,11 @@ class River(watershed_workflow.tinytree.Tree):
 
         Note that this does not split the catchment!
 
-        Returns upstream_node, downstream_node
+        self becomes the downstream node, and is modified in-place to
+        preserve the full tree if the trunk is the one being split.
+        
+        Returns upstream_node, downstream_node.
+
         """
         if i < 0:
             i = len(self.linestring.coords) + i
@@ -200,34 +221,37 @@ class River(watershed_workflow.tinytree.Tree):
         linestring = self.linestring
         upstream_linestring = shapely.geometry.LineString(list(linestring.coords)[0:i + 1])
         downstream_linestring = shapely.geometry.LineString(list(linestring.coords)[i:])
-        downstream_area_frac = downstream_linestring.length / linestring.length
+        upstream_area_frac = upstream_linestring.length / linestring.length
 
         # fix properties
-        downstream_props = dict(self.properties)
-        if names.AREA in downstream_props:
-            downstream_props[names.AREA] = self[names.AREA] * downstream_area_frac
-            self[names.AREA] = self[names.AREA] * (1-downstream_area_frac)
+        upstream_props = dict(self.properties)
+        if names.AREA in upstream_props:
+            upstream_props[names.AREA] = self[names.AREA] * upstream_area_frac
+            self[names.AREA] = self[names.AREA] * (1-upstream_area_frac)
 
-        if names.HYDROSEQ in downstream_props:
-            downstream_props[names.HYDROSEQ] -= 0.5
-            self[names.DOWNSTREAM_HYDROSEQ] = downstream_props[names.HYDROSEQ]
+        if names.HYDROSEQ in upstream_props:
+            upstream_props[names.HYDROSEQ] = (self[names.HYDROSEQ] + self.parent[names.HYDROSEQ]) / 2.0
+            if names.UPSTREAM_HYDROSEQ in upstream_props:
+                self[names.UPSTREAM_HYDROSEQ] = upstream_props[names.HYDROSEQ]
+            if names.DOWNSTREAM_HYDROSEQ in upstream_props:
+                upstream_props[names.DOWNSTREAM_HYDROSEQ] = self[names.HYDROSEQ]
 
         if names.ID in self.properties:
             ID = self[names.ID]
-            downstream_props[names.ID] = ID + 'a'
+            upstream_props[names.ID] = ID + 'a'
             self[names.ID] = ID + 'b'
 
-        if names.DIVERGENCE in downstream_props:
-            downstream_props[names.DIVERGENCE] = 0
+        if names.DIVERGENCE in upstream_props:
+            self[names.DIVERGENCE] = 0
 
-        # detach self
-        self.linestring = upstream_linestring
-        parent = self.parent
-        if parent is not None:
-            self.remove()
+        if names.CATCHMENT in upstream_props:
+            upstream_props[names.CATCHMENT] = shapely.geometry.Point()
+
+        self.linestring = downstream_linestring
+        upstream_props['geometry'] = upstream_linestring
 
         # new node
-        # -- add the row to the dataframe
+        # -- create a valid index and add the row to the dataframe
         if pandas.api.types.is_integer_dtype(self.df.index.dtype):
             new_index = pandas.Series(max(self.df.index)+1).astype(self.df.index.dtype)[0]
         elif isinstance(self.index, str):
@@ -239,13 +263,12 @@ class River(watershed_workflow.tinytree.Tree):
             new_index = str(self.index) + 'a'
 
         assert new_index not in self.df.index
-        self.df.loc[new_index] = downstream_props
+        self.df.loc[new_index] = upstream_props
 
-        # -- construct the node and add it to the original parent
-        new_node = self.__class__(new_index, self.df, [self,])
-        if parent is not None:
-            parent.addChild(new_node)
-        return self, new_node
+        # -- construct the new upstream node inject it into the tree
+        new_node = self.__class__(new_index, self.df)
+        self.inject(new_node)
+        return new_node, self
 
 
     def merge(self, merge_reach : bool = True) -> None:
@@ -345,7 +368,7 @@ class River(watershed_workflow.tinytree.Tree):
     def getNode(self, index : int | str) -> River | None:
         """return node for a given index"""
         try:
-            node = next(node for node in self.preOrder() if node.index == index)
+            node = next(node for node in self if node.index == index)
         except StopIteration:
             node = None
         return node
@@ -402,7 +425,7 @@ class River(watershed_workflow.tinytree.Tree):
         option is not used. Here we make them consistent.
 
         """
-        for node in self.preOrder():
+        for node in self:
             for child in node.children:
                 if not node._isContinuous(child, tol):
                     node._makeContinuous(child)
@@ -457,7 +480,7 @@ class River(watershed_workflow.tinytree.Tree):
 
     def to_mls(self) -> shapely.geometry.MultiLineString:
         """Represent this as a shapely.geometry.MultiLineString"""
-        return shapely.geometry.MultiLineString([r.linestring for r in self.preOrder()])
+        return shapely.geometry.MultiLineString([r.linestring for r in self])
 
     def copy(self, df : gpd.GeoDataFrame) -> River:
         """Shallow copy using a provided DataFrame"""
@@ -753,29 +776,30 @@ def mergeShortReaches(river : River,
     Note if tol is None, the tol is taken from the reach property TARGET_SEGMENT_LENGTH.
 
     """
-    for node in list(river.preOrder()):
+    for node in list(river):
         if tol is None:
             ltol = node[names.TARGET_SEGMENT_LENGTH]
         else:
             ltol = tol
         if node.linestring.length < ltol and node.parent is not None:
+            nname = node[names.ID] if names.ID in node.properties else node.index
             logging.info(
                 "  ...cleaned inner linestring of length %g at centroid %r with id %r" %
-                (node.linestring.length, node.linestring.centroid.coords[0], node[names.ID]))
+                (node.linestring.length, node.linestring.centroid.coords[0], nname))
 
-            if len(list(node.siblings())) > 0 and len(node.children) == 1:
+            if len(list(node.siblings)) > 0 and len(node.children) == 1:
                 # junction tributary with one child
-                node.merge(to='child')
+                node.children[0].merge()
             elif len(node.children) == 0:
                 # if the leaf node is too small
                 node.remove()
             else:
-                for sibling in list(node.siblings()):
+                for sibling in list(node.siblings):
                     sibling.moveCoordinate(-1, node.linestring.coords[0])
                     sibling.remove()
                     node.addChild(sibling)
 
-                assert (len(list(node.siblings())) == 0)
+                assert (len(list(node.siblings)) == 0)
                 node.merge()
 
 
@@ -803,16 +827,13 @@ def pruneByLineStringLength(river : River,
 
 def pruneByArea(river : River,
                 area : float,
-                prop : Optional[str] = None):
+                prop : str = names.DRAINAGE_AREA):
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
     Note this requires NHDPlus data to have been used and the
     'DivergenceRoutedDrainAreaSqKm' property (or whatever is selected) to have been set.
     """
     count = 0
-    if prop is None:
-        prop = names.DRAINAGE_AREA
-        
     for node in river.preOrder():
         # note, we only ever prune children, to avoid unneeded recursive pruning
         #
@@ -829,7 +850,7 @@ def pruneByArea(river : River,
 
 def pruneRiversByArea(rivers : List[River],
                       area : float,
-                      prop : Optional[str] = None) -> List[River]:
+                      prop : str = names.DRAINAGE_AREA) -> List[River]:
     """Both prunes reaches and filters rivers whose contributing area is less than area."""
     count = 0
     sufficiently_big_rivers = []

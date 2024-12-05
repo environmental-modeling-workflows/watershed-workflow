@@ -6,6 +6,7 @@ and HUC.
 
 from typing import List, Optional, Tuple, Any, Iterable, Callable, overload
 
+import logging
 import numpy as np
 import math
 import shapely
@@ -13,6 +14,7 @@ import abc
 
 from watershed_workflow.river_tree import River
 from watershed_workflow.split_hucs import SplitHUCs
+import watershed_workflow.utils
 
 
 #
@@ -140,8 +142,10 @@ def _resampleRiver(river : River,
                    computeTargetLength : Callable[[River,],float]) -> None:
     """Resamples a river, in place, given a strategy to compute the target segment length."""
     for node in river.preOrder():
-        node.linestring = resampleLineStringUniform(node.linestring, computeTargetLength(node))
-
+        #ls2 = shapely.geometry.LineString(_resampleLineStringUniform(node.linestring, computeTargetLength(node)))
+        ls2 = resampleLineStringUniform(node.linestring, computeTargetLength(node))
+        logging.info(f'  - resampling ls: {node.linestring.length}, {min(watershed_workflow.utils.computeSegmentLengths(node.linestring))}, {min(watershed_workflow.utils.computeSegmentLengths(ls2))}')
+        node.linestring = ls2
 
 
 #
@@ -217,25 +221,26 @@ def _resampleLineStringUniform(linestring : shapely.geometry.LineString,
 def resampleLineStringUniform(linestring : shapely.geometry.LineString,
                               target_length : float) -> shapely.geometry.LineString:
     """Resample a linestring nearly uniformly, keeping previous discrete coords if possible."""
-    assert linestring.length > 0
-    coords = np.array(linestring.coords)
-    dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
-    if np.max(dcoords) > target_length:
-        new_coords = []
-        i = 0
-        while i < len(coords)-1:
-            j = i + 1
-            while j < len(coords)-1 and dcoords[j-1] < target_length:
-                j += 1
-            sublinestring = shapely.geometry.LineString(coords[i:j+1])
-            extra_coords = _resampleLineStringUniform(sublinestring, target_length)
-            if i == 0:
-                new_coords.extend(extra_coords)
-            else:
-                new_coords.extend(extra_coords[1:])
-            i = j
-    else:
-        new_coords = _resampleLineStringUniform(linestring, target_length)
+    # assert linestring.length > 0
+    # coords = np.array(linestring.coords)
+    # dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
+    # if np.max(dcoords) > target_length:
+    #     new_coords = []
+    #     i = 0
+    #     while i < len(coords)-1:
+    #         j = i + 1
+    #         while j < len(coords)-1 and dcoords[j-1] < target_length:
+    #             j += 1
+    #         sublinestring = shapely.geometry.LineString(coords[i:j+1])
+    #         extra_coords = _resampleLineStringUniform(sublinestring, target_length)
+    #         if i == 0:
+    #             new_coords.extend(extra_coords)
+    #         else:
+    #             new_coords.extend(extra_coords[1:])
+    #         i = j
+    # else:
+    #     new_coords = _resampleLineStringUniform(linestring, target_length)
+    new_coords = _resampleLineStringUniform(linestring, target_length)
     return shapely.geometry.LineString(new_coords)
 
 
@@ -279,32 +284,34 @@ def resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     else:
         reverse = False
 
-    # greedily add coords along the linestring
-    coords = np.array(linestring.coords)
-    dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
-    ml = targets[0]
-    if np.max(dcoords) > ml:
-        new_coords = []
-        i = 0
-        while i < len(coords)-1:
-            j = i + 1
-            while j < len(coords)-1 and dcoords[j-1] < ml:
-                j += 1
-                ml = computeTargetLength(coords[j])
-            sublinestring = shapely.geometry.LineString(coords[i:j+1])
+    # # greedily add coords along the linestring
+    # coords = np.array(linestring.coords)
+    # dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
+    # ml = targets[0]
+    # if np.max(dcoords) > ml:
+    #     new_coords = []
+    #     i = 0
+    #     while i < len(coords)-1:
+    #         j = i + 1
+    #         while j < len(coords)-1 and dcoords[j-1] < ml:
+    #             j += 1
+    #             ml = computeTargetLength(coords[j])
+    #         sublinestring = shapely.geometry.LineString(coords[i:j+1])
 
-            extra_coords = _resampleLineStringNonuniform(sublinestring, computeTargetLength)
-            if i == 0:
-                new_coords.extend(extra_coords)
-            else:
-                new_coords.extend(extra_coords[1:])
+    #         extra_coords = _resampleLineStringNonuniform(sublinestring, computeTargetLength)
+    #         if i == 0:
+    #             new_coords.extend(extra_coords)
+    #         else:
+    #             new_coords.extend(extra_coords[1:])
 
-            i = j
-            if j < len(coords):
-                ml = computeTargetLength(coords[j])
+    #         i = j
+    #         if j < len(coords):
+    #             ml = computeTargetLength(coords[j])
 
-    else:
-        new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
+    # else:
+    #     new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
+
+    new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
 
     if reverse:
         new_coords = list(reversed(new_coords))

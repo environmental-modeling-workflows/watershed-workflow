@@ -151,6 +151,28 @@ def test_merge():
     assert (len(n1.children) == 0)
 
 
+def test_split():
+    s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
+    df = geopandas.GeoDataFrame({'geometry' : [s,]})
+    node = watershed_workflow.river_tree.River(0, df)
+
+    n1,n2 = node.split(1)
+    # check topology: n1 --> n2
+    assert n1.parent is n2
+    assert n2 not in n1.preOrder()
+    assert len(n1.children) == 0
+    
+    assert n2.parent is None
+    assert n1 in n2.children
+    assert len(n2.children) == 1
+
+    assert n2 is node # inplace
+    assert n1.linestring.length == 2 # geometry is right
+    assert n2.linestring.length == 1
+
+    assert n2.isContinuous()
+
+    
 def test_prune():
     s2 = shapely.geometry.LineString([(2, 0), (1, 0)])
     s1 = shapely.geometry.LineString([(1, 0), (0, 0)])

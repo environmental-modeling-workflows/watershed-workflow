@@ -63,10 +63,20 @@ def computeArea(vertices : Iterable[Tuple[float]]) -> float:
     return area
 
 
-def computeAngle(v1 : Tuple[float, float],
-                 v2 : Tuple[float, float]) -> float:
-    """Given two 2D vectors represented as len 2 arrays or tuples, find the angle
-    of 2 relative to 1 in a clockwise notion."""
+def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
+                 v2 : Tuple[float, float] | shapely.geometry.LineString) -> float:
+    """Given two 2D vectors represented as len 2 arrays or tuples,
+    find the angle (in degrees) of 2 relative to 1 in a clockwise
+    notion.
+
+    """
+    if isinstance(v1, shapely.geometry.LineString):
+        c1 = np.array(v1.coords[0:2])
+        return computeAngle(c1[1] - c1[0], v2)
+    if isinstance(v2, shapely.geometry.LineString):
+        c2 = np.array(v2.coords[-2:])
+        return computeAngle(v1, c2[0] - c2[1])
+    
     x1 = v1[0]
     y1 = v1[1]
     x2 = v2[0]
@@ -80,9 +90,9 @@ def computeAngle(v1 : Tuple[float, float],
     mag = 180. / np.pi * np.arccos(arg)
     sign = x1*y2 - x2*y1
     if sign < 0:
-        return -mag
-    else:
         return mag
+    else:
+        return 360 - mag
 
 
 def computeMidpoint(p1 : Tuple[float,float],
@@ -520,19 +530,44 @@ def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.g
     return shapely.ops.transform(_drop_z, geom)
 
 
-def diagnoseMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString]) -> Tuple[float,float,float]:
+def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.array:
+    coords = np.array(ls.coords)
+    return np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
+
+
+def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
+                           name : str,
+                           assert_on_zero : bool = False,
+                           ax : Optional[matplotlib.Axes] = None,
+                           color : Optional[str | Tuple] = None) -> None:
     """Computes min, median, and max segment length across all linestrings."""
     seg_mins = []
     seg_maxs = []
     seg_meds = []
+    seg_lens = []
+    geom_lens = []
     
     for ls in iterable:
-        coords = np.array(ls.coords)
-        seg_len = np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
-        seg_mins.append(np.min(seg_len))
-        seg_maxs.append(np.max(seg_len))
-        seg_meds.append(np.median(seg_len))
-    return min(seg_mins), np.median(seg_meds), max(seg_maxs)
+        geom_lens.append(ls.length)
+        seg_len = computeSegmentLengths(ls)
+        seg_lens.append(seg_len)
+        if assert_on_zero:
+            assert(min(seg_len) > 1.e-10)
+
+    seg_lens_a = np.concatenate(seg_lens)
+    seg_diags = np.min(seg_lens_a), np.median(seg_lens_a), np.max(seg_lens_a)
+
+    geom_lens_a = np.array(geom_lens)
+    geom_diags = (min(geom_lens_a), np.median(geom_lens_a), max(geom_lens_a))
+
+    if ax is not None:
+        ax.hist(seg_lens_a, max(len(seg_lens_a)//20, 10), color=color)
+                  
+    logging.info(f"  {name}: min seg length: \t{seg_diags[0]:16.10f} \tmin geom length: \t{geom_diags[0]:16.10f}")
+    logging.info(f"  {name}: med seg length: \t{seg_diags[1]:16.10f} \tmed geom length: \t{geom_diags[1]:16.10f}")
+    logging.info(f"  {name}: max seg length: \t{seg_diags[2]:16.10f} \tmax geom length: \t{geom_diags[2]:16.10f}")
+    logging.info('')
+    return
 
 
 #

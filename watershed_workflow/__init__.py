@@ -26,6 +26,7 @@ import math
 import numpy as np
 import geopandas as gpd
 import shapely.geometry
+from matplotlib import pyplot as plt
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -267,10 +268,10 @@ def findHUC(source : Any,
 def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
              rivers : List[watershed_workflow.river_tree.River],
              reach_segment_target_length : float,
-             waterbodies : Optional[gpd.GeoDataFrame] = None,
              huc_segment_target_length : Optional[float] = None,
              river_close_distance : float = 100.0,
-             river_far_distance : float = 500.0) -> None:
+             river_far_distance : float = 500.0,
+             resample_by_reach_property : bool = False) -> None:
     """Simplifies the HUC and river shapes to create constrained, discrete segments.
 
     Parameters
@@ -333,55 +334,75 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     logging.info("-" * 30)
 
     assert len(rivers) > 0
-    if huc_segment_target_length is None:
-        huc_segment_target_length = reach_segment_target_length
 
     logging.info(f"Presimplify to remove colinear, coincident points.")
-    presimplify = 0.01
+    presimplify = 1.e-4 * reach_segment_target_length
     watershed_workflow.river_tree.simplify(rivers, presimplify)
     watershed_workflow.split_hucs.simplify(hucs, presimplify)
-    if waterbodies is not None:
-        waterbodies.simplify(presimplify)
 
     logging.info(f"Pruning leaf reaches < {reach_segment_target_length}")
     for river in rivers:
         watershed_workflow.river_tree.pruneByLineStringLength(river, reach_segment_target_length)
 
-    logging.info("Snapping discrete points to make rivers, HUCs, and waterbodies consistent.")
+    logging.info(f"Merging internal reaches < {reach_segment_target_length}")
+    for river in rivers:
+        watershed_workflow.river_tree.mergeShortReaches(river, reach_segment_target_length)
+
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+        
+    logging.info("Snapping discrete points to make rivers and HUCs discretely consistent.")
     logging.info(" -- snapping HUC triple junctions to reaches")
     snap_triple_junctions_tol = 3*reach_segment_target_length
     watershed_workflow.hydrography.snapHUCsJunctions(hucs, rivers, snap_triple_junctions_tol)
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
-    logging.info(" -- cut and snapping reach endpoints to HUC polygon")
+    logging.info(" -- snapping reach endpoints to HUC boundaries")
+    for river in rivers:
+        watershed_workflow.hydrography.snapEndpoints(hucs, river, reach_segment_target_length)
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+        
+    logging.info(" -- cutting reaches at HUC boundaries")
     watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, reach_segment_target_length)
-
-    if waterbodies is not None:
-        logging.info(" -- snapping waterbodies to HUCs and reaches")
-        watershed_workflow.hydrography.snapWaterbodies(waterbodies, hucs, rivers, 2*reach_segment_target_length)
-
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+    
     logging.info("")
     logging.info("Simplification Diagnostics")
     logging.info("-" * 30)
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
-    rdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(r.linestring for river in rivers for r in river.preOrder())
-    logging.info(f"  river min seg length: {rdiags[0]}")
-    logging.info(f"  river median seg length: {rdiags[1]}")
-    logging.info(f"  river max seg length: {rdiags[2]}")
+    # resample
+    logging.info("")
+    logging.info("Resampling HUC and river")
 
-    hdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(hucs.linestrings)
-    logging.info('')
-    logging.info(f"  HUC min seg length: {hdiags[0]}")
-    logging.info(f"  HUC median seg length: {hdiags[1]}")
-    logging.info(f"  HUC max seg length: {hdiags[2]}")
+    if huc_segment_target_length is not None:
+        dfunc = [river_close_distance, reach_segment_target_length, 
+                 river_far_distance, huc_segment_target_length]
+        river_mls = shapely.ops.unary_union([river.to_mls() for river in rivers])
+        logging.info(f" -- resampling HUCs based on distance function {dfunc}")
+        watershed_workflow.resampling.resampleHUCs(hucs, dfunc, river_mls)
+    else:
+        logging.info(f" -- resampling HUCs based on uniform target {reach_segment_target_length}")
+        watershed_workflow.resampling.resampleHUCs(hucs, reach_segment_target_length)
 
-    if waterbodies is not None:
-        wbdiags = watershed_workflow.utils.diagnoseMinMaxMedianSegment(wb.exterior for wb in waterbodies)
-        logging.info('')
-        logging.info(f"  HUC min seg length: {wbdiags[0]}")
-        logging.info(f"  HUC median seg length: {wbdiags[1]}")
-        logging.info(f"  HUC max seg length: {wbdiags[2]}")
+    if resample_by_reach_property:
+        logging.info(f" -- resampling reaches based on TARGET_SEGMENT_LENGTH property")
+        watershed_workflow.resampling.resampleRivers(rivers)
+    else:
+        logging.info(f" -- resampling reaches based on uniform target {reach_segment_target_length}")
+        watershed_workflow.resampling.resampleRivers(rivers, reach_segment_target_length)
 
-
+    logging.info("")
+    logging.info("Resampling Diagnostics")
+    logging.info("-" * 30)
+    fig, ax = plt.subplots(1,1)
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach", ax=ax, color='b')
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ", ax=ax, color='orange')
+        
 
 # def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
 #     """Redensify a river, huc, or waterbodies object, meeting a provided target or target resolution function.
