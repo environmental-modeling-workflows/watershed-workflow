@@ -217,17 +217,17 @@ class SplitHUCs:
 
     def computePolygon(self, i):
         """Construct polygon i and return a copy."""
-        segs = []
+        linestrings = []
         boundary, inter = self.gons[i]
         for h_boundary in boundary:
             for s in self.boundaries[h_boundary]:
-                segs.append(self.linestrings[s])
+                linestrings.append(self.linestrings[s])
 
         for h_intersection in inter:
             for s in self.intersections[h_intersection]:
-                segs.append(self.linestrings[s])
+                linestrings.append(self.linestrings[s])
 
-        ml = shapely.ops.linemerge(segs)
+        ml = shapely.ops.linemerge(linestrings)
         assert (type(ml) is shapely.geometry.LineString)
         poly = shapely.geometry.Polygon(ml)
         return poly
@@ -270,12 +270,12 @@ class SplitHUCs:
 
         if markers:
             # scatter the markers
-            for i, seg in enumerate(self.df.boundary.geometry):
+            for i, linestring in enumerate(self.df.boundary.geometry):
                 if len(colors) == 1:
                     color = colors[0]
                 else:
                     color = colors[i]
-                ax.scatter(seg.xy[0], seg.xy[1], color=color, **markerargs)
+                ax.scatter(linestring.xy[0], linestring.xy[1], color=color, **markerargs)
 
         return ax
         
@@ -293,11 +293,11 @@ class SplitHUCs:
     @property
     def exterior(self):
         """Construct boundary polygon and return a copy."""
-        segs = []
+        linestrings = []
         for b in self.boundaries:
             for s in b:
-                segs.append(self.linestrings[s])
-        ml = shapely.ops.linemerge(segs)
+                linestrings.append(self.linestrings[s])
+        ml = shapely.ops.linemerge(linestrings)
         if type(ml) is shapely.geometry.LineString:
             return shapely.geometry.Polygon(ml)
         else:
@@ -314,8 +314,8 @@ class SplitHUCs:
 
 def simplify(hucs, tol=0.1):
     """Simplify, IN PLACE, all linestrings in the polygon representation."""
-    for i, seg in hucs.linestrings.items():
-        hucs.linestrings[i] = seg.simplify(tol)
+    for i, linestring in hucs.linestrings.items():
+        hucs.linestrings[i] = linestring.simplify(tol)
 
 
 def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):

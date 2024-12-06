@@ -79,24 +79,25 @@ class ComputeTargetLengthByDistanceToShape(ComputeTargetLength):
 # resampleRivers()
 #
 @overload
-def resampleRivers(rivers : List[River]) -> None:
+def resampleRivers(rivers : List[River], keep_points : bool = False) -> None:
     """Resamples each reach based on the TARGET_SEGMENT_LENGTH property."""
     ...
 
 @overload
-def resampleRivers(rivers : List[River], target_length : float) -> None:
+def resampleRivers(rivers : List[River], target_length : float, keep_points : bool = False) -> None:
     """Resamples each reach based on a given target length."""
     ...
 
 @overload
-def resampleRivers(rivers : List[River], target_length : Callable[[River,],float]) -> None:
+def resampleRivers(rivers : List[River], target_length : Callable[[River,],float], keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
 def resampleRivers(rivers : List[River],
-                   target_length : Optional[float | Callable[[River,],float]] = None) -> None:
+                   target_length : Optional[float | Callable[[River,],float]] = None,
+                   keep_points : bool = False) -> None:
     for river in rivers:
-        _resampleRiverArgs(river, target_length)
+        _resampleRiverArgs(river, target_length, keep_points)
 
 
 
@@ -104,63 +105,67 @@ def resampleRivers(rivers : List[River],
 # resampleRiver()
 #
 @overload
-def resampleRiver(river : River) -> None:
+def resampleRiver(river : River, keep_points : bool = False) -> None:
     """Resamples each reach based on the TARGET_SEGMENT_LENGTH property."""
     ...
 
 @overload
-def resampleRiver(river : River, target_length : float) -> None:
+def resampleRiver(river : River, target_length : float, keep_points : bool = False) -> None:
     """Resamples each reach based on a given target length."""
     ...
 
 @overload
-def resampleRiver(river : River, target_length : Callable[[River,],float]) -> None:
+def resampleRiver(river : River, target_length : Callable[[River,],float], keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
 # could use functools singledispatch here but it seems unnecessary
 def resampleRiver(river : River,
-                  target_length : Optional[float | Callable[[River,],float]] = None) -> None:
-    _resampleRiverArgs(river, target_length)
+                  target_length : Optional[float | Callable[[River,],float]] = None,
+                  keep_points : bool = False) -> None:
+    _resampleRiverArgs(river, target_length, keep_points)
 
 
 # only exists to quiet mypy    
 def _resampleRiverArgs(river : River,
-                       target_length : Optional[float | Callable[[River,],float]] = None) -> None:
+                       target_length : Optional[float | Callable[[River,],float]] = None,
+                       keep_points : bool = False) -> None:
     if target_length is None:
-        _resampleRiver(river, ComputeTargetLengthByProperty())
+        _resampleRiver(river, ComputeTargetLengthByProperty(), keep_points)
     elif callable(target_length):
-        _resampleRiver(river, ComputeTargetLengthByCallable(target_length))
+        _resampleRiver(river, ComputeTargetLengthByCallable(target_length), keep_points)
     else:
         try:
-            _resampleRiver(river, ComputeTargetLengthFixed(float(target_length)))
+            _resampleRiver(river, ComputeTargetLengthFixed(float(target_length)), keep_points)
         except ValueError:
             raise ValueError('Unrecognized compute strategy argument provided for resampleRiver')
 
 
 def _resampleRiver(river : River,
-                   computeTargetLength : Callable[[River,],float]) -> None:
+                   computeTargetLength : Callable[[River,],float],
+                   keep_points : bool = False) -> None:
     """Resamples a river, in place, given a strategy to compute the target segment length."""
     for node in river.preOrder():
-        #ls2 = shapely.geometry.LineString(_resampleLineStringUniform(node.linestring, computeTargetLength(node)))
-        ls2 = resampleLineStringUniform(node.linestring, computeTargetLength(node))
-        logging.info(f'  - resampling ls: {node.linestring.length}, {min(watershed_workflow.utils.computeSegmentLengths(node.linestring))}, {min(watershed_workflow.utils.computeSegmentLengths(ls2))}')
+        ls2 = resampleLineStringUniform(node.linestring, computeTargetLength(node), keep_points)
+        logging.debug(f'  - resampling ls: {node.linestring.length}, {min(watershed_workflow.utils.computeSegmentLengths(node.linestring))}, {min(watershed_workflow.utils.computeSegmentLengths(ls2))}')
         node.linestring = ls2
 
 
 #
-# resampleHUCs()
+# resampleSplitHUCs()
 #
 @overload
-def resampleHUCs(hucs : SplitHUCs,
-                 target_length : float) -> None:
+def resampleSplitHUCs(hucs : SplitHUCs,
+                      target_length : float,
+                      keep_points : bool = False) -> None:
     """Resamples each HUC boundary segment based on a given target length."""
     ...
 
 @overload
-def resampleHUCs(hucs : SplitHUCs,
-                 target_length : Tuple[float,float,float,float],
-                 shp : shapely.geometry.base.BaseGeometry) -> None:
+def resampleSplitHUCs(hucs : SplitHUCs,
+                      target_length : Tuple[float,float,float,float],
+                      shp : shapely.geometry.base.BaseGeometry,
+                      keep_points : bool = False) -> None:
     """Resample each HUC boundary segment based on distance to a given shape.
 
     distance_args are [D1, L1, D2, L2], which provides for a linear
@@ -170,40 +175,45 @@ def resampleHUCs(hucs : SplitHUCs,
     ...
 
     
-def resampleHUCs(hucs : SplitHUCs,
-                 target_length : float | Tuple[float,float,float,float],
-                 shp : Optional[shapely.geometry.base.BaseGeometry] = None) -> None:
+def resampleSplitHUCs(hucs : SplitHUCs,
+                      target_length : float | Tuple[float,float,float,float],
+                      shp : Optional[shapely.geometry.base.BaseGeometry] = None,
+                      keep_points : bool = False) -> None:
     if isinstance(target_length, list):
         target_length = tuple(target_length)
 
     if shp is None:
         if isinstance(target_length, tuple):
-            raise ValueError('Unrecognized compute strategy arguments provided for resampleHUCs')
+            raise ValueError('Unrecognized compute strategy arguments provided for resampleSplitHUCs')
         else:
             try:
                 target_length = float(target_length)
             except ValueError:
-                raise ValueError('Unrecognized compute strategy arguments provided for resampleHUCs')
+                raise ValueError('Unrecognized compute strategy arguments provided for resampleSplitHUCs')
             else:
-                _resampleHUCs(hucs, ComputeTargetLengthFixed(target_length))
+                _resampleSplitHUCs(hucs, ComputeTargetLengthFixed(target_length), keep_points)
 
     else:
         try:
             strat = ComputeTargetLengthByDistanceToShape(target_length, shp)
         except ValueError:
-            raise ValueError('Unrecognized compute strategy arguments provided for resampleHUCs')
+            raise ValueError('Unrecognized compute strategy arguments provided for resampleSplitHUCs')
         else:
-            _resampleHUCs(hucs, strat)
+            _resampleSplitHUCs(hucs, strat, keep_points)
+
+    # recreate polygon shapes after changing all the linestrings
+    hucs.update()
 
 
-def _resampleHUCs(huc : SplitHUCs,
-                  computeTargetLength : ComputeTargetLength) -> None:
+def _resampleSplitHUCs(huc : SplitHUCs,
+                       computeTargetLength : ComputeTargetLength,
+                       keep_points : bool = False) -> None:
     if computeTargetLength.is_uniform:
         for i, ls in enumerate(huc.linestrings):
-            huc.linestrings[i] = resampleLineStringUniform(ls, computeTargetLength(ls))
+            huc.linestrings[i] = resampleLineStringUniform(ls, computeTargetLength(ls), keep_points)
     else:
         for i, ls in enumerate(huc.linestrings):
-            huc.linestrings[i] = resampleLineStringNonuniform(ls, computeTargetLength)
+            huc.linestrings[i] = resampleLineStringNonuniform(ls, computeTargetLength, keep_points)
 
 
             
@@ -211,7 +221,7 @@ def _resampleHUCs(huc : SplitHUCs,
 # resampleLineString
 #        
 def _resampleLineStringUniform(linestring : shapely.geometry.LineString,
-                              target_length : float) -> shapely.geometry.LineString:
+                               target_length : float) -> shapely.geometry.LineString:
     """Resample a linestring uniformly with no respect for previous discrete coords."""
     count = math.ceil(linestring.length / target_length) + 1
     s = np.linspace(0, 1, count)
@@ -219,28 +229,31 @@ def _resampleLineStringUniform(linestring : shapely.geometry.LineString,
                 
 
 def resampleLineStringUniform(linestring : shapely.geometry.LineString,
-                              target_length : float) -> shapely.geometry.LineString:
+                              target_length : float,
+                              keep_points : bool = False) -> shapely.geometry.LineString:
     """Resample a linestring nearly uniformly, keeping previous discrete coords if possible."""
-    # assert linestring.length > 0
-    # coords = np.array(linestring.coords)
-    # dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
-    # if np.max(dcoords) > target_length:
-    #     new_coords = []
-    #     i = 0
-    #     while i < len(coords)-1:
-    #         j = i + 1
-    #         while j < len(coords)-1 and dcoords[j-1] < target_length:
-    #             j += 1
-    #         sublinestring = shapely.geometry.LineString(coords[i:j+1])
-    #         extra_coords = _resampleLineStringUniform(sublinestring, target_length)
-    #         if i == 0:
-    #             new_coords.extend(extra_coords)
-    #         else:
-    #             new_coords.extend(extra_coords[1:])
-    #         i = j
-    # else:
-    #     new_coords = _resampleLineStringUniform(linestring, target_length)
-    new_coords = _resampleLineStringUniform(linestring, target_length)
+    assert linestring.length > 0
+    if keep_points:
+        coords = np.array(linestring.coords)
+        dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
+        if np.max(dcoords) > target_length:
+            new_coords = []
+            i = 0
+            while i < len(coords)-1:
+                j = i + 1
+                while j < len(coords)-1 and dcoords[j-1] < target_length:
+                    j += 1
+                sublinestring = shapely.geometry.LineString(coords[i:j+1])
+                extra_coords = _resampleLineStringUniform(sublinestring, target_length)
+                if i == 0:
+                    new_coords.extend(extra_coords)
+                else:
+                    new_coords.extend(extra_coords[1:])
+                i = j
+        else:
+            new_coords = _resampleLineStringUniform(linestring, target_length)
+    else:
+        new_coords = _resampleLineStringUniform(linestring, target_length)
     return shapely.geometry.LineString(new_coords)
 
 
@@ -255,9 +268,20 @@ def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     s = 0.0
     while s < length:
         d = computeTargetLength(coords[-1])
-        s = s + d
+        done = False
+        count = 0
+        s0 = s
+        while not done:
+            count += 1
+            s = s0 + d
+            next_coord = linestring.interpolate(s).coords[0]
+            midp = watershed_workflow.utils.computeMidpoint(next_coord, coords[-1])
+            d_midp = computeTargetLength(midp)
+            done = (abs(d - d_midp) / max(d, d_midp)) < 0.01 or count > 10
+            d = d_midp
+
         arclens.append(s)
-        coords.append(linestring.interpolate(s))
+        coords.append(next_coord)
 
     # the new total arclength (s) is now longer than original length,
     # scale the arclens back to length
@@ -269,7 +293,8 @@ def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     
 
 def resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
-                                 computeTargetLength : Callable[[Any,],float]) -> shapely.geometry.LineString:
+                                 computeTargetLength : Callable[[Any,],float],
+                                 keep_points : bool = False) -> shapely.geometry.LineString:
     """Resample a linestring nonuniformly, keeping previous discrete coords if possible."""
     assert linestring.length > 0
 
@@ -284,34 +309,36 @@ def resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     else:
         reverse = False
 
-    # # greedily add coords along the linestring
-    # coords = np.array(linestring.coords)
-    # dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
-    # ml = targets[0]
-    # if np.max(dcoords) > ml:
-    #     new_coords = []
-    #     i = 0
-    #     while i < len(coords)-1:
-    #         j = i + 1
-    #         while j < len(coords)-1 and dcoords[j-1] < ml:
-    #             j += 1
-    #             ml = computeTargetLength(coords[j])
-    #         sublinestring = shapely.geometry.LineString(coords[i:j+1])
+    if keep_points:
+        # greedily add coords along the linestring
+        coords = np.array(linestring.coords)
+        dcoords = np.linalg.norm(coords[1:] - coords[:-1], axis=1)
+        ml = targets[0]
+        if np.max(dcoords) > ml:
+            new_coords = []
+            i = 0
+            while i < len(coords)-1:
+                j = i + 1
+                while j < len(coords)-1 and dcoords[j-1] < ml:
+                    j += 1
+                    ml = computeTargetLength(coords[j])
+                sublinestring = shapely.geometry.LineString(coords[i:j+1])
 
-    #         extra_coords = _resampleLineStringNonuniform(sublinestring, computeTargetLength)
-    #         if i == 0:
-    #             new_coords.extend(extra_coords)
-    #         else:
-    #             new_coords.extend(extra_coords[1:])
+                extra_coords = _resampleLineStringNonuniform(sublinestring, computeTargetLength)
+                if i == 0:
+                    new_coords.extend(extra_coords)
+                else:
+                    new_coords.extend(extra_coords[1:])
 
-    #         i = j
-    #         if j < len(coords):
-    #             ml = computeTargetLength(coords[j])
+                i = j
+                if j < len(coords):
+                    ml = computeTargetLength(coords[j])
 
-    # else:
-    #     new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
+        else:
+            new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
 
-    new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
+    else:
+        new_coords = _resampleLineStringNonuniform(linestring, computeTargetLength)
 
     if reverse:
         new_coords = list(reversed(new_coords))

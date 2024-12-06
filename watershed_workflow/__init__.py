@@ -271,7 +271,8 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
              huc_segment_target_length : Optional[float] = None,
              river_close_distance : float = 100.0,
              river_far_distance : float = 500.0,
-             resample_by_reach_property : bool = False) -> None:
+             resample_by_reach_property : bool = False,
+             keep_points : bool = False) -> None:
     """Simplifies the HUC and river shapes to create constrained, discrete segments.
 
     Parameters
@@ -384,17 +385,17 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
                  river_far_distance, huc_segment_target_length]
         river_mls = shapely.ops.unary_union([river.to_mls() for river in rivers])
         logging.info(f" -- resampling HUCs based on distance function {dfunc}")
-        watershed_workflow.resampling.resampleHUCs(hucs, dfunc, river_mls)
+        watershed_workflow.resampling.resampleSplitHUCs(hucs, dfunc, river_mls, keep_points=keep_points)
     else:
         logging.info(f" -- resampling HUCs based on uniform target {reach_segment_target_length}")
-        watershed_workflow.resampling.resampleHUCs(hucs, reach_segment_target_length)
+        watershed_workflow.resampling.resampleSplitHUCs(hucs, reach_segment_target_length, keep_points=keep_points)
 
     if resample_by_reach_property:
         logging.info(f" -- resampling reaches based on TARGET_SEGMENT_LENGTH property")
-        watershed_workflow.resampling.resampleRivers(rivers)
+        watershed_workflow.resampling.resampleRivers(rivers, keep_points=keep_points)
     else:
         logging.info(f" -- resampling reaches based on uniform target {reach_segment_target_length}")
-        watershed_workflow.resampling.resampleRivers(rivers, reach_segment_target_length)
+        watershed_workflow.resampling.resampleRivers(rivers, reach_segment_target_length, keep_points=keep_points)
 
     logging.info("")
     logging.info("Resampling Diagnostics")

@@ -46,6 +46,12 @@ def computeTriangleArea(p1 : Tuple[float,float],
     return 0.5 * (p2[0] * p3[1] - p3[0] * p2[1] - p1[0] * p3[1] + p3[0] * p1[1]
                + p1[0] * p2[1] - p2[0] * p1[1])
 
+def computeTriangleCentroid(p1 : Tuple[float,float],
+                            p2 : Tuple[float,float],
+                            p3 : Tuple[float,float]) -> float:
+    """Centroid of a triangle in 2D"""
+    return np.array([p1,p2,p3]).mean(axis=0)
+
 
 def isCollinear(p1 : Tuple[float,float],
                 p2 : Tuple[float,float],
@@ -95,8 +101,22 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
         return 360 - mag
 
 
+def projectVectorAtAngle(v1 : Tuple[float,float] | shapely.geometry.LineString,
+                        angle : float,
+                        distance : float) -> Tuple[float,float]:
+    """Given a vector v1 (or one that can be computed from a
+    downstream-oriented linestring), find the vector v2 that is at a
+    distance and angle away from v1.
+
+    In some ways, this is the inverse of computeAngle().  Given v1,
+    angle, and distance, compute v2.
+    """
+    raise NotImplementedError('projectPointAtAngle')
+
+    
 def computeMidpoint(p1 : Tuple[float,float],
                     p2 : Tuple[float,float]) -> Tuple[float,float]:
+
     """Returns the midpoint of two points"""
     return ((p1[0] + p2[0]) / 2., (p1[1] + p2[1]) / 2.)
 
@@ -561,7 +581,10 @@ def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
     geom_diags = (min(geom_lens_a), np.median(geom_lens_a), max(geom_lens_a))
 
     if ax is not None:
-        ax.hist(seg_lens_a, max(len(seg_lens_a)//20, 10), color=color)
+        ax.hist(seg_lens_a, max(len(seg_lens_a)//20, 10), color=color, label=name)
+        ax.set_xlabel('segment length')
+        ax.set_ylabel('count')
+        ax.legend()
                   
     logging.info(f"  {name}: min seg length: \t{seg_diags[0]:16.10f} \tmin geom length: \t{geom_diags[0]:16.10f}")
     logging.info(f"  {name}: med seg length: \t{seg_diags[1]:16.10f} \tmed geom length: \t{geom_diags[1]:16.10f}")

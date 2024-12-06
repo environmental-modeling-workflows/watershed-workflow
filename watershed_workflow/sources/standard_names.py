@@ -11,3 +11,6 @@ DOWNSTREAM_HYDROSEQ = 'dnhydroseq'
 DIVERGENCE = 'divergence'
 AREA = 'area'
 CATCHMENT = 'catchment'
+
+OUTLET = 'outlet'
+INLET = 'inlet'

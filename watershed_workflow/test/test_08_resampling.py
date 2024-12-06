@@ -43,24 +43,25 @@ def test_no_keep_corner():
     assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
 
 # -- prefer old points
-def test_smaller():
-    ls_in = shapely.geometry.LineString([ (i,0) for i in range(0,21,10)])
-    ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
-    ls_test = shapely.geometry.LineString([(i,0) for i in range(0,21,2)])
-    assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
+if watershed_workflow.resampling.PREFER_OLD_POINTS:
+    def test_smaller():
+        ls_in = shapely.geometry.LineString([ (i,0) for i in range(0,21,10)])
+        ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
+        ls_test = shapely.geometry.LineString([(i,0) for i in range(0,21,2)])
+        assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
 
-def test_bigger():
-    ls_in = shapely.geometry.LineString([ (i,0) for i in range(0,21,1)])
-    ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
-    ls_test = shapely.geometry.LineString([(i,0) for i in range(0,21,2)])
-    assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
+    def test_bigger():
+        ls_in = shapely.geometry.LineString([ (i,0) for i in range(0,21,1)])
+        ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
+        ls_test = shapely.geometry.LineString([(i,0) for i in range(0,21,2)])
+        assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
 
-def test_keep_corner():
-    ls_in = shapely.geometry.LineString([(0,0), (5,0), (5,5)])
-    ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
+    def test_keep_corner():
+        ls_in = shapely.geometry.LineString([(0,0), (5,0), (5,5)])
+        ls_out = watershed_workflow.resampling.resampleLineStringUniform(ls_in, 2.)
 
-    ls_test = shapely.geometry.LineString([(0,0), (5./3,0), (10./3,0), (5,0), (5,5./3), (5,10./3), (5,5)])
-    assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
+        ls_test = shapely.geometry.LineString([(0,0), (5./3,0), (10./3,0), (5,0), (5,5./3), (5,10./3), (5,5)])
+        assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
 
 #
 # Nonuniform tests
@@ -95,23 +96,24 @@ def test_nonuniform_no_keep_corner():
 
     ls_test = shapely.geometry.LineString([(0,0), (5,0), (10,2.5), (10,12.5)])
     assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
-    
-def test_nonuniform_keep_corner():
-    shp = shapely.geometry.Point((-1,0))
 
-    ls_in = shapely.geometry.LineString([ (0,0), (10.0,0), (10,12.5)])
-    strat = watershed_workflow.resampling.ComputeTargetLengthByDistanceToShape((1, 5, 11, 10), shp)
-    ls_out = watershed_workflow.resampling.resampleLineStringNonuniform(ls_in, strat)
+if watershed_workflow.resampling.PREFER_OLD_POINTS:
+    # -- keep old points
+    def test_nonuniform_keep_corner():
+        shp = shapely.geometry.Point((-1,0))
 
-    points1 = np.array([(0,0), (5,0), (12.5,0)]) # shrunk -- to (10,0)
-    points1 = points1 * (10 / 12.5)
+        ls_in = shapely.geometry.LineString([ (0,0), (10.0,0), (10,12.5)])
+        strat = watershed_workflow.resampling.ComputeTargetLengthByDistanceToShape((1, 5, 11, 10), shp)
+        ls_out = watershed_workflow.resampling.resampleLineStringNonuniform(ls_in, strat)
 
-    arclens = np.array([0, 10, 20]) # arclens from distance = 10
-    arclens = arclens * (12.5 / 20) # rescale to 12.5, the endpoint
-    ls_test = shapely.geometry.LineString(
-        [p for p in points1]+  [(10,s) for s in arclens[1:]])
-    assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
+        points1 = np.array([(0,0), (5,0), (12.5,0)]) # shrunk -- to (10,0)
+        points1 = points1 * (10 / 12.5)
 
+        arclens = np.array([0, 10, 20]) # arclens from distance = 10
+        arclens = arclens * (12.5 / 20) # rescale to 12.5, the endpoint
+        ls_test = shapely.geometry.LineString(
+            [p for p in points1]+  [(10,s) for s in arclens[1:]])
+        assert watershed_workflow.utils.isClose(ls_out, ls_test, 1.e-10)
 
     
 # with data
@@ -127,6 +129,9 @@ def test_resampling(watershed_poly, watershed_reaches):
 
     # old resampling algorithm
     #assert (53 == len(watershed.exterior.exterior.coords))
-    assert (37 == len(watershed.exterior.exterior.coords))
+    if watershed_workflow.resampling.PREFER_OLD_POINTS:
+        assert (37 == len(watershed.exterior.exterior.coords))
+    else:
+        assert (34 == len(watershed.exterior.exterior.coords))
     assert (16 == len(rivers[0].linestring.coords))
     assert (12 == len(rivers[1].linestring.coords))
