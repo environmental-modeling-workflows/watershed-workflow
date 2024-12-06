@@ -358,8 +358,76 @@ def test_angle():
 
 
     v7 = shapely.geometry.LineString([(-1,1.e-10), (0,0)])
-    assert abs(watershed_workflow.utils.computeAngle(v1,v7) - 0.) < 1.e-10
+    assert abs(watershed_workflow.utils.computeAngle(v1,v7) - 0.) < 1.e-8
 
     v8 = shapely.geometry.LineString([(-1,-1.e-10), (0,0)])
-    assert abs(watershed_workflow.utils.computeAngle(v1,v8) - 360) < 1.e-10
+    assert abs(watershed_workflow.utils.computeAngle(v1,v8) - 360) < 1.e-8
+
+
+def test_project():
+    v1 = shapely.geometry.LineString([(0,0), (-1,0)])
+
+    v2_gold = shapely.geometry.LineString([(0,1), (0,0)])
+    vec2 = watershed_workflow.utils.projectVectorAtAngle(v1,90,1)
+    v2 = shapely.geometry.LineString([np.array(v1.coords[0]) + np.array(vec2), v1.coords[0]])
+    assert watershed_workflow.utils.isClose(v2_gold, v2)
+
+    v3_gold = shapely.geometry.LineString([(1,1), (0,0)])
+    vec3 = watershed_workflow.utils.projectVectorAtAngle(v1, .75*180, np.sqrt(2))
+    v3 = shapely.geometry.LineString([np.array(v1.coords[0]) + np.array(vec3), v1.coords[0]])
+    assert watershed_workflow.utils.isClose(v3_gold, v3)
+    
+
+    vec4 = watershed_workflow.utils.projectVectorAtAngle(v1, .75*180, 4)
+    assert np.allclose(vec4, np.array(vec3) * 4. / np.linalg.norm(vec3), 1.e-10)
+
+    
+def test_angle2():
+    v1 = shapely.geometry.LineString([(1,1), (1,2)])
+
+    v2 = shapely.geometry.LineString([(2,1), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v2) - 90) < 1.e-10
+
+    v3 = shapely.geometry.LineString([(2,0), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v3) - .75 * 180) < 1.e-10
+    
+    v4 = shapely.geometry.LineString([(1,0), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v4) - 180) < 1.e-10
+
+    v5 = shapely.geometry.LineString([(0,0), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v5) - 5. * 180 / 4.) < 1.e-10
+
+    v6 = shapely.geometry.LineString([(0,1), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v6) - 6 * 180 / 4.) < 1.e-10
+
+
+    v7 = shapely.geometry.LineString([(1+1.e-10,2), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v7) - 0.) < 1.e-8
+
+    v8 = shapely.geometry.LineString([(1-1.e-10,2), (1,1)])
+    assert abs(watershed_workflow.utils.computeAngle(v1,v8) - 360) < 1.e-8
+
+
+def test_project2():
+    v1 = shapely.geometry.LineString([(1,1), (1,2)])
+
+    v2_gold = shapely.geometry.LineString([(2,1), (1,1)])
+    vec2 = watershed_workflow.utils.projectVectorAtAngle(v1,90,1)
+    v2 = shapely.geometry.LineString([np.array(v1.coords[0]) + np.array(vec2), v1.coords[0]])
+    assert watershed_workflow.utils.isClose(v2_gold, v2)
+
+    v3_gold = shapely.geometry.LineString([(2,0), (1,1)])
+    vec3 = watershed_workflow.utils.projectVectorAtAngle(v1, .75*180, np.sqrt(2))
+    v3 = shapely.geometry.LineString([np.array(v1.coords[0]) + np.array(vec3), v1.coords[0]])
+    assert watershed_workflow.utils.isClose(v3_gold, v3)
+    
+
+    vec4 = watershed_workflow.utils.projectVectorAtAngle(v1, .75*180, 4)
+    assert np.allclose(vec4, np.array(vec3) * 4. / np.linalg.norm(vec3), 1.e-10)
+
+    
+    
+
+
+    
     

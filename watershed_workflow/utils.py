@@ -82,36 +82,60 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
     if isinstance(v2, shapely.geometry.LineString):
         c2 = np.array(v2.coords[-2:])
         return computeAngle(v1, c2[0] - c2[1])
-    
-    x1 = v1[0]
-    y1 = v1[1]
-    x2 = v2[0]
-    y2 = v2[1]
-    numer = x1*x2 + y1*y2
-    denom = np.sqrt(x1*x1 + y1*y1) * np.sqrt(x2*x2 + y2*y2)
-    assert (denom > 0)
-    arg = numer / denom
-    assert (arg < 1.1 and arg > -1.1)  # roundoff problems
-    arg = min(max(numer / denom, -1), 1)
-    mag = 180. / np.pi * np.arccos(arg)
-    sign = x1*y2 - x2*y1
-    if sign < 0:
-        return mag
-    else:
-        return 360 - mag
 
+    x1, y1 = v1
+    x2, y2 = v2
+
+    # Compute the angle of each vector with respect to the positive x-axis
+    angle1 = math.atan2(y1, x1)  # Angle of vec1
+    angle2 = math.atan2(y2, x2)  # Angle of vec2
+    print(angle1, angle2)
+
+    # Compute the difference in angles, clockwise
+    delta_angle = angle1 - angle2
+
+    # Convert to clockwise angle in degrees
+    clockwise_angle = math.degrees(delta_angle)
+
+    # Normalize the angle to be between 0 and 360 degrees
+    if clockwise_angle < 0:
+        clockwise_angle += 360
+
+    print(v1, v2, clockwise_angle)
+        
+    return clockwise_angle    
+
+    
 
 def projectVectorAtAngle(v1 : Tuple[float,float] | shapely.geometry.LineString,
                         angle : float,
                         distance : float) -> Tuple[float,float]:
     """Given a vector v1 (or one that can be computed from a
-    downstream-oriented linestring), find the vector v2 that is at a
-    distance and angle away from v1.
+    downstream-oriented linestring), find the vector v2 such that
+    ||v2|| == distance and computeAngle(v1,v2) == angle.
 
-    In some ways, this is the inverse of computeAngle().  Given v1,
-    angle, and distance, compute v2.
+    angle is in degrees
+
     """
-    raise NotImplementedError('projectPointAtAngle')
+    if isinstance(v1, shapely.geometry.LineString):
+        c1 = np.array(v1.coords[0:2])
+        return projectVectorAtAngle(c1[1] - c1[0], angle, distance)
+
+    x1, y1 = v1
+
+    # Compute the angle of vec1 with respect to the positive x-axis
+    angle1 = math.atan2(y1, x1)
+
+    # Convert the clockwise angle to radians
+    angle_offset = math.radians(angle)
+
+    # Compute the resulting angle of vec2
+    angle2 = angle1 - angle_offset
+
+    # Compute the components of vec2 using the distance and angle2
+    x2 = distance * math.cos(angle2)
+    y2 = distance * math.sin(angle2)
+    return (x2, y2)    
 
     
 def computeMidpoint(p1 : Tuple[float,float],

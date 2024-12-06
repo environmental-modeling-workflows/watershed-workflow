@@ -36,37 +36,52 @@ def smoothSharpAngles(rivers : List[River],
                 smoothJunctionSharpAngles(reach, junction_min_angle)
 
                 
-def _badAngle(coords, i, min_angle):
-    angle = watershed_workflow.utils.computeAngle(coords[i-1] - coords[i],
-                                                  coords[i] - coords[i+1])
-    return angle < min_angle || angle > (360 - min_angle)
+def _badInternalAngle(coords : np.ndarray | shapely.geometry.LineString,
+                      i : int,
+                      min_angle : float) -> bool:
+    if isinstance(coords, shapely.geometry.LineString):
+        return _badInternalAngle(np.array(coords.coords), i, min_angle)
 
-        
+    angle = watershed_workflow.utils.computeAngle(coords[i-1] - coords[i],
+                                                  coords[i+1] - coords[i])
+    return (angle < min_angle) or (angle > (360 - min_angle))
+
+def isBadInternalAngle(linestring : shapely.geometry.LineString,
+                       min_angle : float):
+    """Diagnostic function"""
+    coords = np.array(linestring.coords)
+    return any(_badInternalAngle(coords, i, min_angle) for i in range(1, len(coords)-1))
+
+
 def _smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
                           min_angle : float) -> shapely.geometry.LineString:
     """Smooths any internal angle less than min_angle."""
+    coords = np.array(linestring.coords)
     if len(coords) < 3:
         return linestring
 
-    coords = np.array(linestring.coords)
     new_coords = np.copy(coords)
 
     if len(coords) == 3:
-        # cannot remove points, simply recenter
-        if _badAngle(coords, 1, min_angle):
+        # cannot move endpoints, so only the middle point can move
+        if _badInternalAngle(coords, 1, min_angle):
+            # what is the right condition?  Should we remove the point or move it?
             if watershed_workflow.utils.computeDistance(coords[0], coords[2]) \
                < max(watershed_workflow.utils.computeDistance(coords[0], coords[1]),
                      watershed_workflow.utils.computeDistance(coords[1], coords[2])):
                 # just remove the extra point
                 return shapely.geometry.LineString([coords[0], coords[2]])
             else:
+                # move the point to the triangle centroid
                 new_coords[1] = watershed_workflow.utils.computeTriangleCentroid(coords[0], coords[1], coords[2])
                 return shapely.geometry.LineString(new_coords)
+        else:
+            return linestring
 
     else:
         i = 1
         while i < len(coords)-1:
-            if _badAngle(coords, i, min_angle):
+            if _badInternalAngle(coords, i, min_angle):
                 if i == 1:
                     # borders endpoint, cannot recenter the triangle, so instead place new point at midpoint
                     new_coords[i+1,:] = np.nan
@@ -83,8 +98,8 @@ def _smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
             else:
                 i += 1
 
-        new_coords = new_coords[~np.isnan(new_coords)]
-        return shapely.geometry.LineString(new_coords)
+        new_coords2 = new_coords[~np.isnan(new_coords[:,0]),:]
+        return shapely.geometry.LineString(new_coords2)
 
 
 def smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
@@ -131,12 +146,12 @@ def _smoothJunctionSharpAnglesHelper(linestrings : List[shapely.geometry.LineStr
 
     # now that we have a valid set of angles, we can redistribute the
     # linestrings to those angles by moving the first interior points.
-    for i, child in enumerate(reach.children):
+    for i in range(len(linestrings)-1):
         fixed_ls = linestrings[i]
         move_ls = linestrings[i+1]
         v1 = np.array(fixed_ls.coords[-1]) - np.array(fixed_ls.coords[-2])
         dist = watershed_workflow.utils.computeDistance(move_ls.coords[-1], move_ls.coords[-2])
-        v2 = watershed_workflow.utils.computeVectorAtAngle(v1, angles[i], dist)
+        v2 = watershed_workflow.utils.projectVectorAtAngle(v1, angles[i], dist)
 
         new_coords = np.array(linestrings[i+1].coords)
         new_coords[-2] = new_coords[-1] - np.array(v2)
@@ -144,15 +159,37 @@ def _smoothJunctionSharpAnglesHelper(linestrings : List[shapely.geometry.LineStr
     return
 
 
+def getAnglesAtJunction(reach : River):
+    """Helper function"""
+    assert(len(reach.children) > 0)
+    linestrings = [_reverseLinestring(reach.linestring),] \
+        + [c.linestring for c in reach.children]
+    angles = np.array([watershed_workflow.utils.computeAngle(_reverseLinestring(linestrings[i]),
+                                                             linestrings[(i+1) % len(linestrings)]) \
+                       for i in range(len(linestrings))])
+    assert(abs(sum(angles) - 360) < 0.01)
+    return angles
+
+
+def isBadJunctionSharpAngle(reach : River,
+                              min_angle : float) -> bool:
+    """Diagnostic function for post-facto checking."""
+    if min_angle == 0: return False
+    if len(reach.children) == 0: False
+    angles = getAnglesAtJunction(reach)
+    return min(angles) < min_angle
+
+
 def smoothJunctionSharpAngles(reach : River,
                               min_angle : float) -> None:
     if min_angle == 0: return
     if len(reach.children) == 0: return
+
     linestrings = [_reverseLinestring(reach.linestring),] \
         + [c.linestring for c in reach.children]
-    new_linestrings = _smoothJunctionSharpAnglesHelper(linestrings)
+    _smoothJunctionSharpAnglesHelper(linestrings, min_angle)
     for i,c in enumerate(reach.children):
-        c.linestring = new_linestrings[i+1]
+        c.linestring = linestrings[i+1]
     return 
     
 
@@ -170,10 +207,10 @@ def smoothOutletSharpAngles(reach : River,
     # find the segment whose endpoint touches outlet -- there should be exactly two
     huc_touches = []
     for handle in hucs.boundaries:
-        if hucs.linestrings[handle]
-    handle for handle in hucs.boundaries if 
-    
-    for ls in hucs.exterior
+        #if hucs.linestrings[handle]
+        #handle for handle in hucs.boundaries if 
+        pass
+    #for ls in hucs.exterior
 
 
 def treatSmallAngleBetweenChildNodes(node : River, angle_limit : float = 10) -> bool:
