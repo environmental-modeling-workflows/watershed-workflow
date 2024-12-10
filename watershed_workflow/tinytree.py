@@ -164,19 +164,24 @@ class Tree(object):
         for i in nodes:
             i.register(parent)
 
-    def inject(self, node):
+    def giveChildren(self, node):
         """
-            Inserts a node between the current node and its children. Returns the
-            specified parent node.
+            Gives my children to node.
 
             :node A Tree object
         """
         children = self.clear()
         for i in children:
             node.addChild(i)
-        self.addChild(node)
         return node
 
+    def inject(self, node):
+        """
+            Inject node between self and self.children.
+        """
+        self.giveChildren(node)
+        self.addChild(node)
+    
     def reparent(self, node):
         """
             Inserts a node between the current node and its parent. Returns the

@@ -190,7 +190,7 @@ class River(watershed_workflow.tinytree.Tree):
             colors = lc.get_colors()
 
             # scatter the markers
-            for i, seg in enumerate(self.df.geometry):
+            for i, seg in enumerate(geo for geo in self.df.geometry if not watershed_workflow.utils.isEmpty(geo)):
                 if len(colors) == 1:
                     color = colors[0]
                 else:
@@ -247,7 +247,6 @@ class River(watershed_workflow.tinytree.Tree):
         if names.CATCHMENT in upstream_props:
             upstream_props[names.CATCHMENT] = shapely.geometry.Point()
 
-        self.linestring = downstream_linestring
         upstream_props['geometry'] = upstream_linestring
 
         # new node
@@ -267,9 +266,15 @@ class River(watershed_workflow.tinytree.Tree):
 
         # -- construct the new upstream node inject it into the tree
         new_node = self.__class__(new_index, self.df)
-        self.inject(new_node)
+        self.giveChildren(new_node)
+        self.linestring = downstream_linestring
+        self.addChild(new_node)
         return new_node, self
 
+    def splitAtArclen(self, s : float):
+        """Inserts a coordinate at arclen s, then splits at that coordinate."""
+        i = self.insertCoordinateByArclen(s)
+        return self.split(i)
 
     def merge(self, merge_reach : bool = True) -> None:
         """Merges this with its parent."""
@@ -296,6 +301,7 @@ class River(watershed_workflow.tinytree.Tree):
 
         # set topology
         self.remove()
+        self.linestring = shapely.geometry.LineString()
         for child in self.children:
             parent.addChild(child)
 
@@ -320,13 +326,39 @@ class River(watershed_workflow.tinytree.Tree):
         coords[i] = xy
         self.linestring = shapely.geometry.LineString(coords)
 
-    def insertCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
-        """Inserts a new coordinate before the ith coordinate."""
+    def insertCoordinate(self, i : int, xy : Tuple[float,float]) -> int:
+        """If it doesn't already exist, inserts a new coordinate before the ith coordinate.
+
+        Returns the index of the new (or preexisting) coordinate.
+        """
         if i < 0:
             i = len(self.linestring.coords) + i
         coords = list(self.linestring.coords)
-        coords.insert(i, xy)
-        self.linestring = shapely.geometry.LineString(coords)
+
+        if watershed_workflow.utils.isClose(xy, coords[i-1]):
+            # don't insert and existing point
+            return i-1
+        elif i < len(coords) and watershed_workflow.utils.isClose(xy, coords[i]):
+            return i
+        else:
+            coords.insert(i, xy)
+            self.linestring = shapely.geometry.LineString(coords)
+            return i
+
+    def insertCoordinateByArclen(self, s : float) -> int:
+        """Inserts a new coordinate at a given arclen, returning the index of that coordinate.
+
+        Note that arclen is measured from the downstream end!
+        """
+        sp = self.linestring.length - s
+        
+        coords = np.array(self.linestring.coords)
+        dcoords = coords[1:] - coords[:-1]
+        ds = np.linalg.norm(dcoords, axis=1)
+        point_arclens = np.cumsum(ds)
+        i = np.where(point_arclens > sp)[0][0]
+        p = self.linestring.interpolate(sp)
+        return self.insertCoordinate(i+1, p)
 
     def appendCoordinate(self, xy : Tuple[float,float]) -> None:
         """Appends a coordinate at the end (downstream) of the linestring."""
@@ -610,17 +642,33 @@ def getNode(rivers, index):
     return None
 
 
-def combineSiblings(n1, n2):
+def combineSiblings(n1 : River,
+                    n2 : River,
+                    new_ls : Optional[shapely.geometry.LineString] = None,
+                    ds : Optional[float] = None) -> River:
     """Combines two sibling nodes, merging catchments and metadata.
 
-    Note the resulting reach linestring only merges the beginpoint and endpoint.
+    Note the resulting reach is either provided (by new_ls) or is
+    computed by interpolating discrete nodes every ds.
+
     """
     assert (n1.isSiblingOf(n2))
-    beginpoint = (np.array(n1.linestring.coords[0]) + np.array(n2.linestring.coords[0])) / 2
-    endpoint = (np.array(n1.linestring.coords[-1]) + np.array(n2.linestring.coords[-1])) / 2
-    new_seg = shapely.geometry.LineString([beginpoint, endpoint])
-    n1.linestring = new_seg
 
+    if new_ls is None:
+        assert ds is not None
+        avg_length = (n1.linestring.length + n2.linestring.length) / 2
+        npoints = int(avg_length // ds) + 2
+        ds1 = np.linspace(0, n1.linestring.length, npoints)
+        points1 = n1.linestring.interpolate(ds1)
+    
+        ds2 = np.linspace(0, n2.linestring.length, npoints)
+        points2 = n2.linestring.interpolate(ds2)
+
+        points = [watershed_workflow.utils.computeMidpoint(p1.coords[0], p2.coords[0]) for (p1,p2) in zip(points1, points2)]
+        new_ls = shapely.geometry.LineString(points)
+
+    n1.linestring = new_ls
+    
     if names.AREA in n1:
         n1[names.AREA] += n2[names.AREA]
 
@@ -630,16 +678,19 @@ def combineSiblings(n1, n2):
         else:
             n1['catchment'] = shapely.ops.unary_union([n1['catchment'], n2['catchment']])
 
+    for child in n1.children:
+        if not watershed_workflow.utils.isClose(child.linestring.coords[-1], new_ls.coords[0]):
+            child.appendCoordinate(new_ls.coords[0])
+            
     for child in n2.children:
+        if not watershed_workflow.utils.isClose(child.linestring.coords[-1], new_ls.coords[0]):
+            child.appendCoordinate(new_ls.coords[0])
         if names.DOWNSTREAM_HYDROSEQ in child:
             child[names.DOWNSTREAM_HYDROSEQ] = n1[names.HYDROSEQ]
         n1.addChild(child)
     n2.children = []
     n2.remove()
-
-    for child in n1.children:
-        child.moveCoordinate(-1, n1.linestring.coords[0])
-
+    n2.linestring = shapely.geometry.LineString()
     return n1
 
 
@@ -793,6 +844,7 @@ def mergeShortReaches(river : River,
             elif len(node.children) == 0:
                 # if the leaf node is too small
                 node.remove()
+                node.linestring = shapely.geometry.LineString()
             else:
                 for sibling in list(node.siblings):
                     sibling.moveCoordinate(-1, node.linestring.coords[0])
@@ -801,7 +853,7 @@ def mergeShortReaches(river : River,
 
                 assert (len(list(node.siblings)) == 0)
                 node.merge()
-
+            
 
 def pruneByLineStringLength(river : River,
                             prune_tol : Optional[float] = None) -> int:
@@ -999,4 +1051,11 @@ def simplify(rivers : List[River],
             river.df.simplify(tol)
 
 
-            
+def isClose(river1 : River,
+            river2 : River,
+            tol : float):
+    """Equivalence of rivers."""
+    return all((watershed_workflow.utils.isClose(r1.linestring, r2.linestring, tol) and
+                    len(r1.children) == len(r2.children))
+                   for (r1,r2) in zip(river1.preOrder(), river2.preOrder()))
+    

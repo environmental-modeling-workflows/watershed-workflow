@@ -2,6 +2,7 @@ import pytest
 import itertools
 
 import shapely.geometry
+from matplotlib import pyplot as plt
 
 from watershed_workflow.test.shapes import *
 import watershed_workflow.river_tree
@@ -34,10 +35,10 @@ def test_list_same():
 
 def test_tree_gen():
     df = geopandas.GeoDataFrame({'index':[0,1,2,3],
-                                 'geometry': [shapely.geometry.LineString([(0,0), (0,1)]),
-                                              shapely.geometry.LineString([(0,1), (1,0)]),
-                                              shapely.geometry.LineString([(1,0), (1,1)]),
-                                              shapely.geometry.LineString([(1,0), (2,0)])]
+                                 'geometry': [shapely.geometry.LineString([(0,1), (0,0)]),
+                                              shapely.geometry.LineString([(1,0), (0,1)]),
+                                              shapely.geometry.LineString([(1,1), (1,0)]),
+                                              shapely.geometry.LineString([(2,0), (1,0)])]
                                  }).set_index('index')
     t = watershed_workflow.river_tree.River(0,df)
     n0 = t.addChild(1)
@@ -151,6 +152,15 @@ def test_merge():
     assert (len(n1.children) == 0)
 
 
+def _validUpDown(n1,n2):
+    assert n1.parent is n2
+    assert n2.parent is None
+    assert n2 not in n1.preOrder()
+    assert n1 in n2.preOrder()
+    assert n2.isContinuous()
+    assert len(n1.children) == 0
+    assert len(n2.children) == 1
+    
 def test_split():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
@@ -158,20 +168,57 @@ def test_split():
 
     n1,n2 = node.split(1)
     # check topology: n1 --> n2
-    assert n1.parent is n2
-    assert n2 not in n1.preOrder()
-    assert len(n1.children) == 0
-    
-    assert n2.parent is None
-    assert n1 in n2.children
-    assert len(n2.children) == 1
+    _validUpDown(n1, n2)
 
     assert n2 is node # inplace
     assert n1.linestring.length == 2 # geometry is right
     assert n2.linestring.length == 1
 
-    assert n2.isContinuous()
+    
+def test_split_errors():
+    s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
+    df = geopandas.GeoDataFrame({'geometry' : [s,]})
+    node = watershed_workflow.river_tree.River(0, df)
 
+    with pytest.raises(Exception):
+        node.split(5)
+    
+def test_split_arclen():
+    s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
+    df = geopandas.GeoDataFrame({'geometry' : [s,]})
+    node = watershed_workflow.river_tree.River(0, df)
+
+    n1, n2 = node.splitAtArclen(1.5)
+    _validUpDown(n1, n2)
+    assert abs(n1.linestring.length - 1.5) < 1.e-10
+    assert len(n1.linestring.coords) == 2
+    assert abs(n2.linestring.length - 1.5) < 1.e-10
+    assert len(n2.linestring.coords) == 3
+
+
+def test_split_arclen_on_coord():
+    s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
+    df = geopandas.GeoDataFrame({'geometry' : [s,]})
+    node = watershed_workflow.river_tree.River(0, df)
+
+    n1, n2 = node.splitAtArclen(1.0)
+    _validUpDown(n1, n2)
+    assert abs(n1.linestring.length - 2) < 1.e-10
+    assert len(n1.linestring.coords) == 2
+    assert abs(n2.linestring.length - 1) < 1.e-10
+    assert len(n2.linestring.coords) == 2
+
+    
+def test_split_arclen_errors():
+    s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
+    df = geopandas.GeoDataFrame({'geometry' : [s,]})
+    node = watershed_workflow.river_tree.River(0, df)
+
+    with pytest.raises(Exception):
+        node.split(-0.5)
+    with pytest.raises(Exception):
+        node.split(3.5)
+    
     
 def test_prune():
     s2 = shapely.geometry.LineString([(2, 0), (1, 0)])
@@ -205,3 +252,123 @@ def test_remove_divergences(braided_stream):
     hydroseq = [r.properties['hydroseq'] for r in rivers[0]]
     expected = [1, 2, 3, 6]
     assert (all((e == h) for (e, h) in zip(expected, hydroseq)))
+
+
+    
+    
+def test_zipper_null(y):
+    river = watershed_workflow.river_tree.River.constructRiversByGeometry(y)[0]
+    river_copy = river.deepcopy()
+    watershed_workflow.river_tree.zipperParallelTributaries(river, 0.1, 0.05)
+    assert watershed_workflow.river_tree.isClose(river, river_copy, 1.e-10)
+
+def test_zipper_simple():
+    s3 = shapely.geometry.LineString([(2, 0.1), (1, 0)])
+    s2 = shapely.geometry.LineString([(2, 0), (1, 0)])
+    s1 = shapely.geometry.LineString([(1, 0), (0, 0)])
+    df = geopandas.GeoDataFrame({'index' : [3, 2,1],
+                                 'geometry' : [s3, s2,s1]}).set_index('index')
+
+    n3 = watershed_workflow.river_tree.River(3, df)
+    n2 = watershed_workflow.river_tree.River(2, df)
+    river = watershed_workflow.river_tree.River(1, df, [n2,n3])
+    river_orig = river.deepcopy()
+
+    watershed_workflow.river_tree.zipperParallelTributaries(river, 0.1, 0.05)
+
+    assert len(river) == 4 # added a new node
+    assert river.isContinuous()
+    assert len(river.children) == 1 # in between 1 and {2,3}
+    assert watershed_workflow.utils.isClose(s1, river.linestring) # unchanged downstream
+    assert watershed_workflow.utils.isClose(river.children[0].linestring,
+                                            shapely.geometry.LineString([(1.5,0.025),
+                                                                         (1.4,0.02),
+                                                                         (1.3,0.015),
+                                                                         (1.2,0.01),
+                                                                         (1.1,0.005),
+                                                                         (1.,0.)]), 0.001)
+
+    n3_t = river.children[0].children[0]
+    assert watershed_workflow.utils.isClose(n3_t.linestring,
+                                            shapely.geometry.LineString([(2, 0.1),
+                                                                         (1.5,0.05),
+                                                                         (1.5,0.025)]), 0.001)
+
+    n2_t = river.children[0].children[1]
+    assert watershed_workflow.utils.isClose(n2_t.linestring,
+                                            shapely.geometry.LineString([(2, 0),
+                                                                         (1.5,0),
+                                                                         (1.5,0.025)]), 0.001)
+
+    # for reach in river:
+    #     print(reach.linestring)
+
+    # fig, ax = plt.subplots(1,1)
+    # river_orig.plot(color='b', marker='x', ax=ax)
+    # river.plot(color='r', marker='x', ax=ax)
+    # plt.show()
+    # assert False
+
+
+def test_zipper_three():
+    s4 = shapely.geometry.LineString([(2, 0.1), (1, 0)])
+    s3 = shapely.geometry.LineString([(2, 0), (1, 0)])
+    s2 = shapely.geometry.LineString([(2, -0.1), (1, 0)])
+    s1 = shapely.geometry.LineString([(1, 0), (0, 0)])
+    df = geopandas.GeoDataFrame({'index' : [4, 3, 2, 1],
+                                 'geometry' : [s4, s3, s2, s1]}).set_index('index')
+
+    n4 = watershed_workflow.river_tree.River(4, df)
+    n3 = watershed_workflow.river_tree.River(3, df)
+    n2 = watershed_workflow.river_tree.River(2, df)
+    river = watershed_workflow.river_tree.River(1, df, [n2,n3,n4])
+    river_orig = river.deepcopy()
+
+    watershed_workflow.river_tree.zipperParallelTributaries(river, 0.1, 0.05)
+
+    assert len(river) == 6 # added two new nodes...
+    assert river.isContinuous()
+    assert len(river.children) == 1 # in between 1 and {2,3}
+    assert watershed_workflow.utils.isClose(s1, river.linestring) # unchanged downstream
+    # assert watershed_workflow.utils.isClose(river.children[0].linestring,
+    #                                         shapely.geometry.LineString([(1.5,0.025),
+    #                                                                      (1.4,0.02),
+    #                                                                      (1.3,0.015),
+    #                                                                      (1.2,0.01),
+    #                                                                      (1.1,0.005),
+    #                                                                      (1.,0.)]), 0.001)
+
+    # n4_t = river.children[0].children[0]
+    # assert watershed_workflow.utils.isClose(n4_t.linestring,
+    #                                         shapely.geometry.LineString([(2, 0.1),
+    #                                                                      (1.5, 0.05),
+    #                                                                      (1.5, 0.025)]), 0.001)
+
+    # n3_t = river.children[0].children[1]
+    # assert watershed_workflow.utils.isClose(n3_t.linestring,
+    #                                         shapely.geometry.LineString([(2, 0),
+    #                                                                      (1.5,0),
+    #                                                                      (1.5,0.025)]), 0.001)
+
+    # n2_t = river.children[0].children[2]
+    # assert watershed_workflow.utils.isClose(n2_t.linestring,
+    #                                         shapely.geometry.LineString([(2, -0.1),
+    #                                                                      (1.5,-0.05),
+    #                                                                      (1.5,-0.025)]), 0.001)
+    
+    
+    # for reach in river:
+    #     print(reach.linestring)
+
+    # fig, ax = plt.subplots(1,1)
+    # river_orig.plot(color='k', marker='x', ax=ax)
+    # river.plot(marker='x', ax=ax)
+    # plt.show()
+    # assert False
+    
+    
+    
+           
+
+    
+    

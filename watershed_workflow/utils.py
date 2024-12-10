@@ -11,9 +11,11 @@ if typing.TYPE_CHECKING:
     from typing import Iterable, Tuple, List, Any, Optional, Literal
     import numpy.typing as npt
     import geopandas as gpd
-    from watershed_workflow.crs import CRS
     import xarray.core.types
+    import matplotlib.axes
 
+    from watershed_workflow.crs import CRS
+    
 import datetime, cftime
 import logging
 import numpy as np
@@ -77,6 +79,9 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
 
     """
     if isinstance(v1, shapely.geometry.LineString):
+        if isinstance(v2, shapely.geometry.LineString):
+            assert isClose(v1.coords[0], v2.coords[-1])
+        
         c1 = np.array(v1.coords[0:2])
         return computeAngle(c1[1] - c1[0], v2)
     if isinstance(v2, shapely.geometry.LineString):
@@ -89,7 +94,6 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
     # Compute the angle of each vector with respect to the positive x-axis
     angle1 = math.atan2(y1, x1)  # Angle of vec1
     angle2 = math.atan2(y2, x2)  # Angle of vec2
-    print(angle1, angle2)
 
     # Compute the difference in angles, clockwise
     delta_angle = angle1 - angle2
@@ -101,8 +105,6 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
     if clockwise_angle < 0:
         clockwise_angle += 360
 
-    print(v1, v2, clockwise_angle)
-        
     return clockwise_angle    
 
     
@@ -298,6 +300,10 @@ def breakLineStringCollinearity(linestring_coords : np.ndarray,
 
             linestring_coords[i + 1] = p1 + ortho
     return linestring_coords
+
+
+def reverseLineString(ls):
+    return shapely.geometry.LineString(reversed(ls.coords))
 
 
 def isClose(s1 : BaseGeometry,
@@ -574,7 +580,7 @@ def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.g
     return shapely.ops.transform(_drop_z, geom)
 
 
-def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.array:
+def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.ndarray:
     coords = np.array(ls.coords)
     return np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
 
@@ -582,14 +588,14 @@ def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.array:
 def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
                            name : str,
                            assert_on_zero : bool = False,
-                           ax : Optional[matplotlib.Axes] = None,
+                           ax : Optional[matplotlib.axes.Axes] = None,
                            color : Optional[str | Tuple] = None) -> None:
     """Computes min, median, and max segment length across all linestrings."""
-    seg_mins = []
-    seg_maxs = []
-    seg_meds = []
-    seg_lens = []
-    geom_lens = []
+    seg_mins : List[float] = []
+    seg_maxs : List[float] = []
+    seg_meds : List[float] = []
+    seg_lens : List[np.ndarray] = []
+    geom_lens : List[float] = []
     
     for ls in iterable:
         geom_lens.append(ls.length)

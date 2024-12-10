@@ -228,7 +228,12 @@ class SplitHUCs:
                 linestrings.append(self.linestrings[s])
 
         ml = shapely.ops.linemerge(linestrings)
-        assert (type(ml) is shapely.geometry.LineString)
+        try:
+            assert (type(ml) is shapely.geometry.LineString)
+        except AssertionError:
+            for ls in linestrings:
+                logging.info(ls)
+            raise AssertionError
         poly = shapely.geometry.Polygon(ml)
         return poly
 

@@ -33,8 +33,9 @@ import watershed_workflow.utils
 import watershed_workflow.river_tree
 import watershed_workflow.split_hucs
 import watershed_workflow.hydrography
-import watershed_workflow.triangulation
 import watershed_workflow.resampling
+import watershed_workflow.angles
+import watershed_workflow.triangulation
 import watershed_workflow.river_mesh
 import watershed_workflow.source_list
 
@@ -272,6 +273,8 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
              river_close_distance : float = 100.0,
              river_far_distance : float = 500.0,
              resample_by_reach_property : bool = False,
+             min_angle : float = 20,
+             junction_min_angle : float = 10,
              keep_points : bool = False) -> None:
     """Simplifies the HUC and river shapes to create constrained, discrete segments.
 
@@ -347,7 +350,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 
     logging.info(f"Merging internal reaches < {reach_segment_target_length}")
     for river in rivers:
-        watershed_workflow.river_tree.mergeShortReaches(river, reach_segment_target_length)
+        watershed_workflow.river_tree.mergeShortReaches(river, 0.75*reach_segment_target_length)
 
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
@@ -379,10 +382,11 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     # resample
     logging.info("")
     logging.info("Resampling HUC and river")
+    logging.info("-" * 30)
 
     if huc_segment_target_length is not None:
-        dfunc = [river_close_distance, reach_segment_target_length, 
-                 river_far_distance, huc_segment_target_length]
+        dfunc = (river_close_distance, reach_segment_target_length, 
+                 river_far_distance, huc_segment_target_length)
         river_mls = shapely.ops.unary_union([river.to_mls() for river in rivers])
         logging.info(f" -- resampling HUCs based on distance function {dfunc}")
         watershed_workflow.resampling.resampleSplitHUCs(hucs, dfunc, river_mls, keep_points=keep_points)
@@ -403,7 +407,16 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     fig, ax = plt.subplots(1,1)
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach", ax=ax, color='b')
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ", ax=ax, color='orange')
-        
+
+    # fix bad angles
+    logging.info("")
+    logging.info("Clean up sharp angles, both internally and at junctions.")
+    logging.info("-" * 30)
+    count = watershed_workflow.angles.smoothSharpAngles(hucs, rivers, min_angle, junction_min_angle)
+    logging.info(f"Cleaned up {count} sharp angles.")
+    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+    
 
 # def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
 #     """Redensify a river, huc, or waterbodies object, meeting a provided target or target resolution function.

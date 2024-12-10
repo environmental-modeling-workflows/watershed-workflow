@@ -11,6 +11,7 @@ import numpy as np
 import math
 import shapely
 import abc
+import scipy.optimize
 
 from watershed_workflow.river_tree import River
 from watershed_workflow.split_hucs import SplitHUCs
@@ -27,6 +28,14 @@ class ComputeTargetLength(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def min(self) -> float:
+        pass
+
+    @abc.abstractmethod
+    def max(self) -> float:
+        pass
+    
+    @abc.abstractmethod
     def __call__(self, arg : Any) -> float:
         pass
 
@@ -39,27 +48,50 @@ class ComputeTargetLengthFixed(ComputeTargetLength):
     def __call__(self, arg):
         return self._target_length
 
+    def min(self):
+        return self._target_length
+
+    def max(self):
+        return self._target_length
+    
+
     
 class ComputeTargetLengthByProperty(ComputeTargetLength):
     is_uniform = True
     def __call__(self, reach):
         return reach.properties[names.TARGET_SEGMENT_LENGTH]
 
+    def min(self):
+        return reach.properties[names.TARGET_SEGMENT_LENGTH]
+
+    def max(self):
+        return reach.properties[names.TARGET_SEGMENT_LENGTH]
+    
     
 class ComputeTargetLengthByCallable(ComputeTargetLength):
     is_uniform = True
-    def __init__(self, func):
+    def __init__(self, func, min, max):
         self._func = func
+        self._min = min
+        self._max = max
 
     def __call__(self, reach):
         return self._func(reach)
 
+    def min(self):
+        return self._min
+
+    def max(self):
+        return self._max
+    
     
 class ComputeTargetLengthByDistanceToShape(ComputeTargetLength):
     is_uniform = False
     def __init__(self, dist_args, shp):
         self._d1, self._d2 = dist_args[0], dist_args[2]
+        assert self._d1 <= self._d2
         self._l1, self._l2 = dist_args[1], dist_args[3]
+        assert self._l1 <= self._l2
         self._shp = shp
 
     def _fromDistance(self, dist):
@@ -73,6 +105,11 @@ class ComputeTargetLengthByDistanceToShape(ComputeTargetLength):
     def __call__(self, point):
         return self._fromDistance(shapely.distance(self._shp, shapely.geometry.Point(point)))
 
+    def min(self):
+        return self._l1
+
+    def max(self):
+        return self._l2
     
 
 #
@@ -89,12 +126,12 @@ def resampleRivers(rivers : List[River], target_length : float, keep_points : bo
     ...
 
 @overload
-def resampleRivers(rivers : List[River], target_length : Callable[[River,],float], keep_points : bool = False) -> None:
+def resampleRivers(rivers : List[River], target_length : ComputeTargetLength, keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
 def resampleRivers(rivers : List[River],
-                   target_length : Optional[float | Callable[[River,],float]] = None,
+                   target_length : Optional[float | ComputeTargetLength] = None,
                    keep_points : bool = False) -> None:
     for river in rivers:
         _resampleRiverArgs(river, target_length, keep_points)
@@ -115,25 +152,25 @@ def resampleRiver(river : River, target_length : float, keep_points : bool = Fal
     ...
 
 @overload
-def resampleRiver(river : River, target_length : Callable[[River,],float], keep_points : bool = False) -> None:
+def resampleRiver(river : River, target_length : ComputeTargetLength, keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
 # could use functools singledispatch here but it seems unnecessary
 def resampleRiver(river : River,
-                  target_length : Optional[float | Callable[[River,],float]] = None,
+                  target_length : Optional[float | ComputeTargetLength] = None,
                   keep_points : bool = False) -> None:
     _resampleRiverArgs(river, target_length, keep_points)
 
 
 # only exists to quiet mypy    
 def _resampleRiverArgs(river : River,
-                       target_length : Optional[float | Callable[[River,],float]] = None,
+                       target_length : Optional[float | ComputeTargetLength] = None,
                        keep_points : bool = False) -> None:
     if target_length is None:
         _resampleRiver(river, ComputeTargetLengthByProperty(), keep_points)
-    elif callable(target_length):
-        _resampleRiver(river, ComputeTargetLengthByCallable(target_length), keep_points)
+    elif isinstance(target_length, ComputeTargetLength):
+        _resampleRiver(river, target_length, keep_points)
     else:
         try:
             _resampleRiver(river, ComputeTargetLengthFixed(float(target_length)), keep_points)
@@ -142,7 +179,7 @@ def _resampleRiverArgs(river : River,
 
 
 def _resampleRiver(river : River,
-                   computeTargetLength : Callable[[River,],float],
+                   computeTargetLength : ComputeTargetLength,
                    keep_points : bool = False) -> None:
     """Resamples a river, in place, given a strategy to compute the target segment length."""
     for node in river.preOrder():
@@ -258,7 +295,7 @@ def resampleLineStringUniform(linestring : shapely.geometry.LineString,
 
 
 def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
-                                  computeTargetLength : Callable[[Any,],float]) -> shapely.geometry.LineString:
+                                  computeTargetLength : ComputeTargetLength) -> shapely.geometry.LineString:
     """Resample a linestring by distance with no respect for previous discrete coords."""
     # starting at the near coordinate, add segments of a given
     # arclength until they cover the linestring.
@@ -266,26 +303,45 @@ def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     arclens = [0.,]
     length = linestring.length
     s = 0.0
-    while s < length:
-        d = computeTargetLength(coords[-1])
-        done = False
-        count = 0
-        s0 = s
-        while not done:
-            count += 1
-            s = s0 + d
-            next_coord = linestring.interpolate(s).coords[0]
+
+    while s < length - 1.e-4:
+        def func1(s_itr):
+            if s_itr > linestring.length:
+                v = np.array(linestring.coords[-1]) - np.array(linestring.coords[-2])
+                v /= np.linalg.norm(v)
+                next_coord = np.array(linestring.coords[-1]) + (s_itr - linestring.length) * v
+            else:
+                next_coord = linestring.interpolate(s_itr).coords[0]
             midp = watershed_workflow.utils.computeMidpoint(next_coord, coords[-1])
-            d_midp = computeTargetLength(midp)
-            done = (abs(d - d_midp) / max(d, d_midp)) < 0.01 or count > 10
-            d = d_midp
+            d = computeTargetLength(midp)
+            return next_coord, d
+        
+        def func(s_itr):
+            next_coord, d = func1(s_itr)
+            ds = watershed_workflow.utils.computeDistance(next_coord, coords[-1])
+            return abs(d - ds)
+
+        logging.info('Iterating to resample nonuniform:')
+        res = scipy.optimize.minimize_scalar(func, bounds=[s + computeTargetLength.min(),
+                                                           s + computeTargetLength.max()])
+        s = res.x
+        next_coord, d = func1(s)
+
+        logging.info(f'  coords = ( {coords[-1]}, {next_coord} ) at s = {s} gives d = {d}')
+        if res.success:
+            logging.info(f'  converged: {res.message} with error {func(s)}, itrs = {res.nit}')
+        else:
+            logging.info(f'  NOT CONVERGED: {res.message} with error {func(s)}, itrs = {res.nit}')
 
         arclens.append(s)
         coords.append(next_coord)
 
     # the new total arclength (s) is now longer than original length,
     # scale the arclens back to length
-    arclens_a = np.array(arclens) * length / s
+    logging.info(f'arclens = {np.array(arclens) / length}')
+    logging.info(f'shrinking by factor of {length/s}')
+    arclens_a = np.array(arclens) / arclens[-1] * length
+    
 
     # sample the linestring to get the new coordinates and return
     new_linestring_coords = shapely.line_interpolate_point(linestring, arclens_a)
@@ -293,7 +349,7 @@ def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
     
 
 def resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
-                                 computeTargetLength : Callable[[Any,],float],
+                                 computeTargetLength : ComputeTargetLength,
                                  keep_points : bool = False) -> shapely.geometry.LineString:
     """Resample a linestring nonuniformly, keeping previous discrete coords if possible."""
     assert linestring.length > 0
