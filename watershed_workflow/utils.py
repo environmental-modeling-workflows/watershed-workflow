@@ -565,10 +565,6 @@ def findNearestPoint(point : shapely.geometry.Point,
             dist = computeDistance(nearest_p, point)
             logging.debug("  - nearest p = {0}, dist = {1}, tol = {2}".format(nearest_p, dist, tol))
             if dist < tol:
-                if dist < 1.e-7:
-                    # filter case where the point is already there
-                    if any(isClose(point, c) for c in line.coords):
-                        return None
                 return nearest_p
         return None
 

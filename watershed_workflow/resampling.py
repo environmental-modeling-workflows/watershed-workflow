@@ -321,25 +321,25 @@ def _resampleLineStringNonuniform(linestring : shapely.geometry.LineString,
             ds = watershed_workflow.utils.computeDistance(next_coord, coords[-1])
             return abs(d - ds)
 
-        logging.info('Iterating to resample nonuniform:')
+        logging.debug('Iterating to resample nonuniform:')
         res = scipy.optimize.minimize_scalar(func, bounds=[s + computeTargetLength.min(),
                                                            s + computeTargetLength.max()])
         s = res.x
         next_coord, d = func1(s)
 
-        logging.info(f'  coords = ( {coords[-1]}, {next_coord} ) at s = {s} gives d = {d}')
+        logging.debug(f'  coords = ( {coords[-1]}, {next_coord} ) at s = {s} gives d = {d}')
         if res.success:
-            logging.info(f'  converged: {res.message} with error {func(s)}, itrs = {res.nit}')
+            logging.debug(f'  converged: {res.message} with error {func(s)}, itrs = {res.nit}')
         else:
-            logging.info(f'  NOT CONVERGED: {res.message} with error {func(s)}, itrs = {res.nit}')
+            logging.debug(f'  NOT CONVERGED: {res.message} with error {func(s)}, itrs = {res.nit}')
 
         arclens.append(s)
         coords.append(next_coord)
 
     # the new total arclength (s) is now longer than original length,
     # scale the arclens back to length
-    logging.info(f'arclens = {np.array(arclens) / length}')
-    logging.info(f'shrinking by factor of {length/s}')
+    logging.debug(f'arclens = {np.array(arclens) / length}')
+    logging.debug(f'shrinking by factor of {length/s}')
     arclens_a = np.array(arclens) / arclens[-1] * length
     
 

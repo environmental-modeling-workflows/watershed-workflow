@@ -365,11 +365,14 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     logging.info(" -- snapping reach endpoints to HUC boundaries")
     for river in rivers:
         watershed_workflow.hydrography.snapEndpoints(hucs, river, reach_segment_target_length)
+        assert river.isContinuous()
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
-        
+
     logging.info(" -- cutting reaches at HUC boundaries")
     watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, reach_segment_target_length)
+    for river in rivers:
+        assert river.isContinuous()
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
     

@@ -213,8 +213,7 @@ class Tree(object):
     @property
     def siblings(self):
         """
-            Generator yielding all siblings of this node, including this
-            node itself.
+            Generator yielding all siblings of this node, not including this node.
         """
         if self.parent:
             for i in self.parent.children:
