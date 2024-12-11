@@ -4,6 +4,8 @@ import matplotlib.colors
 import matplotlib.cm
 import numpy as np
 import collections
+import random
+import colorsys
 
 #
 # Lists of disparate color palettes
@@ -24,6 +26,98 @@ enumerated_palettes = {
         "#333a9e", "#94721a", "#d17778", "#f3c011", "#1eefc9", "#8e3703", "#02531d", "#d62df6"
     ],
 }
+
+
+
+def isNearlyGrey(color_hash, tolerance=10):
+    """
+    Determines whether a color hash is nearly grey.
+
+    Parameters:
+        color_hash (str): A hex color string, e.g., "#A1A1A1".
+        tolerance (int): The maximum allowable difference between RGB values to consider the color grey.
+
+    Returns:
+        bool: True if the color is nearly grey, False otherwise.
+
+    This code was written by ChatGTP4.0.
+    """
+    # Ensure the color hash is valid
+    if not isinstance(color_hash, str) or not color_hash.startswith("#") or len(color_hash) != 7:
+        raise ValueError("Invalid color hash. Must be a string in the format #RRGGBB.")
+
+    # Extract RGB values
+    try:
+        r = int(color_hash[1:3], 16)
+        g = int(color_hash[3:5], 16)
+        b = int(color_hash[5:7], 16)
+    except ValueError:
+        raise ValueError("Invalid color hash. RGB values must be hexadecimal.")
+
+    # Check if the RGB values are within the tolerance range
+    return abs(r - g) <= tolerance and abs(g - b) <= tolerance and abs(b - r) <= tolerance
+
+
+def measureBoldness(color_hash):
+    """
+    Calculate a vibrancy and boldness score for a given color hash.
+
+    Args:
+        color_hash (str): A string representing the color hash (e.g., "#RRGGBB").
+
+    Returns:
+        float: A score representing how vibrant and bold the color is (0 to 100).
+    """
+    # Ensure the hash is valid
+    if not color_hash.startswith("#") or len(color_hash) not in {7, 4}:
+        raise ValueError("Invalid color hash format. Use #RRGGBB or #RGB.")
+
+    # Convert shorthand #RGB to full #RRGGBB if necessary
+    if len(color_hash) == 4:
+        color_hash = "#" + "".join([char * 2 for char in color_hash[1:]])
+
+    # Extract RGB values
+    r = int(color_hash[1:3], 16) / 255.0
+    g = int(color_hash[3:5], 16) / 255.0
+    b = int(color_hash[5:7], 16) / 255.0
+
+    # Convert RGB to HSL for better vibrancy measurement
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+
+    # Calculate vibrancy score (saturation and brightness impact vibrancy)
+    vibrancy = s * (1 - abs(2 * l - 1))
+
+    # Calculate boldness score (intensity of RGB components)
+    boldness = (r + g + b) / 3
+
+    # Combine vibrancy and boldness into a single score (weighted average)
+    score = (0.6 * vibrancy + 0.4 * boldness) * 100
+
+    return round(score, 2)
+
+
+
+# create a very big list of non-grey colors
+xkcd_colors = [c for c in matplotlib.colors.XKCD_COLORS.values() if not isNearlyGrey(c)]
+random.shuffle(xkcd_colors)
+
+_xkcd_by_bold = list(reversed(sorted(xkcd_colors, key=measureBoldness)))
+
+xkcd_bolds = _xkcd_by_bold[0:len(_xkcd_by_bold)//4]
+random.shuffle(xkcd_bolds)
+
+xkcd_muted = _xkcd_by_bold[len(_xkcd_by_bold)//2:3*len(_xkcd_by_bold)//4]
+random.shuffle(xkcd_muted)
+
+#random.shuffle(xkcd_colors)
+enumerated_palettes[5] = xkcd_colors
+
+# create a bigish list of greyish colors
+
+
+
+# this gives us way more unique colors to cycle through in plots
+matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=xkcd_bolds)
 
 
 def enumerated_colors(count, palette=1, chain=True):

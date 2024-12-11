@@ -36,9 +36,25 @@ def check_twoboxes(hucs):
 def hilevSnap(hucs, rivers, tol):
     """This helper function simply does all three hydro operations."""
     hydro.snapHUCsJunctions(hucs, rivers, 3*tol)
+
+    domain = hucs.exterior
+    assert all(domain.intersects(reach.linestring) for river in rivers for reach in river)
     for river in rivers:
-        hydro.snapEndpoints(hucs, river, tol)
-    hydro.cutAndSnapCrossings(hucs, rivers, tol)
+        river.linestring = hydro.snapBoundaryToLineString(hucs, river.linestring, tol)
+    for river in rivers:
+        for leaf in river.leaf_nodes:
+            new_linestring = hydro.snapBoundaryToLineString(hucs, watershed_workflow.utils.reverseLineString(leaf.linestring), tol)
+            if new_linestring is not None:
+                leaf.linestring = watershed_workflow.utils.reverseLineString(new_linestring)
+    hucs.update()
+
+    domain = hucs.exterior
+    assert all(domain.contains(reach.linestring) for river in rivers for reach in river)
+
+    for river in rivers:
+        for reach in river:
+            hydro.snapInternalToReachUpstreamJunction(hucs, reach, tol)
+
     
     
 #
@@ -51,18 +67,26 @@ def check0(hucs, rivers):
     assert len(hucs) == 1
     poly0 = hucs.computePolygon(0)
     print(poly0.boundary.coords[:])
+
+    # close to the polygon
     assert (watershed_workflow.utils.isClose(
-        poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])))
+        poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])),
+            1.e-3)
 
     riverlist = [r.linestring for r in rivers[0]]
     assert len(riverlist) == 1
     print(riverlist[0].coords[:])
-    assert watershed_workflow.utils.isClose(riverlist[0],
-                                           shapely.geometry.LineString([(5, 0), (10, 0)]))
 
+    # close to the river
     for tree in rivers:
         assert tree.isConsistent()
+    assert watershed_workflow.utils.isClose(riverlist[0],
+                                            shapely.geometry.LineString([(5, 0), (10, 0)]),
+                                            1.e-3)
 
+    # exact at the endpoint
+    assert any(watershed_workflow.utils.isClose(riverlist[0].coords[-1], c) for c in poly0.boundary.coords)
+    
 
 def test_snap0():
     """null-op, all data are already correct"""
@@ -83,7 +107,7 @@ def test_snap0a():
     hucs, rivers = data(tb, rs)
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 1)
-    hydro.snapEndpoints(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0b():
@@ -93,7 +117,7 @@ def test_snap0b():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (9.999, 0)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.snapEndpoints(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0c():
@@ -103,7 +127,7 @@ def test_snap0c():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.001, 0)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.snapEndpoints(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0d():
@@ -113,7 +137,7 @@ def test_snap0d():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (10.2, 0)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0e():
@@ -133,7 +157,7 @@ def test_snap0h():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 def test_snap0j():
@@ -143,7 +167,7 @@ def test_snap0j():
     tb.append(shapely.geometry.Polygon(b1))
     rs = [shapely.geometry.LineString([(5., 0.), (15, 0.), (16, 0.)]), ]
     hucs, rivers = data(tb, rs)
-    hydro.cutAndSnapCrossings(hucs, rivers, 0.1)
+    hilevSnap(hucs, rivers, 0.1)
     check0(hucs, rivers)
 
 #

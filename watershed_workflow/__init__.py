@@ -364,7 +364,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 
     logging.info(" -- snapping reach endpoints to HUC boundaries")
     for river in rivers:
-        watershed_workflow.hydrography.snapEndpoints(hucs, river, reach_segment_target_length)
+        watershed_workflow.hydrography.snapReachEndpoints(hucs, river, reach_segment_target_length)
         assert river.isContinuous()
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")

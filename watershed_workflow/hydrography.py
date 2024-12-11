@@ -295,7 +295,8 @@ def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
 
     Either way, also ensure there is a coordinate on the HUC
     boundary at the crossing point.
-    
+
+    Modifies no geometry, only topology.
     """
     r = reach.linestring
 
@@ -344,7 +345,10 @@ def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
 def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
                                 reach : River,
                                 merge_tol : float) -> None:
-    """Helper function for cutAndSnapCrossings()"""
+    """Helper function for cutAndSnapCrossings()
+
+    Modifies no geometry, only topology.
+    """
     r = reach.linestring
 
     # now deal with crossings of the HUC interior boundary -- in this
@@ -377,7 +381,10 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
 def snapHUCsJunctions(hucs : SplitHUCs,
                       rivers : List[River],
                       tol : float):
-    """Snaps the junctions of HUC linestrings to endpoints of rivers."""
+    """Snaps the junctions of HUC linestrings to endpoints of rivers.
+
+    Modifies HUCs geometry.
+    """
     # make the kdTree of endpoints of all reaches
     coords1 = np.array([reach.linestring.coords[-1] for river in rivers for reach in river.preOrder()])
     coords2 = np.array([reach.linestring.coords[0] for river in rivers for reach in river.leaf_nodes])
@@ -416,18 +423,68 @@ def snapHUCsJunctions(hucs : SplitHUCs,
             hucs.linestrings[ls_handle] = shapely.geometry.LineString(new_ls)
 
 
-def snapEndpoints(hucs : SplitHUCs,
+def snapReachEndpoints(hucs : SplitHUCs,
                   river : River,
                   tol : float) -> None:
     """Snap river endpoints to huc linestrings and insert that point into
     the boundary.
 
     Note this is O(n^2), and could be made more efficient.
+
+    Modifies reach geometry.
     """
     to_add = []
     reaches = list(river)
+
+    # check the river oulet
+    reach_ls = river.linestring
+    done = False
+    for b, component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
+        for s, huc_ls_handle in component.items():
+            huc_ls = hucs.linestrings[huc_ls_handle]
+            logging.debug("  - checking reach coord: %r" % list(reach_ls.coords[-1]))
+            logging.debug("  - huc_ls coords: {0}".format(list(huc_ls.coords)))
+
+            # find the nearest point to the endpoint if it is within tol
+            new_coord = watershed_workflow.utils.findNearestPoint(reach_ls.coords[-1], huc_ls, tol)
+            if new_coord is not None:
+                if any(watershed_workflow.utils.isClose(new_coord, c) for c in huc_ls.coords):
+                    # the endpoint is already discretely in the HUC
+                    # boundary, likely done in a junction snap
+                    done = True
+                    break
+
+                logging.debug("  - new coord: {0}".format(new_coord))
+                logging.debug("  - snapped reach: %r to %r" % (reach_ls.coords[-1], new_coord))
+
+                # keep a list of all points to add, which are all added at once
+                to_add.append((huc_ls_handle, component, -1, reach))
+
+                # remove points on the reach that are
+                # closer to the huc -- this deals with the
+                # case that multiple discrete points are
+                # on the "wrong" side of the internal
+                # boundary.
+                coords = list(reach_ls.coords)
+                while len(coords) > 2 and \
+                      watershed_workflow.utils.computeDistance(new_coord, coords[-2]) \
+                      < watershed_workflow.utils.computeDistance(new_coord, coords[-1]):
+                    coords.pop(-1)
+                coords[-1] = new_coord
+                reach_ls = shapely.geometry.LineString(coords)
+                reach.linestring = reach_ls
+
+                # if we add a point on this huc linestring, don't
+                # add it to any other
+                done = True
+                break
+
+        if done: break # break out of both for loops
+
+    # now check the upstream end of all reaches
     for reach in reaches:
         reach_ls = reach.linestring
+        done = False
         for b, component in itertools.chain(hucs.boundaries.items(), hucs.intersections.items()):
 
             # note, this is done in two stages to allow it deal with both endpoints touching
@@ -444,88 +501,49 @@ def snapEndpoints(hucs : SplitHUCs,
                 #
                 # this is the upstream point of this reach, so
                 # consider this and all children
-                touches = [reach_ls,]+[c.linestring for c in reach.children]
-                if any(watershed_workflow.utils.intersects(huc_ls, ls) for ls in touches):
+                reach_linestrings = [reach_ls,]+[watershed_workflow.utils.reverseLineString(c.linestring) for c in reach.children]
+                if any(watershed_workflow.utils.intersects(huc_ls, ls) for ls in reach_linestrings):
                     # find the nearest point to the endpoint if it is within tol
                     new_coord = watershed_workflow.utils.findNearestPoint(reach_ls.coords[0], huc_ls, tol)
-                    if any(watershed_workflow.utils.isClose(new_coord, c) for c in huc_ls.coords):
-                        # the endpoint is already discretely in the HUC boundary, likely done previously in this loop
-                        break
-                    
-                    logging.debug("  - new coord: {0}".format(new_coord))
                     if new_coord is not None:
+                        if any(watershed_workflow.utils.isClose(new_coord, c) for c in huc_ls.coords):
+                            # the endpoint is already discretely in the
+                            # HUC boundary, likely done as a junction
+                            done = True
+                            break
+
+                        logging.debug("  - new coord: {0}".format(new_coord))
                         logging.debug(f"    snapped reach: {reach_ls.coords[0]} to {new_coord}")
 
-                        # move new_coord onto an existing linestring coord
-                        new_coord_c = np.expand_dims(new_coord, 0) # type: ignore
-                        dist = np.linalg.norm(np.array(huc_ls.coords) - new_coord_c, axis=1)
-                        assert (len(dist) == len(huc_ls.coords))
-                        assert (len(dist.shape) == 1)
-                        i = int(np.argmin(dist))
-                        if (dist[i] < tol):
-                            new_coord = huc_ls.coords[i]
-
-                        # remove points that are closer
-                        coords = list(reach_ls.coords)
-                        while len(coords) > 2 and \
-                              watershed_workflow.utils.computeDistance(new_coord, coords[1]) \
-                              < watershed_workflow.utils.computeDistance(new_coord, coords[0]):
-                            coords.pop(0)
-                        coords[0] = new_coord
-                        reach_ls = shapely.geometry.LineString(coords)
-                        reach.linestring = reach_ls
+                        # keep a list of all points to add, which are all added at once
                         to_add.append((huc_ls_handle, component, 0, reach))
+                        
+                        for ls, r in zip(reach_linestrings, [reach,]+list(reach.children)):
+                            # remove points on the reach that are
+                            # closer to the huc -- this deals with the
+                            # case that multiple discrete points are
+                            # on the "wrong" side of the internal
+                            # boundary.
+                            coords = list(ls.coords)
+                            while len(coords) > 2 and \
+                                  watershed_workflow.utils.computeDistance(new_coord, coords[1]) \
+                                  < watershed_workflow.utils.computeDistance(new_coord, coords[0]):
+                                coords.pop(0)
+                            coords[0] = new_coord
+                            ls = shapely.geometry.LineString(coords)
+                            if r is reach:
+                                r.linestring = ls
+                            else:
+                                r.linestring = watershed_workflow.utils.reverseLineString(ls)
+
+                        assert reach.isLocallyContinuous()
+
+                        # if we add a point on this huc linestring, don't
+                        # add it to any other
+                        done = True
                         break
 
-            # second stage
-            for s, huc_ls_handle in component.items():
-                huc_ls = hucs.linestrings[huc_ls_handle]
-                logging.debug("  - checking reach coord: %r" % list(reach_ls.coords[-1]))
-                logging.debug("  - huc_ls coords: {0}".format(list(huc_ls.coords)))
-
-                # only consider endpoints for whom one reach
-                # intersects the HUC boundary.  If the endpoint is
-                # close but no reaches intersect the boundary, it is
-                # likely that the endpoint is fully contained in the
-                # polygon.
-                #
-                # this is the downstream point of this reach, so
-                # consider this, siblings, and parent
-                touches = [reach.linestring,] + [c.linestring for c in reach.siblings]
-                if reach.parent is not None:
-                    touches.append(reach.parent.linestring)
-                    
-                if any(watershed_workflow.utils.intersects(huc_ls, ls) for ls in touches):
-                    # find the nearest point to the endpoint if it is within tol
-                    new_coord = watershed_workflow.utils.findNearestPoint(reach_ls.coords[-1], huc_ls, tol)
-                    if any(watershed_workflow.utils.isClose(new_coord, c) for c in huc_ls.coords):
-                        # the endpoint is already discretely in the HUC boundary, likely done previously in this loop
-                        break
-
-                    logging.debug("  - new coord: {0}".format(new_coord))
-                    if new_coord is not None:
-                        logging.debug("  - snapped reach: %r to %r" % (reach_ls.coords[-1], new_coord))
-
-                        # move new_coord onto an existing linestring coord
-                        new_coord_c = np.expand_dims(new_coord, 0) # type: ignore
-                        dist = np.linalg.norm(np.array(huc_ls.coords) - new_coord_c, axis=1)
-                        assert (len(dist) == len(huc_ls.coords))
-                        assert (len(dist.shape) == 1)
-                        i = int(np.argmin(dist))
-                        if (dist[i] < tol):
-                            new_coord = huc_ls.coords[i]
-
-                        # remove points that are closer on the reach
-                        coords = list(reach_ls.coords)
-                        while len(coords) > 2 and \
-                              watershed_workflow.utils.computeDistance(new_coord, coords[-2]) \
-                              < watershed_workflow.utils.computeDistance(new_coord, coords[-1]):
-                            coords.pop(-1)
-                        coords[-1] = new_coord
-                        reach_ls = shapely.geometry.LineString(coords)
-                        reach.linestring = reach_ls
-                        to_add.append((huc_ls_handle, component, -1, reach))
-                        break
+            if done: break # break out of two for loops
 
         if reach.linestring.length == 0.:
             # snapped both endpoints to the same point on the internal

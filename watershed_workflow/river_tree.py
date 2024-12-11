@@ -198,7 +198,52 @@ class River(watershed_workflow.tinytree.Tree):
                 ax.scatter(seg.xy[0], seg.xy[1], color=color, **markerargs)
 
         return ax
-        
+
+
+    def explore(self, column=None, m=None, marker=True, **kwargs):
+        """Open a map!"""
+        # get a name
+        if column is None:
+            if 'name' in self.df:
+                column = 'name'
+            elif 'ID' in self.df:
+                column = 'ID'
+            else:
+                self.df['name'] = self.df.index.astype('string')
+                column = 'name'
+
+        kwargs.setdefault('tooltip', False)
+
+        default_props = [pname for pname in [names.ID, names.NAME, names.LENGTH, names.AREA, names.HYDROSEQ] if pname in self.df]
+        for p in self.df.keys():
+            if p not in default_props:
+                default_props.append(p)
+            if len(default_props) >= 8:
+                break
+        kwargs.setdefault('popup', default_props)
+
+        kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_bolds)
+        kwargs.setdefault('legend', False)
+
+        # style
+        style_kwds = kwargs.setdefault('style_kwds', dict())
+        style_kwds.setdefault('weight', 5)
+
+        # default explore
+        m = self.df.explore(column=column, m=m, **kwargs)
+
+        if marker:
+            # explore the coordinates too!
+            marker_kwds = kwargs.setdefault('marker_kwds', dict())
+            marker_kwds.setdefault('radius', 10)
+            style_kwds['fillOpacity'] = 1
+
+            marker_df = self.df.copy()
+            marker_df['geometry'] = [shapely.geometry.MultiPoint(ls.coords) for ls in self.df.geometry]
+            marker_df.explore(column=column, m=m, **kwargs)
+
+        return m
+    
 
     #
     # methods that act on topology and geometry -- high level API
