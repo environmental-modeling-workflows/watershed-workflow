@@ -6,6 +6,8 @@ import collections
 import copy
 import itertools
 from matplotlib import pyplot as plt
+import folium
+import folium.plugins
 
 import shapely.geometry
 import shapely.ops
@@ -286,27 +288,27 @@ class SplitHUCs:
         return ax
         
 
-    def explore(self, column=None, m=None, marker=True, **kwargs):
+    def explore(self, column=names.ID, m=None, marker=True, name='watersheds', **kwargs):
         """Open a map!"""
         # get a name
-        if column is None:
-            if 'name' in self.df:
-                column = 'name'
-            elif 'ID' in self.df:
-                column = 'ID'
-            else:
-                self.df['name'] = self.df.index.astype('string')
-                column = 'name'
+        if column == names.ID and names.ID not in self.df:
+            self.df[names.ID+"_as_column"] = self.df.index.astype('string')
+            column = names.ID+"_as_column"
 
         kwargs.setdefault('tooltip', False)
 
-        default_props = [pname for pname in [names.ID, names.NAME, names.AREA, names.HUC] if pname in self.df]
+        default_props = [pname for pname in [names.NAME,
+                                             names.HUC,
+                                             'tohuc',
+                                             names.AREA,
+                                             'hutype',
+                                             'states', ] if pname in self.df]
         for p in self.df.keys():
+            if len(default_props) >= 7:
+                break
             if p not in default_props and p != 'geometry':
                 default_props.append(p)
-            if len(default_props) >= 8:
-                break
-        kwargs.setdefault('popup', default_props)
+        kwargs.setdefault('popup', [names.ID,]+default_props)
 
         kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_muted)
         kwargs.setdefault('legend', True)
@@ -321,22 +323,30 @@ class SplitHUCs:
         highlight_kwds.setdefault('fillOpacity', 0.4)
 
         # default explore
-        m = self.df.explore(column=column, m=m, **kwargs)
+        m = self.df.explore(column=column, m=m, name=name, **kwargs)
+        
 
         if marker:
             # don't reuse -- some versions keep the various *_kwds
             # dictionaries by reference
-            kwargs = copy.deepcopy(kwargs)
+            kwargs2 = copy.deepcopy(kwargs)
             
             # explore the coordinates too!
-            marker_kwds = kwargs.setdefault('marker_kwds', dict())
+            marker_kwds = kwargs2.setdefault('marker_kwds', dict())
             marker_kwds.setdefault('radius', 10)
-            kwargs['style_kwds']['fillOpacity'] = 1
+            kwargs2['style_kwds']['fillOpacity'] = 1
 
-            marker_df = self.df.copy()
-            marker_df.set_geometry([shapely.geometry.MultiPoint(poly.exterior.coords) for poly in self.df.geometry])
-            m = marker_df.explore(column=column, m=m, **kwargs)
+            marker_df = self.df.set_geometry([shapely.geometry.MultiPoint(poly.exterior.coords) for poly in self.df.geometry]) \
+                .explode(index_parts=True).reset_index(names=[names.ID, 'coord'])
 
+            for disp_mode in ['tooltip', 'popup']:
+                if disp_mode in kwargs2 and isinstance(kwargs2[disp_mode], list):
+                    if names.ID in kwargs2[disp_mode]:
+                        kwargs2[disp_mode].remove(names.ID)
+                    kwargs2[disp_mode].insert(0,'coord')
+                    kwargs2[disp_mode].insert(0,names.ID)
+
+            m = marker_df.explore(column=column, m=m, name=name+' coordinates', **kwargs2)
         return m
         
     

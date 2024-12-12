@@ -13,6 +13,12 @@ water_data_ids = {'nhdflowline_network' : 'comid',
                   'nhdwaterbody' : 'comid'
                   }
 
+def _tryRename(df, old, new):
+    try:
+        df[new] = df[old]
+    except KeyError:
+        pass
+
 class ManagerWaterData(ManagerHyRiver):
     """Leverages WaterData to download NHDv2.1? data and its supporting shapes."""
     lowest_level = 12
@@ -43,13 +49,11 @@ class ManagerWaterData(ManagerHyRiver):
         return df
 
     def addStandardNames(self, df):
-        try:
-            df[names.LENGTH] = df['lengthkm']
-            df[names.AREA] = df['areasqkm']
-            df[names.ORDER] = df['streamorde']
-            df[names.DRAINAGE_AREA] = df['totdasqkm']
-        except KeyError:
-            pass
+        _tryRename(df, 'gnis_name', names.NAME)
+        _tryRename(df, 'lengthkm', names.LENGTH)
+        _tryRename(df, 'areasqkm', names.AREA)
+        _tryRename(df, 'streamorde', names.ORDER)
+        _tryRename(df, 'totdasqkm', names.DRAINAGE_AREA)
         return df
             
     def getShapesByGeometry(self,

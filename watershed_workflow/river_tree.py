@@ -29,6 +29,8 @@ from scipy.spatial import cKDTree
 from matplotlib import pyplot as plt
 import itertools
 import sortedcontainers
+import folium
+import folium.plugins
 
 import shapely.geometry
 import shapely.ops
@@ -200,29 +202,43 @@ class River(watershed_workflow.tinytree.Tree):
         return ax
 
 
-    def explore(self, column=None, m=None, marker=True, **kwargs):
+    def explore(self, column=names.ID, m=None, marker=True, name=None, **kwargs):
         """Open a map!"""
         # get a name
-        if column is None:
-            if 'name' in self.df:
-                column = 'name'
-            elif 'ID' in self.df:
-                column = 'ID'
-            else:
-                self.df['name'] = self.df.index.astype('string')
-                column = 'name'
+        if column == names.ID and names.ID not in self.df:
+            self.df[names.ID+"_as_column"] = self.df.index.astype('string')
+            column = names.ID+"_as_column"
 
+        if name is None:
+            try:
+                name = self[names.NAME]
+            except KeyError:
+                try:
+                    name = self[names.ID]
+                except KeyError:
+                    name = self.index
+                
         kwargs.setdefault('tooltip', False)
 
-        default_props = [pname for pname in [names.ID, names.NAME, names.LENGTH, names.AREA, names.HYDROSEQ, names.ORDER, names.DIVERGENCE] if pname in self.df]
+        default_props = [pname for pname in [names.NAME,
+                                             'gnis_name',
+                                             'ftype',
+                                             names.ORDER,
+                                             names.DIVERGENCE,
+                                             names.HYDROSEQ,
+                                             names.DOWNSTREAM_HYDROSEQ,
+                                             names.UPSTREAM_HYDROSEQ,
+                                             names.LENGTH,
+                                             names.AREA, ] if pname in self.df]
         for p in self.df.keys():
-            if p not in default_props and p != 'geometry':
-                default_props.append(p)
             if len(default_props) >= 8:
                 break
-        kwargs.setdefault('popup', default_props)
+            if p not in default_props and p != 'geometry':
+                default_props.append(p)
+        kwargs.setdefault('popup', [names.ID,]+default_props)
 
-        kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_bolds)
+        if 'color' not in kwargs:
+            kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_bolds)
         kwargs.setdefault('legend', False)
 
         # style
@@ -230,22 +246,29 @@ class River(watershed_workflow.tinytree.Tree):
         style_kwds.setdefault('weight', 5)
 
         # default explore
-        m = self.df.explore(column=column, m=m, **kwargs)
+        m = self.df.explore(column=column, m=m, name=name, **kwargs)
 
         if marker:
             # don't reuse -- some versions keep the various *_kwds
             # dictionaries by reference
-            kwargs = copy.deepcopy(kwargs)
+            kwargs2 = copy.deepcopy(kwargs)
 
             # explore the coordinates too!
-            marker_kwds = kwargs.setdefault('marker_kwds', dict())
-            marker_kwds.setdefault('radius', 10)
-            kwargs['style_kwds']['fillOpacity'] = 1
+            marker_kwds = kwargs2.setdefault('marker_kwds', dict())
+            marker_kwds.setdefault('radius', 8)
+            kwargs2['style_kwds']['fillOpacity'] = 1
 
-            marker_df = self.df.copy()
-            marker_df['geometry'] = [shapely.geometry.MultiPoint(ls.coords) for ls in self.df.geometry]
-            marker_df.explore(column=column, m=m, **kwargs)
+            marker_df = self.df.set_geometry([shapely.geometry.MultiPoint(ls.coords) for ls in self.df.geometry]) \
+                .explode(index_parts=True).reset_index(names=[names.ID, 'coord'])
 
+            for disp_mode in ['tooltip', 'popup']:
+                if disp_mode in kwargs2 and isinstance(kwargs2[disp_mode], list):
+                    if names.ID in kwargs2[disp_mode]:
+                        kwargs2[disp_mode].remove(names.ID)
+                    kwargs2[disp_mode].insert(0,'coord')
+                    kwargs2[disp_mode].insert(0,names.ID)
+
+            m = marker_df.explore(column=column, m=m, name=self[names.NAME]+' coordinates', **kwargs2)
         return m
     
 

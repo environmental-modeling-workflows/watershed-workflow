@@ -27,6 +27,8 @@ import numpy as np
 import geopandas as gpd
 import shapely.geometry
 from matplotlib import pyplot as plt
+import folium
+import folium.plugins
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -871,3 +873,10 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 #                                                    raster_profile['transform'],
 #                                                    invert=True)
 #             raster[mask] = p_id
+
+
+def makeMap(m):
+    folium.LayerControl().add_to(m)
+    folium.plugins.Fullscreen().add_to(m)
+    folium.plugins.MeasureControl().add_to(m)
+    return m
