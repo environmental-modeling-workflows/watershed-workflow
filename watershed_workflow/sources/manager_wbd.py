@@ -3,6 +3,8 @@ from shapely.geometry.base import BaseGeometry
 from pyproj import CRS
 import geopandas as gpd
 from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
+import watershed_workflow.sources.standard_names as names
+
 
 class ManagerWBD(ManagerHyRiver):
     """Leverages pygeohydro to download WBD data."""
@@ -47,8 +49,17 @@ class ManagerWBD(ManagerHyRiver):
             geom_df = self.getShapesByID(hucs)
             self.setLevel(level)
             df = self.getShapesByGeometry(geom_df.union_all(), geom_df.crs)
+
+            df[names.HUC] = df[f'huc{self._level}']
+            df[names.AREA] = df[f'areasqkm']
+            
             return df.loc[df.index.to_series().apply(lambda l : any(l.startswith(huc) for huc in hucs))]
         else:
             self.setLevel(req_level)
-            return super(ManagerWBD, self).getShapesByID(hucs)
+            df = super(ManagerWBD, self).getShapesByID(hucs)
+
+            df[names.HUC] = df[f'huc{req_level}']
+            df[names.AREA] = df[f'areasqkm']
+
+            return df
 

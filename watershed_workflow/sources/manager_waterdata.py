@@ -5,6 +5,7 @@ import geopandas as gpd
 import pandas as pd
 
 from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
+import watershed_workflow.sources.standard_names as names
 
 water_data_ids = {'nhdflowline_network' : 'comid',
                   'nhdflowline_nonnetwork' : 'comid',
@@ -40,17 +41,30 @@ class ManagerWaterData(ManagerHyRiver):
 
             df = pd.merge(df, cas_raw, how='outer', left_on='ID', right_on='ID', suffixes=(None, '_ca'))
         return df
-            
+
+    def addStandardNames(self, df):
+        try:
+            df[names.LENGTH] = df['lengthkm']
+            df[names.AREA] = df['areasqkm']
+            df[names.ORDER] = df['streamorde']
+            df[names.DRAINAGE_AREA] = df['totdasqkm']
+        except KeyError:
+            pass
+        return df
             
     def getShapesByGeometry(self,
                             geom : BaseGeometry,
                             geom_crs : CRS) -> gpd.GeoDataFrame:
         df = super(ManagerWaterData, self).getShapesByGeometry(geom, geom_crs)
-        return self.getCatchments(df)
+        df = self.getCatchments(df)
+        df = self.addStandardNames(df)        
+        return df
 
     
     def getShapesByID(self,
                       ids : List[str] | str) -> gpd.GeoDataFrame:
         df = super(ManagerWaterData, self).getShapesByID(ids)
-        return self.getCatchments(df)
+        df = self.getCatchments(df)
+        df = self.addStandardNames(df)        
+        return df
     

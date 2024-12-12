@@ -214,9 +214,9 @@ class River(watershed_workflow.tinytree.Tree):
 
         kwargs.setdefault('tooltip', False)
 
-        default_props = [pname for pname in [names.ID, names.NAME, names.LENGTH, names.AREA, names.HYDROSEQ] if pname in self.df]
+        default_props = [pname for pname in [names.ID, names.NAME, names.LENGTH, names.AREA, names.HYDROSEQ, names.ORDER, names.DIVERGENCE] if pname in self.df]
         for p in self.df.keys():
-            if p not in default_props:
+            if p not in default_props and p != 'geometry':
                 default_props.append(p)
             if len(default_props) >= 8:
                 break
@@ -233,10 +233,14 @@ class River(watershed_workflow.tinytree.Tree):
         m = self.df.explore(column=column, m=m, **kwargs)
 
         if marker:
+            # don't reuse -- some versions keep the various *_kwds
+            # dictionaries by reference
+            kwargs = copy.deepcopy(kwargs)
+
             # explore the coordinates too!
             marker_kwds = kwargs.setdefault('marker_kwds', dict())
             marker_kwds.setdefault('radius', 10)
-            style_kwds['fillOpacity'] = 1
+            kwargs['style_kwds']['fillOpacity'] = 1
 
             marker_df = self.df.copy()
             marker_df['geometry'] = [shapely.geometry.MultiPoint(ls.coords) for ls in self.df.geometry]

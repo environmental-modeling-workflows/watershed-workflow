@@ -6,6 +6,8 @@ from pyproj import CRS
 import geopandas as gpd
 
 import watershed_workflow.utils
+import watershed_workflow.sources.standard_names as names
+
 
 class ManagerHyRiver:
     def __init__(self,
