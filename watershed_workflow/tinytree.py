@@ -241,16 +241,21 @@ class Tree(object):
         yield self
 
     def prePostInBetweenOrder(self):
+        """Generates a tuple, (flag,node) in pre and post order, but
+            also with self in between all consective children.
+
+            The flag indicates how many times we have touched this
+            node.
+
         """
-            Generates nodes in pre and post order, but also with self in between all consective children.
-        """
-        yield self
+        count = 0
+        yield count, self
+        count += 1
         for i in self.children[:]:
             for j in i.prePostInBetweenOrder():
                 yield j
-            yield self
-        if len(self.children) == 0:
-            yield self
+            yield count, self
+            count += 1
 
     def breadthFirstOrder(self):
         """

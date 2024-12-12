@@ -28,7 +28,7 @@ def river_small():
     reach2 = shapely.geometry.LineString([(1, 19), (2, 15.01), (4, 10)])
     reach3 = shapely.geometry.LineString([(8, 19), (6, 15.01), (4, 10)])
     reaches = geopandas.GeoDataFrame(geometry=[reach1, reach2, reach3])
-    rivers = watershed_workflow.river_tree.createRiverTrees(reaches, method='geometry')
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
     return rivers[0]
 
 
