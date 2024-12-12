@@ -33,35 +33,65 @@ def hucs_rivers():
         shapely.geometry.LineString([(15., 0.), (10., 5), ]),
         shapely.geometry.LineString([(10., 5.), (10, 10)]),
     ])
-    rivers = watershed_workflow.river_tree.createRiverTrees(rs)
-    watershed_workflow.hydrography.snap(hucs, rivers, 0.1)
+    rivers = watershed_workflow.river_tree.createRivers(rs)
+    watershed_workflow.simplify(hucs, rivers, 1)
     return hucs, rivers
 
 
 def test_triangulate_nofunc(hucs_rivers):
     hucs, rivers = hucs_rivers
-    points, tris = watershed_workflow.triangulation.triangulate(hucs)
-    # watershed_workflow.plot.triangulation(points,tris)
-    # watershed_workflow.plot.hucs(hucs,'r')
-    # watershed_workflow.plot.rivers(rivers,'b')
-    # plt.show()
+    points, tris = watershed_workflow.triangulation.triangulate(hucs, tol=0.01)
 
+    # fig, ax = plt.subplots(1,1)
+    # ax.triplot(points[:,0], points[:,1], tris)
+    # hucs.plot(color='r', ax=ax)
+    # for river in rivers:
+    #     river.plot(color='b', ax=ax)
+    # plt.show()
+    # assert(False)
+    
 
 def test_triangulate_max_area(hucs_rivers):
     hucs, rivers = hucs_rivers
     func = watershed_workflow.triangulation.refineByMaxArea(1.)
-    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
-    # watershed_workflow.plot.triangulation(points,tris)
-    # watershed_workflow.plot.hucs(hucs,'r')
-    # watershed_workflow.plot.rivers(rivers,'b')
+    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func, tol=0.01)
+
+    # fig, ax = plt.subplots(1,1)
+    # ax.triplot(points[:,0], points[:,1], tris)
+    # hucs.plot(color='r', ax=ax)
+    # for river in rivers:
+    #     river.plot(color='b', ax=ax)
     # plt.show()
+    # assert(False)
 
 
 def test_triangulate_distance(hucs_rivers):
     hucs, rivers = hucs_rivers
     func = watershed_workflow.triangulation.refineByRiverDistance(1., 0.5, 4, 2, rivers)
-    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func)
-    # watershed_workflow.plot.triangulation(points,tris)
-    # watershed_workflow.plot.hucs(hucs,'r')
-    # watershed_workflow.plot.rivers(rivers,'b')
+    points, tris = watershed_workflow.triangulation.triangulate(hucs, refinement_func=func, tol=0.01)
+
+    # fig, ax = plt.subplots(1,1)
+    # ax.triplot(points[:,0], points[:,1], tris)
+    # hucs.plot(color='r', ax=ax)
+    # for river in rivers:
+    #     river.plot(color='b', ax=ax)
     # plt.show()
+    # assert(False)
+
+
+def test_triangulate_internal_boundary(hucs_rivers):
+    hucs, rivers = hucs_rivers
+    func = watershed_workflow.triangulation.refineByRiverDistance(1., 0.5, 4, 2, rivers)
+
+    points, tris = watershed_workflow.triangulation.triangulate(hucs,
+                                                                internal_boundaries=[r.linestring for river in rivers for r in river],
+                                                                refinement_func=func, tol=0.01)
+
+    fig, ax = plt.subplots(1,1)
+    ax.triplot(points[:,0], points[:,1], tris)
+    hucs.plot(color='r', ax=ax)
+    for river in rivers:
+        river.plot(color='b', ax=ax)
+    plt.show()
+    assert(False)
+    

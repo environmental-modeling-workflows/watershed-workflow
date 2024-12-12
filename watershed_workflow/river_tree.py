@@ -770,7 +770,7 @@ def combineSiblings(n1 : River,
 # Construction method
 #
 def createRivers(reaches : gpd.GeoDataFrame,
-                 method : Literal['geometry','hydroseq'],
+                 method : Literal['geometry','hydroseq'] = 'geometry',
                  tol : float = _tol) -> List[River]:
     """Constructs River objects from a list of reaches.
 

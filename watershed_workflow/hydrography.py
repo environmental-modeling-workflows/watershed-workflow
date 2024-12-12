@@ -458,7 +458,7 @@ def snapReachEndpoints(hucs : SplitHUCs,
                 logging.debug("  - snapped reach: %r to %r" % (reach_ls.coords[-1], new_coord))
 
                 # keep a list of all points to add, which are all added at once
-                to_add.append((huc_ls_handle, component, -1, reach))
+                to_add.append((huc_ls_handle, component, -1, river))
 
                 # remove points on the reach that are
                 # closer to the huc -- this deals with the
@@ -472,7 +472,7 @@ def snapReachEndpoints(hucs : SplitHUCs,
                     coords.pop(-1)
                 coords[-1] = new_coord
                 reach_ls = shapely.geometry.LineString(coords)
-                reach.linestring = reach_ls
+                river.linestring = reach_ls
 
                 # if we add a point on this huc linestring, don't
                 # add it to any other

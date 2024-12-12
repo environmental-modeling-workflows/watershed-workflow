@@ -277,6 +277,7 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
              resample_by_reach_property : bool = False,
              min_angle : float = 20,
              junction_min_angle : float = 10,
+             plot_diagnostics : bool = False,
              keep_points : bool = False) -> None:
     """Simplifies the HUC and river shapes to create constrained, discrete segments.
 
@@ -409,9 +410,13 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     logging.info("")
     logging.info("Resampling Diagnostics")
     logging.info("-" * 30)
-    fig, ax = plt.subplots(1,1)
-    watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach", ax=ax, color='b')
-    watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ", ax=ax, color='orange')
+    if plot_diagnostics:
+        fig, ax = plt.subplots(1,1)
+        watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach", ax=ax, color='b')
+        watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ", ax=ax, color='orange')
+    else:
+        watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
+        watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
     # fix bad angles
     logging.info("")

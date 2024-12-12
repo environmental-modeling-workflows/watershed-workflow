@@ -238,7 +238,7 @@ def testHUCOutletIsBad():
     river = watershed_workflow.river_tree.createRivers(reach_shp_df, 'geometry')[0]
     river_copy = river.deepcopy()
 
-    watershed_workflow.hydrography.snapEndpoints(hucs, river, 0.01)
+    watershed_workflow.hydrography.snapReachEndpoints(hucs, river, 0.01)
 
     assert watershed_workflow.angles.isOutletSharpAngle(hucs, river, 20)
     count = watershed_workflow.angles.smoothOutletSharpAngles(hucs, river, 20)

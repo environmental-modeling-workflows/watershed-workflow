@@ -181,7 +181,6 @@ class SplitHUCs:
                 if watershed_workflow.utils.isEmpty(inter):
                     pass
                 elif type(inter) is shapely.geometry.LineString:
-                    #print("Adding linestring intersection")
                     handle = self.linestrings.append(inter)
                     ihandle = self.intersections.append(HandledCollection([handle, ]))
                     intersection_gon[i].append(ihandle)
@@ -513,7 +512,6 @@ def intersectAndSplit(list_of_shapes):
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
 
-                        # print(mps)
                         assert (isinstance(mps, shapely.geometry.MultiPoint))
                         assert (len(mps) == 2)
                         parts_lines.append(

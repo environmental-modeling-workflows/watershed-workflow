@@ -160,9 +160,7 @@ def blackzerojet_cmap(data):
                 [0.66000000000000003, 1, 1], [0.89000000000000001, 1, 1], [1, 0.5, 0.5]]
     }
     minval = data[np.where(data > 0.)[0]].min()
-    print(minval)
     maxval = data[np.where(data > 0.)[0]].max()
-    print(maxval)
     oneminval = .9 * minval / maxval
     for color in ['blue', 'green', 'red']:
         for i in range(1, len(blackzerojet_dict[color])):

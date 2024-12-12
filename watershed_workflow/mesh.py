@@ -689,7 +689,7 @@ class Mesh2D:
                     cn = c[up_i:] + c[0:up_i]
                 else:
                     # I screwed up... debug me!
-                    print("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
+                    logging.info("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
 
@@ -1473,7 +1473,7 @@ def computeTelescopeFactor(ncells : int, dz : float, layer_dz : float) -> float:
             calc_layer_dz += dz_new
             dz_new *= r
 
-        #print('tried: {} got: {}'.format(r, calc_layer_dz))
+        #logging.debug('tried: {} got: {}'.format(r, calc_layer_dz))
         return layer_dz - calc_layer_dz
 
     res = scipy.optimize.root_scalar(seq, method='bisect', bracket=[1.0001, 2], maxiter=1000)
