@@ -130,9 +130,9 @@ def test_nonuniform_keep_corner():
 
     
 # with data
-def test_resampling(watershed_poly, watershed_reaches):
-    watershed = watershed_workflow.split_hucs.SplitHUCs(watershed_poly)
-    rivers = watershed_workflow.river_tree.createRivers(watershed_reaches, method='geometry')
+def test_resampling(watershed_poly2, watershed_reaches2):
+    watershed = watershed_workflow.split_hucs.SplitHUCs(watershed_poly2)
+    rivers = watershed_workflow.river_tree.createRivers(watershed_reaches2, method='geometry')
 
     watershed_workflow.resampling.resampleSplitHUCs(watershed, (0,25,10,50), 
                                 shapely.ops.unary_union([r.to_mls() for r in rivers]))

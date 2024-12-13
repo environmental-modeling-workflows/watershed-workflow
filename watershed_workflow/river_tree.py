@@ -41,6 +41,7 @@ import pandas.api.types
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 from watershed_workflow.crs import CRS
+import watershed_workflow.plot
 import watershed_workflow.sources.standard_names as names
 
 _tol = 1.e-7
@@ -168,40 +169,11 @@ class River(watershed_workflow.tinytree.Tree):
         else:
             return watershed_workflow.utils.computeAngle(self.parent.linestring, self.linestring)
 
-    def plot(self, column=None, **kwargs):
-        # get marker arguments, popping them from kwargs
-        markers = False
-        if 'marker' in kwargs:
-            markers = True
-            markerargs = {'marker' : kwargs.pop('marker')}
-            if 'markersize' in kwargs:
-                markerargs['s'] = kwargs.pop('markersize')
+    def plot(self, *args, **kwargs):
+        """Plot the rivers."""
+        return watershed_workflow.plot.linestringsWithCoords(self.df, *args, **kwargs)
 
-        # force cycled colors as default, not all blue as default
-        if column is None and 'color' not in kwargs:
-            color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
-            color = [c for (ind,c) in zip(self.df.index, itertools.cycle(color_cycle))]
-            kwargs['color'] = color
-
-        # call the default plotter, which, because River is all
-        # LineStrings, will always add exactly one collection.
-        ax = self.df.plot(**kwargs)
-
-        if markers:
-            lc = ax.collections[-1]
-            colors = lc.get_colors()
-
-            # scatter the markers
-            for i, seg in enumerate(geo for geo in self.df.geometry if not watershed_workflow.utils.isEmpty(geo)):
-                if len(colors) == 1:
-                    color = colors[0]
-                else:
-                    color = colors[i]
-                ax.scatter(seg.xy[0], seg.xy[1], color=color, **markerargs)
-
-        return ax
-
-
+    
     def explore(self, column=names.ID, m=None, marker=True, name=None, **kwargs):
         """Open a map!"""
         # get a name

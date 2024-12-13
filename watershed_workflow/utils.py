@@ -283,6 +283,7 @@ def filterToShape(df : gpd.GeoDataFrame,
 def isEmpty(shply : BaseGeometry | None) -> bool:
     return shply is None or shply.is_empty
 
+
 def isConvex(points : Iterable[Tuple[float,float]]) -> bool:
     poly = shapely.geometry.Polygon(points)
     return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)

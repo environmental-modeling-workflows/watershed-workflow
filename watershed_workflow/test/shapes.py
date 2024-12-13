@@ -75,9 +75,12 @@ def braided_stream():
 @pytest.fixture
 @to_dataframe
 def rivers():
-    points = [[(5, 0), (0, 0)], [(8, 3), (5, 0)], [(12, -3), (8, -3), (5, 0)], [(15, -3), (12, -3)],
-              [(12, 0), (12, -3)]]
-    return list(shapely.geometry.MultiLineString(points).geoms)
+    return [shapely.geometry.LineString([(5, 0), (0, 0)]),
+            shapely.geometry.LineString([(8, 3), (5, 0)]),
+            shapely.geometry.LineString([(12, -3), (8, -3), (5, 0)]),
+            shapely.geometry.LineString([(15, -3), (12, -3)]),
+            shapely.geometry.LineString([(12, 0), (12, -3)]),
+            ]
 
 
 #
@@ -87,48 +90,70 @@ def rivers():
 @pytest.fixture
 @to_dataframe
 def y_with_junction():
-    points = [[(1, 0), (0, 0)], [(1, 1), (1, 0)], [(1, -1), (0.5, 0)]]
-    return list(shapely.geometry.MultiLineString(points).geoms)
+    return [shapely.geometry.LineString([(1, 0), (0, 0)]),
+            shapely.geometry.LineString([(1, 1), (1, 0)]),
+            shapely.geometry.LineString([(1, -1), (0.5, 0)]),
+            ]
 
 
 # ===== polygons =====
 @pytest.fixture
 @to_dataframe
 def two_boxes():
-    b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
-    b2 = [(10, -5), (20, -5), (20, 5), (10, 5)]
-    shps = []
-    shps.append(shapely.geometry.Polygon(b1))
-    shps.append(shapely.geometry.Polygon(b2))
-    return shps
+    return [shapely.geometry.Polygon([(0, -5), (10, -5), (10, 5), (0, 5)]),
+            shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5)]),
+            ]
 
 
 @pytest.fixture
 @to_dataframe
 def three_boxes():
-    b1 = [(0, -5), (10, -5), (10, 5), (0, 5)]
-    b2 = [(10, -5), (20, -5), (20, 5), (10, 5)]
-    b3 = [(20, -5), (30, -5), (30, 5), (20, 5)]
-    shps = []
-    shps.append(shapely.geometry.Polygon(b1))
-    shps.append(shapely.geometry.Polygon(b2))
-    shps.append(shapely.geometry.Polygon(b3))
-    return shps
+    return [shapely.geometry.Polygon([(0, -5), (10, -5), (10, 5), (0, 5)]),
+            shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5)]),
+            shapely.geometry.Polygon([(20, -5), (30, -5), (30, 5), (20, 5)]),
+            ]
 
 
 @pytest.fixture
 @to_dataframe
-def watershed_poly():
+def three_more_boxes():
+    return [ shapely.geometry.Polygon([(0, -5), (10, -5), (10, 5), (0, 5)]),
+             shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5)]),
+             shapely.geometry.Polygon([(0, 5), (10, 5), (20, 5), (20, 10), (0, 10)]),
+            ]
+
+
+@pytest.fixture
+@to_dataframe
+def watershed_poly1():
+    return [ shapely.geometry.Polygon([(0, -5), (10, -5), (10, 5), (0, 5)]),
+             shapely.geometry.Polygon([(10, -5), (20, -5), (20, 5), (10, 5)]),
+             shapely.geometry.Polygon([(0, 5), (10, 5), (20, 5), (20, 10), (0, 10)]),
+            ]
+
+
+@pytest.fixture
+@to_dataframe
+def watershed_reaches1():
+    return [
+        shapely.geometry.LineString([(5., 0.), (10., 5), ]),
+        shapely.geometry.LineString([(15., 0.), (10., 5), ]),
+        shapely.geometry.LineString([(10., 5.), (10, 10)]),
+    ]
+
+
+@pytest.fixture
+@to_dataframe
+def watershed_poly2():
     """Create watershed polygon, mocking NHDPLus dataset"""
-    ws1 = shapely.geometry.Polygon(
+    return [shapely.geometry.Polygon(
         100 * np.array([[0, 0], [1, 0], [3, 0], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [3, 4.5],
-                        [2, 5], [1, 4.5], [0, 4], [0, 3], [0, 2], [0, 1]], 'd'))
-    return [ws1,]
+                        [2, 5], [1, 4.5], [0, 4], [0, 3], [0, 2], [0, 1]], 'd')),]
 
 
 @pytest.fixture
 @to_dataframe
-def watershed_reaches():
+def watershed_reaches2():
     """Create a list of reaches, mocking NHDPLus dataset"""
     reach1 = shapely.geometry.LineString([(200, 200), (200, 0)])
     reach2 = shapely.geometry.LineString([(50, 300), (100, 300), (100, 200), (200, 200)])
@@ -137,4 +162,31 @@ def watershed_reaches():
     reach4 = shapely.geometry.LineString([(100, 400), (200, 300)])
     reaches = [reach1, reach2, reach3, reach4]
     return reaches
+
+
+@pytest.fixture
+def watershed_rivers1(watershed_poly1, watershed_reaches1):
+    if watershed_poly1 is not None:
+        hucs = watershed_workflow.split_hucs.SplitHUCs(watershed_poly1)
+    else:
+        hucs = None
+    if watershed_reaches1 is not None:
+        rivers = watershed_workflow.river_tree.createRivers(watershed_reaches1)
+    else:
+        rivers = None
+    return hucs, rivers
+
+
+
+@pytest.fixture
+def watershed_rivers2(watershed_poly2, watershed_reaches2):
+    if watershed_poly2 is not None:
+        hucs = watershed_workflow.split_hucs.SplitHUCs(watershed_poly2)
+    else:
+        hucs = None
+    if watershed_reaches2 is not None:
+        rivers = watershed_workflow.river_tree.createRivers(watershed_reaches2)
+    else:
+        rivers = None
+    return hucs, rivers
 

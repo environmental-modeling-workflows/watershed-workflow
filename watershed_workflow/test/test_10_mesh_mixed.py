@@ -6,6 +6,7 @@ import geopandas
 from matplotlib import pyplot as plt
 
 from watershed_workflow.river_mesh import *
+from watershed_workflow.test.shapes import *
 
 plot = False
 
@@ -77,19 +78,23 @@ def test_projectTwo_jagged():
 #
 # Tests for toy reaches
 #
-_plot = False
-_assert_plot = True
-def plot(river, elems, coords, force = False):
+_plot = True
+_assert_plot = False
+def plot(river, coords, elems, hucs = None, force = False):
     if _plot or force:
         fig, ax = plt.subplots(1,1)
         river.plot(ax=ax, color='b', marker='x')
         ax.scatter(coords[:,0], coords[:,1], marker='o', color='g')
-        to_df(elems, coords).plot(ax=ax, color='r', )
+        to_df(coords, elems).plot(ax=ax, color='r', )
+
+        if hucs is not None:
+            df_huc_ls = geopandas.GeoDataFrame(geometry=list(hucs.linestrings.values()))
+            df_huc_ls.plot(color='k', ax=ax)
         plt.show()
         assert not _assert_plot
 
         
-def to_df(elems, coords):
+def to_df(coords, elems):
     return geopandas.GeoDataFrame(geometry=[shapely.geometry.Polygon(coords[e]).exterior for e in elems])
 
 def test_single_reach_vert():
@@ -99,7 +104,7 @@ def test_single_reach_vert():
 
     def computeWidth(x): return 0.5
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -116,7 +121,7 @@ def test_single_reach_vert():
          [ 0.25,  1.  ],
          [ 0.25,  0.  ]])
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
 
 
 def test_single_reach_horiz():
@@ -126,7 +131,7 @@ def test_single_reach_horiz():
 
     def computeWidth(x): return 0.5
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -144,7 +149,7 @@ def test_single_reach_horiz():
          [ 3.,    0.25],
          [ 6.,    0.25]])
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
 
     
 def test_single_reach_diag():
@@ -154,7 +159,7 @@ def test_single_reach_diag():
 
     def computeWidth(x): return 0.5
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -173,7 +178,7 @@ def test_single_reach_diag():
          [5.8232233, 6.1767767]]
     )
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
     
 
 def test_single_reach_jagged():
@@ -183,7 +188,7 @@ def test_single_reach_jagged():
 
     def computeWidth(x): return np.sqrt(2.0)/2
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -202,7 +207,7 @@ def test_single_reach_jagged():
          [4.75,       5.25      ]]
     )
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
 
 
 def test_two_coplanar_reaches():
@@ -213,7 +218,7 @@ def test_two_coplanar_reaches():
 
     def computeWidth(x): return 1
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 7
     assert len(coords) == 15
     assert len(elems[0]) == 3
@@ -240,7 +245,7 @@ def test_two_coplanar_reaches():
 
     print(gold_coords)
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
 
 
 def test_two_kinked_reaches():
@@ -251,7 +256,7 @@ def test_two_kinked_reaches():
 
     def computeWidth(x): return 1
 
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 6
     assert len(coords) == 13
     assert len(elems[0]) == 3
@@ -273,7 +278,7 @@ def test_two_kinked_reaches():
          [ 3.7763932,   2.4472136 ],
          [ 5.7763932,   3.4472136 ]])
     assert np.allclose(gold_coords, coords, 1.e-4)
-    plot(rivers[0], elems, coords)
+    plot(rivers[0], coords, elems)
 
 
 def assert_list_same(l1, l2):
@@ -283,8 +288,9 @@ def assert_list_same(l1, l2):
     for a, b in zip(l1, l2):
         assert (a == b)
 
+        
 @pytest.fixture
-def river_small():
+def not_as_simple_y():
     reach1 = shapely.geometry.LineString([(4, 10), (4.01, 5.0), (4, 0)])
     reach2 = shapely.geometry.LineString([(1, 19), (2, 15.01), (4, 10)])
     reach3 = shapely.geometry.LineString([(8, 19), (6, 15.01), (4, 10)])
@@ -292,9 +298,11 @@ def river_small():
     rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
     return rivers[0]
 
-def test_create_river_mesh(river_small):
+
+def test_y(not_as_simple_y):
+    """A three-reach system with a junction."""
     def computeWidth(a): return 1
-    elems, coords = watershed_workflow.river_mesh.createRiverMesh(river_small, computeWidth)
+    coords, elems = createRiverMesh(not_as_simple_y, computeWidth)
 
     assert (13 == len(coords))
     assert np.allclose((1.,19), coords[4])
@@ -312,4 +320,24 @@ def test_create_river_mesh(river_small):
     assert_list_same([7, 8, 9], elems[2])
     assert_list_same([0, 1, 11, 12], elems[-1])
 
-    plot(river_small, elems, coords)
+    plot(not_as_simple_y, coords, elems)
+
+
+# def test_ADD_TEST_FOR_VARIABLE_WIDTH():
+#     assert False
+    
+
+    
+
+#
+# Adapt HUCs to river corridor
+# 
+def test_huc_to_corridor(watershed_rivers1):
+    hucs, rivers = watershed_rivers1
+    watershed_workflow.simplify(hucs, rivers, 1)
+
+    coords, elems, hole_points = createRiverMesh(rivers[0], lambda a : 1)
+    adjustHUCsToRiverMesh(hucs, rivers[0], coords)
+
+    plot(rivers[0], coords, elems, hucs)
+    

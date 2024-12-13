@@ -8,6 +8,36 @@ from watershed_workflow.test.shapes import two_boxes
 import watershed_workflow.test.shapes
 import watershed_workflow.angles
 
+_plot = True
+_assert_plot = False
+def plotHUCs(hucs, hucs_orig, force = False):
+    if _plot or force:
+        fig, ax = plt.subplots(1,1)
+        hucs_orig.plot(color='k', marker='x', ax=ax)
+        hucs.plot(color='r', marker='x', ax=ax)
+        plt.show()
+        assert not _assert_plot
+
+def plotRiver(river, river_orig, force = False):
+    if _plot or force:
+        fig, ax = plt.subplots(1,1)
+        river_orig.plot(color='b', marker='x', ax=ax)
+        river.plot(color='r', marker='x', ax=ax)
+        plt.show()
+        assert not _assert_plot
+
+def plot(hucs, hucs_orig, river, river_orig, force=False):
+    if _plot or force:
+        fig, ax = plt.subplots(1,1)
+        river_orig.plot(color='b', marker='x', ax=ax)
+        river.plot(color='r', marker='x', ax=ax)
+        hucs_orig.plot(color='k', marker='x', ax=ax)
+        hucs.plot(color='g', marker='x', ax=ax)
+        plt.show()
+        assert not _assert_plot
+        
+        
+
 def test_bad_angle():
     ls1 = np.array([ (0,0), (1,0), (1,1) ])
     ls2 = np.array([ (0,0), (1,0), (0,0.01) ])
@@ -17,7 +47,6 @@ def test_bad_angle():
     assert watershed_workflow.angles._isInternalSharpAngle(ls3, 1, 10)
     assert not watershed_workflow.angles._isInternalSharpAngle(ls1, 1, 10)
     assert watershed_workflow.angles._isInternalSharpAngle(ls1, 1, 95)        
-
 
     
 def testInternalAngleLen3Null():
@@ -219,13 +248,7 @@ def testJunctionIsBadAngle():
     print('-----')
     print(river_orig.children[1].linestring)
     print(river.children[0].children[1].linestring)
-
-    # fig, ax = plt.subplots(1,1)
-    # river_orig.plot(color='b', marker='x', ax=ax)
-    # river.plot(color='r', marker='x', ax=ax)
-    # plt.show()
-    # assert False
-
+    plotRiver(river, river_orig)
 
 def testHUCOutletIsBad():
     huc_shp = shapely.geometry.Polygon([ (0,0), (1,0), (1,1), (0,1) ])
@@ -243,18 +266,11 @@ def testHUCOutletIsBad():
     assert watershed_workflow.angles.isOutletSharpAngle(hucs, river, 20)
     count = watershed_workflow.angles.smoothOutletSharpAngles(hucs, river, 20)
     assert count == 1
-    assert not watershed_workflow.angles.isOutletSharpAngle(hucs, river, 20)
 
     # river is unchanged
     assert watershed_workflow.utils.isClose(river.linestring, river_copy.linestring)
-
-    # fig, ax = plt.subplots(1,1)
-    # river_copy.plot(color='b', marker='x', ax=ax)
-    # river.plot(color='c', marker='x', ax=ax)
-    # hucs_copy.plot(color='k', marker='x', ax=ax)
-    # hucs.plot(color='r', marker='x', ax=ax)
-    # plt.show()
-    # assert False
+    plot(river, river_copy, hucs, hucs_copy)
+    assert not watershed_workflow.angles.isOutletSharpAngle(hucs, river, 20)
     
 
 def testHUCIsBad_NoOp(two_boxes):
@@ -282,12 +298,6 @@ def testHUCIsBad():
     assert count == 1
     assert not watershed_workflow.angles.isHUCsSharpAngle(hucs, 30)
 
-    # note, shouldn't move the junction points, just the other one
-    # fig, ax = plt.subplots(1,1)
-    # hucs_copy.plot(color='k', marker='x', ax=ax)
-    # hucs.plot(color='r', marker='x', ax=ax)
-    # plt.show()
-    # assert False
     
 
 

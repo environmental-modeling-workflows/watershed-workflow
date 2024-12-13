@@ -459,278 +459,232 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
 #         raise ValueError("densify() currently only supports list(River) and SplitHUC objects.")
 
 
-# def triangulate(hucs,
-#                 rivers=None,
-#                 river_corrs=None,
-#                 internal_boundaries=None,
-#                 hole_points=None,
-#                 diagnostics=True,
-#                 verbosity=1,
-#                 tol=1,
-#                 refine_max_area=None,
-#                 refine_distance=None,
-#                 refine_max_edge_length=None,
-#                 refine_min_angle=None,
-#                 enforce_delaunay=False,
-#                 river_region_dist=None):
-#     """Triangulates HUCs and rivers.
+def triangulate(hucs,
+                rivers=None,
+                internal_boundaries=None,
+                hole_points=None,
+                diagnostics=True,
+                verbosity=1,
+                tol=1,
+                refine_max_area=None,
+                refine_distance=None,
+                refine_max_edge_length=None,
+                refine_min_angle=None,
+                enforce_delaunay=False,
+                river_region_dist=None):
+    """Triangulates HUCs and rivers.
 
-#     Note, refinement of a given triangle is done if any of the provided
-#     criteria is met.
+    Note, refinement of a given triangle is done if any of the provided
+    criteria is met.
 
-#     Parameters
-#     ----------
-#     hucs : SplitHUCs
-#         A split-form HUC object from, e.g., get_split_form_hucs()
-#     rivers : list[watershed_workflow.river_tree.River], optional
-#         List of rivers, used to refine the triangulation in conjunction with refine_distance.
-#     river_corrs : list[shapely.geometry.Polygon], optional
-#         List of rivers corridor polygons.
-#     internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
-#         List of objects, whose boundary (in the case of
-#         polygons/waterbodies) or reaches (in the case of River) will
-#         be present in the edges of the triangulation.
-#     hole_points : list(shapely.Point), optional
-#         List of points inside the polygons to be left as holes/voids (excluded from mesh)
-#     diagnostics : bool, optional
-#         Plot diagnostics graphs of the triangle refinement.
-#     tol : float, optional
-#         Set tolerance for minimum distance between two nodes. The unit is the same as 
-#         that of the watershed's CRS. The default is 1.
-#     refine_max_area : float, optional
-#         Refine a triangle if its area is greater than this area.
-#     refine_distance : list(float), optional
-#         Refine a triangle if its area is greater than a function of its
-#         centroid's distance from the nearest point on the river network.  The
-#         argument is given by:
+    Parameters
+    ----------
+    hucs : SplitHUCs
+        A split-form HUC object from, e.g., get_split_form_hucs()
+    rivers : list[watershed_workflow.river_tree.River], optional
+        List of rivers, used to refine the triangulation in conjunction with refine_distance.
+    internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional
+        List of objects, whose boundary (in the case of
+        polygons/waterbodies) or reaches (in the case of River) will
+        be present in the edges of the triangulation.
+    hole_points : list(shapely.Point), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh)
+    diagnostics : bool, optional
+        Plot diagnostics graphs of the triangle refinement.
+    tol : float, optional
+        Set tolerance for minimum distance between two nodes. The unit is the same as 
+        that of the watershed's CRS. The default is 1.
+    refine_max_area : float, optional
+        Refine a triangle if its area is greater than this area.
+    refine_distance : list(float), optional
+        Refine a triangle if its area is greater than a function of its
+        centroid's distance from the nearest point on the river network.  The
+        argument is given by:
 
-#         [near_distance, near_area, far_distance, far_area]
+        [near_distance, near_area, far_distance, far_area]
 
-#         Defining d as the distance from triangle centroid to the nearest point
-#         on the river network and area as the area of the triangle in question,
-#         refinement occurs if:
+        Defining d as the distance from triangle centroid to the nearest point
+        on the river network and area as the area of the triangle in question,
+        refinement occurs if:
 
-#         * d < near_distance and area > near_area
-#         * d > far_distance and area > far_area
-#         * otherwise, defining 
-#           d' = (d - near_distance) / (far_distance - near_distance),
-#           refining occurs if
-#           area > near_area + (far_area - near_area) * d'
+        * d < near_distance and area > near_area
+        * d > far_distance and area > far_area
+        * otherwise, defining 
+          d' = (d - near_distance) / (far_distance - near_distance),
+          refining occurs if
+          area > near_area + (far_area - near_area) * d'
 
-#         Effectively this simply writes a piecewise linear function of triangle
-#         distance from centroid and uses that as a max area criteria.
-#     refine_max_edge_length : float, optional
-#         Refine a triangle if its max edge length is greater than this length.
-#     refine_min_angle : float, optional
-#         Try to ensure that all triangles have a minimum edge length greater
-#         than this value.
-#     enforce_delaunay : bool,optional, experimental
-#         Attempt to ensure all triangles are proper Delaunay triangles.
+        Effectively this simply writes a piecewise linear function of triangle
+        distance from centroid and uses that as a max area criteria.
+    refine_max_edge_length : float, optional
+        Refine a triangle if its max edge length is greater than this length.
+    refine_min_angle : float, optional
+        Try to ensure that all triangles have a minimum edge length greater
+        than this value.
+    enforce_delaunay : bool,optional, experimental
+        Attempt to ensure all triangles are proper Delaunay triangles.
 
-#         .. note:
-#             This requires a hacked version of meshpy.triangle that
-#             supports this option.  See the patch available at
-#             workflow_tpls/meshpy_triangle.patch
-#     river_region_dist: float, optional
-#         Create river region based on the distance from river networks. This is useful if explicit 
-#         representation of riverbed is desired. Default is None.
+        .. note:
+            This requires a hacked version of meshpy.triangle that
+            supports this option.  See the patch available at
+            workflow_tpls/meshpy_triangle.patch
 
-#     Returns
-#     -------
-#     vertices : np.array((n_points, 2), 'd')
-#         Array of triangle vertices.
-#     triangles : np.array((n_tris, 3), 'i')
-#         For each triangle, a list of 3 indices into the vertex array that make
-#         up that triangle.
-#     areas : _only if diagnostics=True_, np.array((n_tris), 'd')
-#         Array of triangle areas.
+    Returns
+    -------
+    vertices : np.array((n_points, 2), 'd')
+        Array of triangle vertices.
+    triangles : np.array((n_tris, 3), 'i')
+        For each triangle, a list of 3 indices into the vertex array that make
+        up that triangle.
+    areas : _only if diagnostics=True_, np.array((n_tris), 'd')
+        Array of triangle areas.
+    distances : _only if diagnostics=True_, np.array((n_tris), 'd')
+        Array of triangle distances from the river network.
 
-#     """
-#     verbose = verbosity > 2
+    """
+    verbose = verbosity > 2
 
-#     logging.info("")
-#     logging.info("Triangulation")
-#     logging.info("-" * 30)
+    logging.info("")
+    logging.info("Triangulation")
+    logging.info("-" * 30)
 
-#     refine_funcs = []
-#     if refine_max_area != None:
-#         refine_funcs.append(watershed_workflow.triangulation.refine_from_max_area(refine_max_area))
-#     if refine_distance != None:
-#         if river_corrs != None:
-#             refine_funcs.append(
-#                 watershed_workflow.triangulation.refine_from_river_distance(
-#                     *refine_distance, river_corrs))
-#         else:
-#             refine_funcs.append(
-#                 watershed_workflow.triangulation.refine_from_river_distance(
-#                     *refine_distance, rivers))
-#     if refine_max_edge_length != None:
-#         refine_funcs.append(
-#             watershed_workflow.triangulation.refine_from_max_edge_length(refine_max_edge_length))
+    refine_funcs = []
+    if refine_max_area != None:
+        refine_funcs.append(watershed_workflow.triangulation.refineByMaxArea(refine_max_area))
+    if refine_distance != None:
+        refine_funcs.append(
+            watershed_workflow.triangulation.refineByRiverDistance(*refine_distance, rivers))
+    if refine_max_edge_length != None:
+        refine_funcs.append(
+            watershed_workflow.triangulation.refineByMaxEdgeLength(refine_max_edge_length))
 
-#     def my_refine_func(*args):
-#         return any(rf(*args) for rf in refine_funcs)
+    def my_refine_func(*args):
+        return any(rf(*args) for rf in refine_funcs)
 
-#     vertices, triangles = watershed_workflow.triangulation.triangulate(
-#         hucs,
-#         river_corrs,
-#         internal_boundaries=internal_boundaries,
-#         hole_points=hole_points,
-#         tol=tol,
-#         verbose=verbose,
-#         refinement_func=my_refine_func,
-#         min_angle=refine_min_angle,
-#         enforce_delaunay=enforce_delaunay,
-#         allow_boundary_steiner=(river_corrs is None))
+    vertices, triangles = watershed_workflow.triangulation.triangulate(
+        hucs,
+        internal_boundaries=internal_boundaries,
+        hole_points=hole_points,
+        tol=tol,
+        verbose=verbose,
+        refinement_func=my_refine_func,
+        min_angle=refine_min_angle,
+        enforce_delaunay=enforce_delaunay,
+        allow_boundary_steiner=False)
 
-#     if diagnostics or river_region_dist is not None:
-#         logging.info("Plotting triangulation diagnostics")
-#         river_multiline = shapely.geometry.MultiLineString([r for river in rivers for r in river])
-#         distances = []
-#         areas = []
-#         needs_refine = []
-#         for tri in triangles:
-#             verts = vertices[tri]
-#             bary = np.sum(np.array(verts), axis=0) / 3
-#             bary_p = shapely.geometry.Point(bary[0], bary[1])
-#             distances.append(bary_p.distance(river_multiline))
-#             areas.append(watershed_workflow.utils.triangle_area(verts))
-#             needs_refine.append(my_refine_func(verts, areas[-1]))
-#         areas = np.array(areas)
-#         distances = np.array(distances)
-#         logging.info("  min area = {}".format(areas.min()))
-#         logging.info("  max area = {}".format(areas.max()))
+    
+    if diagnostics:
+        logging.info("Plotting triangulation diagnostics")
+        river_multiline = shapely.ops.unary_union([river.to_mls() for river in rivers])
+        distances = []
+        areas = []
+        needs_refine = []
+        for tri in triangles:
+            verts = vertices[tri]
+            bary = np.sum(np.array(verts), axis=0) / 3
+            bary_p = shapely.geometry.Point(bary[0], bary[1])
+            distances.append(bary_p.distance(river_multiline))
+            areas.append(watershed_workflow.utils.computeTriangleArea(*verts))
+            needs_refine.append(my_refine_func(verts, areas[-1]))
+        areas = np.array(areas)
+        distances = np.array(distances)
+        logging.info("  min area = {}".format(areas.min()))
+        logging.info("  max area = {}".format(areas.max()))
 
-#         if verbosity > 0:
-#             plt.figure()
-#             plt.subplot(121)
-#             plt.hist(distances)
-#             plt.xlabel("distance from river of triangle centroids [m]")
-#             plt.ylabel("count [-]")
-#             plt.subplot(122)
-#             plt.scatter(distances, areas, c=needs_refine, marker='x')
-#             plt.xlabel("distance [m]")
-#             plt.ylabel("triangle area [m^2]")
+        if verbosity > 0:
+            plt.figure()
+            plt.subplot(121)
+            plt.hist(distances)
+            plt.xlabel("distance from river of triangle centroids [m]")
+            plt.ylabel("count [-]")
+            plt.subplot(122)
+            plt.scatter(distances, areas, c=needs_refine, marker='x')
+            plt.xlabel("distance [m]")
+            plt.ylabel("triangle area [m^2]")
 
-#         if river_region_dist is not None:
-#             river_idx = distances < river_region_dist
-#             river_tris = triangles[river_idx]
+        return vertices, triangles, areas, distances
 
-#             plt.figure()
-#             plt.tripcolor(vertices[:, 0],
-#                           vertices[:, 1],
-#                           triangles,
-#                           facecolors=np.array([0] * len(triangles)),
-#                           cmap=None,
-#                           edgecolors='w',
-#                           linewidth=0.01)
-#             plt.tripcolor(vertices[:, 0],
-#                           vertices[:, 1],
-#                           river_tris,
-#                           facecolors=np.array([1] * len(river_tris)),
-#                           cmap='jet',
-#                           edgecolors='w',
-#                           linewidth=0.1)
-#             plt.title("river region")
-
-#             return vertices, triangles, areas, distances, river_idx
-#         return vertices, triangles, areas, distances
-
-#     return vertices, triangles
+    return vertices, triangles
 
 
-# def tessalateRiverAligned(hucs,
-#                             rivers,
-#                             river_width,
-#                             river_n_quads=1,
-#                             internal_boundaries=None,
-#                             hole_points=None,
-#                             diagnostics=False,
-#                             ax=None,
-#                             **kwargs):
-#     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
+def tessalateRiverAligned(hucs,
+                          rivers,
+                          river_width,
+                          internal_boundaries=None,
+                          **kwargs):
+    """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
-#     Parameters
-#     ----------
-#     hucs : SplitHUCs
-#        The huc geometry to tessalate.  Note this will be adjusted if
-#        required by the river corridor.
-#     rivers : list[River]
-#        The rivers to mesh with quads
-#     river_width : float or dict or callable or boolean 
-#        Width of the quads, either a float or a dictionary providing a
-#        {StreamOrder : width} mapping.
-#        Or a function (callable) that computer width using node properties
-#        Or boolean, where True means, width for each reach is explicitely provided properties as "width"
-#     river_n_quads : int, optional
-#        Number of quads across the river.  Currently only 1 is
-#        supported (the default).
-#     hole_points : list(shapely.Point), optional
-#         List of points inside the polygons to be left as holes/voids (excluded from mesh)
-#     internal_boundaries : list[shapely.Polygon], optional
-#        List of internal boundaries to embed in the domain, e.g. waterbodies.
-#     diagnostics : bool, optional
-#        If true, prints extra diagnostic info.
-#     ax : matplotlib Axes object, optional
-#        For debugging -- plots troublesome reaches as quad elements are
-#        generated to find tricky areas.
-#     kwargs :
-#        All other arguments are passed to the triangulation function for refinement.
+    Parameters
+    ----------
+    hucs : SplitHUCs
+       The huc geometry to tessalate.  Note this will be adjusted if
+       required by the river corridor.
+    rivers : list[River]
+       The rivers to mesh with quads
+    river_width : float or dict or callable or boolean 
+       Width of the quads, either a float or a dictionary providing a
+       {StreamOrder : width} mapping.
+       Or a function (callable) that computer width using node properties
+       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
+    river_n_quads : int, optional
+       Number of quads across the river.  Currently only 1 is
+       supported (the default).
+    hole_points : list(shapely.Point), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh)
+    internal_boundaries : list[shapely.Polygon], optional
+       List of internal boundaries to embed in the domain, e.g. waterbodies.
+    diagnostics : bool, optional
+       If true, prints extra diagnostic info.
+    ax : matplotlib Axes object, optional
+       For debugging -- plots troublesome reaches as quad elements are
+       generated to find tricky areas.
+    kwargs :
+       All other arguments are passed to the triangulation function for refinement.
 
-#     Returns
-#     -------
-#     vertices : np.array((n_vertices, 2), 'd')
-#         Array of triangle vertices.
-#     cell_conn : list[list[int]]
-#         For each cell, an ordered list of indices into the vertices
-#         array that make up that cell.
-#     areas : _only if diagnostics=True_, np.array((n_cell_vertices), 'd')
-#         Array of areas.
+    Returns
+    -------
+    vertices : np.array((n_vertices, 2), 'd')
+        Array of triangle vertices.
+    elems : list[list[int]]
+        For each element, an ordered list of indices into the vertices
+        array that make up that cell.
+    areas : _only if diagnostics=True_, np.array((n_cell_vertices), 'd')
+        Array of areas.
 
-#     """
-#     logging.info("")
-#     logging.info("Stream-aligned Meshing")
-#     logging.info("-" * 30)
+    """
+    logging.info("")
+    logging.info("Stream-aligned Meshing")
+    logging.info("-" * 30)
 
-#     # generate the quads
-#     logging.info('Creating stream-aligned mesh...')
-#     quad_conn, corrs = watershed_workflow.river_mesh.createRiverMeshes(rivers=rivers,
-#                                                                           widths=river_width,
-#                                                                           enforce_convexity=True,
-#                                                                           ax=ax,
-#                                                                           label=False)
+    # generate the quads
+    logging.info('Creating stream-aligned mesh...')
+    computeWidth = watershed_workflow.river_mesh.createWidthFunction(river_width)
+    river_coords, river_elems, river_corridors, hole_points = watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth)
 
-#     # adjust the HUC to match the corridor at the boundary
-#     logging.info('Adjusting rivers at the watershed boundaries...')
-#     hucs_without_outlet = hucs.deep_copy()
-#     watershed_workflow.river_mesh.adjustHUCsForRiverCorridors(hucs_without_outlet,
-#                                                                   rivers,
-#                                                                   corrs,
-#                                                                   integrate_rc=False,
-#                                                                   ax=ax)
+    # triangulate the rest
+    if internal_boundaries is None:
+        internal_boundaries = river_corridors
+    else:
+        internal_boundaries = river_corridors + internal_boundaries
+        
+    tri_res  = watershed_workflow.triangulate(hucs,
+                                              rivers,
+                                              internal_boundaries,
+                                              hole_points,
+                                              **kwargs)
+    
+    tri_coords = tri_res[0]
+    tri_elems = [tri.tolist() for tri in tri_res[1]]
+    
+    # merge elements into a single output
+    elems = tri_elems + river_elems
+    # note, all river verts are in the tri_verts, listed first, and in the same order!
+    coords = tri_coords
 
-#     # triangulate the rest
-#     tri_res = watershed_workflow.triangulate(hucs_without_outlet, rivers, corrs,
-#                                              internal_boundaries, hole_points, diagnostics,
-#                                              **kwargs)
-#     tri_verts = tri_res[0]
-#     tri_conn = tri_res[1]
-
-#     # merge into a single output
-#     tri_conn_list = [conn.tolist() for conn in tri_conn]
-#     conn_list = tri_conn_list + quad_conn
-
-#     river_gid_start = len(tri_conn_list)
-#     for river in rivers:
-#         river.properties['gid_start'] = river_gid_start
-#         all_elems = [elem for node in river.preOrder() for elem in node.elements]
-#         river_gid_start = river_gid_start + len(all_elems)
-
-#     # note, all quad verts are in the tri_verts, and hopefully in the right order!
-#     if len(tri_res) > 2:
-#         return (tri_verts, conn_list) + tuple(tri_res[2:])
-#     else:
-#         return tri_verts, conn_list
+    if len(tri_res) > 2:
+        return (coords, elems) + tuple(tri_res[2:])
+    else:
+        return coords, elems
 
 
 # def elevate(mesh_points, mesh_crs, dem, algorithm='piecewise bilinear'):

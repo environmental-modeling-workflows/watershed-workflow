@@ -14,6 +14,7 @@ import shapely.ops
 import shapely.errors
 
 import watershed_workflow.utils
+import watershed_workflow.plot
 import watershed_workflow.sources.standard_names as names
 
 _abs_tol = 1
@@ -53,7 +54,6 @@ class HandledCollection:
             raise RuntimeError("HandledCollection takes 0, 1 or 2 arguments")
 
     def __getitem__(self, key):
-
         """Get an object"""
         return self._store[key]
 
@@ -89,6 +89,15 @@ class HandledCollection:
         for k in self._store.keys():
             yield k
 
+    def keys(self):
+        """Generator for handles"""
+        for k in self._store.keys():
+            yield k
+            
+    def values(self):
+        for v in self._store.values():
+            yield v
+            
     def items(self):
         for it in self._store.items():
             yield it
@@ -249,43 +258,15 @@ class SplitHUCs:
         self.update()
         return self.df
 
-    def plot(self, column=None, fill=False, **kwargs):
-        # get marker arguments, popping them from kwargs
-        markers = False
-        if 'marker' in kwargs:
-            markers = True
-            markerargs = {'marker' : kwargs.pop('marker')}
-            if 'markersize' in kwargs:
-                markerargs['s'] = kwargs.pop('markersize')
+    def plot(self, *args, **kwargs):
+        """Plot as polygons (boundaries only)."""
+        return watershed_workflow.plot.linestringsWithCoords(self.df.set_geometry(self.df.boundary), *args, **kwargs)
 
-        # force cycled colors as default, not all blue as default
-        if column is None and 'color' not in kwargs:
-            color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
-            color = [c for (ind,c) in zip(self.df.index, itertools.cycle(color_cycle))]
-            kwargs['color'] = color
-
-        # call the default plotter, which, because HUCs are all
-        # Polygons, will always add exactly one collection.
-        if fill:
-            ax = self.df.plot(**kwargs)
-            lc = ax.collections[-1]
-            colors = lc.get_facecolors()
-        else:
-            ax = self.df.boundary.plot(**kwargs)
-            lc = ax.collections[-1]
-            colors = lc.get_colors()
-
-        if markers:
-            # scatter the markers
-            for i, linestring in enumerate(self.df.boundary.geometry):
-                if len(colors) == 1:
-                    color = colors[0]
-                else:
-                    color = colors[i]
-                ax.scatter(linestring.xy[0], linestring.xy[1], color=color, **markerargs)
-
-        return ax
-        
+    def plotAsLinestrings(self, *args, **kwargs):
+        """Plot not as polygons, but individual linestrings."""
+        df = geopandas.GeoDataFrame(geometry=list(self.linestrings.values()))
+        return watershed_workflow.plot.linestringsWithCoords(df, *args, **kwargs)
+    
 
     def explore(self, column=names.ID, m=None, marker=True, name='watersheds', **kwargs):
         """Open a map!"""

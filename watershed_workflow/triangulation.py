@@ -83,10 +83,10 @@ class NodesEdges:
 
     def add(self, obj):
         """Adds nodes and edges from obj into collection."""
-        if type(obj) is shapely.geometry.LineString:
+        if isinstance(obj, shapely.geometry.LineString):
             inds = [self.nodes[c] for c in obj.coords]
             [self.edges.add(orient(e)) for e in connectOnewayTrip(inds) if orient(e)]
-        elif type(obj) is shapely.geometry.Polygon:
+        elif isinstance(obj, shapely.geometry.Polygon):
             inds = [self.nodes[c] for c in obj.boundary.coords]
             [self.edges.add(orient(e)) for e in connectRoundTrip(inds) if orient(e)]
         else:
@@ -120,7 +120,7 @@ class NodesEdges:
 
 
 def triangulate(hucs,
-                river_corrs=None,
+                river_mesh=None,
                 internal_boundaries=None,
                 hole_points=None,
                 tol=1,
@@ -134,12 +134,6 @@ def triangulate(hucs,
     ----------
     hucs : SplitHUCs
         A split-form HUC object from, e.g., get_split_form_hucs()
-    river_corrs : list(shapely.geometry.Polygons), optional
-        A list of river corridor polygons for each river
-    refinement_polygon : list, optional
-        List of RiverTrees or other iterable collections of
-        coordinates used to refine the mesh given the distance
-        function refinement.
     internal_boundaries : list, optional
         List of shapely objects or RiverTrees or other iterable
         collections of coordinates used as internal boundaries that
@@ -156,55 +150,33 @@ def triangulate(hucs,
     import meshpy.triangle
 
     logging.info("Triangulating...")
-    linestrings = list(hucs.linestrings)
 
-    if internal_boundaries != None:
-        if type(internal_boundaries) is list:
-            for item in internal_boundaries:
-                if isinstance(item, shapely.geometry.LineString) or isinstance(
-                        item, shapely.geometry.Polygon):
-                    linestrings = [item, ] + linestrings
-                elif isinstance(item, watershed_workflow.river_tree.River):
-                    linestrings = list(item) + linestrings
-        elif isinstance(internal_boundaries, shapely.geometry.Polygon):
-            linestrings = [internal_boundaries, ] + linestrings
+    # get a list of required boundaries, both interior and exterior
+    linestrings = []
+    # -- internal boundaries may include a river mesh and must go first
+    if internal_boundaries is not None:
+        linestrings.extend(internal_boundaries)
+    linestrings = linestrings + list(hucs.linestrings)
 
-    if river_corrs != None:
-        if type(river_corrs) is list:
-            linestrings = river_corrs + linestrings
-        elif type(river_corrs) is shapely.geometry.Polygon:
-            linestrings = [river_corrs, ] + linestrings
-        else:
-            raise RuntimeError("Triangulate not implemented for container of type '%r'"
-                               % type(hucs))
-
+    # convert to nodes and edges
     nodes_edges = NodesEdges(linestrings)
-
     logging.info("   %i points and %i facets" % (len(nodes_edges.nodes), len(nodes_edges.edges)))
     nodes_edges.check(tol=tol)
 
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
+    logging.info(f"  -- graph.nodes: {len(nodes)}")
 
     pdata = [tuple([float(c) for c in p]) for p in nodes]
+    logging.info(pdata)
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
+    logging.info(fdata)
     info.set_facets(fdata)
 
-    if river_corrs is not None:
-        # adding hole in the river corridor for quad elements
-        logging.info("defining hole..")
-        rc_hole_points = []
-        for river_corr in river_corrs:
-            rc_hole_point = pick_hole_point(river_corr)
-            rc_hole_points.append(rc_hole_point.coords[0])  # a point inside the river corridor
-            assert (river_corr.contains(rc_hole_point))
-        if hole_points != None:
-            hole_points = hole_points + rc_hole_points
-        else:
-            hole_points = rc_hole_points
-        info.set_holes(hole_points)
+    # add hole points, which should include the river mesh interior
+    info.set_holes(hole_points)
 
     logging.info(" triangle.build...")
 
@@ -299,12 +271,3 @@ def refineByMaxEdgeLength(edge_length):
     return refine
 
 
-def pickHolePoint(poly):
-    """A function to pick a point inside a polygon"""
-    nodes_edges_rc = NodesEdges([poly])
-    p1 = list(nodes_edges_rc.nodes)[0]
-    p2 = list(nodes_edges_rc.nodes)[-1]
-    p3 = list(nodes_edges_rc.nodes)[1]
-    p4 = list(nodes_edges_rc.nodes)[-2]
-
-    return shapely.geometry.MultiPoint([p1, p2, p3, p4]).centroid

@@ -36,27 +36,10 @@ def check_twoboxes(hucs):
 def hilevSnap(hucs, rivers, tol):
     """This helper function simply does all three hydro operations."""
     hydro.snapHUCsJunctions(hucs, rivers, 3*tol)
-
-    domain = hucs.exterior
-    assert all(domain.intersects(reach.linestring) for river in rivers for reach in river)
     for river in rivers:
-        river.linestring = hydro.snapBoundaryToLineString(hucs, river.linestring, tol)
-    for river in rivers:
-        for leaf in river.leaf_nodes:
-            new_linestring = hydro.snapBoundaryToLineString(hucs, watershed_workflow.utils.reverseLineString(leaf.linestring), tol)
-            if new_linestring is not None:
-                leaf.linestring = watershed_workflow.utils.reverseLineString(new_linestring)
-    hucs.update()
+        hydro.snapReachEndpoints(hucs, river, tol)
+    watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, tol)
 
-    domain = hucs.exterior
-    assert all(domain.contains(reach.linestring) for river in rivers for reach in river)
-
-    for river in rivers:
-        for reach in river:
-            hydro.snapInternalToReachUpstreamJunction(hucs, reach, tol)
-
-    
-    
 #
 # test0:
 # one box, one reach with outlet on the boundary
@@ -229,7 +212,7 @@ def test_snap1c(two_boxes):
           shapely.geometry.LineString([(9.999, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
     for river in rivers:
-        hydro.snapEndpoints(hucs, river, 0.1)
+        hydro.snapReachEndpoints(hucs, river, 0.1)
     check1(hucs, rivers)
 
 def test_snap1d(two_boxes):
@@ -245,7 +228,7 @@ def test_snap1e(two_boxes):
           shapely.geometry.LineString([(10.001, 0.), (15, 0.)]),]
     hucs, rivers = data(two_boxes, rs)
     for river in rivers:
-        hydro.snapEndpoints(hucs, river, 0.1)
+        hydro.snapReachEndpoints(hucs, river, 0.1)
     check1(hucs, rivers)
 
 def test_snap1f(two_boxes):

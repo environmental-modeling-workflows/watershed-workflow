@@ -19,10 +19,18 @@ from watershed_workflow.split_hucs import SplitHUCs
 
 
 def _getAngles(linestrings : List[shapely.geometry.LineString]) -> np.ndarray:
+    """Given a list of linestrings whose terminal coordinate is the same, compute angles between each successive pair of strings."""
+    # check preconditions
+    assert len(linestrings) > 1
+    assert all(watershed_workflow.utils.isClose(linestrings[0].coords[-1], ls.coords[-1]) for ls in linestrings)
+
     angles = np.array([watershed_workflow.utils.computeAngle(reverseLineString(linestrings[i]),
                                                              linestrings[(i+1) % len(linestrings)]) \
               for i in range(len(linestrings))])
+
+    # check postconditions
     assert(abs(sum(angles) - 360) < 0.01)
+    assert(min(angles) > 0)
     return angles
     
 
@@ -158,7 +166,8 @@ def smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
 
 
 def _spreadAngles(linestrings : List[shapely.geometry.LineString],
-                  min_angle : float) -> Tuple[int, List[shapely.geometry.LineString]]:
+                  min_angle : float,
+                  can_move : Optional[List[bool]] = None) -> Tuple[int, List[shapely.geometry.LineString]]:
     """Given a list of linestrings, all of whose terminal coordinate
     is the same (origin) and whose ordering is clockwise around that
     origin, nudge the second-to-last point of all linestrings (except
@@ -166,32 +175,34 @@ def _spreadAngles(linestrings : List[shapely.geometry.LineString],
     """
     pre_angles = _getAngles(linestrings)
     logging.debug(f'  smoothing angles pre: {pre_angles}')
-    assert(abs(sum(pre_angles) - 360) < 0.01)
+
     if min(pre_angles) >= min_angle: return 0, linestrings
 
-    # Note, any linestring with len(coords) == 2 cannot be moved!  Try
-    # to rotate them to be the origin
-    num_short = [i for (i,ls) in enumerate(linestrings) if len(ls.coords) == 2]
-    rotation = 0
-    if len(num_short) > 1:
-        raise RuntimeError('Rotating angles cannot find a valid solution that does not move endpoints'
-                           ' when more than 1 linestring is of length 2 coords')
-    elif len(num_short) == 1:
-        rotation = num_short[0]
-        linestrings = linestrings[rotation:] + linestrings[0:rotation]
-        pre_angles = _getAngles(linestrings)
+    if can_move is None:
+        can_move = [True for ls in linestrings]
+    can_move[0] = False
+    for i,ls in enumerate(linestrings):
+        if len(ls.coords) == 2:
+            # cannot move this one!
+            can_move[i] = False
 
-    
     # compute a valid set of angles, all > min_angle
+    n = len(linestrings)
     angles = np.copy(pre_angles)
     itrs = 0
     while min(angles) < min_angle:
-        where = np.where(angles < min_angle)[0]
-        angles[where] += 2
-        angles[(where - 1) % len(angles)] -= 1
-        angles[(where + 1) % len(angles)] -= 1
+        for i in range(len(angles)):
+            if angles[i] < min_angle:
+                if can_move[i]:
+                    # move one
+                    angles[i] += 1
+                    angles[(i-1)%n] -= 1
+                if can_move[(i+1)%n]:
+                    angles[i] += 1
+                    angles[(i+1)%n] -= 1
+
         itrs += 1
-        if itrs > 100:
+        if itrs > 1000:
             raise RuntimeError("Cannot smooth sharp angles at junction.")
 
     logging.debug(f'  smoothing angles post: {angles}')
@@ -200,9 +211,10 @@ def _spreadAngles(linestrings : List[shapely.geometry.LineString],
 
     # now that we have a valid set of angles, we can redistribute the
     # linestrings to those angles by moving the first interior points.
+    linestrings_out = [ls for ls in linestrings]
     for i in range(len(linestrings)-1):
-        fixed_ls = linestrings[i]
-        move_ls = linestrings[i+1]
+        fixed_ls = linestrings_out[i]
+        move_ls = linestrings_out[i+1]
         v1 = np.array(fixed_ls.coords[-1]) - np.array(fixed_ls.coords[-2])
         dist = watershed_workflow.utils.computeDistance(move_ls.coords[-1], move_ls.coords[-2])
         v2 = watershed_workflow.utils.projectVectorAtAngle(v1, angles[i], dist)
@@ -212,13 +224,13 @@ def _spreadAngles(linestrings : List[shapely.geometry.LineString],
         logging.debug(f'moving: {linestrings[i+1]}')
         new_ls = shapely.geometry.LineString(new_coords)
         logging.debug(f'to: {new_ls}')
-        linestrings[i+1] = new_ls
+        linestrings_out[i+1] = new_ls
 
-    if rotation != 0:
-        unrotation = len(linestrings) - rotation
-        linestrings = linestrings[unrotation:] + linestrings[0:unrotation]
+    for ls_in, ls_out, ls_can_move in zip(linestrings, linestrings_out, can_move):
+        if not ls_can_move:
+            assert ls_in is ls_out
         
-    return 1, linestrings
+    return 1, linestrings_out
 
 
 def _getOutletLinestrings(hucs : SplitHUCs,

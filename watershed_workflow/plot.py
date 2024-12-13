@@ -18,9 +18,9 @@ from matplotlib import pyplot as plt
 from matplotlib import collections as pltc
 from matplotlib import cm as pcm
 import shapely
-import rasterio
 from mpl_toolkits.mplot3d import Axes3D
 import geopandas
+import itertools
 
 import watershed_workflow.utils
 import watershed_workflow.crs
@@ -33,6 +33,39 @@ def _is_iter(obj):
     except TypeError:
         return False
     return True
+
+
+def linestringsWithCoords(df, column=None, marker=None, **kwargs):
+    """Plot linestrings, but also potentially scatter their coordinates."""
+    if marker is not None:
+        marker_args = {'marker' : marker}
+        if 'markersize' in kwargs:
+            marker_args['s'] = kwargs.pop('markersize')
+
+    # force cycled colors as default, not all blue as default
+    if column is None and 'color' not in kwargs:
+        color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        color = [c for (ind,c) in zip(df.index, itertools.cycle(color_cycle))]
+        kwargs['color'] = color
+
+    # call the default plotter, which, because this is all
+    # LineStrings, will always add exactly one collection.
+    ax = df.plot(**kwargs)
+
+    if marker is not None:
+        lc = ax.collections[-1]
+        colors = lc.get_colors()
+
+        # scatter the markers
+        for i, seg in enumerate(geo for geo in df.geometry if not watershed_workflow.utils.isEmpty(geo)):
+            if len(colors) == 1:
+                color = colors[0]
+            else:
+                color = colors[i]
+            ax.scatter(seg.xy[0], seg.xy[1], color=color, **marker_args)
+
+    return ax
+                          
 
 
 # plot reaches and modify...
@@ -130,105 +163,6 @@ class Labeler:
         self.select(i, 0, (event.mouseevent.x, event.mouseevent.y))
         self.ax.get_figure().canvas.draw_idle()
 
-
-def shply(shply, **kwargs):
-    """Plot a shapely object, in whatever CRS it is in.
-
-    Parameters
-    ----------
-    shply : shapely.geometry object
-
-    **kwargs
-      passed to geopandas.GeoDataFrame.plot
-    
-    Returns
-    -------
-    ax : matplotlib axis
-    """
-    df = geopandas.GeoDataFrame(geometry=[shply,])
-    return df.plot(**kwargs)
-
-
-def hucs(hucs,
-         outlet_kwargs=None,
-         **kwargs):
-    """Plot a SplitHUCs object.
-    
-    Parameters
-    ----------
-    hucs : watershed_workflow.split_hucs.SplitHucs object
-      The collection of hucs to plot.
-    outlet_kwargs : dict
-      kwargs to pass to scatterplot of outlets
-    kwargs : dict
-      Extra arguments passed to geopandas.GeoDataFrame.plot
-
-    Returns
-    -------
-    ax : matplotlib.Axes object
-    """
-    df = hucs.to_dataframe()
-    ax = df.plot(**kwargs)
-    df_out = geopandas.GeoDataFrame(crs=df.crs, geometry=df['outlets'])
-    df_out.plot(ax=ax, **outlet_kwargs)
-    return ax
-
-
-def river(river, **kwargs):
-    """Plot an itereable collection of reaches.
-
-    A wrapper for plot.shply()
-
-    Parameters
-    ----------
-    river : list(shapely.LineString)
-      An iterable of shapely LineString reaches.
-    kwargs : dict
-      Extra arguments passed to geopandas.GeoDataFrame.plot
-
-    Returns
-    -------
-    ax : matplotlib.Axes object
-    """
-    df = river.to_dataframe()
-    return df.plot(**kwargs)
-
-
-def rivers(rivers, color=None, ax=None, **kwargs):
-    """Plot an itereable collection of river Tree objects.
-
-    A wrapper for plot.shply()
-
-    Parameters
-    ----------
-    rivers : list(river_tree.RiverTree)
-      An iterable of river_tree.RiverTree objects.
-    color : str, scalar, tuple, or iterable, optional
-      If it is a tuple, this is assumed to be a single color
-      (e.g. RGB, etc).  If it is a list or other iterable, this must
-      be the same length as rivers, and each entry is used to color
-      each river independently.
-    ax : matplotib axes object, optional
-      Axes to plot on.
-    kwargs : dict
-      Extra arguments passed to the plotting method, which is likely
-      matplotlib.collections.LineCollection.
-
-    Returns
-    -------
-    ax : matplotlib.Axes object
-
-    """
-    if color is None:
-        color = watershed_workflow.colors.enumerated_colors(len(rivers))
-
-    if type(color) is not str and len(color) == len(rivers):
-        for r, c in zip(rivers, color):
-            ax = river(r, color=c, **kwargs)
-    else:
-        for r in rivers:
-            ax = river(r, color=color, **kwargs)
-            
 
 def triangulation(points, tris, ax=None, **kwargs):
     """Plots a triangulation.
@@ -332,7 +266,7 @@ def mesh(m2, **kwargs):
 
     """
     df = geopandas.GeoDataFrame(geometry=[shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn])
-    return df.plot(**kwargs)
+    return df.boundary.plot(**kwargs)
 
 
 def basemap(crs=None,
@@ -443,27 +377,3 @@ def basemap(crs=None,
     return ax
 
 
-def feather_axis_limits(ax, delta=0.02):
-    """Adds a small delta to the axis limits to provide a bit of buffer.
-
-    Parameters
-    ----------
-    ax : matplotlib Axis object
-      The axis to feather.
-    delta : 2-tuple or double, default=0.02
-      If a double, equivalent to (delta,delta).  Provides the fraction of 
-      the current plot width,height to increase by.
-    """
-    try:
-        assert (len(delta) == 2)
-    except AssertionError:
-        raise RuntimeError("feather_axis_limits expects delta argument of length 2 (dx,dy)")
-    except ValueError:
-        delta = (delta, delta)
-
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    dx = delta[0] * (xlim[1] - xlim[0])
-    dy = delta[1] * (ylim[1] - ylim[0])
-    ax.set_xlim((xlim[0] - dx, xlim[1] + dx))
-    ax.set_ylim((ylim[0] - dy, ylim[1] + dy))
