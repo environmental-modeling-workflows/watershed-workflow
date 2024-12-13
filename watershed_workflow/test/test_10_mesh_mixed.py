@@ -3,15 +3,277 @@ import numpy as np
 import math
 import shapely
 import geopandas
+from matplotlib import pyplot as plt
 
-import watershed_workflow.mesh
-import watershed_workflow.utils
-import watershed_workflow.resampling
-import watershed_workflow.river_tree
-import watershed_workflow.river_mesh
-import watershed_workflow.split_hucs
+from watershed_workflow.river_mesh import *
 
-from watershed_workflow.test.shapes import *
+plot = False
+
+#
+# Tests for geometry helpers
+#
+def test_line_shifts():
+    p1 = (0.,0)
+    p2 = (2.,1)
+    l1 = computeLine(p1, p2)
+    l1s = translateLinePerpendicular(l1, 0.6)
+
+    p2s = projectOne(p1, p2, 0.6)
+    p1s = projectOne(p2, p1, -0.6)
+    l2 = computeLine(p1s, p2s)
+
+    assert np.allclose(l2, l1s)
+
+
+
+def test_intersections():
+    p1 = (0,0)
+    p2 = (1,0)
+    p3 = (1,1)
+
+    i1 = findIntersection(computeLine(p1,p2), computeLine(p2,p3))
+    assert np.allclose(i1, (1,0))
+
+    p4 = (2,3)
+    p5 = (1,4)
+    i2 = findIntersection(computeLine(p1,p3), computeLine(p4,p5))
+    assert np.allclose(i2, (2.5,2.5))
+
+
+def test_projectOne():
+    p = projectOne((0.,1), (0,0), 1)
+    assert np.allclose(p, (-1,0))
+
+    p = projectOne((0.,1), (1,1), 1)
+    assert np.allclose(p, (1,0))
+
+    p = projectOne((3.,4), (4,3), np.sqrt(2))
+    assert np.allclose(p, (3,2))
+
+def test_projectTwo_parallel():
+    p = projectTwo((0.,0), (1.,0), (2.,0), 1, 1)
+    assert np.allclose(p, (1.,-1))
+
+def test_projectTwo_parallel_mixedwidth():
+    p = projectTwo((0.,0), (1.,0), (2.,0), 0.5, 1.5)
+    assert np.allclose(p, (1.,-1))
+
+
+def test_projectTwo():
+    p = projectTwo((0.,0), (1.,0), (1.,1), 1., 1.)
+    assert np.allclose(p, (2., -1))
+
+def test_projectTwo_mixed():
+    p = projectTwo((0.,0), (1.,0), (1.,1), 2., 1.)
+    assert np.allclose(p, (2., -2))
+    
+def test_projectTwo_jagged():
+    p = projectTwo((0,0), (2,1), (4,0), 1, 1)
+    new_p = (2, 1 - 1./np.cos(np.arctan(0.5)))
+    assert np.allclose(p, new_p)
+    
+
+
+#
+# Tests for toy reaches
+#
+_plot = False
+_assert_plot = True
+def plot(river, elems, coords, force = False):
+    if _plot or force:
+        fig, ax = plt.subplots(1,1)
+        river.plot(ax=ax, color='b', marker='x')
+        ax.scatter(coords[:,0], coords[:,1], marker='o', color='g')
+        to_df(elems, coords).plot(ax=ax, color='r', )
+        plt.show()
+        assert not _assert_plot
+
+        
+def to_df(elems, coords):
+    return geopandas.GeoDataFrame(geometry=[shapely.geometry.Polygon(coords[e]).exterior for e in elems])
+
+def test_single_reach_vert():
+    r1 = shapely.geometry.LineString([(0,3), (0,2), (0,1), (0,0)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return 0.5
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 3
+    assert len(coords) == 7
+    assert len(elems[0]) == 3
+    assert len(elems[1]) == 4
+    assert len(elems[2]) == 4
+
+    print(coords)
+    gold_coords = np.array(
+        [[-0.25,  0.  ],
+         [-0.25,  1.  ],
+         [-0.25,  2.  ],
+         [ 0.,    3.  ],
+         [ 0.25,  2.  ],
+         [ 0.25,  1.  ],
+         [ 0.25,  0.  ]])
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
+
+
+def test_single_reach_horiz():
+    r1 = shapely.geometry.LineString([(0,0), (2,0), (3,0), (6,0)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return 0.5
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 3
+    assert len(coords) == 7
+    assert len(elems[0]) == 3
+    assert len(elems[1]) == 4
+    assert len(elems[2]) == 4
+
+    print(coords)
+
+    gold_coords = np.array(
+        [[ 6.,   -0.25],
+         [ 3.,   -0.25],
+         [ 2.,   -0.25],
+         [ 0.,    0.  ],
+         [ 2.,    0.25],
+         [ 3.,    0.25],
+         [ 6.,    0.25]])
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
+
+    
+def test_single_reach_diag():
+    r1 = shapely.geometry.LineString([(0,0), (2,2), (3,3), (6,6)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return 0.5
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 3
+    assert len(coords) == 7
+    assert len(elems[0]) == 3
+    assert len(elems[1]) == 4
+    assert len(elems[2]) == 4
+
+    print(coords)
+
+    gold_coords = np.array(
+        [[6.1767767, 5.8232233],
+         [3.1767767, 2.8232233],
+         [2.1767767, 1.8232233],
+         [0.,        0.       ],
+         [1.8232233, 2.1767767],
+         [2.8232233, 3.1767767],
+         [5.8232233, 6.1767767]]
+    )
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
+    
+
+def test_single_reach_jagged():
+    r1 = shapely.geometry.LineString([(0,0), (2,1), (3,3), (5,5)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return np.sqrt(2.0)/2
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 3
+    assert len(coords) == 7
+    assert len(elems[0]) == 3
+    assert len(elems[1]) == 4
+    assert len(elems[2]) == 4
+
+    print(coords)
+
+    gold_coords = np.array(
+        [[5.25,       4.75      ],
+         [3.29056942, 2.79056942],
+         [2.26352314, 0.73647686],
+         [0.,         0.        ],
+         [1.73647686, 1.26352314],
+         [2.70943058, 3.20943058],
+         [4.75,       5.25      ]]
+    )
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
+
+
+def test_two_coplanar_reaches():
+    r1 = shapely.geometry.LineString([(0,0), (2,0), (3,0), (5,0)])
+    r2 = shapely.geometry.LineString([(-10, 0), (-5,0), (-4,0), (-1,0), (0,0)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1, r2])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return 1
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 7
+    assert len(coords) == 15
+    assert len(elems[0]) == 3
+    assert all(len(e) == 4 for e in elems[1:])
+
+    print(coords)
+
+    gold_coords = np.array(
+        [[5,-0.5],
+         [3,-0.5],
+         [2,-0.5],
+         [0,-0.5],
+         [-1,-0.5],
+         [-4,-0.5],
+         [-5,-0.5],
+         [-10,0],
+         [-5,0.5],
+         [-4,0.5],
+         [-1,0.5],
+         [0,0.5],
+         [2,0.5],
+         [3,0.5],
+         [5,0.5]], 'd')
+
+    print(gold_coords)
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
+
+
+def test_two_kinked_reaches():
+    r1 = shapely.geometry.LineString([(0,0), (2,1), (4,2), (6,3)])
+    r2 = shapely.geometry.LineString([(-6,3), (-4, 2), (-2, 1), (0,0)])
+    reaches = geopandas.GeoDataFrame(geometry=[r1, r2])
+    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+
+    def computeWidth(x): return 1
+
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    assert len(elems) == 6
+    assert len(coords) == 13
+    assert len(elems[0]) == 3
+    assert all(len(e) == 4 for e in elems[1:])
+
+    print(coords)
+    gold_coords = np.array(
+        [[ 6.2236068,   2.5527864 ],
+         [ 4.2236068,   1.5527864 ],
+         [ 2.2236068,   0.5527864 ],
+         [ 0.,         -0.55901699],
+         [-2.2236068,   0.5527864 ],
+         [-4.2236068,   1.5527864 ],
+         [-6.,          3.        ],
+         [-3.7763932,   2.4472136 ],
+         [-1.7763932,   1.4472136 ],
+         [-0.,          0.55901699],
+         [ 1.7763932,   1.4472136 ],
+         [ 3.7763932,   2.4472136 ],
+         [ 5.7763932,   3.4472136 ]])
+    assert np.allclose(gold_coords, coords, 1.e-4)
+    plot(rivers[0], elems, coords)
 
 
 def assert_list_same(l1, l2):
@@ -20,7 +282,6 @@ def assert_list_same(l1, l2):
     assert (len(l1) == len(l2))
     for a, b in zip(l1, l2):
         assert (a == b)
-
 
 @pytest.fixture
 def river_small():
@@ -31,65 +292,24 @@ def river_small():
     rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
     return rivers[0]
 
+def test_create_river_mesh(river_small):
+    def computeWidth(a): return 1
+    elems, coords = watershed_workflow.river_mesh.createRiverMesh(river_small, computeWidth)
 
-@pytest.fixture
-def corr_small():
-    corr_coords = [(3.500000999997, 0.0009999980000059787), (3.5099990000009997, 5.0),
-                   (3.5001921882905838, 9.903405855207968), (1.523171889094147, 14.855841704695042),
-                   (1.0, 19.0), (2.476828110905853, 15.164158295304956), (4.0, 11.348612713124119),
-                   (5.543501505461575, 15.215083984305364), (8.0, 19.0),
-                   (6.456498494538425, 14.804916015694635), (4.500192262191668, 9.90436890366601),
-                   (4.510000999999, 5.0), (4.499999000003, -0.0009999980000059787),
-                   (3.500000999997, 0.0009999980000059787)]
-    return shapely.geometry.Polygon(corr_coords)
+    assert (13 == len(coords))
+    assert np.allclose((1.,19), coords[4])
+    assert np.allclose((4.,11.348612713124119), coords[6])
 
+    assert (6 == len(elems))
+    assert (3 == len(elems[0])) # headwater elem tri on left branch
+    assert (4 == len(elems[1])) # midstream elem quad on left branch
+    assert (3 == len(elems[2])) # headwater elem tri on right
+    assert (4 == len(elems[3])) # midstream elem quad on right
+    assert (5 == len(elems[4])) # junction
+    assert (4 == len(elems[5])) # downstream outlet
 
-@pytest.fixture
-def watershed_small():
-    seg1 = shapely.geometry.LineString([[16, 4], [16, 8], [16, 12], [16, 16], [16, 20], [12, 20],
-                                        [8, 20], [4, 20], [0, 20], [0, 16], [0, 12], [0, 8], [0, 4],
-                                        [0, 0], [4, 0]])
-    seg2 = shapely.geometry.LineString([[4, 0], [8, 0], [12, 0], [16, 0], [16, 4]])
+    assert_list_same([1, 2, 6, 10, 11], elems[4])
+    assert_list_same([7, 8, 9], elems[2])
+    assert_list_same([0, 1, 11, 12], elems[-1])
 
-    ws = geopandas.GeoDataFrame(geometry=[shapely.geometry.Polygon(seg1.coords[:] + seg2.coords[:]),])
-    watershed = watershed_workflow.split_hucs.SplitHUCs(ws)
-
-    for i, seg in enumerate([seg1, seg2]):
-        watershed.linestrings[i] = seg
-    return watershed
-
-#
-# NEED MORE TESTS HERE -- there are 1000+ lines of code in river_mesh...
-#
-
-
-def test_create_river_corridor(river_small):
-    corr = watershed_workflow.river_mesh.createRiverCorridor(river_small, 1)
-
-    assert (14 == len(corr.exterior.coords))
-    assert (0 == math.dist((1.0, 19.0), corr.exterior.coords[4]))
-    assert (0 == math.dist((4.0, 11.348612713124119), corr.exterior.coords[6]))
-
-
-def test_to_quads(river_small, corr_small):
-    quads = watershed_workflow.river_mesh.createRiverQuads(river_small, corr_small, 1)
-    assert (6 == len(quads))
-    assert (4 == len(quads[0]))
-    assert (5 == len(quads[1]))
-    assert (3 == len(quads[3]))
-    assert (3 == len(quads[3]))
-    assert_list_same([1, 2, 6, 10, 11], quads[1])
-    assert_list_same([7, 8, 9], quads[-1])
-
-
-# def test_triangulate(watershed_small, river_small):
-#     points, elems = watershed_workflow.tessalate_river_aligned(watershed_small, [river_small],
-#                                                                river_width=1,
-#                                                                tol=0.1,
-#                                                                refine_min_angle=32,
-#                                                                refine_distance=[2, 5, 5, 10],
-#                                                                diagnostics=False)
-#     areas = np.array([watershed_workflow.utils.triangle_area(points[e]) for e in elems])
-
-#     assert (47 == len(points))
-#     assert (68 == len(elems))
+    plot(river_small, elems, coords)
