@@ -1205,18 +1205,30 @@ def triangle_split_points(stream_triangles, river_corrs):
                 watershed_workflow.utils.midpoint(tri_verts[i], tri_verts[(i+1) % 3]))
             for i in range(3)
         ]
-
+        
         # Check which midpoints lie on river corridors
         off_corridor = list(
             filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
 
-        # We expect exactly one midpoint to be off the corridor
         if len(off_corridor) == 1:
             edge_i = off_corridor[0][0]
-
-            # Find the additional point
             edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
                                                               tri_verts[(edge_i+1) % 3])
             additional_points.append(edge_midpoint)
-
-    return additional_points
+                
+        elif len(off_corridor) == 2:
+            edge_lengths = [
+                watershed_workflow.utils.distance(tri_verts[off_corridor[i][0]], 
+                                                    tri_verts[(off_corridor[i][0]+1) % 3])
+                for i in range(2)
+            ]          
+            # Select the midpoint on the longer edge
+            longer_edge_index = edge_lengths.index(max(edge_lengths))
+            edge_i = off_corridor[longer_edge_index][0]
+            edge_midpoint = watershed_workflow.utils.midpoint(tri_verts[edge_i],
+                                                                tri_verts[(edge_i+1) % 3])
+            additional_points.append(edge_midpoint)
+     
+    # Remove coinciding points
+    unique_points = list(set(additional_points))
+    return unique_points
