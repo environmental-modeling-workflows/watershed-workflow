@@ -166,13 +166,10 @@ def triangulate(hucs,
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
-    logging.info(f"  -- graph.nodes: {len(nodes)}")
 
     pdata = [tuple([float(c) for c in p]) for p in nodes]
-    logging.info(pdata)
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
-    logging.info(fdata)
     info.set_facets(fdata)
 
     # add hole points, which should include the river mesh interior

@@ -293,7 +293,7 @@ class Mesh2D:
     @cache
     def centroids(self):
         """Calculate surface mesh centroids."""
-        return np.array([self.compute_centroid(c) for c in range(self.num_cells)])
+        return np.array([self.computeCentroid(c) for c in range(self.num_cells)])
 
     def clearGeometryCache(self) -> None:
         """If coordinates are changed, any computed, cached geometry must be

@@ -250,7 +250,7 @@ def triangulation(points, tris, ax=None, **kwargs):
     return col
 
 
-def mesh(m2, **kwargs):
+def mesh(m2, color=None, **kwargs):
     """Plots a watershed_workflow.mesh.Mesh2D object.
 
     Parameters
@@ -266,7 +266,15 @@ def mesh(m2, **kwargs):
 
     """
     df = geopandas.GeoDataFrame(geometry=[shapely.geometry.Polygon(m2.coords[c, :]) for c in m2.conn])
-    return df.boundary.plot(**kwargs)
+
+    if color == 'elevation':
+        df['elevation'] = m2.centroids[:,2]
+        return df.plot(column='elevation', **kwargs)
+
+    if isinstance(color, str):
+        return df.boundary.plot(color=color, **kwargs)
+    else:
+        return df.plot(color=color, **kwargs)
 
 
 def basemap(crs=None,

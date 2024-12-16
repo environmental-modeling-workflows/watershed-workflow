@@ -98,16 +98,17 @@ def measureBoldness(color_hash):
 
 
 # create a very big list of non-grey colors
+_my_not_random = random.Random(7) #2
 xkcd_colors = [c for c in matplotlib.colors.XKCD_COLORS.values() if not isNearlyGrey(c)]
-random.shuffle(xkcd_colors)
+_my_not_random.shuffle(xkcd_colors)
 
 _xkcd_by_bold = list(reversed(sorted(xkcd_colors, key=measureBoldness)))
 
 xkcd_bolds = _xkcd_by_bold[0:len(_xkcd_by_bold)//4]
-random.shuffle(xkcd_bolds)
+_my_not_random.shuffle(xkcd_bolds)
 
 xkcd_muted = _xkcd_by_bold[len(_xkcd_by_bold)//2:3*len(_xkcd_by_bold)//4]
-random.shuffle(xkcd_muted)
+_my_not_random.shuffle(xkcd_muted)
 
 #random.shuffle(xkcd_colors)
 enumerated_palettes[5] = xkcd_colors

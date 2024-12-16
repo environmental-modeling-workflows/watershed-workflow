@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import logging
 from typing import Callable
+from matplotlib import pyplot as plt
 
 import shapely.geometry
 import shapely.ops
@@ -11,6 +12,7 @@ import shapely.ops
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 import watershed_workflow.angles
+import watershed_workflow.sources.standard_names as names
 
 
 # def _isOverlappingCorridor(corr, river):
@@ -56,7 +58,7 @@ def _computeExpectedNumElems(river):
 def createWidthFunction(arg):
     if isinstance(arg, dict):
         def func(reach):
-            return arg[reach[names.STREAM_ORDER]]
+            return arg[reach[names.ORDER]]
     elif isinstance(arg, Callable):
         func = arg
     else:
@@ -132,7 +134,7 @@ def createRiverMesh(river, computeWidth):
 
     """
     coords = np.nan * np.ones((_computeExpectedNumCoords(river), 2), 'd')
-    river.df['elems'] = pd.Series([ [list() for i in range(len(ls.coords)-1)] for ls in river.df.geometry])
+    river.df['elems'] = pd.Series([ [list() for i in range(len(ls.coords)-1)] for ls in river.df.geometry], index=river.df.index)
 
     # project the starting point
     k = 0
@@ -140,7 +142,7 @@ def createRiverMesh(river, computeWidth):
     for touch, reach in river.prePostInBetweenOrder():
         halfwidth = computeWidth(reach) / 2.
         reach_elems = reach['elems']
-        logging.debug(f'PRE: reach = {reach.index}, touch = {touch}, elems = {reach_elems}')
+        #logging.debug(f'PRE: reach = {reach.index}, touch = {touch}, elems = {reach_elems}')
 
         if touch == 0:
             # add paddler's right downstream point
@@ -150,24 +152,17 @@ def createRiverMesh(river, computeWidth):
                 coords[k] = projectOne(reach.linestring.coords[-2],
                                         reach.linestring.coords[-1],
                                         halfwidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} outlet right")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} outlet right")
                 reach_elems[-1].append(k)
                 k += 1
 
             # add paddler's right internal points by two-touches projection
             for i in reversed(range(1, len(reach.linestring.coords)-1)):
-                if k == 4:
-                    logging.info(f"projecting info:")
-                    logging.info(f"  upstream point = {reach.linestring.coords[i-1]}")
-                    logging.info(f"  mid point = {reach.linestring.coords[i]}")
-                    logging.info(f"  dnstream point = {reach.linestring.coords[i+1]}")
-                    logging.info(f"  halfwidth = {halfwidth}")
-                
                 coords[k] = projectTwo(reach.linestring.coords[i-1],
                                        reach.linestring.coords[i],
                                        reach.linestring.coords[i+1],
                                        halfwidth, halfwidth, k==4)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} interal right")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} interal right")
                 reach_elems[i].append(k)
                 reach_elems[i-1].append(k)
                 k += 1
@@ -176,7 +171,7 @@ def createRiverMesh(river, computeWidth):
             if len(reach.children) == 0:
                 # add an upstream midpoint
                 coords[k] = reach.linestring.coords[0]
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} leaf tip")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} leaf tip")
                 reach_elems[0].append(k)
                 k += 1
 
@@ -187,7 +182,7 @@ def createRiverMesh(river, computeWidth):
                                        reach.linestring.coords[0],
                                        reach.linestring.coords[1],
                                        child_halfwidth, halfwidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream right")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream right")
                 reach_elems[0].append(k)
                 child_elems = reach.children[0]['elems']
                 child_elems[-1].append(k)
@@ -196,7 +191,7 @@ def createRiverMesh(river, computeWidth):
             else:
                 # project downstream paddler's right of junction
                 coords[k] = projectJunction(reach, touch, computeWidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream right")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream right")
                 reach_elems[0].append(k)
                 reach.children[0]['elems'][-1].append(k)
                 k += 1
@@ -212,7 +207,7 @@ def createRiverMesh(river, computeWidth):
                                        reach.linestring.coords[0],
                                        reach.children[-1].linestring.coords[-2],
                                        halfwidth, child_halfwidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream left")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream left")
                 reach_elems[0].append(k)
                 reach.children[-1]['elems'][-1].append(k)
                 k += 1
@@ -220,7 +215,7 @@ def createRiverMesh(river, computeWidth):
             else:
                 # project downstream paddler's left of junction
                 coords[k] = projectJunction(reach, touch, computeWidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream left")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream left")
                 reach_elems[0].append(k)
                 reach.children[-1]['elems'][-1].append(k)
                 k += 1
@@ -231,7 +226,7 @@ def createRiverMesh(river, computeWidth):
                                        reach.linestring.coords[i],
                                        reach.linestring.coords[i-1],
                                        halfwidth, halfwidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} internal left")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} internal left")
                 reach_elems[i-1].append(k)
                 reach_elems[i].append(k)
                 k += 1
@@ -243,30 +238,41 @@ def createRiverMesh(river, computeWidth):
                 coords[k] = projectOne(reach.linestring.coords[-2],
                                         reach.linestring.coords[-1],
                                         -halfwidth)
-                logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} outlet left")
+                #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} outlet left")
                 reach_elems[-1].append(k)
                 k += 1
 
         if touch != 0 and touch != len(reach.children):
             # add the junction point
             coords[k] = projectJunction(reach, touch, computeWidth)
-            logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction midpoint")
+            #logging.debug(f" -- adding coord {k} = {coords[k]} as {reach.index} junction midpoint")
             reach_elems[0].append(k)
             reach.children[touch-1]['elems'][-1].append(k)
             reach.children[touch]['elems'][-1].append(k)
             k += 1
 
-        logging.debug(f'POST: reach = {reach.index}, touch = {touch}, elems = {reach_elems}')
+        #logging.debug(f'POST: reach = {reach.index}, touch = {touch}, elems = {reach_elems}')
     assert k == len(coords)
             
+    # check convexity
+    for reach in river:
+        for elem in reach['elems']:
+            ecoords = coords[elem]
+            if not watershed_workflow.utils.isConvex(ecoords):
+                fig, ax = plt.subplots(1,1)
+
+                reaches = [reach, reach.parent] + list(reach.children)
+                for r in reaches:
+                    ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'r-x')
+
+                poly = shapely.geometry.Polygon(ecoords)
+                ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'b-x')
+                plt.show()
+                assert False
+
     # gather elems
     elems = [e for reach in river.postOrder() for e in reach['elems']]
     assert len(elems) == _computeExpectedNumElems(river)
-
-    # check convexity
-    for elem in elems:
-        ecoords = coords[elem]
-        assert watershed_workflow.utils.isConvex(ecoords)
 
     return coords, elems
 
@@ -362,7 +368,7 @@ def findIntersection(line1, line2, debug=False):
 
     determinant = A1 * B2 - A2 * B1
     if debug:
-        logging.info(f"  Parallel?  det = {determinant}")
+        logging.debug(f"  Parallel?  det = {determinant}")
     if abs(determinant) < 1.e-6:
         return None  # Lines are parallel or coincident
 
@@ -397,13 +403,6 @@ def projectTwo(p_up, p, p_dn, width1, width2, debug=False):
 
     intersection = findIntersection(l1, l2, debug)
     if intersection is None:
-        if debug:
-            logging.info('parallel!')
-            logging.info(' projectOne:')
-            logging.info(f' p_up = {p_up}')
-            logging.info(f' p = {p}')
-            logging.info(f' width = {(width1 + width2)/2.}')
-            
         return projectOne(p_up, p, (width1 + width2)/2.)
     return intersection
 
