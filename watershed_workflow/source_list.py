@@ -15,7 +15,7 @@ from typing import Dict, Any
 
 from watershed_workflow.sources.manager_wbd import ManagerWBD
 from watershed_workflow.sources.manager_waterdata import ManagerWaterData
-# from watershed_workflow.sources.manager_ned import FileManagerNED
+from watershed_workflow.sources.manager_3dep import Manager3DEP
 # from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
 # from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
 # from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
@@ -45,10 +45,11 @@ default_hydrography_source = 'NHDv2.1'
 
 # available and default digital elevation maps
 dem_sources : Dict[str,Any] = {
-    # 'NED 1/3 arc-second': FileManagerNED('1/3 arc-second'),
-    # 'NED 1 arc-second': FileManagerNED('1 arc-second'),
+    '3DEP 60m': Manager3DEP(60),
+    '3DEP 30m': Manager3DEP(30),
+    '3DEP 10m': Manager3DEP(10),
 }
-default_dem_source = None#'NED 1 arc-second'
+default_dem_source = '3DEP 60m'
 
 # available and default soil survey datasets
 structure_sources : Dict[str,Any] = {
@@ -84,7 +85,7 @@ def get_default_sources():
     sources = dict()
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
-    # sources['DEM'] = dem_sources[default_dem_source]
+    sources['DEM'] = dem_sources[default_dem_source]
     # sources['soil structure'] = structure_sources['NRCS SSURGO']
     # sources['geologic structure'] = structure_sources['GLHYMPS']
     # sources['land cover'] = land_cover_sources[default_land_cover]

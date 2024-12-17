@@ -103,9 +103,9 @@ class _ExtrusionHelper:
         """Maps 2D cell ID and index in the vertical to a 3D cell ID"""
         return z_cell + column * self.ncells_tall
 
-    def node_to_id(self, node, z_node):
-        """Maps 2D node ID and index in the vertical to a 3D node ID"""
-        return z_node + node * (self.ncells_tall + 1)
+    def vertex_to_id(self, vertex, z_vertex):
+        """Maps 2D vertex ID and index in the vertical to a 3D vertex ID"""
+        return z_vertex + vertex * (self.ncells_tall + 1)
 
     def edge_to_id(self, edge, z_cell):
         """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face"""
@@ -130,7 +130,7 @@ class Mesh2D:
         A small measure of length between coords.
     check_handedness : bool, optional=True
         If true, ensure all cells are oriented so that right-hand rule
-        ordering of the nodes points up.
+        ordering of the vertices points up.
     validate : bool, optional=False
         If true, validate coordinates and connections
         post-construction.
@@ -169,7 +169,7 @@ class Mesh2D:
         return len(self.conn)
 
     @property
-    def num_nodes(self):
+    def num_vertices(self):
         return self.coords.shape[0]
 
     @property
@@ -230,7 +230,7 @@ class Mesh2D:
 
     @property
     @cache
-    def boundary_nodes(self):
+    def boundary_vertices(self):
         return [e[0] for e in self.boundary_edges]
 
     def checkHandedness(self):
@@ -268,10 +268,10 @@ class Mesh2D:
             if ls.entity == 'CELL':
                 size = self.num_cells
             elif ls.entity == 'FACE':
-                size = self.num_nodes  # note there are no faces, edges are tuples of nodes
+                size = self.num_vertices  # note there are no faces, edges are tuples of vertices
                 is_tuple = True
-            elif ls.entity == 'NODE':
-                size = self.num_nodes
+            elif ls.entity == 'VERTEX':
+                size = self.num_vertices
             ls.validate(size, is_tuple)
 
     def getNextAvailableLabeledSetID(self) -> int:
@@ -497,21 +497,21 @@ class Mesh2D:
 
         Returns
         -------
-        dual_nodes : np.ndarray
+        dual_vertices : np.ndarray
         dual_conn : list(lists)
-            The nodes and cell_to_node_conn of a 2D, polygonal, nearly Voronoi
+            The vertices and cell_to_vertex_conn of a 2D, polygonal, nearly Voronoi
             mesh that is the truncated dual of self.  Here we say nearly because
             the boundary triangles (see note below) are not Voronoi.
         dual_from_primal_mapping : np.array( (len(dual_conn),), 'i')
-            Mapping from a dual cell to the primal node it is based on.
+            Mapping from a dual cell to the primal vertex it is based on.
             Without the boundary, this would be simply
             arange(0,len(dual_conn)), but beacuse we added triangles on the
             boundary, this mapping is useful.
 
         Note
         ----
-        - Nodes of the dual are on circumcenters of the primal triangles.
-        - Centers of the dual are numbered by nodes of the primal mesh, modulo
+        - Vertices of the dual are on circumcenters of the primal triangles.
+        - Centers of the dual are numbered by vertices of the primal mesh, modulo
           the boundary.
         - At the boundary, the truncated dual polygon may be non-convex.  To
           avoid this issue, we triangulate boundary polygons.
@@ -535,63 +535,63 @@ class Mesh2D:
                   (p1[0] - p3[0]) + (p3[0]**2 + p3[1]**2) * (p2[0] - p1[0])) / d
             return (xv, yv)
 
-        # dual nodes are given by:
+        # dual vertices are given by:
         # - primal cell circumcenters
-        # - primal nodes on the boundary
-        # - primal edge midpoints on the boundary (note this length is the same as primal nodes on the boundary)
+        # - primal vertices on the boundary
+        # - primal edge midpoints on the boundary (note this length is the same as primal vertices on the boundary)
 
         # dual cells are given by:
-        # - primal cell nodes (modulo the boundary)
+        # - primal cell vertices (modulo the boundary)
 
         coords = self.coords[:, 0:2]
         logging.info("-- computing primary boundary edges")
         boundary_edges = self.boundary_edges
-        n_dual_nodes = len(self.conn) + 2 * len(boundary_edges)
-        logging.info("     n_primal_cell = {}, n_boundary_edges = {}, n_dual_nodes = "
-                     "{}".format(len(self.conn), len(boundary_edges), n_dual_nodes))
+        n_dual_vertices = len(self.conn) + 2 * len(boundary_edges)
+        logging.info("     n_primal_cell = {}, n_boundary_edges = {}, n_dual_vertices = "
+                     "{}".format(len(self.conn), len(boundary_edges), n_dual_vertices))
 
         # create space to populate dual coordinates
-        dual_nodes = np.zeros((n_dual_nodes, 2), 'd')
+        dual_vertices = np.zeros((n_dual_vertices, 2), 'd')
         dual_from_primal_mapping = list(range(len(coords)))
 
         # Create a list of lists for dual cells -- at this point the truncated
         # dual (e.g. allow non-convex boundary polygons), so one per primal
-        # node.  Also create a flag array for whether a given dual cell is on the
+        # vertex.  Also create a flag array for whether a given dual cell is on the
         # boundary and so might be non-convex.
         #
         # Note that both of these will be indexed by the index of the
-        # corresponding primal node.
+        # corresponding primal vertex.
         dual_cells = [list() for i in range(len(coords))]
         is_boundary = np.zeros(len(dual_cells), 'i')
 
         # Loop over all primal cells (triangles), adding the circumcenter
-        # as a dual node and sticking that node in three dual cells rooted
-        # at the three primal nodes.
-        logging.info("-- computing dual nodes")
-        i_dual_node = 0
+        # as a dual vertex and sticking that vertex in three dual cells rooted
+        # at the three primal vertices.
+        logging.info("-- computing dual vertices")
+        i_dual_vertex = 0
         for j, c in enumerate(self.conn):
-            dual_nodes[i_dual_node][:] = circumcenter(coords[c[0]], coords[c[1]], coords[c[2]])
-            dual_cells[c[0]].append(i_dual_node)
-            dual_cells[c[1]].append(i_dual_node)
-            dual_cells[c[2]].append(i_dual_node)
-            i_dual_node += 1
+            dual_vertices[i_dual_vertex][:] = circumcenter(coords[c[0]], coords[c[1]], coords[c[2]])
+            dual_cells[c[0]].append(i_dual_vertex)
+            dual_cells[c[1]].append(i_dual_vertex)
+            dual_cells[c[2]].append(i_dual_vertex)
+            i_dual_vertex += 1
 
-        logging.info("    added {} tri centroid nodes".format(i_dual_node))
+        logging.info("    added {} tri centroid vertices".format(i_dual_vertex))
 
-        # Loop over the boundary, adding both the primal nodes and the edge
-        # midpoints as dual nodes.
+        # Loop over the boundary, adding both the primal vertices and the edge
+        # midpoints as dual vertices.
         #
-        # Add the primal node and two midpoints on either side to the list
-        # of dual nodes in the cell "rooted at" the primal node.
+        # Add the primal vertex and two midpoints on either side to the list
+        # of dual vertices in the cell "rooted at" the primal vertex.
         for i, e in enumerate(boundary_edges):
-            # add the primal node always
-            my_primal_node_dual_node = i_dual_node
-            dual_nodes[i_dual_node][:] = coords[e[0]]
-            i_dual_node += 1
+            # add the primal vertex always
+            my_primal_vertex_dual_vertex = i_dual_vertex
+            dual_vertices[i_dual_vertex][:] = coords[e[0]]
+            i_dual_vertex += 1
 
             my_cell = list()
 
-            # stick in the previous midpoint node, add to my_cell
+            # stick in the previous midpoint vertex, add to my_cell
             if i == 0:
                 # reserve a spot for the last midpoint
                 first_cell_added = e[0]
@@ -599,15 +599,15 @@ class Mesh2D:
             else:
                 my_cell.append(prev_midp_n)
 
-            # stick in the next midpoint node, add to my_cell
-            next_midp_n = i_dual_node
+            # stick in the next midpoint vertex, add to my_cell
+            next_midp_n = i_dual_vertex
             next_midp = (coords[e[0]][:] + coords[e[1]][:]) / 2.
-            dual_nodes[i_dual_node][:] = next_midp
-            i_dual_node += 1
+            dual_vertices[i_dual_vertex][:] = next_midp
+            i_dual_vertex += 1
             my_cell.append(next_midp_n)
 
-            # add the primal node to my_cell
-            my_cell.append(my_primal_node_dual_node)
+            # add the primal vertex to my_cell
+            my_cell.append(my_primal_vertex_dual_vertex)
             dual_cells[e[0]].extend(my_cell)
 
             is_boundary[e[0]] = 1
@@ -617,59 +617,59 @@ class Mesh2D:
         assert (dual_cells[first_cell_added][-3] == -1)
         dual_cells[first_cell_added][-3] = prev_midp_n
 
-        logging.info("    added {} boundary nodes".format(len(boundary_edges)))
+        logging.info("    added {} boundary vertices".format(len(boundary_edges)))
 
         #
-        # Now every dual cell has a list of nodes (in no particular order).
-        # But some of these nodes may be duplicated -- either the circumcenter
+        # Now every dual cell has a list of vertices (in no particular order).
+        # But some of these vertices may be duplicated -- either the circumcenter
         # of two adjacent triangles may both be on the boundary, allowing for
         # coincident points at the midpoint of the coincident faces, or (more
         # likely) there was a circumcenter on the boundary, meaning it is
         # coincident with the boundary edge's midpoint.
         #
-        # Order those nodes, and collect a list of coincident nodes for removal.
-        logging.info("-- Finding duplicates and ordering conn_cell_to_node")
-        nodes_to_kill = dict()  # coincident nodes (key = node to remove, val = coincident node)
+        # Order those vertices, and collect a list of coincident vertices for removal.
+        logging.info("-- Finding duplicates and ordering conn_cell_to_vertex")
+        vertices_to_kill = dict()  # coincident vertices (key = vertex to remove, val = coincident vertex)
         for i in range(len(dual_cells)):
             c = dual_cells[i]
 
             if is_boundary[i]:
-                # check for duplicate nodes
+                # check for duplicate vertices
                 to_pop = []
                 for k in range(len(c)):
                     for j in range(k + 1, len(c)):
-                        if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
+                        if (np.linalg.norm(dual_vertices[c[k]] - dual_vertices[c[j]]) < self.eps):
                             logging.info("    found dup on boundary cell {} = {}".format(i, c))
                             logging.info("        indices = {}, {}".format(k, j))
-                            logging.info("        nodes = {}, {}".format(c[k], c[j]))
+                            logging.info("        vertices = {}, {}".format(c[k], c[j]))
                             logging.info("        coords = {}, {}".format(
-                                dual_nodes[c[k]], dual_nodes[c[j]]))
+                                dual_vertices[c[k]], dual_vertices[c[j]]))
 
-                            if c[k] in nodes_to_kill:
-                                assert c[j] == nodes_to_kill[c[k]]
+                            if c[k] in vertices_to_kill:
+                                assert c[j] == vertices_to_kill[c[k]]
                                 assert k < len(c) - 3
                                 to_pop.append(k)
-                            elif c[j] in nodes_to_kill:
-                                assert c[k] == nodes_to_kill[c[j]]
+                            elif c[j] in vertices_to_kill:
+                                assert c[k] == vertices_to_kill[c[j]]
                                 assert j < len(c) - 3
                                 to_pop.append(j)
                             else:
                                 assert k < len(c) - 3
-                                nodes_to_kill[c[k]] = c[j]
+                                vertices_to_kill[c[k]] = c[j]
                                 to_pop.append(k)
 
-                # remove the duplicated nodes from the cell_to_node_conn
+                # remove the duplicated vertices from the cell_to_vertex_conn
                 for j in reversed(sorted(to_pop)):
                     c.pop(j)
 
                 # may not be convex -- triangulate
                 c_orig = c[:]
-                c0 = c[-1]  # the primal node
+                c0 = c[-1]  # the primal vertex
                 cup = c[-2]  # boundary midpoint, one direction
                 cdn = c[-3]  # boundary midpoint, the other direction
 
-                # order the nodes (minus the primal node) clockwise around the primal node
-                cell_coords = np.array([dual_nodes[cj] for cj in c[:-1]]) - dual_nodes[c0]
+                # order the vertices (minus the primal vertex) clockwise around the primal vertex
+                cell_coords = np.array([dual_vertices[cj] for cj in c[:-1]]) - dual_vertices[c0]
                 angle = np.array([
                     np.arctan2(cell_coords[j, 1], cell_coords[j, 0])
                     for j in range(len(cell_coords))
@@ -693,12 +693,12 @@ class Mesh2D:
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
 
-                    cc_sorted = np.array([cell_coords[k] for k in order]) + dual_nodes[c0]
-                    cb_sorted = np.array([dual_nodes[cdn], dual_nodes[c], dual_nodes[cup]])
+                    cc_sorted = np.array([cell_coords[k] for k in order]) + dual_vertices[c0]
+                    cb_sorted = np.array([dual_vertices[cdn], dual_vertices[c], dual_vertices[cup]])
                     ax.plot(cc_sorted[:, 0], cc_sorted[:, 1], 'k-x')
-                    ax.scatter(dual_nodes[c0, 0], dual_nodes[c0, 1], color='r')
-                    ax.scatter(dual_nodes[cup, 0], dual_nodes[cup, 1], color='m')
-                    ax.scatter(dual_nodes[cdn, 0], dual_nodes[cdn, 1], color='b')
+                    ax.scatter(dual_vertices[c0, 0], dual_vertices[c0, 1], color='r')
+                    ax.scatter(dual_vertices[cup, 0], dual_vertices[cup, 1], color='m')
+                    ax.scatter(dual_vertices[cdn, 0], dual_vertices[cdn, 1], color='b')
                     plt.show()
 
                     fig = plt.figure(figsize=figsize)
@@ -728,7 +728,7 @@ class Mesh2D:
                     raise RuntimeError('uh oh borked geom')
 
                 # triangulate the truncated dual polygon, always including the
-                # primal node to guarantee all triangles exist and partition
+                # primal vertex to guarantee all triangles exist and partition
                 # the polygon.
                 for k in range(len(cn) - 1):
                     if k == 0:
@@ -738,33 +738,33 @@ class Mesh2D:
                         dual_from_primal_mapping.append(i)
 
             else:
-                # NOT a boundary polygon.  Simply order and check for duplicate nodes.
+                # NOT a boundary polygon.  Simply order and check for duplicate vertices.
                 to_pop = []
                 for k in range(len(c)):
                     for j in range(k + 1, len(c)):
-                        if (np.linalg.norm(dual_nodes[c[k]] - dual_nodes[c[j]]) < self.eps):
+                        if (np.linalg.norm(dual_vertices[c[k]] - dual_vertices[c[j]]) < self.eps):
                             logging.info("    found dup on interior cell {} = {}".format(i, c))
                             logging.info("        indices = {}, {}".format(k, j))
-                            logging.info("        nodes = {}, {}".format(c[k], c[j]))
+                            logging.info("        vertices = {}, {}".format(c[k], c[j]))
                             logging.info("        coords = {}, {}".format(
-                                dual_nodes[c[k]], dual_nodes[c[j]]))
+                                dual_vertices[c[k]], dual_vertices[c[j]]))
 
-                            if c[k] in nodes_to_kill:
-                                assert c[j] == nodes_to_kill[c[k]]
+                            if c[k] in vertices_to_kill:
+                                assert c[j] == vertices_to_kill[c[k]]
                                 to_pop.append(k)
-                            elif c[j] in nodes_to_kill:
-                                assert c[k] == nodes_to_kill[c[j]]
+                            elif c[j] in vertices_to_kill:
+                                assert c[k] == vertices_to_kill[c[j]]
                                 to_pop.append(j)
                             else:
-                                nodes_to_kill[c[k]] = c[j]
+                                vertices_to_kill[c[k]] = c[j]
                                 to_pop.append(k)
 
-                # remove the duplicated nodes from the cell_to_node_conn
+                # remove the duplicated vertices from the cell_to_vertex_conn
                 for j in reversed(sorted(to_pop)):
                     c.pop(j)
 
-                # order around the primal node (now dual cell centroid)
-                cell_coords = np.array([dual_nodes[j] for j in c]) - coords[i]
+                # order around the primal vertex (now dual cell centroid)
+                cell_coords = np.array([dual_vertices[j] for j in c]) - coords[i]
                 angle = np.array([
                     np.arctan2(cell_coords[j, 1], cell_coords[j, 0])
                     for j in range(len(cell_coords))
@@ -772,34 +772,34 @@ class Mesh2D:
                 order = np.argsort(angle)
                 dual_cells[i] = [c[j] for j in order]
 
-        logging.info("-- removing duplicate nodes")
+        logging.info("-- removing duplicate vertices")
         # note this requires both removing the duplicates from the coordinate
         # list, but also remapping to new numbers that range in [0,
-        # num_not_removed_nodes).  To do the latter, we create a map from old
+        # num_not_removed_vertices).  To do the latter, we create a map from old
         # indices to new indices, where removed indices are mapped to their
-        # coincident, new index.  These old nodes may have appeared in cells
+        # coincident, new index.  These old vertices may have appeared in cells
         # that did not actually include its duplicate, so must get remapped to
-        # the coincident node.
+        # the coincident vertex.
         i = 0
-        compression_map = -np.ones(len(dual_nodes), 'i')
-        for j in range(len(dual_nodes)):
-            if j not in nodes_to_kill:
+        compression_map = -np.ones(len(dual_vertices), 'i')
+        for j in range(len(dual_vertices)):
+            if j not in vertices_to_kill:
                 compression_map[j] = i
                 i += 1
-        for j in nodes_to_kill.keys():
-            compression_map[j] = compression_map[nodes_to_kill[j]]
+        for j in vertices_to_kill.keys():
+            compression_map[j] = compression_map[vertices_to_kill[j]]
         assert (compression_map.min() >= 0)
 
-        # -- delete the nodes
-        to_kill = sorted(list(nodes_to_kill.keys()))
-        dual_nodes = np.delete(dual_nodes, to_kill, axis=0)
+        # -- delete the vertices
+        to_kill = sorted(list(vertices_to_kill.keys()))
+        dual_vertices = np.delete(dual_vertices, to_kill, axis=0)
         # -- remap the conn
         for c in dual_cells:
             for j in range(len(c)):
                 c[j] = compression_map[c[j]]
             assert (min(c) >= 0)
 
-        return dual_nodes, dual_cells, np.array(dual_from_primal_mapping)
+        return dual_vertices, dual_cells, np.array(dual_from_primal_mapping)
 
 
 @attr.define(slots=False)
@@ -810,10 +810,10 @@ class Mesh3D:
     ----------
     coords : np.ndarray(NCOORDS,3)
         Array of coordinates of the 3D mesh.
-    face_to_node_conn : list(lists)
+    face_to_vertex_conn : list(lists)
         List of lists of indices into coords that form the faces.
     cell_to_face_conn : list(lists)
-        List of lists of indices into face_to_node_conn that form the
+        List of lists of indices into face_to_vertex_conn that form the
         cells.
     side_sets : list(SideSet), optional
         List of side sets to add to the mesh.
@@ -831,7 +831,7 @@ class Mesh3D:
 
     """
     coords = attr.ib(validator=attr.validators.instance_of(np.ndarray))
-    _face_to_node_conn = attr.ib()
+    _face_to_vertex_conn = attr.ib()
     _cell_to_face_conn = attr.ib()
 
     labeled_sets : List[LabeledSet] = attr.ib(factory=list)
@@ -847,8 +847,8 @@ class Mesh3D:
         del self._validate
 
     @property
-    def face_to_node_conn(self):
-        return self._face_to_node_conn
+    def face_to_vertex_conn(self):
+        return self._face_to_vertex_conn
 
     @property
     def cell_to_face_conn(self):
@@ -867,12 +867,12 @@ class Mesh3D:
         return len(self.cell_to_face_conn)
 
     @property
-    def num_nodes(self):
+    def num_vertices(self):
         return self.coords.shape[0]
 
     @property
     def num_faces(self):
-        return len(self.face_to_node_conn)
+        return len(self.face_to_vertex_conn)
 
     def validate(self) -> None:
         """Checks the validity of the mesh, or throws an AssertionError."""
@@ -882,12 +882,12 @@ class Mesh3D:
         assert (self.coords.shape[1] == 3)
 
         # validate conn
-        assert (min(c for conn in self.face_to_node_conn for c in conn) >= 0)
-        assert (max(c for conn in self.face_to_node_conn for c in conn) < len(self.coords))
+        assert (min(c for conn in self.face_to_vertex_conn for c in conn) >= 0)
+        assert (max(c for conn in self.face_to_vertex_conn for c in conn) < len(self.coords))
 
         assert (min(c for conn in self.cell_to_face_conn for c in conn) >= 0)
         assert (max(c for conn in self.cell_to_face_conn for c in conn)
-                < len(self.face_to_node_conn))
+                < len(self.face_to_vertex_conn))
 
         # validate labeled_sets and side sets
         ls_ss_ids = [ls.setid for ls in self.labeled_sets] + \
@@ -897,8 +897,8 @@ class Mesh3D:
         for ls in self.labeled_sets:
             if ls.entity == 'CELL':
                 size = self.num_cells
-            elif ls.entity == 'NODE':
-                size = self.num_nodes
+            elif ls.entity == 'VERTEX':
+                size = self.num_vertices
             else:
                 assert (False)  # no face or edge sets
             ls.validate(size, False)
@@ -933,8 +933,8 @@ class Mesh3D:
         for c2f in self.cell_to_face_conn:
             fup = c2f[0]
             fdn = c2f[1]
-            assert (len(self.face_to_node_conn[fup]) == 3 and len(self.face_to_node_conn[fdn]) == 3)
-            wedges.append(self.face_to_node_conn[fup] + self.face_to_node_conn[fdn])
+            assert (len(self.face_to_vertex_conn[fup]) == 3 and len(self.face_to_vertex_conn[fdn]) == 3)
+            wedges.append(self.face_to_vertex_conn[fup] + self.face_to_vertex_conn[fdn])
         watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
 
     def writeExodus(self, filename, face_block_mode="one block") -> None:
@@ -973,10 +973,10 @@ class Mesh3D:
         face_blks = []
         if face_block_mode == "one block":
             # no reordering of faces needed
-            face_blks.append(self.face_to_node_conn)
+            face_blks.append(self.face_to_vertex_conn)
 
         elif face_block_mode == "n blocks, not duplicated":
-            used_faces = np.zeros((len(self.face_to_node_conn), ), 'bool')
+            used_faces = np.zeros((len(self.face_to_vertex_conn), ), 'bool')
             new_to_old_faces = []
             for i_m, m_id in enumerate(self.material_ids_list):
                 # split out faces of this material, save new_to_old map
@@ -986,7 +986,7 @@ class Mesh3D:
                     return result
 
                 elem_blk = elem_blks[i_m]
-                faces_tuple = [(f, self.face_to_node_conn[f]) for c in elem_blk
+                faces_tuple = [(f, self.face_to_vertex_conn[f]) for c in elem_blk
                                for (j, f) in enumerate(c) if not used(f)]
                 new_to_old_faces.extend([j for (j, f) in faces_tuple])
                 faces = [f for (j, f) in faces_tuple]
@@ -1002,7 +1002,7 @@ class Mesh3D:
             elem_blks_new = []
             offset = 0
             for i_m, m_id in enumerate(self.material_ids_list):
-                used_faces = np.zeros((len(self.face_to_node_conn), ), 'bool')
+                used_faces = np.zeros((len(self.face_to_vertex_conn), ), 'bool')
 
                 def used(f):
                     result = used_faces[f]
@@ -1011,11 +1011,11 @@ class Mesh3D:
 
                 elem_blk = elem_blks[i_m]
 
-                tuple_old_f = [(f, self.face_to_node_conn[f]) for c in elem_blk for f in c
+                tuple_old_f = [(f, self.face_to_vertex_conn[f]) for c in elem_blk for f in c
                                if not used(f)]
                 tuple_new_old_f = [(new, old, f) for (new, (old, f)) in enumerate(tuple_old_f)]
 
-                old_to_new_blk = np.zeros((len(self.face_to_node_conn), ), 'i') - 1
+                old_to_new_blk = np.zeros((len(self.face_to_vertex_conn), ), 'i') - 1
                 for new, old, f in tuple_new_old_f:
                     old_to_new_blk[old] = new + offset
 
@@ -1028,7 +1028,7 @@ class Mesh3D:
         elif face_block_mode == "one block, repeated":
             # no reordering of faces needed, just repeat
             for eblock in elem_blks:
-                face_blks.append(self.face_to_node_conn)
+                face_blks.append(self.face_to_vertex_conn)
         else:
             raise RuntimeError(
                 "Invalid face_block_mode: '%s', valid='one block', 'n blocks, duplicated', 'n blocks, not duplicated'"
@@ -1041,7 +1041,7 @@ class Mesh3D:
         filename_base = os.path.split(filename)[-1]
         ep = exodus.ex_init_params(title=filename_base.encode('ascii'),
                                    num_dim=3,
-                                   num_nodes=self.num_nodes,
+                                   num_vertices=self.num_vertices,
                                    num_face=num_faces,
                                    num_face_blk=len(face_blks),
                                    num_elem=num_elems,
@@ -1060,8 +1060,8 @@ class Mesh3D:
         for i_blk, face_blk in enumerate(face_blks):
             face_raveled = [n for f in face_blk for n in f]
             e.put_polyhedra_face_blk(i_blk + 1, len(face_blk), len(face_raveled), 0)
-            e.put_node_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
-            e.put_face_node_conn(i_blk + 1, np.array(face_raveled) + 1)
+            e.put_vertex_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
+            e.put_face_vertex_conn(i_blk + 1, np.array(face_raveled) + 1)
 
         # put the elem blocks
         assert len(elem_blks) == len(self.material_ids_list)
@@ -1144,7 +1144,7 @@ class Mesh3D:
         mesh2D : Mesh2D
           The 2D mesh to extrude
         layer_types : str, list[str]
-          One of ['snapped', 'function', 'node', 'cell',] or a list of
+          One of ['snapped', 'function', 'vertex', 'cell',] or a list of
           these strings, describing the extrusion method for each
           layer.  If only a single string is supplied, all layers are
           of this type.  See layer_data below.
@@ -1157,8 +1157,8 @@ class Mesh3D:
             Cells are extruded uniformly to whatever thickness
             required to match this bottom coordinate.
           - 'function' : function, layer_thickness = func(x,y)
-          - 'node' : np.array((mesh2D.num_nodes,), float) layer
-            thickness for each node
+          - 'vertex' : np.array((mesh2D.num_vertices,), float) layer
+            thickness for each vertex
           - 'cell' : np.array((mesh2D.num_cells,), float)
             interpolates nodal layer thickness from neighboring cell
             thicknesses
@@ -1224,7 +1224,7 @@ class Mesh3D:
         ncells_tall = sum(ncells_per_layer)
         ncells_total = ncells_tall * mesh2D.num_cells
         nfaces_total = (ncells_tall+1) * mesh2D.num_cells + ncells_tall * mesh2D.num_edges
-        nnodes_total = (ncells_tall+1) * mesh2D.num_nodes
+        nvertices_total = (ncells_tall+1) * mesh2D.num_vertices
 
         eh = _ExtrusionHelper(ncells_tall, mesh2D.num_cells)
 
@@ -1265,18 +1265,18 @@ class Mesh3D:
 
                 elif layer_type.lower() == 'function':
                     # layer thickness is given by a function evaluation of x,y
-                    for node_col in range(mesh2D.coords.shape[0]):
-                        layer_bottom[node_col] = coords[node_col, cell_layer_start,
+                    for vertex_col in range(mesh2D.coords.shape[0]):
+                        layer_bottom[vertex_col] = coords[vertex_col, cell_layer_start,
                                                         2] - layer_datum(
-                                                            coords[node_col, 0, 0], coords[node_col,
+                                                            coords[vertex_col, 0, 0], coords[vertex_col,
                                                                                            0, 1])
 
-                elif layer_type.lower() == 'node':
+                elif layer_type.lower() == 'vertex':
                     # layer bottom specifically provided through thickness
                     layer_bottom[:] = coords[:, cell_layer_start, 2] - layer_datum
 
                 elif layer_type.lower() == 'cell':
-                    # interpolate cell thicknesses to node thicknesses
+                    # interpolate cell thicknesses to vertex thicknesses
                     import scipy.interpolate
                     centroids = mesh2D.centroids
                     interp = scipy.interpolate.interp2d(centroids[:, 0],
@@ -1290,10 +1290,10 @@ class Mesh3D:
                     raise RuntimeError("Unrecognized layer_type '%s'" % layer_type)
 
                 # linspace from bottom of previous layer to bottom of this layer
-                for node_col in range(mesh2D.coords.shape[0]):
-                    coords[node_col, cell_layer_start:cell_layer_start + ncells + 1,
-                           2] = np.linspace(coords[node_col, cell_layer_start, 2],
-                                            layer_bottom[node_col], ncells + 1)
+                for vertex_col in range(mesh2D.coords.shape[0]):
+                    coords[vertex_col, cell_layer_start:cell_layer_start + ncells + 1,
+                           2] = np.linspace(coords[vertex_col, cell_layer_start, 2],
+                                            layer_bottom[vertex_col], ncells + 1)
 
             cell_layer_start = cell_layer_start + ncells
 
@@ -1305,11 +1305,11 @@ class Mesh3D:
 
         # -- loop over the columns, adding the horizontal faces
         for col in range(mesh2D.num_cells):
-            nodes_2 = mesh2D.conn[col]
+            vertices_2 = mesh2D.conn[col]
             surface.append(eh.col_to_id(col, 0))
             for z_face in range(ncells_tall + 1):
                 i_f = len(faces)
-                f = [eh.node_to_id(n, z_face) for n in nodes_2]
+                f = [eh.vertex_to_id(n, z_face) for n in vertices_2]
 
                 if z_face != ncells_tall:
                     cells[eh.col_to_id(col, z_face)].append(i_f)
@@ -1324,9 +1324,9 @@ class Mesh3D:
         vertical_side_cells = []
         vertical_side_indices = []
         for col in range(mesh2D.num_cells):
-            nodes_2 = mesh2D.conn[col]
-            for i in range(len(nodes_2)):
-                edge = mesh2D.edge_hash(nodes_2[i], nodes_2[(i+1) % len(nodes_2)])
+            vertices_2 = mesh2D.conn[col]
+            for i in range(len(vertices_2)):
+                edge = mesh2D.edge_hash(vertices_2[i], vertices_2[(i+1) % len(vertices_2)])
                 try:
                     i_e = added[edge]
                 except KeyError:
@@ -1338,10 +1338,10 @@ class Mesh3D:
                         i_f = len(faces)
                         assert i_f == eh.edge_to_id(i_e, z_face)
                         f = [
-                            eh.node_to_id(edge[0], z_face),
-                            eh.node_to_id(edge[1], z_face),
-                            eh.node_to_id(edge[1], z_face + 1),
-                            eh.node_to_id(edge[0], z_face + 1)
+                            eh.vertex_to_id(edge[0], z_face),
+                            eh.vertex_to_id(edge[1], z_face),
+                            eh.vertex_to_id(edge[1], z_face + 1),
+                            eh.vertex_to_id(edge[0], z_face + 1)
                         ]
                         faces.append(f)
                         face_cell = eh.col_to_id(col, z_face)
@@ -1427,7 +1427,7 @@ class Mesh3D:
                 side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
 
         # reshape coords
-        coords = coords.reshape(nnodes_total, 3)
+        coords = coords.reshape(nvertices_total, 3)
 
         # instantiate the mesh
         m3 = cls(coords,
@@ -1611,7 +1611,7 @@ def mergeTwoMeshes(mesh1 : Mesh2D, mesh2 : Mesh2D) -> Mesh2D:
 
     combined_coords = mesh1.coords.tolist()
     # mapping for adjusting coord indices
-    mapping = { i: i for i in range(mesh2.num_nodes) }
+    mapping = { i: i for i in range(mesh2.num_vertices) }
 
     # adjust connection indices for the second mesh using the mapping
     def map_conn(conn, mapping):

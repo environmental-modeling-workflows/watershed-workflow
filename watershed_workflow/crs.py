@@ -124,10 +124,20 @@ def to_wkt(crs : CRS) -> str:
 
 def from_xarray(array : xarray.DataArray) -> CRS | None:
     """Tries to find a CRS from the xarray DataSet or DataArray."""
+    wkt = None
     try:
-        return from_wkt(array.spatial_ref['crs_wkt'])
-    except (AttributeError, KeyError):
-        return None
+        wkt = array.spatial_ref['crs_wkt']
+    except (KeyError, AttributeError):
+        pass
+
+    try:
+        wkt = array.spatial_ref.attrs['crs_wkt']
+    except KeyError:
+        pass
+
+    if wkt is not None:
+        return from_wkt(wkt)
+    return None
 
 
 # a default UTM based CRS that is functionally useful for North America.

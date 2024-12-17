@@ -27,6 +27,11 @@ def xy(x, y, old_crs, new_crs):
     return x1, y1
 
 
+def points(array, old_crs, new_crs):
+    x,y = xy(array[:,0], array[:,1], old_crs, new_crs)
+    return np.array([x,y]).transpose()
+
+
 def bounds(bounds, old_crs, new_crs):
     """Warp a bounding box from old_crs to new_crs."""
     return shply(shapely.geometry.box(*bounds), old_crs, new_crs).bounds
