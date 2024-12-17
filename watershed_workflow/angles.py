@@ -176,7 +176,7 @@ def _spreadAngles(linestrings : List[shapely.geometry.LineString],
     pre_angles = _getAngles(linestrings)
     logging.debug(f'  smoothing angles pre: {pre_angles}')
 
-    if min(pre_angles) >= min_angle: return 0, linestrings
+    if min(pre_angles) >= min_angle: return 0, linestrings, pre_angles
 
     if can_move is None:
         can_move = [True for ls in linestrings]
@@ -230,7 +230,7 @@ def _spreadAngles(linestrings : List[shapely.geometry.LineString],
         if not ls_can_move:
             assert ls_in is ls_out
         
-    return 1, linestrings_out
+    return 1, linestrings_out, _getAngles(linestrings_out)
 
 
 def _getOutletLinestrings(hucs : SplitHUCs,
@@ -310,7 +310,7 @@ def smoothOutletSharpAngles(hucs : SplitHUCs,
 
     assert len(touches) == 3
     linestrings = [touch[1] for touch in touches]
-    count, linestrings = _spreadAngles(linestrings, min_angle)
+    count, linestrings, _ = _spreadAngles(linestrings, min_angle)
 
     # put them back, reversing if needed
     reach.linestring = linestrings[0]
@@ -397,6 +397,11 @@ def smoothUpstreamSharpAngles(hucs : SplitHUCs | None,
     linestrings = [touch[1] for touch in touches]
     angles = _getAngles(linestrings)
 
+    if len(angles) > 4:
+        logging.info(f"Considering lots of angles at {linestrings[0].coords[-1]}:")
+        logging.info(f"  ... angles = {angles}")
+
+    
     # first look to zipper -- look for subsequent reaches that are within angle
     if zipper_angle > 0:
         for i in range(1, len(touches)-1):
@@ -406,7 +411,9 @@ def smoothUpstreamSharpAngles(hucs : SplitHUCs | None,
                 return 1 + smoothUpstreamSharpAngles(hucs, reach, min_angle, zipper_angle)
 
     # done zippering, now spread
-    count, linestrings = _spreadAngles(linestrings, min_angle)
+    count, linestrings, new_angles = _spreadAngles(linestrings, min_angle)
+    if len(angles) > 4:
+        logging.info(f"  ... spread angles = {new_angles}")    
 
     for ls, touch in zip(linestrings, touches):
         if touch[0] is None:
@@ -499,7 +506,7 @@ def smoothHUCsSharpAngles(hucs : SplitHUCs,
             linestrings = [t[1] for t in touches]
             for ls in linestrings:
                 logging.debug(f'ls before: {ls}')
-            lcount, linestrings = _spreadAngles(linestrings, junction_min_angle)
+            lcount, linestrings, _  = _spreadAngles(linestrings, junction_min_angle)
             count += lcount
             for ls in linestrings:
                 logging.debug(f'ls after: {ls}')

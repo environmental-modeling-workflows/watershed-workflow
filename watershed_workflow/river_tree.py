@@ -174,7 +174,7 @@ class River(watershed_workflow.tinytree.Tree):
         return watershed_workflow.plot.linestringsWithCoords(self.df, *args, **kwargs)
 
     
-    def explore(self, column=names.ID, m=None, marker=True, name=None, **kwargs):
+    def explore(self, column=names.ID, m=None, marker=None, name=None, **kwargs):
         """Open a map!"""
         # get a name
         if column == names.ID and names.ID not in self.df:

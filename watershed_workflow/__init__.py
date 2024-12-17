@@ -32,14 +32,19 @@ import folium.plugins
 
 import watershed_workflow.crs
 import watershed_workflow.utils
+
 import watershed_workflow.river_tree
+from watershed_workflow.river_tree import River
 import watershed_workflow.split_hucs
+from watershed_workflow.split_hucs import SplitHUCs
+
 import watershed_workflow.hydrography
 import watershed_workflow.resampling
 import watershed_workflow.angles
 import watershed_workflow.triangulation
 import watershed_workflow.river_mesh
 import watershed_workflow.source_list
+import watershed_workflow.sources.standard_names as names
 
 
 def _coerceShapes(df : gpd.GeoDataFrame,
@@ -99,6 +104,7 @@ def getShapesByID(source : Any,
     df = source.getShapesByID(ids)
     df = _coerceShapes(df, crs, digits)
     return df
+
 
 def getShapesByGeometry(source : Any,
                         geom : shapely.geometry.base.BaseGeometry,
@@ -191,95 +197,87 @@ def findHUC(source : Any,
     return result
 
 
-# def reduceRivers(rivers,
-#                   ignore_small_rivers=0,
-#                   prune_by_area=None,
-#                   area_property='DivergenceRoutedDrainAreaSqKm',
-#                   remove_diversions=False,
-#                   remove_braided_divergences=False,
-#                   tol=0.1):
-#     """Create a river, which is a tree of reaches.
-    
-#     Note, HUCs and rivers must be in the same crs.
+def reduceRivers(rivers : List[River],
+                 ignore_small_rivers : int = 0,
+                 keep_n_rivers : int = -1,
+                 prune_by_area : float = 0.0,
+                 area_property : str = names.AREA,
+                 remove_diversions : bool = False,
+                 remove_braided_divergences : bool = False,
+                 tol : Optional[float] = 0.1) -> List[River]:
+    """Reduce the extent of the river network through a variety of methods.
 
-#     Parameters
-#     ----------
-#     rivers : list(river_tree.River)
-#         A list of rivers to reduce.
-#     ignore_small_rivers : int, optional
-#         If provided and positive, removes rivers whose number of
-#         reaches is less than this value.  If negative, keeps the N
-#         biggest (in number of reaches) rivers, where N is the negative
-#         of the provided value (e.g. -2 keeps the biggest 2 rivers).
-#     prune_by_area : float, optional
-#         If provided, remove reaches whose total contributing area is
-#         less than this tol.  NOTE: only valid for reaches that include
-#         a contributing area property (e.g. NHDPlus).
-#     area_property : str, optional='DivergenceRoutedDrainAreaSqKm'
-#         Name of the area property to use for determining reach CA.
-#         Note that this defines the units of prune_by_area value.
-#     remove_diversions : bool, optional=False
-#         If true, remove diversions (see documentation of
-#         modify_rivers_remove_divergences()).
-#     remove_braided_divergences : bool, optional=False
-#         If true, remove braided divergences (see documentation of
-#         modify_rivers_remove_divergences()).
-#     tol : float, optional=0.1
-#         Defines what close is in the case of method == 'geometry'
+    Parameters
+    ----------
+    rivers : list(river_tree.River)
+        A list of rivers to reduce.
+    ignore_small_rivers : int, optional
+        If provided and positive, removes rivers whose number of
+        reaches is less than this value.  If negative, keeps the N
+        biggest (in number of reaches) rivers, where N is the negative
+        of the provided value (e.g. -2 keeps the biggest 2 rivers).
+    prune_by_area : float, optional
+        If provided, remove reaches whose total contributing area is
+        less than this tol.  NOTE: only valid for reaches that include
+        a contributing area property (e.g. NHDPlus).
+    area_property : str, optional='DivergenceRoutedDrainAreaSqKm'
+        Name of the area property to use for determining reach CA.
+        Note that this defines the units of prune_by_area value.
+    remove_diversions : bool, optional=False
+        If true, remove diversions (see documentation of
+        modify_rivers_remove_divergences()).
+    remove_braided_divergences : bool, optional=False
+        If true, remove braided divergences (see documentation of
+        modify_rivers_remove_divergences()).
+    tol : float, optional=0.1
+        Defines what close is in the case of method == 'geometry'
 
-#     Returns
-#     ------- 
-#     out : list(river_tree.River)
-#         A list of rivers, as River objects.
+    Returns
+    ------- 
+    out : list(river_tree.River)
+        A list of rivers, as River objects.
 
-#     """
-#     if ignore_small_rivers < 0:
-#         rivers = sorted(rivers, key=lambda a: len(a), reverse=True)
-#         rivers = rivers[0:-ignore_small_rivers]
-#         logging.info(f"Removing all but the biggest {-ignore_small_rivers} rivers")
-#     elif ignore_small_rivers > 0:
-#         rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
-#         if len(rivers) == 0:
-#             return rivers
+    """
+    if keep_n_rivers > 0:
+        logging.info(f"Removing all but the biggest {keep_n_rivers} rivers")
+        rivers = sorted(rivers, key=lambda a: len(a), reverse=True)
+        rivers = rivers[0:keep_n_rivers]
+        
+    if ignore_small_rivers > 0:
+        rivers = watershed_workflow.river_tree.filterSmallRivers(rivers, ignore_small_rivers)
 
-#     # note it is faster to remove all rivers with small area first
-#     if prune_by_area is not None:
-#         logging.info(f"Removing rivers with area < {prune_by_area}")
-#         rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
-#         if len(rivers) == 0:
-#             return rivers
+    if prune_by_area > 0.0:
+        logging.info(f"Removing rivers with area < {prune_by_area}")
+        rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
 
-#     if remove_diversions and remove_braided_divergences:
-#         rivers = watershed_workflow.hydrography.removeDivergences(rivers)
-#     elif remove_diversions:
-#         rivers = watershed_workflow.hydrography.removeDiversions(rivers)
-#     elif remove_braided_divergences:
-#         rivers = watershed_workflow.hydrography.removeBraids(rivers)
-#     if len(rivers) == 0:
-#         return rivers
+    if remove_diversions and remove_braided_divergences:
+        rivers = watershed_workflow.river_tree.removeDivergences(rivers)
+    elif remove_diversions:
+        rivers = watershed_workflow.river_tree.removeDiversions(rivers)
+    elif remove_braided_divergences:
+        rivers = watershed_workflow.river_tree.removeBraids(rivers)
 
-#     if prune_by_area is not None:
-#         rivers = watershed_workflow.hydrography.pruneByArea(rivers, prune_by_area, area_property)
+    if prune_by_area is not None:
+        rivers = watershed_workflow.river_tree.pruneRiversByArea(rivers, prune_by_area, area_property)
 
-#     if ignore_small_rivers > 0:
-#         rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
-#         if len(rivers) == 0:
-#             return rivers
+    if ignore_small_rivers > 0:
+        rivers = watershed_workflow.river_tree.filterSmallRivers(rivers, ignore_small_rivers)
 
-#     return rivers
+    return rivers
 
-def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
-             rivers : List[watershed_workflow.river_tree.River],
+
+def simplify(hucs : SplitHUCs,
+             rivers : List[River],
              reach_segment_target_length : float,
              huc_segment_target_length : Optional[float] = None,
              river_close_distance : float = 100.0,
              river_far_distance : float = 500.0,
              resample_by_reach_property : bool = False,
              min_angle : float = 20,
-             junction_min_angle : float = 10,
+             junction_min_angle : float = 20,
              plot_diagnostics : bool = False,
              keep_points : bool = False) -> None:
-    """Simplifies the HUC and river shapes to create constrained, discrete segments.
+    """Simplifies, in place, the HUC and river shapes to create constrained, discrete segments.
 
     Parameters
     ----------
@@ -428,50 +426,18 @@ def simplify(hucs : watershed_workflow.split_hucs.SplitHUCs,
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
     
 
-# def densify(objct, target, objct_orig=None, rivers=None, **kwargs):
-#     """Redensify a river, huc, or waterbodies object, meeting a provided target or target resolution function.
-
-#     Parameters
-#     ----------
-#     objct : SplitHUCs, list(River), or list(shapely.Polygon)
-#       The object to be densified.
-#     target : float, list[float]
-#       Parameters for the target density -- either a float target
-#       length or a list of floats used in
-#       watershed_workflow.resampling.limit_from_river_distance
-#       object.
-#     objct_orig : same as objct, optional
-#       The object with original coordinates.  The original,
-#       unsimplified object, if provided, allows better interpolation
-#       between the coarsened coordinates.
-#     rivers : optional
-#       If target is a list of floats, the rivers used in the signed
-#       distance function.
-#     **kwargs : optional
-#       Passed along to the densify function.
-#     """
-#     if isinstance(objct, watershed_workflow.split_hucs.SplitHUCs):
-#         return watershed_workflow.resampling.densify_hucs(objct, objct_orig, rivers, target,
-#                                                              **kwargs)
-#     elif isinstance(objct[0], watershed_workflow.river_tree.River):
-#         return watershed_workflow.resampling.densify_rivers(objct, objct_orig, target, **kwargs)
-#     else:
-#         raise ValueError("densify() currently only supports list(River) and SplitHUC objects.")
-
-
-def triangulate(hucs,
-                rivers=None,
-                internal_boundaries=None,
-                hole_points=None,
-                diagnostics=True,
-                verbosity=1,
-                tol=1,
-                refine_max_area=None,
-                refine_distance=None,
-                refine_max_edge_length=None,
-                refine_min_angle=None,
-                enforce_delaunay=False,
-                river_region_dist=None):
+def triangulate(hucs : SplitHUCs,
+                rivers : Optional[River] = None,
+                internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
+                hole_points : Optional[List[shapely.geometry.Point]] = None,
+                diagnostics : bool = True,
+                verbosity : int = 1,
+                tol : float = 1.0,
+                refine_max_area : Optional[float] = None,
+                refine_distance : Optional[float] = None,
+                refine_max_edge_length : Optional[float] = None,
+                refine_min_angle : Optional[float] = None,
+                enforce_delaunay : bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -607,12 +573,13 @@ def triangulate(hucs,
     return vertices, triangles
 
 
-def tessalateRiverAligned(hucs,
-                          rivers,
-                          river_width,
-                          internal_boundaries=None,
-                          debug=False,
-                          **kwargs):
+def tessalateRiverAligned(hucs : SplitHUCs,
+                          rivers : List[River],
+                          river_width : Any,
+                          internal_boundaries = List[River | shapely.geometry.BaseGeometry],
+                          debug : bool = False,
+                          **kwargs) -> Tuple[np.ndarray, List[List[int]]] | \
+                                       Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray]:
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
     Parameters
@@ -696,36 +663,38 @@ def tessalateRiverAligned(hucs,
         return coords, elems
 
 
-# def elevate(mesh_points, mesh_crs, dem, algorithm='piecewise bilinear'):
-#     """Elevate mesh_points onto the provided dem.
+def elevate(mesh_points : np.ndarray,
+            dem : xarray.DataSet,
+            algorithm : str = 'piecewise bilinear') -> np.ndarray:
+    """Elevate mesh_points onto the provided dem.
 
-#     Parameters
-#     ----------
-#     mesh_points : np.array((n_points, 2), 'd')
-#         Array of triangle vertices.
-#     mesh_crs : crs-type
-#         Mesh coordinate system.
-#     dem : xarray.DataArray
-#         2D array forming an elevation raster.
-#     algorithm : str, optional
-#         Algorithm used for interpolation.  One of:
-#         * "nearest" for nearest-neighbor pixels
-#         * "piecewise bilinear" for interpolation (default)
+    Parameters
+    ----------
+    mesh_points : np.array((n_points, 2), 'd')
+        Array of triangle vertices.
+    mesh_crs : crs-type
+        Mesh coordinate system.
+    dem : xarray.DataArray
+        2D array forming an elevation raster.
+    algorithm : str, optional
+        Algorithm used for interpolation.  One of:
+        * "nearest" for nearest-neighbor pixels
+        * "piecewise bilinear" for interpolation (default)
 
-#     Returns
-#     -------
-#     out : np.array((n_points, 3), 'd')
-#         Array of triangle vertices, including a z-dimension.
+    Returns
+    -------
+    out : np.array((n_points, 3), 'd')
+        Array of triangle vertices, including a z-dimension.
 
-#     """
-#     # index the i,j of the points, pick the elevations
-#     elev = interpolateFromArray(mesh_points, mesh_crs, dem, algorithm)
+    """
+    # index the i,j of the points, pick the elevations
+    elev = interpolateFromArray(mesh_points, mesh_crs, dem, algorithm)
 
-#     # create the 3D points
-#     out = np.zeros((len(mesh_points), 3), 'd')
-#     out[:, 0:2] = mesh_points
-#     out[:, 2] = elev
-#     return out
+    # create the 3D points
+    out = np.zeros((len(mesh_points), 3), 'd')
+    out[:, 0:2] = mesh_points
+    out[:, 2] = elev
+    return out
 
 
 # def colorRasterFromShapes(shapes,
@@ -847,4 +816,5 @@ def makeMap(m):
     folium.LayerControl().add_to(m)
     folium.plugins.Fullscreen().add_to(m)
     folium.plugins.MeasureControl().add_to(m)
+    folium.plugins.MousePosition().add_to(m)
     return m

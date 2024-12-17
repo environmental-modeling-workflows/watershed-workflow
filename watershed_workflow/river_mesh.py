@@ -17,28 +17,12 @@ import watershed_workflow.angles
 import watershed_workflow.sources.standard_names as names
 
 
-# def _isOverlappingCorridor(corr, river):
-#     if len(corr.interiors) > 0:
-#         # there is an overlap upstream of the junction of two tributaries,
-#         # creating a hole
-#         return 2
-#     n = 0
-#     if not _isExpectedNumPoints(corr, river, n):
-#         # overlaps at the junction result in losing points in the corridor polygon.
-#         return 1
-#     return 0
-
-
-# def _isOverlappingCorridors(corrs, rivers):
-#     """Corridors can overlap"""
-#     if any(_isOverlappingCorridor(c, river) for (c, river) in zip(corrs, rivers)):
-#         return True
-
-#     corrs_area = shapely.ops.unary_union(corrs).area
-#     summed_area = sum(c.area for c in corrs)
-#     if abs(summed_area - corrs_area) > 1.e-3:
-#         return True
-#     return False
+def isNonoverlapping(points, elems, tol=1):
+    """Are a set of shapes nonoverlapping?"""
+    shps = [shapely.geometry.Polygon(points[e]) for e in elems]
+    total_area = shapely.unary_union(shps).area
+    summed_area = sum(shp.area for shp in shps)
+    return abs(total_area - summed_area) < tol
 
 
 def _computeExpectedNumCoords(river):
@@ -55,14 +39,6 @@ def _computeExpectedNumCoords(river):
 
 def _computeExpectedNumElems(river):
     return sum(len(reach.linestring.coords)-1 for reach in river)
-
-
-def isNonoverlapping(points, elems, tol=1):
-    """Are a set of shapes nonoverlapping?"""
-    shps = [shapely.geometry.Polygon(points[e]) for e in elems]
-    total_area = shapely.unary_union(shps).area
-    summed_area = sum(shp.area for shp in shps)
-    return abs(total_area - summed_area) < tol
     
 
 def createWidthFunction(arg):
@@ -363,8 +339,12 @@ def adjustHUCsToRiverMesh(hucs, river, coords):
                     # point to put on the reach junction element
                     # coordinate, and wierd stuff would probably
                     # happen in triangulation anyway.
-                    assert touches[touch_i-1][0] is None or touches[touch_i-1][0] < 0
-                    assert touches[(touch_i+1)%len(touches)][0] is None or touches[(touch_i+1)%len(touches)][0] < 0
+                    assert touches[touch_i-1][0] is None or touches[touch_i-1][0] < 0, \
+                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+                    
+                    assert touches[(touch_i+1)%len(touches)][0] is None or touches[(touch_i+1)%len(touches)][0] < 0, \
+                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+
                     
                     # it is a HUC, insert the point
                     new_coord = coords[reach['elems'][0][point_i]]

@@ -16,5 +16,3 @@ AREA = 'area'
 CATCHMENT = 'catchment'
 LENGTH = 'length'
 
-OUTLET = 'outlet'
-INLET = 'inlet'

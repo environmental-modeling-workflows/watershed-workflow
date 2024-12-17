@@ -37,7 +37,7 @@ def _is_iter(obj):
 
 def linestringsWithCoords(df, column=None, marker=None, **kwargs):
     """Plot linestrings, but also potentially scatter their coordinates."""
-    if marker is not None:
+    if marker:
         marker_args = {'marker' : marker}
         if 'markersize' in kwargs:
             marker_args['s'] = kwargs.pop('markersize')

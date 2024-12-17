@@ -269,7 +269,7 @@ class SplitHUCs:
         return watershed_workflow.plot.linestringsWithCoords(df, *args, **kwargs)
     
 
-    def explore(self, column=names.ID, m=None, marker=True, name='watersheds', **kwargs):
+    def explore(self, column=names.ID, m=None, marker=None, name='watersheds', **kwargs):
         """Open a map!"""
         # get a name
         if column == names.ID and names.ID not in self.df:
