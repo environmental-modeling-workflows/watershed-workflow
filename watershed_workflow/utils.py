@@ -359,8 +359,13 @@ def isClose(s1 : BaseGeometry,
     # points get compared as tuples
     if isinstance(s1, shapely.geometry.Point):
         return isClose(s1.coords[0], s2, tol)
+    elif isinstance(s1, np.ndarray) and len(s1.shape) == 1:
+        return isClose((s1[0], s1[1]), s2)
+
     if isinstance(s2, shapely.geometry.Point):
         return isClose(s1, s2.coords[0], tol)
+    elif isinstance(s2, np.ndarray) and len(s2.shape) == 1:
+        return isClose(s1, (s2[0], s2[1]))
 
     # types should be the same now
     if type(s1) != type(s2):

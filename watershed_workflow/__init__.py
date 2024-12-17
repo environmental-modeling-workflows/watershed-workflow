@@ -611,6 +611,7 @@ def tessalateRiverAligned(hucs,
                           rivers,
                           river_width,
                           internal_boundaries=None,
+                          debug=False,
                           **kwargs):
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
@@ -659,7 +660,15 @@ def tessalateRiverAligned(hucs,
     # generate the quads
     logging.info('Creating stream-aligned mesh...')
     computeWidth = watershed_workflow.river_mesh.createWidthFunction(river_width)
-    river_coords, river_elems, river_corridors, hole_points = watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth)
+
+    if debug:
+        fig, ax = plt.subplots(1,1)
+    else:
+        ax = None
+    
+    river_coords, river_elems, river_corridors, hole_points = watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
+    if debug:
+        plt.show()
 
     # triangulate the rest
     if internal_boundaries is None:

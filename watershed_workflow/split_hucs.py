@@ -8,6 +8,7 @@ import itertools
 from matplotlib import pyplot as plt
 import folium
 import folium.plugins
+import geopandas as gpd
 
 import shapely.geometry
 import shapely.ops
@@ -216,7 +217,7 @@ class SplitHUCs:
         self.df.to_crs(crs)
         obj_handles = list(self.linestrings.handles())
         shapes = list(self.linestrings)
-        tmp_df = geopandas.GeoDataFrame({'geometry':shapes}, crs=self.df.crs)
+        tmp_df = gpd.GeoDataFrame({'geometry':shapes}, crs=self.df.crs)
         tmp_df.to_crs(crs, inplace=True)
         self.linestrings = HandledCollection(obj_handles, tmp_df['geometry'])
         self.update()
@@ -264,7 +265,7 @@ class SplitHUCs:
 
     def plotAsLinestrings(self, *args, **kwargs):
         """Plot not as polygons, but individual linestrings."""
-        df = geopandas.GeoDataFrame(geometry=list(self.linestrings.values()))
+        df = gpd.GeoDataFrame(geometry=list(self.linestrings.values()))
         return watershed_workflow.plot.linestringsWithCoords(df, *args, **kwargs)
     
 

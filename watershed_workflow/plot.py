@@ -271,7 +271,7 @@ def mesh(m2, color=None, **kwargs):
         df['elevation'] = m2.centroids[:,2]
         return df.plot(column='elevation', **kwargs)
 
-    if isinstance(color, str):
+    if color is None or isinstance(color, str):
         return df.boundary.plot(color=color, **kwargs)
     else:
         return df.plot(color=color, **kwargs)
