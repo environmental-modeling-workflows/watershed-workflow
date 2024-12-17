@@ -142,7 +142,7 @@ def createRiverMesh(river, computeWidth):
     # project the starting point
     k = 0
 
-    debug = '1332698', 0  # reach index, coordinate index
+    debug = None, None  # reach index, coordinate index
     if debug != (None, None):
         logging.info(f"Debugging reach {debug[0]}, coordinate {debug[1]}, at {river.getNode(debug[0]).linestring.coords[debug[1]]}")
     
