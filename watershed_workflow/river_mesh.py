@@ -50,7 +50,6 @@ def createWidthFunction(arg):
     else:
         def func(reach):
             return arg
-
     return func
 
 

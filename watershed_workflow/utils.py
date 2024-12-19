@@ -583,8 +583,15 @@ def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.g
 
 
 def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.ndarray:
+    """Computes the incremental segment length between each coord of ls."""
     coords = np.array(ls.coords)
     return np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
+
+
+def computeArclengths(ls : shapely.geometry.LineString) -> np.ndarray:
+    """Computes the arclength of each coord in ls."""
+    ds = computeSegmentLengths(ls)
+    return np.cumsum(np.concatenate([[0.0,], ds]))
 
 
 def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],

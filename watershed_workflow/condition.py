@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Dict, Tuple, List, Literal
+from typing import Optional, Iterable, Dict, Tuple, List, Literal, Callable
 
 import numpy as np
 import attr
@@ -383,7 +383,9 @@ def identifyLocalMinima(m2 : Mesh2D) -> np.ndarray:
     -------
     np.array
       Array of 0s and 1s, where 1 indicates a local minima.
+
     """
+    # this is effectively used as a diagnostic
     res = np.zeros((m2.num_cells, ), )
     for cell, conn in enumerate(m2.conn):
         higher = []
@@ -412,41 +414,36 @@ def identifyLocalMinima(m2 : Mesh2D) -> np.ndarray:
 
 def conditionRiverMeshes(m2 : Mesh2D,
                          rivers : List[River],
-                         smooth : bool = False,
-                         use_parent : bool = False,
-                         lower : bool = False,
-                         use_nhd_elev : bool = False,
-                         treat_banks : bool = False,
-                         depress_upstream_by : Optional[float] = None,
-                         network_burn_in_depth : Optional[float] = None,
-                         ignore_in_sweep : Optional[List[int]] = None) -> None:
+                         *args, **kwargs) -> None:
     """For multiple rivers, condition, IN PLACE, the elevations of
     stream-corridor elements to ensure connectivity throgh culverts,
     skips ponds, maintain monotonicity, or otherwise enforce depths of
     constructed channels.
     """
     for river in rivers:
-        conditionRiverMesh(m2,
-                           river,
-                           smooth=smooth,
-                           use_parent=use_parent,
-                           lower=lower,
-                           use_nhd_elev=use_nhd_elev,
-                           treat_banks=treat_banks,
-                           depress_upstream_by=depress_upstream_by,
-                           network_burn_in_depth=network_burn_in_depth,
-                           ignore_in_sweep=ignore_in_sweep)
+        conditionRiverMesh(m2, river, *args, **kwargs)
 
 
+def createDepressionFunction(arg):
+    if isinstance(arg, dict):
+        def func(reach):
+            return arg[reach[names.ORDER]]
+    elif isinstance(arg, Callable):
+        func = arg
+    else:
+        def func(reach):
+            return arg
+    return func
+
+        
 def conditionRiverMesh(m2 : Mesh2D,
                        river : River,
                        smooth : bool = False,
                        use_parent : bool = False,
                        lower : bool = False,
-                       use_nhd_elev : bool = False,
-                       treat_banks : bool = False,
+                       bank_integrity_elevation : float = 0.0,
                        depress_upstream_by : Optional[float] = None,
-                       network_burn_in_depth : Optional[float] = None,
+                       network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
                        ignore_in_sweep : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
    to ensure connectivity throgh culverts, skips ponds, maintain
@@ -461,19 +458,13 @@ def conditionRiverMesh(m2 : Mesh2D,
     smooth: boolean, optional
         If true, smooth the profile of each reach using a gaussian
         filter (mainly to pass through railroads and avoid reservoirs).
-    use_parent: boolean, optional
-        If true, use the linestring from the original parent reach while
-        smoothing (seems to be not making a huge difference).
     lower: boolean, optional
         If true, lower the smoothed bed profile to match the lower
         points on the raw bed profile. This is useful particularly for
         narrow ag. ditches where NHDPLus flowlines often do not
         coincide with the DEM depressions and so stream-elements
         intermitently fall into them.
-    use_nhd_elev: boolean, optional
-        If true, enforce maximum and minimum elevation for each
-        reach provided in NHDPlus.
-    treat_banks: boolean, optional
+    bank_integrity_elevation: float, optional
         Where the river is passing right next to the reservoir or
         NHDline is misplaced into the reservoir, banks may fall into
         the reservoir. If true, this will enforce that the bank vertex
@@ -495,121 +486,91 @@ def conditionRiverMesh(m2 : Mesh2D,
         sweep.
 
     """
-    river_corr_ids = []  # collecting IDs of all vertices in the river/stream
-    for reach in river.preOrder():
-        for elem in reach['elems']:
-            for vertex_id in elem:
-                if vertex_id not in river_corr_ids:
-                    river_corr_ids.append(vertex_id)
-
     # conditioning of stream-bed profiles to enforce typical channel
     # depths, large-scale topographic gradients in the streambeds, and
     # connectivity through culverts that pass under road and railway
     # embankments
     if smooth:
         for reach in river:
-            # adds smooth profile in reach's properties
-            _smoothProfile(reach, use_parent=use_parent, lower=lower)
+            # smooth the reach profile
+            smoothProfile(reach, lower=lower)
 
-        # network-wide conditioning
-        _sweepNetwork(river,
-                      depress_upstream_by=depress_upstream_by,
-                      use_nhd_elev=use_nhd_elev,
-                      ignore_in_sweep=ignore_in_sweep)
+    # network-wide conditioning
+    sweepNetwork(river,depress_upstream_by, ignore_in_sweep)
 
-    # transferring network-scale-conditioned stream-bed elevations
-    # onto the mesh
+    # potentially burn in the network using a depression function
+    if network_burn_in_depth is not None:
+        depressionFunction = createDepressionFunction(network_burn_in_depth)
+        for reach in river:
+            coords = np.array(reach.linestring.coords)
+            coords[:,2] = coords[:,2] - depressionFunction(reach)
+            reach.linestring = shapely.geometry.LineString(coords)
+
+    # map new profile to mesh
     for reach in river:
-        if smooth:
-            profile = reach.properties["SmoothProfile"]
-        else:
-            # only centerline elevation is to be used, without any
-            # conditioning
-            profile = _getProfile(reach)
+        for i, elem in enumerate(reach['elems']):
+            m2.coords[elem[1:-1], 2] = reach.linestring.coords[i][2]
 
-        if network_burn_in_depth is not None:
-            if isinstance(network_burn_in_depth, dict):
-                order = reach.properties[names.ORDER]
-                if order > max(network_burn_in_depth.keys()):
-                    burn_in_depth = network_burn_in_depth[max(network_burn_in_depth.keys())]
-                elif order < min(network_burn_in_depth.keys()):
-                    burn_in_depth = network_burn_in_depth[min(network_burn_in_depth.keys())]
-                else:
-                    burn_in_depth = network_burn_in_depth[order]
-            elif callable(network_burn_in_depth):
-                # can we pass such user-defined functions for channel width
-                # and depth as a function of drainage area W or D =
-                # f(Drainage_area)
-                DA_sqm = reach.properties[names.AREA] * 1e6
-                burn_in_depth = network_burn_in_depth(DA_sqm)
-            else:
-                burn_in_depth = network_burn_in_depth
+        m2.coords[elem[0], 2] = reach.linestring.coords[i+1][2]
+        m2.coords[elem[-1], 2] = reach.linestring.coords[i+1][2]
 
-            profile[:, 1] = profile[:, 1] - burn_in_depth
+    # ensure that a diked channel passing over/around
+    # a pond or reservoirs does not have bank-vertices fall into
+    # the depression
+    if bank_integrity_elevation > 0.:
+        # collecting IDs of all vertices in the river/stream
+        river_corr_ids = set(vertex_id for reach in river for elem in reach['elems'] for vertex_id in elem)
 
-        for i, elem in enumerate(reach.elements):
-            if i == 0:  # for the first point
-                m2.coords[elem[0]][2] = m2.coords[elem[-1]][2] = profile[i, 1]
-
-            # assign elevations to the upstream points of each
-            # river-corridor element (quads)
-            for coord_id in elem[1:-1]:
-                m2.coords[coord_id][2] = profile[i + 1, 1]
-
-            # this to ensure that a diked channel passing over/around
-            # a pond or reservoirs does not have bank-vertices fall into
-            # the depression
-            if treat_banks:
+        for reach in river:
+            for i, elem in enumerate(reach['elems']):
                 bank_vertex_ids = _bankVerticesFromElem(elem, m2)
                 for vertex_id in bank_vertex_ids:
                     if vertex_id not in river_corr_ids:
-                        if m2.coords[vertex_id][2] < min(profile[i + 1, 1], profile[i, 1]):
+                        midp = (reach.linestring.coords[i][2] + reach.linestring.coords[i+1][2]) / 2
+                        if m2.coords[vertex_id][2] < midp + bank_integrity_elevation:
                             logging.info(f"raised vertex {vertex_id} for bank integrity")
-                            m2.coords[vertex_id][2] = 0.5 * (profile[i, 1] + profile[i + 1, 1]) + 0.55
+                            m2.coords[vertex_id][2] = midp + bank_integrity_elevation
+
     m2.clearGeometryCache()
 
 
-def _getProfile(reach : River) -> np.ndarray:
-    """For a given reach, generate a bedprofile using elevations on the reach.linestring."""
-    # Note that reach_elems are downstream to upstream, while linestring coords are upstream to downstream.
-    stream_bed_coords = list(reversed(reach.linestring.coords))
-    dists = [math.dist(stream_bed_coords[0], point) for point in stream_bed_coords]
-    elevs = reach.properties['elev_profile'][::-1]  # reversed
-    profile = np.array([dists, elevs]).T
-    return profile
+def setProfileByDEM(rivers : List[River],
+                    dem : xarray.DataArray,
+                    **kwargs) -> None:
+    """Set the z-coordinate of the reach linestring from a DEM dataset."""
+    assert len(rivers) > 0
+    points = np.array([c for river in rivers for reach in river for c in reach.linestring.coords])
+    elevs = watershed_workflow.datasets.interpolateDataset(points, rivers[0].crs, dem, **kwargs)
 
+    if points.shape[1] == 3:
+        new_points = points
+        new_points[:,2] = elevs
+    else:
+        new_points = np.empty((len(points), 3), 'd')
+        new_points[:, :2] = points
+        new_points[:,2] = elevs
 
-def _smoothProfile(reach : River,
-                   use_parent : bool = False,
-                   lower : bool = False) -> np.ndarray:
+    i = 0
+    for river in rivers:
+        for reach in river:
+            count = len(reach.linestring.coords)
+            reach.linestring = shapely.geometry.LineString(new_points[i:count])
+            i += count
+
+        
+def smoothProfile(reach : River,
+                  lower : bool = False) -> None:
     """Applies gaussian filter smoothing to the bed-profile obtained from DEM.
 
     This option becomes important in ag. watersheds when NHDPLus is
-    inconsistent with the depression in the DEM.  One can also include
-    elevation profile of the parent reach for better continuity,
-    although, subsequent network sweep option makes using parent
-    profile redundant.
+    inconsistent with the depression in the DEM.
 
     """
-    profile = _getProfile(reach)
-    profile_new = copy.deepcopy(profile)
+    ls = reach.linestring
+    s = watershed_workflow.utils.computeArclengths(ls)
 
-    if use_parent:
-        if reach.parent is None:
-            profile_new[:, 1] = scipy.ndimage.gaussian_filter(profile[:, 1], 5, mode='nearest')
-        else:
-            parent_profile = reach.parent.properties['SmoothProfile']
-            profile_to_smooth = np.vstack((parent_profile, profile_new[1:, :]))
-            profile_to_smooth[len(parent_profile):,
-                              0] = profile_to_smooth[len(parent_profile):, 0] + profile_to_smooth[
-                                  len(parent_profile) - 1, 0]  # shift the distances
-            profile_to_smooth[:, 1] = scipy.ndimage.gaussian_filter(profile_to_smooth[:, 1],
-                                                                    5,
-                                                                    mode='nearest')  # smooth filter
-            profile_new[:, 1] = profile_to_smooth[-len(profile):, 1]
-
-    else:
-        profile_new[:, 1] = scipy.ndimage.gaussian_filter(profile[:, 1], 5, mode='nearest')
+    coords = np.array(ls.coords)
+    new_z = scipy.ndimage.gaussian_filter(coords[:,2], 5, mode='nearest')
 
     if lower:
         # NHDPlus flowlines may not fall on the DEM depression of the
@@ -617,42 +578,41 @@ def _smoothProfile(reach : River,
         # underestimate the depression In this step, the smoothed bed
         # propfile is depressed by a median of one-sided difference
         # between the raw and smoothed profile
-        diffs = profile_new[:, 1] - profile[:, 1]
+        diffs = new_z - coords[:,2]
         if any(diffs > 0):
-            profile_new[:, 1] = profile_new[:, 1] - np.median(diffs[diffs > 0])
+            new_z = new_z - np.median(diffs[diffs > 0])
 
-    reach.properties["SmoothProfile"] = profile_new
-    return profile_new
+    coords[:,2] = new_z
+    reach.linestring = shapely.geometry.LineString(coords)
 
 
-def _enforceMonotonicity(profile : np.ndarray,
-                         moving : Literal['upstream', 'downstream'] = 'upstream') -> np.ndarray:
+def enforceMonotonicity(reach : River,
+                        moving : Literal['upstream', 'downstream'] = 'upstream') -> None:
     """Ensures that the streambed-profile elevations are monotonically
     increasing as we move upstream, or decreasing as we move
     downstream.
 
     """
-    profile_new = copy.deepcopy(profile)
+    coords = np.array(reach.linestring.coords)
     if moving == 'upstream':
-        for i in range(len(profile_new) - 1):
-            if profile_new[i + 1, 1] < profile_new[i, 1]:
-                profile_new[i + 1, 1] = profile_new[i, 1]
+        for i in range(len(coords) - 1, 0, -1):
+            if coords[i + 1, 2] > coords[i, 2]:
+                coords[i + 1, 2] = coords[i, 2]
 
     elif moving == 'downstream':
-        for i in range(len(profile_new) - 1, 0, -1):
-            if profile_new[i - 1, 1] > profile_new[i, 1]:
-                profile_new[i - 1, 1] = profile_new[i, 1]
+        for i in range(len(coords) - 1):
+            if coords[i + 1, 2] > coords[i, 2]:
+                coords[i + 1, 2] = coords[i, 2]
 
     else:
         raise ValueError(f"Invalid value '{moving}' for enforceMonotonicity()")
 
-    return profile_new
+    reach.linestring = shapely.geometry.LineString(coords)
 
-
-def _sweepNetwork(river : River,
-                  depress_upstream_by : Optional[float] = None,
-                  use_nhd_elev : bool = False,
-                  ignore_in_sweep : Optional[List[int]] = None) -> None:
+    
+def sweepNetwork(river : River,
+                 depress_upstream_by : float = 0,
+                 ignore_in_sweep : Optional[List[int]] = None) -> None:
     """Sweep the river network from each headwater reach (leaf node)
     to the watershed outlet (root node), removing aritificial
     obstructions in the river mesh and enforcing depths of constructed
@@ -664,23 +624,25 @@ def _sweepNetwork(river : River,
 
     # starting from one of the leaf nodes providing extra depression at the upstream end
     for leaf in river.leaf_nodes():
-        if depress_upstream_by is not None:
-            leaf.properties['SmoothProfile'][-1, 1] -= depress_upstream_by
+        if depress_upstream_by > 0:
+            coords = np.array(leaf.linestring.coords)
+            coords[:,2] = coords[:,2] - depress_upstream_by
+            leaf.linestring = shapely.geometry.LineString(coords)
 
         for reach in leaf.pathToRoot():
             # traversing from leaf reach (headwater) catchment to the root reach
-            reach.properties['SmoothProfile'] = _enforceMonotonicity(
-                reach.properties['SmoothProfile'], 'downstream')
-            junction_elevs = [sib.properties['SmoothProfile'][0, 1] for sib in reach.siblings()]
+            enforceMonotonicity(reach, 'downstream')
+            if reach.parent is not None and reach.parent.index not in ignore_in_sweep:
+                junction_elevs = [r.linestring.coords[-1][2] for r in reach.parent.children] \
+                    + [reach.parent.linestring.coords[0][2],]
+                new_coord = (reach.linestring.coords[-1][0], reach.linestring.coords[-1][1],
+                             min(junction_elevs))
 
-            if use_nhd_elev:
-                junction_elevs.append(reach.properties['MinimumElevationSmoothed'] / 100)
-            if reach.parent != None and reach.properties['ID'] not in ignore_in_sweep:
-                junction_elevs.append(reach.parent.properties['SmoothProfile'][-1, 1])
-                # giving min junction elevation to both the siblings
-                reach.parent.properties['SmoothProfile'][-1, 1] = min(junction_elevs)
-            for sib in reach.siblings():
-                sib.properties['SmoothProfile'][0, 1] = min(junction_elevs)
+                for r in reach.parent.children:
+                    r.moveCoordinate(-1, new_coord)
+                reach.parent.moveCoordinate(0, new_coord)
+
+    assert river.isMonotonic(ignore_in_sweep)
 
 
 def _bankVerticesFromElem(elem : List[int],
@@ -691,10 +653,8 @@ def _bankVerticesFromElem(elem : List[int],
     """
     # edge on the right as we look from the downstream direction
     edge_r = list(m2.cell_edges(elem))[0]
-
     # edge on the left as we look from the downstream direction
     edge_l = list(m2.cell_edges(elem))[2]
-
     return [_bankVerticesFromEdge(edge_r, elem, m2), _bankVerticesFromEdge(edge_l, elem, m2)]
 
 
@@ -706,7 +666,6 @@ def _bankVerticesFromEdge(edge : Tuple[int,int],
     river-corridor, vertex that does not form the river corridor.
 
     """
-
     cell_ids = m2.edges_to_cells[edge]
     cells_to_edge = [m2.conn[cell_id] for cell_id in cell_ids]
     cells_to_edge.remove(elem)
@@ -715,12 +674,3 @@ def _bankVerticesFromEdge(edge : Tuple[int,int],
     return vertex_id
 
 
-def elevateRivers(rivers : List[River],
-                  dem : xarray.DataArray) -> None:
-    """Elevate the river using dem and store reach-bed-profile as reach properties."""
-    for river in rivers:
-        for i, reach in enumerate(river):
-            reach_points = (np.array(reach.linestring.xy).T)
-            reach_elevs = watershed_workflow.elevate(reach_points, crs, dem, dem_profile)[:, 2]
-            assert (len(reach_elevs) == len(reach.linestring.coords))
-            reach.properties['elev_profile'] = reach_elevs

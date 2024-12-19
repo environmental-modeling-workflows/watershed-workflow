@@ -4,108 +4,26 @@ import attr
 import numpy as np
 import collections.abc
 import cftime, datetime
+import xarray
 
 import watershed_workflow.utils
+import watershed_workflow.crs
 
 
-def np_array_convertor(thing, *args, **kwargs):
-    if isinstance(thing, np.ndarray):
-        return thing
-    else:
-        return np.ndarray(thing, *args, **kwargs)
-
-
-@attr.define
-class Data:
-    """Simple struct for storing time-dependent rasters.
-
-    Note that time is always the first dimension, e.g.
-
-      times.shape[0] == data.shape[0]
-    """
-    profile: dict
-    times: np.ndarray = attr.field(converter=np_array_convertor)
-    data: np.ndarray = attr.field(converter=np_array_convertor)
-
-
-@attr.define
-class Dataset(collections.abc.MutableMapping):
-    """Stores a collection of datasets with shared times and profile."""
-    profile: dict
-    times: np.ndarray
-    data: dict = attr.Factory(dict)
-
-    def __getitem__(self, key):
-        return Data(self.profile, self.times, self.data[key])
-
-    def __setitem__(self, key, val):
-        if isinstance(val, tuple):
-            self.__setitem__(key, Data(*val))
-        elif isinstance(val, Data):
-            self.data[key] = val.data
-        else:
-            self.data[key] = np.array(val)
-
-    def __delitem__(self, key):
-        self.data.__delitem__(key)
-
-    def __iter__(self):
-        for k in self.data:
-            yield k
-
-    def __len__(self):
-        return len(self.data)
-
-    def canContain(self, dset):
-        return (dset.profile == self.profile) and (dset.times == self.times).all()
-
-
-class State(collections.abc.MutableMapping):
-    """This is a multi-key dictionary.
-
-    Each key is a string variable name.  Each value is a (profile,
-    times, raster) tuple.  Profiles and times may be shared across
-    multiple keys, hence the need for a special dictionary.
-
-    Note that actual data is stored as a simple list of Dataset
-    collections.
-
-    """
-    def __init__(self):
-        self.collections = []
-
-    def __getitem__(self, key):
-        for col in self.collections:
-            if key in col:
-                return col[key]
-
-    def __setitem__(self, key, val):
-        if isinstance(val, tuple):
-            self.__setitem__(key, Data(*val))
-        else:
-            for col in self.collections:
-                if col.canContain(val):
-                    col[key] = val
-                    return
-            self.collections.append(Dataset(val.profile, val.times, { key: val.data }))
-
-    def __delitem__(self, key):
-        for col in self.collections:
-            if key in col:
-                col.__delitem__(key)
-                break
-
-    def __iter__(self):
-        for col in self.collections:
-            for k in col:
-                yield k
-
-    def __len__(self):
-        return sum(len(col) for col in self.collections)
+def interpolateDataset(points : np.ndarray,
+                       points_crs : watershed_workflow.crs.CRS,
+                       dataarray : xarray.DataArray,
+                       **kwargs) -> np.ndarray:
+    """Interpolate from a data array onto a set of points."""
+    dataarray_crs = watershed_workflow.crs.from_xarray(dataarray)
+    points = watershed_workflow.warp.points(points, points_crs, dataarray_crs)
+    x = xarray.DataArray(points[:,0], dims="points")
+    y = xarray.DataArray(points[:,1], dims="points")
+    return dataarray.interp(x=x, y=y, **kwargs).values
 
 
 def removeLeapDay(dataset):
-    """Removes leap days from a dataset, in place.
+    """Removes leap days from a dataset.
 
     Here we follow the DayMet convention of removing Dec 31, not Feb 29.
     """

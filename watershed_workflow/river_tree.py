@@ -201,7 +201,7 @@ class River(watershed_workflow.tinytree.Tree):
                                              names.DOWNSTREAM_HYDROSEQ,
                                              names.UPSTREAM_HYDROSEQ,
                                              names.LENGTH,
-                                             names.AREA, ] if pname in self.df]
+                                             names.CATCHMENT_AREA, ] if pname in self.df]
         for p in self.df.keys():
             if len(default_props) >= 8:
                 break
@@ -269,9 +269,13 @@ class River(watershed_workflow.tinytree.Tree):
 
         # fix properties
         upstream_props = dict(self.properties)
-        if names.AREA in upstream_props:
-            upstream_props[names.AREA] = self[names.AREA] * upstream_area_frac
-            self[names.AREA] = self[names.AREA] * (1-upstream_area_frac)
+        if names.CATCHMENT_AREA in upstream_props:
+            upstream_props[names.CATCHMENT_AREA] = self[names.CATCHMENT_AREA] * upstream_area_frac
+            self[names.CATCHMENT_AREA] = self[names.CATCHMENT_AREA] * (1-upstream_area_frac)
+
+        if names.DRAINAGE_AREA in upstream_props:
+            if names.CATCHMENT_AREA in self.properties:
+                upstream_props[names.DRAINAGE_AREA] = self[names.DRAINAGE_AREA] - self[names.CATCHMENT_AREA]
 
         if names.HYDROSEQ in upstream_props:
             upstream_props[names.HYDROSEQ] = (self[names.HYDROSEQ] + self.parent[names.HYDROSEQ]) / 2.0
@@ -331,8 +335,8 @@ class River(watershed_workflow.tinytree.Tree):
             parent.linestring = new_seg
 
         # fix properties
-        if names.AREA in self:
-            self.parent[names.AREA] += self[names.AREA]
+        if names.CATCHMENT_AREA in self:
+            self.parent[names.CATCHMENT_AREA] += self[names.CATCHMENT_AREA]
         if 'catchment' in self and self['catchment'] is not None:
             if self.parent['catchment'] is None:
                 self.parent['catchment'] = self['catchment']
@@ -362,7 +366,9 @@ class River(watershed_workflow.tinytree.Tree):
     #
     # methods that act on coordinates only
     #
-    def moveCoordinate(self, i : int, xy : Tuple[float,float]) -> None:
+    def moveCoordinate(self,
+                       i : int,
+                       xy : Tuple[float,float] | Tuple[float,float,float]) -> None:
         """Moves the ith coordinate of self.linestring to a new location."""
         if i < 0:
             i = len(self.linestring.coords) + i
@@ -506,6 +512,16 @@ class River(watershed_workflow.tinytree.Tree):
                 if not node._isContinuous(child, tol):
                     node._makeContinuous(child)
         assert (self.isContinuous())
+
+    def isLocallyMonotonic(self, ignore_in_sweep):
+        if self.index not in ignore_in_sweep:
+            for child in self.children:
+                if self.linestring.coords[0][2] > child.linestring.coords[-1][2]:
+                    return False
+        return True
+        
+    def isMonotonic(self, ignore_in_sweep):
+        return all(reach.isLocallyMonotonic(ignore_in_sweep) for reach in self)
 
     def isHydroseqConsistent(self) -> bool:
         """Confirms that hydrosequence is valid."""
@@ -713,8 +729,8 @@ def combineSiblings(n1 : River,
 
     n1.linestring = new_ls
     
-    if names.AREA in n1:
-        n1[names.AREA] += n2[names.AREA]
+    if names.CATCHMENT_AREA in n1:
+        n1[names.CATCHMENT_AREA] += n2[names.CATCHMENT_AREA]
 
     if 'catchment' in n2 and n2['catchment'] is not None:
         if n1['catchment'] is None:
