@@ -126,13 +126,8 @@ def from_xarray(array : xarray.DataArray) -> CRS | None:
     """Tries to find a CRS from the xarray DataSet or DataArray."""
     wkt = None
     try:
-        wkt = array.spatial_ref['crs_wkt']
-    except (KeyError, AttributeError):
-        pass
-
-    try:
         wkt = array.spatial_ref.attrs['crs_wkt']
-    except KeyError:
+    except (KeyError, AttributeError):
         pass
 
     if wkt is not None:

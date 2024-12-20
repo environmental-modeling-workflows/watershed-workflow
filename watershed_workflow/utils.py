@@ -82,10 +82,10 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
         if isinstance(v2, shapely.geometry.LineString):
             assert isClose(v1.coords[0], v2.coords[-1])
         
-        c1 = np.array(v1.coords[0:2])
+        c1 = np.array(v1.coords[0:2])[:,0:2]
         return computeAngle(c1[1] - c1[0], v2)
     if isinstance(v2, shapely.geometry.LineString):
-        c2 = np.array(v2.coords[-2:])
+        c2 = np.array(v2.coords[-2:])[:,0:2]
         return computeAngle(v1, c2[0] - c2[1])
 
     x1, y1 = v1

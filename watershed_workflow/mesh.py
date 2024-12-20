@@ -152,7 +152,6 @@ class Mesh2D:
             self.checkHandedness()
         if self._validate:
             self.validate()
-        del self._validate
 
     @property
     def conn(self):
@@ -844,7 +843,6 @@ class Mesh3D:
     def __attrs_post_init__(self):
         if self._validate:
             self.validate()
-        del self._validate
 
     @property
     def face_to_vertex_conn(self):

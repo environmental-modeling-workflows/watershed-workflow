@@ -289,44 +289,39 @@ def assert_list_same(l1, l2):
         assert (a == b)
 
         
-@pytest.fixture
-def not_as_simple_y():
-    reach1 = shapely.geometry.LineString([(4, 10), (4.01, 5.0), (4, 0)])
-    reach2 = shapely.geometry.LineString([(1, 19), (2, 15.01), (4, 10)])
-    reach3 = shapely.geometry.LineString([(8, 19), (6, 15.01), (4, 10)])
-    reaches = geopandas.GeoDataFrame(geometry=[reach1, reach2, reach3])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
-    return rivers[0]
-
-
-def test_y(not_as_simple_y):
+def test_goalposts(watershed_rivers2):
     """A three-reach system with a junction."""
-    def computeWidth(a): return 1
-    coords, elems = createRiverMesh(not_as_simple_y, computeWidth)
+    hucs, rivers = watershed_rivers2
 
-    assert (13 == len(coords))
-    assert np.allclose((1.,19), coords[4])
-    assert np.allclose((4.,11.348612713124119), coords[6])
+    river = rivers[0]
+    assert len(river)  == 3
+    watershed_workflow.simplify(hucs, [river,], 50)
+    # test precondition
+    assert sum(len(r.linestring.coords) for r in river) == 19
+    
+    def computeWidth(a): return 10
+    coords, elems = createRiverMesh(river, computeWidth)
 
-    assert (6 == len(elems))
+    assert (33 == len(coords))
+    assert np.allclose((195,195), coords[4])
+    assert np.allclose((95,195), coords[6])
+
+    assert (16 == len(elems))
     assert (3 == len(elems[0])) # headwater elem tri on left branch
     assert (4 == len(elems[1])) # midstream elem quad on left branch
-    assert (3 == len(elems[2])) # headwater elem tri on right
-    assert (4 == len(elems[3])) # midstream elem quad on right
-    assert (5 == len(elems[4])) # junction
-    assert (4 == len(elems[5])) # downstream outlet
+    assert (3 == len(elems[5])) # headwater elem tri on right
+    assert (4 == len(elems[6])) # midstream elem quad on right
+    assert (5 == len(elems[-4])) # junction
+    assert (4 == len(elems[-1])) # downstream outlet
 
-    assert_list_same([1, 2, 6, 10, 11], elems[4])
-    assert_list_same([7, 8, 9], elems[2])
-    assert_list_same([0, 1, 11, 12], elems[-1])
+    assert_list_same([0,1,31,32], elems[-1])
+    assert_list_same([3,4,14,28,29], elems[-4])
 
-    plot(not_as_simple_y, coords, elems)
+    plot(river, coords, elems, hucs)
 
 
 # def test_ADD_TEST_FOR_VARIABLE_WIDTH():
 #     assert False
-    
-
     
 
 #

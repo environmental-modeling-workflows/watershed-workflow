@@ -178,8 +178,10 @@ def watershed_rivers1(watershed_poly1, watershed_reaches1):
 
 
 
+
 @pytest.fixture
 def watershed_rivers2(watershed_poly2, watershed_reaches2):
+    """The goalpost river network with two rivers."""
     if watershed_poly2 is not None:
         hucs = watershed_workflow.split_hucs.SplitHUCs(watershed_poly2)
     else:

@@ -433,14 +433,15 @@ def triangulate(hucs : SplitHUCs,
                 rivers : Optional[River] = None,
                 internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
                 hole_points : Optional[List[shapely.geometry.Point]] = None,
-                diagnostics : bool = True,
+                diagnostics : bool = False,
                 verbosity : int = 1,
                 tol : float = 1.0,
                 refine_max_area : Optional[float] = None,
                 refine_distance : Optional[float] = None,
                 refine_max_edge_length : Optional[float] = None,
                 refine_min_angle : Optional[float] = None,
-                enforce_delaunay : bool = False) -> Tuple[np.ndarray, np.ndarray]:
+                enforce_delaunay : bool = False,
+                as_mesh : bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -571,15 +572,23 @@ def triangulate(hucs : SplitHUCs,
             plt.xlabel("distance [m]")
             plt.ylabel("triangle area [m^2]")
 
-        return vertices, triangles, areas, distances
-
-    return vertices, triangles
+        if as_mesh:
+            m2 = watershed_workflow.mesh.Mesh2D(vertices, triangle, crs=hucs.crs)
+            return m2, areas, distances
+        else:
+            return vertices, triangles, areas, distances
+    
+    if as_mesh:
+        return watershed_workflow.mesh.Mesh2D(vertices, triangle, crs=hucs.crs)
+    else:
+        return vertices, triangles
 
 
 def tessalateRiverAligned(hucs : SplitHUCs,
                           rivers : List[River],
                           river_width : Any,
-                          internal_boundaries = List[River | shapely.geometry.base.BaseGeometry],
+                          internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
+                          as_mesh : bool = True,
                           debug : bool = False,
                           **kwargs) -> Tuple[np.ndarray, List[List[int]]] | \
                                        Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray]:
@@ -650,6 +659,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                                               rivers,
                                               internal_boundaries,
                                               hole_points,
+                                              as_mesh = False,
                                               **kwargs)
     
     tri_coords = tri_res[0]
@@ -660,10 +670,18 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     # note, all river verts are in the tri_verts, listed first, and in the same order!
     coords = tri_coords
 
-    if len(tri_res) > 2:
-        return (coords, elems) + tuple(tri_res[2:])
+    if as_mesh:
+        m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
+        if len(tri_res) > 2:
+            return (m2,) + tuple(tri_res[2:])
+        else:
+            return m2
+        
     else:
-        return coords, elems
+        if len(tri_res) > 2:
+            return (coords, elems) + tuple(tri_res[2:])
+        else:
+            return coords, elems
 
 
 def elevate(m2 : Mesh2D,
@@ -691,7 +709,7 @@ def elevate(m2 : Mesh2D,
     mesh_points = m2.coords
     
     # index the i,j of the points, pick the elevations
-    elev = watershed_workflow.datasets.interpolateDataset(mesh_points, mesh_crs, dem, **kwargs)
+    elev = watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dem, **kwargs)
 
     # create the 3D points
     if mesh_points.shape[1] == 3:

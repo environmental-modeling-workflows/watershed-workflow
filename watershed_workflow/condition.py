@@ -4,12 +4,13 @@ import numpy as np
 import attr
 import sortedcontainers
 import logging
-import copy
 import math
+import shapely
 import xarray
 import scipy.ndimage
 
 import watershed_workflow.sources.standard_names as names
+import watershed_workflow.utils
 from watershed_workflow.mesh import Mesh2D
 from watershed_workflow.river_tree import River
 
@@ -442,9 +443,9 @@ def conditionRiverMesh(m2 : Mesh2D,
                        use_parent : bool = False,
                        lower : bool = False,
                        bank_integrity_elevation : float = 0.0,
-                       depress_upstream_by : Optional[float] = None,
+                       depress_headwaters_by : Optional[float] = None,
                        network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
-                       ignore_in_sweep : Optional[List[int]] = None) -> None:
+                       known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
    to ensure connectivity throgh culverts, skips ponds, maintain
    monotonicity, or otherwise enforce depths of constructed channels.
@@ -469,19 +470,19 @@ def conditionRiverMesh(m2 : Mesh2D,
         NHDline is misplaced into the reservoir, banks may fall into
         the reservoir. If true, this will enforce that the bank vertex
         is at a higher elevation than the stream bed elevation.
-    depress_upstream_by: float, optional
+    depress_headwaters_by: float, optional
         If the depression is not captured well in the DEM, the
         river-mesh elements (streambed) headwater reaches may be
-        lowered by this number.  The effect of propogated downstream
-        only upto where it is needed to maintain topographic gradients
+        lowered by this number.  The effect is propogated downstream
+        only up to where it is needed to maintain topographic gradients
         on the network scale in the network sweep step.
     network_burn_in_depth: float, dict, or function
-        Like depress_upstream_by, this also lowers river-mesh elements
+        Like depress_headwaters_by, this also lowers river-mesh elements
         by this value, but this variant lowers all reaches.  The depth
         may be provided as a float (uniform lowering), dictionary
         {stream order : depth to depress by}, or as a function of
         drainage area.
-    ignore_in_sweep: list, optional
+    known_depressions: list, optional
         If provided, a list of IDs to not be burned in via the network
         sweep.
 
@@ -496,41 +497,21 @@ def conditionRiverMesh(m2 : Mesh2D,
             smoothProfile(reach, lower=lower)
 
     # network-wide conditioning
-    sweepNetwork(river,depress_upstream_by, ignore_in_sweep)
+    enforceMonotonicity(river, depress_headwaters_by, known_depressions)
 
     # potentially burn in the network using a depression function
     if network_burn_in_depth is not None:
-        depressionFunction = createDepressionFunction(network_burn_in_depth)
-        for reach in river:
-            coords = np.array(reach.linestring.coords)
-            coords[:,2] = coords[:,2] - depressionFunction(reach)
-            reach.linestring = shapely.geometry.LineString(coords)
+        burnInRiver(river, network_burn_in_depth)
 
     # map new profile to mesh
-    for reach in river:
-        for i, elem in enumerate(reach['elems']):
-            m2.coords[elem[1:-1], 2] = reach.linestring.coords[i][2]
-
-        m2.coords[elem[0], 2] = reach.linestring.coords[i+1][2]
-        m2.coords[elem[-1], 2] = reach.linestring.coords[i+1][2]
+    distributeProfileToMesh(river, m2)
 
     # ensure that a diked channel passing over/around
     # a pond or reservoirs does not have bank-vertices fall into
     # the depression
     if bank_integrity_elevation > 0.:
-        # collecting IDs of all vertices in the river/stream
-        river_corr_ids = set(vertex_id for reach in river for elem in reach['elems'] for vertex_id in elem)
-
-        for reach in river:
-            for i, elem in enumerate(reach['elems']):
-                bank_vertex_ids = _bankVerticesFromElem(elem, m2)
-                for vertex_id in bank_vertex_ids:
-                    if vertex_id not in river_corr_ids:
-                        midp = (reach.linestring.coords[i][2] + reach.linestring.coords[i+1][2]) / 2
-                        if m2.coords[vertex_id][2] < midp + bank_integrity_elevation:
-                            logging.info(f"raised vertex {vertex_id} for bank integrity")
-                            m2.coords[vertex_id][2] = midp + bank_integrity_elevation
-
+        enforceBankIntegrity(m2, river, bank_integrity_elevation)
+        
     m2.clearGeometryCache()
 
 
@@ -554,7 +535,7 @@ def setProfileByDEM(rivers : List[River],
     for river in rivers:
         for reach in river:
             count = len(reach.linestring.coords)
-            reach.linestring = shapely.geometry.LineString(new_points[i:count])
+            reach.linestring = shapely.geometry.LineString(new_points[i:i+count])
             i += count
 
         
@@ -586,8 +567,8 @@ def smoothProfile(reach : River,
     reach.linestring = shapely.geometry.LineString(coords)
 
 
-def enforceMonotonicity(reach : River,
-                        moving : Literal['upstream', 'downstream'] = 'upstream') -> None:
+def enforceLocalMonotonicity(reach : River,
+                             moving : Literal['downstream', 'upstream'] = 'downstream') -> None:
     """Ensures that the streambed-profile elevations are monotonically
     increasing as we move upstream, or decreasing as we move
     downstream.
@@ -596,8 +577,8 @@ def enforceMonotonicity(reach : River,
     coords = np.array(reach.linestring.coords)
     if moving == 'upstream':
         for i in range(len(coords) - 1, 0, -1):
-            if coords[i + 1, 2] > coords[i, 2]:
-                coords[i + 1, 2] = coords[i, 2]
+            if coords[i, 2] > coords[i - 1, 2]:
+                coords[i, 2] = coords[i - 1, 2]
 
     elif moving == 'downstream':
         for i in range(len(coords) - 1):
@@ -610,57 +591,98 @@ def enforceMonotonicity(reach : River,
     reach.linestring = shapely.geometry.LineString(coords)
 
     
-def sweepNetwork(river : River,
-                 depress_upstream_by : float = 0,
-                 ignore_in_sweep : Optional[List[int]] = None) -> None:
+def enforceMonotonicity(river : River,
+                        depress_headwaters_by : float = 0.0,
+                        known_depressions : Optional[List[int]] = None) -> None:
     """Sweep the river network from each headwater reach (leaf node)
     to the watershed outlet (root node), removing aritificial
     obstructions in the river mesh and enforcing depths of constructed
     channels.
 
     """
-    if ignore_in_sweep is None:
-        ignore_in_sweep = []
+    if known_depressions is None:
+        known_depressions = []
 
     # starting from one of the leaf nodes providing extra depression at the upstream end
-    for leaf in river.leaf_nodes():
-        if depress_upstream_by > 0:
-            coords = np.array(leaf.linestring.coords)
-            coords[:,2] = coords[:,2] - depress_upstream_by
-            leaf.linestring = shapely.geometry.LineString(coords)
+    for leaf in river.leaf_nodes:
+        if leaf.index not in known_depressions:
+            if depress_headwaters_by > 0:
+                coords = np.array(leaf.linestring.coords)
+                coords[:,2] = coords[:,2] - depress_headwaters_by
+                leaf.linestring = shapely.geometry.LineString(coords)
 
         for reach in leaf.pathToRoot():
-            # traversing from leaf reach (headwater) catchment to the root reach
-            enforceMonotonicity(reach, 'downstream')
-            if reach.parent is not None and reach.parent.index not in ignore_in_sweep:
-                junction_elevs = [r.linestring.coords[-1][2] for r in reach.parent.children] \
-                    + [reach.parent.linestring.coords[0][2],]
-                new_coord = (reach.linestring.coords[-1][0], reach.linestring.coords[-1][1],
-                             min(junction_elevs))
+            if not reach.index in known_depressions:
+                # traversing from leaf reach (headwater) catchment to the root reach
+                enforceLocalMonotonicity(reach)
+                if reach.parent is not None:
+                    junction_elevs = [r.linestring.coords[-1][2] for r in reach.parent.children] \
+                        + [reach.parent.linestring.coords[0][2],]
+                    new_coord = (reach.linestring.coords[-1][0], reach.linestring.coords[-1][1],
+                                 min(junction_elevs))
 
-                for r in reach.parent.children:
-                    r.moveCoordinate(-1, new_coord)
-                reach.parent.moveCoordinate(0, new_coord)
+                    for r in reach.parent.children:
+                        r.moveCoordinate(-1, new_coord)
+                    reach.parent.moveCoordinate(0, new_coord)
 
-    assert river.isMonotonic(ignore_in_sweep)
+    assert river.isContinuous()
+    assert river.isMonotonic(known_depressions)
 
+    
+def burnInRiver(river : River,
+                network_burn_in_depth : float | Dict[int,float] | Callable[[River,], float]) -> None:
+    """Reduce reach elevations by a float or function."""
+    depressionFunction = createDepressionFunction(network_burn_in_depth)
+    for reach in river:
+        coords = np.array(reach.linestring.coords)
+        coords[:,2] = coords[:,2] - depressionFunction(reach)
+        reach.linestring = shapely.geometry.LineString(coords)
 
-def _bankVerticesFromElem(elem : List[int],
-                          m2 : Mesh2D) -> Tuple[int,int]:
+        
+def distributeProfileToMesh(m2 : Mesh2D,
+                            river : River) -> None:
+    """Take reach profile elevations and move them out to the mesh vertices."""
+    for reach in river:
+        for i, elem in enumerate(reach['elems']):
+            m2.coords[elem[1:-1], 2] = reach.linestring.coords[i][2]
+
+        m2.coords[elem[0], 2] = reach.linestring.coords[i+1][2]
+        m2.coords[elem[-1], 2] = reach.linestring.coords[i+1][2]
+
+        
+def enforceBankIntegrity(m2 : Mesh2D,
+                         river : River,
+                         bank_integrity_elevation : float) -> None:
+    """Forces banks at least bank_integrity_elevation higher than the channel elevation."""
+    # collecting IDs of all vertices in the river/stream
+    river_corr_ids = set(vertex_id for reach in river for elem in reach['elems'] for vertex_id in elem)
+
+    for reach in river:
+        for i, elem in enumerate(reach['elems']):
+            bank_vertex_ids = _findBankVerticesFromElem(m2, elem)
+            for vertex_id in bank_vertex_ids:
+                if vertex_id not in river_corr_ids:
+                    midp = (reach.linestring.coords[i][2] + reach.linestring.coords[i+1][2]) / 2
+                    if m2.coords[vertex_id][2] < midp + bank_integrity_elevation:
+                        logging.info(f"raised vertex {vertex_id} for bank integrity")
+                        m2.coords[vertex_id][2] = midp + bank_integrity_elevation
+
+        
+def _findBankVerticesFromElem(m2 : Mesh2D,
+                              elem : List[int]) -> Tuple[int,int]:
     """For a given m2 mesh and id of river-corridor element, returns
     longitudinal edges of the river-corridor element.
 
     """
-    # edge on the right as we look from the downstream direction
+    # 1st and 2nd-to-last edges -- the last is the downstream, cross-stream edge
     edge_r = list(m2.cell_edges(elem))[0]
-    # edge on the left as we look from the downstream direction
-    edge_l = list(m2.cell_edges(elem))[2]
-    return [_bankVerticesFromEdge(edge_r, elem, m2), _bankVerticesFromEdge(edge_l, elem, m2)]
+    edge_l = list(m2.cell_edges(elem))[-2]
+    return [_findBankVerticesFromEdge(m2, elem, edge_r), _findBankVerticesFromEdge(m2, elem, edge_l)]
 
 
-def _bankVerticesFromEdge(edge : Tuple[int,int],
-                          elem : List[int],
-                          m2 : Mesh2D) -> int:
+def _findBankVerticesFromEdge(m2 : Mesh2D,
+                              elem : List[int],
+                              edge : Tuple[int,int]) -> int:
     """For a given m2 mesh, id of river-corridor element, and edge,
     returns the bank-vertex id, i.e., for the triangle attached to the
     river-corridor, vertex that does not form the river corridor.

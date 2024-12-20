@@ -171,7 +171,8 @@ class River(watershed_workflow.tinytree.Tree):
 
     def plot(self, *args, **kwargs):
         """Plot the rivers."""
-        return watershed_workflow.plot.linestringsWithCoords(self.df, *args, **kwargs)
+        inds = [r.index for r in self]
+        return watershed_workflow.plot.linestringsWithCoords(self.df.loc[inds], *args, **kwargs)
 
     
     def explore(self, column=names.ID, m=None, marker=None, name=None, **kwargs):
@@ -513,15 +514,21 @@ class River(watershed_workflow.tinytree.Tree):
                     node._makeContinuous(child)
         assert (self.isContinuous())
 
-    def isLocallyMonotonic(self, ignore_in_sweep):
-        if self.index not in ignore_in_sweep:
-            for child in self.children:
-                if self.linestring.coords[0][2] > child.linestring.coords[-1][2]:
-                    return False
+    def isLocallyMonotonic(self):
+        """Checks for monotonically decreasing elevation as we march downstream in this reach."""
+        coords = np.array(self.linestring.coords)
+        if max(coords[1:,2] - coords[:-1,2]) > 0:
+            return False
+            
+        for child in self.children:
+            if self.linestring.coords[0][2] > child.linestring.coords[-1][2]:
+                return False
         return True
         
-    def isMonotonic(self, ignore_in_sweep):
-        return all(reach.isLocallyMonotonic(ignore_in_sweep) for reach in self)
+    def isMonotonic(self, known_depressions = None):
+        if known_depressions is None:
+            known_depressions = []
+        return all(reach.isLocallyMonotonic() for reach in self if reach.index not in known_depressions)
 
     def isHydroseqConsistent(self) -> bool:
         """Confirms that hydrosequence is valid."""
@@ -540,8 +547,9 @@ class River(watershed_workflow.tinytree.Tree):
         return good
 
     def pathToRoot(self):
+        """A generator for the nodes on the path to root, including this."""
+        yield self
         if self.parent is not None:
-            yield self.parent
             for n in self.parent.pathToRoot():
                 yield n
 
