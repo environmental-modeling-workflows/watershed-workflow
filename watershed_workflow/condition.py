@@ -707,7 +707,7 @@ def _bank_nodes_from_elem(elem, m2):
     edge_r = list(m2.cell_edges(elem))[0]
 
     # edge on the left as we look from the downstream direction
-    edge_l = list(m2.cell_edges(elem))[2]
+    edge_l = list(m2.cell_edges(elem))[-2]
 
     return [_bank_nodes_from_edge(edge_r, elem, m2), _bank_nodes_from_edge(edge_l, elem, m2)]
 

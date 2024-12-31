@@ -218,6 +218,81 @@ def add_watershed_regions_and_outlets(m2,
         m2.labeled_sets.append(ls2)
 
 
+def add_discharge_regions(m2, discharge_points, labels=None):
+    """Add labeled sets for three faces for each discharge point in the river corridor.
+    The three faces include downstream shorter edge of the quad and two edges connecting 
+    two downstream vertices of the quad and non-quad vertice on the bank triangle.
+
+    Parameters
+    ----------
+    m2 : watershed_workflow.mesh.Mesh2D
+        The 2D mesh containing river corridor elements
+    discharge_points : list of (x,y) coordinates
+        List of discharge point locations to add regions for
+    labels : list of str, optional
+        Custom labels for each discharge point. If not provided, defaults to
+        'discharge point 0', 'discharge point 1', etc.
+
+    Notes
+    -----
+    For each discharge point, this creates a labeled set containing three edges:
+    1. The downstream edge of the quad element containing the point
+    2. Edge connecting downstream right vertex to right bank
+    3. Edge connecting downstream left vertex to left bank
+    """
+    if labels is None:
+        labels = ['discharge region ' + str(i) for i in range(len(discharge_points))]
+    
+    # Process each discharge point
+    for discharge_point, label in zip(discharge_points, labels):
+        # Convert coordinates to shapely Point
+        discharge_point = shapely.geometry.Point(discharge_point)
+        
+        # Find the three edges around this discharge point
+        discharge_edges = find_discharge_edges(m2, discharge_point)
+        
+        if discharge_edges:  # Only create labeled set if edges were found
+            ls2 = watershed_workflow.mesh.LabeledSet(label,
+                                                     m2.next_available_labeled_setid(), 'FACE', discharge_edges)
+            m2.labeled_sets.append(ls2)
+
+
+def find_discharge_edges(m2, discharge_point):
+    """Find the edges around a discharge point in a river corridor mesh.
+
+    Parameters
+    ----------
+    m2 : watershed_workflow.mesh.Mesh2D
+        The 2D mesh containing river corridor elements
+    discharge_point : shapely.geometry.Point
+        The discharge point location
+
+    Returns
+    -------
+    list of tuples
+        List of (vertex1, vertex2) pairs defining edges around the discharge point.
+        Returns empty list if discharge point not found in mesh.
+    """
+    # find the quad element that contains the discharge point
+    discharge_quad = None
+    for conn in m2.conn:
+        poly = shapely.geometry.Polygon(m2.coords[conn])
+        if poly.contains(discharge_point):
+            discharge_quad = conn
+            break   
+    if discharge_quad is None:
+        return []
+
+    # get bank nodes and construct edges
+    bank_node_ids = watershed_workflow.condition._bank_nodes_from_elem(discharge_quad, m2)  
+    discharge_edges = [
+        (discharge_quad[0], bank_node_ids[0]),  # edge to right bank
+        (discharge_quad[-1], bank_node_ids[1]), # edge to left bank 
+        (discharge_quad[-1], discharge_quad[0])  # downstream edge
+    ]
+    return discharge_edges
+
+
 def add_river_corridor_regions(m2, rivers, labels=None):
     """Add labeled sets to m2 for each river corridor.
      

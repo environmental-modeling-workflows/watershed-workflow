@@ -36,8 +36,6 @@ except Exception:
         import exodus3 as exodus
     except Exception:
         exodus = None
-
-
 #
 # A caching decorator, like functools.cache, but works in this case?
 #
