@@ -218,7 +218,7 @@ def add_watershed_regions_and_outlets(m2,
         m2.labeled_sets.append(ls2)
 
 
-def add_discharge_regions(m2, discharge_points, labels=None):
+def add_discharge_regions(m2, discharge_points, labels=None, buffer_width=1):
     """Add labeled sets for three faces for each discharge point in the river corridor.
     The three faces include downstream shorter edge of the quad and two edges connecting 
     two downstream vertices of the quad and non-quad vertice on the bank triangle.
@@ -246,18 +246,20 @@ def add_discharge_regions(m2, discharge_points, labels=None):
     # Process each discharge point
     for discharge_point, label in zip(discharge_points, labels):
         # Convert coordinates to shapely Point
-        discharge_point = shapely.geometry.Point(discharge_point)
+        if isinstance(discharge_point, tuple):
+          discharge_point = shapely.geometry.Point(discharge_point)
         
         # Find the three edges around this discharge point
-        discharge_edges = find_discharge_edges(m2, discharge_point)
+        discharge_edges =  find_discharge_edges(m2, discharge_point, buffer_width)
         
         if discharge_edges:  # Only create labeled set if edges were found
             ls2 = watershed_workflow.mesh.LabeledSet(label,
                                                      m2.next_available_labeled_setid(), 'FACE', discharge_edges)
+            ls2.to_extrude = True
             m2.labeled_sets.append(ls2)
 
 
-def find_discharge_edges(m2, discharge_point):
+def find_discharge_edges(m2, discharge_point, buffer_width=1):
     """Find the edges around a discharge point in a river corridor mesh.
 
     Parameters
@@ -275,11 +277,13 @@ def find_discharge_edges(m2, discharge_point):
     """
     # find the quad element that contains the discharge point
     discharge_quad = None
+    discharge_point_buffer = discharge_point.buffer(buffer_width)
     for conn in m2.conn:
-        poly = shapely.geometry.Polygon(m2.coords[conn])
-        if poly.contains(discharge_point):
-            discharge_quad = conn
-            break   
+        if len(conn) > 3:
+          poly = shapely.geometry.Polygon(m2.coords[conn])
+          if poly.intersects(discharge_point_buffer):
+              discharge_quad = conn
+              break   
     if discharge_quad is None:
         return []
 
