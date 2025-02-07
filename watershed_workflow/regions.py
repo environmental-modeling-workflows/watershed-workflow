@@ -257,6 +257,8 @@ def add_discharge_regions(m2, discharge_points, labels=None, buffer_width=1):
                                                      m2.next_available_labeled_setid(), 'FACE', discharge_edges)
             ls2.to_extrude = True
             m2.labeled_sets.append(ls2)
+        else:
+            print(f"No discharge edges found for point {discharge_point}")
 
 
 def find_discharge_edges(m2, discharge_point, buffer_width=1):

@@ -88,7 +88,7 @@ class FileManagerMODISAppEEARS:
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
 
     _START = datetime.date(2002, 7, 1)
-    _END = datetime.date(2021, 1, 1)
+    _END = datetime.date(2024, 1, 1)
 
     _PRODUCTS = {
         'LAI': {

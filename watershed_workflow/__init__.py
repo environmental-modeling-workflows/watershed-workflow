@@ -1179,6 +1179,7 @@ def triangulate(hucs,
                 tol=1,
                 refine_max_area=None,
                 refine_distance=None,
+                refine_polygons = None,
                 refine_max_edge_length=None,
                 refine_min_angle=None,
                 enforce_delaunay=False,
@@ -1215,6 +1216,8 @@ def triangulate(hucs,
         that of the watershed's CRS. The default is 1.
     refine_max_area : float, optional
         Refine a triangle if its area is greater than this area.
+    refine_polygons : [list(shapely.geometry.Polygon), list(float)], optional
+        Refine a triangle if fall within the polygons and its area is greater than the area limit for the polygon
     refine_distance : list(float), optional
         Refine a triangle if its area is greater than a function of its
         centroid's distance from the nearest point on the river network.  The
@@ -1286,6 +1289,8 @@ def triangulate(hucs,
 
     if treat_stream_triangles != None:
         refine_funcs.append(watershed_workflow.triangulation.refine_stream_triangles(river_corrs))
+    if refine_polygons != None:
+        refine_funcs.append(watershed_workflow.triangulation.refine_from_polygons(refine_polygons[0], refine_polygons[1]))
 
     def my_refine_func(*args):
         return any(rf(*args) for rf in refine_funcs)
