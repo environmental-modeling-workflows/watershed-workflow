@@ -295,6 +295,35 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
     return refine
 
 
+def refine_from_polygons(polygons, areas):
+    """Returns a graded refinement function based upon polygon area limits, for use with Triangle.
+
+    Triangle area must be smaller than the area limit for the polygon when the triangle
+    centroid is within the polygon.
+    """
+
+    def refine(vertices, area):
+        """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on polygon area limits."""
+        bary = np.sum(np.array(vertices), axis=0) / 3
+        bary_p = shapely.geometry.Point(bary[0], bary[1])
+
+        # Check if a single area value is provided
+        if isinstance(areas, (int, float)):
+            max_area = areas
+            for polygon in polygons:
+                if polygon.contains(bary_p) and area > max_area:
+                    return True
+        else:
+            # Assume areas is a list of area limits
+            for polygon, max_area in zip(polygons, areas):
+                if polygon.contains(bary_p) and area > max_area:
+                    return True
+
+        return False
+
+    return refine
+
+
 def refine_from_max_edge_length(edge_length):
     """Returns a refinement function based on max edge length, for use with Triangle."""
     def refine(vertices, area):
