@@ -65,7 +65,7 @@ def computeTimeSeries(lai, lc, unique_lc=None, lc_idx=-1, polygon=None, polygon_
 
     for ilc in unique_lc:
         time_series = [
-            lai.data[itime][mask][np.where(lc.data[lc_idx][mask] == ilc)].mean()
+            np.nanmean(lai.data[itime][mask][np.where(lc.data[lc_idx][mask] == ilc)])
             for itime in range(len(lai.times))
         ]
         col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]

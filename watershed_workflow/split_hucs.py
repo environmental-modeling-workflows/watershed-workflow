@@ -385,8 +385,6 @@ def intersectAndSplit(list_of_shapes):
                     left_over_polys = []
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
-
-                        # print(mps)
                         assert (isinstance(mps, shapely.geometry.MultiPoint))
                         assert (len(mps) == 2)
                         parts_lines.append(
