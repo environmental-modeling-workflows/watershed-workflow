@@ -218,7 +218,7 @@ def add_watershed_regions_and_outlets(m2,
         m2.labeled_sets.append(ls2)
 
 
-def add_discharge_regions(m2, discharge_points, labels=None, buffer_width=1):
+def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True, buffer_width=1):
     """Add labeled sets for three faces for each discharge point in the river corridor.
     The three faces include downstream shorter edge of the quad and two edges connecting 
     two downstream vertices of the quad and non-quad vertice on the bank triangle.
@@ -250,18 +250,26 @@ def add_discharge_regions(m2, discharge_points, labels=None, buffer_width=1):
           discharge_point = shapely.geometry.Point(discharge_point)
         
         # Find the three edges around this discharge point
-        discharge_edges =  find_discharge_edges(m2, discharge_point, buffer_width)
-        
+        if include_cells:
+          discharge_edges, discharge_cells = find_discharge_edges_cells(m2, discharge_point, include_cells, buffer_width)
+        else:
+          discharge_edges = find_discharge_edges_cells(m2, discharge_point, include_cells, buffer_width)
+    
         if discharge_edges:  # Only create labeled set if edges were found
             ls2 = watershed_workflow.mesh.LabeledSet(label,
                                                      m2.next_available_labeled_setid(), 'FACE', discharge_edges)
             ls2.to_extrude = True
             m2.labeled_sets.append(ls2)
+            
+            if include_cells and len(discharge_cells) > 0:
+              ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface',
+                                                     m2.next_available_labeled_setid(), 'CELL', discharge_cells)
+              m2.labeled_sets.append(ls2)
         else:
             print(f"No discharge edges found for point {discharge_point}")
-
-
-def find_discharge_edges(m2, discharge_point, buffer_width=1):
+            
+            
+def find_discharge_edges_cells(m2, discharge_point, include_cells=True, buffer_width=1):
     """Find the edges around a discharge point in a river corridor mesh.
 
     Parameters
@@ -280,11 +288,12 @@ def find_discharge_edges(m2, discharge_point, buffer_width=1):
     # find the quad element that contains the discharge point
     discharge_quad = None
     discharge_point_buffer = discharge_point.buffer(buffer_width)
-    for conn in m2.conn:
+    for c, conn in enumerate(m2.conn):
         if len(conn) > 3:
           poly = shapely.geometry.Polygon(m2.coords[conn])
           if poly.intersects(discharge_point_buffer):
               discharge_quad = conn
+              discharge_quad_id = c
               break   
     if discharge_quad is None:
         return []
@@ -296,9 +305,28 @@ def find_discharge_edges(m2, discharge_point, buffer_width=1):
         (discharge_quad[-1], bank_node_ids[1]), # edge to left bank 
         (discharge_quad[-1], discharge_quad[0])  # downstream edge
     ]
+    
+    if include_cells:
+        discharge_cells=[]
+        # edge on the right as we look from the downstream direction
+        edge_r = list(m2.cell_edges(discharge_quad))[0]
+        cell_ids = m2.edges_to_cells[edge_r]
+        bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
+        discharge_cells.append(bank_cell_id)
+        
+        # edge on the left as we look from the downstream direction
+        edge_l = list(m2.cell_edges(discharge_quad))[-2]
+        cell_ids = m2.edges_to_cells[edge_l]
+        bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
+        discharge_cells.append(bank_cell_id)
+        
+        # quad element
+        discharge_cells.append(discharge_quad_id)
+        return discharge_edges, discharge_cells
+      
     return discharge_edges
-
-
+ 
+ 
 def add_river_corridor_regions(m2, rivers, labels=None):
     """Add labeled sets to m2 for each river corridor.
      
