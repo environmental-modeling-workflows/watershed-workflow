@@ -819,6 +819,7 @@ def construct_rivers(reaches,
                      area_property='DivergenceRoutedDrainAreaSqKm',
                      remove_diversions=False,
                      remove_braided_divergences=False,
+                     preserve_catchments=False,
                      tol=0.1):
     """Create a river, which is a tree of reaches.
     
@@ -856,6 +857,8 @@ def construct_rivers(reaches,
     remove_braided_divergences : bool, optional=False
         If true, remove braided divergences (see documentation of
         modify_rivers_remove_divergences()).
+    preserve_catchments : bool, optional=False
+        If true, accumulate catchments of pruned reaches into parent reaches. Default is False.
     tol : float, optional=0.1
         Defines what close is in the case of method == 'geometry'
 
@@ -874,7 +877,7 @@ def construct_rivers(reaches,
     logging.info(f" ... generated {len(rivers)} rivers")
 
     return reduce_rivers(rivers, ignore_small_rivers, prune_by_area, area_property,
-                         remove_diversions, remove_braided_divergences, tol)
+                         remove_diversions, remove_braided_divergences, preserve_catchments, tol)
 
 
 def reduce_rivers(rivers,
@@ -883,6 +886,7 @@ def reduce_rivers(rivers,
                   area_property='DivergenceRoutedDrainAreaSqKm',
                   remove_diversions=False,
                   remove_braided_divergences=False,
+                  preserve_catchments=False,
                   tol=0.1):
     """Create a river, which is a tree of reaches.
     
@@ -910,6 +914,8 @@ def reduce_rivers(rivers,
     remove_braided_divergences : bool, optional=False
         If true, remove braided divergences (see documentation of
         modify_rivers_remove_divergences()).
+    preserve_catchments : bool, optional=False
+        If true, accumulate catchments of pruned reaches into parent reaches. Default is False.
     tol : float, optional=0.1
         Defines what close is in the case of method == 'geometry'
 
@@ -945,7 +951,7 @@ def reduce_rivers(rivers,
         return rivers
 
     if prune_by_area is not None:
-        rivers = watershed_workflow.hydrography.pruneByArea(rivers, prune_by_area, area_property)
+        rivers = watershed_workflow.hydrography.pruneByArea(rivers, prune_by_area, area_property, preserve_catchments)
 
     if ignore_small_rivers > 0:
         rivers = watershed_workflow.hydrography.filterSmallRivers(rivers, ignore_small_rivers)
