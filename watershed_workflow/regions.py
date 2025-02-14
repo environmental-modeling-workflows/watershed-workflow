@@ -221,7 +221,11 @@ def add_watershed_regions_and_outlets(m2,
 def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True, buffer_width=1):
     """Add labeled sets for three faces for each discharge point in the river corridor.
     The three faces include downstream shorter edge of the quad and two edges connecting 
-    two downstream vertices of the quad and non-quad vertice on the bank triangle.
+    two downstream vertices of the quad and non-quad vertice on the bank triangle. 
+    Corresponding upstreams cells (a quad and two triangles) are also added if include_cells is True,
+    which should be use with 
+    <Parameter name="direction normalized flux relative to region" type="string" value="discharge_cell_region_name" />
+    in the ATS observation parameter list in the input file 
 
     Parameters
     ----------
@@ -232,6 +236,10 @@ def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True,
     labels : list of str, optional
         Custom labels for each discharge point. If not provided, defaults to
         'discharge point 0', 'discharge point 1', etc.
+    include_cells : bool, optional
+        If True, add a labeled set for the cells just upstream of discharge faces. Default is True.
+    buffer_width : float, optional
+        Buffer width to identify quad elements containing the discharge point. Default is 1.
 
     Notes
     -----
@@ -239,6 +247,9 @@ def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True,
     1. The downstream edge of the quad element containing the point
     2. Edge connecting downstream right vertex to right bank
     3. Edge connecting downstream left vertex to left bank
+    and labeled set containing three cells:
+    1. the quad element containing the point
+    2. the two triangles sharing edges with the quad
     """
     if labels is None:
         labels = ['discharge region ' + str(i) for i in range(len(discharge_points))]
@@ -278,12 +289,16 @@ def find_discharge_edges_cells(m2, discharge_point, include_cells=True, buffer_w
         The 2D mesh containing river corridor elements
     discharge_point : shapely.geometry.Point
         The discharge point location
+    include_cells : bool, optional
+        If True, include cells in the labeled set. Default is True.
+    buffer_width : float, optional
+        Buffer width to identify quad elements containing the discharge point. Default is 1.
 
     Returns
     -------
     list of tuples
-        List of (vertex1, vertex2) pairs defining edges around the discharge point.
-        Returns empty list if discharge point not found in mesh.
+        List of (vertex1, vertex2) pairs defining edges.
+        if include_cells is True, also returns the cells just upstream of the edges.
     """
     # find the quad element that contains the discharge point
     discharge_quad = None
