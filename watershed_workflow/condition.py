@@ -581,7 +581,7 @@ def condition_river_mesh(m2,
             # this to ensure that a diked channel passing over/around
             # a pond or reservoirs does not have bank-nodes fall into
             # the depression
-            if treat_banks:
+            if treat_banks and len(elem)>3:
                 bank_node_ids = _bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                     if node_id not in river_corr_ids:
