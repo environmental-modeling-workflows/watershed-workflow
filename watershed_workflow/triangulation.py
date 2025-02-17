@@ -123,6 +123,7 @@ def triangulate(hucs,
                 river_corrs=None,
                 internal_boundaries=None,
                 hole_points=None,
+                additional_points=None,
                 tol=1,
                 **kwargs):
     """Triangulates HUCs and rivers.
@@ -187,6 +188,10 @@ def triangulate(hucs,
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
 
+    # Add additional points if provided
+    if additional_points is not None:
+        nodes = np.vstack((nodes, additional_points))
+
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
     fdata = [[int(i) for i in f] for f in nodes_edges.edges]
@@ -229,6 +234,7 @@ def triangulate(hucs,
 
     mesh_points = np.array(mesh.points)
     mesh_tris = np.array(mesh.elements)
+
     logging.info("  ...built: %i mesh points and %i triangles" % (len(mesh_points), len(mesh_tris)))
     return mesh_points, mesh_tris
 
@@ -289,12 +295,51 @@ def refine_from_river_distance(near_distance, near_area, away_distance, away_are
     return refine
 
 
+def refine_from_polygons(polygons, areas):
+    """Returns a graded refinement function based upon polygon area limits, for use with Triangle.
+
+    Triangle area must be smaller than the area limit for the polygon when the triangle
+    centroid is within the polygon.
+    """
+
+    def refine(vertices, area):
+        """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on polygon area limits."""
+        bary = np.sum(np.array(vertices), axis=0) / 3
+        bary_p = shapely.geometry.Point(bary[0], bary[1])
+
+        # Check if a single area value is provided
+        if isinstance(areas, (int, float)):
+            max_area = areas
+            for polygon in polygons:
+                if polygon.contains(bary_p) and area > max_area:
+                    return True
+        else:
+            # Assume areas is a list of area limits
+            for polygon, max_area in zip(polygons, areas):
+                if polygon.contains(bary_p) and area > max_area:
+                    return True
+
+        return False
+
+    return refine
+
+
 def refine_from_max_edge_length(edge_length):
     """Returns a refinement function based on max edge length, for use with Triangle."""
     def refine(vertices, area):
         verts4 = np.array([vertices[0], vertices[1], vertices[2], vertices[0]])
         edge_lengths = la.norm(verts4[1:] - verts4[:-1], 2, 1)
         return bool(edge_lengths.max() > edge_length)
+
+    return refine
+
+
+def refine_stream_triangles(river_corrs):
+    """Returns a refinement function for triangles that have all three vertices on stream mesh."""
+    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+
+    def refine(vertices, area):
+        return all(riv_corr.intersects(shapely.geometry.Point(p)) for p in vertices)
 
     return refine
 
