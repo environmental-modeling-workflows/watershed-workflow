@@ -90,14 +90,14 @@ def computeAverageYear(df,
                     watershed_workflow.utils.interpolate_in_time(times,
                                                                  df[k],
                                                                  new_times,
-                                                                 units='days since 2000-1-1',
+                                                                 units=f'days since {start_year}-1-1',
                                                                  **interpolate_kwargs)
     else:
         df_interp = df
 
     if smooth_kwargs is None:
         smooth_kwargs = dict()
-    start = cftime.datetime(2000, 1, 1, calendar='noleap')
+    start = cftime.datetime(start_year, 1, 1, calendar='noleap')
     times_out = np.array([start + i*dt for i in range(365 * output_nyears)])
     df_out = pandas.DataFrame()
     df_out['time [datetime]'] = times_out
