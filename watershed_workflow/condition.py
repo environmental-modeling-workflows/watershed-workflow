@@ -581,7 +581,7 @@ def condition_river_mesh(m2,
             # this to ensure that a diked channel passing over/around
             # a pond or reservoirs does not have bank-nodes fall into
             # the depression
-            if treat_banks:
+            if treat_banks and len(elem)>3:
                 bank_node_ids = _bank_nodes_from_elem(elem, m2)
                 for node_id in bank_node_ids:
                     if node_id not in river_corr_ids:
@@ -703,12 +703,13 @@ def _bank_nodes_from_elem(elem, m2):
     longitudinal edges of the river-corridor element.
 
     """
+    
+    assert len(elem) > 3, "elem must not be a triangle element"
     # edge on the right as we look from the downstream direction
     edge_r = list(m2.cell_edges(elem))[0]
 
     # edge on the left as we look from the downstream direction
-    edge_l = list(m2.cell_edges(elem))[2]
-
+    edge_l = list(m2.cell_edges(elem))[-2]
     return [_bank_nodes_from_edge(edge_r, elem, m2), _bank_nodes_from_edge(edge_l, elem, m2)]
 
 

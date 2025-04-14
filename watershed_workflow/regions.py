@@ -218,6 +218,130 @@ def add_watershed_regions_and_outlets(m2,
         m2.labeled_sets.append(ls2)
 
 
+def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True, buffer_width=1):
+    """Add labeled sets for three faces for each discharge point in the river corridor.
+    The three faces include downstream shorter edge of the quad and two edges connecting 
+    two downstream vertices of the quad and non-quad vertice on the bank triangle. 
+    Corresponding upstreams cells (a quad and two triangles) are also added if include_cells is True,
+    which should be use with 
+    <Parameter name="direction normalized flux relative to region" type="string" value="discharge_cell_region_name" />
+    in the ATS observation parameter list in the input file 
+
+    Parameters
+    ----------
+    m2 : watershed_workflow.mesh.Mesh2D
+        The 2D mesh containing river corridor elements
+    discharge_points : list of (x,y) coordinates
+        List of discharge point locations to add regions for
+    labels : list of str, optional
+        Custom labels for each discharge point. If not provided, defaults to
+        'discharge point 0', 'discharge point 1', etc.
+    include_cells : bool, optional
+        If True, add a labeled set for the cells just upstream of discharge faces. Default is True.
+    buffer_width : float, optional
+        Buffer width to identify quad elements containing the discharge point. Default is 1.
+
+    Notes
+    -----
+    For each discharge point, this creates a labeled set containing three edges:
+    1. The downstream edge of the quad element containing the point
+    2. Edge connecting downstream right vertex to right bank
+    3. Edge connecting downstream left vertex to left bank
+    and labeled set containing three cells:
+    1. the quad element containing the point
+    2. the two triangles sharing edges with the quad
+    """
+    if labels is None:
+        labels = ['discharge region ' + str(i) for i in range(len(discharge_points))]
+    
+    # Process each discharge point
+    for discharge_point, label in zip(discharge_points, labels):
+        # Convert coordinates to shapely Point
+        if isinstance(discharge_point, tuple):
+          discharge_point = shapely.geometry.Point(discharge_point)
+        
+        # Find the three edges around this discharge point
+        if include_cells:
+          discharge_edges, discharge_cells = find_discharge_edges_cells(m2, discharge_point, include_cells, buffer_width)
+        else:
+          discharge_edges = find_discharge_edges_cells(m2, discharge_point, include_cells, buffer_width)
+    
+        if discharge_edges:  # Only create labeled set if edges were found
+            ls2 = watershed_workflow.mesh.LabeledSet(label,
+                                                     m2.next_available_labeled_setid(), 'FACE', discharge_edges)
+            ls2.to_extrude = True
+            m2.labeled_sets.append(ls2)
+            
+            if include_cells and len(discharge_cells) > 0:
+              ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface',
+                                                     m2.next_available_labeled_setid(), 'CELL', discharge_cells)
+              m2.labeled_sets.append(ls2)
+        else:
+            print(f"No discharge edges found for point {discharge_point}")
+            
+            
+def find_discharge_edges_cells(m2, discharge_point, include_cells=True, buffer_width=1):
+    """Find the edges around a discharge point in a river corridor mesh.
+
+    Parameters
+    ----------
+    m2 : watershed_workflow.mesh.Mesh2D
+        The 2D mesh containing river corridor elements
+    discharge_point : shapely.geometry.Point
+        The discharge point location
+    include_cells : bool, optional
+        If True, include cells in the labeled set. Default is True.
+    buffer_width : float, optional
+        Buffer width to identify quad elements containing the discharge point. Default is 1.
+
+    Returns
+    -------
+    list of tuples
+        List of (vertex1, vertex2) pairs defining edges.
+        if include_cells is True, also returns the cells just upstream of the edges.
+    """
+    # find the quad element that contains the discharge point
+    discharge_quad = None
+    discharge_point_buffer = discharge_point.buffer(buffer_width)
+    for c, conn in enumerate(m2.conn):
+        if len(conn) > 3:
+          poly = shapely.geometry.Polygon(m2.coords[conn])
+          if poly.intersects(discharge_point_buffer):
+              discharge_quad = conn
+              discharge_quad_id = c
+              break   
+    if discharge_quad is None:
+        return []
+
+    # get bank nodes and construct edges
+    bank_node_ids = watershed_workflow.condition._bank_nodes_from_elem(discharge_quad, m2)  
+    discharge_edges = [
+        (discharge_quad[0], bank_node_ids[0]),  # edge to right bank
+        (discharge_quad[-1], bank_node_ids[1]), # edge to left bank 
+        (discharge_quad[-1], discharge_quad[0])  # downstream edge
+    ]
+    
+    if include_cells:
+        discharge_cells=[]
+        # edge on the right as we look from the downstream direction
+        edge_r = list(m2.cell_edges(discharge_quad))[0]
+        cell_ids = m2.edges_to_cells[edge_r]
+        bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
+        discharge_cells.append(bank_cell_id)
+        
+        # edge on the left as we look from the downstream direction
+        edge_l = list(m2.cell_edges(discharge_quad))[-2]
+        cell_ids = m2.edges_to_cells[edge_l]
+        bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
+        discharge_cells.append(bank_cell_id)
+        
+        # quad element
+        discharge_cells.append(discharge_quad_id)
+        return discharge_edges, discharge_cells
+      
+    return discharge_edges
+ 
+ 
 def add_river_corridor_regions(m2, rivers, labels=None):
     """Add labeled sets to m2 for each river corridor.
      
