@@ -44,4 +44,8 @@ This work was supported by multiple US Department of Energy projects, and was mo
 
 [Coon, E. T., & Shuai, P. (2022). Watershed Workflow: A toolset for parameterizing data-intensive, integrated hydrologic models. Environmental Modelling & Software, 157, 105502.](https://doi.org/10.1016/j.envsoft.2022.105502)
 
+The use of stream-aligned mixed-polyhedral mesh should cite:
+
+[Rathore, S. S., Coon E. T., and Painter S. L. (2024). A stream-aligned mixed polyhedral meshing strategy for integrated surface-subsurface hydrological models. Computers & Geosciences, 188, 105617.](https://doi.org/10.1016/j.cageo.2024.105617)
+
 Collaborators and contributions are very welcome!
