@@ -418,7 +418,7 @@
         <Parameter name="limiter number of dofs" type="int" value="2" />
         <Parameter name="limiter dof" type="int" value="1" />
         <Parameter name="air temperature key" type="string" value="surface-air_temperature" />
-        <Parameter name="surface temperature key" type="string" value="snow-temperature" />
+        <Parameter name="surface temperature key" type="string" value="surface-temperature" />
         <Parameter name="elevation key" type="string" value="surface-elevation" />
         <Parameter name="net radiation key" type="string" value="snow-radiation_balance" />
         <Parameter name="limiter key" type="string" value="surface-area_fractions" />

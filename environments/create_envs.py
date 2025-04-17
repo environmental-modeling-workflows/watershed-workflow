@@ -71,6 +71,7 @@ PACKAGES_TOOLS=['cmake',
                 ]
 
 # channels needed to find these packages
+# need force use of linux-64, not just noarch?
 CHANNELS=['conda-forge',
 #          'defaults',
           ]
@@ -166,23 +167,30 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
     with open(env_filename, 'w') as fid:
         fid.write('\n'.join(lines))
 
+
+_commands = """
+CONDA_SUBDIR=linux-64 {package_manager} create --name {env_name} {channels} {packages}
+"""
 def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
     """Creates the environment locally."""
     if env_name is None:
         env_prefix = get_env_prefix(env_type)
         env_name = get_env_name(env_prefix)
 
-    # build up the conda env create command
+    channels = ' '.join([f'-c {c}' for c in CHANNELS])
+
     cmd = [PACKAGE_MANAGER, 'create', '--yes', '--name', env_name]
     for channel in CHANNELS:
         cmd.append('-c')
         cmd.append(channel)
     cmd.extend(packages)
 
-    # call conda env create
+    env = os.environ.copy()
+    env['CONDA_SUBDIR'] = 'linux-64'
+
     if dry_run:
         return print(cmd)
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, env=env, check=True)
 
     # set an environment variable so the user can figure out what we just made
     if env_type is None:
