@@ -22,7 +22,7 @@ def getAttributes(bounds, start, end):
     return attributes
 
 
-def convertToATS(dat):
+def convertToATS(dat, partition_temp=0):
     """Convert dictionary of Daymet datasets to daily average data in standard form.
 
     This:
@@ -30,6 +30,9 @@ def convertToATS(dat):
     - takes tmin and tmax to compute a mean
     - splits rain and snow precip based on mean air temp
     - standardizes units and names for ATS
+    Parameters:
+        partition_temp, int
+        Temperature in degC used for partition snow and rain from precipitation. Default is 0 degC.
 
     """
     logging.info('Converting to ATS met input')
@@ -53,6 +56,6 @@ def convertToATS(dat):
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'].data * dat[
         'dayl'].data / 86400  # Wm2
     dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
-    dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
-    dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
+    dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= partition_temp, precip_ms, 0)
+    dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < partition_temp, precip_ms, 0)
     return dout
