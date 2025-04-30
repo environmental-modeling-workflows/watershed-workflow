@@ -153,9 +153,10 @@ def findHUC(source : Any,
         The smallest containing HUC.
 
     """
+    
     def _in_huc(shply, huc_shply):
-        result = huc_shply.contains(shply)
-        if result:
+        """Checks whether shply is in huc_shply"""
+        if huc_shply.contains(shply):
             return 2
         elif huc_shply.intersects(shply):
             return 1
@@ -164,7 +165,7 @@ def findHUC(source : Any,
 
     def _findHUC(source, shply, crs, hint):
         """Searches in hint to find shp."""
-        logging.debug('searching: %s' % hint)
+        logging.info('searching: %s' % hint)
         hint_level = len(hint)
         search_level = hint_level + 2
         if search_level > source.lowest_level:
@@ -177,14 +178,14 @@ def findHUC(source : Any,
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                logging.debug(f'  subhuc: {index} contains')
+                logging.info(f'  subhuc: {index} contains')
                 return _findHUC(source, shply, crs, index)
             elif inhuc == 1:
-                logging.debug(f'  subhuc: {index} partially contains')
+                logging.info(f'  subhuc: {index} partially contains')
                 # partially contained in try_huc, return this
                 return hint
             else:
-                logging.debug(f'  subhuc: {index} does not contain')
+                logging.info(f'  subhuc: {index} does not contain')
         assert False
 
     # must shrink the poly a bit in case it is close to or on a boundary
@@ -746,6 +747,14 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 
 
 
+def getDatasetOnMesh(m2 : Mesh2D,
+                     dataset : xarray.DataArray,
+                     **kwargs) -> np.ndarray:
+    """Get the dataset on the mesh.
+    """
+    mesh_points = m2.centroids
+    
+    return watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dataset, **kwargs)
 
 # def colorRasterFromShapes(shapes,
 #                           shape_color_column,
@@ -756,6 +765,7 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 #     """Color in a raster by filling in a collection of shapes.
 
 #     Given a canvas specified by bounds and pixel size, color a raster by, for
+
 #     each shape, finding the intersection of that shape with the canvas and
 #     coloring it by a provided value.  Paint by numbers.
 
