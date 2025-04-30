@@ -722,15 +722,21 @@ def elevate(m2 : Mesh2D,
         m2.coords = new_points
 
 
-
 def getDatasetOnMesh(m2 : Mesh2D,
                      dataset : xarray.DataArray,
                      **kwargs) -> np.ndarray:
-    """Get the dataset on the mesh.
+    """Get the dataset on the mesh as a 1D array.
     """
     mesh_points = m2.centroids
     
-    return watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dataset, **kwargs)
+    interpolated_data = watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dataset, **kwargs)
+    
+    # Ensure the data type of the interpolated data matches the input dataset
+    if not np.issubdtype(interpolated_data.dtype, dataset.dtype):
+        interpolated_data = interpolated_data.astype(dataset.dtype)
+    
+    # Flatten the interpolated data to ensure it is a 1D array
+    return interpolated_data.flatten()
 
 # def colorRasterFromShapes(shapes,
 #                           shape_color_column,
