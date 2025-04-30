@@ -194,7 +194,7 @@ def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
 def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False, dry_run=False):
     if not dump_only:
         create_env_local(env_type, os_name, packages, env_name, dry_run)
-    dump_env_local(env_type, os_name, env_name)
+        dump_env_local(env_type, os_name, env_name)
 
 
 if __name__ == '__main__':
@@ -214,7 +214,8 @@ if __name__ == '__main__':
     parser.add_argument('--manager', default='conda', type=str,
                         help='Package manager, likely one of mamba or conda, note that mamba is now dead, defaults to conda')
     parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
-                        help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env and a OS-specific filename for writing the environment.yml file.')
+                        help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env '
+                             'and a OS-specific filename for writing the environment.yml file.')
     parser.add_argument('ENV_NAME', type=str, help='Name for this environement')
     args = parser.parse_args()
 
