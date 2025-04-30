@@ -173,7 +173,8 @@ def triangulate(hucs,
     info.set_facets(fdata)
 
     # add hole points, which should include the river mesh interior
-    info.set_holes(hole_points)
+    if hole_points is not None:
+        info.set_holes(hole_points)
 
     logging.info(" triangle.build...")
 
