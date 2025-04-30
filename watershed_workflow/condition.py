@@ -443,7 +443,7 @@ def conditionRiverMesh(m2 : Mesh2D,
                        use_parent : bool = False,
                        lower : bool = False,
                        bank_integrity_elevation : float = 0.0,
-                       depress_headwaters_by : Optional[float] = None,
+                       depress_headwaters_by : Optional[float] = 0.0,
                        network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
                        known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements

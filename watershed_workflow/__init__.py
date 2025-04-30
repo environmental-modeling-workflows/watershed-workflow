@@ -154,10 +154,10 @@ def findHUC(source : Any,
 
     """
     def _in_huc(shply, huc_shply):
-        """Checks whether shp is in HUC"""
-        if huc_shply.contains(shply):
+        result = huc_shply.contains(shply)
+        if result.any():
             return 2
-        elif huc_shply.intersects(shply):
+        elif huc_shply.intersects(shply).any():
             return 1
         else:
             return 0
@@ -573,13 +573,13 @@ def triangulate(hucs : SplitHUCs,
             plt.ylabel("triangle area [m^2]")
 
         if as_mesh:
-            m2 = watershed_workflow.mesh.Mesh2D(vertices, triangle, crs=hucs.crs)
+            m2 = watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
             return m2, areas, distances
         else:
             return vertices, triangles, areas, distances
     
     if as_mesh:
-        return watershed_workflow.mesh.Mesh2D(vertices, triangle, crs=hucs.crs)
+        return watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
     else:
         return vertices, triangles
 
