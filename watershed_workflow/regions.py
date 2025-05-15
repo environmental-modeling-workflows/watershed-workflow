@@ -41,7 +41,7 @@ def _get_labels(polygons, kind='polygon'):
     return labels
 
 
-def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=False):
+def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=True):
     """Label m2 with region(s) for each polygon.
 
     Always adds a surface region; if volume also adds a volume region
@@ -88,12 +88,13 @@ def add_polygonal_regions(m2, polygons, labels=None, kind='watershed', volume=Fa
             setid = m2.next_available_labeled_setid()
             ls = watershed_workflow.mesh.LabeledSet(label, int(setid), 'CELL', part)
             m2.labeled_sets.append(ls)
-            ls.to_extrude = True
+            if volume:
+              ls.to_extrude = True
 
-            # add a second region, denoting this one as the top surface of faces
-            setid2 = m2.next_available_labeled_setid()
-            ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
-            m2.labeled_sets.append(ls2)
+              # add a second region, denoting this one as the top surface of faces
+              setid2 = m2.next_available_labeled_setid()
+              ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+              m2.labeled_sets.append(ls2)
 
     return partitions
 
@@ -218,6 +219,49 @@ def add_watershed_regions_and_outlets(m2,
         m2.labeled_sets.append(ls2)
 
 
+def add_outlet_regions(m2,
+                      outlet_points,
+                      outlet_width=300,
+                      labels=None):
+    """Add labeled sets for outlet faces for each outlet point in the river corridor.
+
+    Parameters
+    ----------
+    m2 : watershed_workflow.mesh.Mesh2D
+        The 2D mesh containing river corridor elements
+    hucs : list of shapely.Polygon
+        The watershed polygons
+    outlet_points : list of shapely.Point
+        List of outlet point locations to add regions for
+    outlet_width : float, optional
+        Buffer width to identify faces near the outlet point. Default is 300.
+    labels : list of str, optional
+        Custom labels for each outlet point. If not provided, defaults to
+        'outlet 0', 'outlet 1', etc.
+    """
+    if labels is None:
+        labels = ['outlet ' + str(i) for i in range(len(outlet_points))]
+    
+    def inside_ball(outlet, edge):
+        n1 = m2.coords[edge[0]]
+        n2 = m2.coords[edge[1]]
+        c = (n1+n2) / 2.
+        close = watershed_workflow.utils.close(outlet, tuple(c[0:2]), outlet_width)
+        return close
+    
+    for outlet, label in zip(outlet_points, labels):
+        outlet_faces = [e for e in m2.boundary_edges if inside_ball(outlet, e)]
+        edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
+        if len(edges) == 0:
+            warnings.warn(f'Outlet region found 0 faces for outlet {label}')
+        ls = watershed_workflow.mesh.LabeledSet(label + ' outlet',
+                                                m2.next_available_labeled_setid(), 'FACE',
+                                                edges)
+        ls.to_extrude = False
+        m2.labeled_sets.append(ls)
+    
+    
+    
 def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True, buffer_width=1):
     """Add labeled sets for three faces for each discharge point in the river corridor.
     The three faces include downstream shorter edge of the quad and two edges connecting 
@@ -273,7 +317,7 @@ def add_discharge_regions(m2, discharge_points, labels=None, include_cells=True,
             m2.labeled_sets.append(ls2)
             
             if include_cells and len(discharge_cells) > 0:
-              ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface',
+              ls2 = watershed_workflow.mesh.LabeledSet(label + ' cells',
                                                      m2.next_available_labeled_setid(), 'CELL', discharge_cells)
               m2.labeled_sets.append(ls2)
         else:
