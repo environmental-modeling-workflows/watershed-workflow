@@ -1315,22 +1315,24 @@ def triangulate(hucs,
         allow_boundary_steiner=(river_corrs is None))
 
     if river_corrs != None:  # stream-aligned mesh
-        stream_triangles = identify_stream_triangles(vertices, triangles, river_corrs)
-        if treat_stream_triangles == None:
+        
+        if treat_stream_triangles != None:
+            stream_triangles = identify_stream_triangles(vertices, triangles, river_corrs)
             logging.warning(
                 f'Found {len(stream_triangles)} stream triangles - consider using "treat_stream_triangles" option'
             )
-        elif treat_stream_triangles == 'moderate':
-            logging.warning(
-                f'{len(stream_triangles)} stream triangles could not be refined - consider using treat_stream_triangles="strict"'
-            )
-        elif treat_stream_triangles == 'strict':
-            if additional_points is None:
-                additional_points = watershed_workflow.river_mesh.triangle_split_points(
-                    stream_triangles, river_corrs)
-            else:
-                additional_points = additional_points + watershed_workflow.river_mesh.triangle_split_points(
-                    stream_triangles, river_corrs)
+            if treat_stream_triangles == 'moderate':
+                
+                logging.warning(
+                    f'{len(stream_triangles)} stream triangles could not be refined - consider using treat_stream_triangles="strict"'
+                )
+            elif treat_stream_triangles == 'strict':
+                if additional_points is None:
+                    additional_points = watershed_workflow.river_mesh.triangle_split_points(
+                        stream_triangles, river_corrs)
+                else:
+                    additional_points = additional_points + watershed_workflow.river_mesh.triangle_split_points(
+                        stream_triangles, river_corrs)
 
             # triangulate again with additional points to split stream triangles
             logging.info('triangulating again with additional points to split stream triangles')
