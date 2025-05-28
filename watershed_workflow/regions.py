@@ -254,7 +254,7 @@ def add_outlet_regions(m2,
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
         if len(edges) == 0:
             warnings.warn(f'Outlet region found 0 faces for outlet {label}')
-        ls = watershed_workflow.mesh.LabeledSet(label + ' outlet',
+        ls = watershed_workflow.mesh.LabeledSet(label + ' boundary',
                                                 m2.next_available_labeled_setid(), 'FACE',
                                                 edges)
         ls.to_extrude = False
