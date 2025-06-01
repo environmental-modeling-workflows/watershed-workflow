@@ -31,7 +31,10 @@ def findOutletsByCrossings(hucs : SplitHUCs,
                            debug_plot : bool = False) -> None:
     """For each HUC, find all outlets using a river network's crossing points."""
     # next determine the outlet, and all boundary edges within x m of that outlet
-    polygons = list(hucs.polygons())
+
+    # note, we avoid recomputing the polygon geometry because it has a
+    # notch removed at the outlet, which will cause an error.
+    polygons = list(hucs.df['geometry'])
     poly_crossings = []
     for i_sub, poly in enumerate(polygons):
         my_crossings = []
@@ -158,7 +161,7 @@ def findOutletsByCrossings(hucs : SplitHUCs,
     last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
 
     hucs.exterior_outlet = last_outlet_loc
-    hucs.df['outlet'] = outlet_locs.values()
+    hucs.df[names.OUTLET] = outlet_locs.values()
 
 
 def findOutletsByElevation(hucs : SplitHUCs,
@@ -175,7 +178,7 @@ def findOutletsByElevation(hucs : SplitHUCs,
     hucs.exterior_outlet = _findOutletsByElevation_helper(hucs.exterior, hucs.crs, elev_raster)
 
     outlets = [_findOutletsByElevation_helper(poly, hucs.crs, elev_raster) for poly in hucs.polygons()]
-    hucs.df['outlet'] = outlets
+    hucs.df[names.OUTLET] = outlets
 
 
 def findOutletsByHydroseq(hucs : SplitHUCs,
@@ -225,7 +228,7 @@ def findOutletsByHydroseq(hucs : SplitHUCs,
         if len(poly_ids) == 0:
             break
 
-    hucs.df['outlet'] = polygon_outlets
+    hucs.df[names.OUTLET] = polygon_outlets
 
 
 def snapWaterbodies(waterbodies : List[shapely.geometry.base.Geometry],

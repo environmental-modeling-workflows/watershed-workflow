@@ -504,7 +504,7 @@ def conditionRiverMesh(m2 : Mesh2D,
         burnInRiver(river, network_burn_in_depth)
 
     # map new profile to mesh
-    distributeProfileToMesh(river, m2)
+    distributeProfileToMesh(m2, river)
 
     # ensure that a diked channel passing over/around
     # a pond or reservoirs does not have bank-vertices fall into

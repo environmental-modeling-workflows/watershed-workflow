@@ -644,8 +644,9 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         fig, ax = plt.subplots(1,1)
     else:
         ax = None
-    
-    river_coords, river_elems, river_corridors, hole_points = watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
+
+    river_coords, river_elems, river_corridors, hole_points = \
+        watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
     if debug:
         plt.show()
 
@@ -655,12 +656,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         internal_boundaries = river_corridors + internal_boundaries
         
-    tri_res  = watershed_workflow.triangulate(hucs,
-                                              rivers,
-                                              internal_boundaries,
-                                              hole_points,
-                                              as_mesh = False,
-                                              **kwargs)
+    tri_res  = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
+                                              hole_points, as_mesh=False, **kwargs)
     
     tri_coords = tri_res[0]
     tri_elems = [tri.tolist() for tri in tri_res[1]]
@@ -669,6 +666,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     elems = tri_elems + river_elems
     # note, all river verts are in the tri_verts, listed first, and in the same order!
     coords = tri_coords
+
+    # We could now recover the polygon linestrings in SplitHUCs, but don't... TBD --ETC
 
     if as_mesh:
         m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
@@ -683,8 +682,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         else:
             return coords, elems
 
-
-def elevate(m2 : Mesh2D,
+        
+def elevate(m2 : watershed_workflow.mesh.Mesh2D,
             dem : xarray.DataSet,
             **kwargs) -> np.ndarray:
     """Elevate a mesh onto the provided dem, in place.

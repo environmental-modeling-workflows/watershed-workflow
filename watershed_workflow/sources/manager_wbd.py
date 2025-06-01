@@ -63,3 +63,13 @@ class ManagerWBD(ManagerHyRiver):
 
             return df
 
+
+    def getAll(self,
+               level : int) -> gpd.GeoDataFrame:
+        """Download all HUCs at a given level."""
+        # this is a shortcut...
+        import pygeohydro.watershed
+        df = pygeohydro.watershed.huc_wb_full(level)
+        df[names.HUC] = df[f'huc{level}']
+        df[names.AREA] = df[f'areasqkm']
+        return df
