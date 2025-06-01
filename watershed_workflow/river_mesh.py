@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import logging
-from typing import Callable
+from typing import Callable, List
 from matplotlib import pyplot as plt
 import math
 import geopandas as gpd
@@ -14,10 +14,13 @@ import shapely.ops
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 import watershed_workflow.angles
+import watershed_workflow.river_tree
 import watershed_workflow.sources.standard_names as names
 
 
-def isNonoverlapping(points, elems, tol=1):
+def _isNonoverlapping(points : np.ndarray,
+                      elems : List[List[int]],
+                      tol : float = 1) -> bool:
     """Are a set of shapes nonoverlapping?"""
     shps = [shapely.geometry.Polygon(points[e]) for e in elems]
     total_area = shapely.unary_union(shps).area
@@ -25,7 +28,7 @@ def isNonoverlapping(points, elems, tol=1):
     return abs(total_area - summed_area) < tol
 
 
-def _computeExpectedNumCoords(river):
+def _computeExpectedNumCoords(river : watershed_workflow.river_tree.River) -> int:
     """Compute the number of expected coordinates."""
     # two outlet points    
     n = 2
@@ -37,7 +40,7 @@ def _computeExpectedNumCoords(river):
     n += sum(len(reach.children)+1 for reach in river)
     return n
 
-def _computeExpectedNumElems(river):
+def _computeExpectedNumElems(river : watershed_workflow.river_tree.River) -> int:
     return sum(len(reach.linestring.coords)-1 for reach in river)
     
 
@@ -53,11 +56,11 @@ def createWidthFunction(arg):
     return func
 
 
-def plotRiver(river, coords, ax):
-    """Plot the river and elements"""
+def _plotRiver(river, coords, ax):
+    """Plot the river and elements for a debugging plot"""
     river.plot(color='b', marker='+', ax=ax)
 
-    elems = gpd.GeoDataFrame(geometry=[shapely.geometry.Polygon(coords[elem]) for reach in river for elem in reach['elems']])
+    elems = gpd.GeoDataFrame(geometry=[shapely.geometry.Polygon(coords[elem]) for reach in river for elem in reach[names.ELEMS]])
     watershed_workflow.plot.linestringsWithCoords(elems.boundary, color='g', marker='x', ax=ax)
 
 
@@ -68,16 +71,19 @@ def createRiversMesh(hucs, rivers, computeWidth, ax = None):
     corridors = []
     hole_points = []
     i = 0
+    elems_gid_start = 0
+    
     for river in rivers:
         # create the mesh
-        lcoords, lelems = createRiverMesh(river, computeWidth)
+        lcoords, lelems = createRiverMesh(river, computeWidth, elems_gid_start)
+        elems_gid_start += len(lelems)
 
         # adjust the HUC linestrings to include the small cross-stream
         # segment
         adjustHUCsToRiverMesh(hucs, river, lcoords)
 
         if ax is not None:
-            plotRiver(river, lcoords, ax)
+            _plotRiver(river, lcoords, ax)
 
         # hole point is the centroid of the outlet element
         hole_points.append(lcoords[lelems[-1]].mean(axis=0))
@@ -98,11 +104,13 @@ def createRiversMesh(hucs, rivers, computeWidth, ax = None):
 
     all_coords = np.concatenate(coords)
         
-    assert isNonoverlapping(all_coords, elems)
+    assert _isNonoverlapping(all_coords, elems)
     return all_coords, elems, corridors, hole_points
         
         
-def createRiverMesh(river, computeWidth):
+def createRiverMesh(river : watershed_workflow.river_tree.River,
+                    computeWidth : float,
+                    elems_gid_start : int = 0):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
@@ -136,9 +144,10 @@ def createRiverMesh(river, computeWidth):
 
     """
     coords = np.nan * np.ones((_computeExpectedNumCoords(river), 2), 'd')
-    river.df['elems'] = pd.Series([ [list() for i in range(len(ls.coords)-1)] for ls in river.df.geometry], index=river.df.index)
+    river.df[names.ELEMS] = pd.Series([ [list() for i in range(len(ls.coords)-1)] for ls in river.df.geometry], index=river.df.index)
 
     # project the starting point
+    # k tracks the index of the point/coordinate
     k = 0
 
     debug = None, None  # reach index, coordinate index
@@ -147,7 +156,7 @@ def createRiverMesh(river, computeWidth):
     
     for touch, reach in river.prePostInBetweenOrder():
         halfwidth = computeWidth(reach) / 2.
-        reach_elems = reach['elems']
+        reach_elems = reach[names.ELEMS]
 
         if debug[0] == reach.index:
             logging.info(f'PRE: reach = {reach.index}, touch = {touch}, elems = {reach_elems}')
@@ -198,7 +207,7 @@ def createRiverMesh(river, computeWidth):
                 if reach.index == debug[0] and 0 == debug[1]:
                     logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream right")
                 reach_elems[0].append(k)
-                child_elems = reach.children[0]['elems']
+                child_elems = reach.children[0][names.ELEMS]
                 child_elems[-1].append(k)
                 k += 1
 
@@ -208,7 +217,7 @@ def createRiverMesh(river, computeWidth):
                 if reach.index == debug[0] and 0 == debug[1]:
                     logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream right")
                 reach_elems[0].append(k)
-                reach.children[0]['elems'][-1].append(k)
+                reach.children[0][names.ELEMS][-1].append(k)
                 k += 1
 
         if touch == len(reach.children):
@@ -226,7 +235,7 @@ def createRiverMesh(river, computeWidth):
                 if reach.index == debug[0] and 0 == debug[1]:
                     logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} inline child upstream left")
                 reach_elems[0].append(k)
-                reach.children[-1]['elems'][-1].append(k)
+                reach.children[-1][names.ELEMS][-1].append(k)
                 k += 1
 
             else:
@@ -235,7 +244,7 @@ def createRiverMesh(river, computeWidth):
                 if reach.index == debug[0] and 0 == debug[1]:
                     logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction child upstream left")
                 reach_elems[0].append(k)
-                reach.children[-1]['elems'][-1].append(k)
+                reach.children[-1][names.ELEMS][-1].append(k)
                 k += 1
 
             # add a paddler's left internal point
@@ -269,8 +278,8 @@ def createRiverMesh(river, computeWidth):
             if reach.index == debug[0] and 0 == debug[1]:
                 logging.info(f" -- adding coord {k} = {coords[k]} as {reach.index} junction midpoint")
             reach_elems[0].append(k)
-            reach.children[touch-1]['elems'][-1].append(k)
-            reach.children[touch]['elems'][-1].append(k)
+            reach.children[touch-1][names.ELEMS][-1].append(k)
+            reach.children[touch][names.ELEMS][-1].append(k)
             k += 1
 
         if debug[0] == reach.index:
@@ -280,7 +289,7 @@ def createRiverMesh(river, computeWidth):
             
     # check convexity
     for reach in river:
-        for k, elem in enumerate(reach['elems']):
+        for k, elem in enumerate(reach[names.ELEMS]):
             e_coords = coords[elem]
             if not watershed_workflow.utils.isConvex(e_coords):
                 assert k == 0
@@ -289,8 +298,17 @@ def createRiverMesh(river, computeWidth):
                     coords[c_index] = coord
                 
     # gather elems
-    elems = [e for reach in river.postOrder() for e in reach['elems']]
+    elems = [e for reach in river.postOrder() for e in reach[names.ELEMS]]
     assert len(elems) == _computeExpectedNumElems(river)
+
+    # assign GID to each elem start
+    # note this must be done in the same order as above elems
+    if names.ELEMS_GID_START not in river.df.columns:
+        river.df[names.ELEMS_GID_START] = -np.ones(len(river.df), 'i')
+
+    for reach in river.postOrder():
+        reach[names.ELEMS_GID_START] = elems_gid_start
+        elems_gid_start += len(reach[names.ELEMS])
 
     return coords, elems
 
@@ -306,11 +324,11 @@ def adjustHUCsToRiverMesh(hucs, river, coords):
         logging.info(f"Adjusting HUC to match reaches at outlet")
         # touches[1] is paddler's left
         left_old_coords = touches[1][1].coords
-        left_new_coord = coords[river['elems'][-1][-1]]
+        left_new_coord = coords[river[names.ELEMS][-1][-1]]
         left_new_ls = shapely.geometry.LineString(left_old_coords[:-1] + [left_new_coord,])
 
         right_old_coords = touches[2][1].coords
-        right_new_coord = coords[river['elems'][-1][0]]
+        right_new_coord = coords[river[names.ELEMS][-1][0]]
         right_new_ls = shapely.geometry.LineString(right_old_coords[:-1] + [right_new_coord,])
 
         if remerge:
@@ -346,7 +364,7 @@ def adjustHUCsToRiverMesh(hucs, river, coords):
 
                     
                     # it is a HUC, insert the point
-                    new_coord = coords[reach['elems'][0][point_i]]
+                    new_coord = coords[reach[names.ELEMS][0][point_i]]
                     old_coords = touches[touch_i][1].coords
                     new_ls = shapely.geometry.LineString(old_coords[:-1] + [new_coord,])
                     hucs.linestrings[touches[touch_i][0]] = new_ls

@@ -303,20 +303,36 @@ class Mesh2D:
         if hasattr(self, '_centroids'):
             del self._centroids
 
-    def plot(self, color=None, ax=None) -> None:
+    def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None,
+             **kwargs) -> None:
         """Plot the flattened 2D mesh."""
-        if color is None:
-            cm = watershed_workflow.colors.cm_mapper(0, self.num_cells - 1)
-            colors = [cm(i) for i in range(self.num_cells)]
-        else:
-            colors = color
-
-        verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
-        from matplotlib import collections
-        gons = collections.PolyCollection(verts, facecolors=colors)
         from matplotlib import pyplot as plt
+
+        # set default plotting options for mesh
+        kwargs.setdefault('edgecolors', 'grey')
+        kwargs.setdefault('linewidth', 0.5)
+        kwargs.setdefault('linewidth', 0.5)
+
+        if facecolors == 'elevation':
+            facecolors = self.centroids[:,-1]
+            if cmap is None:
+                cmap = 'terrain'
+
+        if facecolors is not None and len(facecolors) == len(self.conn):
+            # convert from an array to a list of colors, using a cmap
+            norm = plt.Normalize(vmin=vmin, vmax=vmax)
+            facecolors = plt.colormaps[cmap](norm(facecolors))
+
+        # build the collection of gons
+        from matplotlib import collections
+        verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
+        gons = collections.PolyCollection(verts,
+                                          facecolors=facecolors,
+                                          **kwargs)
+
+        # put on the axis
         if ax is None:
-            fig, ax = plt.subplots(1, 1)
+            fig, ax = plt.subplots()
         ax.add_collection(gons)
         ax.autoscale_view()
 

@@ -6,7 +6,6 @@ PACKAGES_BASE=['python',
                'matplotlib',
                'scipy',
                'geopandas',
-               'meshpy',
                'xarray',
                'rioxarray',
                'requests',
@@ -18,10 +17,14 @@ PACKAGES_BASE=['python',
                'nbmake',
                'ipympl',
                'ipython',
+               'ipympl',
+               'ipykernel',
                'pynhd',
                'pygeohydro',
                'py3dep',
                'pydaymet',
+               'meshpy',
+               'aiohttp>=3.11',
                ]
 
 # extra packages needed in the WW env when building for a user
@@ -42,6 +45,7 @@ PACKAGES_EXTRAS_DEV=[
 # packages for the base environment
 PACKAGES_USER_BASE=['ipython',
                'jupyterlab',
+               'jupyterlab_widgets',
                'ipykernel',
                'notebook<7.0.0',
                'nb_conda',
@@ -71,7 +75,7 @@ PACKAGES_TOOLS=['cmake',
 CHANNELS=['conda-forge',
           ]
 
-PACKAGE_MANAGER = 'mamba'
+PACKAGE_MANAGER = 'conda'
 
 
 import datetime
@@ -207,8 +211,8 @@ if __name__ == '__main__':
                         help='Build a tools environment for compiling ExodusII.')
     parser.add_argument('--dump-only', action='store_true', help='Only write the .yml file')
     parser.add_argument('--dry-run', action='store_true', help='Only print the environment creation command')
-    parser.add_argument('--manager', default='mamba', type=str,
-                        help='Package manager, likely one of mamba or conda, defaults to mamba')
+    parser.add_argument('--manager', default='conda', type=str,
+                        help='Package manager, likely one of mamba or conda, note that mamba is now dead, defaults to conda')
     parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
                         help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env and a OS-specific filename for writing the environment.yml file.')
     parser.add_argument('ENV_NAME', type=str, help='Name for this environement')

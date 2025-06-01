@@ -173,7 +173,6 @@ class River(watershed_workflow.tinytree.Tree):
         """Plot the rivers."""
         inds = [r.index for r in self]
         return watershed_workflow.plot.linestringsWithCoords(self.df.loc[inds], *args, **kwargs)
-
     
     def explore(self, column=names.ID, m=None, marker=None, name=None, **kwargs):
         """Open a map!"""
@@ -337,16 +336,16 @@ class River(watershed_workflow.tinytree.Tree):
 
         # fix properties
         if names.CATCHMENT_AREA in self:
-            self.parent[names.CATCHMENT_AREA] += self[names.CATCHMENT_AREA]
-        if 'catchment' in self and self['catchment'] is not None:
-            if self.parent['catchment'] is None:
-                self.parent['catchment'] = self['catchment']
+            parent[names.CATCHMENT_AREA] += self[names.CATCHMENT_AREA]
+        if names.CATCHMENT in self and self[names.CATCHMENT] is not None:
+            if parent[names.CATCHMENT] is None:
+                parent[names.CATCHMENT] = self[names.CATCHMENT]
             else:
-                self.parent['catchment'] = shapely.ops.unary_union(
-                    [self['catchment'], self.parent['catchment']])
+                parent[names.CATCHMENT] = shapely.ops.unary_union(
+                    [self[names.CATCHMENT], parent['catchment']])
 
         if names.DIVERGENCE in self:
-            self.parent[names.DIVERGENCE] = self[names.DIVERGENCE]
+            parent[names.DIVERGENCE] = self[names.DIVERGENCE]
 
         # set topology
         self.remove()
@@ -514,7 +513,7 @@ class River(watershed_workflow.tinytree.Tree):
                     node._makeContinuous(child)
         assert (self.isContinuous())
 
-    def isLocallyMonotonic(self):
+    def isLocallyMonotonic(self) -> bool:
         """Checks for monotonically decreasing elevation as we march downstream in this reach."""
         coords = np.array(self.linestring.coords)
         if max(coords[1:,2] - coords[:-1,2]) > 0:
@@ -525,7 +524,7 @@ class River(watershed_workflow.tinytree.Tree):
                 return False
         return True
         
-    def isMonotonic(self, known_depressions = None):
+    def isMonotonic(self, known_depressions = None) -> bool:
         if known_depressions is None:
             known_depressions = []
         return all(reach.isLocallyMonotonic() for reach in self if reach.index not in known_depressions)
@@ -546,18 +545,39 @@ class River(watershed_workflow.tinytree.Tree):
             good &= self.isHydroseqConsistent()
         return good
 
-    def pathToRoot(self):
+    def pathToRoot(self) -> None:
         """A generator for the nodes on the path to root, including this."""
         yield self
         if self.parent is not None:
             for n in self.parent.pathToRoot():
                 yield n
 
+    def resetDataFrame(self) -> None:
+        """Resets the data frame for the river rooted at self.
+
+        This restricts the (shared) DataFrame to a subset of rows that
+        are all in the river rooted at self.
+        """
+        drop_id = False
+        if names.ID not in self.df.columns:
+            drop_id = True
+            self.df[names.ID] = self.df.index
+
+        ids = [reach[names.ID] for reach in self.preOrder()]
+
+        # certainly there is a pandas method for this?
+        new_df = self.df[self.df[names.ID].apply(ids.__contains__)]
+        if drop_id:
+            new_df = new_df.drop(columns=[names.ID,])
+
+        for reach in self.preOrder():
+            reach.df = new_df                
 
     #
     # methods that convert this to another object
     #
     def to_crs(self, crs : CRS) -> None:
+
         """Warp the coordinate system."""
         self.df.to_crs(crs, inplace=True)
 
@@ -570,18 +590,30 @@ class River(watershed_workflow.tinytree.Tree):
             else:
                 return n.parent.index
 
-        self.df['parent'] = dict([(n.index, _parent_index(n)) for n in self.preOrder()])
-        self.df['parent'] = self.df['parent'].convert_dtypes()
+        self.df[names.PARENT] = dict([(n.index, _parent_index(n)) for n in self.preOrder()])
+        self.df[names.PARENT] = self.df[names.PARENT].convert_dtypes()
 
         # move the children into the dataframe
-        self.df['children'] = dict([(n.index, [c.index for c in n.children]) for n in self.preOrder()])
-        self.df['children'] = self.df['children'].convert_dtypes()
+        self.df[names.CHILDREN] = dict([(n.index, [c.index for c in n.children]) for n in self.preOrder()])
+        self.df[names.CHILDREN] = self.df[names.CHILDREN].convert_dtypes()
+        if names.ID not in self.df.columns:
+            self.df[names.ID] = self.df.index
         return self.df
 
     def to_mls(self) -> shapely.geometry.MultiLineString:
         """Represent this as a shapely.geometry.MultiLineString"""
         return shapely.geometry.MultiLineString([r.linestring for r in self])
 
+    def to_file(self, filename : str, **kwargs) -> None:
+        """Save the network for this river only to a geopandas file.
+
+        Note this file can be reloaded via:
+
+        $> watershed_workflow.river_tree.River.constructRiversByDataFrame(gpd.read_file(filename))
+
+        """
+        self.to_dataframe().to_file(filename, **kwargs)
+    
     def copy(self, df : gpd.GeoDataFrame) -> River:
         """Shallow copy using a provided DataFrame"""
         if df is None:
@@ -599,8 +631,7 @@ class River(watershed_workflow.tinytree.Tree):
         inds = [r.index for r in self.preOrder()]
         df_copy = self.df.loc[inds]
         return self.copy(df_copy)
-        
-    
+
     #
     # Factory functions
     #
@@ -685,12 +716,13 @@ class River(watershed_workflow.tinytree.Tree):
     def constructRiversByDataFrame(cls, df):
         """Create a list of rivers from a dataframe that includes a 'parent' column.
         """
-        assert 'parent' in df
+        assert names.PARENT in df
+        assert names.ID in df
         nodes = dict([(index,cls(index, df)) for index in df.index])
 
         roots = []
         for index, node in nodes.items():
-            parent = df.at[index, 'parent']
+            parent = df.at[index, names.PARENT]
             if pandas.isna(parent):
                 roots.append(node)
             else:
@@ -766,7 +798,7 @@ def combineSiblings(n1 : River,
 # Construction method
 #
 def createRivers(reaches : gpd.GeoDataFrame,
-                 method : Literal['geometry','hydroseq'] = 'geometry',
+                 method : Literal['geometry','hydroseq','native'] = 'geometry',
                  tol : float = _tol) -> List[River]:
     """Constructs River objects from a list of reaches.
 
@@ -781,16 +813,25 @@ def createRivers(reaches : gpd.GeoDataFrame,
           method, get_reaches() must have been called with both
           'hydroseq' and 'dnhydroseq'
           properties requested (or properties=True).
+        * 'native' Reads a natively dumped list of rivers.
     :tol: Defines what close is in the case of method == 'geometry'
 
     """
     if method == 'hydroseq':
-        return watershed_workflow.river_tree.River.constructRiversByHydroseq(reaches)
+        rivers = watershed_workflow.river_tree.River.constructRiversByHydroseq(reaches)
     elif method == 'geometry':
-        return watershed_workflow.river_tree.River.constructRiversByGeometry(reaches, tol)
+        rivers = watershed_workflow.river_tree.River.constructRiversByGeometry(reaches, tol)
+    elif method == 'native':
+        rivers = watershed_workflow.river_tree.River.constructRiversByDataFrame(reaches)
     else:
         raise ValueError(
             "Invalid method for making Rivers, must be one of 'hydroseq' or 'geometry'")
+
+    # reset the data frame to be unique for each river
+    for river in rivers:
+        river.resetDataFrame()
+
+    return rivers
 
 
 #

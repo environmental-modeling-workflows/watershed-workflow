@@ -7,6 +7,7 @@ NAME = 'name'
 # watershed/polygon property names
 HUC = 'huc'
 AREA = 'area'
+OUTLET = 'outlet'
 
 # reach property names
 TARGET_SEGMENT_WIDTH = 'target_width'
@@ -22,4 +23,11 @@ CATCHMENT_AREA = 'catchment_area'
 LENGTH = 'length'
 
 # reach property names used in conditioning
-PROFILE_ELEVATION = "elev_profile"
+PROFILE_ELEVATION = 'elev_profile'
+
+
+# internal reach properties, not set by user
+ELEMS = 'elems'
+ELEMS_GID_START = 'elems_gid_start'
+PARENT = 'parent_ID'
+CHILDREN = 'children_IDs'
