@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Dict, Tuple, List, Literal, Callable
+from typing import Optional, Iterable, Dict, Tuple, List, Literal, Callable, Set
 
 import numpy as np
 import attr
@@ -19,11 +19,11 @@ from watershed_workflow.river_tree import River
 class _Point:
     """POD struct of coordinate and set of neighbors"""
     coords = attr.ib()
-    neighbors : Optional[Iterable[int]] = attr.ib(factory=set)
+    neighbors: Set[int] = attr.ib(factory=set, converter=set)
 
 
 def fillPits(m2 : Mesh2D,
-             outlet : Optional[int] = None,
+             outletID : Optional[int] = None,
              algorithm : int = 3) -> None:
     """Conditions a mesh, IN PLACE, by removing pits.
     
@@ -40,7 +40,7 @@ def fillPits(m2 : Mesh2D,
     ----------
     m2 : mesh.Mesh2D object
       The mesh to condition.
-    outlet : int, optional
+    outletID : int, optional
       If provided, the ID of the point to start conditioning from.  If
       not provided, will use the boundary vertex with minimal elevation.
     algorithm : int
@@ -56,28 +56,25 @@ def fillPits(m2 : Mesh2D,
         p.neighbors.remove(i)
 
     # set the outlet as minimal boundary elevation
-    if outlet is None:
+    if outletID is None:
         boundary_vertices = m2.boundary_vertices
-        outlet = boundary_vertices[np.argmin(m2.coords[boundary_vertices, 2])]
+        outletID = boundary_vertices[np.argmin(m2.coords[boundary_vertices, 2])]
 
     if algorithm == 1:
-        fillPits1(points_dict, outlet)
+        fillPits1(points_dict, outletID)
     elif algorithm == 2:
-        fillPits2(points_dict, outlet)
+        fillPits2(points_dict, outletID)
     elif algorithm == 3:
-        fillPits3(points_dict, outlet)
+        fillPits3(points_dict, outletID)
     else:
         raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
 
-    m2.points = np.array([p.coords for p in points_dict.values()])
+    m2.coords = np.array([p.coords for p in points_dict.values()])
 
 
 def fillPits1(points : Dict[int, _Point],
-              outletID : Optional[int] = None) -> None:
+              outletID : int) -> None:
     """This is the origional, 2-pass algorithm, and is likely inefficient."""
-
-    if outletID is None:
-        outletID = np.argmin(np.array([points[i].coords[2] for i in range(len(points))]))
 
     # create a sorted list of elevations, from largest to smallest
     elev = sorted(list(points.items()), key=lambda id_p: -id_p[1].coords[2])
@@ -101,14 +98,14 @@ def fillPits1(points : Dict[int, _Point],
     assert (len(pits.union(waterway)) == len(points))
 
     # loop over waterway and raise up pits as they touch the waterway
-    waterway = sorted([(ID, points[ID]) for ID in waterway], key=lambda id_p: -id_p[1].coords[2])
-    while len(waterway) != 0:
-        current, current_p = waterway.pop()
+    waterway_l = sorted([(ID, points[ID]) for ID in waterway], key=lambda id_p: -id_p[1].coords[2])
+    while len(waterway_l) != 0:
+        current, current_p = waterway_l.pop()
         for n in current_p.neighbors:
             if n in pits:
                 points[n].coords[2] = max(current_p.coords[2], points[n].coords[2])
                 pits.remove(n)
-                waterway.append((n, points[n]))
+                waterway_l.append((n, points[n]))
 
     # post-conditions
     assert (len(pits) == 0)
@@ -116,7 +113,7 @@ def fillPits1(points : Dict[int, _Point],
 
 
 def fillPits2(points : Dict[int, _Point],
-              outletID : Optional[int] = None) -> None:
+              outletID : int) -> None:
     """This is a refactored, single pass algorithm that leverages a sorted list."""
 
     # create a sorted list of elevations, from largest to smallest
@@ -143,7 +140,7 @@ def fillPits2(points : Dict[int, _Point],
 
 
 def fillPits3(points : Dict[int, _Point],
-              outletID : Optional[int] = None) -> None:
+              outletID : int) -> None:
     """This algorithm is based on a boundary marching method"""
     # Waterway is the list of things that are already conditioned and
     # can be reached.
@@ -443,7 +440,7 @@ def conditionRiverMesh(m2 : Mesh2D,
                        use_parent : bool = False,
                        lower : bool = False,
                        bank_integrity_elevation : float = 0.0,
-                       depress_headwaters_by : Optional[float] = 0.0,
+                       depress_headwaters_by : Optional[float] = None,
                        network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
                        known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
@@ -592,7 +589,7 @@ def enforceLocalMonotonicity(reach : River,
 
     
 def enforceMonotonicity(river : River,
-                        depress_headwaters_by : float = 0.0,
+                        depress_headwaters_by : Optional[float] = None,
                         known_depressions : Optional[List[int]] = None) -> None:
     """Sweep the river network from each headwater reach (leaf node)
     to the watershed outlet (root node), removing aritificial
@@ -606,7 +603,8 @@ def enforceMonotonicity(river : River,
     # starting from one of the leaf nodes providing extra depression at the upstream end
     for leaf in river.leaf_nodes:
         if leaf.index not in known_depressions:
-            if depress_headwaters_by > 0:
+            if depress_headwaters_by is not None:
+                assert depress_headwaters_by > 0.
                 coords = np.array(leaf.linestring.coords)
                 coords[:,2] = coords[:,2] - depress_headwaters_by
                 leaf.linestring = shapely.geometry.LineString(coords)
@@ -677,7 +675,7 @@ def _findBankVerticesFromElem(m2 : Mesh2D,
     # 1st and 2nd-to-last edges -- the last is the downstream, cross-stream edge
     edge_r = list(m2.cell_edges(elem))[0]
     edge_l = list(m2.cell_edges(elem))[-2]
-    return [_findBankVerticesFromEdge(m2, elem, edge_r), _findBankVerticesFromEdge(m2, elem, edge_l)]
+    return _findBankVerticesFromEdge(m2, elem, edge_r), _findBankVerticesFromEdge(m2, elem, edge_l)
 
 
 def _findBankVerticesFromEdge(m2 : Mesh2D,

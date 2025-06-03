@@ -11,12 +11,13 @@ import watershed_workflow.crs
 
 
 def interpolateDataset(points : np.ndarray,
-                       points_crs : watershed_workflow.crs.CRS,
+                       points_crs : watershed_workflow.crs.CRS | None,
                        dataarray : xarray.DataArray,
                        **kwargs) -> np.ndarray:
     """Interpolate from a data array onto a set of points."""
     dataarray_crs = watershed_workflow.crs.from_xarray(dataarray)
-    points = watershed_workflow.warp.points(points, points_crs, dataarray_crs)
+    if points_crs is not None and dataarray_crs is not None:
+        points = watershed_workflow.warp.points(points, points_crs, dataarray_crs)
     x = xarray.DataArray(points[:,0], dims="points")
     y = xarray.DataArray(points[:,1], dims="points")
     return dataarray.interp(x=x, y=y, **kwargs).values

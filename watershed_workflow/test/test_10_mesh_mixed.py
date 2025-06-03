@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from watershed_workflow.river_mesh import *
 from watershed_workflow.test.shapes import *
 
-plot = False
+_plot = False
 
 #
 # Tests for geometry helpers
@@ -78,7 +78,7 @@ def test_projectTwo_jagged():
 #
 # Tests for toy reaches
 #
-_plot = True
+_plot = False
 _assert_plot = False
 def plot(river, coords, elems, hucs = None, force = False):
     if _plot or force:
@@ -331,7 +331,7 @@ def test_huc_to_corridor(watershed_rivers1):
     hucs, rivers = watershed_rivers1
     watershed_workflow.simplify(hucs, rivers, 1)
 
-    coords, elems, hole_points = createRiverMesh(rivers[0], lambda a : 1)
+    coords, elems = createRiverMesh(rivers[0], lambda a : 1)
     adjustHUCsToRiverMesh(hucs, rivers[0], coords)
 
     plot(rivers[0], coords, elems, hucs)

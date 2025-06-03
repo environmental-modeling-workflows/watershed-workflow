@@ -167,7 +167,7 @@ def smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
 
 def _spreadAngles(linestrings : List[shapely.geometry.LineString],
                   min_angle : float,
-                  can_move : Optional[List[bool]] = None) -> Tuple[int, List[shapely.geometry.LineString]]:
+                  can_move : Optional[List[bool]] = None) -> Tuple[int, List[shapely.geometry.LineString], np.ndarray]:
     """Given a list of linestrings, all of whose terminal coordinate
     is the same (origin) and whose ordering is clockwise around that
     origin, nudge the second-to-last point of all linestrings (except

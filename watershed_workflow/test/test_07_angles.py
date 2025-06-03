@@ -287,8 +287,8 @@ def testHUCIsBad_NoOp(two_boxes):
 
 
 def testHUCIsBad():
-    huc_shp1 = shapely.geometry.Polygon([ (0,0), (1,0), (1,10), (0,1) ])
-    huc_shp2 = shapely.geometry.Polygon([ (1,0), (2,0), (2,1), (1,10) ])
+    huc_shp1 = shapely.geometry.Polygon([ (0,0), (1,0), (1,5), (1,10), (0,1) ])
+    huc_shp2 = shapely.geometry.Polygon([ (1,0), (2,0), (2,1), (1,10), (1,5) ])
     huc_shp_df = geopandas.GeoDataFrame({'geometry':[huc_shp1, huc_shp2]})
     hucs = watershed_workflow.split_hucs.SplitHUCs(huc_shp_df)
 

@@ -25,6 +25,7 @@ import scipy.optimize
 import shapely
 import warnings
 import functools
+import pandas
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -146,6 +147,7 @@ class Mesh2D:
     eps : float = attr.ib(default=0.001)
     _check_handedness : bool = attr.ib(default=True)
     _validate : bool = attr.ib(default=False)
+    cell_data : Optional[pandas.DataFrame]
 
     def __attrs_post_init__(self):
         if self._check_handedness:

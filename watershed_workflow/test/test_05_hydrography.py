@@ -52,9 +52,8 @@ def check0(hucs, rivers):
     print(poly0.boundary.coords[:])
 
     # close to the polygon
-    assert (watershed_workflow.utils.isClose(
-        poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)])),
-            1.e-3)
+    assert watershed_workflow.utils.isClose(
+        poly0, shapely.geometry.Polygon([(0, -5), (10, -5), (10, 0), (10, 5), (0, 5)]), 1.e-3)
 
     riverlist = [r.linestring for r in rivers[0]]
     assert len(riverlist) == 1

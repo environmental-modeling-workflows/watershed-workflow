@@ -20,7 +20,7 @@ dnhydroseq : int
 
 """
 from __future__ import annotations
-from typing import List, Optional, Any, Tuple, Callable, Literal
+from typing import List, Optional, Any, Tuple, Callable, Literal, Generator
 
 import logging
 import numpy as np
@@ -545,7 +545,7 @@ class River(watershed_workflow.tinytree.Tree):
             good &= self.isHydroseqConsistent()
         return good
 
-    def pathToRoot(self) -> None:
+    def pathToRoot(self) -> Generator:
         """A generator for the nodes on the path to root, including this."""
         yield self
         if self.parent is not None:

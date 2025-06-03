@@ -20,7 +20,7 @@ from __future__ import annotations
 from . import _version
 __version__ = _version.get_versions()['version']
 
-from typing import Any, Optional, Iterable, List
+from typing import Any, Optional, Iterable, List, Tuple
 import logging
 import math
 import numpy as np
@@ -155,9 +155,9 @@ def findHUC(source : Any,
     """
     def _in_huc(shply, huc_shply):
         result = huc_shply.contains(shply)
-        if result.any():
+        if result:
             return 2
-        elif huc_shply.intersects(shply).any():
+        elif huc_shply.intersects(shply):
             return 1
         else:
             return 0
@@ -254,11 +254,11 @@ def reduceRivers(rivers : List[River],
         rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
 
     if remove_diversions and remove_braided_divergences:
-        rivers = watershed_workflow.river_tree.removeDivergences(rivers)
+        rivers = watershed_workflow.river_tree.filterDivergences(rivers)
     elif remove_diversions:
-        rivers = watershed_workflow.river_tree.removeDiversions(rivers)
+        rivers = watershed_workflow.river_tree.filterDiversions(rivers)
     elif remove_braided_divergences:
-        rivers = watershed_workflow.river_tree.removeBraids(rivers)
+        watershed_workflow.river_tree.removeBraids(rivers)
 
     if prune_by_area is not None:
         rivers = watershed_workflow.river_tree.pruneRiversByArea(rivers, prune_by_area, area_property)
@@ -430,18 +430,22 @@ def simplify(hucs : SplitHUCs,
     
 
 def triangulate(hucs : SplitHUCs,
-                rivers : Optional[River] = None,
+                rivers : Optional[List[River]] = None,
                 internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
                 hole_points : Optional[List[shapely.geometry.Point]] = None,
                 diagnostics : bool = False,
                 verbosity : int = 1,
                 tol : float = 1.0,
                 refine_max_area : Optional[float] = None,
-                refine_distance : Optional[float] = None,
+                refine_distance : Optional[Tuple[float,float,float,float]] = None,
                 refine_max_edge_length : Optional[float] = None,
                 refine_min_angle : Optional[float] = None,
                 enforce_delaunay : bool = False,
-                as_mesh : bool = True) -> Tuple[np.ndarray, np.ndarray]:
+                as_mesh : bool = True) -> \
+                       Tuple[np.ndarray, np.ndarray] | \
+                       watershed_workflow.mesh.Mesh2D | \
+                       Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | \
+                       Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -545,32 +549,46 @@ def triangulate(hucs : SplitHUCs,
     
     if diagnostics:
         logging.info("Plotting triangulation diagnostics")
-        river_multiline = shapely.ops.unary_union([river.to_mls() for river in rivers])
-        distances = []
-        areas = []
-        needs_refine = []
-        for tri in triangles:
-            verts = vertices[tri]
-            bary = np.sum(np.array(verts), axis=0) / 3
-            bary_p = shapely.geometry.Point(bary[0], bary[1])
-            distances.append(bary_p.distance(river_multiline))
-            areas.append(watershed_workflow.utils.computeTriangleArea(*verts))
-            needs_refine.append(my_refine_func(verts, areas[-1]))
-        areas = np.array(areas)
-        distances = np.array(distances)
-        logging.info("  min area = {}".format(areas.min()))
-        logging.info("  max area = {}".format(areas.max()))
+        if rivers is not None:
+            river_multiline = shapely.ops.unary_union([river.to_mls() for river in rivers])
+            distances_l = []
+            areas_l = []
+            needs_refine = []
+            for tri in triangles:
+                verts = vertices[tri]
+                bary = np.sum(np.array(verts), axis=0) / 3
+                bary_p = shapely.geometry.Point(bary[0], bary[1])
+                distances_l.append(bary_p.distance(river_multiline))
+                areas_l.append(watershed_workflow.utils.computeTriangleArea(*verts))
+                needs_refine.append(my_refine_func(verts, areas_l[-1]))
 
-        if verbosity > 0:
-            plt.figure()
-            plt.subplot(121)
-            plt.hist(distances)
-            plt.xlabel("distance from river of triangle centroids [m]")
-            plt.ylabel("count [-]")
-            plt.subplot(122)
-            plt.scatter(distances, areas, c=needs_refine, marker='x')
-            plt.xlabel("distance [m]")
-            plt.ylabel("triangle area [m^2]")
+            distances = np.array(distances_l)
+            areas = np.array(areas_l)
+            logging.info("  min area = {}".format(areas.min()))
+            logging.info("  max area = {}".format(areas.max()))
+
+            if verbosity > 0:
+                plt.figure()
+                plt.subplot(121)
+                plt.hist(distances)
+                plt.xlabel("distance from river of triangle centroids [m]")
+                plt.ylabel("count [-]")
+                plt.subplot(122)
+                plt.scatter(distances, areas, c=needs_refine, marker='x')
+                plt.xlabel("distance [m]")
+                plt.ylabel("triangle area [m^2]")
+
+        else:
+            areas = np.array([watershed_workflow.utils.computeTriangleArea(*vertices[tri]) for tri in triangles])
+            logging.info("  min area = {}".format(areas.min()))
+            logging.info("  max area = {}".format(areas.max()))
+
+            if verbosity > 0:
+                plt.figure()
+                plt.subplot(111)
+                plt.hist(areas)
+                plt.xlabel("area [m]")
+                plt.ylabel("count [-]")
 
         if as_mesh:
             m2 = watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
@@ -590,8 +608,11 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
                           as_mesh : bool = True,
                           debug : bool = False,
-                          **kwargs) -> Tuple[np.ndarray, List[List[int]]] | \
-                                       Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray]:
+                          **kwargs) -> \
+                       Tuple[np.ndarray, List[List[int]]] | \
+                       watershed_workflow.mesh.Mesh2D | \
+                       Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray] | \
+                       Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
     Parameters
@@ -656,11 +677,13 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         internal_boundaries = river_corridors + internal_boundaries
         
-    tri_res  = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
+    tri_res = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
                                               hole_points, as_mesh=False, **kwargs)
-    
+
+    assert not isinstance(tri_res, watershed_workflow.mesh.Mesh2D)
+    assert not isinstance(tri_res[0], watershed_workflow.mesh.Mesh2D)
     tri_coords = tri_res[0]
-    tri_elems = [tri.tolist() for tri in tri_res[1]]
+    tri_elems : List[List[int]] = [tri.tolist() for tri in tri_res[1]]
     
     # merge elements into a single output
     elems = tri_elems + river_elems
@@ -671,21 +694,23 @@ def tessalateRiverAligned(hucs : SplitHUCs,
 
     if as_mesh:
         m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
-        if len(tri_res) > 2:
-            return (m2,) + tuple(tri_res[2:])
+        if len(tri_res) > 3:
+            return (m2, tri_res[2], tri_res[3])
         else:
+            assert len(tri_res) == 2
             return m2
         
     else:
-        if len(tri_res) > 2:
-            return (coords, elems) + tuple(tri_res[2:])
+        if len(tri_res) > 3:
+            return (coords, elems, tri_res[2], tri_res[3])
         else:
-            return coords, elems
+            assert len(tri_res) == 2
+            return (coords, elems)
 
         
 def elevate(m2 : watershed_workflow.mesh.Mesh2D,
-            dem : xarray.DataSet,
-            **kwargs) -> np.ndarray:
+            dem : xarray.DataArray,
+            **kwargs) -> None:
     """Elevate a mesh onto the provided dem, in place.
 
     Parameters

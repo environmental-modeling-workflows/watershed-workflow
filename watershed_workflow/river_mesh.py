@@ -3,9 +3,11 @@
 import numpy as np
 import pandas as pd
 import logging
-from typing import Callable, List
+from typing import Callable, List, Tuple, Dict, Optional
+
 from matplotlib import pyplot as plt
-import math
+import matplotlib.axes
+
 import geopandas as gpd
 
 import shapely.geometry
@@ -14,7 +16,8 @@ import shapely.ops
 import watershed_workflow.utils
 import watershed_workflow.tinytree
 import watershed_workflow.angles
-import watershed_workflow.river_tree
+from watershed_workflow.river_tree import River
+from watershed_workflow.split_hucs import SplitHUCs
 import watershed_workflow.sources.standard_names as names
 
 
@@ -28,7 +31,7 @@ def _isNonoverlapping(points : np.ndarray,
     return abs(total_area - summed_area) < tol
 
 
-def _computeExpectedNumCoords(river : watershed_workflow.river_tree.River) -> int:
+def _computeExpectedNumCoords(river : River) -> int:
     """Compute the number of expected coordinates."""
     # two outlet points    
     n = 2
@@ -40,15 +43,15 @@ def _computeExpectedNumCoords(river : watershed_workflow.river_tree.River) -> in
     n += sum(len(reach.children)+1 for reach in river)
     return n
 
-def _computeExpectedNumElems(river : watershed_workflow.river_tree.River) -> int:
+def _computeExpectedNumElems(river : River) -> int:
     return sum(len(reach.linestring.coords)-1 for reach in river)
     
 
-def createWidthFunction(arg):
+def createWidthFunction(arg : Dict[int, float] | Callable[[int,], float] | float) -> Callable[[int,], float]:
     if isinstance(arg, dict):
         def func(reach):
             return arg[reach[names.ORDER]]
-    elif isinstance(arg, Callable):
+    elif callable(arg):
         func = arg
     else:
         def func(reach):
@@ -56,7 +59,9 @@ def createWidthFunction(arg):
     return func
 
 
-def _plotRiver(river, coords, ax):
+def _plotRiver(river : River,
+               coords : np.ndarray,
+               ax : matplotlib.axes.Axes) -> None:
     """Plot the river and elements for a debugging plot"""
     river.plot(color='b', marker='+', ax=ax)
 
@@ -64,12 +69,19 @@ def _plotRiver(river, coords, ax):
     watershed_workflow.plot.linestringsWithCoords(elems.boundary, color='g', marker='x', ax=ax)
 
 
-def createRiversMesh(hucs, rivers, computeWidth, ax = None):
+def createRiversMesh(hucs : SplitHUCs,
+                     rivers : List[River],
+                     computeWidth : Callable[[int,], float],
+                     ax : Optional[matplotlib.axes.Axes] = None) -> \
+                     Tuple[np.ndarray,
+                           List[List[int]],
+                           List[shapely.geometry.Polygon],
+                           List[shapely.geometry.Point]]:
     """Creates meshes for each river and merges them."""
-    elems = []
-    coords = []
-    corridors = []
-    hole_points = []
+    elems : List[List[int]] = []
+    coords : List[np.ndarray] = []
+    corridors : List[shapely.geometry.Polygon] = []
+    hole_points : List[shapely.geometry.Point] = []
     i = 0
     elems_gid_start = 0
     
@@ -108,14 +120,14 @@ def createRiversMesh(hucs, rivers, computeWidth, ax = None):
     return all_coords, elems, corridors, hole_points
         
         
-def createRiverMesh(river : watershed_workflow.river_tree.River,
-                    computeWidth : float,
+def createRiverMesh(river : River,
+                    computeWidth : Callable[[int,], float],
                     elems_gid_start : int = 0):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters:
     -----------
-    rivers: list(watershed_workflow.river_tree.River object)
+    rivers: list(River object)
         List of river tree along which river meshes are to be created
     widths: float or dict or callable or boolean 
        Width of the quads, either a float or a dictionary providing a
@@ -150,9 +162,11 @@ def createRiverMesh(river : watershed_workflow.river_tree.River,
     # k tracks the index of the point/coordinate
     k = 0
 
-    debug = None, None  # reach index, coordinate index
-    if debug != (None, None):
-        logging.info(f"Debugging reach {debug[0]}, coordinate {debug[1]}, at {river.getNode(debug[0]).linestring.coords[debug[1]]}")
+    debug : Tuple[int | None,int | None] = None, None  # reach index, coordinate index
+    if debug[0] != None and debug[1] != None:
+        node = river.getNode(debug[0])
+        if node is not None:
+            logging.info(f"Debugging reach {debug[0]}, coordinate {debug[1]}, at {node.linestring.coords[debug[1]]}")
     
     for touch, reach in river.prePostInBetweenOrder():
         halfwidth = computeWidth(reach) / 2.

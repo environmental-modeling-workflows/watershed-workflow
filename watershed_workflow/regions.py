@@ -3,6 +3,7 @@ This namespace hosts functions to add labelsets to define regions
 """
 from typing import Optional, List, Dict, Tuple
 import logging
+import warnings
 
 import numpy as np
 import shapely
@@ -19,7 +20,7 @@ import watershed_workflow.utils
 
 def addSurfaceRegions(m2 : Mesh2D,
                       column : str = 'land_cover',
-                      names : Optional[dict[str,int]] = None):
+                      names : Optional[dict[int, str]] = None):
     """Add labeled sets to a mesh -- one per unique color.
 
     Parameters
@@ -30,7 +31,8 @@ def addSurfaceRegions(m2 : Mesh2D,
       Dictionary mapping colors to color name.
 
     """
-    colors = m2.cells[column]
+    assert m2.cell_data is not None
+    colors = m2.cell_data[column].astype(int)
     inds = np.unique(colors)
 
     if names is None:
@@ -70,7 +72,7 @@ def addPolygonalRegions(m2 : Mesh2D,
         polygons = list(zip(polygons.df['geometry'], polygons.df[names.NAME]))
     logging.info(f"Adding regions for {len(polygons)} polygons")
 
-    partitions = [list() for p in polygons]
+    partitions : List[List[int]] = [list() for p in polygons]
     for c in range(m2.num_cells):
         cc = m2.centroids[c]
         cc = shapely.geometry.Point(cc[0], cc[1])
@@ -183,7 +185,7 @@ def addWatershedAndOutletRegions(m2 : Mesh2D,
                 boundary = hucs.exterior()
             except AttributeError:
                 boundary = shapely.ops.unary_union(hucs)
-            exterior_outlet_point = next(outlet for outlet in outlets
+            exterior_outlet_point = next(outlet for outlet in hucs.df[names.OUTLET]
                                          if outlet.buffer(500).intersects(boundary))
 
         outlet_faces = [e for e in m2.boundary_edges if isInsideBall(exterior_outlet_point, e)]
@@ -236,7 +238,7 @@ def addStreamOrderRegions(m2 : Mesh2D,
     """
     from collections import defaultdict
 
-    regions = defaultdict(list)
+    regions : Dict[int, List[int]] = defaultdict(list)
     for river in rivers:
         for reach in river.preOrder():
             order = reach[names.ORDER]
@@ -268,13 +270,11 @@ def addReachIDRegions(m2 : Mesh2D,
 
     from collections import defaultdict
 
-    regions = defaultdict(list)
+    regions : Dict[str, List[int]] = defaultdict(list)
     for reach in river.preOrder():
-        regions[reach[names.ID]].extend(range(reach[names.ELEMS_GID_START], reach[names.ELEMS_GID_START] + len(reach[names.ELEMS])))
+        regions[f'reach {reach[names.ID]}'] = list(range(reach[names.ELEMS_GID_START], reach[names.ELEMS_GID_START] + len(reach[names.ELEMS])))
 
-    partitions = [regions[order] for order in regions.keys()]
-
-    for label, part in zip(labels, partitions):
+    for label, part in regions.items():
         if len(part) > 0:
             setid2 = m2.getNextAvailableLabeledSetID()
             ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
