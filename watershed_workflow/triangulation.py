@@ -1,4 +1,6 @@
 """Triangulates polygons"""
+from typing import Tuple, List, Optional, Set
+
 import logging
 import collections
 import itertools
@@ -27,16 +29,16 @@ class Nodes:
     shouldn't have to round here at all, but we do anyway to keep
     things cleaner.
     """
-    def __init__(self, decimals=3):
+    def __init__(self, decimals : int = 3):
         self.decimals = decimals
         self._i = 0
-        self._store = collections.OrderedDict()
+        self._store : collections.OrderedDict[Tuple[float, ...], int] = collections.OrderedDict()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length is tracked by the counter"""
         return self._i
 
-    def __getitem__(self, key):
+    def __getitem__(self, key : Tuple[float, ...]) -> int:
         """Get item index, setting if default."""
         # Note this implementation could be optimized, and should be
         # done so assuming keys are NOT there, which is the most
@@ -53,17 +55,17 @@ class Nodes:
             yield k
 
 
-def connectOnewayTrip(inds):
+def connectOnewayTrip(inds : List[int]) -> List[Tuple[int, int]]:
     """Connect indices in edges in a oneway fashion"""
     return [(inds[i], inds[i + 1]) for i in range(len(inds) - 1)]
 
 
-def connectRoundTrip(inds):
+def connectRoundTrip(inds : List[int]) -> List[Tuple[int, int]]:
     """Connect indices in edges in a round-trip fashion"""
     return connectOnewayTrip(inds) + [(inds[-1], inds[0]), ]
 
 
-def orient(e):
+def orient(e : Tuple[int, int]) -> Tuple[int, int] | None:
     if e[0] > e[1]:
         return e[1], e[0]
     elif e[0] < e[1]:
@@ -74,25 +76,37 @@ def orient(e):
 
 class NodesEdges:
     """A collection of nodes and edges."""
-    def __init__(self, objlist=None):
+    def __init__(self,
+                 objlist : Optional[shapely.geometry.LineString | shapely.geometry.Polygon] = None):
         self.nodes = Nodes()
-        self.edges = set()
+        self.edges : Set[Tuple[int,int]] = set()
 
         if objlist != None:
-            [self.add(obj) for obj in objlist]
+            for obj in objlist:
+                self.add(obj)
 
-    def add(self, obj):
+    def add(self, obj : shapely.geometry.LineString | shapely.geometry.Polygon) -> None:
         """Adds nodes and edges from obj into collection."""
         if isinstance(obj, shapely.geometry.LineString):
             inds = [self.nodes[c] for c in obj.coords]
-            [self.edges.add(orient(e)) for e in connectOnewayTrip(inds) if orient(e)]
+
+            for e in connectOnewayTrip(inds):
+                oe = orient(e)
+                if oe is not None:
+                    self.edges.add(oe)
+
         elif isinstance(obj, shapely.geometry.Polygon):
             inds = [self.nodes[c] for c in obj.boundary.coords]
-            [self.edges.add(orient(e)) for e in connectRoundTrip(inds) if orient(e)]
+            
+            for e in connectRoundTrip(inds):
+                oe = orient(e)
+                if oe is not None:
+                    self.edges.add(oe)
+
         else:
             raise TypeError("Invalid type for add, %r" % type(obj))
 
-    def check(self, tol):
+    def check(self, tol : float) -> None:
         """Checks consistency of the internal representation."""
         logging.info(" checking graph consistency")
         logging.info(" tolerance is set to {}".format(tol))
@@ -119,12 +133,11 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs,
-                river_mesh=None,
-                internal_boundaries=None,
-                hole_points=None,
-                tol=1,
-                **kwargs):
+def triangulate(hucs : watershed_workflow.split_hucs.SplitHUCs,
+                internal_boundaries : Optional[List[shapely.geometry.LineString]] = None,
+                hole_points : Optional[List[shapely.geometry.Point]] = None,
+                tol : float = 1.0,
+                **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -152,7 +165,8 @@ def triangulate(hucs,
     logging.info("Triangulating...")
 
     # get a list of required boundaries, both interior and exterior
-    linestrings = []
+    linestrings : List[shapely.geometry.LineStrings] = []
+
     # -- internal boundaries may include a river mesh and must go first
     if internal_boundaries is not None:
         linestrings.extend(internal_boundaries)

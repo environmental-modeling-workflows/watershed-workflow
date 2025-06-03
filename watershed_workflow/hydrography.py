@@ -508,15 +508,20 @@ def snapReachEndpoints(hucs : SplitHUCs,
 
                     # only consider endpoints for whom one reach
                     # intersects the HUC boundary.  If the endpoint is
-                    # close but no reaches intersect the boundary, it is
-                    # likely that the endpoint is fully contained in the
-                    # polygon.  We remove the opposite endpoint to avoid
-                    # counting an intersection at the other end of the
-                    # reach.
+                    # close but no reaches intersect the boundary, it
+                    # is likely that the endpoint is fully contained
+                    # in the polygon.  We shrink the linestring at the
+                    # opposite endpoint to avoid counting an
+                    # intersection at the other end of the reach.
+                    def _shrinkLS(ls):
+                        coords = [c for c in ls.coords]
+                        coords[-1] = watershed_workflow.utils.computeMidpoint(coords[-2], coords[-1])
+                        return shapely.geometry.LineString(coords)
+                    
                     #
                     # this is the upstream point of this reach, so
                     # consider this and all children
-                    if any(watershed_workflow.utils.intersects(huc_ls, shapely.geometry.LineString(ls.coords[:-1])) for ls in reach_linestrings):
+                    if any(watershed_workflow.utils.intersects(huc_ls, _shrinkLS(ls)) for ls in reach_linestrings):
                         # find the nearest point to the endpoint if it is within tol
                         new_coord = watershed_workflow.utils.findNearestPoint(reach_ls.coords[0], huc_ls, tol)
                         if new_coord is not None:

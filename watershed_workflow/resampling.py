@@ -116,50 +116,48 @@ class ComputeTargetLengthByDistanceToShape(ComputeTargetLength):
 # resampleRivers()
 #
 @overload
-def resampleRivers(rivers : List[River], keep_points : bool = False) -> None:
+def resampleRivers(rivers : List[River], *, keep_points : bool = False) -> None:
     """Resamples each reach based on the TARGET_SEGMENT_LENGTH property."""
     ...
 
 @overload
-def resampleRivers(rivers : List[River], target_length : float, keep_points : bool = False) -> None:
+def resampleRivers(rivers : List[River], target_length : float, *, keep_points : bool = False) -> None:
     """Resamples each reach based on a given target length."""
     ...
 
 @overload
-def resampleRivers(rivers : List[River], target_length : ComputeTargetLength, keep_points : bool = False) -> None:
+def resampleRivers(rivers : List[River], target_length : ComputeTargetLength, *, keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
-def resampleRivers(rivers : List[River],
-                   target_length : Optional[float | ComputeTargetLength] = None,
-                   keep_points : bool = False) -> None:
+def resampleRivers(rivers: List[River],
+                   target_length: float | ComputeTargetLength | None = None,
+                   *, keep_points: bool = False) -> None:
     for river in rivers:
         _resampleRiverArgs(river, target_length, keep_points)
-
-
 
 #
 # resampleRiver()
 #
 @overload
-def resampleRiver(river : River, keep_points : bool = False) -> None:
+def resampleRiver(river : River, *, keep_points : bool = False) -> None:
     """Resamples each reach based on the TARGET_SEGMENT_LENGTH property."""
     ...
 
 @overload
-def resampleRiver(river : River, target_length : float, keep_points : bool = False) -> None:
+def resampleRiver(river : River, target_length : float, *, keep_points : bool = False) -> None:
     """Resamples each reach based on a given target length."""
     ...
 
 @overload
-def resampleRiver(river : River, target_length : ComputeTargetLength, keep_points : bool = False) -> None:
+def resampleRiver(river : River, target_length : ComputeTargetLength, *, keep_points : bool = False) -> None:
     """Resamples each reach based on a functor to provide the target length."""
     ...
 
 # could use functools singledispatch here but it seems unnecessary
 def resampleRiver(river : River,
                   target_length : Optional[float | ComputeTargetLength] = None,
-                  keep_points : bool = False) -> None:
+                  *, keep_points : bool = False) -> None:
     _resampleRiverArgs(river, target_length, keep_points)
 
 
@@ -194,7 +192,7 @@ def _resampleRiver(river : River,
 @overload
 def resampleSplitHUCs(hucs : SplitHUCs,
                       target_length : float,
-                      keep_points : bool = False) -> None:
+                      *, keep_points : bool = False) -> None:
     """Resamples each HUC boundary segment based on a given target length."""
     ...
 
@@ -202,7 +200,7 @@ def resampleSplitHUCs(hucs : SplitHUCs,
 def resampleSplitHUCs(hucs : SplitHUCs,
                       target_length : Tuple[float,float,float,float],
                       shp : shapely.geometry.base.BaseGeometry,
-                      keep_points : bool = False) -> None:
+                      *, keep_points : bool = False) -> None:
     """Resample each HUC boundary segment based on distance to a given shape.
 
     distance_args are [D1, L1, D2, L2], which provides for a linear
@@ -215,7 +213,7 @@ def resampleSplitHUCs(hucs : SplitHUCs,
 def resampleSplitHUCs(hucs : SplitHUCs,
                       target_length : float | Tuple[float,float,float,float],
                       shp : Optional[shapely.geometry.base.BaseGeometry] = None,
-                      keep_points : bool = False) -> None:
+                      *, keep_points : bool = False) -> None:
     if isinstance(target_length, list):
         target_length = tuple(target_length)
 

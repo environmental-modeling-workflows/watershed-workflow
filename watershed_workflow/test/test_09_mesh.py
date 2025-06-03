@@ -10,9 +10,9 @@ from watershed_workflow.test.shapes import two_boxes
 def check_2D_geometry(m2):
     assert (2 == m2.num_cells)
     assert (7 == m2.num_edges)
-    assert (6 == m2.num_nodes)
+    assert (6 == m2.num_vertices)
     assert (6 == len(m2.boundary_edges))
-    assert (6 == len(m2.boundary_nodes))
+    assert (6 == len(m2.boundary_vertices))
     assert (np.allclose(np.array([5, 0, 0]), m2.computeCentroid(0), 1.e-6))
     assert (np.allclose(np.array([15, 0, 0]), m2.computeCentroid(1), 1.e-6))
 
@@ -48,7 +48,7 @@ def test_extrude():
                                                         [1001, ])
     assert (20 == m3.num_cells)
     assert (7*10 + 2*11 == m3.num_faces)
-    assert (6 * 11 == m3.num_nodes)
+    assert (6 * 11 == m3.num_vertices)
 
 
 def test_write():

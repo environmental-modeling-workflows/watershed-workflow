@@ -1,3 +1,14 @@
+from typing import List, Dict, Tuple, Union
+
+try:
+    from matplotlib.colors import Color # type: ignore
+except ImportError:
+    Color = Union[
+        str,                       # named color, hex, grayscale str, shorthand
+        Tuple[float, float, float],         # RGB
+        Tuple[float, float, float, float],  # RGBA
+    ]
+
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -7,10 +18,12 @@ import collections
 import random
 import colorsys
 
+    
+
 #
 # Lists of disparate color palettes
 #
-enumerated_palettes = {
+enumerated_palettes : Dict[int, List[Color]] = {
     1: [
         '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf',
         '#999999'
@@ -29,57 +42,26 @@ enumerated_palettes = {
 
 
 
-def isNearlyGrey(color_hash, tolerance=10):
+def isNearlyGrey(color : Color,
+                 tolerance : float = 0.1) -> bool:
     """
-    Determines whether a color hash is nearly grey.
-
-    Parameters:
-        color_hash (str): A hex color string, e.g., "#A1A1A1".
-        tolerance (int): The maximum allowable difference between RGB values to consider the color grey.
-
-    Returns:
-        bool: True if the color is nearly grey, False otherwise.
-
-    This code was written by ChatGTP4.0.
+    Determines whether a color is nearly grey.
     """
     # Ensure the color hash is valid
-    if not isinstance(color_hash, str) or not color_hash.startswith("#") or len(color_hash) != 7:
-        raise ValueError("Invalid color hash. Must be a string in the format #RRGGBB.")
-
-    # Extract RGB values
-    try:
-        r = int(color_hash[1:3], 16)
-        g = int(color_hash[3:5], 16)
-        b = int(color_hash[5:7], 16)
-    except ValueError:
-        raise ValueError("Invalid color hash. RGB values must be hexadecimal.")
+    r,g,b,a = matplotlib.colors.to_rgba(color)
 
     # Check if the RGB values are within the tolerance range
     return abs(r - g) <= tolerance and abs(g - b) <= tolerance and abs(b - r) <= tolerance
 
 
-def measureBoldness(color_hash):
+def measureBoldness(color : Color) -> float:
     """
     Calculate a vibrancy and boldness score for a given color hash.
-
-    Args:
-        color_hash (str): A string representing the color hash (e.g., "#RRGGBB").
 
     Returns:
         float: A score representing how vibrant and bold the color is (0 to 100).
     """
-    # Ensure the hash is valid
-    if not color_hash.startswith("#") or len(color_hash) not in {7, 4}:
-        raise ValueError("Invalid color hash format. Use #RRGGBB or #RGB.")
-
-    # Convert shorthand #RGB to full #RRGGBB if necessary
-    if len(color_hash) == 4:
-        color_hash = "#" + "".join([char * 2 for char in color_hash[1:]])
-
-    # Extract RGB values
-    r = int(color_hash[1:3], 16) / 255.0
-    g = int(color_hash[3:5], 16) / 255.0
-    b = int(color_hash[5:7], 16) / 255.0
+    r,g,b,a = matplotlib.colors.to_rgba(color)
 
     # Convert RGB to HSL for better vibrancy measurement
     h, l, s = colorsys.rgb_to_hls(r, g, b)
@@ -118,7 +100,7 @@ enumerated_palettes[5] = xkcd_colors
 
 
 # this gives us way more unique colors to cycle through in plots
-matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=xkcd_bolds)
+matplotlib.rcParams['axes.prop_cycle'] = matplotlib.rcsetup.cycler(color=xkcd_bolds)
 
 
 def enumerated_colors(count, palette=1, chain=True):

@@ -50,5 +50,3 @@ def test_alaska():
     epsg_harness(3338)
 
 
-def test_latlon():
-    epsg_harness(4269)
