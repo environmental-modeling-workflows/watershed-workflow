@@ -6,6 +6,7 @@ import attr
 import xarray
 import shapely
 import rioxarray
+from typing import Tuple
 import geopandas as gpd
 from shapely.geometry import mapping
 import watershed_workflow.crs
