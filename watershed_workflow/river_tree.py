@@ -1013,6 +1013,7 @@ def pruneRiversByArea(rivers : List[River],
                       area : float,
                       prop : str = names.DRAINAGE_AREA) -> List[River]:
     """Both prunes reaches and filters rivers whose contributing area is less than area."""
+    num_reaches = sum(len(river) for river in rivers)
     count = 0
     sufficiently_big_rivers = []
     for river in rivers:
@@ -1021,7 +1022,7 @@ def pruneRiversByArea(rivers : List[River],
             sufficiently_big_rivers.append(river)
         else:
             count += len(river)
-    logging.info(f"... pruned {count}")
+    logging.info(f"... pruned {count} of {num_reaches}")
     return sufficiently_big_rivers
     
 

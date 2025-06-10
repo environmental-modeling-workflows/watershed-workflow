@@ -89,6 +89,7 @@ def findOutletsByCrossings(hucs : SplitHUCs,
     inlets = collections.defaultdict(list)
     itercount = 0
     done = False
+    last_outlet = None
     while not done:
         logging.info(f'Iteration = {itercount}')
         logging.info(f'-----------------')
@@ -140,9 +141,11 @@ def findOutletsByCrossings(hucs : SplitHUCs,
         itercount += 1
         done = itercount > 50 or len(outlets) == len(polygons) or len(new_outlets) == 0
 
-    logging.info(
-        f'last outlet is {last_outlet} in polygon {last_outlet_poly} at {crossings_clusters_centroids[last_outlet]}'
-    )
+    if last_outlet is not None:
+        logging.info(f'last outlet is {last_outlet} in polygon {last_outlet_poly} '
+                     'at {crossings_clusters_centroids[last_outlet]}')
+    else:
+        logging.info(f'did not find a domain outlet')
 
     # create the output
     outlet_locs = {}
