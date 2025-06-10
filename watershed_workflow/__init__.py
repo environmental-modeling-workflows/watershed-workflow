@@ -612,6 +612,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           **kwargs) -> \
                        Tuple[np.ndarray, List[List[int]]] | \
                        watershed_workflow.mesh.Mesh2D | \
+                       Tuple[np.ndarray, List[List[int]], geopandas.GeoDataFrame] | \
                        Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray] | \
                        Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
@@ -667,10 +668,12 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         ax = None
 
-    river_coords, river_elems, river_corridors, hole_points = \
+    river_coords, river_elems, river_corridors, hole_points, intersections = \
         watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
     if debug:
         plt.show()
+    if intersections is not None:
+        return river_coords, river_elems, intersections
 
     # triangulate the rest
     if internal_boundaries is None:

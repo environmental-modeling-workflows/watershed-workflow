@@ -53,10 +53,9 @@ class ManagerRaster:
         Note that the raster provided is in its native CRS (which is in the
         rasterio profile), not the shape's CRS.
         """
-        
+        if isinstance(geometry, tuple) and len(geometry) == 4:
+            geometry = shapely.geometry.box(*geometry)
+
         dataset = rioxarray.open_rasterio(self._filename, masked=False)
-        gdf = gpd.GeoDataFrame(geometry=[geometry,], crs=geometry_crs)
-        if not watershed_workflow.crs.isEqual(geometry_crs, dataset.rio.crs):
-            gdf = gdf.to_crs(dataset.rio.crs)
-        return dataset.rio.clip(gdf.geometry.apply(mapping), gdf.crs, drop=True)
+        return dataset.rio.clip([shapely.geometry.mapping(geometry),], geometry_crs, drop=True)
   

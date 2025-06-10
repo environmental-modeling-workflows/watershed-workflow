@@ -54,6 +54,7 @@ class ManagerWaterData(ManagerHyRiver):
         _tryRename(df, 'areasqkm', names.CATCHMENT_AREA)
         _tryRename(df, 'streamorde', names.ORDER)
         _tryRename(df, 'totdasqkm', names.DRAINAGE_AREA)
+        _tryRename(df, 'geometry_ca', names.CATCHMENT)
         return df
             
     def getShapesByGeometry(self,

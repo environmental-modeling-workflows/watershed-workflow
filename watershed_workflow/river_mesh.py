@@ -76,7 +76,9 @@ def createRiversMesh(hucs : SplitHUCs,
                      Tuple[np.ndarray,
                            List[List[int]],
                            List[shapely.geometry.Polygon],
-                           List[shapely.geometry.Point]]:
+                           List[shapely.geometry.Point],
+                           gpd.GeoDataFrame | None,
+                           ]:
     """Creates meshes for each river and merges them."""
     elems : List[List[int]] = []
     coords : List[np.ndarray] = []
@@ -95,6 +97,7 @@ def createRiversMesh(hucs : SplitHUCs,
         adjustHUCsToRiverMesh(hucs, river, lcoords)
 
         if ax is not None:
+            logging.info('Plotting the river mesh')
             _plotRiver(river, lcoords, ax)
 
         # hole point is the centroid of the outlet element
@@ -116,8 +119,37 @@ def createRiversMesh(hucs : SplitHUCs,
 
     all_coords = np.concatenate(coords)
         
-    assert _isNonoverlapping(all_coords, elems)
-    return all_coords, elems, corridors, hole_points
+    if not _isNonoverlapping(all_coords, elems):
+        logging.warning(f'Found at least one intersection overlapping elements in the river mesh... searching for the first intersection now')
+
+        # find overlaps
+        # -- create reach polygons
+        reach_polys = [shapely.unary_union([shapely.geometry.Polygon([all_coords[e] for e in elem]) for elem in reach[names.ELEMS]])
+                       for river in rivers for reach in river]
+        reach_ids = [reach[names.ID] for river in rivers for reach in river]
+
+        # -- find pairwise intersections
+        intersection_i = []
+        intersection_j = []
+        intersection_p = []
+        for i in range(0, len(reach_polys) - 1):
+            for j in range(i+1, len(reach_polys)):
+                if reach_polys[i].intersection(reach_polys[j]).area > 0:
+                    intersection_i.append(reach_ids[i])
+                    intersection_j.append(reach_ids[j])
+                    intersection_p.append(reach_polys[i].intersection(reach_polys[j]))
+        
+        intersections_df = gpd.GeoDataFrame(data={'i': intersection_i,
+                                                  'j': intersection_j,},
+                                            geometry=intersection_p,
+                                            crs=hucs.crs)
+        if ax is not None:
+            intersections_df.plot(color='k', ax=ax)
+
+    else:
+        intersections_df = None
+        
+    return all_coords, elems, corridors, hole_points, intersections_df
         
         
 def createRiverMesh(river : River,
