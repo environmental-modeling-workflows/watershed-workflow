@@ -1,0 +1,2204 @@
+"""Functions used in interacting with data, either pandas DataFrames or xarray DataArrays."""
+
+from typing import Union, List, Iterable, Tuple, Any, Optional, Literal, overload
+from xarray.core.types import InterpOptions
+
+import warnings
+import cftime
+import datetime
+import pandas as pd
+import numpy as np
+import xarray as xr
+import scipy.spatial
+import scipy.signal
+import scipy.stats
+import scipy.ndimage
+
+import watershed_workflow.crs
+from watershed_workflow.crs import CRS
+
+ValidTime = Union[cftime._cftime.datetime, pd.Timestamp, datetime.datetime, np.datetime64]
+ValidTimeSeries = Union[pd.Series, np.ndarray, List[ValidTime]]
+CFTimeSeries = Union[pd.Series, np.ndarray, List[cftime._cftime.datetime]]
+CFTimeNoLeapSeries = Union[pd.Series, np.ndarray, List[cftime.DatetimeNoLeap]]
+    
+
+#
+# Helper functions
+#
+def _convertTimesToCFTime(time_values: ValidTimeSeries) -> CFTimeSeries:
+    """Convert an iterable of datetime objects to cftime object.
+    
+    This function accepts various datetime types and converts them to
+    cftime Gregorian calendar while preserving the input container
+    type. Raises an error if any input date represents the 366th day
+    of a year (leap day in DayMet convention).
+    
+    Parameters
+    ----------
+    time_values
+        Iterable of datetime objects (numpy datetime64, pandas Timestamp, 
+        Python datetime, or cftime objects). All elements must be the same type.
+        
+    Returns
+    -------
+    Container of cftime.DatetimeGregorian objects with same type as input:
+    - pandas.Series if input is pandas.Series
+    - numpy.ndarray if input is numpy.ndarray  
+    - List otherwise
+
+    Raises
+    ------
+    ValueError
+        If the calendars do not match.
+
+    """
+    # Determine input type and convert to list for processing
+    if isinstance(time_values, (pd.Series, np.ndarray)):
+        input_type = type(time_values)
+        time_list = list(time_values)
+    else:
+        input_type = list
+        time_list = list(time_values)
+    
+    # Handle empty input
+    if len(time_list) == 0:
+        if input_type == pd.Series:
+            return pd.Series([], dtype=object)
+        elif input_type == np.ndarray:
+            return np.array([], dtype=object)
+        else:
+            return []
+    
+    # Get a sample time and conditional on type
+    sample_time = time_list[0]
+    if isinstance(sample_time, cftime._cftime.datetime):
+        return time_values
+    elif isinstance(sample_time, (np.datetime64, datetime.datetime)):
+        time_list = pd.to_datetime(time_list).tolist()
+            
+    if not isinstance(time_list[0], pd.Timestamp):
+        raise TypeError(f'Cannot convert items of type {type(time_list[0])} to cftime.')
+
+    # convert pd.Timestamp to cftime
+    ret = [cftime.DatetimeGregorian(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond) for t in time_list]
+    
+    # Return in the same container type as input
+    if input_type == pd.Series:
+        return pd.Series(ret, dtype=object)
+    elif input_type == np.ndarray:
+        return np.array(ret, dtype=object)
+    else:
+        return ret
+
+
+def _convertTimesToCFTimeNoleap(time_values: CFTimeSeries) -> CFTimeNoLeapSeries:
+    """
+    Convert an iterable of cftime objects on any calendar to cftime DatetimeNoLeap calendar.
+    
+    This function accepts various datetime types and converts them to cftime NoLeap
+    calendar while preserving the input container type. Raises an error if any
+    input date represents the 366th day of a year (leap day in DayMet convention).
+    
+    Parameters
+    ----------
+    time_values
+        Iterable of datetime objects (numpy datetime64, pandas Timestamp, 
+        Python datetime, or cftime objects). All elements must be the same type.
+        
+    Returns
+    -------
+    Container of cftime.DatetimeNoLeap objects with same type as input:
+    - pandas.Series if input is pandas.Series
+    - numpy.ndarray if input is numpy.ndarray  
+    - List otherwise
+        
+    Raises
+    ------
+    ValueError
+        If any date in the input represents the 366th day of a year (leap day).
+    """
+    if len(time_values) == 0:
+        if isinstance(time_values, np.ndarray):
+            return np.array([], dtype='object')
+        else:
+            return type(time_values)()
+    
+    dayofyr = [t.dayofyr for t in time_values]
+
+    if max(dayofyr) == 366:
+        raise ValueError(f"Input contains leap day(s) (366th day of year)")
+
+    time_values_noleap = [cftime.DatetimeNoLeap(t.year, 1, 1, t.hour, t.minute, t.second, t.microsecond)
+                          + datetime.timedelta(days=(t.dayofyr - 1)) for t in time_values]
+    
+    # Return in the same container type as input
+    if isinstance(time_values, pd.Series):
+        return pd.Series(time_values_noleap, dtype=object)
+    elif isinstance(time_values, np.ndarray):
+        return np.array(time_values_noleap, dtype=object)
+    else:
+        return time_values_noleap
+
+
+def _createNoleapMask(time_values : ValidTimeSeries)-> Tuple[CFTimeNoLeapSeries, List[bool]]:
+    """Mask that is true for any non-leap-day (day 366)"""
+    # no times --> no leap days
+    if len(time_values) == 0:
+        return list(), list()
+        
+    # cftime.DataNoleap --> no leap days
+    if isinstance(time_values[0], cftime.DatetimeNoLeap):
+        return time_values, [True,]*len(time_values)
+    
+    # Get the time column is in cftime format
+    time_in_cftime = _convertTimesToCFTime(time_values)
+    mask = [(t.dayofyr != 366) for t in time_in_cftime]
+    return time_in_cftime[mask], mask 
+
+    
+def _generateRegularTimes(
+    start_time: cftime.datetime,
+    end_time: cftime.datetime,
+    interval: int
+) -> List[cftime.datetime]:
+    """
+    Generate regular cftime grid between start and end times.
+    
+    Parameters
+    ----------
+    start_time : cftime.datetime
+        Start time for the grid.
+    end_time : cftime.datetime
+        End time for the grid.
+    interval : int
+        Interval in days between grid points.
+        
+    Returns
+    -------
+    list of cftime.datetime
+        Regular time grid.
+    """
+    regular_times = []
+    current_time = cftime.DatetimeNoLeap(start_time.year, start_time.month, start_time.day)
+    
+    while current_time <= end_time:
+        regular_times.append(current_time)
+        current_time = current_time + datetime.timedelta(days=interval)
+    
+    return regular_times
+
+
+def _convertDataFrameToDataset(
+        df: pd.DataFrame,
+        time_column: str,
+        columns: List[str] | None 
+        ) -> Tuple[List[str], xr.Dataset]:
+    """Helper function to convert from DataFrame to Dataset to share code."""
+    if time_column not in df.columns:
+        raise ValueError(f"Column '{time_column}' not found in DataFrame")
+
+    # Sort by time
+    df_sorted = df.sort_values(time_column).copy()
+    
+    # Identify columns to average
+    if columns is None:
+        # Get all numeric columns except time column
+        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+        columns_out = [col for col in numeric_cols if col != time_column]
+    else:
+        # Validate specified columns
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
+        
+        # Filter to only numeric columns from the specified list
+        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+        columns_out = [col for col in columns if col in numeric_cols and col != time_column]
+        
+        # Warn if any specified columns are non-numeric
+        non_numeric_specified = [col for col in columns if col not in numeric_cols]
+        if non_numeric_specified:
+            warnings.warn(f"Non-numeric columns will be ignored: {non_numeric_specified}")
+    
+    # Create Dataset from numeric columns
+    data_vars = {}
+    for col in columns_out:
+        data_vars[col] = xr.DataArray(
+            df_sorted[col].values,
+            coords={time_column: df_sorted[time_column].values},
+            dims=[time_column]
+        )
+    
+    if len(data_vars) == 0:
+        raise ValueError(f"No numeric columns provided or found.")
+
+    return columns_out, xr.Dataset(data_vars)
+
+
+def _convertDatasetToDataFrame(
+        ds: xr.Dataset,
+        time_column : str,
+        output_times : pd.Series,
+        columns: List[str]
+        ) -> pd.DataFrame:
+    """Invert the above operation, converting from Dataset to DataFrame."""
+    result_df = ds.to_dataframe().reset_index()
+    result_df[time_column] = output_times
+    
+    # Ensure column order: time column first, then others in original order
+    cols_order = [time_column] + [col for col in columns if col in result_df.columns]
+    result_df = result_df[cols_order]
+    return result_df
+    
+
+def computeMode(
+    da: xr.DataArray,
+    time_dim: str = 'time'
+) -> xr.DataArray:
+    """
+    Compute the mode along the time dimension of a DataArray.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray. Can contain any data type that scipy.stats.mode can handle.
+    time_dim : str, optional
+        Name of the time dimension along which to compute the mode. Default is 'time'.
+        
+    Returns
+    -------
+    xr.DataArray
+        DataArray with the mode computed along the time dimension. The time dimension
+        is removed from the output. All other dimensions, coordinates, and attributes
+        are preserved. In case of multiple modes, returns the smallest value.
+        
+    Raises
+    ------
+    ValueError
+        If the specified time dimension is not found in the DataArray.
+        
+    Notes
+    -----
+    For continuous data, the mode may not be meaningful. This function is most
+    useful for discrete or categorical data.
+    
+    When multiple values have the same highest frequency (multiple modes), 
+    scipy.stats.mode returns the smallest of these values.
+    
+    NaN values are ignored in the mode calculation.
+
+    """
+    if time_dim not in da.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    # Get the axis number for time dimension
+    time_axis = da.dims.index(time_dim)
+    
+    if np.issubdtype(da.dtype, np.integer) or np.issubdtype(da.dtype, np.floating):
+        # For numeric data, use scipy.stats.mode
+        mode_result = scipy.stats.mode(da.values, axis=time_axis, nan_policy='omit', keepdims=False)
+        mode_values = mode_result.mode
+    else:
+        raise ValueError('Non-numeric data modes are not implemented.')
+    
+    # Create coordinates for the result (all except time dimension)
+    new_coords = {k: v for k, v in da.coords.items() if k != time_dim}
+    
+    # Create new dimensions list (all except time dimension)
+    new_dims = [d for d in da.dims if d != time_dim]
+    
+    # Create result DataArray
+    result = xr.DataArray(
+        mode_values,
+        dims=new_dims,
+        coords=new_coords,
+        attrs=da.attrs.copy()
+    )
+    
+    # Preserve the name if it exists
+    if da.name is not None:
+        result.name = f"{da.name}_mode"
+    
+    return result
+
+
+#
+# filter leap day
+#
+def filterLeapDay_DataFrame(df: pd.DataFrame, time_column: str = 'time') -> pd.DataFrame:
+    """
+    Remove day 366 (Dec 31) from leap years and convert time column to CFTime noleap calendar.
+    
+    Parameters
+    ----------
+    df
+        Input DataFrame containing time series data.
+    time_column
+        Name of the column containing datetime data. Must be convertible to pandas datetime.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with day 366 of leap years removed and time column converted to 
+        cftime noleap calendar format.
+        
+    Raises
+    ------
+    ValueError
+        If `time_column` is not found in the DataFrame.
+        If the time column cannot be converted to datetime format.
+        
+    Notes
+    -----
+    Day 366 only occurs on December 31st in leap years. The function assumes that
+    the input time column is not already in cftime noleap format, as noleap 
+    calendars by definition do not have day 366.
+    
+    The DataFrame index is reset after filtering to ensure continuous indexing.
+    """
+    # Validate inputs
+    try:
+        time_series = df[time_column]
+    except KeyError:
+        raise ValueError(f"Column '{time_column}' not found in DataFrame")
+
+    # no times --> no leap days
+    if len(time_series) == 0:
+        return df
+        
+    # cftime.DataNoleap --> no leap days
+    if isinstance(time_series[0], cftime.DatetimeNoLeap):
+        return df
+    
+    # Get the time column is in cftime format, and a mask that is True for any non-leap-days
+    try:
+        time_series_cftime, mask = _createNoleapMask(time_series)
+    except Exception as e:
+        raise ValueError(f"Could not convert column '{time_column}' to cftime: {e}")
+
+    # Apply the filter
+    df_filtered = df[mask].reset_index(drop=True)
+    
+    # Convert the time column to CFTime noleap calendar
+    df_filtered[time_column] = _convertTimesToCFTimeNoleap(time_series_cftime)
+    
+    return df_filtered
+
+
+def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset, time_dim: str = 'time'
+                         )-> xr.DataArray | xr.Dataset:
+    """
+    Remove day 366 (Dec 31) from leap years and convert time dimension to CFTime noleap calendar.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray with a time dimension. The time dimension must contain
+        datetime-like values that can be converted to pandas datetime.
+        
+    Returns
+    -------
+    xr.DataArray
+        DataArray with day 366 of leap years removed and time dimension converted to 
+        cftime noleap calendar format. All attributes, including rasterio-specific
+        attributes like 'nodata' and 'crs', are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If the DataArray does not have a 'time' dimension.
+        If the time dimension cannot be converted to datetime format.
+        
+    Notes
+    -----
+    Day 366 only occurs on December 31st in leap years. The function assumes that
+    the input time dimension is not already in cftime noleap format, as noleap 
+    calendars by definition do not have day 366.
+    
+    For rasterio-based DataArrays, this function preserves the coordinate reference
+    system (CRS) and nodata value attributes. All other attributes are also preserved.
+    
+    The time dimension name is preserved, but its values are replaced with cftime
+    noleap calendar objects.
+    """
+    # deal with missing time_dim
+    try:
+        time_series = da[time_dim]
+    except KeyError:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+
+    # deal with empty time_dim
+    if len(time_series) == 0:
+        return da
+    
+    # Create mask for values to keep (exclude day 366 in leap years)
+    time_array_cftime, mask = _createNoleapMask(time_series.values)
+    
+    # Apply the filter to the DataArray
+    da_filtered = da.isel({time_dim:mask})
+    
+    # Convert the filtered time values to cftime noleap
+    time_array_noleap = _convertTimesToCFTimeNoleap(time_array_cftime)
+    
+    # Replace the time coordinate with cftime noleap
+    da_filtered = da_filtered.assign_coords({time_dim : time_array_noleap})
+    
+    # Preserve all attributes from the original DataArray
+    da_filtered.attrs = da.attrs.copy()
+    
+    # Preserve coordinate attributes (including CRS if present)
+    for coord in da_filtered.coords:
+        if coord in da.coords and hasattr(da.coords[coord], 'attrs'):
+            da_filtered.coords[coord].attrs = da.coords[coord].attrs.copy()
+    
+    # Preserve attributes for all variables in a Dataset
+    if hasattr(da_filtered, 'data_vars'):
+        for var in da_filtered.data_vars:
+            if var in da.data_vars and hasattr(da[var], 'attrs'):
+                da_filtered[var].attrs = da[var].attrs.copy()
+    
+    return da_filtered
+
+
+@overload
+def filterLeapDay(data: xr.Dataset, time_column: str = 'time') -> xr.Dataset: ...
+
+@overload
+def filterLeapDay(data: xr.DataArray, time_column: str = 'time') -> xr.DataArray: ...
+
+@overload
+def filterLeapDay(data: pd.DataFrame, time_column: str = 'time') -> pd.DataFrame: ...
+
+def filterLeapDay(
+        data: Union[pd.DataFrame, xr.DataArray, xr.Dataset], 
+        time_column: str = 'time') -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """
+    Remove day 366 (Dec 31) from leap years and convert time to CFTime noleap calendar.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataFrame, DataArray, or Dataset.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Input data containing time series information to filter.
+    time_column : str, optional
+        For DataFrame: Name of the column containing datetime data (required).
+        For Dataset: Name of the time dimension (defaults to 'time').
+        For DataArray: Ignored (always uses 'time' dimension).
+        
+    Returns
+    -------
+    pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Same type as input with day 366 of leap years removed and time 
+        converted to cftime noleap calendar format.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataFrame, DataArray, or Dataset.
+        If DataFrame is provided without time_column.
+    ValueError
+        If time column/dimension is not found or cannot be converted to datetime.
+        
+    Notes
+    -----
+    Day 366 only occurs on December 31st in leap years. The function assumes that
+    the input time data is not already in cftime noleap format, as noleap 
+    calendars by definition do not have day 366.
+    
+    For DataFrames:
+        - time_column parameter is required
+        - DataFrame index is reset after filtering
+        
+    For DataArrays & Datasets:
+        - time_column parameter specifies the time dimension (default: 'time')
+        - All attributes including rasterio-specific ones are preserved
+        
+    See Also
+    --------
+    filterLeapDay_DataFrame : DataFrame-specific implementation
+    filterLeapDay_DataArray : DataArray-specific implementation  
+    filterLeapDay_Dataset : Dataset-specific implementation
+    """
+    if isinstance(data, (xr.Dataset, xr.DataArray)):
+        # Dataset can use custom time dimension name
+        return filterLeapDay_xarray(data, time_dim=time_column)
+    
+    elif isinstance(data, pd.DataFrame):
+        if time_column is None:
+            raise TypeError("time_column parameter is required for DataFrame input")
+        return filterLeapDay_DataFrame(data, time_column)
+    
+    else:
+        raise TypeError(
+            f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
+            f"Got {type(data).__name__}"
+        )
+
+
+#
+# interpolate onto a regular time interval
+#
+def _interpolateDataset(
+    ds: xr.Dataset,
+    regular_times: List[cftime.datetime],
+    time_dim: str = 'time',
+    method: 'InterpOptions' = 'linear',
+    limit: Optional[int] = None
+) -> xr.Dataset:
+    """
+    Interpolate xr Dataset to regular time intervals.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset to interpolate.
+    regular_times : list of cftime.datetime
+        Regular time grid to interpolate to.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+    limit : int, optional
+        Maximum number of consecutive NaNs to fill.
+        
+    Returns
+    -------
+    xr.Dataset
+        Interpolated Dataset on regular time grid.
+    """
+    # Interpolate to regular grid
+    ds_interp = ds.interp(
+        {time_dim: regular_times},
+        method=method,
+        kwargs={'fill_value': 'extrapolate'} if method in ['linear', 'nearest'] else {}
+    )
+    
+    # Apply limit if specified
+    if limit is not None:
+        for var in ds_interp.data_vars:
+            # Find gaps larger than limit
+            is_nan = np.isnan(ds_interp[var].values)
+            if np.any(is_nan):
+                # Identify consecutive NaN groups
+                diff = np.diff(np.concatenate(([False], is_nan, [False])).astype(int))
+                starts = np.where(diff == 1)[0]
+                ends = np.where(diff == -1)[0]
+                
+                # Restore NaNs for gaps larger than limit
+                for start, end in zip(starts, ends):
+                    if end - start > limit:
+                        ds_interp[var].values[start:end] = np.nan
+    
+    return ds_interp
+
+
+def interpolateToRegular_DataArray(
+    da: xr.DataArray,
+    interval: Optional[Literal[1, 5]] = 1,
+    time_dim: str = 'time',
+    method: 'InterpOptions' = 'linear',
+    limit: Optional[int] = None
+) -> xr.DataArray:
+    """
+    Interpolate DataArray with cftime calendar to regular 1- or 5-day intervals.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray with a time dimension containing cftime objects.
+    interval : {1, 5}, optional
+        Time interval in days for the regular grid. Default is 1.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+    limit : int, optional
+        Maximum number of consecutive NaNs to fill. Default is None (no limit).
+        
+    Returns
+    -------
+    xr.DataArray
+        DataArray with regular time intervals and interpolated values.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found or interval is not 1 or 5.
+    """
+    # Create temporary Dataset for interpolation
+    temp_ds = xr.Dataset({da.name or 'data': da})
+    
+    # Interpolate
+    interp_ds = interpolateToRegular_Dataset(temp_ds, interval, time_dim, method, limit)
+    
+    # Extract the DataArray
+    result = interp_ds[da.name or 'data']
+    
+    # Preserve original attributes
+    result.attrs = da.attrs.copy()
+    return result
+
+
+def interpolateToRegular_Dataset(
+    ds: xr.Dataset,
+    interval: Optional[Literal[1, 5]] = 1,
+    time_dim: str = 'time',
+    method: 'InterpOptions' = 'linear',
+    limit: Optional[int] = None,
+    variables: Optional[List[str]] = None
+) -> xr.Dataset:
+    """
+    Interpolate Dataset with cftime calendar to regular 1- or 5-day intervals.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset with a time dimension containing cftime objects.
+    interval : {1, 5}, optional
+        Time interval in days for the regular grid. Default is 1.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+    limit : int, optional
+        Maximum number of consecutive NaNs to fill. Default is None (no limit).
+    variables : list of str, optional
+        List of variables to interpolate. If None, interpolates all variables
+        with the time dimension.
+        
+    Returns
+    -------
+    xr.Dataset
+        Dataset with regular time intervals and interpolated values.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found or interval is not 1 or 5.
+    """
+    if time_dim not in ds.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    if interval not in [1, 5]:
+        raise ValueError(f"Interval must be 1 or 5, got {interval}")
+    
+    # Get time range
+    time_values = ds[time_dim].values
+    start_time = min(time_values)
+    end_time = max(time_values)
+    
+    # Generate regular times
+    regular_times = _generateRegularTimes(start_time, end_time, interval)
+    
+    # Select variables to interpolate
+    if variables is None:
+        # Interpolate all variables that have the time dimension
+        ds_to_interp = ds
+    else:
+        # Validate variables
+        missing = [v for v in variables if v not in ds.data_vars]
+        if missing:
+            raise ValueError(f"Variables not found in Dataset: {missing}")
+        
+        # Select only specified variables (plus coordinates)
+        ds_to_interp = ds[variables]
+    
+    # Interpolate
+    result = _interpolateDataset(ds_to_interp, regular_times, time_dim, method, limit)
+    
+    # Add back any variables that weren't interpolated
+    for var in ds.data_vars:
+        if var not in result.data_vars:
+            if time_dim not in ds[var].dims:
+                # Variable doesn't have time dimension, just copy it
+                result[var] = ds[var]
+    
+    # Preserve Dataset attributes
+    result.attrs = ds.attrs.copy()
+    
+    return result
+
+
+def interpolateToRegular_DataFrame(
+    df: pd.DataFrame,
+    interval: Optional[Literal[1, 5]] = 1,
+    time_column: str = 'time',
+    method: 'InterpOptions' = 'linear',
+    limit: Optional[int] = None,
+    columns: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Interpolate DataFrame with cftime calendar to regular 1- or 5-day intervals.
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input DataFrame with a time column containing cftime objects.
+    time_column : str
+        Name of the column containing cftime datetime objects.
+    interval : {1, 5}, optional
+        Time interval in days for the regular grid. Default is 1.
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+    limit : int, optional
+        Maximum number of consecutive NaNs to fill. Default is None (no limit).
+    columns : list of str, optional
+        List of columns to interpolate. If None, interpolates all numeric columns.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with regular time intervals and interpolated values.
+        
+    Raises
+    ------
+    ValueError
+        If time_column is not found or interval is not 1 or 5.
+    """
+    # Validate inputs
+    if interval not in [1, 5]:
+        raise ValueError(f"Interval must be 1 or 5, got {interval}")
+    
+    # Get time range
+    time_values = df[time_column].values
+    start_time = min(time_values)
+    end_time = max(time_values)
+    
+    # Generate regular times
+    regular_times = _generateRegularTimes(start_time, end_time, interval)
+    
+    # convert from df to ds
+    columns_to_interp, ds = _convertDataFrameToDataset(df, time_column, columns)
+    
+    # Interpolate
+    ds_interp = _interpolateDataset(ds, regular_times, time_column, method, limit)
+    
+    # Convert back to DataFrame
+    return _convertDatasetToDataFrame(ds_interp, time_column, regular_times, columns_to_interp)
+
+
+@overload
+def interpolateToRegular(
+    data: xr.Dataset,
+        interval: Literal[1, 5] = ...,
+        time_dim: str = ...,
+        method: InterpOptions = ...,
+        limit: Optional[int] = None,
+        variables: Optional[List[str]] = None,
+) -> xr.Dataset: ...
+
+@overload
+def interpolateToRegular(
+    data: xr.DataArray,
+        interval: Literal[1, 5] = ...,
+        time_dim: str = ...,
+        method: InterpOptions = ...,
+        limit: Optional[int] = None,
+        variables: Optional[List[str]] = None,
+) -> xr.DataArray: ...
+
+@overload
+def interpolateToRegular(
+        data: pd.DataFrame,
+        interval: Literal[1, 5] = ...,
+        time_dim: str = ...,
+        method: InterpOptions = ...,
+        limit: Optional[int] = None,
+        variables: Optional[List[str]] = None,
+) -> pd.DataFrame: ...
+
+
+def interpolateToRegular(
+        data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+        interval: Optional[Literal[1, 5]] = 1,
+        time_dim: str = 'time',
+        method: InterpOptions = 'linear',
+        limit: Optional[int] = None,
+        variables: Optional[List[str]] = None,
+) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """
+    Interpolate data with cftime calendar to regular 1- or 5-day intervals.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataFrame, DataArray, or Dataset.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Input data containing time series with cftime calendar.
+    interval : {1, 5}, optional
+        Time interval in days for the regular grid. Default is 1.
+    time_dim : str, optional
+        For DataFrame: Name of the time column (required).
+        For Dataset/DataArray: Name of the time dimension (default: 'time').
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+    limit : int, optional
+        Maximum number of consecutive NaNs to fill. Default is None (no limit).
+    variables : list of str, optional
+        For DataFrame: List of columns to interpolate.
+        For Dataset: List of variables to interpolate.
+        For DataArray: Ignored.
+        
+    Returns
+    -------
+    pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Same type as input with regular time intervals and interpolated values.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataFrame, DataArray, or Dataset.
+    ValueError
+        If required parameters are missing or invalid.
+        
+    See Also
+    --------
+    interpolateToRegular_DataFrame : DataFrame-specific implementation
+    interpolateToRegular_DataArray : DataArray-specific implementation  
+    interpolateToRegular_Dataset : Dataset-specific implementation
+    """
+    if isinstance(data, xr.Dataset):
+        return interpolateToRegular_Dataset(data, interval, time_dim, method, limit, variables)
+
+    elif isinstance(data, xr.DataArray):
+        return interpolateToRegular_DataArray(data, interval, time_dim, method, limit)
+    
+    elif isinstance(data, pd.DataFrame):
+        return interpolateToRegular_DataFrame(data, interval, time_dim, method, limit, variables)
+    
+    else:
+        raise TypeError(
+            f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
+            f"Got {type(data).__name__}"
+        )    
+
+
+#
+# Compute an annual average
+#
+def _computeAnnualAverage(
+    ds: xr.Dataset,
+    time_dim: str,
+    start_date: cftime.datetime,
+    num_years: int
+) -> Tuple[xr.Dataset, List[cftime.datetime]]:
+    """
+    Compute annual average for a Dataset and generate output times.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset with cftime noleap calendar dates.
+    time_dim : str
+        Name of the time dimension.
+    start_date : cftime.datetime
+        Start date for the output time series.
+    num_years : int
+        Number of years to repeat the averaged pattern.
+        
+    Returns
+    -------
+    averaged_ds : xr.Dataset
+        Dataset with averaged values indexed by day of year.
+    output_times : list of cftime.datetime
+        List of output times for the repeated pattern.
+    """
+    # Calculate day of year for each time point
+    time_values = ds[time_dim].values
+    doys = np.array([
+        (date - cftime.DatetimeNoLeap(date.year, 1, 1)).days + 1
+        for date in time_values
+    ])
+    
+    # Get unique days of year
+    unique_doys = np.unique(doys)
+    
+    # Add day of year coordinate temporarily
+    ds_with_doy = ds.assign_coords(day_of_year=(time_dim, doys))
+    
+    # Group by day of year and compute mean
+    averaged_ds = ds_with_doy.groupby('day_of_year').mean(dim=time_dim)
+    
+    # Create output times
+    output_times = []
+    output_doys = []
+    
+    for year_offset in range(num_years):
+        current_year = start_date.year + year_offset
+        
+        for doy in unique_doys:
+            date = cftime.DatetimeNoLeap(current_year, 1, 1) + datetime.timedelta(days=int(doy-1))
+            output_times.append(date)
+            output_doys.append(doy)
+    
+    # Create mapping from output indices to day of year
+    output_doys_array = xr.DataArray(output_doys, dims=['new_time'])
+    
+    # Create result by selecting appropriate days
+    result_ds = averaged_ds.sel(day_of_year=output_doys_array)
+    result_ds = result_ds.rename({'new_time': time_dim})
+    
+    # Drop day_of_year coordinate
+    if 'day_of_year' in result_ds.coords:
+        result_ds = result_ds.drop_vars('day_of_year')
+    
+    return result_ds, output_times
+
+
+def _parseStartDate(start_date: Union[str, datetime.datetime, cftime.datetime]) -> cftime.datetime:
+    """
+    Parse start_date into cftime.DatetimeNoLeap.
+    
+    Parameters
+    ----------
+    start_date : str, datetime, or cftime.datetime
+        Start date in various formats.
+        
+    Returns
+    -------
+    cftime.DatetimeNoLeap
+        Parsed start date.
+    """
+    if isinstance(start_date, str):
+        parts = start_date.split('-')
+        return cftime.DatetimeNoLeap(int(parts[0]), int(parts[1]), int(parts[2]))
+    elif isinstance(start_date, datetime.datetime):
+        return cftime.DatetimeNoLeap(start_date.year, start_date.month, start_date.day)
+    else:
+        return start_date
+
+
+def computeAnnualAverage_DataFrame(
+    df: pd.DataFrame,
+    time_column: str = 'time',
+    start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
+    num_years: int = 2,
+    columns: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Average DataFrame values across years and repeat for specified number of years.
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input DataFrame with cftime noleap calendar dates at 1- or 5-day intervals.
+    time_column : str
+        Name of the column containing cftime datetime objects.
+    start_date : str, datetime, or cftime.datetime
+        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    num_years : int
+        Number of years to repeat the averaged pattern.
+    columns : list of str, optional
+        List of columns to average. If None, averages all numeric columns.
+        Non-numeric columns are always ignored.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with averaged values repeated for the specified number of years,
+        starting from start_date. Only includes the time column and averaged numeric columns.
+        
+    Raises
+    ------
+    ValueError
+        If time_column is not found or contains invalid data.
+        If specified columns are not found in the DataFrame.
+        
+    Notes
+    -----
+    The function computes the average value for each day of year (1-365) across all
+    years in the input data. For 5-day intervals, it averages values at days 1, 6,
+    11, etc. The resulting pattern is then repeated for num_years starting from
+    start_date.
+    
+    Missing values (NaN) are ignored in the averaging process.
+    Non-numeric columns are excluded from the output.
+    """
+    # Parse start date
+    start_cftime = _parseStartDate(start_date)
+
+    # get a dataset
+    columns_to_avg, ds = _convertDataFrameToDataset(df, time_column, columns)
+    
+    # Compute averages using shared function
+    averaged_ds, output_times = _computeAnnualAverage(ds, time_column, start_cftime, num_years)
+
+    # Convert back to DataFrame
+    return _convertDatasetToDataFrame(averaged_ds, time_column, output_times, columns_to_avg)
+
+
+def computeAnnualAverage_DataArray(
+        da: xr.DataArray,
+        time_dim: str = 'time',
+        start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
+        num_years: int = 2,
+) -> xr.DataArray:
+    """
+    Average DataArray values across years and repeat for specified number of years.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray with cftime noleap calendar dates at 1- or 5-day intervals.
+    start_date : str, datetime, or cftime.datetime
+        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    num_years : int
+        Number of years to repeat the averaged pattern.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+        
+    Returns
+    -------
+    xr.DataArray
+        DataArray with averaged values repeated for the specified number of years,
+        starting from start_date. All attributes are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found.
+        
+    Notes
+    -----
+    The function computes the average value for each day of year (1-365) across all
+    years in the input data. The resulting 365-day pattern is then repeated for
+    num_years starting from start_date.
+    
+    This is particularly useful for creating climatological datasets or for
+    generating synthetic time series based on historical patterns.
+    """
+    if time_dim not in da.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    # Parse start date
+    start_cftime = _parseStartDate(start_date)
+    
+    # Convert to Dataset for processing
+    temp_ds = xr.Dataset({da.name or 'data': da})
+    
+    # Compute averages using shared function
+    averaged_ds, output_times = _computeAnnualAverage(temp_ds, time_dim, start_cftime, num_years)
+    
+    # Extract the DataArray
+    result = averaged_ds[da.name or 'data']
+    
+    # Assign the output times
+    result = result.assign_coords({time_dim: output_times})
+    
+    # Preserve attributes
+    result.attrs = da.attrs.copy()
+    result.name = da.name
+    
+    return result
+
+
+def computeAnnualAverage_Dataset(
+    ds: xr.Dataset,
+    time_dim: str = 'time',
+    start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
+    num_years: int = 2,
+    variables: Optional[List[str]] = None
+) -> xr.Dataset:
+    """
+    Average Dataset values across years and repeat for specified number of years.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset with cftime noleap calendar dates at 1- or 5-day intervals.
+    start_date : str, datetime, or cftime.datetime
+        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    num_years : int
+        Number of years to repeat the averaged pattern.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    variables : list of str, optional
+        List of variables to average. If None, averages all variables with the
+        time dimension.
+        
+    Returns
+    -------
+    xr.Dataset
+        Dataset with averaged values repeated for the specified number of years,
+        starting from start_date. All attributes are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found or if specified variables don't exist.
+        
+    Notes
+    -----
+    Variables without the time dimension are preserved unchanged in the output.
+    
+    For each variable with the time dimension, the function computes the average
+    value for each day of year across all years in the input data.
+    """
+    if time_dim not in ds.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    # Parse start date
+    start_cftime = _parseStartDate(start_date)
+    
+    # Select variables to process
+    if variables is None:
+        vars_with_time = [var for var in ds.data_vars if time_dim in ds[var].dims]
+        vars_without_time = [var for var in ds.data_vars if time_dim not in ds[var].dims]
+    else:
+        # Validate variables
+        missing = [v for v in variables if v not in ds.data_vars]
+        if missing:
+            raise ValueError(f"Variables not found in Dataset: {missing}")
+        vars_with_time = [v for v in variables if time_dim in ds[v].dims]
+        vars_without_time = [var for var in ds.data_vars if var not in variables]
+    
+    # Create Dataset with only time-dependent variables
+    ds_to_avg = ds[vars_with_time] if vars_with_time else xr.Dataset()
+    
+    if vars_with_time:
+        # Compute averages using shared function
+        averaged_ds, output_times = _computeAnnualAverage(ds_to_avg, time_dim, start_cftime, num_years)
+        
+        # Assign the output times
+        result = averaged_ds.assign_coords({time_dim: output_times})
+    else:
+        # No time-dependent variables to average
+        result = xr.Dataset()
+    
+    # Add variables without time dimension
+    for var in vars_without_time:
+        result[var] = ds[var]
+    
+    # Copy over other coordinates
+    for coord in ds.coords:
+        if coord != time_dim and coord not in result.coords:
+            result.coords[coord] = ds.coords[coord]
+    
+    # Preserve attributes
+    result.attrs = ds.attrs.copy()
+    for var in result.data_vars:
+        if var in ds.data_vars:
+            result[var].attrs = ds[var].attrs.copy()
+    
+    return result
+
+
+@overload
+def computeAnnualAverage(
+    data: xr.Dataset,
+    time_column: str,
+    start_date: Union[str, datetime.datetime, cftime.datetime],
+    num_years: int,
+    columns: Optional[List[str]] = None
+) -> xr.Dataset: ...
+
+
+@overload
+def computeAnnualAverage(
+    data: xr.DataArray,
+    time_column: str,
+    start_date: Union[str, datetime.datetime, cftime.datetime],
+    num_years: int,
+    columns: None = None
+) -> xr.DataArray: ...
+
+
+@overload
+def computeAnnualAverage(
+    data: pd.DataFrame,
+    time_column: str,
+    start_date: Union[str, datetime.datetime, cftime.datetime],
+    num_years: int,
+    columns: Optional[List[str]] = None
+) -> pd.DataFrame: ...
+
+
+def computeAnnualAverage(
+    data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+    time_column: str = 'time',
+    start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-01-01',
+    num_years: int = 1,
+    columns: Optional[List[str]] = None
+) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """
+    Average data values across years and repeat for specified number of years.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataFrame, DataArray, or Dataset.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Input data with cftime noleap calendar dates at 1- or 5-day intervals.
+    time_column : str, optional
+        For DataFrame: Name of the time column (required).
+        For Dataset: Name of the time dimension (default: 'time').
+        For DataArray: Ignored (always uses 'time' dimension).
+    start_date : str, datetime.datetime, or cftime.datetime, optional
+        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+        Default is '2020-01-01'.
+    num_years : int, optional
+        Number of years to repeat the averaged pattern. Default is 1.
+    columns : list of str, optional
+        For DataFrame: List of columns to average (default: all numeric columns).
+        For Dataset: List of variables to average (default: all with time dimension).
+        For DataArray: Ignored.
+        
+    Returns
+    -------
+    pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Same type as input with averaged values repeated for the specified number
+        of years, starting from start_date.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataFrame, DataArray, or Dataset.
+        If DataFrame is provided without time_column.
+    ValueError
+        If time column/dimension is not found or contains invalid data.
+        If specified columns/variables don't exist.
+        
+    Notes
+    -----
+    The function computes the average value for each day of year (1-365) across all
+    years in the input data. For 5-day intervals, it averages values at days 1, 6,
+    11, etc. The resulting pattern is then repeated for num_years starting from
+    start_date.
+    
+    Missing values (NaN) are ignored in the averaging process.
+    
+    For DataFrames, only numeric columns are included in the output
+        
+    For DataArrays all attributes are preserved
+        
+    For Datasets
+        - Variables without the time dimension are preserved unchanged
+        - All attributes and encodings are preserved
+    """
+    if isinstance(data, pd.DataFrame):
+        if time_column is None:
+            raise TypeError("time_column parameter is required for DataFrame input")
+        return computeAnnualAverage_DataFrame(data, time_column, start_date, num_years, columns)
+    
+    elif isinstance(data, xr.DataArray):
+        if columns is not None:
+            warnings.warn("'columns' parameter is ignored for DataArray input")
+        return computeAnnualAverage_DataArray(data, time_column, start_date, num_years)
+    
+    elif isinstance(data, xr.Dataset):
+        # Dataset can use custom time dimension name
+        time_dim = time_column or time_column
+        return computeAnnualAverage_Dataset(data, time_dim, start_date, num_years, columns)
+    
+    else:
+        raise TypeError(
+            f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
+            f"Got {type(data).__name__}"
+        )
+
+
+#
+# Smooth data temporally
+#
+def smoothTimeSeries_Array(
+    data: np.ndarray,
+    method: Literal['savgol', 'rolling_mean'] = 'savgol',
+    axis: int = -1,
+    **kwargs
+) -> np.ndarray:
+    """
+    Smooth time series data using specified method.
+    
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Array of data to smooth. Must not contain NaN values.
+    method : {'savgol', 'rolling_mean'}
+        Smoothing method to use.
+    axis : int, optional
+        Axis along which to smooth. Default is -1 (last axis).
+    **kwargs : dict
+        Method-specific parameters.
+        
+        For 'savgol':
+            - window_length : int, odd number (default: 7)
+            - polyorder : int (default: 3)
+            - mode : str (default: 'interp')
+            
+        For 'rolling_mean':
+            - window : int (default: 5)
+            - center : bool (default: True)
+        
+    Returns
+    -------
+    numpy.ndarray
+        Smoothed data array.
+        
+    Raises
+    ------
+    ValueError
+        If method is not recognized, parameters are invalid, or data contains NaN.
+    """
+    # Check for NaN values
+    if np.any(np.isnan(data)):
+        raise ValueError("Data contains NaN values")
+    
+    if method == 'savgol':
+        # Extract savgol parameters
+        window_length = kwargs.get('window_length', 7)
+        polyorder = kwargs.get('polyorder', 3)
+        mode = kwargs.get('mode', 'interp')
+        
+        # Validate parameters
+        if window_length % 2 == 0:
+            raise ValueError("window_length must be odd for Savitzky-Golay filter")
+        if polyorder >= window_length:
+            raise ValueError("polyorder must be less than window_length")
+        if data.shape[axis] < window_length:
+            raise ValueError(f"Data length along axis {axis} ({data.shape[axis]}) must be >= window_length ({window_length})")
+        
+        # Apply Savitzky-Golay filter along specified axis
+        return scipy.signal.savgol_filter(data, window_length, polyorder, axis=axis, mode=mode)
+    
+    elif method == 'rolling_mean':
+        # Extract rolling mean parameters
+        window = kwargs.get('window', 5)
+        center = kwargs.get('center', True)
+        
+        # Calculate origin for centering
+        if center:
+            origin = 0
+        else:
+            origin = -(window // 2)
+        
+        # Apply uniform filter (equivalent to rolling mean)
+        return scipy.ndimage.uniform_filter1d(data, size=window, axis=axis, mode='reflect', origin=origin)
+    
+    else:
+        raise ValueError(f"Unknown smoothing method: {method}")
+
+
+def smoothTimeSeries_DataFrame(
+    df: pd.DataFrame,
+    time_column: str = 'time',
+    method: Literal['savgol', 'rolling_mean'] = 'savgol',
+    columns: Optional[List[str]] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Smooth time series data in a DataFrame along the time dimension.
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input DataFrame with time series data. Must not contain NaN values
+        in columns to be smoothed.
+    time_column : str
+        Name of the time column.
+    method : {'savgol', 'rolling_mean'}, optional
+        Smoothing method. Default is 'savgol'.
+    columns : list of str, optional
+        Columns to smooth. If None, smooths all numeric columns except time.
+    **kwargs : dict
+        Method-specific parameters passed to smoothing function.
+        
+        For 'savgol':
+            - window_length : int, odd number (default: 7)
+            - polyorder : int (default: 3)
+            - mode : {'mirror', 'constant', 'nearest', 'wrap', 'interp'} (default: 'interp')
+            
+        For 'rolling_mean':
+            - window : int (default: 5)
+            - center : bool (default: True)
+    
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with smoothed data. Non-numeric columns and unspecified
+        columns are preserved unchanged.
+        
+    Raises
+    ------
+    ValueError
+        If time_column is not found, specified columns don't exist, or
+        any column to be smoothed contains NaN values.
+        
+    Notes
+    -----
+    The Savitzky-Golay filter is useful for smoothing noisy data while preserving
+    important features like peaks. The rolling mean provides simple moving average
+    smoothing.
+    
+    Data is sorted by time before smoothing to ensure correct temporal ordering.
+    """
+    if time_column not in df.columns:
+        raise ValueError(f"Column '{time_column}' not found in DataFrame")
+    
+    # Make a copy and sort by time
+    df_sorted = df.sort_values(time_column).copy()
+    
+    # Identify columns to smooth
+    if columns is None:
+        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+        columns_to_smooth = [col for col in numeric_cols if col != time_column]
+    else:
+        # Validate columns
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
+        
+        # Filter to numeric columns only
+        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+        columns_to_smooth = [col for col in columns if col in numeric_cols]
+        
+        # Warn about non-numeric columns
+        non_numeric = [col for col in columns if col not in numeric_cols]
+        if non_numeric:
+            warnings.warn(f"Non-numeric columns will not be smoothed: {non_numeric}")
+    
+    # Apply smoothing to each column
+    result = df_sorted.copy()
+    for col in columns_to_smooth:
+        data = df_sorted[col].values
+        result[col] = smoothTimeSeries_Array(data, method, axis=0, **kwargs)
+    
+    return result
+
+
+def smoothTimeSeries_DataArray(
+    da: xr.DataArray,
+    time_dim: str = 'time',
+    method: Literal['savgol', 'rolling_mean'] = 'savgol',
+    **kwargs
+) -> xr.DataArray:
+    """
+    Smooth time series data in a DataArray along the time dimension.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray with time series data. Must not contain NaN values.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    method : {'savgol', 'rolling_mean'}, optional
+        Smoothing method. Default is 'savgol'.
+    **kwargs : dict
+        Method-specific parameters passed to smoothing function.
+        
+    Returns
+    -------
+    xr.DataArray
+        DataArray with smoothed data. All attributes and coordinates are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found or data contains NaN values.
+        
+    Notes
+    -----
+    For multidimensional arrays, smoothing is applied along the time dimension
+    for each combination of other dimensions (e.g., each spatial point).
+    """
+    if time_dim not in da.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    # Check for NaN values
+    if np.any(np.isnan(da.values)):
+        raise ValueError("DataArray contains NaN values")
+    
+    # Get the axis number for time dimension
+    time_axis = da.dims.index(time_dim)
+    
+    # Apply smoothing along time dimension in one pass
+    smoothed_data = smoothTimeSeries_Array(da.values, method, axis=time_axis, **kwargs)
+    
+    # Create result DataArray
+    result = da.copy()
+    result.values = smoothed_data
+    
+    return result
+
+
+def smoothTimeSeries_Dataset(
+    ds: xr.Dataset,
+    time_dim: str = 'time',
+    method: Literal['savgol', 'rolling_mean'] = 'savgol',
+    variables: Optional[List[str]] = None,
+    **kwargs
+) -> xr.Dataset:
+    """
+    Smooth time series data in a Dataset along the time dimension.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset with time series data. Variables to be smoothed must
+        not contain NaN values.
+    time_dim : str, optional
+        Name of the time dimension. Default is 'time'.
+    method : {'savgol', 'rolling_mean'}, optional
+        Smoothing method. Default is 'savgol'.
+    variables : list of str, optional
+        Variables to smooth. If None, smooths all variables with the time dimension.
+    **kwargs : dict
+        Method-specific parameters passed to smoothing function.
+        
+    Returns
+    -------
+    xr.Dataset
+        Dataset with smoothed data. Variables without the time dimension are
+        preserved unchanged. All attributes are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If time dimension is not found, specified variables don't exist,
+        or any variable to be smoothed contains NaN values.
+        
+    Notes
+    -----
+    Variables without the time dimension are copied unchanged to the output.
+    """
+    if time_dim not in ds.dims:
+        raise ValueError(f"Data must have a '{time_dim}' dimension")
+    
+    # Select variables to smooth
+    if variables is None:
+        vars_to_smooth = [var for var in ds.data_vars if time_dim in ds[var].dims]
+    else:
+        # Validate variables
+        missing = [v for v in variables if v not in ds.data_vars]
+        if missing:
+            raise ValueError(f"Variables not found in Dataset: {missing}")
+        
+        # Only smooth variables that have time dimension
+        vars_to_smooth = [v for v in variables if time_dim in ds[v].dims]
+        
+        # Warn about variables without time dimension
+        no_time = [v for v in variables if time_dim not in ds[v].dims]
+        if no_time:
+            warnings.warn(f"Variables without '{time_dim}' dimension will not be smoothed: {no_time}")
+    
+    # Create result dataset
+    result = ds.copy()
+    
+    # Smooth each variable
+    for var in vars_to_smooth:
+        result[var] = smoothTimeSeries_DataArray(ds[var], time_dim, method, **kwargs)
+    
+    return result    
+
+
+@overload
+def smoothTimeSeries(
+    data: xr.DataArray,
+    time_dim: str = ...,
+    method: Literal['savgol', 'rolling_mean'] = ...,
+    columns: Optional[List[str]] = ...,
+    **kwargs
+) -> xr.DataArray: ...
+
+
+@overload
+def smoothTimeSeries(
+    data: xr.Dataset,
+    time_dim: str = ...,
+    method: Literal['savgol', 'rolling_mean'] = ...,
+    columns: Optional[List[str]] = ...,
+    **kwargs
+) -> xr.Dataset: ...
+
+
+@overload
+def smoothTimeSeries(
+    data: pd.DataFrame,
+    time_dim: str = ...,
+    method: Literal['savgol', 'rolling_mean'] = ...,
+    columns: Optional[List[str]] = ...,
+    **kwargs
+) -> pd.DataFrame: ...
+
+
+def smoothTimeSeries(
+    data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+    time_dim: str = 'time',
+    method: Literal['savgol', 'rolling_mean'] = 'savgol',
+    columns: Optional[List[str]] = None,
+    **kwargs
+) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """
+    Smooth time series data using specified method.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataFrame, DataArray, or Dataset.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Input data with time series. Must not contain NaN values in data to be smoothed.
+    time_dim : str, optional
+        For DataFrame: Name of the time column (required).
+        For DataArray: Ignored.
+        For Dataset: Ignored (use time_dim instead).
+    method : {'savgol', 'rolling_mean'}, optional
+        Smoothing method. Default is 'savgol'.
+    columns : list of str, optional
+        For DataFrame: Columns to smooth (default: all numeric columns).
+        For Dataset: Variables to smooth (default: all with time dimension).
+        For DataArray: Ignored.
+    time_dim : str, optional
+        For DataArray/Dataset: Name of time dimension (default: 'time').
+        For DataFrame: Ignored (use time_dim instead).
+    **kwargs : dict
+        Method-specific parameters:
+        
+        For 'savgol':
+            - window_length : int, odd number (default: 7)
+            - polyorder : int (default: 3)
+            - mode : {'mirror', 'constant', 'nearest', 'wrap', 'interp'} (default: 'interp')
+            
+        For 'rolling_mean':
+            - window : int (default: 5)
+            - center : bool (default: True)
+        
+    Returns
+    -------
+    pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Same type as input with smoothed data.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataFrame, DataArray, or Dataset.
+        If DataFrame is provided without time_dim.
+    ValueError
+        If time column/dimension is not found.
+        If data contains NaN values.
+        If smoothing parameters are invalid.
+    """
+    if isinstance(data, pd.DataFrame):
+        return smoothTimeSeries_DataFrame(data, time_dim, method, columns, **kwargs)
+    
+    elif isinstance(data, xr.DataArray):
+        # DataArray uses time_dim parameter
+        if columns is not None:
+            warnings.warn("'columns' parameter is ignored for DataArray input")
+        return smoothTimeSeries_DataArray(data, time_dim, method, **kwargs)
+    
+    elif isinstance(data, xr.Dataset):
+        # For Dataset, columns parameter maps to variables
+        return smoothTimeSeries_Dataset(data, time_dim, method, columns, **kwargs)
+    
+    else:
+        raise TypeError(
+            f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
+            f"Got {type(data).__name__}"
+        )
+
+#
+# 2D smoothing of dataset
+#
+def _smooth2D_Array(
+    data: np.ndarray,
+    method: Literal['uniform', 'gaussian', 'box'] = 'gaussian',
+    **kwargs
+) -> np.ndarray:
+    """
+    Apply 2D spatial smoothing to data.
+    
+    Parameters
+    ----------
+    data : numpy.ndarray
+        3D or higher array where the last two dimensions are spatial.
+        Must not contain NaN values.
+    method : {'uniform', 'gaussian', 'box'}
+        Smoothing method to use.
+    **kwargs : dict
+        Method-specific parameters:
+        
+        For 'uniform':
+            - size : int or tuple of int (default: 3)
+              Filter size in pixels. If int, same size for both dimensions.
+              
+        For 'gaussian':
+            - sigma : float or tuple of float (default: 1.0)
+              Standard deviation of Gaussian kernel. If float, same for both dimensions.
+            - truncate : float (default: 4.0)
+              Truncate filter at this many standard deviations.
+              
+        For 'box':
+            - kernel_size : int or tuple of int (default: 3)
+              Size of box filter. If int, same size for both dimensions.
+    
+    Returns
+    -------
+    numpy.ndarray
+        Smoothed data array with same shape as input.
+        
+    Raises
+    ------
+    ValueError
+        If method is not recognized or data contains NaN.
+    """
+    # Check for NaN values
+    if np.any(np.isnan(data)):
+        raise ValueError("Data contains NaN values")
+    
+    # Ensure we have at least 2D data
+    if data.ndim < 2:
+        raise ValueError("Data must be at least 2D for spatial smoothing")
+    
+    if method == 'uniform':
+        # Uniform filter (moving average)
+        size = kwargs.get('size', 3)
+        if isinstance(size, int):
+            size = (size, size)
+        
+        # Apply uniform filter to last two dimensions
+        axes = (-2, -1)
+        return scipy.ndimage.uniform_filter(data, size=size, axes=axes, mode='reflect')
+    
+    elif method == 'gaussian':
+        # Gaussian filter
+        sigma = kwargs.get('sigma', 1.0)
+        truncate = kwargs.get('truncate', 4.0)
+        
+        if isinstance(sigma, (int, float)):
+            sigma = (sigma, sigma)
+        
+        # Apply Gaussian filter to last two dimensions
+        axes = (-2, -1)
+        return scipy.ndimage.gaussian_filter(data, sigma=sigma, axes=axes, mode='reflect', truncate=truncate)
+    
+    elif method == 'box':
+        # Box filter (simple averaging)
+        kernel_size = kwargs.get('kernel_size', 3)
+        if isinstance(kernel_size, int):
+            kernel_size = (kernel_size, kernel_size)
+        
+        # Create box kernel
+        kernel = np.ones(kernel_size) / np.prod(kernel_size)
+        
+        # For higher dimensional data, we need to apply 2D convolution along last two axes
+        if data.ndim == 2:
+            return scipy.signal.convolve2d(data, kernel, mode='same', boundary='symm')
+        else:
+            # Process along last two dimensions for each slice
+            result = np.empty_like(data)
+            # Iterate over all but the last two dimensions
+            for idx in np.ndindex(data.shape[:-2]):
+                result[idx] = scipy.signal.convolve2d(data[idx], kernel, mode='same', boundary='symm')
+            return result
+    
+    else:
+        raise ValueError(f"Unknown smoothing method: {method}")
+
+
+def _findSpatialDims(dims: List[str]) -> Tuple[str, str]:
+    """
+    Find spatial dimensions in a list of dimension names.
+    
+    Parameters
+    ----------
+    dims : tuple of str
+        Dimension names to search.
+        
+    Returns
+    -------
+    dim1, dim2 : str
+        Names of the two spatial dimensions.
+        
+    Raises
+    ------
+    ValueError
+        If suitable spatial dimensions cannot be found.
+    """
+    # First try x and y
+    if 'x' in dims and 'y' in dims:
+        return 'x', 'y'
+    
+    # Then try lon and lat
+    if 'lon' in dims and 'lat' in dims:
+        return 'lon', 'lat'
+    
+    # Also try longitude and latitude
+    if 'longitude' in dims and 'latitude' in dims:
+        return 'longitude', 'latitude'
+    
+    # No standard spatial dimensions found
+    raise ValueError(
+        "Could not find spatial dimensions. Expected 'x' and 'y' or 'lon' and 'lat'. "
+        f"Available dimensions: {dims}"
+    )
+
+
+def smooth2D_DataArray(
+    da: xr.DataArray,
+    dim1: Optional[str] = None,
+    dim2: Optional[str] = None,
+    method: Literal['uniform', 'gaussian', 'box'] = 'gaussian',
+    **kwargs
+) -> xr.DataArray:
+    """
+    Apply 2D spatial smoothing to a DataArray.
+    
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input DataArray with at least 2 spatial dimensions. Must not contain NaN values.
+    dim1 : str, optional
+        First spatial dimension. If None, will try to find 'x' or 'lon'.
+    dim2 : str, optional
+        Second spatial dimension. If None, will try to find 'y' or 'lat'.
+    method : {'uniform', 'gaussian', 'box'}, optional
+        Smoothing method. Default is 'gaussian'.
+    **kwargs : dict
+        Method-specific parameters passed to smoothing function.
+        
+        For 'uniform':
+            - size : int or tuple of int (default: 3)
+            
+        For 'gaussian':
+            - sigma : float or tuple of float (default: 1.0)
+            - truncate : float (default: 4.0)
+            
+        For 'box':
+            - kernel_size : int or tuple of int (default: 3)
+    
+    Returns
+    -------
+    xr.DataArray
+        DataArray with smoothed spatial data. All attributes and coordinates
+        are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If spatial dimensions are not found or data contains NaN values.
+        
+    Notes
+    -----
+    The smoothing is applied in 2D to each slice along non-spatial dimensions.
+    For example, if the data has dimensions (time, lat, lon), smoothing is
+    applied to each time slice independently.
+    """
+    # Find spatial dimensions if not provided
+    if dim1 is None or dim2 is None:
+        found_dim1, found_dim2 = _findSpatialDims([da.dims,] if isinstance(da.dims, str) else 
+                                                  [str(d) for d in da.dims])
+        dim1 = dim1 or found_dim1
+        dim2 = dim2 or found_dim2
+    
+    # Validate dimensions exist
+    if dim1 not in da.dims:
+        raise ValueError(f"Dimension '{dim1}' not found in DataArray")
+    if dim2 not in da.dims:
+        raise ValueError(f"Dimension '{dim2}' not found in DataArray")
+    
+    # Check for NaN values
+    if np.any(np.isnan(da.values)):
+        raise ValueError("DataArray contains NaN values")
+    
+    # Get indices of spatial dimensions
+    dim1_idx = da.dims.index(dim1)
+    dim2_idx = da.dims.index(dim2)
+    
+    # Transpose data so spatial dimensions are last
+    dims_order = [d for d in da.dims if d not in [dim1, dim2]] + [dim1, dim2]
+    da_transposed = da.transpose(*dims_order)
+    
+    # Apply smoothing
+    smoothed_data = _smooth2D_Array(da_transposed.values, method, **kwargs)
+    
+    # Create result with same dimension order as input
+    result = da.copy()
+    # Transpose back to original order
+    result_transposed = da_transposed.copy()
+    result_transposed.values = smoothed_data
+    result = result_transposed.transpose(*da.dims)
+    
+    return result
+
+
+def smooth2D_Dataset(
+    ds: xr.Dataset,
+    dim1: Optional[str] = None,
+    dim2: Optional[str] = None,
+    method: Literal['uniform', 'gaussian', 'box'] = 'gaussian',
+    variables: Optional[list[str]] = None,
+    **kwargs
+) -> xr.Dataset:
+    """
+    Apply 2D spatial smoothing to variables in a Dataset.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input Dataset with at least 2 spatial dimensions. Variables to be smoothed
+        must not contain NaN values.
+    dim1 : str, optional
+        First spatial dimension. If None, will try to find 'x' or 'lon'.
+    dim2 : str, optional
+        Second spatial dimension. If None, will try to find 'y' or 'lat'.
+    method : {'uniform', 'gaussian', 'box'}, optional
+        Smoothing method. Default is 'gaussian'.
+    variables : list of str, optional
+        Variables to smooth. If None, smooths all variables that have both
+        spatial dimensions.
+    **kwargs : dict
+        Method-specific parameters passed to smoothing function.
+        
+    Returns
+    -------
+    xr.Dataset
+        Dataset with smoothed spatial data. Variables without both spatial
+        dimensions are preserved unchanged. All attributes are preserved.
+        
+    Raises
+    ------
+    ValueError
+        If spatial dimensions are not found, specified variables don't exist,
+        or any variable to be smoothed contains NaN values.
+        
+    Notes
+    -----
+    Only variables that contain both spatial dimensions are smoothed. Other
+    variables are copied unchanged to the output.
+    """
+    # If no dimensions specified, let the first variable determine them
+    # This ensures consistent dimension finding across all variables
+    if dim1 is None or dim2 is None:
+        # Try to find dimensions from the Dataset's dims
+        # This is just for early validation and consistency
+        try:
+            found_dim1, found_dim2 = _findSpatialDims([ds.dims,] if isinstance(ds.dims, str) else 
+                                                      [str(d) for d in ds.dims])
+            dim1 = dim1 or found_dim1
+            dim2 = dim2 or found_dim2
+        except ValueError:
+            # If we can't find them at Dataset level, the DataArray function
+            # will try to find them or raise an appropriate error
+            pass
+    
+    # Select variables to smooth
+    if variables is None:
+        # Get all data variables - let smooth2DDataArray handle dimension checking
+        vars_to_process = list(ds.data_vars)
+    else:
+        # Validate specified variables exist
+        missing = [v for v in variables if v not in ds.data_vars]
+        if missing:
+            raise ValueError(f"Variables not found in Dataset: {missing}")
+        vars_to_process = variables
+    
+    # Create result dataset
+    result = ds.copy()
+    
+    # Process each variable
+    for var in vars_to_process:
+        try:
+            # Try to smooth the variable
+            result[var] = smooth2D_DataArray(ds[var], dim1, dim2, method, **kwargs)
+        except ValueError as e:
+            # If it fails because of missing dimensions, just skip this variable
+            if "not found in DataArray" in str(e) or "Could not find spatial dimensions" in str(e):
+                # Variable doesn't have the required dimensions, keep original
+                if variables is not None and var in variables:
+                    # User specifically requested this variable, so warn them
+                    warnings.warn(f"Variable '{var}' does not have required spatial dimensions, skipping.")
+            else:
+                # Some other error (like NaN values), re-raise
+                raise
+    
+    return result
+
+
+@overload
+def smooth2D(
+        data: xr.DataArray,
+        dim1: Optional[str] = ...,
+        dim2: Optional[str] = ...,
+        method: Literal['uniform', 'gaussian', 'box'] = ...,
+        variables: None = ...,
+        **kwargs
+) -> xr.DataArray: ...
+
+
+@overload
+def smooth2D(
+    data: xr.Dataset,
+    dim1: Optional[str] = ...,
+    dim2: Optional[str] = ...,
+    method: Literal['uniform', 'gaussian', 'box'] = ...,
+    variables: Optional[list[str]] = ...,
+    **kwargs
+) -> xr.Dataset: ...
+
+
+def smooth2D(
+    data: Union[xr.DataArray, xr.Dataset],
+    dim1: Optional[str] = None,
+    dim2: Optional[str] = None,
+    method: Literal['uniform', 'gaussian', 'box'] = 'gaussian',
+    variables: Optional[list[str]] = None,
+    **kwargs
+) -> Union[xr.DataArray, xr.Dataset]:
+    """
+    Apply 2D spatial smoothing to data.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataArray or Dataset.
+    
+    Parameters
+    ----------
+    data : xr.DataArray or xr.Dataset
+        Input data with at least 2 spatial dimensions. Must not contain NaN values
+        in data to be smoothed.
+    dim1 : str, optional
+        First spatial dimension. If None, will try to find 'x' or 'lon'.
+    dim2 : str, optional
+        Second spatial dimension. If None, will try to find 'y' or 'lat'.
+    method : {'uniform', 'gaussian', 'box'}, optional
+        Smoothing method. Default is 'gaussian'.
+    variables : list of str, optional
+        For Dataset: Variables to smooth (default: all with both spatial dims).
+        For DataArray: Ignored.
+    **kwargs : dict
+        Method-specific parameters:
+        
+        For 'uniform':
+            - size : int or tuple of int (default: 3)
+              Filter size in pixels.
+              
+        For 'gaussian':
+            - sigma : float or tuple of float (default: 1.0)
+              Standard deviation of Gaussian kernel.
+            - truncate : float (default: 4.0)
+              Truncate filter at this many standard deviations.
+              
+        For 'box':
+            - kernel_size : int or tuple of int (default: 3)
+              Size of box filter.
+    
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        Same type as input with spatially smoothed data.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataArray or Dataset.
+    ValueError
+        If spatial dimensions are not found or data contains NaN values.
+        
+    Examples
+    --------
+    Smooth a DataArray with Gaussian filter:
+    
+    >>> da = xr.DataArray(data, dims=['time', 'lat', 'lon'])
+    >>> smoothed = smooth2D(da, method='gaussian', sigma=2.0)
+    
+    Smooth specific variables in a Dataset:
+    
+    >>> ds = xr.Dataset({'temp': da1, 'pressure': da2})
+    >>> smoothed = smooth2D(ds, variables=['temp'], method='uniform', size=5)
+    
+    Use custom dimension names:
+    
+    >>> smoothed = smooth2D(data, dim1='x_coord', dim2='y_coord')
+    """
+    if isinstance(data, xr.DataArray):
+        if variables is not None:
+            warnings.warn("'variables' parameter is ignored for DataArray input")
+        return smooth2D_DataArray(data, dim1, dim2, method, **kwargs)
+    
+    elif isinstance(data, xr.Dataset):
+        return smooth2D_Dataset(data, dim1, dim2, method, variables, **kwargs)
+    
+    else:
+        raise TypeError(
+            f"Input data must be xr DataArray or Dataset. "
+            f"Got {type(data).__name__}"
+        )
+
+
+def interpolateValues(points: np.ndarray,
+                      points_crs : CRS | None,
+                      data: xr.DataArray,
+                      method: InterpOptions = 'nearest') -> np.ndarray:
+    """
+    Interpolate values from a 2D grid-based DataArray at given x, y or lat, lon points.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        A (N, 2) array of coordinates. Each row should contain an (x, y) or (lon, lat) pair.
+    points_crs : CRS
+        A coordinate system for the points.
+    data : xr.DataArray
+        A DataArray with coordinates either ('x', 'y') or ('lon', 'lat').
+    method : {'linear', 'nearest', 'cubic'}
+        Interpolation method to use.
+
+    Returns
+    -------
+    np.ndarray
+        A 1D array of interpolated values with length N.
+
+    Raises
+    ------
+    ValueError
+        If DataArray does not have suitable coordinates for interpolation.
+    """
+    array_crs = watershed_workflow.crs.from_xarray(data)
+    x,y = watershed_workflow.warp.xy(points[:,0], points[:,1], points_crs, array_crs)
+
+    if {'x', 'y'}.issubset(data.coords):
+        coord_names = ('x', 'y')
+    elif {'lon', 'lat'}.issubset(data.coords):
+        coord_names = ('lon', 'lat')
+    else:
+        raise ValueError("DataArray must have coordinates ('x', 'y') or ('lon', 'lat')")
+
+    coords = xr.Dataset({
+        coord_names[0]: ("points", x),
+        coord_names[1]: ("points", y)
+    })
+
+    interpolated = data.interp(coords, method=method)
+    return interpolated.values
+
+
+def imputeHoles2D(arr : xr.DataArray,
+                  nodata : Any = np.nan,
+                  method : str = 'cubic') -> xr.DataArray:
+    """Very simple imputation algorithm to interpolate values for missing data in rasters.
+
+    Note, this may throw if there is a hole on the boundary?
+
+    Note, valid 'method' values are those of scipy.interpolate.griddata.
+    """
+    if nodata is np.nan:
+        mask = np.isnan(arr)
+    else:
+        mask = (arr == nodata)
+
+    x = np.arange(0, arr.shape[1])
+    y = np.arange(0, arr.shape[0])
+    xx, yy = np.meshgrid(x, y)
+
+    #get only the valid values
+    x1 = xx[~mask]
+    y1 = yy[~mask]
+    newarr = arr[~mask]
+
+    res = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method=method)
+    return res
+    

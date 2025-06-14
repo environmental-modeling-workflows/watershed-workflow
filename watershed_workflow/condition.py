@@ -13,7 +13,7 @@ import watershed_workflow.sources.standard_names as names
 import watershed_workflow.utils
 from watershed_workflow.mesh import Mesh2D
 from watershed_workflow.river_tree import River
-
+import watershed_workflow.data
 
 @attr.s
 class _Point:
@@ -518,7 +518,7 @@ def setProfileByDEM(rivers : List[River],
     """Set the z-coordinate of the reach linestring from a DEM dataset."""
     assert len(rivers) > 0
     points = np.array([c for river in rivers for reach in river for c in reach.linestring.coords])
-    elevs = watershed_workflow.datasets.interpolateDataset(points, rivers[0].crs, dem, **kwargs)
+    elevs = watershed_workflow.data.interpolateValues(points, rivers[0].crs, dem, **kwargs)
 
     if points.shape[1] == 3:
         new_points = points

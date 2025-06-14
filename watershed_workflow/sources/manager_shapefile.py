@@ -10,6 +10,8 @@ from shapely.geometry.base import BaseGeometry
 import watershed_workflow.utils
 from watershed_workflow.crs import CRS
 
+import watershed_workflow.sources.standard_names as names
+
 @attr.s
 class ManagerShapefile:
     """A simple class for reading shapefiles.
@@ -37,10 +39,9 @@ class ManagerShapefile:
         file_crs = watershed_workflow.crs.from_string(info['crs'])
         geom = watershed_workflow.warp.shply(geom, geom_crs, file_crs)
         df = gpd.read_file(self._filename, geom.bounds)
-        df['ID'] = range(len(df.index))
-        df = df.set_index('ID', drop=True)
-        df = watershed_workflow.utils.filterToShape(df, geom, geom_crs, 'non_point_intersection')
-        return df
+        df[names.ID] = range(len(df.index))
+        df = df.set_index(names.ID)
+        return df[df.intersects(geom)]
 
     
     def getShapesByID(self,

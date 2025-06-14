@@ -150,7 +150,7 @@ def blackzerojet_cmap(data):
             blackzerojet_dict[color][i][0] = blackzerojet_dict[color][i][0] * (
                 1-oneminval) + oneminval
 
-    return matplotlib.colors.LinearLineStringedColormap('blackzerojet', blackzerojet_dict)
+    return matplotlib.colors.LinearSegmentedColormap('blackzerojet', blackzerojet_dict)
 
 
 # ice color map
@@ -164,7 +164,7 @@ def ice_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     ice_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearLineStringedColormap('ice', ice_dict)
+    return matplotlib.colors.LinearSegmentedColormap('ice', ice_dict)
 
 
 # water color map
@@ -178,7 +178,7 @@ def water_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     water_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearLineStringedColormap('water', water_dict)
+    return matplotlib.colors.LinearSegmentedColormap('water', water_dict)
 
 
 # water color map
@@ -193,7 +193,7 @@ def gas_cmap():
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
     gas_dict = { 'blue': bb, 'green': gg, 'red': rr }
-    return matplotlib.colors.LinearLineStringedColormap('gas', gas_dict)
+    return matplotlib.colors.LinearSegmentedColormap('gas', gas_dict)
 
 
 # jet-by-index
@@ -251,7 +251,7 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
 
     Returns
     -------
-    matplotlib.colors.LinearLineStringedColormap instance
+    matplotlib.colors.LinearSegmentedColormap instance
 
     Example
     -------
@@ -274,7 +274,7 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
         cdict[key] = [(indices[i], colors_rgba[i - 1, ki], colors_rgba[i, ki])
                       for i in range(ncolors + 1)]
     # Return colormap object.
-    return matplotlib.colors.LinearLineStringedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
+    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
 
 
 def float_list_type(mystring):
@@ -308,7 +308,7 @@ def lighten(color, fraction=0.6):
     return tuple(np.minimum(rgb + fraction * (1-rgb), 1))
 
 
-def generate_indexed_colormap(indices, cmap=None):
+def createIndexedColormap(indices, cmap=None):
     """Generates an indexed colormap and labels for imaging, e.g. soil indices.
     Parameters
     ----------
@@ -400,14 +400,16 @@ indices for each triangle (tri_{label_lower}):
 """
 
 
-def _indexed_colormap(label, all_colors):
-    def _generate_colormap(indices=None, formatted=False):
+def _createColormapCreator(label, all_colors):
+    def _createColormap(indices=None, formatted=False):
         if indices is None:
             indices = list(all_colors.keys())
 
         indices = sorted(set(indices))
 
+        print("making colormap with:", indices)
         values = [all_colors[k][1] for k in indices]
+        print("making colormap with colors:", values)
         cmap = matplotlib.colors.ListedColormap(values)
         ticks = [i - 0.5 for i in indices] + [indices[-1] + 0.5, ]
         norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
@@ -436,11 +438,18 @@ def _indexed_colormap(label, all_colors):
         return indices, cmap, norm, ticks, labels
 
     doc = _doc_template.format(label=label, label_lower=label.lower())
-    _generate_colormap.__doc__ = doc
-    return _generate_colormap
+    _createColormap.__doc__ = doc
+    return _createColormap
 
 
-def colorbar_index(ncolors, cmap, labels=None, **kwargs):
+import watershed_workflow.sources.manager_nlcd
+createNLCDColormap = _createColormapCreator('NLCD', watershed_workflow.sources.manager_nlcd.colors)
+
+import watershed_workflow.sources.manager_modis_appeears
+createMODISColormap = _createColormapCreator('MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
+
+
+def createIndexedColorbar(ncolors, cmap, labels=None, **kwargs):
     """Add an indexed colorbar based on a given colormap.
 
     This sets ticks in the middle of each color range, adds the

@@ -5,9 +5,9 @@ import shapely
 import numpy as np
 import datetime
 import time
+import xarray as xr
 
 import watershed_workflow.config
-import watershed_workflow.datasets
 import watershed_workflow.sources.manager_shape
 import watershed_workflow.sources.manager_modis_appeears
 
@@ -26,7 +26,7 @@ import watershed_workflow.sources.manager_modis_appeears
 #     res = app.get_data(shply, profile['crs'], start=START, end=END,
 #                        force_download=True)
 #     res = app.wait(res)
-#     assert(isinstance(res, watershed_workflow.datasets.State))
+#     assert(isinstance(res, xr.Dataset))
 #     assert(len(res) == 2)
 #     assert(len(res.collections) == 2)
 

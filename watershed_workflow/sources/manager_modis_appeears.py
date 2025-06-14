@@ -1,4 +1,5 @@
 """Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
+from typing import Tuple, Dict
 
 import os, sys
 import logging
@@ -9,16 +10,15 @@ import shapely
 import numpy as np
 import attr
 import rasterio.transform
-import xarray
+import xarray as xr
 
 import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.crs
-import watershed_workflow.datasets
 
-colors = {
+_colors = {
     -1: ('Unclassified', (0, 0, 0)),
     0: ('Open Water', (140, 219, 255)),
     1: ('Evergreen Needleleaf Forests', (38, 115, 0)),
@@ -40,7 +40,8 @@ colors = {
     17: ('Water Bodies', (140, 209, 245)),
 }
 
-for k, v in colors.items():
+colors : Dict[int, Tuple[str,Tuple[float, ...]]] = dict()
+for k, v in _colors.items():
     colors[k] = (v[0], tuple(float(i) / 255.0 for i in v[1]))
 
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
@@ -175,10 +176,10 @@ class FileManagerMODISAppEEARS:
             polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
         if type(polygon_or_bounds) is shapely.geometry.Polygon:
             bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
-                                                      watershed_workflow.crs.latlon_crs()).bounds
+                                                      watershed_workflow.crs.latlon_crs).bounds
         else:
             bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
-                                                       watershed_workflow.crs.latlon_crs())
+                                                       watershed_workflow.crs.latlon_crs)
 
         buffer = 0.01
         feather_bounds = list(bounds_ll[:])
@@ -383,57 +384,19 @@ class FileManagerMODISAppEEARS:
 
     def _read_data(self, task):
         """Read all files for a task, returning the data in the order of variables requested in the task."""
-        s = watershed_workflow.datasets.State()
+        s = dict()
         for var in task.variables:
             s[var] = self._read_file(task.filenames[var], var)
         return s
 
     def _read_file(self, filename, variable):
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
-        profile = dict()
-        logging.info(f'... reading {variable} from {filename}')
-        with xarray.open_dataset(filename, 'r') as nc:
-            profile['crs'] = watershed_workflow.crs.from_epsg(nc.variables['crs'].epsg_code)
-            profile['width'] = nc.dimensions['lon'].size
-            profile['height'] = nc.dimensions['lat'].size
-            profile['count'] = nc.dimensions['time'].size
+        with xr.open_dataset(filename) as fid:
+            layer = self._PRODUCTS[variable]['layer']
+            data = fid[layer]
 
-            # this assumes it is a fixed dx and dy, which should be
-            # pretty good for not-too-big domains.
-            lat = nc.variables['lat'][:]
-            lon = nc.variables['lon'][:]
-            profile['dx'] = (lon[1:] - lon[:-1]).mean()
-            profile['dy'] = (lat[1:] - lat[:-1]).mean()
-            profile['resolution'] = (profile['dx'], -profile['dy'])
-            profile['height'] = len(lat)
-            profile['width'] = len(lon)
-            profile['driver'] = 'netCDF4'  # hint that this was not a real reaster!
-            profile['transform'] = rasterio.transform.from_bounds(lon[0], lat[-1], lon[-1], lat[0],
-                                                                  profile['width'],
-                                                                  profile['height'])
-            profile['nodata'] = -9999
-            varname = self._PRODUCTS[variable]['layer']
-            profile['layer'] = varname
-
-            times = nc.variables['time'][:].filled(-1)
-            print(times[0])
-            time_origin = cftime.datetime(2000, 1, 1)
-            times = np.array([time_origin + datetime.timedelta(days=int(t)) for t in times])
-
-            data = nc.variables[varname][:]
-            if np.issubdtype(data.dtype, np.integer):
-                profile['nodata'] = -1
-                profile['dtype'] = data.dtype
-                data = data.filled(-1)
-            elif np.issubdtype(data.dtype, np.floating):
-                profile['nodata'] = np.nan
-                profile['dtype'] = data.dtype
-                data = data.filled(np.nan)
-            else:
-                profile['nodata'] = data.fill_value
-                profile['dtype'] = data.dtype
-                data = data.filled()
-        return watershed_workflow.datasets.Data(profile, times, data)
+        data.rio.set_crs(watershed_workflow.crs.latlon_crs)
+        return data
 
     def get_data(self,
                  polygon_or_bounds=None,
@@ -494,9 +457,7 @@ class FileManagerMODISAppEEARS:
         if filenames is not None:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
-            s = watershed_workflow.datasets.State()
-            for filename, var in zip(filenames, variables):
-                s[var] = self._read_file(filename, var)
+            s = dict((var, xr.open_dataset(filename)) for (var, filename) in zip(variables, filenames))
             return s
 
         if task is None and filenames is None:
@@ -557,7 +518,7 @@ class FileManagerMODISAppEEARS:
         res = task
         while count < tries and not success:
             res = self.get_data(task=res)
-            if isinstance(res, watershed_workflow.datasets.State):
+            if isinstance(res, xr.Dataset):
                 success = True
                 break
             else:

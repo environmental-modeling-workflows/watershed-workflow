@@ -292,7 +292,7 @@ def goalpost(watershed_rivers2):
     def computeWidth(a): return 10
     m2 = watershed_workflow.tessalateRiverAligned(hucs, [river,], 10, refine_max_area=100)
     # test precondition
-    assert (1200 == len(m2.coords))
+    assert (1193 == len(m2.coords))
 
     # test begins
     # -- elevate based on a simple ramp

@@ -305,8 +305,8 @@ class Mesh2D:
         if hasattr(self, '_centroids'):
             del self._centroids
 
-    def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None,
-             **kwargs) -> None:
+    def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None, norm=None,
+             add_colorbar=True, **kwargs) -> None:
         """Plot the flattened 2D mesh."""
         from matplotlib import pyplot as plt
 
@@ -315,28 +315,42 @@ class Mesh2D:
         kwargs.setdefault('linewidth', 0.5)
         kwargs.setdefault('linewidth', 0.5)
 
-        if facecolors == 'elevation':
+        if isinstance(facecolors, str) and facecolors == 'elevation':
             facecolors = self.centroids[:,-1]
             if cmap is None:
                 cmap = 'terrain'
 
-        if facecolors is not None and len(facecolors) == len(self.conn):
-            # convert from an array to a list of colors, using a cmap
+        # if facecolors is not None and len(facecolors) == len(self.conn):
+        #     # convert from an array to a list of colors, using a cmap
+        #     array = facecolors
+        #     if norm is None:
+        #         norm = plt.Normalize(vmin=vmin, vmax=vmax)
+        #     if isinstance(cmap, str):
+        #         cmap = plt.colormaps[cmap]
+
+        #     facecolors = cmap(norm(facecolors))
+        if norm is None:
             norm = plt.Normalize(vmin=vmin, vmax=vmax)
-            facecolors = plt.colormaps[cmap](norm(facecolors))
+        if isinstance(cmap, str):
+            cmap = plt.colormaps[cmap]        
 
         # build the collection of gons
         from matplotlib import collections
         verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
-        gons = collections.PolyCollection(verts,
-                                          facecolors=facecolors,
-                                          **kwargs)
+        gons = collections.PolyCollection(verts, array=facecolors, cmap=cmap, norm=norm, **kwargs)
 
         # put on the axis
         if ax is None:
             fig, ax = plt.subplots()
         ax.add_collection(gons)
         ax.autoscale_view()
+
+        if add_colorbar:
+            gons.set(array=facecolors, cmap=cmap)
+            plt.colorbar(gons, ax=ax)
+            
+        return gons
+        
 
     def writeVTK(self, filename) -> None:
         """Writes to VTK."""

@@ -2,17 +2,20 @@
 import os, sys
 import logging
 import numpy as np
-import pandas
+import pandas, geopandas
+import shapely
+from shapely.geometry.base import BaseGeometry
 
-import watershed_workflow.sources.manager_shape
+import watershed_workflow.sources.manager_shapefile
 import watershed_workflow.sources.names
 import watershed_workflow.soil_properties
+from watershed_workflow.crs import CRS
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = { 'GLHYMPS version 2.0': 'https://doi.org/10.5683/SP2/TTJNIU'}
 
 
-class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerShape):
+class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefile):
     """The [GLHYMPS]_ global hydrogeology map provides global values of a
     two-layer (unconsolidated, consolidated) structure.
 
@@ -37,32 +40,18 @@ class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerSha
             self.name = 'GLHYMPS version 2.0'
             self.names = watershed_workflow.sources.names.Names(
                 self.name, os.path.join('soil_structure', 'GLHYMPS'), '', 'GLHYMPS.shp')
-            super(FileManagerGLHYMPS, self).__init__(self.names.file_name())
+            super(ManagerGLHYMPS, self).__init__(self.names.file_name())
         else:
             self.name = filename
             self.names = None
-            super(FileManagerGLHYMPS, self).__init__(self.name)
+            super(ManagerGLHYMPS, self).__init__(self.name)
 
-    def get_shapes(self, bounds, crs, force_download=None):
-        """Read the shapes in bounds provided by shape object.
-
-        Parameters
-        ----------
-        bounds : bounds tuple [x_min, y_min, x_max, y_max]
-          bounds in which to find GLHYMPS shapes.
-        crs : CRS
-          CRS of the bounds
-
-        Returns
-        -------
-        profile : dict
-            Fiona profile of the shapefile.
-        shapes : list
-            List of fiona shapes that match the bounds.
-        """
-        logging.info(f'Getting shapes of GLHYMPS on bounds: {bounds}')
+    def _getShapesByGeometry(self,
+                            geom : BaseGeometry,
+                            geom_crs : CRS) -> geopandas.GeoDataFrame:
+        """Read the file and filter to get shapes."""
         filename = self._download()
-        return super(FileManagerGLHYMPS, self).get_shapes(bounds, crs)
+        return super(ManagerGLHYMPS, self).getShapesByGeometry(geom, geom_crs)
 
     def _download(self):
         """Download the files, returning downloaded filename."""
@@ -78,7 +67,7 @@ class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerSha
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
-    def get_shapes_and_properties(self, bounds, crs, **kwargs):
+    def getShapesByGeometry(self, geom, geom_crs, **kwargs):
         """Read shapes and process properties.
 
         Parameters
@@ -107,6 +96,6 @@ class FileManagerGLHYMPS(watershed_workflow.sources.manager_shape.FileManagerSha
             Dataframe including geologic properties.
 
         """
-        profile, shapes = self.get_shapes(bounds, crs)
-        props = watershed_workflow.soil_properties.mangle_glhymps_properties(shapes, **kwargs)
-        return profile, shapes, props
+        shapes = self._getShapesByGeometry(geom, geom_crs)
+        props = watershed_workflow.soil_properties.mangleGLHYMPSProperties(shapes, **kwargs)
+        return props
