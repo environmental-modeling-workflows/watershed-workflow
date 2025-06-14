@@ -12,7 +12,7 @@ import watershed_workflow.warp
 import watershed_workflow.sources.names
 
 colors = {
-    0: ('None', (0.00000000000, 0.00000000000, 0.00000000000)),
+    0: ('None', (1., 1., 1.)),
     11: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
     12: ('Perrenial Ice/Snow', (0.81960784314, 0.86666666667, 0.97647058824)),
     21: ('Developed, Open Space', (0.86666666667, 0.78823529412, 0.78823529412)),
@@ -33,6 +33,7 @@ colors = {
     82: ('Cultivated Crops', (0.66666666667, 0.43921568628, 0.15686274510)),
     90: ('Woody Wetlands', (0.72941176471, 0.84705882353, 0.91764705882)),
     95: ('Emergent Herbaceous Wetlands', (0.43921568628, 0.63921568628, 0.72941176471)),
+    127: ('None', (1., 1., 1.)),
 }
 
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])

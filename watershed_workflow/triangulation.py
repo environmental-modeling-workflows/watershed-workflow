@@ -179,7 +179,7 @@ def triangulate(hucs : watershed_workflow.split_hucs.SplitHUCs,
 
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
-    nodes = np.array(list(nodes_edges.nodes), dtype=np.float64)
+    nodes = np.array(list(nodes_edges.nodes))
 
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)

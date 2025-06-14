@@ -26,7 +26,7 @@ import math
 import numpy as np
 import geopandas as gpd
 import shapely.geometry
-import xarray
+import xarray as xr
 from matplotlib import pyplot as plt
 import folium
 import folium.plugins
@@ -47,7 +47,7 @@ import watershed_workflow.angles
 import watershed_workflow.triangulation
 import watershed_workflow.river_mesh
 import watershed_workflow.condition
-import watershed_workflow.datasets
+import watershed_workflow.data
 
 
 def _coerceShapes(df : gpd.GeoDataFrame,
@@ -344,19 +344,27 @@ def simplify(hucs : SplitHUCs,
 
     assert len(rivers) > 0
 
+    logging.info(rivers[0].df.crs)
+    
     logging.info(f"Presimplify to remove colinear, coincident points.")
     presimplify = 1.e-4 * reach_segment_target_length
     watershed_workflow.river_tree.simplify(rivers, presimplify)
     watershed_workflow.split_hucs.simplify(hucs, presimplify)
 
+    logging.info(rivers[0].df.crs)
+    
     logging.info(f"Pruning leaf reaches < {reach_segment_target_length}")
     for river in rivers:
         watershed_workflow.river_tree.pruneByLineStringLength(river, reach_segment_target_length)
 
+    logging.info(rivers[0].df.crs)
+        
     logging.info(f"Merging internal reaches < {reach_segment_target_length}")
     for river in rivers:
         watershed_workflow.river_tree.mergeShortReaches(river, 0.75*reach_segment_target_length)
 
+    logging.info(rivers[0].df.crs)
+        
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
         
@@ -367,6 +375,8 @@ def simplify(hucs : SplitHUCs,
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
+    logging.info(rivers[0].df.crs)
+    
     logging.info(" -- snapping reach endpoints to HUC boundaries")
     for river in rivers:
         watershed_workflow.hydrography.snapReachEndpoints(hucs, river, reach_segment_target_length)
@@ -374,12 +384,16 @@ def simplify(hucs : SplitHUCs,
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
+    logging.info(rivers[0].df.crs)
+    
     logging.info(" -- cutting reaches at HUC boundaries")
     watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, reach_segment_target_length)
     for river in rivers:
         assert river.isContinuous()
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+
+    logging.info(rivers[0].df.crs)
     
     logging.info("")
     logging.info("Simplification Diagnostics")
@@ -387,6 +401,8 @@ def simplify(hucs : SplitHUCs,
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
+    logging.info(rivers[0].df.crs)
+    
     # resample
     logging.info("")
     logging.info("Resampling HUC and river")
@@ -402,6 +418,8 @@ def simplify(hucs : SplitHUCs,
         logging.info(f" -- resampling HUCs based on uniform target {reach_segment_target_length}")
         watershed_workflow.resampling.resampleSplitHUCs(hucs, reach_segment_target_length, keep_points=keep_points)
 
+    logging.info(rivers[0].df.crs)
+
     if resample_by_reach_property:
         logging.info(f" -- resampling reaches based on TARGET_SEGMENT_LENGTH property")
         watershed_workflow.resampling.resampleRivers(rivers, keep_points=keep_points)
@@ -409,6 +427,8 @@ def simplify(hucs : SplitHUCs,
         logging.info(f" -- resampling reaches based on uniform target {reach_segment_target_length}")
         watershed_workflow.resampling.resampleRivers(rivers, reach_segment_target_length, keep_points=keep_points)
 
+    logging.info(rivers[0].df.crs)
+        
     logging.info("")
     logging.info("Resampling Diagnostics")
     logging.info("-" * 30)
@@ -420,6 +440,8 @@ def simplify(hucs : SplitHUCs,
         watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
         watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
+    logging.info(rivers[0].df.crs)
+        
     # fix bad angles
     logging.info("")
     logging.info("Clean up sharp angles, both internally and at junctions.")
@@ -428,6 +450,8 @@ def simplify(hucs : SplitHUCs,
     logging.info(f"Cleaned up {count} sharp angles.")
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
+
+    logging.info(rivers[0].df.crs)
     
 
 def triangulate(hucs : SplitHUCs,
@@ -612,7 +636,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           **kwargs) -> \
                        Tuple[np.ndarray, List[List[int]]] | \
                        watershed_workflow.mesh.Mesh2D | \
-                       Tuple[np.ndarray, List[List[int]], geopandas.GeoDataFrame] | \
+                       Tuple[np.ndarray, List[List[int]], gpd.GeoDataFrame] | \
                        Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray] | \
                        Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
@@ -713,7 +737,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
 
         
 def elevate(m2 : watershed_workflow.mesh.Mesh2D,
-            dem : xarray.DataArray,
+            dem : xr.DataArray,
             **kwargs) -> None:
     """Elevate a mesh onto the provided dem, in place.
 
@@ -721,7 +745,7 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
     ----------
     mesh_crs : crs-type
         Mesh coordinate system.
-    dem : xarray.DataArray
+    dem : xr.DataArray
         2D array forming an elevation raster.
     algorithm : str, optional
         Algorithm used for interpolation.  One of:
@@ -737,7 +761,7 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
     mesh_points = m2.coords
     
     # index the i,j of the points, pick the elevations
-    elev = watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dem, **kwargs)
+    elev = watershed_workflow.data.interpolateValues(mesh_points, m2.crs, dem, **kwargs)
 
     # create the 3D points
     if mesh_points.shape[1] == 3:
@@ -749,14 +773,14 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
         m2.coords = new_points
 
 
-def getDatasetOnMesh(m2 : Mesh2D,
-                     dataset : xarray.DataArray,
+def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
+                     dataset : xr.DataArray,
                      **kwargs) -> np.ndarray:
     """Get the dataset on the mesh as a 1D array.
     """
     mesh_points = m2.centroids
     
-    interpolated_data = watershed_workflow.datasets.interpolateDataset(mesh_points, m2.crs, dataset, **kwargs)
+    interpolated_data = watershed_workflow.data.interpolateValues(mesh_points, m2.crs, dataset, **kwargs)
     
     # Ensure the data type of the interpolated data matches the input dataset
     if not np.issubdtype(interpolated_data.dtype, dataset.dtype):
@@ -783,7 +807,7 @@ def getDatasetOnMesh(m2 : Mesh2D,
 
 #     Parameters
 #     ----------
-#     shapes : geopandas.GeoDataFrame
+#     shapes : gpd.GeoDataFrame
 #         Collection of shapes (likely) overlapping the canvas.
 #     shape_color_column : string
 #         Column of shapes that is the color.
@@ -799,7 +823,7 @@ def getDatasetOnMesh(m2 : Mesh2D,
 
 #     Returns
 #     -------
-#     xarray 
+#     xr 
 
 #     """
 #     assert len(shapes) == len(shape_colors)

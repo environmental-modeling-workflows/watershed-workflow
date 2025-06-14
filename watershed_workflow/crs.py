@@ -124,14 +124,23 @@ def to_wkt(crs : CRS) -> str:
 
 def from_xarray(array : xarray.DataArray) -> CRS | None:
     """Tries to find a CRS from the xarray DataSet or DataArray."""
-    wkt = None
+    try:
+        rio_crs = array.rio.crs
+    except AttributeError:
+        pass
+    else:
+        if rio_crs is None:
+            return None
+        else:
+            return from_rasterio(rio_crs)
+
     try:
         wkt = array.spatial_ref.attrs['crs_wkt']
     except (KeyError, AttributeError):
         pass
-
-    if wkt is not None:
+    else:
         return from_wkt(wkt)
+    
     return None
 
 

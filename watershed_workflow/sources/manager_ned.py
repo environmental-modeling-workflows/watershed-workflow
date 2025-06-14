@@ -50,9 +50,10 @@ class FileManagerNED:
         elif resolution == '1 arc-second':
             self.short_res = '1as'
         else:
-            raise ValueError(
-                "{}: invalid resolution '{}', must be one of '1/9 arc-second', '1/3 arc-second', or '1 arc-second'"
-                .format(self.name))
+            raise ValueError(f"{self.name[0]}: invalid resolution "
+            "'{self.name[1]}', must be one of '1/9 arc-second', '1/3 "
+            "arc-second', or '1 arc-second'")
+
 
         self.resolution = resolution
 

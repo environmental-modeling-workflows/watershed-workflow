@@ -35,7 +35,7 @@ import folium.plugins
 import shapely.geometry
 import shapely.ops
 import geopandas as gpd
-import pandas
+import pandas as pd
 import pandas.api.types
 
 import watershed_workflow.utils
@@ -51,8 +51,8 @@ class _RowView:
 
     This behaves like a dictionary and represents a reference/view to
     the row of the pandas DataFrame that stores the underlying data in
-    the tree.  Why we can't just return a row is because of pandas
-    Copy-on-Write mechanism.
+    the tree.  We can't just return a row is because of pandas
+    Copy-on-Write mechanism -- we really want a reference, not a copy.
 
     """
     def __init__(self,
@@ -300,7 +300,7 @@ class River(watershed_workflow.tinytree.Tree):
         # new node
         # -- create a valid index and add the row to the dataframe
         if pandas.api.types.is_integer_dtype(self.df.index.dtype):
-            new_index = pandas.Series(max(self.df.index)+1).astype(self.df.index.dtype)[0]
+            new_index = pd.Series(max(self.df.index)+1).astype(self.df.index.dtype)[0]
         elif isinstance(self.index, str):
             if self.index[-1].isalpha():
                 new_index = self.index[:-1] + chr(ord(self.index[-1])+1)
@@ -310,13 +310,26 @@ class River(watershed_workflow.tinytree.Tree):
             new_index = str(self.index) + 'a'
 
         assert new_index not in self.df.index
+
+        assert self.df.crs is not None
+        crs = self.df.crs
+        assert crs is not None
         self.df.loc[new_index] = upstream_props
+
+        # clean up -- see geopandas/geopandas#3119
+        # -- geometry seems to be correct, but catchment is not, and the crs gets dropped
+        self.df[names.CATCHMENT] = self.df[names.CATCHMENT].astype(gpd.array.GeometryDtype())
+        self.df.set_crs(crs, inplace=True)
+        assert self.df.crs is not None
+        # end clean up -- hopefully this gets fixed sometime in upstream (pandas or geopandas)
 
         # -- construct the new upstream node inject it into the tree
         new_node = self.__class__(new_index, self.df)
         self.giveChildren(new_node)
         self.linestring = downstream_linestring
         self.addChild(new_node)
+
+        assert self.df.crs is not None
         return new_node, self
 
     def splitAtArclen(self, s : float):
@@ -552,26 +565,51 @@ class River(watershed_workflow.tinytree.Tree):
             for n in self.parent.pathToRoot():
                 yield n
 
-    def resetDataFrame(self) -> None:
-        """Resets the data frame for the river rooted at self.
+    def resetDataFrame(self, force=False) -> None:
+        """Resets the data frame for the river rooted at self, and
+        reindexes the tree to a simple integer-based, preOrdered
+        indexing.
 
         This restricts the (shared) DataFrame to a subset of rows that
         are all in the river rooted at self.
+
         """
-        drop_id = False
-        if names.ID not in self.df.columns:
-            drop_id = True
-            self.df[names.ID] = self.df.index
+        # this should only be called on a root!
+        if self.parent is not None:
+            raise ValueError("Only call resetDataFrame on a root of the river tree!")
 
-        ids = [reach[names.ID] for reach in self.preOrder()]
+        if hasattr(self, '_df_reset') and self._df_reset and not force:
+            # already reset and not forced, all good
+            return 
+        
+        # collect the indices in this river
+        ids = [reach.index for reach in self]
 
-        # certainly there is a pandas method for this?
-        new_df = self.df[self.df[names.ID].apply(ids.__contains__)]
-        if drop_id:
-            new_df = new_df.drop(columns=[names.ID,])
+        # subset the dataframe to just this river
+        new_df = self.df.loc[ids]
 
-        for reach in self.preOrder():
-            reach.df = new_df                
+        # reindex to a preOrdered listing
+        # -- save the old index as ID
+        if names.ID not in new_df.columns:
+            new_df[names.ID] = new_df.index
+
+        # -- create a new index
+        assert 'new_preorder_index' not in new_df.columns
+        new_df['new_preorder_index'] = -np.ones((len(new_df),), 'i')
+        new_preorder_indices = dict((n.index, i) for (i,n) in enumerate(self))
+        new_df.loc[list(new_preorder_indices.keys()), 'new_preorder_index'] = pd.Series(new_preorder_indices)
+
+        # -- assign the new index as the index, then sort by this index
+        new_df = new_df.set_index('new_preorder_index', drop=True).sort_index()
+
+        # -- pass out to all reaches to make sure all have a reference
+        #    to the same dataframe, and update the index of the reach
+        for i,reach in enumerate(self):
+            reach.index = i
+            reach.df = new_df
+
+        # mark a flag so that we don't have to do this repeatedly
+        self._df_reset = True
 
     #
     # methods that convert this to another object
@@ -583,21 +621,23 @@ class River(watershed_workflow.tinytree.Tree):
 
     def to_dataframe(self) -> gpd.GeoDataFrame:
         """Represent as GeoDataFrame, useful for pickling."""
+        # reset the dataframe to be tight on this tree, and we can
+        # rely on rows being in preOrder
+        self.resetDataFrame()
+        
         # move the parent into the dataframe
         def _parent_index(n):
             if n.parent is None:
                 return None
             else:
-                return n.parent.index
+                return n.parent[names.ID]
 
-        self.df[names.PARENT] = dict([(n.index, _parent_index(n)) for n in self.preOrder()])
+        self.df[names.PARENT] = [_parent_index(n) for n in self]
         self.df[names.PARENT] = self.df[names.PARENT].convert_dtypes()
 
         # move the children into the dataframe
-        self.df[names.CHILDREN] = dict([(n.index, [c.index for c in n.children]) for n in self.preOrder()])
+        self.df[names.CHILDREN] = [[c.index for c in n.children] for n in self]
         self.df[names.CHILDREN] = self.df[names.CHILDREN].convert_dtypes()
-        if names.ID not in self.df.columns:
-            self.df[names.ID] = self.df.index
         return self.df
 
     def to_mls(self) -> shapely.geometry.MultiLineString:
@@ -718,12 +758,14 @@ class River(watershed_workflow.tinytree.Tree):
         """
         assert names.PARENT in df
         assert names.ID in df
-        nodes = dict([(index,cls(index, df)) for index in df.index])
+
+        # create a dictionary from ID --> node (NOT index --> node!)
+        nodes = dict((df.at[index, names.ID], cls(index, df)) for index in df.index)
 
         roots = []
-        for index, node in nodes.items():
-            parent = df.at[index, names.PARENT]
-            if pandas.isna(parent):
+        for ID, node in nodes.items():
+            parent = df.at[node.index, names.PARENT]
+            if pd.isna(parent):
                 roots.append(node)
             else:
                 nodes[parent].addChild(node)
@@ -863,12 +905,12 @@ def accumulateCatchments(rivers, outlet_indices, names=None):
     indices = ['CA_'+index for index in outlet_indices]
     outlet_points = [root.linestring.coords[-1] for root in roots]
     contributing_areas = [root.accumulateCatchments() for root in roots]
-    return geopandas.GeoDataFrame({names.INDEX : indices,
-                                   'outlet_ID' : outlet_indices,
-                                   'name' : names,
-                                   'outlet_point' : outlet_points,
-                                   'geometry' : contributing_areas},
-                                  crs=rivers[0].crs)
+    return gpd.GeoDataFrame({names.INDEX : indices,
+                             'outlet_ID' : outlet_indices,
+                             'name' : names,
+                             'outlet_point' : outlet_points,
+                             'geometry' : contributing_areas},
+                            crs=rivers[0].crs)
     
 
 def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
@@ -885,7 +927,7 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
 
     Returns
     -------
-    geopandas.GeoDataFrame
+    gpd.GeoDataFrame
       DataFrame of the incremental contributing areas to each of the outlet indices.
     
     """
@@ -914,7 +956,7 @@ def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
     indices = ['CA_'+index for index in outlet_indices]
     outlet_points = [root.linestring.coords[-1] for root in roots]
 
-    return geopandas.GeoDataFrame({names.ID : indices,
+    return gpd.GeoDataFrame({names.ID : indices,
                                    'outlet_ID' : outlet_indices,
                                    'name' : names,
                                    'outlet_point' : outlet_points,

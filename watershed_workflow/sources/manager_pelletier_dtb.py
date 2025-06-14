@@ -15,7 +15,7 @@ urls = {
 }
 
 
-class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileManagerRaster):
+class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaster):
     """The [PelletierDTB]_ global soil regolith sediment map provides global values of
     depth to bedrock at a 1km spatial resolution.
 
@@ -43,13 +43,13 @@ class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileMana
                 self.name,
                 os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
                              'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
-            super(FileManagerPelletierDTB, self).__init__(self.names.file_name())
+            super(ManagerPelletierDTB, self).__init__(self.names.file_name())
         else:
             self.name = filename
             self.names = None
-            super(FileManagerPelletierDTB, self).__init__(self.name)
+            super(ManagerPelletierDTB, self).__init__(self.name)
 
-    def get_raster(self, shape, crs, band=1):
+    def getDataset(self, shape, crs, band=1):
         """Read the DTB raster.
 
         Parameters
@@ -68,14 +68,7 @@ class FileManagerPelletierDTB(watershed_workflow.sources.manager_raster.FileMana
         """
         logging.info(f'Getting raster of Pelletier DTB on bounds: {shape.bounds}')
         filename = self._download()
-        profile, raster = super(FileManagerPelletierDTB, self).get_raster(shape, crs, band)
-        logging.info(
-            f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
-        raster = raster.astype(float)
-        profile['dtype'] = float
-        logging.info(
-            f'  Got DTB [m]: mean = {raster[np.where(raster > 0)].mean()}, max = {raster.max()}')
-        return profile, raster
+        return super(ManagerPelletierDTB, self).getDataset(shape, crs, band)
 
     def _download(self):
         """Download the files, returning downloaded filename."""

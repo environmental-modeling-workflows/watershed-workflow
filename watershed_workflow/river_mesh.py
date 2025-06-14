@@ -579,7 +579,10 @@ def fixConvexity(reach, e_coords, computeWidth):
                 if not ls.intersects(e_poly_hull.boundary):
                     fig, ax = plt.subplots(1,1)
 
-                    reaches = [reach, reach.parent] + list(reach.children)
+                    reaches = [reach,]
+                    if reach.parent is not None:
+                        reaches.append(reach.parent)
+                    reaches = reaches + list(reach.children)
                     for r in reaches:
                         ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
 
@@ -593,6 +596,27 @@ def fixConvexity(reach, e_coords, computeWidth):
                     assert False, "No intersection point with convex hull?"
 
                 new_c_p = ls.intersection(e_poly_hull.boundary)
+
+                if isinstance(new_c_p, shapely.geometry.MultiPoint):
+                    # two intersections...
+                    fig, ax = plt.subplots(1,1)
+
+                    reaches = [reach,]
+                    if reach.parent is not None:
+                        reaches.append(reach.parent)
+                    reaches = reaches + list(reach.children)
+                    for r in reaches:
+                        ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
+
+                    poly = shapely.geometry.Polygon(e_coords)
+                    ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'g-x')
+
+                    ax.plot(ls.xy[0], ls.xy[1], 'r-x')
+                    ax.plot(e_poly_hull.boundary.xy[0], e_poly_hull.boundary.xy[1], 'k-x')
+                    ax.set_aspect('equal', adjustable='box')
+                    plt.show()
+                    assert False, "Dual intersection points with convex hull?"
+
                 assert isinstance(new_c_p, shapely.geometry.Point)
                 new_c = new_c_p.coords[0]
 

@@ -6,19 +6,18 @@ Author: Pin Shuai (pin.shuai@pnnl.gov)
 """
 import os, sys
 import logging
-import fiona
 import requests
 import numpy as np
 import pandas
 import collections
 import shapely.wkt
+import geopandas
 
 import watershed_workflow.crs
 import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.utils
 import watershed_workflow.soil_properties
-import watershed_workflow.io
 import watershed_workflow.sources.utils as source_utils
 
 _query_template_props = """
@@ -310,18 +309,9 @@ class FileManagerNRCS:
         #         for i,c in enumerate(ring):
         #             ring[i] = c[1],c[0]
         #     return shp
-
-        with fiona.open(filename, 'r') as fid:
-            profile = fid.profile
-            #shapes = [_flip(s) for s in fid]
-            shapes = list(fid)
-
-        for s in shapes:
-            s['properties']['id'] = s['id']
-
+        shapes = geopandas.read_file(filename)
         logging.info('  Found {} shapes.'.format(len(shapes)))
-        logging.info('  and crs: {}'.format(watershed_workflow.crs.from_fiona(profile['crs'])))
-        return profile, shapes
+        return shapes
 
     def download_properties(self, mukeys, filename=None, force=False):
         """Queries REST API for parameters by MUKEY."""
@@ -380,10 +370,10 @@ class FileManagerNRCS:
         df_agg = aggregate_mukey_values(df)
 
         # get dataframe with van genuchten models
-        df_vgm = watershed_workflow.soil_properties.vgm_from_SSURGO(df_agg)
+        df_vgm = watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO(df_agg)
 
         # fix units
-        df_ats = watershed_workflow.soil_properties.to_ATS(df_vgm)
+        df_ats = watershed_workflow.soil_properties.convertRosettaToATS(df_vgm)
 
         # all structure data frames are expected to have a 'source' and an 'id' in that source field
         df_ats['source'] = 'NRCS'
@@ -523,10 +513,7 @@ class FileManagerNRCS:
             table = r.json()['Table']
 
             shps = [shapely.wkt.loads(ent[3]) for ent in table]
-            for shp, t in zip(shps, table):
-                shp.properties = dict(mukey=int(t[1]))
-
-            logging.info(f'  Writing to shapefile')
-            watershed_workflow.io.write_to_shapefile(filename, shps, self.crs)
-
+            df = geopandas.GeoDataFrame({'mukey':[int(t[1]) for t in table]},
+                                         geometry=shps, crs=self.crs)
+            df.to_file(filename)
         return filename

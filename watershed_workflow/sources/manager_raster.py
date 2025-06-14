@@ -3,7 +3,7 @@
 
 import numpy as np
 import attr
-import xarray
+import xarray as xr
 import shapely
 import rioxarray
 from typing import Tuple
@@ -31,7 +31,7 @@ class ManagerRaster:
                               shapely.geometry.MultiPolygon | \
                               Tuple[float,float,float,float],
                    geometry_crs : watershed_workflow.crs.CRS,
-                   band : int = 1) -> xarray.DataArray:
+                   band : int = 1) -> xr.DataArray:
         """Read a raster as a dataset on this shape, clipping to the shape.
         
         Parameters
@@ -47,15 +47,21 @@ class ManagerRaster:
 
         Returns
         -------
-        dataset : xarray.DataArray
+        dataset : xr.DataArray
           Dataset containing the raster.
 
         Note that the raster provided is in its native CRS (which is in the
         rasterio profile), not the shape's CRS.
         """
-        if isinstance(geometry, tuple) and len(geometry) == 4:
-            geometry = shapely.geometry.box(*geometry)
+        try:
+            bounds = geometry.bounds
+        except AttributeError:
+            bounds = geometry
 
-        dataset = rioxarray.open_rasterio(self._filename, masked=False)
-        return dataset.rio.clip([shapely.geometry.mapping(geometry),], geometry_crs, drop=True)
+        if not self._filename.lower().endswith('.tif'):
+            dataset = rioxarray.open_rasterio(self._filename, chunk='auto')
+        else:
+            dataset = rioxarray.open_rasterio(self._filename, cache=False)
+        assert isinstance(dataset, xr.Dataset) or isinstance(dataset, xr.DataArray)
+        return dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(geometry_crs))
   

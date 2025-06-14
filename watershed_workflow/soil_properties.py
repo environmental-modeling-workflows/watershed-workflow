@@ -11,11 +11,11 @@ etc.
 
 import numpy as np
 import logging
-import pandas
+import pandas, geopandas
 import rosetta
 
 import watershed_workflow.config
-
+import watershed_workflow.sources.standard_names as names
 
 def computeVanGenuchtenModel_Rosetta(data):
     """Return van Genuchten model parameters using Rosetta v3 model.
@@ -261,8 +261,7 @@ def mangleGLHYMPSProperties(shapes,
 
     Parameters
     ----------
-    shapes : list[dict] or list[shapely + properties]
-      The raw result from FileManagerGLHYMPS.get_shapes()
+    shapes : geopandas.GeoDataFrame
     min_porosity : float, optional
       Some GLHYMPS entries have 0 porosity; this sets a floor on that
       value.  Default is 0.01.
@@ -277,22 +276,16 @@ def mangleGLHYMPSProperties(shapes,
       The resulting properties in standard form, names, and units.
     """
     assert (len(shapes) > 0)
-    if type(shapes[0]) is dict:
-        shp_props = [shp['properties'] for shp in shapes]
-    else:
-        shp_props = [shp.properties for shp in shapes]
 
-    ids = np.array([prop['OBJECTID_1'] for prop in shp_props], dtype=int)
-    for prop in shp_props:
-        prop['id'] = prop['OBJECTID_1']
+    ids = shapes['OBJECTID_1']
+    shapes[names.ID] = shapes['OBJECTID_1']
 
-    Ksat = np.array([prop['logK_Ferr_'] for prop in shp_props], dtype=float)
+    Ksat = shapes['logK_Ferr_'].to_numpy(dtype=float)
     Ksat = 10**(Ksat / 100)  # units = m^2, division by 100 is per GLHYMPS Readme file
     Ksat = np.minimum(Ksat, max_permeability)
-    Ksat_std = np.array([prop['K_stdev_x1'] for prop in shp_props],
-                        dtype=float)  # standard deviation
+    Ksat_std = shapes['K_stdev_x1'].to_numpy(dtype=float)
     Ksat_std = Ksat_std / 100  # division by 100 is per GLHYMPS readme
-    poro = np.array([prop['Porosity_x'] for prop in shp_props], dtype=float)  # [-]
+    poro = shapes['Porosity_x'].to_numpy(dtype=float)
     poro = poro / 100  # division by 100 is per GLHYMPS readme
     poro = np.maximum(poro, min_porosity)  # some values are 0?
 
@@ -304,7 +297,7 @@ def mangleGLHYMPSProperties(shapes,
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
 
-    properties = pandas.DataFrame(
+    properties = geopandas.GeoDataFrame(
         data={
             'id': ids,
             'source': 'GLHYMPS',
@@ -315,7 +308,9 @@ def mangleGLHYMPSProperties(shapes,
             'van Genuchten n [-]': vg_n,
             'residual saturation [-]': sr,
             #'description' : descriptions,
-        })
+        },
+        geometry=shapes.geometry,
+        crs=shapes.crs)
     return properties
 
 

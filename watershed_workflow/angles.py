@@ -72,12 +72,17 @@ def smoothSharpAngles(hucs : SplitHUCs,
     count = smoothHUCsSharpAngles(hucs, min_angle, junction_min_angle)
         
     for river in rivers:
+        logging.info(f'SSA1: {river.df.crs}')
         count += smoothOutletSharpAngles(hucs, river, junction_min_angle)
         
+        logging.info(f'SSA2: {river.df.crs}')
         for reach in river:
             lcount, reach.linestring = smoothInternalSharpAngles(reach.linestring, min_angle)
             count += lcount
+        logging.info(f'SSA3: {river.df.crs}')
+        for reach in river:
             count += smoothUpstreamSharpAngles(hucs, reach, junction_min_angle)
+        logging.info(f'SSA4: {river.df.crs}')
     return count
 
                 
@@ -566,11 +571,16 @@ def _zipperSiblings(reaches : List[River],
     old_downstream_nodes = []
     merged_ds_node = None
     for reach, ls in zip(reaches, linestrings):
+        logging.info(f'zip0: {reach.df.crs}')
         us, ds = reach.split(len(ls.coords)-1)
+        logging.info(f'  us: {us.df.crs}')
+        logging.info(f'  ds: {ds.df.crs}')
         us.moveCoordinate(-1, centroid)
         old_downstream_nodes.append(ds)
 
         if merged_ds_node is None:
             merged_ds_node = ds
         else:
+            logging.info(f'zip1: {ds.df.crs}')
             merged_ds_node = watershed_workflow.river_tree.combineSiblings(merged_ds_node, ds, new_downstream_ls)
+            logging.info(f'zip2: {ds.df.crs}')

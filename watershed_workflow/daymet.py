@@ -6,9 +6,8 @@ hdf5 files that models can read.
 
 import logging
 import numpy as np
+import xarray as xr
 import datetime
-import watershed_workflow.datasets
-
 
 def getAttributes(bounds, start, end):
     # set the wind speed height, which is made up
@@ -22,8 +21,8 @@ def getAttributes(bounds, start, end):
     return attributes
 
 
-def convertToATS(dat):
-    """Convert dictionary of Daymet datasets to daily average data in standard form.
+def convertToATS(dat : xr.Dataset) -> xr.Dataset:
+    """Convert xarray.Dataset Daymet datasets to daily average data in standard form.
 
     This:
 
