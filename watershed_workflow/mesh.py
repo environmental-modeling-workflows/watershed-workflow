@@ -323,7 +323,10 @@ class Mesh2D:
         if facecolors is not None and len(facecolors) == len(self.conn):
             # convert from an array to a list of colors, using a cmap
             norm = plt.Normalize(vmin=vmin, vmax=vmax)
-            facecolors = cmap(norm(facecolors))
+            if isinstance(cmap, str):
+                facecolors = plt.colormaps[cmap](norm(facecolors))
+            else:
+                facecolors = cmap(norm(facecolors))
 
         # build the collection of gons
         from matplotlib import collections
