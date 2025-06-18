@@ -229,8 +229,6 @@ def add_outlet_regions(m2,
     ----------
     m2 : watershed_workflow.mesh.Mesh2D
         The 2D mesh containing river corridor elements
-    hucs : list of shapely.Polygon
-        The watershed polygons
     outlet_points : list of shapely.Point
         List of outlet point locations to add regions for
     outlet_width : float, optional
@@ -238,6 +236,15 @@ def add_outlet_regions(m2,
     labels : list of str, optional
         Custom labels for each outlet point. If not provided, defaults to
         'outlet 0', 'outlet 1', etc.
+
+    Notes
+    -----
+    For each outlet point, this creates a labeled set containing the boundary edges
+    that are within outlet_width distance of the outlet point. The labeled sets are
+    named '{label} boundary' and are marked with to_extrude=False.
+
+    If no faces are found within the buffer distance for an outlet point, a warning
+    is issued.
     """
     if labels is None:
         labels = ['outlet ' + str(i) for i in range(len(outlet_points))]
