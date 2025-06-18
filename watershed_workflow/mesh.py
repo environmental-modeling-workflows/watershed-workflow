@@ -315,7 +315,7 @@ class Mesh2D:
         kwargs.setdefault('linewidth', 0.5)
         kwargs.setdefault('linewidth', 0.5)
 
-        if facecolors == 'elevation':
+        if isinstance(facecolors, str) and facecolors == 'elevation':
             facecolors = self.centroids[:,-1]
             if cmap is None:
                 cmap = 'terrain'
@@ -323,7 +323,7 @@ class Mesh2D:
         if facecolors is not None and len(facecolors) == len(self.conn):
             # convert from an array to a list of colors, using a cmap
             norm = plt.Normalize(vmin=vmin, vmax=vmax)
-            facecolors = plt.colormaps[cmap](norm(facecolors))
+            facecolors = cmap(norm(facecolors))
 
         # build the collection of gons
         from matplotlib import collections
@@ -337,6 +337,8 @@ class Mesh2D:
             fig, ax = plt.subplots()
         ax.add_collection(gons)
         ax.autoscale_view()
+
+        return gons
 
     def writeVTK(self, filename) -> None:
         """Writes to VTK."""
