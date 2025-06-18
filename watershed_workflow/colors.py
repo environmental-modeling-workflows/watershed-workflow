@@ -274,7 +274,7 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
         cdict[key] = [(indices[i], colors_rgba[i - 1, ki], colors_rgba[i, ki])
                       for i in range(ncolors + 1)]
     # Return colormap object.
-    return matplotlib.colors.LinearLineStringedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
+    return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
 
 
 def float_list_type(mystring):
