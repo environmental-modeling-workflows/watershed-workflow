@@ -49,6 +49,8 @@ import watershed_workflow.river_mesh
 import watershed_workflow.condition
 import watershed_workflow.data
 
+import watershed_workflow.elm_domain as elm_domain
+
 
 #
 # functions for relating objects
