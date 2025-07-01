@@ -774,135 +774,31 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 
 
 def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
-                     dataset : xr.DataArray,
+                     data : xr.DataArray,
                      **kwargs) -> np.ndarray:
-    """Get the dataset on the mesh as a 1D array.
-    """
+    """Interpolate xarray data onto cell centroids of a mesh."""
     mesh_points = m2.centroids
     
-    interpolated_data = watershed_workflow.data.interpolateValues(mesh_points, m2.crs, dataset, **kwargs)
+    interpolated_data = watershed_workflow.data.interpolateValues(mesh_points, m2.crs, data, **kwargs)
     
-    # Ensure the data type of the interpolated data matches the input dataset
-    if not np.issubdtype(interpolated_data.dtype, dataset.dtype):
-        interpolated_data = interpolated_data.astype(dataset.dtype)
+    # Ensure the data type of the interpolated data matches the input data
+    if not np.issubdtype(interpolated_data.dtype, data.dtype):
+        interpolated_data = interpolated_data.astype(data.dtype)
     
     # Flatten the interpolated data to ensure it is a 1D array
     return interpolated_data.flatten()
 
-# def colorRasterFromShapes(shapes,
-#                           shape_color_column,
-#                           raster_bounds,
-#                           raster_dx,
-#                           raster_crs=None,
-#                           nodata=None):
-#     """Color in a raster by filling in a collection of shapes.
 
-#     Given a canvas specified by bounds and pixel size, color a raster by, for
-
-#     each shape, finding the intersection of that shape with the canvas and
-#     coloring it by a provided value.  Paint by numbers.
-
-#     Note, if the shapes overlap, the last shape containing a pixel gives the
-#     color of that pixel.
-
-#     Parameters
-#     ----------
-#     shapes : gpd.GeoDataFrame
-#         Collection of shapes (likely) overlapping the canvas.
-#     shape_color_column : string
-#         Column of shapes that is the color.
-#     raster_bounds : [xmin, ymin, xmax, ymax]
-#         Bounding box for the output raster, in the given CRS.
-#     raster_dx : float
-#         Pixel size (assumed the same in both x and y).
-#     raster_crs : crs-type, optional=shapes_crs
-#         Coordinate system of the raster.
-#     nodata : dtype, optional={-1 (int), nan (float)}
-#         Value to place in pixels which intersect no shape.  Note the type of
-#         this should be the same as the type of shape_colors.
-
-#     Returns
-#     -------
-#     xr 
-
-#     """
-#     assert len(shapes) == len(shape_colors)
-#     if len(shapes) == 0:
-#         raise ValueError("Cannot generate raster for empty set of shapes")
-
-#     logging.info('Coloring shapes onto raster:')
-
-#     if not watershed_workflow.crs.isEqual(shapes_crs, raster_crs):
-#         shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_crs)
-
-#     dtype = np.dtype(type(shape_colors[0]))
-
-#     if nodata is None:
-#         try:
-#             nodata = dtype(np.nan)
-#         except ValueError:
-#             nodata = dtype(-1)
-
-#     raster_profile, raster = watershed_workflow.utils.create_empty_raster(
-#         raster_bounds, raster_crs, raster_dx, nodata)
-#     assert len(raster.shape) == 3 and raster.shape[0] == 1
-#     raster = raster[0, :, :]
-#     logging.info(f'  of shape: {raster.shape}')
-#     logging.info(f'  and {len(set(shape_colors))} independent colors')
-
-#     for p, p_id in zip(shapes, shape_colors):
-#         if not p.is_empty:
-#             p_list = watershed_workflow.utils.flatten([p, ])
-#             mask = rasterio.features.geometry_mask(p_list,
-#                                                    raster.shape,
-#                                                    raster_profile['transform'],
-#                                                    invert=True)
-#             raster[mask] = p_id
-#     return raster_profile, raster
-
-
-# def colorExistingRasterFromShapes(shapes_df, shape_colors, raster, raster_profile):
-#     """Color in a raster by filling in a collection of shapes.
-
-#     Given a canvas, find the intersection of that shape with the canvas and
-#     coloring it by a provided value.  Paint by numbers.
-
-#     Note, if the shapes overlap, the last shape containing a pixel gives the
-#     color of that pixel.
-
-#     Parameters
-#     ----------
-#     shapes : list(Polygon)
-#         Collection of shapes (likely) overlapping the canvas.
-#     shapes_crs : crs-type
-#         Coordinate system of the shapes.
-#     shapes_colors : iterable[]
-#         Color to label the interior of each polygon with.
-#     raster : np.ndarray
-#         The canvas to color on.
-#     raster_profile : dict
-#         Rasterio style profile including at least CRS, nodata, and
-#         transform.
-
-#     """
-#     assert len(shapes) == len(shape_colors)
-#     if len(shapes) == 0:
-#         raise ValueError("Cannot generate raster for empty set of shapes")
-
-#     logging.info('Coloring shapes onto raster:')
-#     logging.info(f'  and {len(set(shape_colors))} independent colors')
-
-#     if not watershed_workflow.crs.isEqual(shapes_crs, raster_profile['crs']):
-#         shapes = watershed_workflow.warp.shplys(shapes, shapes_crs, raster_profile['crs'])
-
-#     for p, p_id in zip(shapes, shape_colors):
-#         if not p.is_empty:
-#             p_list = watershed_workflow.utils.flatten([p, ])
-#             mask = rasterio.features.geometry_mask(p_list,
-#                                                    raster.shape,
-#                                                    raster_profile['transform'],
-#                                                    invert=True)
-#             raster[mask] = p_id
+def getShapePropertiesOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
+                             df : gpd.GeoDataFrame,
+                             column : str,
+                             resolution : float,
+                             nodata: Optional[Union[int, float]] = None,
+                             **kwargs
+                             ) -> np.ndarray:
+    """Intepolate shape data onto cell centroids of a mesh."""
+    dataarray = watershed_workflow.data.rasterizeGeoDataFrame(df, column, resolution, nodata=nodata)
+    return getDatasetOnMesh(m2, dataarray, **kwargs)
 
 
 def makeMap(m):

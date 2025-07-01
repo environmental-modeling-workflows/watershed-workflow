@@ -7,8 +7,12 @@ import warnings
 import cftime
 import datetime
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import xarray as xr
+import rasterio.transform
+import rasterio.features
+import shapely.geometry
 import scipy.spatial
 import scipy.signal
 import scipy.stats
@@ -141,7 +145,7 @@ def _convertTimesToCFTimeNoleap(time_values: CFTimeSeries) -> CFTimeNoLeapSeries
         return time_values_noleap
 
 
-def _createNoleapMask(time_values : ValidTimeSeries)-> Tuple[CFTimeNoLeapSeries, List[bool]]:
+def _createNoleapMask(time_values : Union[pd.Series, np.ndarray])->Tuple[Union[pd.Series, np.ndarray], List[bool]]:
     """Mask that is true for any non-leap-day (day 366)"""
     # no times --> no leap days
     if len(time_values) == 0:
@@ -153,7 +157,9 @@ def _createNoleapMask(time_values : ValidTimeSeries)-> Tuple[CFTimeNoLeapSeries,
     
     # Get the time column is in cftime format
     time_in_cftime = _convertTimesToCFTime(time_values)
+    assert not isinstance(time_in_cftime, list)
     mask = [(t.dayofyr != 366) for t in time_in_cftime]
+
     return time_in_cftime[mask], mask 
 
     
@@ -315,6 +321,14 @@ def computeMode(
         coords=new_coords,
         attrs=da.attrs.copy()
     )
+
+    # transfer the crs
+    try:
+        crs = da.rio.crs
+    except AttributeError:
+        pass
+    else:
+        result.rio.set_crs(crs)
     
     # Preserve the name if it exists
     if da.name is not None:
@@ -445,6 +459,10 @@ def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset, time_dim: str = 'time'
     da_filtered = da_filtered.assign_coords({time_dim : time_array_noleap})
     
     # Preserve all attributes from the original DataArray
+    try:
+        da_filtered.rio.set_crs(da.rio.crs)
+    except AttributeError:
+        pass
     da_filtered.attrs = da.attrs.copy()
     
     # Preserve coordinate attributes (including CRS if present)
@@ -880,11 +898,11 @@ def interpolateToRegular(
 #
 # Compute an annual average
 #
-def _computeAnnualAverage(
+def _computeAverageYear(
     ds: xr.Dataset,
     time_dim: str,
     start_date: cftime.datetime,
-    num_years: int
+    output_nyears: int
 ) -> Tuple[xr.Dataset, List[cftime.datetime]]:
     """
     Compute annual average for a Dataset and generate output times.
@@ -897,7 +915,7 @@ def _computeAnnualAverage(
         Name of the time dimension.
     start_date : cftime.datetime
         Start date for the output time series.
-    num_years : int
+    output_nyears : int
         Number of years to repeat the averaged pattern.
         
     Returns
@@ -927,7 +945,7 @@ def _computeAnnualAverage(
     output_times = []
     output_doys = []
     
-    for year_offset in range(num_years):
+    for year_offset in range(output_nyears):
         current_year = start_date.year + year_offset
         
         for doy in unique_doys:
@@ -972,11 +990,11 @@ def _parseStartDate(start_date: Union[str, datetime.datetime, cftime.datetime]) 
         return start_date
 
 
-def computeAnnualAverage_DataFrame(
+def computeAverageYear_DataFrame(
     df: pd.DataFrame,
     time_column: str = 'time',
     start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
-    num_years: int = 2,
+    output_nyears: int = 2,
     columns: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """
@@ -990,7 +1008,7 @@ def computeAnnualAverage_DataFrame(
         Name of the column containing cftime datetime objects.
     start_date : str, datetime, or cftime.datetime
         Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
-    num_years : int
+    output_nyears : int
         Number of years to repeat the averaged pattern.
     columns : list of str, optional
         List of columns to average. If None, averages all numeric columns.
@@ -1012,7 +1030,7 @@ def computeAnnualAverage_DataFrame(
     -----
     The function computes the average value for each day of year (1-365) across all
     years in the input data. For 5-day intervals, it averages values at days 1, 6,
-    11, etc. The resulting pattern is then repeated for num_years starting from
+    11, etc. The resulting pattern is then repeated for output_nyears starting from
     start_date.
     
     Missing values (NaN) are ignored in the averaging process.
@@ -1025,17 +1043,17 @@ def computeAnnualAverage_DataFrame(
     columns_to_avg, ds = _convertDataFrameToDataset(df, time_column, columns)
     
     # Compute averages using shared function
-    averaged_ds, output_times = _computeAnnualAverage(ds, time_column, start_cftime, num_years)
+    averaged_ds, output_times = _computeAverageYear(ds, time_column, start_cftime, output_nyears)
 
     # Convert back to DataFrame
     return _convertDatasetToDataFrame(averaged_ds, time_column, output_times, columns_to_avg)
 
 
-def computeAnnualAverage_DataArray(
+def computeAverageYear_DataArray(
         da: xr.DataArray,
         time_dim: str = 'time',
         start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
-        num_years: int = 2,
+        output_nyears: int = 2,
 ) -> xr.DataArray:
     """
     Average DataArray values across years and repeat for specified number of years.
@@ -1046,7 +1064,7 @@ def computeAnnualAverage_DataArray(
         Input DataArray with cftime noleap calendar dates at 1- or 5-day intervals.
     start_date : str, datetime, or cftime.datetime
         Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
-    num_years : int
+    output_nyears : int
         Number of years to repeat the averaged pattern.
     time_dim : str, optional
         Name of the time dimension. Default is 'time'.
@@ -1066,7 +1084,7 @@ def computeAnnualAverage_DataArray(
     -----
     The function computes the average value for each day of year (1-365) across all
     years in the input data. The resulting 365-day pattern is then repeated for
-    num_years starting from start_date.
+    output_nyears starting from start_date.
     
     This is particularly useful for creating climatological datasets or for
     generating synthetic time series based on historical patterns.
@@ -1081,7 +1099,7 @@ def computeAnnualAverage_DataArray(
     temp_ds = xr.Dataset({da.name or 'data': da})
     
     # Compute averages using shared function
-    averaged_ds, output_times = _computeAnnualAverage(temp_ds, time_dim, start_cftime, num_years)
+    averaged_ds, output_times = _computeAverageYear(temp_ds, time_dim, start_cftime, output_nyears)
     
     # Extract the DataArray
     result = averaged_ds[da.name or 'data']
@@ -1096,11 +1114,11 @@ def computeAnnualAverage_DataArray(
     return result
 
 
-def computeAnnualAverage_Dataset(
+def computeAverageYear_Dataset(
     ds: xr.Dataset,
     time_dim: str = 'time',
     start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-1-1',
-    num_years: int = 2,
+    output_nyears: int = 2,
     variables: Optional[List[str]] = None
 ) -> xr.Dataset:
     """
@@ -1112,7 +1130,7 @@ def computeAnnualAverage_Dataset(
         Input Dataset with cftime noleap calendar dates at 1- or 5-day intervals.
     start_date : str, datetime, or cftime.datetime
         Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
-    num_years : int
+    output_nyears : int
         Number of years to repeat the averaged pattern.
     time_dim : str, optional
         Name of the time dimension. Default is 'time'.
@@ -1161,7 +1179,7 @@ def computeAnnualAverage_Dataset(
     
     if vars_with_time:
         # Compute averages using shared function
-        averaged_ds, output_times = _computeAnnualAverage(ds_to_avg, time_dim, start_cftime, num_years)
+        averaged_ds, output_times = _computeAverageYear(ds_to_avg, time_dim, start_cftime, output_nyears)
         
         # Assign the output times
         result = averaged_ds.assign_coords({time_dim: output_times})
@@ -1188,41 +1206,41 @@ def computeAnnualAverage_Dataset(
 
 
 @overload
-def computeAnnualAverage(
-    data: xr.Dataset,
-    time_column: str,
-    start_date: Union[str, datetime.datetime, cftime.datetime],
-    num_years: int,
-    columns: Optional[List[str]] = None
+def computeAverageYear(
+        data: xr.Dataset,
+        time_column: str,
+        start_year: int,
+        output_nyears: int,
+        columns: Optional[List[str]] = None
 ) -> xr.Dataset: ...
 
 
 @overload
-def computeAnnualAverage(
-    data: xr.DataArray,
-    time_column: str,
-    start_date: Union[str, datetime.datetime, cftime.datetime],
-    num_years: int,
-    columns: None = None
+def computeAverageYear(
+        data: xr.DataArray,
+        time_column: str,
+        start_year: int,
+        output_nyears: int,
+        columns: None = None
 ) -> xr.DataArray: ...
 
 
 @overload
-def computeAnnualAverage(
-    data: pd.DataFrame,
-    time_column: str,
-    start_date: Union[str, datetime.datetime, cftime.datetime],
-    num_years: int,
-    columns: Optional[List[str]] = None
+def computeAverageYear(
+        data: pd.DataFrame,
+        time_column: str,
+        start_year: int,
+        output_nyears: int,
+        columns: Optional[List[str]] = None
 ) -> pd.DataFrame: ...
 
 
-def computeAnnualAverage(
-    data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
-    time_column: str = 'time',
-    start_date: Union[str, datetime.datetime, cftime.datetime] = '2020-01-01',
-    num_years: int = 1,
-    columns: Optional[List[str]] = None
+def computeAverageYear(
+        data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+        time_column: str,
+        start_year: int,
+        output_nyears: int,
+        columns: Optional[List[str]] = None
 ) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
     """
     Average data values across years and repeat for specified number of years.
@@ -1238,10 +1256,9 @@ def computeAnnualAverage(
         For DataFrame: Name of the time column (required).
         For Dataset: Name of the time dimension (default: 'time').
         For DataArray: Ignored (always uses 'time' dimension).
-    start_date : str, datetime.datetime, or cftime.datetime, optional
-        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
-        Default is '2020-01-01'.
-    num_years : int, optional
+    start_year : int
+        Start year for the output time series.
+    output_nyears : int, optional
         Number of years to repeat the averaged pattern. Default is 1.
     columns : list of str, optional
         For DataFrame: List of columns to average (default: all numeric columns).
@@ -1267,7 +1284,7 @@ def computeAnnualAverage(
     -----
     The function computes the average value for each day of year (1-365) across all
     years in the input data. For 5-day intervals, it averages values at days 1, 6,
-    11, etc. The resulting pattern is then repeated for num_years starting from
+    11, etc. The resulting pattern is then repeated for output_nyears starting from
     start_date.
     
     Missing values (NaN) are ignored in the averaging process.
@@ -1280,20 +1297,21 @@ def computeAnnualAverage(
         - Variables without the time dimension are preserved unchanged
         - All attributes and encodings are preserved
     """
+    start_date = cftime.DatetimeNoLeap(start_year, 1, 1)
     if isinstance(data, pd.DataFrame):
         if time_column is None:
             raise TypeError("time_column parameter is required for DataFrame input")
-        return computeAnnualAverage_DataFrame(data, time_column, start_date, num_years, columns)
+        return computeAverageYear_DataFrame(data, time_column, start_date, output_nyears, columns)
     
     elif isinstance(data, xr.DataArray):
         if columns is not None:
             warnings.warn("'columns' parameter is ignored for DataArray input")
-        return computeAnnualAverage_DataArray(data, time_column, start_date, num_years)
+        return computeAverageYear_DataArray(data, time_column, start_date, output_nyears)
     
     elif isinstance(data, xr.Dataset):
         # Dataset can use custom time dimension name
         time_dim = time_column or time_column
-        return computeAnnualAverage_Dataset(data, time_dim, start_date, num_years, columns)
+        return computeAverageYear_Dataset(data, time_dim, start_date, output_nyears, columns)
     
     else:
         raise TypeError(
@@ -2202,3 +2220,156 @@ def imputeHoles2D(arr : xr.DataArray,
     res = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method=method)
     return res
     
+
+def rasterizeGeoDataFrame(
+    gdf: gpd.GeoDataFrame,
+    column: str,
+    resolution: float,
+    bounds: Optional[Tuple[float, float, float, float]] = None,
+    nodata: Optional[Union[int, float]] = None
+) -> xr.DataArray:
+    """
+    Convert a GeoDataFrame to a rasterized DataArray based on a column's values.
+    
+    Parameters
+    ----------
+    gdf : geopandas.GeoDataFrame
+        Input GeoDataFrame containing geometries and data.
+    column : str
+        Name of the column containing values to rasterize. Must be a numeric type.
+    resolution : float
+        Spatial resolution of the output raster in the units of the GeoDataFrame's CRS.
+        This defines the size of each pixel.
+    bounds : tuple of float, optional
+        Bounding box as (minx, miny, maxx, maxy). If None, bounds are computed
+        from the GeoDataFrame's total bounds.
+    nodata : int or float, optional
+        Value to use for pixels not covered by any geometry. If None, defaults
+        to NaN for float columns and -999 for integer columns.
+        
+    Returns
+    -------
+    xarray.DataArray
+        Rasterized data with dimensions ('y', 'x') and coordinates defined by
+        the spatial extent and resolution. Areas outside geometries are set to
+        the nodata value. The data type matches the column's data type.
+        
+    Raises
+    ------
+    ValueError
+        If column is not found in the GeoDataFrame.
+        If column is not numeric type.
+        If GeoDataFrame is empty.
+        If resolution is not positive.
+        
+    Notes
+    -----
+    The function uses rasterio's rasterization capabilities to burn geometries
+    into a raster. When geometries overlap, the value from the last geometry
+    in the GeoDataFrame is used.
+    
+    The output DataArray includes the CRS information in its attributes if
+    the GeoDataFrame has a CRS defined.
+    
+    The dtype of the output array matches the dtype of the input column.
+    """
+    # reset the index to make 'index' a column if that is what is
+    # requested to be colored.
+    if column == 'index':
+        gdf = gdf.reset_index()
+    
+    # Validate inputs
+    if column not in gdf.columns:
+        raise ValueError(f"Column '{column}' not found in GeoDataFrame")
+    
+    if len(gdf) == 0:
+        raise ValueError("GeoDataFrame is empty")
+    
+    if resolution <= 0:
+        raise ValueError(f"Resolution must be positive, got {resolution}")
+    
+    # Determine output data type and fill value
+    out_dtype = gdf[column].dtype
+    
+    # Set nodata value based on dtype if not provided
+    fill_value = out_dtype.type()
+    if nodata is None:
+        if np.issubdtype(out_dtype, np.integer):
+            fill_value = -999
+        elif np.issubdtype(out_dtype, np.floating):
+            fill_value = np.nan
+        else:
+            raise ValueError(f"Column '{column}' must be numeric type, got {out_dtype}")
+    else:
+        fill_value = out_dtype.type(nodata)
+
+    # Validate geometry types and create a mask of geometry that are
+    # valid and values that are not na
+    valid_types = (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)
+    valid_mask = gdf[column].notna() & \
+        gdf.geometry.notna() & gdf.geometry.is_valid & \
+        gdf.geometry.apply(lambda s : isinstance(s, valid_types))
+        
+    # Get bounds
+    if bounds is None:
+        bounds = gdf.total_bounds  # minx, miny, maxx, maxy
+    
+    minx, miny, maxx, maxy = bounds
+    
+    # Calculate raster dimensions
+    width = int(np.ceil((maxx - minx) / resolution))
+    height = int(np.ceil((maxy - miny) / resolution))
+    
+    # Create transform
+    transform = rasterio.transform.from_bounds(minx, miny, maxx, maxy, width, height)
+    
+    # Initialize array with nodata value
+    raster = np.full((height, width), fill_value, dtype=out_dtype)
+    
+    
+    if valid_mask.sum() == 0:
+        # No valid data to rasterize
+        pass
+    else:
+        # Create list of (geometry, value) pairs
+        shapes = [
+            (geom, value) 
+            for geom, value in zip(gdf.geometry[valid_mask], gdf[column][valid_mask])
+        ]
+        
+        # Rasterize
+        rasterio.features.rasterize(
+            shapes,
+            out=raster,
+            transform=transform,
+            fill=fill_value,
+            dtype=out_dtype
+        )
+    
+    # Create coordinate arrays
+    # X coordinates (cell centers)
+    x_coords = np.arange(minx + resolution/2, maxx + resolution, resolution)[:width]
+    # Y coordinates (cell centers) - note that y decreases as row index increases
+    y_coords = np.arange(maxy - resolution/2, miny - resolution, -resolution)[:height]
+    
+    # Create DataArray
+    da = xr.DataArray(
+        raster,
+        dims=['y', 'x'],
+        coords={
+            'x': x_coords,
+            'y': y_coords
+        },
+        name=column
+    )
+    
+    # Add attributes
+    da.attrs['resolution'] = resolution
+    da.attrs['source_column'] = column
+    da.attrs['nodata'] = fill_value
+    
+    # Add CRS if available
+    if gdf.crs is not None:
+        da.attrs['crs'] = str(gdf.crs)
+    
+    return da
