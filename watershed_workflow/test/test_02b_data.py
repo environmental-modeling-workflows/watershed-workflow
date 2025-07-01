@@ -1,10 +1,14 @@
 import pytest
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import xarray as xr
 import cftime
 import datetime
 import warnings
+
+import shapely.geometry
+import shapely.wkt
 
 import watershed_workflow.data as wwd
 
@@ -1044,8 +1048,8 @@ class TestAverageAcrossYearsDataFrame:
     
     def test_default_all_numeric_columns(self, sample_multiyear_df):
         """Test averaging all numeric columns by default."""
-        result = wwd.computeAnnualAverage_DataFrame(
-            sample_multiyear_df, 'time', '2025-01-01', 1
+        result = wwd.computeAverageYear_DataFrame(
+            sample_multiyear_df, 'time', 2025, 1
         )
         
         # Should only include time and numeric columns
@@ -1058,8 +1062,8 @@ class TestAverageAcrossYearsDataFrame:
     
     def test_specific_columns(self, sample_multiyear_df):
         """Test averaging specific columns."""
-        result = wwd.computeAnnualAverage_DataFrame(
-            sample_multiyear_df, 'time', '2025-01-01', 1,
+        result = wwd.computeAverageYear_DataFrame(
+            sample_multiyear_df, 'time', 2025, 1,
             columns=['temperature']
         )
         
@@ -1070,8 +1074,8 @@ class TestAverageAcrossYearsDataFrame:
     def test_non_numeric_columns_ignored(self, sample_multiyear_df):
         """Test that non-numeric columns are ignored with warning."""
         with warnings.catch_warnings(record=True) as w:
-            result = wwd.computeAnnualAverage_DataFrame(
-                sample_multiyear_df, 'time', '2025-01-01', 1,
+            result = wwd.computeAverageYear_DataFrame(
+                sample_multiyear_df, 'time', 2025, 1,
                 columns=['temperature', 'station', 'notes']
             )
             
@@ -1086,8 +1090,8 @@ class TestAverageAcrossYearsDataFrame:
     
     def test_averaging_accuracy(self, sample_multiyear_df):
         """Test that averaging is mathematically correct."""
-        result = wwd.computeAnnualAverage_DataFrame(
-            sample_multiyear_df, 'time', '2025-01-01', 1
+        result = wwd.computeAverageYear_DataFrame(
+            sample_multiyear_df, 'time', 2025, 1
         )
         
         # For day 1: values are 0, 1, 2 → average = 1
@@ -1100,8 +1104,8 @@ class TestAverageAcrossYearsDataFrame:
     
     def test_multiple_years_output(self, sample_multiyear_df):
         """Test repeating pattern for multiple years."""
-        result = wwd.computeAnnualAverage_DataFrame(
-            sample_multiyear_df, 'time', '2025-01-01', 3
+        result = wwd.computeAverageYear_DataFrame(
+            sample_multiyear_df, 'time', 2025, 3
         )
         
         # Should have 3 years of data
@@ -1118,8 +1122,8 @@ class TestAverageAcrossYearsDataFrame:
     def test_missing_columns_error(self, sample_multiyear_df):
         """Test error when specified columns don't exist."""
         with pytest.raises(ValueError, match="Columns not found"):
-            wwd.computeAnnualAverage_DataFrame(
-                sample_multiyear_df, 'time', '2025-01-01', 1,
+            wwd.computeAverageYear_DataFrame(
+                sample_multiyear_df, 'time', 2025, 1,
                 columns=['nonexistent']
             )
     
@@ -1132,7 +1136,7 @@ class TestAverageAcrossYearsDataFrame:
         })
 
         with pytest.raises(ValueError, match="No numeric columns"):
-            result = wwd.computeAnnualAverage_DataFrame(df, 'time', '2025-01-01', 1)
+            result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
     
     def test_nan_handling(self):
         """Test handling of NaN values in averaging."""
@@ -1150,7 +1154,7 @@ class TestAverageAcrossYearsDataFrame:
                     values.append(float(doy))
         
         df = pd.DataFrame({'time': dates, 'value': values})
-        result = wwd.computeAnnualAverage_DataFrame(df, 'time', '2025-01-01', 1)
+        result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
         
         # Day 2 should average only non-NaN values: (2 + 2) / 2 = 2
         day2_value = result.loc[1, 'value']
@@ -1168,7 +1172,7 @@ class TestAverageAcrossYearsDataFrame:
                 values.append(doy)
         
         df = pd.DataFrame({'time': dates, 'value': values})
-        result = wwd.computeAnnualAverage_DataFrame(df, 'time', '2025-01-01', 1)
+        result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
         
         # Should have 73 entries (365/5)
         assert len(result) == 73
@@ -1924,3 +1928,319 @@ def test_invalid_coords():
     points = np.array([[1, 2]])
     with pytest.raises(ValueError):
         wwd.interpolateValues(points, None, data, method='linear')        
+
+
+class TestRasterizeGeoDataFrame:
+    
+    @pytest.fixture
+    def simple_polygon_gdf(self):
+        """Create a simple GeoDataFrame with polygons."""
+        data = {
+            'value': [1.0, 2.0, 3.0, 4.0],
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),      # Square at (0,0)
+                shapely.geometry.box(2, 0, 3, 1),      # Square at (2,0)
+                shapely.geometry.box(0, 2, 1, 3),      # Square at (0,2)
+                shapely.geometry.box(2, 2, 3, 3)       # Square at (2,2)
+            ]
+        }
+        return gpd.GeoDataFrame(data, crs='EPSG:4326')
+    
+    @pytest.fixture
+    def overlapping_polygon_gdf(self):
+        """Create a GeoDataFrame with overlapping polygons."""
+        data = {
+            'value': [10, 20, 30],
+            'geometry': [
+                shapely.geometry.box(0, 0, 2, 2),      # Square from (0,0) to (2,2)
+                shapely.geometry.box(1, 1, 3, 3),      # Overlapping square
+                shapely.geometry.box(4, 0, 5, 1)       # Non-overlapping rectangle
+            ]
+        }
+        return gpd.GeoDataFrame(data)
+    
+    @pytest.fixture
+    def multipolygon_gdf(self):
+        """Create a GeoDataFrame with MultiPolygons."""
+        # Create two separate polygons for MultiPolygon
+        poly1 = shapely.geometry.box(0, 0, 1, 1)
+        poly2 = shapely.geometry.box(2, 2, 3, 3)
+        multipoly = shapely.geometry.MultiPolygon([poly1, poly2])
+        
+        data = {
+            'value': [100, 200],
+            'geometry': [
+                multipoly,
+                shapely.geometry.box(4, 0, 6, 2)  # Regular polygon
+            ]
+        }
+        return gpd.GeoDataFrame(data)
+    
+    @pytest.fixture
+    def mixed_types_gdf(self):
+        """Create a GeoDataFrame with different numeric types, leaving a gap for nans."""
+        data = {
+            'int_col': np.array([1, 2, 3], dtype=np.int32),
+            'float_col': np.array([1.5, 2.5, 3.5], dtype=np.float32),
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),
+                shapely.geometry.box(1, 0, 2, 1),
+                shapely.geometry.box(3, 0, 4, 1)
+            ]
+        }
+        return gpd.GeoDataFrame(data)
+    
+    def test_basic_rasterization(self, simple_polygon_gdf):
+        """Test basic rasterization of polygons."""
+        result = wwd.rasterizeGeoDataFrame(simple_polygon_gdf, 'value', resolution=0.5)
+        
+        assert isinstance(result, xr.DataArray)
+        assert result.dims == ('y', 'x')
+        assert 'x' in result.coords
+        assert 'y' in result.coords
+        
+        # Check that we have some non-NaN values
+        assert not np.all(np.isnan(result.values))
+        
+        # Check attributes
+        assert result.attrs['resolution'] == 0.5
+        assert result.attrs['source_column'] == 'value'
+        assert np.isnan(result.attrs['nodata'])  # Default for float
+        assert 'crs' in result.attrs
+    
+    def test_overlapping_rasterization(self, overlapping_polygon_gdf):
+        """Test rasterization of overlapping polygons."""
+        result = wwd.rasterizeGeoDataFrame(overlapping_polygon_gdf, 'value', resolution=0.5)
+        
+        # Check dimensions - should cover bounds (0,0) to (5,3)
+        assert result.sizes['x'] == 10  # 5 / 0.5
+        assert result.sizes['y'] == 6   # 3 / 0.5
+        
+        # Check that polygons were rasterized
+        assert not np.all(result.values == result.attrs['nodata'])
+        
+        # Check specific values
+        unique_values = np.unique(result.values[~np.isnan(result.values)])
+        assert 10 in unique_values
+        assert 20 in unique_values
+        assert 30 in unique_values
+        
+        # Check that overlapping area has value from second polygon (20)
+        x_idx = np.argmin(np.abs(result.x.values - 1.5))
+        y_idx = np.argmin(np.abs(result.y.values - 1.5))
+        assert result.values[y_idx, x_idx] == 20
+    
+    def test_multipolygon_rasterization(self, multipolygon_gdf):
+        """Test rasterization with MultiPolygon geometries."""
+        result = wwd.rasterizeGeoDataFrame(multipolygon_gdf, 'value', resolution=0.5)
+        
+        # Check that MultiPolygon was rasterized correctly
+        unique_values = np.unique(result.values[~np.isnan(result.values)])
+        assert 100 in unique_values  # From MultiPolygon
+        assert 200 in unique_values  # From regular polygon
+        
+        # Check that both parts of MultiPolygon have same value
+        # Bottom-left part (around 0.5, 0.5)
+        x_idx1 = np.argmin(np.abs(result.x.values - 0.5))
+        y_idx1 = np.argmin(np.abs(result.y.values - 0.5))
+        
+        # Top-right part (around 2.5, 2.5)
+        x_idx2 = np.argmin(np.abs(result.x.values - 2.5))
+        y_idx2 = np.argmin(np.abs(result.y.values - 2.5))
+        
+        assert result.values[y_idx1, x_idx1] == 100
+        assert result.values[y_idx2, x_idx2] == 100
+    
+    def test_integer_column_default_nodata(self, mixed_types_gdf):
+        """Test rasterization of integer column with default nodata."""
+        result = wwd.rasterizeGeoDataFrame(mixed_types_gdf, 'int_col', resolution=0.5)
+        
+        # Integer columns should maintain integer dtype
+        assert result.dtype == np.int32
+        
+        # Default nodata for integers should be -999
+        assert result.attrs['nodata'] == -999
+        
+        # Check valid values
+        valid_values = result.values[result.values != -999]
+        assert len(valid_values) > 0
+        assert all(v in [1, 2, 3] for v in valid_values)
+    
+    def test_float_column_default_nodata(self, mixed_types_gdf):
+        """Test rasterization of float column with default nodata."""
+        result = wwd.rasterizeGeoDataFrame(mixed_types_gdf, 'float_col', resolution=0.5)
+        
+        # Float columns should maintain float dtype
+        assert result.dtype == np.float32
+        
+        # Default nodata for floats should be NaN
+        assert np.isnan(result.attrs['nodata'])
+        
+        # Check values
+        non_nan_values = result.values[~np.isnan(result.values)]
+        assert len(non_nan_values) > 0
+    
+    def test_custom_nodata(self, mixed_types_gdf):
+        """Test custom nodata values."""
+        # Integer with custom nodata
+        result_int = wwd.rasterizeGeoDataFrame(
+            mixed_types_gdf, 'int_col', resolution=0.5, nodata=-9999
+        )
+        assert result_int.attrs['nodata'] == -9999
+        assert np.any(result_int.values == -9999)
+        
+        # Float with custom nodata
+        result_float = wwd.rasterizeGeoDataFrame(
+            mixed_types_gdf, 'float_col', resolution=0.5, nodata=-999.99
+        )
+        assert result_float.attrs['nodata'] == -999.99
+        assert np.any(np.isclose(result_float.values, -999.99))
+    
+    def test_custom_bounds(self, simple_polygon_gdf):
+        """Test with custom bounds."""
+        custom_bounds = (-1, -1, 4, 4)
+        result = wwd.rasterizeGeoDataFrame(
+            simple_polygon_gdf, 'value', resolution=0.5, bounds=custom_bounds
+        )
+        
+        # Check that bounds are respected
+        assert result.x.min() >= -1
+        assert result.x.max() <= 4
+        assert result.y.min() >= -1
+        assert result.y.max() <= 4
+    
+    def test_invalid_geometry_type_points(self):
+        """Test error with point geometries."""
+        data = {
+            'value': [1, 2, 3],
+            'geometry': [
+                shapely.geometry.Point(0, 0),
+                shapely.geometry.Point(1, 1),
+                shapely.geometry.Point(2, 2)
+            ]
+        }
+        gdf = gpd.GeoDataFrame(data)
+        result = wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=1.0)
+        assert (result.values == -999).all()
+    
+    def test_mixed_geometry_types(self):
+        """Test error with mixed geometry types."""
+        data = {
+            'value': [1, 2, 3],
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),      # Polygon
+                shapely.geometry.Point(2, 2),           # Point
+                shapely.geometry.box(3, 3, 4, 4)        # Polygon
+            ]
+        }
+        gdf = gpd.GeoDataFrame(data)
+        result = wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=1.0)
+        assert result.values[-1,0] == 1
+        assert result.values[0,-1] == 3
+    
+    def test_empty_geodataframe(self):
+        """Test error with empty GeoDataFrame."""
+        gdf = gpd.GeoDataFrame(columns=['value', 'geometry'])
+        
+        with pytest.raises(ValueError, match="GeoDataFrame is empty"):
+            wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=1.0)
+    
+    def test_missing_column(self, simple_polygon_gdf):
+        """Test error with missing column."""
+        with pytest.raises(ValueError, match="Column 'missing' not found"):
+            wwd.rasterizeGeoDataFrame(simple_polygon_gdf, 'missing', resolution=1.0)
+    
+    def test_non_numeric_column(self):
+        """Test error with non-numeric column."""
+        data = {
+            'text_col': ['a', 'b', 'c'],
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),
+                shapely.geometry.box(1, 0, 2, 1),
+                shapely.geometry.box(2, 0, 3, 1)
+            ]
+        }
+        gdf = gpd.GeoDataFrame(data)
+        
+        with pytest.raises(ValueError, match="must be numeric type"):
+            wwd.rasterizeGeoDataFrame(gdf, 'text_col', resolution=1.0)
+    
+    def test_invalid_resolution(self, simple_polygon_gdf):
+        """Test error with invalid resolution."""
+        with pytest.raises(ValueError, match="Resolution must be positive"):
+            wwd.rasterizeGeoDataFrame(simple_polygon_gdf, 'value', resolution=0)
+        
+        with pytest.raises(ValueError, match="Resolution must be positive"):
+            wwd.rasterizeGeoDataFrame(simple_polygon_gdf, 'value', resolution=-1)
+    
+    def test_with_nan_values(self):
+        """Test handling of NaN values in column."""
+        data = {
+            'value': [1.0, np.nan, 3.0],
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),
+                shapely.geometry.box(1, 0, 2, 1),
+                shapely.geometry.box(2, 0, 3, 1)
+            ]
+        }
+        gdf = gpd.GeoDataFrame(data)
+        
+        result = wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=0.5)
+        
+        # Should successfully rasterize non-NaN values
+        non_nan_values = result.values[~np.isnan(result.values)]
+        assert 1.0 in non_nan_values
+        assert 3.0 in non_nan_values
+        
+        # Middle polygon should not be rasterized
+        x_idx = np.argmin(np.abs(result.x.values - 1.5))
+        y_idx = np.argmin(np.abs(result.y.values - 0.5))
+        assert np.isnan(result.values[y_idx, x_idx])
+    
+    def test_with_invalid_geometries(self):
+        """Test handling of None geometries."""
+        data = {
+            'value': [1.0, 2.0, 3.0],
+            'geometry': [
+                shapely.geometry.box(0, 0, 1, 1),
+                None,  # Invalid geometry
+                shapely.geometry.box(2, 0, 3, 1)
+            ]
+        }
+        gdf = gpd.GeoDataFrame(data)
+        
+        result = wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=0.5)
+        
+        # Should successfully rasterize valid geometries
+        non_nan_values = result.values[~np.isnan(result.values)]
+        assert 1.0 in non_nan_values
+        assert 3.0 in non_nan_values
+        # Value 2.0 should not appear since its geometry is None
+        assert 2.0 not in non_nan_values
+
+
+def test_complex_polygon_shapes():
+    """Test with more complex polygon shapes."""
+    # Create a polygon with a hole
+    exterior = [(0, 0), (4, 0), (4, 4), (0, 4), (0, 0)]
+    interior = [(1, 1), (1, 3), (3, 3), (3, 1), (1, 1)]
+    poly_with_hole = shapely.geometry.Polygon(exterior, [interior])
+    
+    data = {
+        'value': [42],
+        'geometry': [poly_with_hole]
+    }
+    gdf = gpd.GeoDataFrame(data)
+    
+    result = wwd.rasterizeGeoDataFrame(gdf, 'value', resolution=0.5)
+    
+    # Check that the hole is not filled
+    # Center of the hole (around 2, 2) should be NaN
+    x_idx = np.argmin(np.abs(result.x.values - 2))
+    y_idx = np.argmin(np.abs(result.y.values - 2))
+    assert result.values[y_idx, x_idx] == -999
+    
+    # Check that the ring around the hole has the value
+    x_idx_edge = np.argmin(np.abs(result.x.values - 0.5))
+    y_idx_edge = np.argmin(np.abs(result.y.values - 0.5))
+    assert result.values[y_idx_edge, x_idx_edge] == 42        

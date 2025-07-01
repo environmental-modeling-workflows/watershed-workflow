@@ -11,7 +11,8 @@ etc.
 
 import numpy as np
 import logging
-import pandas, geopandas
+import pandas as pd
+import geopandas as gpd
 import rosetta
 
 import watershed_workflow.config
@@ -29,7 +30,7 @@ def computeVanGenuchtenModel_Rosetta(data):
 
     Returns
     -------
-    pandas.DataFrame
+    pd.DataFrame
       van Genuchten model parameters
 
     """
@@ -50,7 +51,7 @@ def computeVanGenuchtenModel_Rosetta(data):
 
     # check results
     #   output log10 of VG-alpha,VG-n, and Ks
-    df = pandas.DataFrame(columns=[
+    df = pd.DataFrame(columns=[
         'Rosetta residual volumetric water content [cm^3 cm^-3]',
         'Rosetta saturated volumetric water content [cm^3 cm^-3]',
         'Rosetta log van Genuchten alpha [cm^-1]', 'Rosetta log van Genuchten n [-]',
@@ -71,12 +72,12 @@ def computeVanGenuchtenModelFromSSURGO(df):
     
     Parameters
     ----------
-    df : pandas.DataFrame
+    df : pd.DataFrame
       SSURGO properties dataframe, from manager_nrcs.FileManagerNRCS().get_properties()
     
     Returns
     -------
-    pandas.DataFrame
+    pd.DataFrame
       df with new properties defining the van Genuchten model.  Note
       that this may be smaller than df as entries in df that have NaN
       values in soil composition (and therefore cannot calculate a
@@ -104,14 +105,14 @@ def computeVanGenuchtenModelFromSSURGO(df):
     assert ('mukey' in df.keys())
     assert ('mukey' in df_rosetta.keys())
     assert ('mukey' in vgm.keys())
-    merged = pandas.merge(vgm, df, how='outer', left_on='mukey', right_on='mukey')
+    merged = pd.merge(vgm, df, how='outer', left_on='mukey', right_on='mukey')
     assert (len(merged) == len(df))
     return merged
 
 
 def convertRosettaToATS(df):
     """Converts units from aggregated, Rosetta standard-parameters to ATS."""
-    df_new = pandas.DataFrame()
+    df_new = pd.DataFrame()
     for k in df.keys():
         if k == 'Rosetta log Ksat [um s^-1]':
             knew = 'Rosetta permeability [m^2]'
@@ -234,18 +235,18 @@ def getDefaultBedrockProperties():
 
     Returns
     -------
-    pandas.DataFrame
+    pd.DataFrame
       Sane default bedrock soil properties.
 
     """
     poro = 0.05
     perm = 1.0e-16
 
-    df = pandas.DataFrame()
+    df = pd.DataFrame()
     df['ats_id'] = [999, ]
     df['porosity [-]'] = [poro, ]
     df['permeability [m^2]'] = [perm, ]
-    df['van Genuchten alpha [Pa^-1]'] = alpha_from_permeability(perm, poro)
+    df['van Genuchten alpha [Pa^-1]'] = computeVGAlphaFromPermeability(perm, poro)
     df['van Genuchten n [-]'] = 3.0
     df['residual saturation [-]'] = 0.01
     df['source'] = 'n/a'
@@ -261,7 +262,7 @@ def mangleGLHYMPSProperties(shapes,
 
     Parameters
     ----------
-    shapes : geopandas.GeoDataFrame
+    shapes : gpd.GeoDataFrame
     min_porosity : float, optional
       Some GLHYMPS entries have 0 porosity; this sets a floor on that
       value.  Default is 0.01.
@@ -272,7 +273,7 @@ def mangleGLHYMPSProperties(shapes,
 
     Returns
     -------
-    pandas.DataFrame
+    pd.DataFrame
       The resulting properties in standard form, names, and units.
     """
     assert (len(shapes) > 0)
@@ -297,7 +298,7 @@ def mangleGLHYMPSProperties(shapes,
     vg_n = 2.0  # arbitrarily chosen
     sr = 0.01  # arbitrarily chosen
 
-    properties = geopandas.GeoDataFrame(
+    properties = gpd.GeoDataFrame(
         data={
             'id': ids,
             'source': 'GLHYMPS',
@@ -319,13 +320,13 @@ def dropDuplicates(df):
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    df : pd.DataFrame
       A data frame that contains only properties (e.g. permeability,
       porosity, WRM) and is indexed by some native ID.
 
     Returns
     -------
-    df_new : pandas.DataFrame
+    df_new : pd.DataFrame
       After this is called, df_new will:
 
       1. have a new column, named by df's index name, containing a tuple of all
