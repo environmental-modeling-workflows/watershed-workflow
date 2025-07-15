@@ -60,6 +60,7 @@ class _RowView:
                  index : int | str):
         self._df = df
         self._index = index
+        self._df_reset : bool = False
 
     def __len__(self) -> int:
         return len(self._df.keys())
@@ -286,8 +287,8 @@ class River(watershed_workflow.tinytree.Tree):
 
         if names.ID in self.properties:
             ID = self[names.ID]
-            upstream_props[names.ID] = ID + 'a'
-            self[names.ID] = ID + 'b'
+            upstream_props[names.ID] = str(ID) + 'a'
+            self[names.ID] = str(ID) + 'b'
 
         if names.DIVERGENCE in upstream_props:
             self[names.DIVERGENCE] = 0
@@ -305,22 +306,22 @@ class River(watershed_workflow.tinytree.Tree):
             if self.index[-1].isalpha():
                 new_index = self.index[:-1] + chr(ord(self.index[-1])+1)
             else:
-                new_index = self.index+'a'
+                new_index = str(self.index) + 'a'
         else:
             new_index = str(self.index) + 'a'
 
         assert new_index not in self.df.index
 
-        assert self.df.crs is not None
         crs = self.df.crs
-        assert crs is not None
         self.df.loc[new_index] = upstream_props
 
         # clean up -- see geopandas/geopandas#3119
         # -- geometry seems to be correct, but catchment is not, and the crs gets dropped
-        self.df[names.CATCHMENT] = self.df[names.CATCHMENT].astype(gpd.array.GeometryDtype())
-        self.df.set_crs(crs, inplace=True)
-        assert self.df.crs is not None
+        if names.CATCHMENT in self.df:
+            self.df[names.CATCHMENT] = self.df[names.CATCHMENT].astype(gpd.array.GeometryDtype())
+
+        if crs is not None:
+            self.df.set_crs(crs, inplace=True)
         # end clean up -- hopefully this gets fixed sometime in upstream (pandas or geopandas)
 
         # -- construct the new upstream node inject it into the tree
@@ -328,8 +329,6 @@ class River(watershed_workflow.tinytree.Tree):
         self.giveChildren(new_node)
         self.linestring = downstream_linestring
         self.addChild(new_node)
-
-        assert self.df.crs is not None
         return new_node, self
 
     def splitAtArclen(self, s : float):
@@ -578,7 +577,7 @@ class River(watershed_workflow.tinytree.Tree):
         if self.parent is not None:
             raise ValueError("Only call resetDataFrame on a root of the river tree!")
 
-        if hasattr(self, '_df_reset') and self._df_reset and not force:
+        if getattr(self, '_df_reset', False) and not force:
             # already reset and not forced, all good
             return 
         

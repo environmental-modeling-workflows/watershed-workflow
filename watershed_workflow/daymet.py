@@ -41,7 +41,8 @@ def convertToATS(dat : xr.Dataset) -> xr.Dataset:
     # share the same profile/times
     profile = dat['tmin'].profile
     times = dat['tmin'].times
-    dout = watershed_workflow.datasets.Dataset(profile, times)
+    dout = xr.Dataset(coords=dat.coords,
+                      attrs=dat.attrs.copy())
 
     mean_air_temp_c = (dat['tmin'].data + dat['tmax'].data) / 2.0
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K

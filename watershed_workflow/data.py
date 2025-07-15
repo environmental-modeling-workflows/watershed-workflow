@@ -328,7 +328,8 @@ def computeMode(
     except AttributeError:
         pass
     else:
-        result.rio.set_crs(crs)
+        if crs is not None:
+            result.rio.set_crs(crs)
     
     # Preserve the name if it exists
     if da.name is not None:
@@ -460,9 +461,12 @@ def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset, time_dim: str = 'time'
     
     # Preserve all attributes from the original DataArray
     try:
-        da_filtered.rio.set_crs(da.rio.crs)
+        crs = da.rio.crs
     except AttributeError:
         pass
+    else:
+        if crs is not None:
+            da_filtered.rio.set_crs(crs)
     da_filtered.attrs = da.attrs.copy()
     
     # Preserve coordinate attributes (including CRS if present)
@@ -967,7 +971,7 @@ def _computeAverageYear(
     return result_ds, output_times
 
 
-def _parseStartDate(start_date: Union[str, datetime.datetime, cftime.datetime]) -> cftime.datetime:
+def _parseStartDate(start_date: Union[str, int, datetime.datetime, cftime.datetime]) -> cftime.datetime:
     """
     Parse start_date into cftime.DatetimeNoLeap.
     
@@ -981,9 +985,16 @@ def _parseStartDate(start_date: Union[str, datetime.datetime, cftime.datetime]) 
     cftime.DatetimeNoLeap
         Parsed start date.
     """
+    if isinstance(start_date, int):
+        start_date = str(start_date)
+
     if isinstance(start_date, str):
         parts = start_date.split('-')
-        return cftime.DatetimeNoLeap(int(parts[0]), int(parts[1]), int(parts[2]))
+        year = int(parts[0])
+        month = int(parts[1]) if len(parts) > 1 else 1
+        day = int(parts[2]) if len(parts) > 2 else 1
+        return cftime.DatetimeNoLeap(year, month, day)
+
     elif isinstance(start_date, datetime.datetime):
         return cftime.DatetimeNoLeap(start_date.year, start_date.month, start_date.day)
     else:

@@ -26,6 +26,7 @@ import shapely
 import warnings
 import functools
 import pandas
+from matplotlib import collections as mpc
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -306,7 +307,7 @@ class Mesh2D:
             del self._centroids
 
     def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None, norm=None,
-             add_colorbar=True, **kwargs) -> None:
+             add_colorbar=True, **kwargs) -> mpc.PolyCollection:
         """Plot the flattened 2D mesh."""
         from matplotlib import pyplot as plt
 
@@ -335,9 +336,8 @@ class Mesh2D:
             cmap = plt.colormaps[cmap]        
 
         # build the collection of gons
-        from matplotlib import collections
         verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
-        gons = collections.PolyCollection(verts, array=facecolors, cmap=cmap, norm=norm, **kwargs)
+        gons = mpc.PolyCollection(verts, array=facecolors, cmap=cmap, norm=norm, **kwargs)
 
         # put on the axis
         if ax is None:
