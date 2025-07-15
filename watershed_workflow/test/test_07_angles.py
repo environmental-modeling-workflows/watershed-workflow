@@ -8,7 +8,7 @@ from watershed_workflow.test.shapes import two_boxes
 import watershed_workflow.test.shapes
 import watershed_workflow.angles
 
-_plot = True
+_plot = False
 _assert_plot = False
 def plotHUCs(hucs, hucs_orig, force = False):
     if _plot or force:

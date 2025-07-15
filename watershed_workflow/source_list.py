@@ -80,7 +80,7 @@ def getDefaultSources() -> Dict[str, Any]:
     
     Returns a dictionary with default sources for each type.
     """
-    sources = dict()
+    sources : Dict[str,Any] = dict()
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
     sources['DEM'] = dem_sources[default_dem_source]
@@ -109,7 +109,7 @@ def getSources(args) -> Dict[str, Any]:
       Dictionary of defaults for each of "HUC", "hydrography", "DEM", "soil
       type", and "land cover".
     """
-    sources = get_default_sources()
+    sources = getDefaultSources()
     try:
         source_huc = args.source_huc
     except AttributeError:
@@ -131,26 +131,26 @@ def getSources(args) -> Dict[str, Any]:
     else:
         sources['DEM'] = dem_sources[source_dem]
 
-    try:
-        source_soil = args.source_soil
-    except AttributeError:
-        pass
-    else:
-        sources['soil type'] = soil_sources[source_soil]
+    # try:
+    #     source_soil = args.source_soil
+    # except AttributeError:
+    #     pass
+    # else:
+    #     sources['soil type'] = soil_sources[source_soil]
 
-    try:
-        land_cover = args.land_cover
-    except AttributeError:
-        pass
-    else:
-        sources['land cover'] = land_cover_sources[land_cover]
+    # try:
+    #     land_cover = args.land_cover
+    # except AttributeError:
+    #     pass
+    # else:
+    #     sources['land cover'] = land_cover_sources[land_cover]
 
-    try:
-        met = args.meteorology
-    except AttributeError:
-        pass
-    else:
-        sources['meteorology'] = met_sources[met]
+    # try:
+    #     met = args.meteorology
+    # except AttributeError:
+    #     pass
+    # else:
+    #     sources['meteorology'] = met_sources[met]
 
     return sources
 

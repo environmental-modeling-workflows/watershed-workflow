@@ -16,7 +16,7 @@ import watershed_workflow.split_hucs
 import watershed_workflow.plot
 from watershed_workflow.test.shapes import *
 
-_plot = True
+_plot = False
 _assert_plot = False
 def plot(hucs, rivers, points, tris, force = False):
     if _plot or force:

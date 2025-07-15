@@ -53,9 +53,9 @@ class ManagerRaster:
         Note that the raster provided is in its native CRS (which is in the
         rasterio profile), not the shape's CRS.
         """
-        try:
+        if isinstance(geometry, shapely.geometry.BaseGeometry):
             bounds = geometry.bounds
-        except AttributeError:
+        else:
             bounds = geometry
 
         if not self._filename.lower().endswith('.tif'):

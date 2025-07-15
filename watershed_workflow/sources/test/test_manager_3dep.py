@@ -10,3 +10,4 @@ def test_3dep(coweeta):
     dem = ned.getDataset(coweeta.geometry[0], coweeta.crs)
     assert ((99,98) == dem.shape)
     assert abs(np.nanmean(dem.values) - 993) < 1
+    
