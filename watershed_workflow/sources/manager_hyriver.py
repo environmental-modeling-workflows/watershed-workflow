@@ -10,6 +10,8 @@ import watershed_workflow.sources.standard_names as names
 
 
 class ManagerHyRiver:
+    """A generic base class for working with HyRiver"""
+
     def __init__(self,
                  protocol : str,
                  layer : str = '',
@@ -45,8 +47,8 @@ class ManagerHyRiver:
         """Finds all shapes in the given dataset that touch a given geometry."""
 
         df = self._protocol(self._layer).bygeom(geom, geom_crs)
-        df['ID'] = df[self._id_name].astype('string')
-        df = df.set_index('ID', drop=True)
+        df[names.ID] = df[self._id_name].astype('string')
+        df = df.set_index(names.ID, drop=True)
         df = watershed_workflow.utils.filterToShape(df, geom, geom_crs, 'non_point_intersection')
         return df
 
@@ -63,6 +65,6 @@ class ManagerHyRiver:
         else:
             df = protocol.byids(self._id_name, ids)
 
-        df['ID'] = df[self._id_name].astype('string')
-        df = df.set_index('ID', drop=True)
+        df[names.ID] = df[self._id_name].astype('string')
+        df = df.set_index(names.ID, drop=True)
         return df

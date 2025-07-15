@@ -14,7 +14,7 @@ import watershed_workflow.utils
 import watershed_workflow.config
 
 
-def get_code(fiona_or_shply_obj, level):
+def getCode(fiona_or_shply_obj, level):
     """Gets the huc string from a HUC shape."""
     try:
         prop = fiona_or_shply_obj.properties
@@ -28,7 +28,7 @@ def get_code(fiona_or_shply_obj, level):
         return prop[key.lower()]
 
 
-def get_verify_option():
+def getVerifyOption():
     """Returns the 'verify' option for requests as provided in config files."""
     verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
     logging.debug('       cert: "%s"' % verify)
@@ -59,7 +59,7 @@ def download(url, location, force=False, **kwargs):
     return os.path.isfile(location)
 
 
-def download_progress_bar(url, location, force=False):
+def downloadWithProgressBar(url, location, force=False):
     """Download a file from URL to location, with a progress bar.
 
     If force, clobber whatever is there.
