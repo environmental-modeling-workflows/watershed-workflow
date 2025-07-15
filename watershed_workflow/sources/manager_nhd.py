@@ -16,17 +16,26 @@ waterdata_renames = {'gnis_name' : names.NAME,
                      'areasqkm' : names.CATCHMENT_AREA,
                      'streamorde' : names.ORDER,
                      'totdasqkm' : names.DRAINAGE_AREA,
-                     'geometry_ca' : names.CATCHMENT
+                     'geometry_ca' : names.CATCHMENT,
+                     'hydroseq' : names.HYDROSEQ,
+                     'uphydroseq' : names.UPSTREAM_HYDROSEQ,
+                     'dnhydroseq' : names.DOWNSTREAM_HYDROSEQ,
+                     'divergence' : names.DIVERGENCE,
                      }
 
 hr_ids = {'flowline' : 'nhdplusid',
           'catchment' : 'nhdplusid',
           }
-hr_renames = { 'lengthkm' : names.LENGTH,
+hr_renames = { 'gnis_name' : names.NAME,
+               'lengthkm' : names.LENGTH,
                'areasqkm' : names.CATCHMENT_AREA,
                'streamorde' : names.ORDER,
                'totdasqkm' : names.DRAINAGE_AREA,
-               'geometry_ca' : names.CATCHMENT
+               'geometry_ca' : names.CATCHMENT,
+               'hydroseq' : names.HYDROSEQ,
+               'uphydroseq' : names.UPSTREAM_HYDROSEQ,
+               'dnhydroseq' : names.DOWNSTREAM_HYDROSEQ,
+               'divergence' : names.DIVERGENCE,
               }
 
 mr_ids = {'flowline_mr' : 'COMID', }
@@ -35,6 +44,10 @@ mr_renames = { 'GNIS_NAME' : names.NAME,
                'AreaSqKM' : names.CATCHMENT_AREA,
                'StreamOrde' : names.ORDER,
                'TotDASqKM' : names.DRAINAGE_AREA,
+               'Hydroseq' : names.HYDROSEQ,
+               'UpHydroseq' : names.UPSTREAM_HYDROSEQ,
+               'DnHydroseq' : names.DOWNSTREAM_HYDROSEQ,
+               'Divergence' : names.DIVERGENCE,
               }
 
 
