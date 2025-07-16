@@ -63,6 +63,7 @@ jobs:
   
   fix-manifest:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Check out repo
         uses: actions/checkout@v4     
