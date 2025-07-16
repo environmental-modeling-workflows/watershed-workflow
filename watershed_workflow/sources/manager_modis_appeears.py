@@ -1,5 +1,5 @@
 """Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional, List
 
 import os, sys
 import logging
@@ -16,6 +16,7 @@ import watershed_workflow.config
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.sources.names
 import watershed_workflow.warp
+from watershed_workflow.crs import CRS
 import watershed_workflow.crs
 
 _colors = {
@@ -105,19 +106,22 @@ class FileManagerMODISAppEEARS:
     colors = colors
     indices = indices
 
-    def __init__(self, login_token=None, remove_leap_day=True):
+    def __init__(self,
+                 login_token : Optional[str] = None,
+                 remove_leap_day : bool = True):
         """Create a new manager for MODIS data."""
-        self.name = 'MODIS'
+        self.name : str = 'MODIS'
         self.names = watershed_workflow.sources.names.Names(
             self.name, 'land_cover', self.name,
             'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
         self.login_token = login_token
         if not os.path.isdir(self.names.folder_name()):
             os.makedirs(self.names.folder_name())
-        self.tasks = []
-        self.completed_tasks = []
+        self.tasks : List[Task] = []
 
-    def _authenticate(self, username=None, password=None):
+    def _authenticate(self,
+                      username : Optional[str] = None,
+                      password : Optional[str] = None) -> str | None:
         """Authenticate to the AppEEARS API.
 
         Parameters
@@ -160,26 +164,28 @@ class FileManagerMODISAppEEARS:
                                         ymax=ymax)
         return filename
 
-    def _clean_date(self, date):
+    def _cleanDate(self,
+                   date : str | datetime.datetime | datetime.date) -> str:
         """Returns a string of the format needed for use in the filename and request."""
-        if type(date) is str:
+        if isinstance(date, str):
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+
+        assert isinstance(date, datetime.datetime)
         if date < self._START:
             raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date.strftime('%m-%d-%Y')
 
-    def _clean_bounds(self, polygon_or_bounds, crs):
+    def _cleanBounds(self,
+                     geometry : shapely.geometry.BaseGeometry | Tuple[float, float, float, float],
+                     crs : CRS) -> Tuple[float,float,float,float]:
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        if type(polygon_or_bounds) is dict:
-            polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
-        if type(polygon_or_bounds) is shapely.geometry.Polygon:
-            bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
-                                                      watershed_workflow.crs.latlon_crs).bounds
+        if isinstance(geometry, shapely.geometry.BaseGeometry):
+            bounds = geometry.bounds
         else:
-            bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
-                                                       watershed_workflow.crs.latlon_crs)
+            bounds = geometry
+        bounds_ll = watershed_workflow.warp.bounds(bounds, crs, watershed_workflow.crs.latlon_crs)
 
         buffer = 0.01
         feather_bounds = list(bounds_ll[:])
@@ -187,9 +193,13 @@ class FileManagerMODISAppEEARS:
         feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
         feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
         feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
-        return feather_bounds
+        return tuple(feather_bounds)
 
-    def _construct_request(self, bounds_ll, start, end, variables):
+    def _constructRequest(self,
+                          bounds_ll : Tuple[float,float,float,float],
+                          start : str,
+                          end : str,
+                          variables : List[str]) -> Task:
         """Create an AppEEARS request to download the variable from start to
         finish.  Note that this does not do the download -- it only creates
         the request.
@@ -271,7 +281,8 @@ class FileManagerMODISAppEEARS:
         logging.info(f'Requesting dataset on {bounds_ll} response task_id {task.task_id}')
         return task
 
-    def _check_status(self, task=None):
+    def _checkStatus(self,
+                     task : Optional[Task] = None) -> str | bool:
         """Checks and prints the status of the task.
 
         Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
@@ -306,7 +317,8 @@ class FileManagerMODISAppEEARS:
             logging.info('... status not found')
             return 'UNKNOWN'
 
-    def _check_bundle_url(self, task=None):
+    def _checkBundleURL(self,
+                        task : Optional[Task] = None) -> bool:
         if self.login_token is None:
             self.login_token = self._authenticate()
         if task is None:
@@ -343,15 +355,15 @@ class FileManagerMODISAppEEARS:
                 assert (found)
             return True
 
-    def is_ready(self, task=None):
+    def is_ready(self, task : Optional[Task] = None) -> str | bool:
         """Actually knowing if it is ready is a bit tricky because Appeears does not appear to be saving its status after it is complete."""
-        status = self._check_status(task)
+        status = self._checkStatus(task)
         if status != False:  # note this matches True or UNKNOWN
-            return self._check_bundle_url(task)
+            return self._checkBundleURL(task)
         else:
             return status
 
-    def _download(self, task=None):
+    def _download(self, task : Optional[Task] = None) -> bool:
         """Downloads the provided task.
 
         If file_id is not provided, is_ready() will be called.
@@ -363,7 +375,7 @@ class FileManagerMODISAppEEARS:
             task = self.tasks[0]
 
         if len(task.urls) == 0:
-            ready = self._check_bundle_url(task)
+            ready = self._checkBundleURL(task)
         else:
             ready = True
 
@@ -382,14 +394,11 @@ class FileManagerMODISAppEEARS:
         else:
             return False
 
-    def _read_data(self, task):
+    def _readData(self, task : Task) -> xr.Dataset:
         """Read all files for a task, returning the data in the order of variables requested in the task."""
-        s = dict()
-        for var in task.variables:
-            s[var] = self._read_file(task.filenames[var], var)
-        return s
+        return xr.merge([self._readFile(task.filenames[var], var) for var in task.variables])
 
-    def _read_file(self, filename, variable):
+    def _readFile(self, filename : str, variable : str) -> xr.DataArray:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         with xr.open_dataset(filename) as fid:
             layer = self._PRODUCTS[variable]['layer']
@@ -398,15 +407,15 @@ class FileManagerMODISAppEEARS:
         data.rio.set_crs(watershed_workflow.crs.latlon_crs)
         return data
 
-    def get_data(self,
-                 polygon_or_bounds=None,
-                 crs=None,
-                 start=None,
-                 end=None,
-                 variables=None,
-                 force_download=False,
-                 task=None,
-                 filenames=None):
+    def getData(self,
+                geometry : Optional[shapely.geometry.BaseGeometry | Tuple[float,float,float,float]]= None,
+                 crs : Optional[CRS] = None,
+                 start : Optional[str | datetime.datetime | datetime.date] = None,
+                 end : Optional[str | datetime.datetime | datetime.date] = None,
+                 variables : Optional[List[str]] = None,
+                 force_download : Optional[bool] = False,
+                 task : Optional[Task] = None,
+                 filenames : Optional[List[str]] = None) -> xr.Dataset | Task:
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -416,10 +425,10 @@ class FileManagerMODISAppEEARS:
 
         Parameters
         ----------
-        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
+        geometry : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
           Collect a file that covers this shape or bounds.
         crs : CRS object
-          Coordinate system of the above polygon_or_bounds
+          Coordinate system of the above geometry
         start : str or datetime.date object, optional
           Date for the beginning of the data, in YYYY-MM-DD. Valid is
           >= 2002-07-01.
@@ -451,17 +460,16 @@ class FileManagerMODISAppEEARS:
 
         task : (task_id, filename)
           If the data is not yet ready after the wait time, returns a
-          task tuple for use in a future call to get_data().
+          task tuple for use in a future call to getData().
 
         """
         if filenames is not None:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
-            s = dict((var, xr.open_dataset(filename)) for (var, filename) in zip(variables, filenames))
-            return s
+            return xr.merge([self._readFile(filename, var) for (filename, var) in zip(filenames, variables)])
 
         if task is None and filenames is None:
-            if polygon_or_bounds is None or crs is None:
+            if geometry is None or crs is None:
                 raise RuntimeError(
                     'Must provide either polgyon_or_bounds and crs or task arguments.')
 
@@ -474,21 +482,21 @@ class FileManagerMODISAppEEARS:
                     raise ValueError(err + ', '.join(self._PRODUCTS.keys()))
 
             # clean bounds
-            bounds = self._clean_bounds(polygon_or_bounds, crs)
+            bounds = self._cleanBounds(geometry, crs)
 
             # check start and end times
             if start is None:
                 start = self._START
             if end is None:
                 end = self._END
-            start = self._clean_date(start)
-            end = self._clean_date(end)
+            start_str = self._cleanDate(start)
+            end_str = self._cleanDate(end)
 
             # create a task
             task = Task('',
                         variables,
                         filenames=dict(
-                            (v, self._filename(bounds, start, end, v)) for v in variables))
+                            (v, self._filename(bounds, start_str, end_str, v)) for v in variables))
 
             # check for existing file
             for filename in task.filenames.values():
@@ -501,14 +509,15 @@ class FileManagerMODISAppEEARS:
                         except FileNotFoundError:
                             pass
                 else:
-                    return self._read_data(task)
+                    return self._readData(task)
 
         if len(task.task_id) == 0:
             # create the task
-            task = self._construct_request(bounds, start, end, variables)
+            assert variables is not None
+            task = self._constructRequest(bounds, start_str, end_str, variables)
 
         if self._download(task):
-            return self._read_data(task)
+            return self._readData(task)
         return task
 
     def wait(self, task, interval=120, tries=100):
@@ -517,7 +526,7 @@ class FileManagerMODISAppEEARS:
         success = False
         res = task
         while count < tries and not success:
-            res = self.get_data(task=res)
+            res = self.getData(task=res)
             if isinstance(res, xr.Dataset):
                 success = True
                 break
