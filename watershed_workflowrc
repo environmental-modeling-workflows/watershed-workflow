@@ -19,3 +19,8 @@
 #
 # ssl_cert : True
 
+data_directory : /Users/7s2/Research/watershed_workflow_data
+
+[AppEEARS]
+username : srathore6
+password : saubhagya-23-ORNL
