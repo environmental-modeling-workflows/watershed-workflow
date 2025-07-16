@@ -440,7 +440,7 @@ def conditionRiverMesh(m2 : Mesh2D,
                        use_parent : bool = False,
                        lower : bool = False,
                        bank_integrity_elevation : float = 0.0,
-                       depress_headwaters_by : Optional[float] = None,
+                       depress_headwaters_by : Optional[float] = 0.0,
                        network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
                        known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
@@ -604,7 +604,7 @@ def enforceMonotonicity(river : River,
     for leaf in river.leaf_nodes:
         if leaf.index not in known_depressions:
             if depress_headwaters_by is not None:
-                assert depress_headwaters_by > 0.
+                assert depress_headwaters_by >= 0.
                 coords = np.array(leaf.linestring.coords)
                 coords[:,2] = coords[:,2] - depress_headwaters_by
                 leaf.linestring = shapely.geometry.LineString(coords)
