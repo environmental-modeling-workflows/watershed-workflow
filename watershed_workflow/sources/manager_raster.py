@@ -53,7 +53,7 @@ class ManagerRaster:
         Note that the raster provided is in its native CRS (which is in the
         rasterio profile), not the shape's CRS.
         """
-        if isinstance(geometry, shapely.geometry.BaseGeometry):
+        if isinstance(geometry, shapely.geometry.base.BaseGeometry):
             bounds = geometry.bounds
         else:
             bounds = geometry
