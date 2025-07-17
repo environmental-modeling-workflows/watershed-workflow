@@ -51,7 +51,7 @@ def download(url, location, force=False, **kwargs):
         logging.info('Downloading: "%s"' % url)
         logging.info('         to: "%s"' % location)
 
-        with requests.get(url, stream=True, verify=get_verify_option(), **kwargs) as r:
+        with requests.get(url, stream=True, verify=getVerifyOption(), **kwargs) as r:
             r.raise_for_status()
             with open(location, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
