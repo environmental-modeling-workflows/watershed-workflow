@@ -5,3 +5,4 @@
 # However, there are a few requirements that cannot be provided via
 # conda, but CAN be provided via pip, so we get those here...
 rosetta-soil
+meshpy

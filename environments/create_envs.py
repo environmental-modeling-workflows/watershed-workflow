@@ -25,7 +25,6 @@ PACKAGES_BASE=['python',
                'pygeohydro',
                'py3dep',
                'pydaymet',
-               'meshpy',
                'aiohttp>=3.11',
                ]
 
