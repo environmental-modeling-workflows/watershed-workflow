@@ -2,7 +2,7 @@
 #
 # Stage 1 -- setup base CI environment
 #
-FROM condaforge/mambaforge:4.12.0-0 AS ww_env_base_ci
+FROM condaforge/miniforge3:latest AS ww_env_base_ci
 LABEL Description="Base env for CI of Watershed Workflow"
 
 ARG env_name=watershed_workflow_CI
