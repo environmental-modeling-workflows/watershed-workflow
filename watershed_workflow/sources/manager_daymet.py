@@ -135,7 +135,7 @@ class FileManagerDaymet:
                               ('time_end', '{}-12-31T12:00:00Z'.format(year)), ('timeStride', '1'),
                               ('accept', 'netcdf')]
 
-            r = requests.get(url, params=request_params, verify=source_utils.get_verify_option())
+            r = requests.get(url, params=request_params, verify=source_utils.getVerifyOption())
             r.raise_for_status()
 
             with open(filename, 'wb') as fid:

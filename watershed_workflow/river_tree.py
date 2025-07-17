@@ -354,7 +354,7 @@ class River(watershed_workflow.tinytree.Tree):
                 parent[names.CATCHMENT] = self[names.CATCHMENT]
             else:
                 parent[names.CATCHMENT] = shapely.ops.unary_union(
-                    [self[names.CATCHMENT], parent['catchment']])
+                    [self[names.CATCHMENT], parent[names.CATCHMENT]])
 
         if names.DIVERGENCE in self:
             parent[names.DIVERGENCE] = self[names.DIVERGENCE]
