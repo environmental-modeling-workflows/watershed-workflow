@@ -5,11 +5,17 @@ import numpy as np
 import shapely
 import rasterio
 import rasterio.mask
+import pygeohydro as gh
+import xarray
+import geopandas as gpd
+from typing import Tuple
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
+
+
 
 colors = {
     0: ('None', (1., 1., 1.)),
@@ -54,7 +60,7 @@ class FileManagerNLCD:
     Parameters
     ----------
     layer : str, optional
-      Layer of interest.  Default is `"land_cover`", should also be one for at
+      Layer of interest.  Default is `"cover`", should also be one for at
       least imperviousness, maybe others?
     year : int, optional
       Year of dataset.  Defaults to the most current available at the location.
@@ -67,11 +73,9 @@ class FileManagerNLCD:
     """
     colors = colors
     indices = indices
-    url_pattern = 'https://s3-us-west-2.amazonaws.com/mrlc/nlcd_{YEAR}_{PRODUCT}_{LOCATION}_{VERSION}.zip'
 
-    def __init__(self, layer='Land_Cover', year=None, location='L48', version='20210604'):
+    def __init__(self, layer='cover', year=None, location='L48'):
         self.layer, self.year, self.location = self.validate_input(layer, year, location)
-        self.version = version
 
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
 
@@ -79,14 +83,10 @@ class FileManagerNLCD:
         self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover',
                                                             self.layer_name,
                                                             self.layer_name + '.img')
-        self.url = self.url_pattern.format(YEAR=self.year,
-                                           PRODUCT=self.layer.lower(),
-                                           LOCATION=self.location.lower(),
-                                           VERSION=self.version)
 
     def validate_input(self, layer, year, location):
         """Validates input to the __init__ method."""
-        valid_layers = ['Land_Cover', 'Imperviousness']
+        valid_layers = ['cover', 'impervious', 'canopy', 'descriptor']
         if layer not in valid_layers:
             raise ValueError('NLCD invalid layer "{}" requested, valid are: {}'.format(
                 layer, valid_layers))
@@ -97,8 +97,8 @@ class FileManagerNLCD:
                 location, valid_locations))
 
         valid_years = {
-            'L48': [2019, 2016, 2013, 2011, 2008, 2006, 2004, 2001],
-            'AK': [2011, 2001],
+            'L48': [2021, 2019, 2016, 2013, 2011, 2008, 2006, 2004, 2001],
+            'AK': [2016, 2011, 2001],
             'HI': [2001, ],
             'PR': [2001, ],
         }
@@ -112,81 +112,59 @@ class FileManagerNLCD:
 
         return layer, year, location
 
-    def get_raster(self, shply, crs, force_download=False):
-        """Download and read a DEM for this shape, clipping to the shape.
+    def getDataset(self,
+                   geometry: gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float],
+                   geometry_crs: str = None) -> xarray.DataArray:
+        """
+        Retrieves the NLCD dataset for a given geometry.
 
         Parameters
         ----------
-        shply : fiona or shapely shape
-          Shape to provide bounds of the raster.
-        crs : CRS
-          CRS of the shape.
-        force_download : bool, optional
-          Download or re-download the file if true.
+        geometry : gpd.GeoDataFrame or Tuple[float, float, float, float]
+            The geometry for which the dataset is to be retrieved. It can be a GeoDataFrame
+            or a tuple representing the bounding box (minx, miny, maxx, maxy). If a GeoDataFrame or GeoSeries is used, the indices are used
+            as keys in the output dictionary. 
+        geometry_crs : str, optional
+            The coordinate reference system of the geometry. If not provided, it defaults
+            to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
 
         Returns
         -------
-        profile : rasterio profile
-          Profile of the raster.
-        raster : np.ndarray
-          Array containing the elevation data.
-
-        Note that the raster provided is in NLCD native CRS (which is in the
-        rasterio profile), not the shape's CRS.
+        xarray.DataArray
+            The NLCD dataset corresponding to the provided geometry.
         """
-        # get shape as a shapely, single Polygon
-        if type(shply) is dict:
-            shply = watershed_workflow.utils.create_shply(shply['geometry'])
-        if type(shply) is shapely.geometry.MultiPolygon:
-            shply = shapely.ops.unary_union(shply)
 
-        # download (or hopefully don't) the file
-        filename, nlcd_profile = self._download()
+        from_tuple = False
+        
+        if geometry_crs is None:
+            if isinstance(geometry, (gpd.GeoDataFrame, gpd.GeoSeries)):
+                geometry_crs = geometry.crs or "epsg:4326"
+            elif isinstance(geometry, Tuple):
+                geometry_crs = "epsg:4326"
+                print("Warning: geometry_crs was not provided. Assuming geometry_crs = 'epsg:4326'")
+        
+        if isinstance(geometry, Tuple):
+            # Create a GeoDataFrame from the tuple coordinates
+            minx, miny, maxx, maxy = geometry
+            geometry = gpd.GeoDataFrame(
+                {'geometry': [shapely.geometry.box(minx, miny, maxx, maxy)]},
+                crs=geometry_crs,
+                index=['domain']
+            )
+            from_tuple = True
 
-        logging.debug('CRS: {}'.format(nlcd_profile['crs']))
+        dataset = gh.nlcd_bygeom(
+            geometry, 
+            resolution=30, 
+            years={self.layer: self.year},
+            region=self.location,
+            crs=geometry_crs
+        )
 
-        # warp to crs
-        shply = watershed_workflow.warp.shply(
-            shply, crs, watershed_workflow.crs.from_rasterio(nlcd_profile['crs']))
+        if not from_tuple:
+            dataset = {f"domain_{key}": value for key, value in dataset.items()}
 
-        # load raster
-        with rasterio.open(filename, 'r') as fid:
-            profile = fid.profile
-            out_image, out_transform = rasterio.mask.mask(fid, [shply, ], crop=True, nodata=0)
+        return dataset
+    
 
-        profile.update({
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform,
-            "nodata": 0
-        })
 
-        assert (len(out_image.shape) == 3)
-        return profile, out_image[0, :, :]
-
-    def _download(self, force=False):
-        """Download the files, returning list of filenames."""
-        # check directory structure
-        os.makedirs(self.names.data_dir(), exist_ok=True)
-        work_folder = self.names.raw_folder_name()
-        os.makedirs(work_folder, exist_ok=True)
-
-        filename = self.names.file_name()
-        logging.info('  filename: {}'.format(filename))
-        if not os.path.exists(filename) or force:
-            downloadfile = os.path.join(work_folder, self.url.split("/")[-1])
-            source_utils.download(self.url, downloadfile, force)
-            source_utils.unzip(downloadfile, work_folder)
-
-            # hope we can find it?
-            img_files = [f for f in os.listdir(work_folder) if f.endswith('.img')]
-            assert (len(img_files) == 1)
-            target = os.path.join(work_folder, img_files[0])
-
-            os.rename(target, filename)
-            for suffix in ['ige', 'rde', 'rrd', 'xml']:
-                os.rename(target[:-3] + suffix, filename[:-3] + suffix)
-
-        with rasterio.open(filename, 'r') as fid:
-            profile = fid.profile
-        return filename, profile
