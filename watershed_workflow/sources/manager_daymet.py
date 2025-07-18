@@ -8,9 +8,9 @@ import requests
 import requests.exceptions
 import shapely.geometry
 import cftime, datetime
-import netCDF4
 import rasterio.transform
 import xarray as xr
+# import netCDF4
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
@@ -80,23 +80,23 @@ class FileManagerDaymet:
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
-    def _read_var(self, fname, var):
+    # def _read_var(self, fname, var):
         
-        # read the data using xarray
-        ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
-        # convert the x and y coordinates from km to meters and update the attributes
-        attrs_ref = ds.x.attrs 
-        attrs_ref['units'] = 'm'
-        ds = ds.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
-        ds.x.attrs = attrs_ref
-        ds.y.attrs = attrs_ref
+    #     # read the data using xarray
+    #     ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
+    #     # convert the x and y coordinates from km to meters and update the attributes
+    #     attrs_ref = ds.x.attrs 
+    #     attrs_ref['units'] = 'm'
+    #     ds = ds.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
+    #     ds.x.attrs = attrs_ref
+    #     ds.y.attrs = attrs_ref
 
-        x = ds.x.values 
-        y = ds.y.values 
-        time = ds.time.values
-        assert (len(time) == 365)
-        val = ds[var].values
-        return x, y, val
+    #     x = ds.x.values 
+    #     y = ds.y.values 
+    #     time = ds.time.values
+    #     assert (len(time) == 365)
+    #     val = ds[var].values
+    #     return x, y, val
 
     def _download(self, var, year, bounds, force=False):
         """Download a NetCDF file covering the bounds.
@@ -295,11 +295,39 @@ class FileManagerDaymet:
                 filename_var.append(fname)
             filenames.append(filename_var)
 
+
         # open files
-        dset = None
-        for fnames, var in zip(filenames, variables):
-            data = self._open_files(fnames, var, start, end)
-            if dset is None:
-                dset = watershed_workflow.datasets.Dataset(data.profile, data.times)
-            dset[var] = data.data
-        return dset
+        fnames_by_var = list(zip(filenames, variables))
+        ds_list_allvars = []
+
+        for info in fnames_by_var:
+            
+            var = info[1]
+            fnames = info[0]
+            
+            ds_list = []
+            for fname in fnames:
+                ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
+                ds_list.append(ds)
+
+            ds_concat = xr.concat(ds_list, dim="time")
+            ds_list_allvars.append(ds_concat[var])
+
+        ds_combined = xr.Dataset({da.name: da for i, da in enumerate(ds_list_allvars)})
+        ds_combined.attrs = ds_concat.attrs
+        # convert the x and y coordinates from km to meters and update the attributes
+        attrs_ref = ds_combined.x.attrs 
+        attrs_ref['units'] = 'm'
+        ds_combined = ds_combined.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
+        ds_combined.x.attrs = attrs_ref
+        ds_combined.y.attrs = attrs_ref
+
+        # # open files
+        # dset = None
+        # for fnames, var in zip(filenames, variables):
+        #     data = self._open_files(fnames, var, start, end)
+        #     if dset is None:
+        #         dset = watershed_workflow.datasets.Dataset(data.profile, data.times)
+        #     dset[var] = data.data
+        # return dset
+        return ds_combined
