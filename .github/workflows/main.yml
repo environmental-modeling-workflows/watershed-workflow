@@ -41,12 +41,7 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}      
+      
       - name: Get runner architecture
         run: |
           if [[ ${{matrix.os}} == "ubuntu-24.04-arm" ]]; then
@@ -54,6 +49,7 @@ jobs:
           else
             echo "ARCH=amd64" >> $GITHUB_ENV
           fi
+
       - name: Check to see if CI_ENV_DOCKER_TAG exists for current branch
         run: |
           # check to see if manifest for requested image exists, echo $? returns 0 if it exists 
@@ -66,6 +62,13 @@ jobs:
           fi 
           # verify that logic above has worked
           echo ${{env.CI_ENV_BRANCH}}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v6
