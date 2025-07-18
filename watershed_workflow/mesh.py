@@ -1601,30 +1601,34 @@ def merge_mesh(mesh1, mesh2):
 
     combined_coords = mesh1.coords.tolist()
     # mapping for adjusting coord indices
-    mapping = { i: i for i in range(mesh2.num_nodes) }
-
+    mapping = {}
+    
+    # Use a spatial data structure for efficient nearest neighbor search
+    from scipy.spatial import cKDTree
+    tree = cKDTree(np.array(combined_coords)[:, :2])  # Only use x,y coordinates for matching
+    
+    # Find potential matches for all mesh2 points at once
+    distances, indices = tree.query(mesh2.coords[:, :2], distance_upper_bound=1e-3)
+    
+    # Process all coordinates from mesh2
+    new_coords = []
+    for idx, (coord, dist, match_idx) in enumerate(zip(mesh2.coords, distances, indices)):
+        if dist < 1e-3:  # Found a match within tolerance
+            mapping[idx] = match_idx
+        else:
+            # No match found, add to new coordinates
+            mapping[idx] = len(combined_coords) + len(new_coords)
+            new_coords.append(coord.tolist())
+    
+    # Add all new coordinates at once
+    combined_coords.extend(new_coords)
+    
     # adjust connection indices for the second mesh using the mapping
-    def map_conn(conn, mapping):
-        return [mapping[idx] for idx in conn]
-
-    for idx, coord in enumerate(mesh2.coords):
-        # check if the point is close enough to any point in combined_coords
-        found = False
-        for i, existing_coord in enumerate(combined_coords):
-            if close_enough(coord[:2], existing_coord[:2], tolerance=1e-3):
-                mapping[idx] = i
-                found = True
-                break
-        # if the point is not close enough to any existing point, add to combined_coords
-        if not found:
-            combined_coords.append(coord.tolist())
-            mapping[idx] = len(combined_coords) - 1
-
-    adjusted_conn2 = [map_conn(conn, mapping) for conn in mesh2.conn]
-
+    adjusted_conn2 = [[mapping[idx] for idx in conn] for conn in mesh2.conn]
+    
     # merge conn lists
     combined_conn = mesh1.conn + adjusted_conn2
-
+    
     # merged mesh creation
     m2_combined = watershed_workflow.mesh.Mesh2D(coords=np.array(combined_coords),
                                                  conn=combined_conn)
