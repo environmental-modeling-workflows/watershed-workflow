@@ -335,7 +335,7 @@ class FileManagerNRCS:
             query = _query_template_props.format(mukey_list_string)
 
             data = { 'FORMAT': 'JSON', 'QUERY': query }
-            r = requests.post(self.url_data, data=data, verify=source_utils.get_verify_option())
+            r = requests.post(self.url_data, data=data, verify=source_utils.getVerifyOption())
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 
@@ -505,7 +505,7 @@ class FileManagerNRCS:
             box = shapely.geometry.box(*bounds)
             query = _query_template_shapes.format(box.wkt)
             data = { 'FORMAT': 'JSON', 'QUERY': query }
-            r = requests.post(self.url_data, data=data, verify=source_utils.get_verify_option())
+            r = requests.post(self.url_data, data=data, verify=source_utils.getVerifyOption())
             logging.info(f'  full URL: {r.url}')
             r.raise_for_status()
 

@@ -8,7 +8,7 @@ import requests
 import requests.exceptions
 import shapely.geometry
 import cftime, datetime
-import netCDF4
+# import netCDF4
 import rasterio.transform
 
 import watershed_workflow.sources.utils as source_utils
@@ -16,8 +16,7 @@ import watershed_workflow.crs
 import watershed_workflow.config
 import watershed_workflow.warp
 import watershed_workflow.sources.names
-import watershed_workflow.datasets
-
+# import watershed_workflow.datasets
 
 def _previous_month():
     now = datetime.datetime.now()
@@ -135,7 +134,7 @@ class FileManagerDaymet:
                               ('time_end', '{}-12-31T12:00:00Z'.format(year)), ('timeStride', '1'),
                               ('accept', 'netcdf')]
 
-            r = requests.get(url, params=request_params, verify=source_utils.get_verify_option())
+            r = requests.get(url, params=request_params, verify=source_utils.getVerifyOption())
             r.raise_for_status()
 
             with open(filename, 'wb') as fid:
@@ -166,10 +165,10 @@ class FileManagerDaymet:
             polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
         if type(polygon_or_bounds) is shapely.geometry.Polygon:
             bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
-                                                      watershed_workflow.crs.latlon_crs()).bounds
+                                                      watershed_workflow.crs.latlon_crs).bounds
         else:
             bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
-                                                       watershed_workflow.crs.latlon_crs())
+                                                       watershed_workflow.crs.latlon_crs)
 
         feather_bounds = list(bounds_ll[:])
         feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
