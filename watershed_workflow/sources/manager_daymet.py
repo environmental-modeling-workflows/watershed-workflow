@@ -8,8 +8,9 @@ import requests
 import requests.exceptions
 import shapely.geometry
 import cftime, datetime
-# import netCDF4
+import netCDF4
 import rasterio.transform
+import xarray as xr
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
@@ -80,12 +81,21 @@ class FileManagerDaymet:
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
     def _read_var(self, fname, var):
-        with netCDF4.Dataset(fname, 'r') as nc:
-            x = nc.variables['x'][:] * 1000.  # km to m; raw netCDF file has km unit
-            y = nc.variables['y'][:] * 1000.  # km to m
-            time = nc.variables['time'][:]
-            assert (len(time) == 365)
-            val = nc.variables[var][:]
+        
+        # read the data using xarray
+        ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
+        # convert the x and y coordinates from km to meters and update the attributes
+        attrs_ref = ds.x.attrs 
+        attrs_ref['units'] = 'm'
+        ds = ds.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
+        ds.x.attrs = attrs_ref
+        ds.y.attrs = attrs_ref
+
+        x = ds.x.values 
+        y = ds.y.values 
+        time = ds.time.values
+        assert (len(time) == 365)
+        val = ds[var].values
         return x, y, val
 
     def _download(self, var, year, bounds, force=False):
@@ -217,7 +227,7 @@ class FileManagerDaymet:
         profile['nodata'] = -9999
         return watershed_workflow.datasets.Data(profile, times, data)
 
-    def get_data(self,
+    def getDataset(self,
                  polygon_or_bounds,
                  crs,
                  start=None,
