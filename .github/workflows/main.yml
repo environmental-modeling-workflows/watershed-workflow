@@ -53,13 +53,16 @@ jobs:
       - name: Check to see if CI_ENV_DOCKER_TAG exists for current branch
         run: |
           # check to see if manifest for requested image exists, echo $? returns 0 if it exists 
-          docker manifest inspect ${{secrets.DOCKER_HUB_USERNAME}}/watershed_workflow-ci_env:${{ env.BRANCH_TAG }}-latest > /dev/null ;
+          docker manifest inspect ${{secrets.DOCKER_HUB_USERNAME}}/watershed_workflow-ci_env:${{ env.BRANCH_TAG }}-latest > /dev/null 2>&1 ;
           # returns 0 if image exists, 1 if it is missing (so default to master if 1)
           if echo $?; then
             echo "CI_ENV_BRANCH=master" >> $GITHUB_ENV
           else
             echo "CI_ENV_BRANCH=${{env.BRANCH_TAG}}" >> $GITHUB_ENV
           fi 
+
+      - name: check environment variable
+        run: |
           # verify that logic above has worked
           echo ${{env.CI_ENV_BRANCH}}
 
