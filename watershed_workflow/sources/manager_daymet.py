@@ -227,6 +227,66 @@ class FileManagerDaymet:
         profile['nodata'] = -9999
         return watershed_workflow.datasets.Data(profile, times, data)
 
+    def _open_files_xarray(self, filenames : list[str], variables : list[str]) -> xr.Dataset:
+        """Open all files and concatenate them into a single xarray dataset."""
+
+        fnames_by_var = list(zip(filenames, variables))
+        ds_list_allvars = []
+
+        for info in fnames_by_var:
+            
+            var = info[1]
+            fnames = info[0]
+            
+            ds_list = []
+            for fname in fnames:
+                ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
+                ds_list.append(ds)
+
+            ds_concat = xr.concat(ds_list, dim="time")
+            ds_list_allvars.append(ds_concat[var])
+
+        ds_combined = xr.Dataset({da.name: da for i, da in enumerate(ds_list_allvars)})
+        ds_combined.attrs = ds_concat.attrs
+        # convert the x and y coordinates from km to meters and update the attributes
+        attrs_ref = ds_combined.x.attrs 
+        attrs_ref['units'] = 'm'
+        ds_combined = ds_combined.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
+        ds_combined.x.attrs = attrs_ref
+        ds_combined.y.attrs = attrs_ref
+        return ds_combined
+    
+    def _prepare_ats_data(self, data : xr.Dataset) -> dict:
+      # Initialize a dictionary to store ATS data
+      dout = dict()
+
+      # Extract mean air temperature in Celsius
+      mean_air_temp_C = (data['tmax'][:].data  + data['tmin'][:].data) / 2 # in Celsius
+
+      # Convert precipitation from mm/day to m/s
+      precip_ms = data['prcp'][:].data / (1.e3 * 24 * 3600)  # mm/day to m/s
+
+      # Calculate time in seconds from the start of the dataset
+      time_start_global = data.time.data[0]
+      time = (pd.to_datetime(data.time.data) - time_start_global).total_seconds()
+
+      # Populate the ATS dictionary with processed data
+      dout['air temperature [K]'] = mean_air_temp_C + 273.15  # Convert to Kelvin
+      dout['incoming shortwave radiation [W m^-2]'] = data['srad'][:].data  # W/m^2
+      dout['vapor pressure air [Pa]'] = data['vp'][:].data   #  Pa
+      dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_C >= 0, precip_ms, 0)  # Rainfall in m/s
+      dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_C < 0, precip_ms, 0)  # Snowfall in m SWE/s
+      dout['day length [s]'] = data['daylength'][:].data  # s
+      dout['time [s]'] = time  # Time in seconds
+
+      # Extract x and y coordinates
+      coords_x = data.x.data
+      coords_y = data.y.data 
+
+      return {'data': dout, 'x': coords_x, 'y': coords_y}
+
+
+
     def getDataset(self,
                  polygon_or_bounds,
                  crs,
@@ -297,30 +357,8 @@ class FileManagerDaymet:
 
 
         # open files
-        fnames_by_var = list(zip(filenames, variables))
-        ds_list_allvars = []
-
-        for info in fnames_by_var:
-            
-            var = info[1]
-            fnames = info[0]
-            
-            ds_list = []
-            for fname in fnames:
-                ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
-                ds_list.append(ds)
-
-            ds_concat = xr.concat(ds_list, dim="time")
-            ds_list_allvars.append(ds_concat[var])
-
-        ds_combined = xr.Dataset({da.name: da for i, da in enumerate(ds_list_allvars)})
-        ds_combined.attrs = ds_concat.attrs
-        # convert the x and y coordinates from km to meters and update the attributes
-        attrs_ref = ds_combined.x.attrs 
-        attrs_ref['units'] = 'm'
-        ds_combined = ds_combined.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
-        ds_combined.x.attrs = attrs_ref
-        ds_combined.y.attrs = attrs_ref
+        ds = self._open_files_xarray(filenames, variables)
+        dset = self._prepare_ats_data(ds)
 
         # # open files
         # dset = None
@@ -330,4 +368,4 @@ class FileManagerDaymet:
         #         dset = watershed_workflow.datasets.Dataset(data.profile, data.times)
         #     dset[var] = data.data
         # return dset
-        return ds_combined
+        return ds
