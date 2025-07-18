@@ -1322,7 +1322,6 @@ def triangulate(hucs,
                 f'Found {len(stream_triangles)} stream triangles - consider using "treat_stream_triangles" option'
             )
             if treat_stream_triangles == 'moderate':
-                
                 logging.warning(
                     f'{len(stream_triangles)} stream triangles could not be refined - consider using treat_stream_triangles="strict"'
                 )
