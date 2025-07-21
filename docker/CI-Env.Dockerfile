@@ -16,8 +16,8 @@ RUN mkdir environments
 RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.10
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --with-user-env=${env_name} \
-    --env-type=CI --with-tools-env=watershed_workflow_tools Linux
+    /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
+    --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
 
 #
 # Stage 2 -- add in the pip
@@ -41,7 +41,9 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
 RUN apt-get install git
-RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas
+RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas \
+  && sed -i '/const int NC_SZIP_NN/ i\#ifdef NC_SZIP_NN\n#undef NC_SZIP_NN\n#endif' \
+    /opt/conda/envs/${env_name}/src/seacas/packages/seacas/libraries/exodus/src/ex_utils.c
 
 # configure
 WORKDIR /ww/tmp
