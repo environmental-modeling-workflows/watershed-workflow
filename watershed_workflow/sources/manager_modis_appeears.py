@@ -169,8 +169,9 @@ class FileManagerMODISAppEEARS:
         """Returns a string of the format needed for use in the filename and request."""
         if isinstance(date, str):
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-
-        assert isinstance(date, datetime.datetime)
+        elif isinstance(date, datatime.datetime):
+            date = date.date()
+        assert isinstance(date, datetime.date)
         if date < self._START:
             raise ValueError(f"Invalid date {date}, must be after {self._START}.")
         if date > self._END:
@@ -178,10 +179,10 @@ class FileManagerMODISAppEEARS:
         return date.strftime('%m-%d-%Y')
 
     def _cleanBounds(self,
-                     geometry : shapely.geometry.BaseGeometry | Tuple[float, float, float, float],
+                     geometry : shapely.geometry.base.BaseGeometry | Tuple[float, float, float, float],
                      crs : CRS) -> Tuple[float,float,float,float]:
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        if isinstance(geometry, shapely.geometry.BaseGeometry):
+        if isinstance(geometry, shapely.geometry.base.BaseGeometry):
             bounds = geometry.bounds
         else:
             bounds = geometry
@@ -396,7 +397,11 @@ class FileManagerMODISAppEEARS:
 
     def _readData(self, task : Task) -> xr.Dataset:
         """Read all files for a task, returning the data in the order of variables requested in the task."""
-        return xr.merge([self._readFile(task.filenames[var], var) for var in task.variables])
+        ds = xr.merge([self._readFile(task.filenames[var], var) for var in task.variables])
+        for var in ds.variables:
+            ds[var].rio.set_crs(watershed_workflow.crs.latlon_crs)
+        ds.rio.set_crs(watershed_workflow.crs.latlon_crs)
+        return ds
 
     def _readFile(self, filename : str, variable : str) -> xr.DataArray:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
@@ -404,11 +409,12 @@ class FileManagerMODISAppEEARS:
             layer = self._PRODUCTS[variable]['layer']
             data = fid[layer]
 
+        data.name = variable
         data.rio.set_crs(watershed_workflow.crs.latlon_crs)
         return data
 
     def getData(self,
-                geometry : Optional[shapely.geometry.BaseGeometry | Tuple[float,float,float,float]]= None,
+                geometry : Optional[shapely.geometry.base.BaseGeometry | Tuple[float,float,float,float]]= None,
                  crs : Optional[CRS] = None,
                  start : Optional[str | datetime.datetime | datetime.date] = None,
                  end : Optional[str | datetime.datetime | datetime.date] = None,
@@ -466,7 +472,12 @@ class FileManagerMODISAppEEARS:
         if filenames is not None:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
-            return xr.merge([self._readFile(filename, var) for (filename, var) in zip(filenames, variables)])
+            darrays = [self._readFile(filename, var) for (filename, var) in zip(filenames, variables)]
+            ds = xr.merge(darrays)
+            for var in ds.variables:
+                ds[var].rio.set_crs(watershed_workflow.crs.latlon_crs)
+            ds.rio.set_crs(watershed_workflow.crs.latlon_crs)
+            return ds
 
         if task is None and filenames is None:
             if geometry is None or crs is None:
