@@ -111,14 +111,22 @@ def get_packages(env_type, os_name=None, extras=False):
             packages.extend(PACKAGES_USER_EXTRAS)
     elif env_type == 'TOOLS':
         packages = PACKAGES_TOOLS.copy()
+	# Previously these were hard-coded to x86_64 architectures
+	# constraint removed so that the package matching os/arch
+	# is automatically selected by conda, but if there is a need
+	# for cross-compiling they should be added back in with an
+	# additional option to specify the architecture. otherwise,
+	# packages via mamba are installed for one arch, but others
+	# that are compiled (e.g., seacas) are build for the other 
+	# arch which causes issues with ld
         if os_name == 'OSX' or os_name == 'Darwin':
-            packages.append('clang_osx-64')
-            packages.append('clangxx_osx-64')
-            packages.append('gfortran_osx-64')
+            packages.append('clang')
+            packages.append('clangxx')
+            packages.append('gfortran')
         elif os_name == 'Linux':
-            packages.append('gcc_linux-64')
-            packages.append('gxx_linux-64')
-            packages.append('gfortran_linux-64')
+            packages.append('gcc')
+            packages.append('gxx')
+            packages.append('gfortran')
         else:
             raise ValueError(f'Cannot determine compilers for unknown platform {os_name}')
     else:
