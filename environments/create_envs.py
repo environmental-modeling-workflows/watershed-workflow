@@ -76,7 +76,7 @@ CHANNELS=['conda-forge',
 #          'defaults',
           ]
 
-PACKAGE_MANAGER = 'mamba'
+PACKAGE_MANAGER = 'conda'
 
 
 import datetime
@@ -219,8 +219,8 @@ if __name__ == '__main__':
                         help='Build a tools environment for compiling ExodusII.')
     parser.add_argument('--dump-only', action='store_true', help='Only write the .yml file')
     parser.add_argument('--dry-run', action='store_true', help='Only print the environment creation command')
-    parser.add_argument('--manager', default='mamba', type=str,
-                        help='Package manager, likely one of mamba or conda, defaults to mamba')
+    parser.add_argument('--manager', default='conda', type=str,
+                        help='Package manager, likely one of mamba or conda, defaults to conda')
     parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
                         help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env and a OS-specific filename for writing the environment.yml file.')
     parser.add_argument('ENV_NAME', type=str, help='Name for this environement')
