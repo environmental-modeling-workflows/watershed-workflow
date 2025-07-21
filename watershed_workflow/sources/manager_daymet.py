@@ -98,7 +98,11 @@ class FileManagerDaymet:
     #     val = ds[var].values
     #     return x, y, val
 
-    def _download(self, var, year, bounds, force=False):
+    def _download(self, 
+                  var : str,
+                  year : int,
+                  bounds : list[float],
+                  force : bool = False) -> str:
         """Download a NetCDF file covering the bounds.
 
         Parameters
@@ -155,7 +159,7 @@ class FileManagerDaymet:
 
         return filename
 
-    def _clean_date(self, date):
+    def _clean_date(self, date : str | datetime.date) -> datetime.date:
         """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
             date_split = date.split('-')
@@ -169,7 +173,11 @@ class FileManagerDaymet:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date
 
-    def _clean_bounds(self, polygon_or_bounds, crs, buffer):
+    def _clean_bounds(self, 
+                      polygon_or_bounds : dict | shapely.geometry.Polygon | list[float],
+                      crs : str,
+                      buffer : float) -> list[float]:
+        
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
         if type(polygon_or_bounds) is dict:
             polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
@@ -187,7 +195,11 @@ class FileManagerDaymet:
         feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
         return feather_bounds
 
-    def _open_files(self, filenames, var, start, end):
+    def _open_files(self, 
+                    filenames : list[str],
+                    var : str,
+                    start : datetime.date,
+                    end : datetime.date) -> dict:
         """Opens and loads the files, making a single array."""
         # NOTE: this probably needs to be refactored to not load the whole thing into memory?
         nyears = len(filenames)
@@ -288,13 +300,14 @@ class FileManagerDaymet:
 
 
     def getDataset(self,
-                 polygon_or_bounds,
-                 crs,
-                 start=None,
-                 end=None,
-                 variables=None,
-                 force_download=False,
-                 buffer=0.01):
+                 polygon_or_bounds : dict | shapely.geometry.Polygon | list[float],
+                 crs : str,
+                 start : str | datetime.date = None,
+                 end : str | datetime.date = None,
+                 variables : list[str] = None,
+                 force_download : bool = False,
+                 buffer : float = 0.01) -> dict:
+        
         """Gets file for a single year and single variable.
 
         Parameters
