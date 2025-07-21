@@ -265,13 +265,13 @@ def plotLAI(df : pd.DataFrame,
 
     """Plots time series of land cover data."""
     # are we using NLCD or MODIS?
-    info : type[watershed_workflow.sources.manager_nlcd.FileManagerNLCD] | \
-        type[watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS] | \
+    info : type[watershed_workflow.sources.manager_nlcd.ManagerNLCD] | \
+        type[watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS] | \
         None = None
     if indices == 'NLCD':
-        info = watershed_workflow.sources.manager_nlcd.FileManagerNLCD
+        info = watershed_workflow.sources.manager_nlcd.ManagerNLCD
     elif indices == 'MODIS':
-        info = watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS
+        info = watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS
     else:
         raise ValueError(f'Unknown land cover indices kind "{indices}"')
 

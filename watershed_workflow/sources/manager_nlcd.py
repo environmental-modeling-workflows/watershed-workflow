@@ -1,20 +1,15 @@
 """Manager for interacting with NLCD datasets."""
 import os, sys
 import logging
-import numpy as np
-import shapely
-import rasterio
-import rasterio.mask
-import pygeohydro as gh
-import xarray
+
+import xarray as xr
 import geopandas as gpd
+import shapely.geometry
+
 from typing import Tuple
+import pygeohydro
 
-import watershed_workflow.sources.utils as source_utils
-import watershed_workflow.config
-import watershed_workflow.warp
-import watershed_workflow.sources.names
-
+from watershed_workflow.crs import CRS
 
 
 colors = {
@@ -45,7 +40,7 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-class FileManagerNLCD:
+class ManagerNLCD:
     """National Land Cover Database provides a raster for indexed land cover types
     [NLCD]_.
 
@@ -75,16 +70,11 @@ class FileManagerNLCD:
     indices = indices
 
     def __init__(self, layer='cover', year=None, location='L48'):
-        self.layer, self.year, self.location = self.validate_input(layer, year, location)
-
+        self.layer, self.year, self.location = self.validateInput(layer, year, location)
         self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
-
         self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
-        self.names = watershed_workflow.sources.names.Names(self.name, 'land_cover',
-                                                            self.layer_name,
-                                                            self.layer_name + '.img')
 
-    def validate_input(self, layer, year, location):
+    def validateInput(self, layer, year, location):
         """Validates input to the __init__ method."""
         valid_layers = ['cover', 'impervious', 'canopy', 'descriptor']
         if layer not in valid_layers:
@@ -113,17 +103,15 @@ class FileManagerNLCD:
         return layer, year, location
 
     def getDataset(self,
-                   geometry: gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float],
-                   geometry_crs: str = None) -> xarray.DataArray:
+                   geometry : shapely.geometry.base.BaseGeometry,
+                   geometry_crs : CRS) -> xr.DataArray:
         """
         Retrieves the NLCD dataset for a given geometry.
 
         Parameters
         ----------
-        geometry : gpd.GeoDataFrame or Tuple[float, float, float, float]
-            The geometry for which the dataset is to be retrieved. It can be a GeoDataFrame
-            or a tuple representing the bounding box (minx, miny, maxx, maxy). If a GeoDataFrame or GeoSeries is used, the indices are used
-            as keys in the output dictionary. 
+        geometry : shapely.geometry.base.BaseGeometry
+            The geometry for which the dataset is to be retrieved. 
         geometry_crs : str, optional
             The coordinate reference system of the geometry. If not provided, it defaults
             to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
@@ -136,35 +124,19 @@ class FileManagerNLCD:
 
         from_tuple = False
         
-        if geometry_crs is None:
-            if isinstance(geometry, (gpd.GeoDataFrame, gpd.GeoSeries)):
-                geometry_crs = geometry.crs or "epsg:4326"
-            elif isinstance(geometry, Tuple):
-                geometry_crs = "epsg:4326"
-                print("Warning: geometry_crs was not provided. Assuming geometry_crs = 'epsg:4326'")
-        
-        if isinstance(geometry, Tuple):
-            # Create a GeoDataFrame from the tuple coordinates
-            minx, miny, maxx, maxy = geometry
-            geometry = gpd.GeoDataFrame(
-                {'geometry': [shapely.geometry.box(minx, miny, maxx, maxy)]},
-                crs=geometry_crs,
-                index=['domain']
-            )
-            from_tuple = True
+        geom_df = gpd.GeoDataFrame(geometry=[geometry,], crs=geometry_crs)
 
-        dataset = gh.nlcd_bygeom(
-            geometry, 
+        dataset = pygeohydro.nlcd_bygeom(
+            geom_df, 
             resolution=30, 
             years={self.layer: self.year},
             region=self.location,
-            crs=geometry_crs
         )
 
-        if not from_tuple:
-            dataset = {f"domain_{key}": value for key, value in dataset.items()}
-
-        return dataset
+        assert len(dataset) == 1
+        dset = dataset[0]
+        assert len(dset) == 1
+        return dset[next(k for k in dset.keys())]
     
 
 
