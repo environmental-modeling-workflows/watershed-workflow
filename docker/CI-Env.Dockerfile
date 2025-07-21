@@ -16,8 +16,8 @@ RUN mkdir environments
 RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.10
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
-    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --env-name=${env_name} \
-    --env-type=CI --with-tools-env --tools-env-name=watershed_workflow_tools Linux
+    /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --with-user-env=${env_name} \
+    --env-type=CI --with-tools-env=watershed_workflow_tools Linux
 
 #
 # Stage 2 -- add in the pip
