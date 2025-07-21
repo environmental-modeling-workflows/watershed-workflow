@@ -14,7 +14,7 @@ class Manager3DEP:
     def __init__(self, resolution):
         self._resolution = resolution
 
-    def getDataset(self,
+    def getData(self,
                    geometry : shapely.geometry.Polygon | \
                               shapely.geometry.MultiPolygon | \
                               Tuple[float,float,float,float],
