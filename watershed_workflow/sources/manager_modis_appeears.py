@@ -57,7 +57,7 @@ class Task:
     shas: dict = attr.Factory(dict)
 
 
-class FileManagerMODISAppEEARS:
+class ManagerMODISAppEEARS:
     """MODIS data through the AppEEARS data portal.
 
     Note this portal requires authentication -- please enter a
@@ -169,7 +169,7 @@ class FileManagerMODISAppEEARS:
         """Returns a string of the format needed for use in the filename and request."""
         if isinstance(date, str):
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-        elif isinstance(date, datatime.datetime):
+        elif isinstance(date, datetime.datetime):
             date = date.date()
         assert isinstance(date, datetime.date)
         if date < self._START:
@@ -413,7 +413,7 @@ class FileManagerMODISAppEEARS:
         data.rio.set_crs(watershed_workflow.crs.latlon_crs)
         return data
 
-    def getData(self,
+    def getDataset(self,
                 geometry : Optional[shapely.geometry.base.BaseGeometry | Tuple[float,float,float,float]]= None,
                  crs : Optional[CRS] = None,
                  start : Optional[str | datetime.datetime | datetime.date] = None,
@@ -466,7 +466,7 @@ class FileManagerMODISAppEEARS:
 
         task : (task_id, filename)
           If the data is not yet ready after the wait time, returns a
-          task tuple for use in a future call to getData().
+          task tuple for use in a future call to getDataset().
 
         """
         if filenames is not None:
@@ -537,7 +537,7 @@ class FileManagerMODISAppEEARS:
         success = False
         res = task
         while count < tries and not success:
-            res = self.getData(task=res)
+            res = self.getDataset(task=res)
             if isinstance(res, xr.Dataset):
                 success = True
                 break

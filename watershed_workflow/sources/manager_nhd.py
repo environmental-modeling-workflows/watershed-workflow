@@ -126,9 +126,9 @@ class ManagerNHD(ManagerHyRiver):
         return df
             
     def getShapesByGeometry(self,
-                            geom : BaseGeometry,
-                            geom_crs : CRS) -> gpd.GeoDataFrame:
-        df = super(ManagerNHD, self).getShapesByGeometry(geom, geom_crs)
+                            geometry : BaseGeometry,
+                            geometry_crs : CRS) -> gpd.GeoDataFrame:
+        df = super(ManagerNHD, self).getShapesByGeometry(geometry, geometry_crs)
         if self._catchments:
             df = self.getCatchments(df)
         df = self.addStandardNames(df)        

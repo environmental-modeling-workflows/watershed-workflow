@@ -1,23 +1,22 @@
 """Manager for interacting with DayMet datasets."""
+from typing import List, Optional
+
 
 import os, sys
 import logging
 import numpy as np
-import pyproj
 import requests
 import requests.exceptions
 import shapely.geometry
 import cftime, datetime
-import rasterio.transform
 import xarray as xr
-# import netCDF4
 
 import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
-import watershed_workflow.config
+from watershed_workflow.crs import CRS
 import watershed_workflow.warp
 import watershed_workflow.sources.names
-# import watershed_workflow.datasets
+
 
 def _previous_month():
     now = datetime.datetime.now()
@@ -29,7 +28,7 @@ def _previous_month():
     return cftime.datetime(year, month, 1, calendar='noleap')
 
 
-class FileManagerDaymet:
+class ManagerDaymet:
     """Daymet meterological datasets.
 
     Daymet is a historic, spatially interpolated product which ingests large
@@ -80,24 +79,6 @@ class FileManagerDaymet:
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
-    # def _read_var(self, fname, var):
-        
-    #     # read the data using xarray
-    #     ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
-    #     # convert the x and y coordinates from km to meters and update the attributes
-    #     attrs_ref = ds.x.attrs 
-    #     attrs_ref['units'] = 'm'
-    #     ds = ds.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
-    #     ds.x.attrs = attrs_ref
-    #     ds.y.attrs = attrs_ref
-
-    #     x = ds.x.values 
-    #     y = ds.y.values 
-    #     time = ds.time.values
-    #     assert (len(time) == 365)
-    #     val = ds[var].values
-    #     return x, y, val
-
     def _download(self, 
                   var : str,
                   year : int,
@@ -127,13 +108,13 @@ class FileManagerDaymet:
         os.makedirs(self.names.folder_name(), exist_ok=True)
 
         # get the target filename
-        bounds = [f"{b:.4f}" for b in bounds]
+        bounds_str = [f"{b:.4f}" for b in bounds]
         filename = self.names.file_name(var=var,
                                         year=year,
-                                        north=bounds[3],
-                                        east=bounds[2],
-                                        west=bounds[0],
-                                        south=bounds[1])
+                                        north=bounds_str[3],
+                                        east=bounds_str[2],
+                                        west=bounds_str[0],
+                                        south=bounds_str[1])
 
         if (not os.path.exists(filename)) or force:
             url_dict = { 'year': str(year), 'variable': var }
@@ -141,8 +122,8 @@ class FileManagerDaymet:
             logging.info("  Downloading: {}".format(url))
             logging.info("      to file: {}".format(filename))
 
-            request_params = [('var', 'lat'), ('var', 'lon'), ('var', var), ('west', bounds[0]),
-                              ('south', bounds[1]), ('east', bounds[2]), ('north', bounds[3]),
+            request_params = [('var', 'lat'), ('var', 'lon'), ('var', var), ('west', bounds_str[0]),
+                              ('south', bounds_str[1]), ('east', bounds_str[2]), ('north', bounds_str[3]),
                               ('horizStride', '1'),
                               ('time_start', '{}-01-01T12:00:00Z'.format(year)),
                               ('time_end', '{}-12-31T12:00:00Z'.format(year)), ('timeStride', '1'),
@@ -159,7 +140,7 @@ class FileManagerDaymet:
 
         return filename
 
-    def _clean_date(self, date : str | datetime.date) -> datetime.date:
+    def _cleanDate(self, date : str | cftime.DatetimeNoLeap) -> cftime.DatetimeNoLeap:
         """Returns a string of the format needed for use in the filename and request."""
         if type(date) is str:
             date_split = date.split('-')
@@ -173,21 +154,13 @@ class FileManagerDaymet:
             raise ValueError(f"Invalid date {date}, must be before {self._END}.")
         return date
 
-    def _clean_bounds(self, 
-                      polygon_or_bounds : dict | shapely.geometry.Polygon | list[float],
-                      crs : str,
-                      buffer : float) -> list[float]:
-        
+    def _cleanBounds(self, 
+                     geometry : shapely.geometry.base.BaseGeometry,
+                     geometry_crs : CRS,
+                     buffer : float) -> list[float]:
         """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        if type(polygon_or_bounds) is dict:
-            polygon_or_bounds = watershed_workflow.utils.create_shply(polygon_or_bounds)
-        if type(polygon_or_bounds) is shapely.geometry.Polygon:
-            bounds_ll = watershed_workflow.warp.shply(polygon_or_bounds, crs,
-                                                      watershed_workflow.crs.latlon_crs).bounds
-        else:
-            bounds_ll = watershed_workflow.warp.bounds(polygon_or_bounds, crs,
-                                                       watershed_workflow.crs.latlon_crs)
-
+        bounds_ll = watershed_workflow.warp.shply(geometry, geometry_crs,
+                                                  watershed_workflow.crs.latlon_crs).bounds
         feather_bounds = list(bounds_ll[:])
         feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
         feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
@@ -195,51 +168,10 @@ class FileManagerDaymet:
         feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
         return feather_bounds
 
-    def _open_files(self, 
-                    filenames : list[str],
-                    var : str,
-                    start : datetime.date,
-                    end : datetime.date) -> dict:
-        """Opens and loads the files, making a single array."""
-        # NOTE: this probably needs to be refactored to not load the whole thing into memory?
-        nyears = len(filenames)
-        data = None
-        for i, fname in enumerate(filenames):
-            x, y, v = self._read_var(fname, var)  # returned v.shape(nband, nrow, ncol)
-            if data is None:
-                # note nrows, ncols ordering
-                data = np.zeros((nyears * 365, len(y), len(x)), 'd')
 
-            # stuff in the right spot
-            data[i * 365:(i+1) * 365, :, :] = v
-
-        # times is a range -- note that DayMet works on a noleap calendar
-        origin = cftime.datetime(start.year, 1, 1, calendar='noleap')
-        times = np.array([origin + datetime.timedelta(days=i) for i in range(365 * nyears)])
-
-        # trim to start, end
-        i_start = (start - origin).days
-        i_end = i_start + (end - start).days
-        times = times[i_start:i_end]
-        data = data[i_start:i_end]
-
-        # profile
-        profile = dict()
-        profile['crs'] = watershed_workflow.crs.daymet_crs()
-        profile['width'] = len(x)
-        profile['height'] = len(y)
-        profile['count'] = len(times)
-        profile['dx'] = (x[1:] - x[:-1]).mean()  # convert to m
-        profile['dy'] = (y[1:] - y[:-1]).mean()  # convert to m
-        profile['resolution'] = (profile['dx'], -profile['dy'])
-        profile['driver'] = 'h5'  # hint that this was not a real raster
-
-        profile['transform'] = rasterio.transform.from_bounds(x[0], y[-1], x[-1], y[0],
-                                                              profile['width'], profile['height'])
-        profile['nodata'] = -9999
-        return watershed_workflow.datasets.Data(profile, times, data)
-
-    def _open_files_xarray(self, filenames : list[str], variables : list[str]) -> xr.Dataset:
+    def _openFiles(self,
+                   filenames : List[List[str]],
+                   variables : List[str]) -> xr.Dataset:
         """Open all files and concatenate them into a single xarray dataset."""
 
         fnames_by_var = list(zip(filenames, variables))
@@ -252,70 +184,55 @@ class FileManagerDaymet:
             
             ds_list = []
             for fname in fnames:
-                ds = xr.open_dataset(fname, engine="netcdf4") # netcdf4 is the default engine
+                ds = xr.open_dataset(fname)
                 ds_list.append(ds)
 
             ds_concat = xr.concat(ds_list, dim="time")
             ds_list_allvars.append(ds_concat[var])
 
         ds_combined = xr.Dataset({da.name: da for i, da in enumerate(ds_list_allvars)})
-        ds_combined.attrs = ds_concat.attrs
+
         # convert the x and y coordinates from km to meters and update the attributes
         attrs_ref = ds_combined.x.attrs 
         attrs_ref['units'] = 'm'
-        ds_combined = ds_combined.assign_coords(x=ds.x * 1000, y=ds.y * 1000)
+
+        new_x = ds.x * 1000
+        new_y = ds.y * 1000
+        new_time = watershed_workflow.data._convertTimesToCFTimeNoleap(
+            watershed_workflow.data._convertTimesToCFTime(ds_combined['time'].values))
+
+        ds_combined = ds_combined.assign_coords(x=new_x, y=new_y, time=new_time)
         ds_combined.x.attrs = attrs_ref
         ds_combined.y.attrs = attrs_ref
+
+        # deal with attrs
+        ds_combined.attrs = ds_concat.attrs
+        try:
+            crs = next(da.rio.crs for da in ds_list_allvars if da.rio.crs is not None)
+        except StopIteration:
+            ds_combined.rio.set_crs(watershed_workflow.crs.daymet_crs)
+        else:
+            ds_combined.rio.set_crs(crs)
         return ds_combined
     
-    def _prepare_ats_data(self, data : xr.Dataset) -> dict:
-      # Initialize a dictionary to store ATS data
-      dout = dict()
-
-      # Extract mean air temperature in Celsius
-      mean_air_temp_C = (data['tmax'][:].data  + data['tmin'][:].data) / 2 # in Celsius
-
-      # Convert precipitation from mm/day to m/s
-      precip_ms = data['prcp'][:].data / (1.e3 * 24 * 3600)  # mm/day to m/s
-
-      # Calculate time in seconds from the start of the dataset
-      time_start_global = data.time.data[0]
-      time = (pd.to_datetime(data.time.data) - time_start_global).total_seconds()
-
-      # Populate the ATS dictionary with processed data
-      dout['air temperature [K]'] = mean_air_temp_C + 273.15  # Convert to Kelvin
-      dout['incoming shortwave radiation [W m^-2]'] = data['srad'][:].data  # W/m^2
-      dout['vapor pressure air [Pa]'] = data['vp'][:].data   #  Pa
-      dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_C >= 0, precip_ms, 0)  # Rainfall in m/s
-      dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_C < 0, precip_ms, 0)  # Snowfall in m SWE/s
-      dout['day length [s]'] = data['daylength'][:].data  # s
-      dout['time [s]'] = time  # Time in seconds
-
-      # Extract x and y coordinates
-      coords_x = data.x.data
-      coords_y = data.y.data 
-
-      return {'data': dout, 'x': coords_x, 'y': coords_y}
-
-
 
     def getDataset(self,
-                 polygon_or_bounds : dict | shapely.geometry.Polygon | list[float],
-                 crs : str,
-                 start : str | datetime.date = None,
-                 end : str | datetime.date = None,
-                 variables : list[str] = None,
-                 force_download : bool = False,
-                 buffer : float = 0.01) -> dict:
-        
+                   geometry : shapely.geometry.base.BaseGeometry,
+                   geometry_crs : CRS,
+                   start : Optional[str | cftime.DatetimeNoLeap] = None,
+                   end : Optional[str | cftime.DatetimeNoLeap] = None,
+                   variables : Optional[List[str]] = None,
+                   force_download : bool = False,
+                   buffer : float = 0.01) -> xr.Dataset:
         """Gets file for a single year and single variable.
 
         Parameters
         ----------
-        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
-          Collect a file that covers this shape or bounds.
-        crs : CRS object
-          Coordinate system of the above polygon_or_bounds
+        geometry : shapely.geometry.base.BaseGeometry
+            The geometry for which the dataset is to be retrieved. 
+        geometry_crs : str, optional
+            The coordinate reference system of the geometry. If not provided, it defaults
+            to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
         start : str or datetime.date object, optional
           Date for the beginning of the data, in YYYY-MM-DD. Valid is
           >= 2002-07-01.
@@ -333,17 +250,19 @@ class FileManagerDaymet:
 
         Returns
         -------
-        datasets.Dataset
+        xarray.Dataset
           Dataset object containing the met data.
         """
         if start is None:
             start = self._START
-        start = self._clean_date(start)
+        start = self._cleanDate(start)
+        assert not isinstance(start, str)
         start_year = start.year
 
         if end is None:
             end = self._END
-        end = self._clean_date(end)
+        end = self._cleanDate(end)
+        assert not isinstance(end, str)
         end_year = (end - datetime.timedelta(days=1)).year
         if start_year > end_year:
             raise RuntimeError(
@@ -357,7 +276,7 @@ class FileManagerDaymet:
                     ', '.join(self.VALID_VARIABLES), var))
 
         # clean bounds
-        bounds = self._clean_bounds(polygon_or_bounds, crs, buffer=buffer)
+        bounds = self._cleanBounds(geometry, geometry_crs, buffer=buffer)
 
         # download files
         filenames = []
@@ -368,17 +287,9 @@ class FileManagerDaymet:
                 filename_var.append(fname)
             filenames.append(filename_var)
 
-
         # open files
-        ds = self._open_files_xarray(filenames, variables)
-        dset = self._prepare_ats_data(ds)
-
-        # # open files
-        # dset = None
-        # for fnames, var in zip(filenames, variables):
-        #     data = self._open_files(fnames, var, start, end)
-        #     if dset is None:
-        #         dset = watershed_workflow.datasets.Dataset(data.profile, data.times)
-        #     dset[var] = data.data
-        # return dset
-        return ds
+        ds = self._openFiles(filenames, variables)
+        ds_sel = ds.sel(time=slice(start, end))
+        ds_sel.attrs = ds.attrs
+        ds_sel.rio.set_crs(ds.rio.crs)
+        return ds_sel

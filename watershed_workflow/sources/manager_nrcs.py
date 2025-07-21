@@ -240,7 +240,7 @@ def aggregate_mukey_values(df, agg_var=None):
     return df_mukey
 
 
-class FileManagerNRCS:
+class ManagerNRCS:
     """The National Resources Conservation Service's SSURGO Database [NRCS]_
     contains a huge amount of information about soil texture, parameters, and
     structure, and are provided as shape files containing soil type
