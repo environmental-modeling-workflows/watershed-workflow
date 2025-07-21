@@ -1,16 +1,13 @@
 """Manager for interacting with GLHYMPS v2.0 dataset."""
 import os, sys
 import logging
-import numpy as np
-import pandas
 import xarray as xr
-import geopandas as gpd
-from typing import Tuple
-
+import shapely.geometry
 
 import watershed_workflow.sources.manager_raster
 import watershed_workflow.sources.names
-import watershed_workflow.soil_properties
+from watershed_workflow.crs import CRS
+
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = {
@@ -54,32 +51,24 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
             super(ManagerPelletierDTB, self).__init__(self.name)
 
     def getDataset(self, 
-                   shape : gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float] | list[float] | np.ndarray,
-                   crs : str,
+                   geometry : shapely.geometry.base.BaseGeometry,
+                   geometry_crs : CRS,
                    band : int = 1) -> xr.DataArray:
         """Read the DTB raster.
 
         Parameters
         ----------
-        shape : gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float] | list[float] | np.ndarray
+        geometry : shapely.geometry.base.BaseGeometry
           Subset the raster to cover this shape.
-        crs : str
-          CRS of the shape
+        geometry_crs : CRS
+          CRS of the geometry
 
         Returns
         -------
-        profile : dict
-            Rasterio profile
-        raster : np.ndarray
-            Array containing the DTB data.
+        xr.DataArray
         """
-        if isinstance(shape, (gpd.GeoDataFrame, gpd.GeoSeries)):
-            logging.info(f'Getting raster of Pelletier DTB on bounds: {shape.bounds}')
-        elif isinstance(shape, (Tuple, list, np.ndarray)):
-            logging.info(f'Getting raster of Pelletier DTB on bounds: {shape}')
-
         filename = self._download()
-        return super(ManagerPelletierDTB, self).getDataset(shape, crs, band)
+        return super(ManagerPelletierDTB, self).getDataset(geometry, geometry_crs, band)
 
     def _download(self):
         """Download the files, returning downloaded filename."""
