@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.river_mesh &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -1312,6 +1314,60 @@
                                                                <span class="n">rc_points</span><span class="p">[</span><span class="n">rc_point_ind</span><span class="p">])</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">rc_point_ind</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="triangle_split_points">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.triangle_split_points">[docs]</a>
+<span class="k">def</span> <span class="nf">triangle_split_points</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find additional points to split stream triangles.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stream_triangles : list of tuples</span>
+<span class="sd">        List of triangle vertices.</span>
+<span class="sd">    river_corrs : list of shapely.geometry.Polygon</span>
+<span class="sd">        List of river corridor polygons.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">river_corr</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">river_corrs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">additional_points</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">tri_verts</span> <span class="ow">in</span> <span class="n">stream_triangles</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+
+        <span class="c1"># Get midpoints of each edge</span>
+        <span class="n">midpoints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span>
+                <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">midpoint</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">tri_verts</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="c1"># Check which midpoints lie on river corridors</span>
+        <span class="n">off_corridor</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ip</span><span class="p">:</span> <span class="ow">not</span> <span class="n">river_corr</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">ip</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">midpoints</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">off_corridor</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">edge_i</span> <span class="o">=</span> <span class="n">off_corridor</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">edge_midpoint</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">midpoint</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">[</span><span class="n">edge_i</span><span class="p">],</span>
+                                                              <span class="n">tri_verts</span><span class="p">[(</span><span class="n">edge_i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="n">additional_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_midpoint</span><span class="p">)</span>
+                
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">off_corridor</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">edge_lengths</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">[</span><span class="n">off_corridor</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span> 
+                                                    <span class="n">tri_verts</span><span class="p">[(</span><span class="n">off_corridor</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="p">]</span>          
+            <span class="c1"># Select the midpoint on the longer edge</span>
+            <span class="n">longer_edge_index</span> <span class="o">=</span> <span class="n">edge_lengths</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">edge_lengths</span><span class="p">))</span>
+            <span class="n">edge_i</span> <span class="o">=</span> <span class="n">off_corridor</span><span class="p">[</span><span class="n">longer_edge_index</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">edge_midpoint</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">midpoint</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">[</span><span class="n">edge_i</span><span class="p">],</span>
+                                                                <span class="n">tri_verts</span><span class="p">[(</span><span class="n">edge_i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="n">additional_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">edge_midpoint</span><span class="p">)</span>
+     
+    <span class="c1"># Remove coinciding points</span>
+    <span class="n">unique_points</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">additional_points</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">unique_points</span></div>
 
 </pre></div>
 

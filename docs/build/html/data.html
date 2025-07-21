@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Data Manipulation &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -14,7 +16,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -112,7 +114,7 @@
 hdf5 files that models can read.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="watershed_workflow.daymet.convertToATS">
-<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">convertToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#convertToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.convertToATS" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">convertToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#convertToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.convertToATS" title="Link to this definition"></a></dt>
 <dd><p>Convert dictionary of Daymet datasets to daily average data in standard form.</p>
 <p>This:</p>
 <ul class="simple">
@@ -120,6 +122,15 @@ hdf5 files that models can read.</p>
 <li><p>splits rain and snow precip based on mean air temp</p></li>
 <li><p>standardizes units and names for ATS</p></li>
 </ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>partition_temp</strong></p></li>
+<li><p><strong>int</strong></p></li>
+<li><p><strong>degC.</strong> (<em>Temperature in degC used for partition snow and rain from precipitation. Default is 0</em>)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.mesh &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -114,8 +116,6 @@
         <span class="kn">import</span> <span class="nn">exodus3</span> <span class="k">as</span> <span class="nn">exodus</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">exodus</span> <span class="o">=</span> <span class="kc">None</span>
-
-
 <span class="c1">#</span>
 <span class="c1"># A caching decorator, like functools.cache, but works in this case?</span>
 <span class="c1">#</span>
@@ -1764,30 +1764,34 @@
 
     <span class="n">combined_coords</span> <span class="o">=</span> <span class="n">mesh1</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="c1"># mapping for adjusting coord indices</span>
-    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">)</span> <span class="p">}</span>
-
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="c1"># Use a spatial data structure for efficient nearest neighbor search</span>
+    <span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">)[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># Only use x,y coordinates for matching</span>
+    
+    <span class="c1"># Find potential matches for all mesh2 points at once</span>
+    <span class="n">distances</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">coords</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">distance_upper_bound</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+    
+    <span class="c1"># Process all coordinates from mesh2</span>
+    <span class="n">new_coords</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">match_idx</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">:</span>  <span class="c1"># Found a match within tolerance</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">match_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># No match found, add to new coordinates</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_coords</span><span class="p">)</span>
+            <span class="n">new_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    
+    <span class="c1"># Add all new coordinates at once</span>
+    <span class="n">combined_coords</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_coords</span><span class="p">)</span>
+    
     <span class="c1"># adjust connection indices for the second mesh using the mapping</span>
-    <span class="k">def</span> <span class="nf">map_conn</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">]</span>
-
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mesh2</span><span class="o">.</span><span class="n">coords</span><span class="p">):</span>
-        <span class="c1"># check if the point is close enough to any point in combined_coords</span>
-        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">existing_coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">close_enough</span><span class="p">(</span><span class="n">coord</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">existing_coord</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
-                <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">break</span>
-        <span class="c1"># if the point is not close enough to any existing point, add to combined_coords</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
-            <span class="n">combined_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-            <span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-
-    <span class="n">adjusted_conn2</span> <span class="o">=</span> <span class="p">[</span><span class="n">map_conn</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">mesh2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
-
+    <span class="n">adjusted_conn2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">]</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">mesh2</span><span class="o">.</span><span class="n">conn</span><span class="p">]</span>
+    
     <span class="c1"># merge conn lists</span>
     <span class="n">combined_conn</span> <span class="o">=</span> <span class="n">mesh1</span><span class="o">.</span><span class="n">conn</span> <span class="o">+</span> <span class="n">adjusted_conn2</span>
-
+    
     <span class="c1"># merged mesh creation</span>
     <span class="n">m2_combined</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">combined_coords</span><span class="p">),</span>
                                                  <span class="n">conn</span><span class="o">=</span><span class="n">combined_conn</span><span class="p">)</span>

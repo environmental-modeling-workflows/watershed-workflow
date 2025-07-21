@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Utilities &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -14,7 +16,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -344,7 +346,7 @@ code.</p>
 <dd><p>Attempts to conver to an EPSG code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>) – </p>
+<dd class="field-odd"><p><strong>crs</strong> (<em>crs-type</em>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -1168,9 +1170,9 @@ long-lat (x,y).  Default is False.</p></li>
 float, then dx = dy.</p></li>
 <li><p><strong>dtype</strong> (<em>optional</em>) – If provided, sets the data type.</p></li>
 <li><p><strong>nodata</strong> (<em>dtype</em><em>, </em><em>optional</em>) – If provided, sets the nodata value.</p></li>
-<li><p><strong>count</strong> (<em>int</em><em>, </em><em>optional</em>) – </p></li>
-<li><p><strong>make</strong> (<em>Note that dx/dy are always used.  The bounds are adjusted to</em>) – </p></li>
-<li><p><strong>dx/dy.</strong> (<em>them an even multiple of</em>) – </p></li>
+<li><p><strong>count</strong> (<em>int</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>make</strong> (<em>Note that dx/dy are always used.  The bounds are adjusted to</em>)</p></li>
+<li><p><strong>dx/dy.</strong> (<em>them an even multiple of</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1252,12 +1254,12 @@ metadata to create a raster.</p>
 <li><p><strong>data</strong> (<em>the</em>) – Daily array to average, note that NTIMES &gt; 365.</p></li>
 <li><p><strong>output_nyears</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of years to repeat the output.  Default is 1.</p></li>
 <li><p><strong>filter</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, filters the data using a Sav-Gol filter from Scipy</p></li>
-<li><p><strong>See</strong> (<em>All other parameters are passed to the filter.</em>) – </p></li>
-<li><p><strong>scipy.signal.savgol_filter</strong> – </p></li>
-<li><p><strong>if</strong> (<em>but sane default values are used</em>) – </p></li>
-<li><p><strong>0</strong> (<em>these are not provided.  Note that if NTIMES % 365 !=</em>) – </p></li>
-<li><p><strong>data</strong> – </p></li>
-<li><p><strong>truncated.</strong> (<em>is</em>) – </p></li>
+<li><p><strong>See</strong> (<em>All other parameters are passed to the filter.</em>)</p></li>
+<li><p><strong>scipy.signal.savgol_filter</strong></p></li>
+<li><p><strong>if</strong> (<em>but sane default values are used</em>)</p></li>
+<li><p><strong>0</strong> (<em>these are not provided.  Note that if NTIMES % 365 !=</em>)</p></li>
+<li><p><strong>data</strong></p></li>
+<li><p><strong>truncated.</strong> (<em>is</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1282,10 +1284,10 @@ metadata to create a raster.</p>
 <li><p><strong>end</strong> (<em>cftime.datetime</em>) – Times to begin and end (inclusive) the interpolated array.</p></li>
 <li><p><strong>dt</strong> (<em>datetime.timedelta</em><em>, </em><em>optional</em>) – Delta to interpolate to.  Defaults to 1 day.</p></li>
 <li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis of data that corresponds to time.  Default is 0.</p></li>
-<li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>) – </p></li>
-<li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>) – </p></li>
-<li><p><strong>'quadratic'</strong> – </p></li>
-<li><p><strong>others.</strong> (<em>'cubic' or</em>) – </p></li>
+<li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>)</p></li>
+<li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>)</p></li>
+<li><p><strong>'quadratic'</strong></p></li>
+<li><p><strong>others.</strong> (<em>'cubic' or</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1313,10 +1315,10 @@ metadata to create a raster.</p>
 is used to convert from dates to numbers using
 cftime.date2num. Valid cfunits for time are strings like “days since
 2000-1-1”, which is the default.</p></li>
-<li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>) – </p></li>
-<li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>) – </p></li>
-<li><p><strong>'quadratic'</strong> – </p></li>
-<li><p><strong>others.</strong> (<em>'cubic' or</em>) – </p></li>
+<li><p><strong>Of</strong> (<em>All other parameters are passed to scipy.interpolate.interp1d.</em>)</p></li>
+<li><p><strong>or</strong> (<em>use particularly is 'kind' which can be 'linear'</em><em> (</em><em>default</em><em>)</em>)</p></li>
+<li><p><strong>'quadratic'</strong></p></li>
+<li><p><strong>others.</strong> (<em>'cubic' or</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1345,7 +1347,7 @@ Default is 61.</p></li>
 <li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Time axis over which to smooth. Default is 0.</p></li>
 <li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – See scipy.signal.savgol_filter documentation, but ‘wrap’ is the
 best bet for data in multiples of years. Default is ‘wrap.’</p></li>
-<li><p><strong>scipy.signal.savgol_filter</strong> (<em>Any additional kwargs are passed to</em>) – </p></li>
+<li><p><strong>scipy.signal.savgol_filter</strong> (<em>Any additional kwargs are passed to</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

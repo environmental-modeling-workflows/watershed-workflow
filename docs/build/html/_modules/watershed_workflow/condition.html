@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.condition &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -685,7 +687,7 @@
             <span class="c1"># this to ensure that a diked channel passing over/around</span>
             <span class="c1"># a pond or reservoirs does not have bank-nodes fall into</span>
             <span class="c1"># the depression</span>
-            <span class="k">if</span> <span class="n">treat_banks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">treat_banks</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">3</span><span class="p">:</span>
                 <span class="n">bank_node_ids</span> <span class="o">=</span> <span class="n">_bank_nodes_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">bank_node_ids</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">river_corr_ids</span><span class="p">:</span>
@@ -808,12 +810,13 @@
 <span class="sd">    longitudinal edges of the river-corridor element.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;elem must not be a triangle element&quot;</span>
     <span class="c1"># edge on the right as we look from the downstream direction</span>
     <span class="n">edge_r</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">elem</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># edge on the left as we look from the downstream direction</span>
-    <span class="n">edge_l</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">elem</span><span class="p">))[</span><span class="mi">2</span><span class="p">]</span>
-
+    <span class="n">edge_l</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">cell_edges</span><span class="p">(</span><span class="n">elem</span><span class="p">))[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">_bank_nodes_from_edge</span><span class="p">(</span><span class="n">edge_r</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">),</span> <span class="n">_bank_nodes_from_edge</span><span class="p">(</span><span class="n">edge_l</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">m2</span><span class="p">)]</span>
 
 

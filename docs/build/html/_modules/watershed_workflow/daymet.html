@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow.daymet &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -102,7 +104,7 @@
 
 <div class="viewcode-block" id="convertToATS">
 <a class="viewcode-back" href="../../data.html#watershed_workflow.daymet.convertToATS">[docs]</a>
-<span class="k">def</span> <span class="nf">convertToATS</span><span class="p">(</span><span class="n">dat</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">convertToATS</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">partition_temp</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert dictionary of Daymet datasets to daily average data in standard form.</span>
 
 <span class="sd">    This:</span>
@@ -110,6 +112,9 @@
 <span class="sd">    - takes tmin and tmax to compute a mean</span>
 <span class="sd">    - splits rain and snow precip based on mean air temp</span>
 <span class="sd">    - standardizes units and names for ATS</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        partition_temp, int</span>
+<span class="sd">        Temperature in degC used for partition snow and rain from precipitation. Default is 0 degC.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Converting to ATS met input&#39;</span><span class="p">)</span>
@@ -133,8 +138,8 @@
     <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;incoming shortwave radiation [W m^-2]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;srad&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">*</span> <span class="n">dat</span><span class="p">[</span>
         <span class="s1">&#39;dayl&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">/</span> <span class="mi">86400</span>  <span class="c1"># Wm2</span>
     <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;vapor pressure air [Pa]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;vp&#39;</span><span class="p">]</span>  <span class="c1"># Pa</span>
-    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation rain [m s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation snow [m SWE s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation rain [m s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&gt;=</span> <span class="n">partition_temp</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">dout</span><span class="p">[</span><span class="s1">&#39;precipitation snow [m SWE s^-1]&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mean_air_temp_c</span> <span class="o">&lt;</span> <span class="n">partition_temp</span><span class="p">,</span> <span class="n">precip_ms</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dout</span></div>
 
 </pre></div>

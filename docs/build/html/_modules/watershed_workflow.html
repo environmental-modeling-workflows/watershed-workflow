@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>watershed_workflow &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -925,6 +927,7 @@
                      <span class="n">area_property</span><span class="o">=</span><span class="s1">&#39;DivergenceRoutedDrainAreaSqKm&#39;</span><span class="p">,</span>
                      <span class="n">remove_diversions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">remove_braided_divergences</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">preserve_catchments</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a river, which is a tree of reaches.</span>
 <span class="sd">    </span>
@@ -962,6 +965,8 @@
 <span class="sd">    remove_braided_divergences : bool, optional=False</span>
 <span class="sd">        If true, remove braided divergences (see documentation of</span>
 <span class="sd">        modify_rivers_remove_divergences()).</span>
+<span class="sd">    preserve_catchments : bool, optional=False</span>
+<span class="sd">        If true, accumulate catchments of pruned reaches into parent reaches. Default is False.</span>
 <span class="sd">    tol : float, optional=0.1</span>
 <span class="sd">        Defines what close is in the case of method == &#39;geometry&#39;</span>
 
@@ -980,7 +985,7 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; ... generated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span><span class="si">}</span><span class="s2"> rivers&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">reduce_rivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">ignore_small_rivers</span><span class="p">,</span> <span class="n">prune_by_area</span><span class="p">,</span> <span class="n">area_property</span><span class="p">,</span>
-                         <span class="n">remove_diversions</span><span class="p">,</span> <span class="n">remove_braided_divergences</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span></div>
+                         <span class="n">remove_diversions</span><span class="p">,</span> <span class="n">remove_braided_divergences</span><span class="p">,</span> <span class="n">preserve_catchments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span></div>
 
 
 
@@ -990,6 +995,7 @@
                   <span class="n">area_property</span><span class="o">=</span><span class="s1">&#39;DivergenceRoutedDrainAreaSqKm&#39;</span><span class="p">,</span>
                   <span class="n">remove_diversions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                   <span class="n">remove_braided_divergences</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">preserve_catchments</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                   <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a river, which is a tree of reaches.</span>
 <span class="sd">    </span>
@@ -1017,6 +1023,8 @@
 <span class="sd">    remove_braided_divergences : bool, optional=False</span>
 <span class="sd">        If true, remove braided divergences (see documentation of</span>
 <span class="sd">        modify_rivers_remove_divergences()).</span>
+<span class="sd">    preserve_catchments : bool, optional=False</span>
+<span class="sd">        If true, accumulate catchments of pruned reaches into parent reaches. Default is False.</span>
 <span class="sd">    tol : float, optional=0.1</span>
 <span class="sd">        Defines what close is in the case of method == &#39;geometry&#39;</span>
 
@@ -1052,7 +1060,7 @@
         <span class="k">return</span> <span class="n">rivers</span>
 
     <span class="k">if</span> <span class="n">prune_by_area</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">pruneByArea</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">prune_by_area</span><span class="p">,</span> <span class="n">area_property</span><span class="p">)</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">pruneByArea</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">prune_by_area</span><span class="p">,</span> <span class="n">area_property</span><span class="p">,</span> <span class="n">preserve_catchments</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">ignore_small_rivers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">filterSmallRivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">ignore_small_rivers</span><span class="p">)</span>
@@ -1286,12 +1294,15 @@
                 <span class="n">rivers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">river_corrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">treat_stream_triangles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">hole_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">additional_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">refine_max_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">refine_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">refine_polygons</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">refine_max_edge_length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">refine_min_angle</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">enforce_delaunay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -1313,8 +1324,14 @@
 <span class="sd">        List of objects, whose boundary (in the case of</span>
 <span class="sd">        polygons/waterbodies) or reaches (in the case of River) will</span>
 <span class="sd">        be present in the edges of the triangulation.</span>
+<span class="sd">    treat_stream_triangles : {&#39;None&#39;, &#39;moderate&#39;, &#39;strict&#39;}, optional</span>
+<span class="sd">        Controls how triangles with all vertices on stream mesh are handled. &#39;none&#39; performs no special treatment,</span>
+<span class="sd">        &#39;moderate&#39; splits stream triangles with additional points and &#39;strict&#39; further splits stream triangles with</span>
+<span class="sd">        additional points until no stream triangles remain.</span>
 <span class="sd">    hole_points : list(shapely.Point), optional</span>
 <span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
+<span class="sd">    additional_points : list(tuple), optional</span>
+<span class="sd">        List of additional points to include in the triangulation.</span>
 <span class="sd">    diagnostics : bool, optional</span>
 <span class="sd">        Plot diagnostics graphs of the triangle refinement.</span>
 <span class="sd">    tol : float, optional</span>
@@ -1322,6 +1339,8 @@
 <span class="sd">        that of the watershed&#39;s CRS. The default is 1.</span>
 <span class="sd">    refine_max_area : float, optional</span>
 <span class="sd">        Refine a triangle if its area is greater than this area.</span>
+<span class="sd">    refine_polygons : [list(shapely.geometry.Polygon), list(float)], optional</span>
+<span class="sd">        Refine a triangle if fall within the polygons and its area is greater than the area limit for the polygon</span>
 <span class="sd">    refine_distance : list(float), optional</span>
 <span class="sd">        Refine a triangle if its area is greater than a function of its</span>
 <span class="sd">        centroid&#39;s distance from the nearest point on the river network.  The</span>
@@ -1391,6 +1410,11 @@
         <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_from_max_edge_length</span><span class="p">(</span><span class="n">refine_max_edge_length</span><span class="p">))</span>
 
+    <span class="k">if</span> <span class="n">treat_stream_triangles</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_stream_triangles</span><span class="p">(</span><span class="n">river_corrs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">refine_polygons</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refine_from_polygons</span><span class="p">(</span><span class="n">refine_polygons</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">refine_polygons</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
     <span class="k">def</span> <span class="nf">my_refine_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">rf</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">rf</span> <span class="ow">in</span> <span class="n">refine_funcs</span><span class="p">)</span>
 
@@ -1399,12 +1423,58 @@
         <span class="n">river_corrs</span><span class="p">,</span>
         <span class="n">internal_boundaries</span><span class="o">=</span><span class="n">internal_boundaries</span><span class="p">,</span>
         <span class="n">hole_points</span><span class="o">=</span><span class="n">hole_points</span><span class="p">,</span>
+        <span class="n">additional_points</span><span class="o">=</span><span class="n">additional_points</span><span class="p">,</span>
         <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
         <span class="n">refinement_func</span><span class="o">=</span><span class="n">my_refine_func</span><span class="p">,</span>
         <span class="n">min_angle</span><span class="o">=</span><span class="n">refine_min_angle</span><span class="p">,</span>
         <span class="n">enforce_delaunay</span><span class="o">=</span><span class="n">enforce_delaunay</span><span class="p">,</span>
         <span class="n">allow_boundary_steiner</span><span class="o">=</span><span class="p">(</span><span class="n">river_corrs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">river_corrs</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># stream-aligned mesh</span>
+        
+        <span class="k">if</span> <span class="n">treat_stream_triangles</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stream_triangles</span> <span class="o">=</span> <span class="n">identify_stream_triangles</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">)</span><span class="si">}</span><span class="s1"> stream triangles - consider using &quot;treat_stream_triangles&quot; option&#39;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">treat_stream_triangles</span> <span class="o">==</span> <span class="s1">&#39;moderate&#39;</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">)</span><span class="si">}</span><span class="s1"> stream triangles could not be refined - consider using treat_stream_triangles=&quot;strict&quot;&#39;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">treat_stream_triangles</span> <span class="o">==</span> <span class="s1">&#39;strict&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">additional_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">additional_points</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_mesh</span><span class="o">.</span><span class="n">triangle_split_points</span><span class="p">(</span>
+                        <span class="n">stream_triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">additional_points</span> <span class="o">=</span> <span class="n">additional_points</span> <span class="o">+</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_mesh</span><span class="o">.</span><span class="n">triangle_split_points</span><span class="p">(</span>
+                        <span class="n">stream_triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">)</span>
+
+            <span class="c1"># triangulate again with additional points to split stream triangles</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;triangulating again with additional points to split stream triangles&#39;</span><span class="p">)</span>
+            <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span>
+                <span class="n">hucs</span><span class="p">,</span>
+                <span class="n">river_corrs</span><span class="p">,</span>
+                <span class="n">internal_boundaries</span><span class="o">=</span><span class="n">internal_boundaries</span><span class="p">,</span>
+                <span class="n">hole_points</span><span class="o">=</span><span class="n">hole_points</span><span class="p">,</span>
+                <span class="n">additional_points</span><span class="o">=</span><span class="n">additional_points</span><span class="p">,</span>
+                <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                <span class="n">refinement_func</span><span class="o">=</span><span class="n">my_refine_func</span><span class="p">,</span>
+                <span class="n">min_angle</span><span class="o">=</span><span class="n">refine_min_angle</span><span class="p">,</span>
+                <span class="n">enforce_delaunay</span><span class="o">=</span><span class="n">enforce_delaunay</span><span class="p">,</span>
+                <span class="n">allow_boundary_steiner</span><span class="o">=</span><span class="p">(</span><span class="n">river_corrs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">))</span>
+
+            <span class="n">stream_triangles</span> <span class="o">=</span> <span class="n">identify_stream_triangles</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">%d</span><span class="s1"> stream triangles that could not be split:&#39;</span><span class="p">,</span>
+                             <span class="nb">len</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stream_triangles</span><span class="p">):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;  Triangle </span><span class="si">%d</span><span class="s1"> coordinates:&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tri</span><span class="p">):</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;    Vertex </span><span class="si">%d</span><span class="s1">: (</span><span class="si">%.2f</span><span class="s1">, </span><span class="si">%.2f</span><span class="s1">)&#39;</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">vertex</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertex</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;all stream triangles treated&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">diagnostics</span> <span class="ow">or</span> <span class="n">river_region_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Plotting triangulation diagnostics&quot;</span><span class="p">)</span>
@@ -1471,6 +1541,8 @@
                             <span class="n">river_n_quads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                             <span class="n">internal_boundaries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="n">hole_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">treat_stream_triangles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">additional_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="n">diagnostics</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                             <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1495,6 +1567,11 @@
 <span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
 <span class="sd">    internal_boundaries : list[shapely.Polygon], optional</span>
 <span class="sd">       List of internal boundaries to embed in the domain, e.g. waterbodies.</span>
+<span class="sd">    treat_stream_triangles : {&#39;None&#39;, &#39;moderate&#39;, &#39;strict&#39;}, optional</span>
+<span class="sd">       Controls how triangles with all vertices on stream mesh are handled. &#39;none&#39; performs no special treatment,</span>
+<span class="sd">       &#39;moderate&#39; tries to split stream triangles using refinement function, and &#39;strict&#39; enforces additional point to split stream triangles.</span>
+<span class="sd">    additional_points : list(tuple), optional</span>
+<span class="sd">        List of additional points to include in the triangulation.</span>
 <span class="sd">    diagnostics : bool, optional</span>
 <span class="sd">       If true, prints extra diagnostic info.</span>
 <span class="sd">    ax : matplotlib Axes object, optional</span>
@@ -1517,6 +1594,7 @@
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stream-aligned Meshing&quot;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;treat stream triangles is set to </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">treat_stream_triangles</span><span class="p">)</span>
 
     <span class="c1"># generate the quads</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating stream-aligned mesh...&#39;</span><span class="p">)</span>
@@ -1537,8 +1615,8 @@
 
     <span class="c1"># triangulate the rest</span>
     <span class="n">tri_res</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">hucs_without_outlet</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span>
-                                             <span class="n">internal_boundaries</span><span class="p">,</span> <span class="n">hole_points</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span>
-                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                             <span class="n">internal_boundaries</span><span class="p">,</span> <span class="n">treat_stream_triangles</span><span class="p">,</span>
+                                             <span class="n">hole_points</span><span class="p">,</span> <span class="n">additional_points</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">tri_verts</span> <span class="o">=</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">tri_conn</span> <span class="o">=</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -1795,6 +1873,35 @@
                                                    <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">raster</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_id</span></div>
 
+
+
+<span class="k">def</span> <span class="nf">identify_stream_triangles</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">river_corrs</span><span class="p">,</span> <span class="n">buffer_distance</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Identifies triangles that are fully within river corridors.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    vertices : np.array((n_points, 2), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle vertices</span>
+<span class="sd">    triangles : np.array((n_tris, 3), &#39;i&#39;)</span>
+<span class="sd">        For each triangle, indices into vertices array</span>
+<span class="sd">    river_corrs : list[shapely.geometry.Polygon]</span>
+<span class="sd">        List of river corridor polygons</span>
+<span class="sd">    buffer_distance : float, optional</span>
+<span class="sd">        Distance to buffer points when checking intersection with corridors.</span>
+<span class="sd">        Default is 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list[np.array]</span>
+<span class="sd">        List of vertex arrays for triangles that are fully within river corridors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stream_triangles</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">riv_corr</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">river_corrs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">triangles</span><span class="p">:</span>
+        <span class="n">tri_verts</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[</span><span class="n">tri</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">riv_corr</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tri_verts</span><span class="p">):</span>
+            <span class="n">stream_triangles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tri_verts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stream_triangles</span>
 </pre></div>
 
            </div>

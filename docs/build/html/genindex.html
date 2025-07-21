@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Index &mdash; Watershed Workflow 1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -13,7 +15,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=f2a433a1"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -127,9 +129,13 @@
         <li><a href="mesh.html#watershed_workflow.triangulation.NodesEdges.add">(watershed_workflow.triangulation.NodesEdges method)</a>
 </li>
       </ul></li>
+      <li><a href="mesh.html#watershed_workflow.regions.add_discharge_regions">add_discharge_regions() (in module watershed_workflow.regions)</a>
+</li>
       <li><a href="geometry.html#watershed_workflow.split_hucs.HandledCollection.add_many">add_many() (watershed_workflow.split_hucs.HandledCollection method)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_nlcd_labeled_sets">add_nlcd_labeled_sets() (in module watershed_workflow.regions)</a>
+</li>
+      <li><a href="mesh.html#watershed_workflow.regions.add_outlet_regions">add_outlet_regions() (in module watershed_workflow.regions)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_polygonal_regions">add_polygonal_regions() (in module watershed_workflow.regions)</a>
 </li>
@@ -137,10 +143,10 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_regions_by_stream_order">add_regions_by_stream_order() (in module watershed_workflow.regions)</a>
 </li>
-      <li><a href="mesh.html#watershed_workflow.regions.add_regions_by_stream_order_rivers">add_regions_by_stream_order_rivers() (in module watershed_workflow.regions)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mesh.html#watershed_workflow.regions.add_regions_by_stream_order_rivers">add_regions_by_stream_order_rivers() (in module watershed_workflow.regions)</a>
+</li>
       <li><a href="mesh.html#watershed_workflow.regions.add_river_corridor_regions">add_river_corridor_regions() (in module watershed_workflow.regions)</a>
 </li>
       <li><a href="mesh.html#watershed_workflow.regions.add_watershed_regions">add_watershed_regions() (in module watershed_workflow.regions)</a>
@@ -367,11 +373,13 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.condition.fill_pits_dual">fill_pits_dual() (in module watershed_workflow.condition)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utilities.html#watershed_workflow.utils.filter_to_shape">filter_to_shape() (in module watershed_workflow.utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="geometry.html#watershed_workflow.hydrography.filterSmallRivers">filterSmallRivers() (in module watershed_workflow.hydrography)</a>
+</li>
+      <li><a href="mesh.html#watershed_workflow.regions.find_discharge_edges_cells">find_discharge_edges_cells() (in module watershed_workflow.regions)</a>
 </li>
       <li><a href="hilev.html#watershed_workflow.find_huc">find_huc() (in module watershed_workflow)</a>
 </li>
@@ -746,12 +754,16 @@
 </li>
       <li><a href="mesh.html#watershed_workflow.triangulation.refine_from_max_edge_length">refine_from_max_edge_length() (in module watershed_workflow.triangulation)</a>
 </li>
+      <li><a href="mesh.html#watershed_workflow.triangulation.refine_from_polygons">refine_from_polygons() (in module watershed_workflow.triangulation)</a>
+</li>
       <li><a href="mesh.html#watershed_workflow.triangulation.refine_from_river_distance">refine_from_river_distance() (in module watershed_workflow.triangulation)</a>
 </li>
-      <li><a href="utilities.html#watershed_workflow.utils.remove_third_dimension">remove_third_dimension() (in module watershed_workflow.utils)</a>
+      <li><a href="mesh.html#watershed_workflow.triangulation.refine_stream_triangles">refine_stream_triangles() (in module watershed_workflow.triangulation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utilities.html#watershed_workflow.utils.remove_third_dimension">remove_third_dimension() (in module watershed_workflow.utils)</a>
+</li>
       <li><a href="geometry.html#watershed_workflow.hydrography.removeBraids">removeBraids() (in module watershed_workflow.hydrography)</a>
 </li>
       <li><a href="geometry.html#watershed_workflow.hydrography.removeDivergences">removeDivergences() (in module watershed_workflow.hydrography)</a>
@@ -844,10 +856,10 @@
 </li>
       <li><a href="utilities.html#watershed_workflow.crs.to_proj">to_proj() (in module watershed_workflow.crs)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mesh.html#watershed_workflow.river_mesh.to_quads">to_quads() (in module watershed_workflow.river_mesh)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utilities.html#watershed_workflow.crs.to_rasterio">to_rasterio() (in module watershed_workflow.crs)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.crs.to_wkt">to_wkt() (in module watershed_workflow.crs)</a>
@@ -857,6 +869,8 @@
       <li><a href="utilities.html#watershed_workflow.utils.treat_segment_collinearity">treat_segment_collinearity() (in module watershed_workflow.utils)</a>
 </li>
       <li><a href="utilities.html#watershed_workflow.utils.triangle_area">triangle_area() (in module watershed_workflow.utils)</a>
+</li>
+      <li><a href="mesh.html#watershed_workflow.river_mesh.triangle_split_points">triangle_split_points() (in module watershed_workflow.river_mesh)</a>
 </li>
       <li><a href="hilev.html#watershed_workflow.triangulate">triangulate() (in module watershed_workflow)</a>
 
