@@ -3,6 +3,10 @@ import os, sys
 import logging
 import numpy as np
 import pandas
+import xarray as xr
+import geopandas as gpd
+from typing import Tuple
+
 
 import watershed_workflow.sources.manager_raster
 import watershed_workflow.sources.names
@@ -49,14 +53,17 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
             self.names = None
             super(ManagerPelletierDTB, self).__init__(self.name)
 
-    def getDataset(self, shape, crs, band=1):
+    def getDataset(self, 
+                   shape : gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float] | list[float] | np.ndarray,
+                   crs : str,
+                   band : int = 1) -> xr.DataArray:
         """Read the DTB raster.
 
         Parameters
         ----------
-        shape : shapely.Polygon
+        shape : gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float] | list[float] | np.ndarray
           Subset the raster to cover this shape.
-        crs : CRS
+        crs : str
           CRS of the shape
 
         Returns
@@ -66,7 +73,11 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
         raster : np.ndarray
             Array containing the DTB data.
         """
-        logging.info(f'Getting raster of Pelletier DTB on bounds: {shape.bounds}')
+        if isinstance(shape, (gpd.GeoDataFrame, gpd.GeoSeries)):
+            logging.info(f'Getting raster of Pelletier DTB on bounds: {shape.bounds}')
+        elif isinstance(shape, (Tuple, list, np.ndarray)):
+            logging.info(f'Getting raster of Pelletier DTB on bounds: {shape}')
+
         filename = self._download()
         return super(ManagerPelletierDTB, self).getDataset(shape, crs, band)
 
