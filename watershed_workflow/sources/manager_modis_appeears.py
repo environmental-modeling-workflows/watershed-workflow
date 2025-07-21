@@ -207,12 +207,6 @@ class ManagerMODISAppEEARS:
 
         Parameters
         ----------
-        polygon_or_bounds : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
-          Collect a file that covers this shape or bounds.
-        crs : CRS object
-          Coordinate system of the above polygon_or_bounds
-        buffer : float
-          buffer size in units of CRS (or degrees? FIXME --etc)
         start : int
           Year to start, must be XXXX -- YYYY.  Defaults to XXXX
         end : int
