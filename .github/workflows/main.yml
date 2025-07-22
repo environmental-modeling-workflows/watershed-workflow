@@ -58,7 +58,7 @@ jobs:
           if [ $? -eq 1 ]; then
             echo "CI_ENV_BRANCH=master" >> $GITHUB_ENV
           else
-            echo "CI_ENV_BRANCH=${{env.BRANCH_TAG}}" >> $GITHUB_ENV
+            echo "CI_ENV_BRANCH=${{env.BRANCH_TAG}}-latest" >> $GITHUB_ENV
           fi 
 
       - name: check environment variable
