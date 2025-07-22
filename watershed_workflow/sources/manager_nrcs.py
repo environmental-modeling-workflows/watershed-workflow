@@ -4,21 +4,26 @@ Author: Ethan Coon (coonet@ornl.gov)
 Author: Pin Shuai (pin.shuai@pnnl.gov)
 
 """
-import os, sys
+from typing import Optional, List, Tuple
+
+import os
 import logging
 import requests
 import numpy as np
-import pandas
+import pandas as pd
+import geopandas as gpd
 import collections
 import shapely.wkt
-import geopandas
+import shapely.geometry
 
 import watershed_workflow.crs
+from watershed_workflow.crs import CRS
 import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.utils
 import watershed_workflow.soil_properties
 import watershed_workflow.sources.utils as source_utils
+import watershed_workflow.sources.standard_names as snames
 
 _query_template_props = """
 SELECT
@@ -72,7 +77,7 @@ INNER JOIN mapunit M ON I.mukey = M.mukey
 """
 
 
-def synthesize_data(df):
+def synthesizeData(df):
     """Renames and calculates derived properties in a MUKEY-based data frame, in place"""
     # rename columns to improve readability
     rename_list = {
@@ -98,12 +103,13 @@ def synthesize_data(df):
     df['log Ksat [um s^-1]'] = np.log10(np.maximum(df['log Ksat [um s^-1]'].values, 1.e-3))
 
     # assume null porosity = saturated water content
-    df.loc[pandas.isnull(df['porosity [-]']), 'porosity [-]'] = \
-        df.loc[pandas.isnull(df['porosity [-]']), 'saturated water content [%]']/100
+    df.loc[pd.isnull(df['porosity [-]']), 'porosity [-]'] = \
+        df.loc[pd.isnull(df['porosity [-]']), 'saturated water content [%]']/100
     logging.info(f'found {len(df["mukey"].unique())} unique MUKEYs.')
 
 
-def aggregate_component_values(df, agg_var=None):
+def aggregateComponentValues(df : gpd.GeoDataFrame,
+                             agg_var : Optional[List[str]] = None):
     """
     Aggregate horizon value by layer thickness to get component property.
 
@@ -133,7 +139,7 @@ def aggregate_component_values(df, agg_var=None):
         'bot depth [cm]', 'particle density [g/cm^3]',
     ] + agg_var
 
-    df_comp = pandas.DataFrame(columns=comp_list)
+    df_comp = pd.DataFrame(columns=comp_list)
     cokeys = df['cokey'].unique()
 
     rows = []
@@ -166,11 +172,11 @@ def aggregate_component_values(df, agg_var=None):
 
         # create the local df
         assert (len(depth_agg_value) == len(comp_list))
-        idf_comp = pandas.DataFrame(np.array(depth_agg_value).reshape(1, len(depth_agg_value)),
+        idf_comp = pd.DataFrame(np.array(depth_agg_value).reshape(1, len(depth_agg_value)),
                                     columns=comp_list)
 
         # normalize sand/silt/clay pct to make the sum(%sand, %silt, %clay)=1
-        sum_soil = idf_comp.loc[:, 'total sand pct [%]':'total clay pct [%]'].sum().sum()
+        sum_soil = idf_comp.loc[:, ['total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]']].sum().sum()
         if sum_soil != 100:
             for isoil in ['total sand pct [%]', 'total silt pct [%]', 'total clay pct [%]']:
                 idf_comp[isoil] = idf_comp[isoil] / sum_soil * 100
@@ -178,10 +184,11 @@ def aggregate_component_values(df, agg_var=None):
         # append to df
         rows.append(idf_comp)
 
-    return pandas.concat(rows)
+    return pd.concat(rows)
 
 
-def aggregate_mukey_values(df, agg_var=None):
+def aggregateMukeyValues(df : gpd.GeoDataFrame,
+                         agg_var : Optional[List[str]] =None):
     """Aggregate component values by component percentage to get MUKEY property.
 
     Parameters
@@ -206,7 +213,7 @@ def aggregate_mukey_values(df, agg_var=None):
         ]
 
     # aggregate all horizons to components
-    df_comp = aggregate_component_values(df, agg_var)
+    df_comp = aggregateComponentValues(df, agg_var)
 
     # area-average to mukey
     area_agg_var = ['thickness [cm]', ] + agg_var
@@ -231,11 +238,11 @@ def aggregate_mukey_values(df, agg_var=None):
 
         # create the local data frame and append
         assert (len(area_agg_value) == len(mukey_agg_var))
-        idf_mukey = pandas.DataFrame(np.array(area_agg_value).reshape(1, len(area_agg_value)),
+        idf_mukey = pd.DataFrame(np.array(area_agg_value).reshape(1, len(area_agg_value)),
                                      columns=mukey_agg_var)
         df_mukey_rows.append(idf_mukey)
 
-    df_mukey = pandas.concat(df_mukey_rows)
+    df_mukey = pd.concat(df_mukey_rows)
     df_mukey['mukey'] = np.array(df_mukey['mukey'], dtype=int)
     return df_mukey
 
@@ -276,14 +283,18 @@ class ManagerNRCS:
         self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
-    def get_shapes(self, bounds, bounds_crs, force_download=False):
+        
+    def _getShapesByGeometry(self,
+                            geometry : shapely.geometry.base.BaseGeometry,
+                            geometry_crs : CRS,
+                            force_download : bool = False) -> gpd.GeoDataFrame:
         """Downloads and reads soil shapefiles.
 
         This accepts only a bounding box.
 
         Parameters
         ----------
-        bounds : [xmin, ymin, xmax, ymax]
+        geometry : shapely.geometry.base.BaseGeometry
             Bounding box to filter shapes.
         crs : CRS
             Coordinate system of the bounding box.
@@ -292,28 +303,15 @@ class ManagerNRCS:
 
         Returns
         -------
-        profile : dict
-            Fiona profile of the shapefile.
-        shapes : list
-            List of fiona shapes that match the index or bounds.
+        gpd.GeoDataFrame
         """
-        if type(bounds) is int:
-            raise TypeError('NRCS file manager only handles bounds, not indices.')
-
-        bounds = self.bounds(bounds, bounds_crs)
-        filename = self._download(bounds, force=force_download)
-
-        # def _flip(shp):
-        #     """Generate a new fiona shape in long-lat from one in lat-long"""
-        #     for ring in watershed_workflow.utils.generate_rings(shp):
-        #         for i,c in enumerate(ring):
-        #             ring[i] = c[1],c[0]
-        #     return shp
-        shapes = geopandas.read_file(filename)
+        bounds = self._cleanBounds(geometry, geometry_crs)
+        filename = self._downloadShapes(bounds, force=force_download)
+        shapes = gpd.read_file(filename)
         logging.info('  Found {} shapes.'.format(len(shapes)))
         return shapes
 
-    def download_properties(self, mukeys, filename=None, force=False):
+    def _downloadProperties(self, mukeys, filename=None, force=False):
         """Queries REST API for parameters by MUKEY."""
         if filename is None or (not os.path.exists(filename)) or force:
             logging.info(f'  Downloading raw properties data via request:')
@@ -340,7 +338,7 @@ class ManagerNRCS:
             r.raise_for_status()
 
             table = np.array(r.json()['Table'])
-            df = pandas.DataFrame()
+            df = pd.DataFrame()
 
             def to_type(val, dtype):
                 if val is None:
@@ -359,15 +357,15 @@ class ManagerNRCS:
                 df.to_csv(filename)
 
         else:
-            df = pandas.read_csv(filename)
+            df = pd.read_csv(filename)
         return df
 
-    def get_properties(self, mukeys, filename=None, force_download=False):
+    def _getProperties(self, mukeys, filename=None, force_download=False):
         """Download and aggregate properties for a given set of mukeys, storing raw data in filename."""
-        df = self.download_properties(mukeys, filename, force_download)
+        df = self._downloadProperties(mukeys, filename, force_download)
 
-        synthesize_data(df)
-        df_agg = aggregate_mukey_values(df)
+        synthesizeData(df)
+        df_agg = aggregateMukeyValues(df)
 
         # get dataframe with van genuchten models
         df_vgm = watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO(df_agg)
@@ -386,7 +384,11 @@ class ManagerNRCS:
         df_ats.reset_index(inplace=True)
         return df_ats
 
-    def get_shapes_and_properties(self, shapes, crs, force_download=False, split_download=False):
+    
+    def getShapesByGeometry(self,
+                            geometry : shapely.geometry.base.BaseGeometry,
+                            geometry_crs : CRS,
+                            force_download : bool = False) -> gpd.GeoDataFrame:
         """Downloads and reads soil shapefiles, and aggregates SSURGO data onto MUKEYS
 
         Accepts either a bounding box, shape, or list of shapes.
@@ -409,89 +411,60 @@ class ManagerNRCS:
         properties : pandas dataframe
             Dataframe of data by mukey = shape['id']
         """
-        if type(shapes) is list:
-            if len(shapes) == 0:
-                return None, list(), None
-            elif len(shapes) == 4 and type(shapes[0]) is float:
-                list_of_bounds = [shapes, ]
-            else:
-                list_of_bounds = [shapely.ops.unary_union(shapes).bounds, ]
-        else:
-            list_of_bounds = [shapes.bounds, ]
+        bounds = self._cleanBounds(geometry, geometry_crs)
+        filename = self.name_manager.file_name(*bounds)
 
-        total_bounds = list_of_bounds[0]
-        filename = self.name_manager.file_name(*self.bounds(total_bounds, crs))
-
-        if not split_download:
-            try:
-                profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs, force_download)
-            except requests.HTTPError as e:
-                if '500 Server Error' in str(e):
-                    # failed because too big!
-                    if type(shapes) is list and type(shapes[0]) is not float:
-                        # get the shapes independently
-                        list_of_bounds = [shp.bounds for shp in shapes]
-                        logging.info(
-                            'Shape is too big -- attempting to download as separate shapes and merge.'
-                        )
-                        profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs,
-                                                                   force_download)
-                    else:
-                        raise ValueError(
-                            'NRCS get_shapes() called with too large of a shape for NRCS servers.  Trying splitting it into smaller polygons and trying again.'
-                        )
+        try:
+            shapes = self._getShapesByGeometry(geometry, geometry_crs, force_download)
+        except requests.HTTPError as e:
+            if '500 Server Error' in str(e):
+                if isinstance(geometry, shapely.geometry.MultiPolygon):
+                    shape_dfs = [self.getShapesByGeometry(poly, geometry_crs, force_download)[['mukey', 'geometry']]
+                                 for poly in geometry]
+                    shapes = pd.concat(shape_dfs)
                 else:
-                    raise e
-        else:
-            list_of_bounds = [shp.bounds for shp in shapes]
-            profile, mukeys, shapes = self._get_shapes(list_of_bounds, crs, force_download)
+                    raise ValueError(
+                        'NRCS.getShapesByGeometry() called with too large of a shape for NRCS servers.  '
+                        'Trying splitting it into smaller polygons and trying again.'
+                    )
+            else:
+                raise e
 
+        # Group by ID and union geometries
+        shapes_no_crs = shapes.groupby('mukey')['geometry'].apply(
+            lambda x: shapely.ops.unary_union(x.tolist()) if len(x) > 1 else x.iloc[0]
+        ).reset_index()
+        shapes = shapes_no_crs.set_crs(shapes.crs)
+        assert shapes.crs is not None
+
+        # read the properties
         data_filename = filename[:-4] + "_properties.csv"
-        df = self.get_properties(mukeys, data_filename, force_download)
-        return profile, shapes, df
+        props = self._getProperties(shapes['mukey'], data_filename, force_download)
 
-    def _get_shapes(self, list_of_bounds, crs, force_download=False):
-        """Inner function called by above, accepts list of bounds only."""
-        shapes = []
-        for bounds in list_of_bounds:
-            profile, shapes_l = self.get_shapes(bounds, crs, force_download)
-            shapes.extend(shapes_l)
+        # merge properties and shapes dfs
+        df = shapes.merge(props, on='mukey')
+        df[snames.ID] = df['mukey']
+        return df
 
-        logging.info(f'  Downloaded {len(shapes)} total shapes')
 
-        # find unique
-        unique = collections.defaultdict(list)
-        for s in shapes:
-            unique[s['properties']['mukey']].append(s)
-        logging.info(f'  Downloaded {len(unique)} unique mukeys')
+    def _cleanBounds(self, 
+                     geometry : shapely.geometry.base.BaseGeometry,
+                     geometry_crs : CRS,
+                     buffer : float = 0.0001) -> Tuple[float,float,float,float]:
+        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
+        bounds_ll = watershed_workflow.warp.shply(geometry, geometry_crs,
+                                                  watershed_workflow.crs.latlon_crs).bounds
+        feather_bounds = list(bounds_ll[:])
+        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
+        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
+        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
+        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
+        return tuple(feather_bounds)
 
-        # merge the shapes into multipolygons, converting to shapely in the process
-        for mukey in unique:
-            unique[mukey] = [watershed_workflow.utils.create_shply(s) for s in unique[mukey]]
-
-        # sort -- this just keeps everything cleaner
-        unique = sorted(unique.items())
-        shapes = [shapely.ops.unary_union(l[1]) for l in unique]
-        mukeys = [l[0] for l in unique]
-
-        # put the mukey on the MultiPolygon object
-        for mukey, shp in zip(mukeys, shapes):
-            shp.properties = { 'mukey': mukey }
-
-        return profile, mukeys, shapes
-
-    def bounds(self, b, bounds_crs):
-        """Create a bounds in the NRCS coordinate system for use in downloading."""
-        b = watershed_workflow.warp.bounds(b, bounds_crs, self.crs)
-        b = [
-            np.round(b[0], 4) - .0001,
-            np.round(b[1], 4) - .0001,
-            np.round(b[2], 4) + .0001,
-            np.round(b[3], 4) + .0001
-        ]
-        return b
-
-    def _download(self, bounds, force=False):
+    
+    def _downloadShapes(self,
+                  bounds : Tuple[float,float,float,float],
+                  force : bool = False) -> str:
         """Downloads the data and writes it to disk."""
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         filename = self.name_manager.file_name(*bounds)
@@ -513,7 +486,7 @@ class ManagerNRCS:
             table = r.json()['Table']
 
             shps = [shapely.wkt.loads(ent[3]) for ent in table]
-            df = geopandas.GeoDataFrame({'mukey':[int(t[1]) for t in table]},
+            df = gpd.GeoDataFrame({'mukey':[int(t[1]) for t in table]},
                                          geometry=shps, crs=self.crs)
             df.to_file(filename)
         return filename
