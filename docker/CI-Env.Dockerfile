@@ -13,7 +13,7 @@ COPY environments/create_envs.py /ww/tmp/create_envs.py
 RUN mkdir environments
 
 # install a base environment with just python
-RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.10
+RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.13
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
@@ -26,8 +26,12 @@ FROM ww_env_base_ci AS ww_env_pip_ci
 
 WORKDIR /ww/tmp
 COPY requirements.txt /ww/tmp/requirements.txt
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
+ENV PATH="$COMPILERS/bin:$PATH"
+ENV CC=$COMPILERS/bin/gcc
+ENV CXX=$COMPILERS/bin/g++
+ENV FC=$COMPILERS/bin/gfortran
 RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
-
 
 #
 # Stage 3 -- add in Exodus
@@ -51,11 +55,11 @@ COPY docker/configure-seacas.sh /ww/tmp/configure-seacas.sh
 RUN chmod +x /ww/tmp/configure-seacas.sh
 WORKDIR /ww/tmp/seacas-build
 RUN ${CONDA_BIN} run -n watershed_workflow_tools ../configure-seacas.sh
-RUN make -j install
+RUN make -j4 install
 
 # exodus installs its wrappers in an invalid place for python...
 # -- get and save the python version
-RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py /opt/conda/envs/${env_name}/lib/python3.10/site-packages/
+RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py /opt/conda/envs/${env_name}/lib/python3.13/site-packages/
 ENV PYTHONPATH="/opt/conda/envs/${env_name}/lib:${PYTHONPATH}"
 
 #
@@ -74,7 +78,7 @@ RUN /ww_env/bin/conda-unpack
 #
 # Stage 5 -- copy over just what we need for CI
 #
-FROM ubuntu:20.04 AS ww_env_ci
+FROM ubuntu:22.04 AS ww_env_ci
 COPY --from=ww_env_ci_moved /ww_env /ww_env
 ENV PATH="/ww_env/bin:${PATH}"
 
