@@ -1,6 +1,5 @@
 """Basic manager for interacting with shapefiles.
 """
-from __future__ import annotations
 from typing import Optional, List
 
 import attr
@@ -32,16 +31,16 @@ class ManagerShapefile:
 
     
     def getShapesByGeometry(self,
-                            geom : BaseGeometry,
-                            geom_crs : CRS) -> gpd.GeoDataFrame:
+                            geometry : BaseGeometry,
+                            geometry_crs : CRS) -> gpd.GeoDataFrame:
         """Read the file and filter to get shapes."""
         info = pyogrio.read_info(self._filename)
         file_crs = watershed_workflow.crs.from_string(info['crs'])
-        geom = watershed_workflow.warp.shply(geom, geom_crs, file_crs)
-        df = gpd.read_file(self._filename, geom.bounds)
+        geometry = watershed_workflow.warp.shply(geometry, geometry_crs, file_crs)
+        df = gpd.read_file(self._filename, geometry.bounds)
         df[names.ID] = range(len(df.index))
         df = df.set_index(names.ID)
-        return df[df.intersects(geom)]
+        return df[df.intersects(geometry)]
 
     
     def getShapesByID(self,

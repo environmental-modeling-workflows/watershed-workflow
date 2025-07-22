@@ -8,5 +8,4 @@ import watershed_workflow.crs
 def coweeta():
     ms = ManagerShapefile(os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_basin.shp'))
     shp = ms.getShapes()
-    shp.to_crs(watershed_workflow.crs.latlon_crs)
-    return shp
+    return shp.to_crs(watershed_workflow.crs.latlon_crs)
