@@ -81,6 +81,7 @@ RUN /ww_env/bin/conda-unpack
 FROM ubuntu:22.04 AS ww_env_ci
 COPY --from=ww_env_ci_moved /ww_env /ww_env
 ENV PATH="/ww_env/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/ww_env/lib:${LD_LIBRARY_PATH}"
 
 # #
 # # Stage 6 -- run tests!
