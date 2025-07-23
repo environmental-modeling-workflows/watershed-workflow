@@ -75,7 +75,7 @@ class FileManagerAORC:
                 geometry_crs: str = None,
                 start_year : int = None,
                 end_year : int = None,
-                buffer : float = 0.05,
+                buffer : float = 0.01,
                 force : bool = False) -> str:
         
         """
@@ -135,13 +135,13 @@ class FileManagerAORC:
 
         s3_out = s3fs.S3FileSystem(anon=True)
         fileset = [s3fs.S3Map(
-                    root=f"s3://{self.URL}/{dataset_year}.zarr", s3=s3_out, check=False
+                    root=f"{self.URL}/{dataset_year}.zarr", s3=s3_out, check=False
                 ) for dataset_year in dataset_years]
 
         ds_multi_year = xr.open_mfdataset(fileset, engine='zarr')
 
         print(f'Variable size: {ds_multi_year.nbytes/1e12:.1f} TB')
-        ds_multi_year
+        print(ds_multi_year)
 
         # Read the AORC mesh file. This was previously created from the AORC dataset, saving time in the clipping step.
         # TODO: Find a good way to distribute this mesh file
@@ -188,20 +188,25 @@ class FileManagerAORC:
         print(f'Variable size: {ds_subset.nbytes/1e9:.3f} GB')
 
         # Display the subset dataset
-        ds_subset
+        print(ds_subset)
 
         # # We can slice the dates to get a specific time range
         # ds_subset = ds_subset.sel(time=slice('2007-01-01', '2007-01-02'))
 
         # Save the subset dataset
         
+        north_bound = round(bounds.maxy[0], 3)
+        east_bound = round(bounds.maxx[0], 3)
+        south_bound = round(bounds.miny[0], 3)
+        west_bound = round(bounds.minx[0], 3)
+
         filename = self.names.file_name(
-                                        start_year=start_year,
-                                        end_year=end_year,
-                                        north=bounds[3],
-                                        east=bounds[2],
-                                        south=bounds[1],
-                                        west=bounds[0])
+                                start_year=start_year,
+                                end_year=end_year,
+                                north=north_bound,
+                                east=east_bound,
+                                south=south_bound,
+                                west=west_bound)
         
         if (not os.path.exists(filename)) or force:
             ds_subset = ds_subset.compute()

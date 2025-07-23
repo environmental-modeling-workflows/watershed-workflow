@@ -25,7 +25,9 @@ PACKAGES_BASE=['python',
                'pygeohydro',
                'py3dep',
                'pydaymet',
-               'aiohttp>=3.11',
+               'aiohttp',
+               's3fs', 
+               'zarr',
                ]
 
 # extra packages needed in the WW env when building for a user
