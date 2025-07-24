@@ -321,7 +321,7 @@ class River(watershed_workflow.tinytree.Tree):
             self.df[names.CATCHMENT] = self.df[names.CATCHMENT].astype(gpd.array.GeometryDtype())
 
         if crs is not None:
-            self.df.set_crs(crs, inplace=True)
+            self.df.write_crs(crs, inplace=True)
         # end clean up -- hopefully this gets fixed sometime in upstream (pandas or geopandas)
 
         # -- construct the new upstream node inject it into the tree
