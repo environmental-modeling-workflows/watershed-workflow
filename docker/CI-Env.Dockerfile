@@ -12,12 +12,15 @@ WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
 RUN mkdir environments
 
-# install a base environment with just python
-RUN ${CONDA_BIN} install -n base -y -c conda-forge python=3.13
-
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
     --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
+
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
+ENV PATH="$COMPILERS/bin:$PATH"
+ENV CC=$COMPILERS/bin/gcc
+ENV CXX=$COMPILERS/bin/g++
+ENV FC=$COMPILERS/bin/gfortran
 
 #
 # Stage 2 -- add in the pip
@@ -26,11 +29,7 @@ FROM ww_env_base_ci AS ww_env_pip_ci
 
 WORKDIR /ww/tmp
 COPY requirements.txt /ww/tmp/requirements.txt
-ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
-ENV PATH="$COMPILERS/bin:$PATH"
-ENV CC=$COMPILERS/bin/gcc
-ENV CXX=$COMPILERS/bin/g++
-ENV FC=$COMPILERS/bin/gfortran
+
 RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
 
 #
@@ -60,48 +59,4 @@ RUN make -j4 install
 # exodus installs its wrappers in an invalid place for python...
 # -- get and save the python version
 RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py /opt/conda/envs/${env_name}/lib/python3.13/site-packages/
-ENV PYTHONPATH="/opt/conda/envs/${env_name}/lib:${PYTHONPATH}"
-
-#
-# Stage 4 -- move the whole thing to make simpler containers
-#
-FROM ww_env_exodus_ci AS ww_env_ci_moved
-
-# add conda-pack to the base env
-RUN ${CONDA_BIN} install --name base -c conda-forge --yes --freeze-installed conda-pack 
-RUN conda-pack -n ${env_name} -o /tmp/env.tar && \
-    mkdir /ww_env && cd /ww_env && tar xf /tmp/env.tar && \
-    rm /tmp/env.tar
-RUN /ww_env/bin/conda-unpack
-
-
-#
-# Stage 5 -- copy over just what we need for CI
-#
-FROM ubuntu:22.04 AS ww_env_ci
-COPY --from=ww_env_ci_moved /ww_env /ww_env
-ENV PATH="/ww_env/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/ww_env/lib:${LD_LIBRARY_PATH}"
-
-# #
-# # Stage 6 -- run tests!
-# #
-# # Note, this is in CI.Dockerfile as well
-# #
-# FROM ww_env_ci AS ww_ci
-
-# WORKDIR /ww
-
-# # copy over source code
-# COPY . /ww
-# RUN python -m pip install -e .
-
-# # create a watershed_workflowrc that will be picked up
-# RUN cp watershed_workflowrc .watershed_workflowrc
-
-# # run the tests
-# RUN python -m pytest watershed_workflow/test/
-
-
-
-
+ENV PYTHONPATH="/opt/conda/envs/${env_name}/lib"
