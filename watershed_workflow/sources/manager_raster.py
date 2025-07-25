@@ -31,7 +31,7 @@ class ManagerRaster:
                               shapely.geometry.MultiPolygon | \
                               Tuple[float,float,float,float],
                    geometry_crs : watershed_workflow.crs.CRS,
-                   band : int = 1) -> xr.DataArray:
+                   band : int = -1) -> xr.DataArray:
         """Read a raster as a dataset on this shape, clipping to the shape.
         
         Parameters
@@ -63,5 +63,18 @@ class ManagerRaster:
         else:
             dataset = rioxarray.open_rasterio(self._filename, cache=False)
         assert isinstance(dataset, xr.Dataset) or isinstance(dataset, xr.DataArray)
-        return dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(geometry_crs))
+        dataset = dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(geometry_crs))
+
+        if len(dataset.shape) > 2:
+            if band > 0:
+                dataset_out = dataset[band-1,:,:]
+                dataset_out.rio.write_crs(dataset.rio.crs)
+                dataset = dataset_out
+
+            elif dataset.shape[0] == 1:
+                dataset_out = dataset[0,:,:]
+                dataset_out.rio.write_crs(dataset.rio.crs)
+                dataset = dataset_out
+        
+        return dataset
   

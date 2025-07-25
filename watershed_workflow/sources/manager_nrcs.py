@@ -372,6 +372,9 @@ class ManagerNRCS:
 
         # fix units
         df_ats = watershed_workflow.soil_properties.convertRosettaToATS(df_vgm)
+        # -- convert thickness to [m]
+        df_ats['thickness [cm]'] = df_ats['thickness [cm]'] / 100.
+        df_ats.rename(columns={'thickness [cm]' : 'thickness [m]'}, inplace=True)
 
         # all structure data frames are expected to have a 'source' and an 'id' in that source field
         df_ats['source'] = 'NRCS'

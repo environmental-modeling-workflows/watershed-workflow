@@ -68,7 +68,8 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
         xr.DataArray
         """
         filename = self._download()
-        return super(ManagerPelletierDTB, self).getDataset(geometry, geometry_crs, band)
+        raster = super(ManagerPelletierDTB, self).getDataset(geometry, geometry_crs, band)
+        return raster
 
     def _download(self):
         """Download the files, returning downloaded filename."""

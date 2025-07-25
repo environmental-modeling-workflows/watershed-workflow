@@ -389,13 +389,10 @@ class ManagerMODISAppEEARS:
         else:
             return False
 
-    def _readData(self, task : Task) -> xr.Dataset:
+    def _readData(self, task : Task) -> Dict[str, xr.DataArray]:
         """Read all files for a task, returning the data in the order of variables requested in the task."""
-        ds = xr.merge([self._readFile(task.filenames[var], var) for var in task.variables])
-        for var in ds.variables:
-            ds[var].rio.set_crs(watershed_workflow.crs.latlon_crs)
-        ds.rio.set_crs(watershed_workflow.crs.latlon_crs)
-        return ds
+        darrays = dict((var, self._readFile(task.filenames[var], var)) for var in task.variables)
+        return darrays
 
     def _readFile(self, filename : str, variable : str) -> xr.DataArray:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
@@ -404,7 +401,9 @@ class ManagerMODISAppEEARS:
             data = fid[layer]
 
         data.name = variable
-        data.rio.set_crs(watershed_workflow.crs.latlon_crs)
+        if data.rio.crs is None:
+            data.rio.write_crs(watershed_workflow.crs.latlon_crs, inplace=True)
+        assert data.rio.crs is not None
         return data
 
     def getDataset(self,
@@ -415,7 +414,7 @@ class ManagerMODISAppEEARS:
                  variables : Optional[List[str]] = None,
                  force_download : Optional[bool] = False,
                  task : Optional[Task] = None,
-                 filenames : Optional[List[str]] = None) -> xr.Dataset | Task:
+                 filenames : Optional[List[str]] = None) -> Dict[str, xr.DataArray] | Task:
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
@@ -466,12 +465,8 @@ class ManagerMODISAppEEARS:
         if filenames is not None:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
-            darrays = [self._readFile(filename, var) for (filename, var) in zip(filenames, variables)]
-            ds = xr.merge(darrays)
-            for var in ds.variables:
-                ds[var].rio.set_crs(watershed_workflow.crs.latlon_crs)
-            ds.rio.set_crs(watershed_workflow.crs.latlon_crs)
-            return ds
+            darrays = dict((var, self._readFile(filename, var)) for (filename, var) in zip(filenames, variables))
+            return darrays
 
         if task is None and filenames is None:
             if geometry is None or crs is None:
@@ -532,13 +527,13 @@ class ManagerMODISAppEEARS:
         res = task
         while count < tries and not success:
             res = self.getDataset(task=res)
-            if isinstance(res, xr.Dataset):
-                success = True
-                break
-            else:
+            if isinstance(res, Task):
                 logging.info('sleeping...')
                 time.sleep(interval)
                 count += 1
+            else:
+                success = True
+                break
 
         if success:
             return res

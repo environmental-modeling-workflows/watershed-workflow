@@ -19,4 +19,3 @@ def test_glhymps(coweeta):
     # check df
     assert len(data) == 1
     assert data.crs is not None
-

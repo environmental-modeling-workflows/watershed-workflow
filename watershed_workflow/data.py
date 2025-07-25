@@ -329,7 +329,7 @@ def computeMode(
         pass
     else:
         if crs is not None:
-            result.rio.set_crs(crs)
+            result.rio.write_crs(crs, inplace=True)
     
     # Preserve the name if it exists
     if da.name is not None:
@@ -466,7 +466,7 @@ def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset, time_dim: str = 'time'
         pass
     else:
         if crs is not None:
-            da_filtered.rio.set_crs(crs)
+            da_filtered.rio.write_crs(crs, inplace=True)
     da_filtered.attrs = da.attrs.copy()
     
     # Preserve coordinate attributes (including CRS if present)

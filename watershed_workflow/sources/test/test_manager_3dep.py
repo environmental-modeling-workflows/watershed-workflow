@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 from watershed_workflow.sources.test.fixtures import coweeta
 import watershed_workflow.crs
@@ -10,4 +11,7 @@ def test_3dep(coweeta):
     dem = ned.getDataset(coweeta.geometry[0], coweeta.crs)
     assert ((99,98) == dem.shape)
     assert abs(np.nanmean(dem.values) - 993) < 1
-    
+
+    assert(isinstance(dem, xr.DataArray)
+    assert dem.rio.crs is not None
+    assert dem.rio.crs is not None

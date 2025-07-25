@@ -210,9 +210,11 @@ class ManagerDaymet:
         try:
             crs = next(da.rio.crs for da in ds_list_allvars if da.rio.crs is not None)
         except StopIteration:
-            ds_combined.rio.set_crs(watershed_workflow.crs.daymet_crs)
-        else:
-            ds_combined.rio.set_crs(crs)
+            crs = watershed_workflow.crs.daymet_crs
+
+        ds_combined.rio.write_crs(crs, inplace=True)
+        for var in ds_combined.variables:
+            ds_combined[var] = ds_combined[var].write_crs(crs)
         return ds_combined
     
 
@@ -291,5 +293,8 @@ class ManagerDaymet:
         ds = self._openFiles(filenames, variables)
         ds_sel = ds.sel(time=slice(start, end))
         ds_sel.attrs = ds.attrs
-        ds_sel.rio.set_crs(ds.rio.crs)
+
+        ds_sel.rio.write_crs(ds.rio.crs, inplace=True)
+        for var in ds_sel.variables:
+            ds_sel[var] = ds_sel[var].write_crs(ds.rio.crs)
         return ds_sel

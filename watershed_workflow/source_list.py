@@ -16,13 +16,13 @@ from typing import Dict, Any
 from watershed_workflow.sources.manager_wbd import ManagerWBD
 from watershed_workflow.sources.manager_nhd import ManagerNHD
 from watershed_workflow.sources.manager_3dep import Manager3DEP
-# from watershed_workflow.sources.manager_nrcs import FileManagerNRCS
-# from watershed_workflow.sources.manager_glhymps import FileManagerGLHYMPS
-# from watershed_workflow.sources.manager_soilgrids_2017 import FileManagerSoilGrids2017
-# from watershed_workflow.sources.manager_pelletier_dtb import FileManagerPelletierDTB
-# from watershed_workflow.sources.manager_nlcd import FileManagerNLCD
-# from watershed_workflow.sources.manager_daymet import FileManagerDaymet
-# from watershed_workflow.sources.manager_modis_appeears import FileManagerMODISAppEEARS
+from watershed_workflow.sources.manager_nrcs import ManagerNRCS
+from watershed_workflow.sources.manager_glhymps import ManagerGLHYMPS
+# from watershed_workflow.sources.manager_soilgrids_2017 import ManagerSoilGrids2017
+from watershed_workflow.sources.manager_pelletier_dtb import ManagerPelletierDTB
+from watershed_workflow.sources.manager_nlcd import ManagerNLCD
+from watershed_workflow.sources.manager_daymet import ManagerDaymet
+from watershed_workflow.sources.manager_modis_appeears import ManagerMODISAppEEARS
 
 from watershed_workflow.sources.manager_shapefile import ManagerShapefile
 from watershed_workflow.sources.manager_raster import ManagerRaster
@@ -51,28 +51,31 @@ default_dem_source = '3DEP 60m'
 
 # available and default soil survey datasets
 structure_sources : Dict[str,Any] = {
-    # 'NRCS SSURGO': FileManagerNRCS(),
-    # 'GLHYMPS': FileManagerGLHYMPS(),
-    # 'SoilGrids2017': FileManagerSoilGrids2017(),
-    # 'Pelletier DTB': FileManagerPelletierDTB(),
+    'NRCS SSURGO': ManagerNRCS(),
+    'GLHYMPS': ManagerGLHYMPS(),
+    # 'SoilGrids2017': ManagerSoilGrids2017(),
+    'Pelletier DTB': ManagerPelletierDTB(),
 }
-default_structure_source = None#'NRCS SSURGO'
+default_structure_source = 'NRCS SSURGO'
 
 # available and default land cover
 land_cover_sources : Dict[str,Any] = {
-    # 'NLCD (L48)': FileManagerNLCD(layer='Land_Cover', location='L48'),
-    # 'NLCD (AK)': FileManagerNLCD(layer='Land_Cover', location='AK'),
-    # 'MODIS': FileManagerMODISAppEEARS()
+    'NLCD (L48)': ManagerNLCD(layer='cover', location='L48'),
+    'NLCD (AK)': ManagerNLCD(layer='cover', location='AK'),
+    'MODIS': ManagerMODISAppEEARS()
 }
-default_land_cover = None #'NLCD (L48)'
+default_land_cover = 'NLCD (L48)'
 
-lai_sources : Dict[str,Any] = {}
-#    'MODIS': FileManagerMODISAppEEARS() }
-default_lai = None #'MODIS'
+lai_sources : Dict[str,Any] = {
+   'MODIS': ManagerMODISAppEEARS()
+}
+default_lai = 'MODIS'
 
 # available and default meteorology
-met_sources : Dict[str,Any] = {} # 'DayMet': FileManagerDaymet() }
-default_met = None #'DayMet'
+met_sources : Dict[str,Any] = {
+    'DayMet': ManagerDaymet()
+}
+default_met = 'DayMet'
 
 
 def getDefaultSources() -> Dict[str, Any]:
@@ -84,12 +87,12 @@ def getDefaultSources() -> Dict[str, Any]:
     sources['HUC'] = huc_sources[default_huc_source]
     sources['hydrography'] = hydrography_sources[default_hydrography_source]
     sources['DEM'] = dem_sources[default_dem_source]
-    # sources['soil structure'] = structure_sources['NRCS SSURGO']
-    # sources['geologic structure'] = structure_sources['GLHYMPS']
-    # sources['land cover'] = land_cover_sources[default_land_cover]
-    # sources['lai'] = lai_sources[default_lai]
-    # sources['depth to bedrock'] = structure_sources['Pelletier DTB']
-    # sources['meteorology'] = met_sources[default_met]
+    sources['soil structure'] = structure_sources['NRCS SSURGO']
+    sources['geologic structure'] = structure_sources['GLHYMPS']
+    sources['land cover'] = land_cover_sources[default_land_cover]
+    sources['LAI'] = lai_sources[default_lai]
+    sources['depth to bedrock'] = structure_sources['Pelletier DTB']
+    sources['meteorology'] = met_sources[default_met]
     return sources
 
 
@@ -131,26 +134,26 @@ def getSources(args) -> Dict[str, Any]:
     else:
         sources['DEM'] = dem_sources[source_dem]
 
-    # try:
-    #     source_soil = args.source_soil
-    # except AttributeError:
-    #     pass
-    # else:
-    #     sources['soil type'] = soil_sources[source_soil]
+    try:
+        source_soil = args.source_soil
+    except AttributeError:
+        pass
+    else:
+        sources['soil type'] = soil_sources[source_soil]
 
-    # try:
-    #     land_cover = args.land_cover
-    # except AttributeError:
-    #     pass
-    # else:
-    #     sources['land cover'] = land_cover_sources[land_cover]
+    try:
+        land_cover = args.land_cover
+    except AttributeError:
+        pass
+    else:
+        sources['land cover'] = land_cover_sources[land_cover]
 
-    # try:
-    #     met = args.meteorology
-    # except AttributeError:
-    #     pass
-    # else:
-    #     sources['meteorology'] = met_sources[met]
+    try:
+        met = args.meteorology
+    except AttributeError:
+        pass
+    else:
+        sources['meteorology'] = met_sources[met]
 
     return sources
 
