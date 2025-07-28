@@ -5,19 +5,20 @@ import numpy as np
 import logging
 import h5py
 import cftime
+import rasterio.transform
+import xarray as xr
 
 import watershed_workflow.crs
 
 def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar='noleap'):
-    """Writes a DatasetCollection and attributes to an HDF5 file.
+    """Writes an xarray.Dataset and attributes to an HDF5 file.
 
     Parameters
     ----------
     filename : str
         Name of the file to write.
-    ts : dict or dataframe
-        Dictionary or dataframe of time series, with keys being the name of the time series
-        and values being the time series data.
+    dataset : xarray.Dataset
+        Dataset containing the data to write.
     attributes : dict
         Dictionary of attributes to write to the HDF5 file.
     time0 : str or datetime.date object, optional
@@ -34,18 +35,13 @@ def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar=
     except FileNotFoundError:
         pass
 
-    keys = list(dataset.keys())
-    profile = dataset.profile
-    times = dataset.times
+    keys = list(dataset.data_vars.keys())
+    times = dataset.time.values
 
-    # construct the x,y,t arrays
-    transform = profile['transform']
-    if not transform.is_rectilinear:
-        raise ValueError(
-            'Raster cannot be written as transform is not rectilinear, which is an assumption of simulators.'
-        )
-    x = np.array([(transform * (i, 0))[0] for i in range(profile['width'])])
-    y = np.array([(transform * (0, j))[1] for j in range(profile['height'])])
+    # construct the x,y arrays from the dataset coordinates
+    x = dataset.x.values
+    y = dataset.y.values
+    
     if time0 is None:
         time0 = times[0]
 
@@ -70,14 +66,15 @@ def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar=
         fid.create_dataset('x [m]', data=x)
 
         for key in keys:
-            # dat has shape (nband, nrow, ncol)
-            assert (dataset.data[key].shape[0] == times.shape[0])
-            assert (dataset.data[key].shape[1] == y.shape[0])
-            assert (dataset.data[key].shape[2] == x.shape[0])
+            # dat has shape (ntime, ny, nx)
+            data = dataset[key].values
+            assert (data.shape[0] == times.shape[0])
+            assert (data.shape[1] == y.shape[0])
+            assert (data.shape[2] == x.shape[0])
 
             grp = fid.create_group(key)
             for i in range(len(times)):
-                idat = dataset.data[key][i, :, :]
+                idat = data[i, :, :]
                 # flip rows to match the order of y
                 rev_idat = np.flip(idat, axis=0)
                 grp.create_dataset(str(i), data=rev_idat)

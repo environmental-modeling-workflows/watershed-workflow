@@ -38,21 +38,18 @@ def convertToATS(dat : xr.Dataset) -> xr.Dataset:
         dat[key].data[dat[key].data == -9999] = np.nan
 
     # note that all of these can live in the same dataset since they
-    # share the same profile/times
-    profile = dat['tmin'].profile
-    times = dat['tmin'].times
+    # share the same coordinates/times
     dout = xr.Dataset(coords=dat.coords,
                       attrs=dat.attrs.copy())
 
-    mean_air_temp_c = (dat['tmin'].data + dat['tmax'].data) / 2.0
+    mean_air_temp_c = (dat['tmin'] + dat['tmax']) / 2.0
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K
 
-    precip_ms = dat['prcp'].data / 1.e3 / 86400.  # mm/day --> m/s
+    precip_ms = dat['prcp'] / 1.e3 / 86400.  # mm/day --> m/s
 
     # note that shortwave radiation in daymet is averged over the unit daylength, not per unit day.
-    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'].data * dat[
-        'dayl'].data / 86400  # Wm2
+    dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl'] / 86400  # Wm2
     dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
-    dout['precipitation rain [m s^-1]'] = np.where(mean_air_temp_c >= 0, precip_ms, 0)
-    dout['precipitation snow [m SWE s^-1]'] = np.where(mean_air_temp_c < 0, precip_ms, 0)
+    dout['precipitation rain [m s^-1]'] = xr.where(mean_air_temp_c >= 0, precip_ms, 0)
+    dout['precipitation snow [m SWE s^-1]'] = xr.where(mean_air_temp_c < 0, precip_ms, 0)
     return dout
