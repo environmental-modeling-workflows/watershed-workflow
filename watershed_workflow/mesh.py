@@ -1071,7 +1071,7 @@ class Mesh3D:
         filename_base = os.path.split(filename)[-1]
         ep = exodus.ex_init_params(title=filename_base.encode('ascii'),
                                    num_dim=3,
-                                   num_vertices=self.num_vertices,
+                                   num_nodes=self.num_vertices,
                                    num_face=num_faces,
                                    num_face_blk=len(face_blks),
                                    num_elem=num_elems,
@@ -1090,8 +1090,8 @@ class Mesh3D:
         for i_blk, face_blk in enumerate(face_blks):
             face_raveled = [n for f in face_blk for n in f]
             e.put_polyhedra_face_blk(i_blk + 1, len(face_blk), len(face_raveled), 0)
-            e.put_vertex_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
-            e.put_face_vertex_conn(i_blk + 1, np.array(face_raveled) + 1)
+            e.put_node_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
+            e.put_face_node_conn(i_blk + 1, np.array(face_raveled) + 1)
 
         # put the elem blocks
         assert len(elem_blks) == len(self.material_ids_list)
