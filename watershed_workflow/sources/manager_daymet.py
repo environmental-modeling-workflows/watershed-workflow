@@ -214,9 +214,8 @@ class ManagerDaymet:
 
         ds_combined.rio.write_crs(crs, inplace=True)
         for var in ds_combined.variables:
-            ds_combined[var] = ds_combined[var].write_crs(crs)
+            ds_combined[var] = ds_combined[var].rio.write_crs(crs)
         return ds_combined
-    
 
     def getDataset(self,
                    geometry : shapely.geometry.base.BaseGeometry,
@@ -296,5 +295,5 @@ class ManagerDaymet:
 
         ds_sel.rio.write_crs(ds.rio.crs, inplace=True)
         for var in ds_sel.variables:
-            ds_sel[var] = ds_sel[var].write_crs(ds.rio.crs)
+            ds_sel[var] = ds_sel[var].rio.write_crs(ds.rio.crs)
         return ds_sel
