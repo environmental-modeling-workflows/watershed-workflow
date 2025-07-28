@@ -465,17 +465,8 @@ class ManagerMODISAppEEARS:
         if filenames is not None:
             # read the file
             assert variables is not None, "Must provide variables if providing filenames."
-<<<<<<< HEAD
             darrays = dict((var, self._readFile(filename, var)) for (filename, var) in zip(filenames, variables))
             return darrays
-=======
-            darrays = [self._readFile(filename, var) for (filename, var) in zip(filenames, variables)]
-            ds = xr.merge(darrays)
-            for var in ds.variables:
-                ds[var].rio.write_crs(watershed_workflow.crs.latlon_crs)
-            ds.rio.write_crs(watershed_workflow.crs.latlon_crs)
-            return ds
->>>>>>> 31cc3bd (fix rioxarray deprecation warnings)
 
         if task is None and filenames is None:
             if geometry is None or crs is None:
