@@ -21,7 +21,7 @@ RUN ${CONDA_BIN} env create -f /ww/tmp/environments/environment-CI-Linux.yml
 
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --manager=${CONDA_BIN} --without-ww-env \
-        --with-tools-env --tools-env-name=watershed_workflow_tools Linux
+        --with-tools-env=watershed_workflow_tools Linux
 
 #
 # Stage 2 -- add in the pip
