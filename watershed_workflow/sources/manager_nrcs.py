@@ -447,6 +447,7 @@ class ManagerNRCS:
         # merge properties and shapes dfs
         df = shapes.merge(props, on='mukey')
         df[snames.ID] = df['mukey']
+        df[snames.NAME] = [f'NRCS-{mukey}' for mukey in df['mukey']]
         return df
 
 

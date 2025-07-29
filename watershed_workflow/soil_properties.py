@@ -244,6 +244,8 @@ def getDefaultBedrockProperties():
 
     df = pd.DataFrame()
     df['ats_id'] = [999, ]
+    df[names.ID] = [999, ]
+    df[names.NAME] = ['bedrock',]
     df['porosity [-]'] = [poro, ]
     df['permeability [m^2]'] = [perm, ]
     df['van Genuchten alpha [Pa^-1]'] = computeVGAlphaFromPermeability(perm, poro)
@@ -254,10 +256,12 @@ def getDefaultBedrockProperties():
     return df
 
 
-def mangleGLHYMPSProperties(shapes,
-                            min_porosity=0.01,
-                            max_permeability=np.inf,
-                            max_vg_alpha=np.inf):
+def mangleGLHYMPSProperties(shapes : gpd.GeoDataFrame,
+                            min_porosity : float = 0.01,
+                            max_permeability : float = np.inf,
+                            max_vg_alpha : float = np.inf,
+                            residual_saturation : float = 0.01,
+                            van_genuchten_n : float = 2.0) -> gpd.GeoDataFrame:
     """GLHYMPs properties need their units changed and variables renamed.
 
     Parameters
@@ -290,24 +294,23 @@ def mangleGLHYMPSProperties(shapes,
     poro = poro / 100  # division by 100 is per GLHYMPS readme
     poro = np.maximum(poro, min_porosity)  # some values are 0?
 
-    #descriptions = [prop['Descriptio'] for prop in shp_props]
     # derived properties
-    # - this scaling law has trouble for really small porosity, especially high permeability low porosity
-    vg_alpha = np.minimum(watershed_workflow.soil_properties.computeVGAlphaFromPermeability(Ksat, poro),
+    # - this scaling law has trouble for really small porosity,
+    # - especially high permeability low porosity
+    vg_alpha = np.minimum(computeVGAlphaFromPermeability(Ksat, poro),
                           max_vg_alpha)
-    vg_n = 2.0  # arbitrarily chosen
-    sr = 0.01  # arbitrarily chosen
 
     properties = gpd.GeoDataFrame(
         data={
-            'id': ids,
+            names.ID: ids,
+            names.NAME: [f'GLHYMPS-{id}' for id in ids],
             'source': 'GLHYMPS',
             'permeability [m^2]': Ksat,
             'logk_stdev [-]': Ksat_std,
             'porosity [-]': poro,
             'van Genuchten alpha [Pa^-1]': vg_alpha,
-            'van Genuchten n [-]': vg_n,
-            'residual saturation [-]': sr,
+            'van Genuchten n [-]': van_genuchten_n,
+            'residual saturation [-]': residual_saturation,
             #'description' : descriptions,
         },
         geometry=shapes.geometry,
