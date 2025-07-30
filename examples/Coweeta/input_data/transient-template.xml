@@ -123,10 +123,9 @@
       <Parameter name="source term is differentiable" type="bool" value="true"/>
       <Parameter name="modify predictor positivity preserving" type="bool" value="true"/>
       <Parameter name="debug cells" type="Array(int)" value="{0}"/>
+
       <ParameterList name="initial conditions" type="ParameterList">
-
         <Parameter name="restart file" type="string" value="../checkpoint_final.h5"/>
-
       </ParameterList>
 
       <ParameterList name="inverse" type="ParameterList">
@@ -371,7 +370,7 @@
         <Parameter name="area index key" type="string" value="canopy-leaf_area_index"/>
         <Parameter name="units" type="string" value="m s^-1"/>
       </ParameterList>
-      <ParameterList name="canopy-fracwet" type="ParameterList">
+      <ParameterList name="canopy-drainage" type="ParameterList">
         <Parameter name="evaluator type" type="string" value="canopy drainage"/>
         <Parameter name="drainage key" type="string" value="canopy-drainage"/>
         <Parameter name="fraction wet key" type="string" value="canopy-fracwet"/>

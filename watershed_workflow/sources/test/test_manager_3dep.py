@@ -12,6 +12,6 @@ def test_3dep(coweeta):
     assert ((99,98) == dem.shape)
     assert abs(np.nanmean(dem.values) - 993) < 1
 
-    assert(isinstance(dem, xr.DataArray)
+    assert isinstance(dem, xr.DataArray)
     assert dem.rio.crs is not None
     assert dem.rio.crs is not None

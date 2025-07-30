@@ -307,7 +307,7 @@ class Mesh2D:
             del self._centroids
 
     def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None, norm=None,
-             add_colorbar=True, **kwargs) -> mpc.PolyCollection:
+             colorbar=True, **kwargs) -> mpc.PolyCollection:
         """Plot the flattened 2D mesh."""
         from matplotlib import pyplot as plt
 
@@ -345,7 +345,7 @@ class Mesh2D:
         ax.add_collection(gons)
         ax.autoscale_view()
 
-        if add_colorbar:
+        if colorbar:
             gons.set(array=facecolors, cmap=cmap)
             plt.colorbar(gons, ax=ax)
             
@@ -1418,7 +1418,7 @@ class Mesh3D:
         side_sets = []
         side_sets.append(SideSet("bottom", 1, bottom, [1, ] * len(bottom)))
         side_sets.append(SideSet("surface", 2, surface, [0, ] * len(surface)))
-        side_sets.append(SideSet("external_sides", 3, vertical_side_cells, vertical_side_indices))
+        side_sets.append(SideSet("external sides", 3, vertical_side_cells, vertical_side_indices))
 
         labeled_sets = []
         for ls in mesh2D.labeled_sets:

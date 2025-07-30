@@ -437,7 +437,7 @@ class ManagerNRCS:
         shapes_no_crs = shapes.groupby('mukey')['geometry'].apply(
             lambda x: shapely.ops.unary_union(x.tolist()) if len(x) > 1 else x.iloc[0]
         ).reset_index()
-        shapes = shapes_no_crs.write_crs(shapes.crs)
+        shapes = shapes_no_crs.set_crs(shapes.crs)
         assert shapes.crs is not None
 
         # read the properties

@@ -6,11 +6,11 @@ import configparser
 import getpass
 
 
-def home():
+def getHome() -> str:
     return os.path.expanduser('~')
 
 
-def get_default_config():
+def getDefaultConfig() -> configparser.ConfigParser:
     """Dictionary of all config option defaults.
 
     Returns
@@ -35,17 +35,17 @@ def get_default_config():
     return rcParams
 
 
-def get_config():
+def getConfig() -> configparser.ConfigParser:
     try:
         data_directory = os.path.join(os.environ['WATERSHED_WORKFLOW_DATA_DIR'])
     except KeyError:
         data_directory = os.path.join(os.getcwd(), 'data')
-    rc = get_default_config()
+    rc = getDefaultConfig()
     rc['DEFAULT']['data_directory'] = data_directory
 
     # paths to search for rc files
     rc_paths = [
-        os.path.join(home(), '.watershed_workflowrc'),
+        os.path.join(getHome(), '.watershed_workflowrc'),
         os.path.join(os.getcwd(), '.watershed_workflowrc'),
         os.path.join(os.getcwd(), 'watershed_workflowrc'),
     ]
@@ -59,10 +59,10 @@ def get_config():
     return rc
 
 
-def set_data_directory(path):
+def setDataDirectory(path : str) -> None:
     """Sets the directory in which all data is stored."""
     rcParams['DEFAULT']['data_directory'] = path
 
 
 # global config
-rcParams = get_config()
+rcParams = getConfig()

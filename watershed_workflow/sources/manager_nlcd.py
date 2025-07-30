@@ -44,14 +44,6 @@ class ManagerNLCD:
     """National Land Cover Database provides a raster for indexed land cover types
     [NLCD]_.
 
-    .. note:: NLCD does not provide an API for subsetting the data, so the
-       first time this is used, it WILL result in a long download time as it
-       grabs the big file.  After that it will be much faster as the file is
-       already local.
-
-    TODO: Labels and colors for these indices should get moved here, but
-    currently reside in watershed_workflow.colors.
-
     Parameters
     ----------
     layer : str, optional

@@ -407,14 +407,14 @@ class ManagerMODISAppEEARS:
         return data
 
     def getDataset(self,
-                geometry : Optional[shapely.geometry.base.BaseGeometry | Tuple[float,float,float,float]]= None,
-                 crs : Optional[CRS] = None,
-                 start : Optional[str | datetime.datetime | datetime.date] = None,
-                 end : Optional[str | datetime.datetime | datetime.date] = None,
-                 variables : Optional[List[str]] = None,
-                 force_download : Optional[bool] = False,
-                 task : Optional[Task] = None,
-                 filenames : Optional[List[str]] = None) -> Dict[str, xr.DataArray] | Task:
+                   geometry : Optional[shapely.geometry.base.BaseGeometry | Tuple[float,float,float,float]]= None,
+                   crs : Optional[CRS] = None,
+                   start : Optional[str | datetime.datetime | datetime.date] = None,
+                   end : Optional[str | datetime.datetime | datetime.date] = None,
+                   variables : Optional[List[str]] = None,
+                   force_download : Optional[bool] = False,
+                   task : Optional[Task] = None,
+                   filenames : Optional[List[str]] = None) -> Dict[str, xr.DataArray] | Task:
         """Get dataset corresponding to MODIS data from the AppEEARS data portal.
 
         Note that AppEEARS requires the constrution of a request, and
