@@ -11,11 +11,13 @@ import watershed_workflow
 
 from fixtures import coweeta
 
-def test_glhymps(coweeta):
-    # get imgs
-    glhymps = watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS()
-    data = glhymps.getShapesByGeometry(coweeta.geometry[0], coweeta.crs)
+# do not test glhymps in general -- file does not download
+#
+# def test_glhymps(coweeta):
+#     # get imgs
+#     glhymps = watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS()
+#     data = glhymps.getShapesByGeometry(coweeta.geometry[0], coweeta.crs)
 
-    # check df
-    assert len(data) == 1
-    assert data.crs is not None
+#     # check df
+#     assert len(data) == 1
+#     assert data.crs is not None
