@@ -279,6 +279,7 @@ def simplify(hucs : SplitHUCs,
              resample_by_reach_property : bool = False,
              min_angle : float = 20,
              junction_min_angle : float = 20,
+             snap_triple_junctions_tol : Optional[float] = None,
              plot_diagnostics : bool = False,
              keep_points : bool = False) -> None:
     """Simplifies, in place, the HUC and river shapes to create constrained, discrete segments.
@@ -370,7 +371,8 @@ def simplify(hucs : SplitHUCs,
         
     logging.info("Snapping discrete points to make rivers and HUCs discretely consistent.")
     logging.info(" -- snapping HUC triple junctions to reaches")
-    snap_triple_junctions_tol = 3*reach_segment_target_length
+    if snap_triple_junctions_tol is None:
+        snap_triple_junctions_tol = 3*reach_segment_target_length
     watershed_workflow.hydrography.snapHUCsJunctions(hucs, rivers, snap_triple_junctions_tol)
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")

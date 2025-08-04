@@ -14,10 +14,11 @@ class ManagerWBD(ManagerHyRiver):
         """Also valid is WaterData"""
         self._protocol_name : str = protocol
         self._level : Optional[int] = None
+        super(ManagerWBD, self).__init__(protocol)
+
         self.name = 'WBD'
         if protocol != 'WBD':
             self.name = ' '.join(['WBD', protocol])
-        super(ManagerWBD, self).__init__(protocol)
 
     def set(self, **kwargs):
         if 'level' in kwargs:

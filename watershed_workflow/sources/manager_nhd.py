@@ -96,6 +96,7 @@ class ManagerNHD(ManagerHyRiver):
             raise ValueError(f'Invalid ManagerNHD protocol {protocol}')
 
         super(ManagerNHD, self).__init__(self._protocol)
+        self.name = protocol # override
         self.setLayer(layer)
         self._catchments = catchments
         

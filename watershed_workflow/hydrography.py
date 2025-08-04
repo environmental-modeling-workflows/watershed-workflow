@@ -343,7 +343,7 @@ def _cutAndSnapExteriorCrossing(hucs : SplitHUCs,
                 # -- rename the first
                 hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
-                    # -- add the first
+                    # -- add the second
                     new_handle = hucs.linestrings.append(new_spine[1])
                     spine.append(new_handle)
 
@@ -373,9 +373,13 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
                 if len(new_reach) == 1:
                     reach.linestring = new_reach[0]
                 elif len(new_reach) == 2:
+                    logging.info('  branch2')
                     reach.linestring = shapely.geometry.LineString(
                         list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
-                    us, ds = reach.split(len(new_reach[0].coords)-1)
+                    logging.info(f'  seg1: {list(new_reach[0].coords)}')
+                    logging.info(f'  seg2: {list(new_reach[1].coords[1:])}')
+                    logging.info(f'  splitting at coord: {len(new_reach[0].coords)-1} of {len(reach.linestring.coords)}')
+                    #us, ds = reach.split(len(new_reach[0].coords)-1)
 
                 hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -406,7 +410,7 @@ def snapHUCsJunctions(hucs : SplitHUCs,
     for ls_handle, ls in hucs.linestrings.items():
         # check point 0, -1
         endpoints = np.array([ls.coords[0], ls.coords[-1]])
-        # limit to x,y
+        # delete z coord
         if (endpoints.shape[1] != 2):
             endpoints = endpoints[:, 0:2]
         dists, inds = kdtree.query(endpoints)
@@ -420,12 +424,28 @@ def snapHUCsJunctions(hucs : SplitHUCs,
                 )
                 logging.debug("        point 0 to river at %r" % list(new_ls[0]))
 
+                # zap points until we are outside of the ball -- otherwise we can get weird crossings
+                count = 0
+                while watershed_workflow.utils.computeDistance(new_ls[1], new_ls[0]) < tol:
+                    new_ls.pop(1)
+                    count += 1
+                logging.debug(f"    also removed {count} other coords")
+                
+
             if dists[1] < tol:
                 new_ls[-1] = coords[inds[1]]
                 logging.debug(
                     f"  Moving HUC linestring point 0,1: {list(ls.coords)[0]}, {list(ls.coords)[-1]}"
                 )
                 logging.debug("        point -1 to river at %r" % list(new_ls[-1]))
+
+                # zap points until we are outside of the ball -- otherwise we can get weird crossings
+                count = 0
+                while watershed_workflow.utils.computeDistance(new_ls[-2], new_ls[-1]) < tol:
+                    new_ls.pop(-2)
+                    count += 1
+                logging.debug(f"    also removed {count} other coords")
+
             hucs.linestrings[ls_handle] = shapely.geometry.LineString(new_ls)
 
 

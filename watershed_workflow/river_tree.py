@@ -60,7 +60,6 @@ class _RowView:
                  index : int | str):
         self._df = df
         self._index = index
-        self._df_reset : bool = False
 
     def __len__(self) -> int:
         return len(self._df.keys())
@@ -231,8 +230,13 @@ class River(watershed_workflow.tinytree.Tree):
             marker_kwds.setdefault('radius', 8)
             kwargs2['style_kwds']['fillOpacity'] = 1
 
+            if names.ID in self.df:
+                new_id_name = names.ID+'-copy'
+            else:
+                new_id_name = names.ID
+
             marker_df = self.df.set_geometry([shapely.geometry.MultiPoint(ls.coords) for ls in self.df.geometry]) \
-                .explode(index_parts=True).reset_index(names=[names.ID, 'coord'])
+                .explode(index_parts=True).reset_index(names=[new_id_name, 'coord'])
 
             for disp_mode in ['tooltip', 'popup']:
                 if disp_mode in kwargs2 and isinstance(kwargs2[disp_mode], list):
@@ -321,7 +325,7 @@ class River(watershed_workflow.tinytree.Tree):
             self.df[names.CATCHMENT] = self.df[names.CATCHMENT].astype(gpd.array.GeometryDtype())
 
         if crs is not None:
-            self.df.write_crs(crs, inplace=True)
+            self.df.set_crs(crs, inplace=True)
         # end clean up -- hopefully this gets fixed sometime in upstream (pandas or geopandas)
 
         # -- construct the new upstream node inject it into the tree
@@ -577,10 +581,6 @@ class River(watershed_workflow.tinytree.Tree):
         if self.parent is not None:
             raise ValueError("Only call resetDataFrame on a root of the river tree!")
 
-        if getattr(self, '_df_reset', False) and not force:
-            # already reset and not forced, all good
-            return 
-        
         # collect the indices in this river
         ids = [reach.index for reach in self]
 
@@ -606,9 +606,6 @@ class River(watershed_workflow.tinytree.Tree):
         for i,reach in enumerate(self):
             reach.index = i
             reach.df = new_df
-
-        # mark a flag so that we don't have to do this repeatedly
-        self._df_reset = True
 
     #
     # methods that convert this to another object
@@ -878,89 +875,212 @@ def createRivers(reaches : gpd.GeoDataFrame,
 #
 # Helper functions on lists of rivers
 #
-def accumulateCatchments(rivers, outlet_indices, names=None):
-    """Given a list of outlet_indices, find the reach in rivers and form its contributing area.
+def determineOutletToReachMap(rivers : List[River],
+                              outlets : gpd.GeoDataFrame,
+                              reach_ID_column : str = 'reach_ID',
+                              measure_tol : float = 15) -> gpd.GeoDataFrame:
+    """Given a list of rivers and a set of gages, find the reach in
+    rivers and mark where on the reach to put the effective gage.
     
     Parameters:
     -----------
     rivers: list[River]
       Rivers from which outlet reaches are potentially from 
-    outlet_indices: list[str]
-      List of indices of the outlet reaches
-    names: list[str], optional
-      Names for the catchments
+    outlets : gpd.GeoDataFrame
+      GeoDataFrame containing at least the following columns
+      - reach_ID_column : ID of the reach on which the outlet lives
+      - measure : (if algorithm == 'measure tol') the % up the reach
+        from downstream of the true location of the outlet
+    reach_ID_column : str
+      Name of the column containing the reach ID.
 
     Returns
     -------
     geopandas.GeoDataFrame
-      DataFrame of the contributing areas to each of the outlet indices.
+      An updated outlets GeoDataFrame including additionally:
+      - river_index : index into rivers indicating which river the outlet is on
+      - reach_index : index of the reach holding the outlet
+      - location_on_reach : an indicator function, 0 if the outlet
+          should be approximated on the downstream end of the reach, 1
+          if it is on the upstream end.
+      - true_geometry : the old geometry
+      - geometry : the new location of the outlet
+
     """
-    if names is None:
-        names = outlet_indices
+    assert reach_ID_column in outlets
 
-    roots = [river.getNode(index) for index in outlet_indices]
-    assert (all(root is not None for root in roots))
+    # find the index in rivers and reaches
+    river_indices = []
+    reach_indices = []
+    locations_on_reach = []
+    new_geometry = []
 
-    indices = ['CA_'+index for index in outlet_indices]
-    outlet_points = [root.linestring.coords[-1] for root in roots]
-    contributing_areas = [root.accumulateCatchments() for root in roots]
-    return gpd.GeoDataFrame({names.INDEX : indices,
-                             'outlet_ID' : outlet_indices,
-                             'name' : names,
-                             'outlet_point' : outlet_points,
-                             'geometry' : contributing_areas},
-                            crs=rivers[0].crs)
+    for index in outlets.index:
+        reach_ID = outlets.loc[index, reach_ID_column]
+        measure = outlets.loc[index, 'measure']
+
+        for ri, river in enumerate(rivers):
+            node = river.findNode(lambda n : n[names.ID] == reach_ID)
+            if node is not None:
+                river_indices.append(ri)
+                reach_indices.append(node.index)
+
+                loc = 1
+                if node.parent is None:
+                    # river outlet, put at downstream end
+                    loc = 0
+                elif measure < measure_tol and len(list(node.siblings)) == 0:
+                    # close to downstream end, no siblings, ok to put downstream
+                    loc = 0
+
+                # upstream to downstream coordinates
+                if loc == 0:
+                    new_geometry.append(shapely.geometry.Point(node.linestring.coords[-1]))
+                elif loc == 1:
+                    new_geometry.append(shapely.geometry.Point(node.linestring.coords[0]))
+                    
+                locations_on_reach.append(loc)
+                break
+
+    outlets['river_index'] = river_indices
+    outlets['reach_index'] = reach_indices
+    outlets['location_on_reach'] = locations_on_reach
+    outlets['true_geometry'] = outlets['geometry']
+    outlets['geometry'] = new_geometry
+    outlets = outlets.set_geometry('geometry')
+    return outlets
     
 
-def accumulateIncrementalCatchments(rivers, outlet_indices, names=None):
+def accumulateCatchments(rivers : List[River],
+                         outlets : gpd.GeoDataFrame,
+                         reach_ID_column : str = 'reach_ID') -> gpd.GeoDataFrame:
+    """Given a dataframe of outlets, compute contributing areas for each one.""
+    
+    Parameters:
+    -----------
+    rivers: list[River]
+      Rivers from which outlet reaches are potentially from 
+    outlets : gpd.GeoDataFrame
+      GeoDataFrame containing at least the following columns
+      - river_index : index into rivers indicating which river the outlet is on
+      - reach_index : index of the reach holding the outlet
+      - location_on_reach : indicator (0,1) of where on the reach is
+        the outlet
+
+      Likely this is satisfied by calling determineOutletToReachMap()
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+      An updated outlets GeoDataFrame including additionally:
+      - catchment : polygon geometry of the contributing area to the outlet
+    """
+    assert 'river_index' in outlets
+    assert 'reach_index' in outlets
+    assert 'location_on_reach' in outlets
+
+    # find the index in rivers and reaches
+    catchments = []
+    for index in outlets.index:
+        river_index = outlets.loc[index, 'river_index']
+        reach_index = outlets.loc[index, 'reach_index']
+        node = rivers[river_index].getNode(reach_index)
+        assert node is not None
+        loc = outlets.loc[index, 'location_on_reach']
+        
+
+        if loc == 0:
+            print('computing from downstream')
+            ca = shapely.unary_union([n[names.CATCHMENT] for n in node.preOrder() if n[names.CATCHMENT] is not None])
+        else:
+            print('computing from upstream')
+            ca = shapely.unary_union([n[names.CATCHMENT] for child in node.children \
+                                      for n in child.preOrder() if n[names.CATCHMENT] is not None])
+        catchments.append(ca)
+
+    outlets[names.CATCHMENT] = gpd.GeoSeries(catchments, outlets.index)
+    return outlets
+    
+
+def accumulateIncrementalCatchments(rivers : List[Rivers],
+                                    outlets : gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Given a list of outlet_indices, form the incremental contributing areas.
     
     Parameters:
     -----------
     rivers: list[River]
       Rivers from which outlet reaches are potentially from 
-    outlet_indices: list[str]
-      List of indices of the outlet reaches
-    names: list[str], optional
-      Names for the catchments
+    outlets : gpd.GeoDataFrame
+      GeoDataFrame containing at least the following columns
+      - river_index : index into rivers indicating which river the outlet is on
+      - reach_index : index of the reach holding the outlet
+      - location_on_reach : indicator (0,1) of where on the reach is
+        the outlet
 
     Returns
     -------
-    gpd.GeoDataFrame
-      DataFrame of the incremental contributing areas to each of the outlet indices.
-    
+    geopandas.GeoDataFrame
+      An updated outlets GeoDataFrame including additionally:
+      - incremental_catchment : polygon geometry of the contributing
+        area to the outlet
+
     """
-    if names is None:
-        names = outlet_indices
+    # sort by number of total children, decreasing.  This ensures that we can work down the tree
+    roots = [rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
+             for index in outlets.index]
+    assert all(root is not None for root in roots)
+    outlets['num_iterated_children'] = [len(root) for root in roots]
+    
+    outlets = outlets.sort_values(by='num_iterated_children', ascending=False)
+    
+    outlets.pop('num_iterated_children')
 
-    roots = [getNode(rivers, out_id) for out_id in outlet_indices]
-    assert (all(root is not None for root in roots))
+    # recompute roots in the new order
+    roots = [rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
+             for index in outlets.index]
+    assert all(root is not None for root in roots)
 
-    sorted_ids = sorted(outlet_indices)
+    stopping_ids = [root.index for root in roots]
 
-    def truncated_tree_iter(n):
-        yield n
-        for c in n.children:
-            if c.index not in sorted_ids:
-                for nn in truncated_tree_iter(c):
+        
+    def _truncated_tree_iter(n):
+        if n.index in stopping_ids:
+            print(f'stoppping at {n["comid"]}')
+            matches = outlets[outlets['reach_index'] == n.index]
+            assert len(matches) == 1
+            if matches['location_on_reach'].values[0] == 1:
+                print(f'...but including it {n["comid"]}')
+                yield n
+
+        else:
+            yield n
+            for c in n.children:
+                for nn in _truncated_tree_iter(c):
                     yield nn
 
-    incremental_cas = [
-        shapely.ops.unary_union([
-            n['catchment'] for n in truncated_tree_iter(root)
-            if n['catchment'] is not None
-        ]) for root in roots
-    ]
+    def truncated_tree_iter(n):
+        print(f'calling trunc_tree on {n["comid"]}')
+        for i in _truncated_tree_iter(n):
+            yield i
 
-    indices = ['CA_'+index for index in outlet_indices]
-    outlet_points = [root.linestring.coords[-1] for root in roots]
+    incremental_cas = []
+    for root, index in zip(roots, outlets.index):
+        print()
+        print(f'Computing CA for {index}')
+        print('-'*40)
+        loc = outlets.loc[index, 'location_on_reach']
 
-    return gpd.GeoDataFrame({names.ID : indices,
-                                   'outlet_ID' : outlet_indices,
-                                   'name' : names,
-                                   'outlet_point' : outlet_points,
-                                   'geometry' : incremental_cas},
-                                  crs=rivers[0].crs)
+        catches = []
+        if loc == 0:
+            catches.append(root[names.CATCHMENT])
+
+        for child in root.children:
+            catches.extend([n[names.CATCHMENT] for n in truncated_tree_iter(child)])
+
+        incremental_cas.append(shapely.unary_union([ca for ca in catches if ca is not None]))
+
+    outlets['incremental_catchment'] = gpd.GeoSeries(incremental_cas, outlets.index)
+    return outlets
 
 
 #
@@ -977,6 +1097,12 @@ def mergeShortReaches(river : River,
     Note if tol is None, the tol is taken from the reach property TARGET_SEGMENT_LENGTH.
 
     """
+    # do-not-merge flag:
+    #    1 -> do not merge upstream of this reach
+    #   -1 -> do not merge downstream of this reach
+    if 'do-not-merge' not in river.df:
+        river.df['do-not-merge'] = [0,] * len(river)
+    
     for node in list(river):
         if tol is None:
             ltol = node[names.TARGET_SEGMENT_LENGTH]
@@ -988,14 +1114,14 @@ def mergeShortReaches(river : River,
                 "  ...cleaned inner linestring of length %g at centroid %r with id %r" %
                 (node.linestring.length, node.linestring.centroid.coords[0], nname))
 
-            if len(list(node.siblings)) > 0 and len(node.children) == 1:
+            if len(list(node.siblings)) > 0 and len(node.children) == 1 and node['do-not-merge'] != 1:
                 # junction tributary with one child
                 node.children[0].merge()
-            elif len(node.children) == 0:
+            elif len(node.children) == 0 and node['do-not-merge'] != -1:
                 # if the leaf node is too small
                 node.remove()
                 node.linestring = shapely.geometry.LineString()
-            else:
+            elif node['do-not-merge'] != -1:
                 for sibling in list(node.siblings):
                     sibling.moveCoordinate(-1, node.linestring.coords[0])
                     sibling.remove()

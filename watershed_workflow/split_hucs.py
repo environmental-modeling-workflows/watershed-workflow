@@ -1,4 +1,5 @@
 """A module for working with multi-polys, a MultiLine that together forms a Polygon"""
+from typing import Optional, Tuple, List, Iterable, Any
 
 import logging
 import numpy as np
@@ -15,6 +16,7 @@ import shapely.ops
 import shapely.errors
 
 import watershed_workflow.utils
+import watershed_workflow.crs
 import watershed_workflow.plot
 import watershed_workflow.sources.standard_names as names
 
@@ -141,10 +143,10 @@ class SplitHUCs:
 
     """
     def __init__(self,
-                 df,
-                 abs_tol=_abs_tol,
-                 rel_tol=_rel_tol,
-                 exterior_outlet=None):
+                 df : gpd.GeoDataFrame,
+                 abs_tol : float = _abs_tol,
+                 rel_tol : float = _rel_tol,
+                 exterior_outlet : Optional[shapely.geometry.Point] = None):
         self.df = df
 
         # all shapes are stored as a collection of collections of linestrings
@@ -158,14 +160,14 @@ class SplitHUCs:
 
         # save the exterior outlet
         if exterior_outlet is not None:
-            assert type(exterior_outlet) is shapely.geometry.Point
+            assert isinstance(exterior_outlet, shapely.geometry.Point)
         self.exterior_outlet = exterior_outlet
 
         # initialize
         shapes = df['geometry']
-        assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
+        assert all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes)
         shapes = partition(shapes, abs_tol, rel_tol)
-        assert (all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes))
+        assert all(isinstance(poly, shapely.geometry.Polygon) for poly in shapes)
         uniques, intersections = intersectAndSplit(shapes)
 
         boundary_gon = [HandledCollection() for i in range(len(shapes))]
@@ -208,12 +210,13 @@ class SplitHUCs:
 
         # the list of shapes, each entry in the list is a tuple
         self.gons = [(u, i) for u, i in zip(boundary_gon, intersection_gon)]
+        self.update()
 
     @property
-    def crs(self):
+    def crs(self) -> watershed_workflow.crs.CRS:
         return self.df.crs
 
-    def to_crs(self, crs):
+    def to_crs(self, crs : watershed_workflow.crs.CRS):
         self.df.to_crs(crs)
         obj_handles = list(self.linestrings.handles())
         shapes = list(self.linestrings)
@@ -227,7 +230,7 @@ class SplitHUCs:
         geom = [self.computePolygon(i) for i in range(len(self))]
         self.df['geometry'] = geom
 
-    def computePolygon(self, i):
+    def computePolygon(self, i : int) -> shapely.geometry.Polygon:
         """Construct polygon i and return a copy."""
         linestrings = []
         boundary, inter = self.gons[i]
@@ -240,22 +243,21 @@ class SplitHUCs:
                 linestrings.append(self.linestrings[s])
 
         ml = shapely.ops.linemerge(linestrings)
-        try:
-            assert (type(ml) is shapely.geometry.LineString)
-        except AssertionError:
+
+        if not isinstance(ml, shapely.geometry.LineString):
             for ls in linestrings:
                 logging.info(ls)
-            raise AssertionError
+            raise TypeError(f'computePolygon({i}) failed as linemerged components do not form a LineString but a {type(ml)}')
         poly = shapely.geometry.Polygon(ml)
         return poly
 
-    def polygons(self):
+    def polygons(self) -> Iterable[shapely.geometry.Polygon]:
         """Iterate over the polygons."""
         self.update()
         for g in self.df['geometry']:
             yield g
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> gpd.GeoDataFrame:
         self.update()
         return self.df
 
@@ -265,11 +267,20 @@ class SplitHUCs:
 
     def plotAsLinestrings(self, *args, **kwargs):
         """Plot not as polygons, but individual linestrings."""
-        df = gpd.GeoDataFrame(geometry=list(self.linestrings.values()))
+        df = gpd.GeoDataFrame(geometry=list(self.linestrings.values()), crs=self.crs)
         return watershed_workflow.plot.linestringsWithCoords(df, *args, **kwargs)
     
-
-    def explore(self, column=names.ID, m=None, marker=None, name='watersheds', **kwargs):
+    def explore_linestrings(self,
+                            **kwargs):
+        df = gpd.GeoDataFrame(geometry=list(self.linestrings.values()), crs=self.crs)
+        return df.explore(**kwargs)
+    
+    def explore(self,
+                column : str = names.ID,
+                m : Optional[Any] = None,
+                marker : Optional[str] = None,
+                name : str = 'watersheds',
+                **kwargs):
         """Open a map!"""
         # get a name
         if column == names.ID and names.ID not in self.df:
@@ -305,7 +316,6 @@ class SplitHUCs:
 
         # default explore
         m = self.df.explore(column=column, m=m, name=name, **kwargs)
-        
 
         if marker:
             # don't reuse -- some versions keep the various *_kwds
@@ -317,8 +327,13 @@ class SplitHUCs:
             marker_kwds.setdefault('radius', 10)
             kwargs2['style_kwds']['fillOpacity'] = 1
 
+            if names.ID in self.df:
+                new_id_name = names.ID+'-copy'
+            else:
+                new_id_name = names.ID
+
             marker_df = self.df.set_geometry([shapely.geometry.MultiPoint(poly.exterior.coords) for poly in self.df.geometry]) \
-                .explode(index_parts=True).reset_index(names=[names.ID, 'coord'])
+                               .explode(index_parts=True).reset_index(names=[new_id_name, 'coord'])
 
             for disp_mode in ['tooltip', 'popup']:
                 if disp_mode in kwargs2 and isinstance(kwargs2[disp_mode], list):
@@ -360,21 +375,26 @@ class SplitHUCs:
         return len(self.gons)
 
 
-def simplify(hucs, tol=0.1):
+def simplify(hucs : SplitHUCs,
+             tol=0.1) -> None:
     """Simplify, IN PLACE, all linestrings in the polygon representation."""
     for i, linestring in hucs.linestrings.items():
         hucs.linestrings[i] = linestring.simplify(tol)
 
 
-def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interior=True):
+def removeHoles(polygons : Iterable[shapely.geometry.Polygon],
+                abs_tol : float = _abs_tol,
+                rel_tol : float = _rel_tol,
+                remove_all_interior : bool = True) -> \
+                Tuple[List[shapely.geometry.Polygon], List[shapely.geometry.Polygon]]:
     """Removes interior small holes between the boundaries of polygons.
 
     Note this assumes the polygons are mostly disjoint.
     
     """
-    polygons = polygons[:]
+    polygons = [p for p in polygons]
     logging.info(f'Removing holes on {len(polygons)} polygons')
-    assert (all(isinstance(p, shapely.geometry.Polygon) for p in polygons))
+    assert all(isinstance(p, shapely.geometry.Polygon) for p in polygons)
 
     # first remove interior holes
     if remove_all_interior:
@@ -424,7 +444,9 @@ def removeHoles(polygons, abs_tol=_abs_tol, rel_tol=_rel_tol, remove_all_interio
     return polygons, big_holes
 
 
-def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
+def partition(list_of_shapes : Iterable[shapely.geometry.Polygon],
+              abs_tol : float = _abs_tol,
+              rel_tol : float =_rel_tol) -> List[shapely.geometry.Polygon]:
     """Given a list of shapes which mostly share boundaries, make sure
     they partition the space.  Often HUC boundaries have minor
     overlaps and underlaps -- here we try to account for wiggles.
@@ -440,12 +462,10 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
 
             try:
                 if watershed_workflow.utils.isVolumetricIntersection(s1, s2):
-                    props = s2.properties
                     s2 = s2.difference(s1)
                     if isinstance(s2, shapely.geometry.base.BaseMultipartGeometry):
                         s2 = biggest(s2)
                     list_of_shapes[j] = s2
-                    list_of_shapes[j].properties = props
             except shapely.errors.TopologicalError as err:
                 raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '
                                                       + str(err))
@@ -455,7 +475,8 @@ def partition(list_of_shapes, abs_tol=_abs_tol, rel_tol=_rel_tol):
     return list_of_shapes
 
 
-def intersectAndSplit(list_of_shapes):
+def intersectAndSplit(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> \
+        Tuple[List[List[None | shapely.geometry.LineString]], List[shapely.geometry.LineString]]:
     """Given a list of shapes which share boundaries (i.e. they partition
     some space), return a compilation of their linestrings.
 
@@ -494,8 +515,8 @@ def intersectAndSplit(list_of_shapes):
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
 
-                        assert (isinstance(mps, shapely.geometry.MultiPoint))
-                        assert (len(mps) == 2)
+                        assert isinstance(mps, shapely.geometry.MultiPoint)
+                        assert len(mps) == 2
                         parts_lines.append(
                             shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
                     inter = shapely.ops.linemerge(parts_lines)
@@ -511,7 +532,7 @@ def intersectAndSplit(list_of_shapes):
                    type(inter) is shapely.geometry.MultiLineString:
 
                     logging.info(
-                        f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter)}'
+                        f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter.geoms)}'
                     )
                     err = RuntimeError('HUC intersection yielded collection of odd types')
                     err.polys = list_of_shapes
@@ -552,10 +573,10 @@ def intersectAndSplit(list_of_shapes):
     return uniques_r, intersections
 
 
-def computeNonOverlappingPolygons(polys,
-                                  abs_tol=_abs_tol,
-                                  rel_tol=_rel_tol,
-                                  remove_all_interior=True):
+def computeNonOverlappingPolygons(polys : gpd.GeoDataFrame,
+                                  abs_tol : float = _abs_tol,
+                                  rel_tol : float = _rel_tol,
+                                  remove_all_interior : bool =True) -> List[shapely.geometry.Polygon]:
     """Given a list of overlapping contributing area polygons, compute a nonoverlapping set.
 
     Often we wish to use SplitHucs constructed from the "delta
@@ -582,17 +603,19 @@ def computeNonOverlappingPolygons(polys,
       Holes in the partition that are bigger than the tolerance.
 
     """
-    assert (all(isinstance(p, shapely.geometry.Polygon) for p in polys))
-    assert (all(hasattr(p, 'properties') for p in polys))
+    assert names.ID in polys.keys()
+    assert all(isinstance(p, shapely.geometry.Polygon) for p in polys)
 
-    sorted_polys = sorted(polys, key=lambda a: a.area, reverse=True)
+    if 'area' not in polys.keys():
+        polys['area'] = polys.geometry.area
+    polys = polys.sort_values(by='area', ascending=False)
+
 
     # form the tree
-
     logging.info(f'Create {len(roots)} roots')
 
     def print(r, ntabs):
-        logging.info(' '*ntabs + f'node {r.properties["ID"]}')
+        logging.info(' '*ntabs + f'node {r["ID"]}')
         for n in r.children:
             print(n, ntabs + 1)
 
@@ -600,7 +623,7 @@ def computeNonOverlappingPolygons(polys,
         logging.info(f'Root {i}:')
         print(root, 1)
 
-    assert (all(hasattr(node, 'properties') for root in roots for node in root.preOrder()))
+    assert all(hasattr(node, 'properties') for root in roots for node in root.preOrder())
 
     # now, at each level, subtract all the containing children.  note
     # we want to work down the tree here
@@ -613,11 +636,11 @@ def computeNonOverlappingPolygons(polys,
                                                  remove_all_interior)
                 big_holes.extend(holes)
                 upstream = shapely.ops.unary_union(child_polys + holes)
-                assert (isinstance(node.poly, shapely.geometry.Polygon))
+                assert isinstance(node.poly, shapely.geometry.Polygon)
                 node.poly = node.poly.difference(upstream)
                 if isinstance(node.poly, shapely.geometry.MultiPolygon):
                     node.poly = biggest(list(node.poly))
-                assert (isinstance(node.poly, shapely.geometry.Polygon))
+                assert isinstance(node.poly, shapely.geometry.Polygon)
 
     def getPoly(node):
         poly = node.poly
@@ -629,9 +652,9 @@ def computeNonOverlappingPolygons(polys,
 
     logging.info('Second Remove Holes')
     partition, holes = removeHoles(partition, abs_tol, rel_tol, remove_all_interior)
-    assert (all(hasattr(p, 'properties') for p in partition))
+    assert all(hasattr(p, 'properties') for p in partition)
     return partition, holes
 
 
-def findBiggest(list_of_shapes):
+def findBiggest(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> shapely.geometry.Polygon:
     return next(reversed(sorted(list_of_shapes, key=lambda a: a.area)))
