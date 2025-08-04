@@ -379,7 +379,7 @@ def _cutAndSnapInteriorCrossing(hucs : SplitHUCs,
                     logging.info(f'  seg1: {list(new_reach[0].coords)}')
                     logging.info(f'  seg2: {list(new_reach[1].coords[1:])}')
                     logging.info(f'  splitting at coord: {len(new_reach[0].coords)-1} of {len(reach.linestring.coords)}')
-                    #us, ds = reach.split(len(new_reach[0].coords)-1)
+                    us, ds = reach.split(len(new_reach[0].coords)-1)
 
                 hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
