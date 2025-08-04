@@ -22,10 +22,9 @@ PACKAGES_BASE=['python',
                'ipympl',
                'ipykernel',
                'pynhd',
-               'pygeohydro',
+               'pygeohydro>0.18',
                'py3dep',
                'pydaymet',
-               'aiohttp>=3.11',
                ]
 
 # extra packages needed in the WW env when building for a user
