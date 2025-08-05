@@ -8,13 +8,40 @@ LABEL Description="Base env for CI of Watershed Workflow"
 ARG env_name=watershed_workflow_CI
 ENV CONDA_BIN=mamba
 
+# copy over create_envs
 WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
 RUN mkdir environments
 
+# linux-arm64 does not have a pycares package -- build it locally
+# Detect architecture and build if needed
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "aarch64" ]; then \
+        echo "Building pycares from source for aarch64..."; \
+        conda install -y conda-build; \
+        conda skeleton pypi pycares; \
+        awk '/^requirements:/ { \
+                print; \
+                print "  build:"; \
+                print "    - python"; \
+                print "    - pip"; \
+                print "    - setuptools"; \
+                print "    - cffi >=1.5.0"; \
+                print "    - wheel"; \
+                print "    - gcc"; \
+                next \
+            } \
+            { print }' pycares/meta.yaml > meta.new.yaml; \
+        mv meta.new.yaml pycares/meta.yaml; \
+        echo "!!!ran awk!!!"; \
+        cat pycares/meta.yaml; \
+        conda build pycares; \
+    fi
+
+# Create the environment
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
-    --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
+    --env-type=CI --with-tools-env=watershed_workflow_tools --use-local ${env_name}
 
 ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
 ENV PATH="$COMPILERS/bin:$PATH"
@@ -58,5 +85,6 @@ RUN make -j4 install
 
 # exodus installs its wrappers in an invalid place for python...
 # -- get and save the python version
-RUN cp /opt/conda/envs/${env_name}/lib/exodus3.py /opt/conda/envs/${env_name}/lib/python3.13/site-packages/
-ENV PYTHONPATH="/opt/conda/envs/${env_name}/lib"
+RUN SITE_PACKAGES=$(conda run -n ${env_name} python -c "import site; print(site.getsitepackages()[0])") && \
+    cp /opt/conda/envs/${env_name}/lib/exodus3.py ${SITE_PACKAGES}
+

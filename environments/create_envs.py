@@ -174,7 +174,7 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
     with open(env_filename, 'w') as fid:
         fid.write('\n'.join(lines))
 
-def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
+def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False, use_local=False):
     """Creates the environment locally."""
     if env_name is None:
         env_prefix = get_env_prefix(env_type)
@@ -182,6 +182,9 @@ def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
 
     # build up the conda env create command
     cmd = [PACKAGE_MANAGER, 'create', '--yes', '--name', env_name]
+    if use_local:
+        cmd.append('-c')
+        cmd.append('local')
     for channel in CHANNELS:
         cmd.append('-c')
         cmd.append(channel)
@@ -199,9 +202,9 @@ def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False):
         os.environ[f'WATERSHED_WORKFLOW_{env_type}_ENV'] = env_name
     return env_name
 
-def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False, dry_run=False):
+def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False, dry_run=False, use_local=False):
     if not dump_only:
-        create_env_local(env_type, os_name, packages, env_name, dry_run)
+        create_env_local(env_type, os_name, packages, env_name, dry_run, use_local)
         dump_env_local(env_type, os_name, env_name)
 
 
@@ -224,6 +227,8 @@ if __name__ == '__main__':
     parser.add_argument('--OS', type=str, default=None, choices=['OSX', 'Linux'],
                         help='Operating system flag, likely OSX or Linux.  This is used to determine compilers for tools env '
                              'and a OS-specific filename for writing the environment.yml file.')
+    parser.add_argument('--use-local', action='store_true',
+                        help='Use local emulated channel, with locally built packages, in all conda create calls.')
     parser.add_argument('ENV_NAME', type=str, help='Name for this environement')
     args = parser.parse_args()
 
@@ -237,7 +242,7 @@ if __name__ == '__main__':
     if not args.without_ww_env:
         # create the workflow environment
         packages = get_packages(args.env_type, args.OS)
-        create_and_dump_env_local(args.env_type, args.OS, packages, args.ENV_NAME, args.dump_only, args.dry_run)
+        create_and_dump_env_local(args.env_type, args.OS, packages, args.ENV_NAME, args.dump_only, args.dry_run, args.use_local)
 
     if args.with_user_env is not None:
         # create the user environment
