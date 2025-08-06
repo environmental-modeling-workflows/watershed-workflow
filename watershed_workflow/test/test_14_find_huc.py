@@ -19,8 +19,6 @@ def test_find12(datadir):
 
     testshpfile = datadir.join('test_shapefile.shp')
     shp = get_shapes(testshpfile)
-    radius = math.sqrt(float(shp.area.iloc[0]) / np.pi)
-    shp = shp.buffer(-.001 * radius)
     found = watershed_workflow.findHUC(nhd, shp.geometry.iloc[0], shp.crs, '0601')
     assert '060102020103' == found
 
