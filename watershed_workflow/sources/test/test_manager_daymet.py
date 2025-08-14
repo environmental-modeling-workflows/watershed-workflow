@@ -9,6 +9,10 @@ import watershed_workflow.sources.manager_shapefile
 import watershed_workflow.sources.manager_daymet
 
 
+pytest.skip("skipping DayMet module -- DayMet THREDDS is down", allow_module_level=True)
+
+
+
 def test_daymet1():
     # single file covers it
     ms = watershed_workflow.sources.manager_shapefile.ManagerShapefile(

@@ -21,7 +21,10 @@ from watershed_workflow.sources.manager_glhymps import ManagerGLHYMPS
 # from watershed_workflow.sources.manager_soilgrids_2017 import ManagerSoilGrids2017
 from watershed_workflow.sources.manager_pelletier_dtb import ManagerPelletierDTB
 from watershed_workflow.sources.manager_nlcd import ManagerNLCD
+
+# DayMet THREDDS API is disabled -- this only works for previously-downloaded files!
 from watershed_workflow.sources.manager_daymet import ManagerDaymet
+
 from watershed_workflow.sources.manager_modis_appeears import ManagerMODISAppEEARS
 
 from watershed_workflow.sources.manager_shapefile import ManagerShapefile
@@ -75,7 +78,7 @@ default_lai = 'MODIS'
 met_sources : Dict[str,Any] = {
     'DayMet': ManagerDaymet()
 }
-default_met = 'DayMet'
+default_met = None
 
 
 def getDefaultSources() -> Dict[str, Any]:
@@ -92,7 +95,7 @@ def getDefaultSources() -> Dict[str, Any]:
     sources['land cover'] = land_cover_sources[default_land_cover]
     sources['LAI'] = lai_sources[default_lai]
     sources['depth to bedrock'] = structure_sources['Pelletier DTB']
-    sources['meteorology'] = met_sources[default_met]
+    sources['meteorology'] = None
     return sources
 
 
