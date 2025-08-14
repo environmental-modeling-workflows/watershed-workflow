@@ -686,16 +686,17 @@ def _network_sweep(river, depress_upstream_by=None, use_nhd_elev=False, ignore_i
             # traversing from leaf node (headwater) catchment to the root node
             node.properties['SmoothProfile'] = _enforce_monotonicity(
                 node.properties['SmoothProfile'], 'downstream')  # making monotonous
-            junction_elevs = [sib.properties['SmoothProfile'][0, 1] for sib in node.siblings()]
+            junction_elevs = [node.properties['SmoothProfile'][0, 1]]
+            junction_elevs.extend([sib.properties['SmoothProfile'][0, 1] for sib in node.siblings()])
 
             if use_nhd_elev:
                 junction_elevs.append(node.properties['MinimumElevationSmoothed'] / 100)
             if node.parent != None and node.properties['ID'] not in ignore_in_sweep:
                 junction_elevs.append(node.parent.properties['SmoothProfile'][-1, 1])
-                node.parent.properties['SmoothProfile'][-1, 1] = min(
-                    junction_elevs)  # giving min junction elevation to both the siblings
+                node.parent.properties['SmoothProfile'][-1, 1] = min(junction_elevs)  # giving min junction elevation to both the siblings
             for sib in node.siblings():
                 sib.properties['SmoothProfile'][0, 1] = min(junction_elevs)
+            node.properties['SmoothProfile'][0, 1] = min(junction_elevs)
 
 
 def _bank_nodes_from_elem(elem, m2):
