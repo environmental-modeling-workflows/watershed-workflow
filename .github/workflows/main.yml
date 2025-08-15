@@ -44,7 +44,7 @@ jobs:
         id: extract_tag
         run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
 
-      - name; Extract short sha name
+      - name: Extract short sha name
         id: extract_short_sha
         run: echo "GITHUB_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
         
