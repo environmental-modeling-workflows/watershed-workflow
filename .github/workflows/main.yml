@@ -42,7 +42,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
@@ -103,7 +103,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
