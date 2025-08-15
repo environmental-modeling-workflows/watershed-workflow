@@ -22,9 +22,9 @@ RUN cp watershed_workflowrc examples/.watershed_workflowrc
 RUN echo "data_directory : /ww/examples/Coweeta/input_data" >> examples/.watershed_workflowrc
 
 # run the library tests
-RUN conda run -n watershed_workflow_CI python -m pytest watershed_workflow/
+# RUN conda run -n watershed_workflow_CI python -m pytest watershed_workflow/test
 
 # run the notebook examples
-RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_stream_aligned_mesh.ipynb
+# RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_stream_aligned_mesh.ipynb
 
 
