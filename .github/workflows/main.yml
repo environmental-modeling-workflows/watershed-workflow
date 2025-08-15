@@ -78,8 +78,8 @@ jobs:
           file: ./docker/CI.Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ github.sha.substr(0,7) }}
-          build-args: CI_ENV_DOCKER_TAG=${{ env.CI_ENV_BRANCH }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${GITHUB_SHA}
+          build-args: CI_ENV_DOCKER_TAG=${{env.CI_ENV_BRANCH}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
@@ -110,8 +110,8 @@ jobs:
       - name: Create and push multi-arch manifest
         run: |
           docker manifest create ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }} \
-            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64-${{ github.sha.substr(0,7) }} \
-            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64-${{ github.sha.substr(0,7) }}
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64-${GITHUB_SHA} \
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64-${GITHUB_SHA}
 
           docker manifest push myorg/watershed_workflow-ci:${{ env.BRANCH_TAG }}
 
