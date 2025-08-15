@@ -42,7 +42,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
@@ -80,7 +80,6 @@ jobs:
         with:
           context: .
           file: ./docker/CI.Dockerfile
-          platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
           build-args: CI_ENV_DOCKER_TAG=${{ env.CI_ENV_BRANCH }}
@@ -103,7 +102,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA})" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
