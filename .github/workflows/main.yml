@@ -60,13 +60,13 @@ jobs:
           if [ $? -eq 1 ]; then
             echo "CI_ENV_BRANCH=master" >> $GITHUB_ENV
           else
-            echo "CI_ENV_BRANCH=${{env.BRANCH_TAG}}" >> $GITHUB_ENV
+            echo "CI_ENV_BRANCH=${{ env.BRANCH_TAG }}" >> $GITHUB_ENV
           fi 
 
       - name: check environment variable
         run: |
           # verify that logic above has worked
-          echo ${{env.CI_ENV_BRANCH}}
+          echo ${{ env.CI_ENV_BRANCH }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -121,5 +121,5 @@ jobs:
             --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64-${{ env.GITHUB_SHORT_SHA }} \
             --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64-${{ env.GITHUB_SHORT_SHA }}
 
-          docker manifest push myorg/watershed_workflow-ci:${{ env.BRANCH_TAG }}
+          docker manifest push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}
 
