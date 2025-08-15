@@ -19,16 +19,22 @@ jobs:
   build:
     # The type of runner that the job will run on
     strategy:
-      fail-fast: false 
-      matrix: 
-        os: [ ubuntu-latest, ubuntu-24.04-arm ]
-    runs-on: ${{ matrix.os }}
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+            platform: linux/arm64
+
+    runs-on: ${{ matrix.runner }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Extract branch name
         id: extract_branch
@@ -42,14 +48,6 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Get runner architecture
-        run: |
-          if [[ ${{matrix.os}} == "ubuntu-24.04-arm" ]]; then
-            echo "ARCH=arm64" >> $GITHUB_ENV
-          else
-            echo "ARCH=amd64" >> $GITHUB_ENV
-          fi
-
       - name: Check to see if CI_ENV_DOCKER_TAG exists for current branch
         run: |
           # check to see if manifest for requested image exists, echo $? returns 0 if it exists 
@@ -67,7 +65,7 @@ jobs:
           echo ${{env.CI_ENV_BRANCH}}
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
@@ -76,10 +74,11 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: ./
+          context: .
           file: ./docker/CI.Dockerfile
+          platforms: ${{ matrix.platform }}
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ env.ARCH }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}
           build-args: CI_ENV_DOCKER_TAG=${{env.CI_ENV_BRANCH}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -93,25 +92,26 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4     
+
       - name: Extract branch name
         id: extract_branch
         run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
+
       - name: Extract docker tag name
         id: extract_tag
         run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{secrets.DOCKER_HUB_USERNAME}}
           password: ${{secrets.DOCKER_HUB_ACCESS_TOKEN}}
-      - name: Pull images (remove with artifacts??)
+
+      - name: Create and push multi-arch manifest
         run: |
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64-latest
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64-latest
-      - name: Edit manifest
-        run: |
-          docker manifest create ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-latest \
-            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64-latest \
-            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64-latest
-          docker manifest push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-latest
+          docker manifest create ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }} \
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-amd64 \
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-arm64
+
+          docker manifest push myorg/watershed_workflow-ci:${{ env.BRANCH_TAG }}
 
