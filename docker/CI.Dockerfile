@@ -1,7 +1,7 @@
 #
 # Stage 2 -- clone repo run
 #
-ARG CI_ENV_DOCKER_TAG
+ARG CI_ENV_DOCKER_TAG=master
 
 FROM ecoon/watershed_workflow-ci_env:${CI_ENV_DOCKER_TAG} AS watershed_workflow
 
@@ -25,9 +25,7 @@ RUN echo "data_directory : /ww/examples/Coweeta/input_data" >> examples/.watersh
 RUN conda run -n watershed_workflow_CI python -m pytest watershed_workflow/
 
 # run the notebook examples
-# RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/mesh_coweeta.ipynb
-# RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/get_Daymet.ipynb
-# RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/mesh_mixed_element_toy_problem.ipynb
-# RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/mesh_mixed_element_coweeta.ipynb
+RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_stream_aligned_mesh.ipynb
+RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_triangle_only_mesh.ipynb
 
 
