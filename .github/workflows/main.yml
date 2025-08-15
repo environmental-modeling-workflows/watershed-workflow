@@ -40,13 +40,13 @@ jobs:
         id: extract_branch
         run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
 
-      - name: Extract docker tag name
-        id: extract_tag
-        run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
-
       - name: Extract short sha name
         id: extract_short_sha
         run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
+
+      - name: Extract docker tag name
+        id: extract_tag
+        run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
         id: buildx
@@ -100,6 +100,10 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
+
+      - name: Extract short sha name
+        id: extract_short_sha
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
