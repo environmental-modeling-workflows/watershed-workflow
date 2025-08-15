@@ -87,7 +87,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Manually push to avoid creating manifest?
+      - name: Manually push to avoid creating manifest
         id: docker_push
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
