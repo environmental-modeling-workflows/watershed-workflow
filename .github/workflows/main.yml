@@ -90,7 +90,7 @@ jobs:
       - name: Manually push to avoid creating manifest?
         id: docker_push
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
   
   fix-manifest:
     runs-on: ubuntu-latest
