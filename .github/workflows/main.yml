@@ -46,7 +46,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
         id: buildx
