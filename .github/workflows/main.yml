@@ -80,14 +80,16 @@ jobs:
         with:
           context: .
           file: ./docker/CI.Dockerfile
-          push: true
+          push: false
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
           build-args: CI_ENV_DOCKER_TAG=${{ env.CI_ENV_BRANCH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+
+      - name: Manually push to avoid creating manifest?
+        id: docker_push
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
   
   fix-manifest:
     runs-on: ubuntu-latest
