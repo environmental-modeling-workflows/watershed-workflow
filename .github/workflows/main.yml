@@ -46,7 +46,7 @@ jobs:
 
       - name: Extract short sha name
         id: extract_short_sha
-        run: echo "GITHUB_SHORT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
         id: buildx
@@ -83,7 +83,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ci:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
-          build-args: CI_ENV_DOCKER_TAG=${{env.CI_ENV_BRANCH}}
+          build-args: CI_ENV_DOCKER_TAG=${{ env.CI_ENV_BRANCH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
