@@ -18,16 +18,6 @@ import watershed_workflow.warp
 import watershed_workflow.sources.names
 
 
-def _previous_month():
-    now = datetime.datetime.now()
-    year = now.year
-    month = now.month - 1
-    if month == 0:
-        year = year - 1
-        month = 12
-    return cftime.datetime(year, month, 1, calendar='noleap')
-
-
 class ManagerDaymet:
     """Daymet meterological datasets.
 
@@ -68,7 +58,7 @@ class ManagerDaymet:
     """
 
     _START = cftime.datetime(1980, 1, 1, calendar='noleap')
-    _END = _previous_month()
+    _END = cftime.datetime(2024, 1, 1, calendar='noleap')
     VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
     DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"

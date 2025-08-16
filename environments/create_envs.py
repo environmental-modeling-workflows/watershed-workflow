@@ -24,7 +24,8 @@ PACKAGES_BASE=['python',
                'pynhd',
                'pygeohydro>0.18',
                'py3dep',
-               'pydaymet',
+               's3fs',
+               'zarr',
                ]
 
 # extra packages needed in the WW env when building for a user
