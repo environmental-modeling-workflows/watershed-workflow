@@ -203,8 +203,8 @@ class ManagerDaymet:
             crs = watershed_workflow.crs.daymet_crs
 
         ds_combined.rio.write_crs(crs, inplace=True)
-        for var in ds_combined.variables:
-            ds_combined[var] = ds_combined[var].rio.write_crs(crs)
+        for vname in ds_combined.variables:
+            ds_combined[vname] = ds_combined[vname].rio.write_crs(crs)
         return ds_combined
 
     def getDataset(self,
@@ -284,6 +284,6 @@ class ManagerDaymet:
         ds_sel.attrs = ds.attrs
 
         ds_sel.rio.write_crs(ds.rio.crs, inplace=True)
-        for var in ds_sel.variables:
-            ds_sel[var] = ds_sel[var].rio.write_crs(ds.rio.crs)
+        for vname in ds_sel.variables:
+            ds_sel[vname] = ds_sel[vname].rio.write_crs(ds.rio.crs)
         return ds_sel

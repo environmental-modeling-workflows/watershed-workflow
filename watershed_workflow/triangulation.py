@@ -1,5 +1,5 @@
 """Triangulates polygons"""
-from typing import Tuple, List, Optional, Set
+from typing import Tuple, List, Optional, Set, Iterator
 
 import logging
 import collections
@@ -29,16 +29,23 @@ class Nodes:
     shouldn't have to round here at all, but we do anyway to keep
     things cleaner.
     """
-    def __init__(self, decimals : int = 3):
+    def __init__(self, decimals: int = 3) -> None:
+        """Initialize a Nodes collection.
+        
+        Parameters
+        ----------
+        decimals : int, optional
+            Number of decimal places for rounding coordinates. Default is 3.
+        """
         self.decimals = decimals
         self._i = 0
-        self._store : collections.OrderedDict[Tuple[float, ...], int] = collections.OrderedDict()
+        self._store: collections.OrderedDict[Tuple[float, ...], int] = collections.OrderedDict()
 
     def __len__(self) -> int:
         """Length is tracked by the counter"""
         return self._i
 
-    def __getitem__(self, key : Tuple[float, ...]) -> int:
+    def __getitem__(self, key: Tuple[float, ...]) -> int:
         """Get item index, setting if default."""
         # Note this implementation could be optimized, and should be
         # done so assuming keys are NOT there, which is the most
@@ -49,23 +56,35 @@ class Nodes:
             self._i += 1
         return self._store[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[float, ...]]:
         """Iterable collection"""
         for k in self._store.keys():
             yield k
 
 
-def connectOnewayTrip(inds : List[int]) -> List[Tuple[int, int]]:
+def connectOnewayTrip(inds: List[int]) -> List[Tuple[int, int]]:
     """Connect indices in edges in a oneway fashion"""
     return [(inds[i], inds[i + 1]) for i in range(len(inds) - 1)]
 
 
-def connectRoundTrip(inds : List[int]) -> List[Tuple[int, int]]:
+def connectRoundTrip(inds: List[int]) -> List[Tuple[int, int]]:
     """Connect indices in edges in a round-trip fashion"""
     return connectOnewayTrip(inds) + [(inds[-1], inds[0]), ]
 
 
-def orient(e : Tuple[int, int]) -> Tuple[int, int] | None:
+def orient(e: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    """Orient an edge consistently.
+    
+    Parameters
+    ----------
+    e : Tuple[int, int]
+        Edge as tuple of two vertex indices.
+        
+    Returns
+    -------
+    Optional[Tuple[int, int]]
+        Oriented edge or None if vertices are identical.
+    """
     if e[0] > e[1]:
         return e[1], e[0]
     elif e[0] < e[1]:
@@ -76,16 +95,25 @@ def orient(e : Tuple[int, int]) -> Tuple[int, int] | None:
 
 class NodesEdges:
     """A collection of nodes and edges."""
-    def __init__(self,
-                 objlist : Optional[shapely.geometry.LineString | shapely.geometry.Polygon] = None):
+    def __init__(
+        self,
+        objlist: Optional[List[shapely.geometry.LineString | shapely.geometry.Polygon]] = None
+    ) -> None:
+        """Initialize NodesEdges collection.
+        
+        Parameters
+        ----------
+        objlist : Optional[List[shapely.geometry.LineString | shapely.geometry.Polygon]], optional
+            List of geometry objects to add. Default is None.
+        """
         self.nodes = Nodes()
-        self.edges : Set[Tuple[int,int]] = set()
+        self.edges: Set[Tuple[int, int]] = set()
 
         if objlist != None:
             for obj in objlist:
                 self.add(obj)
 
-    def add(self, obj : shapely.geometry.LineString | shapely.geometry.Polygon) -> None:
+    def add(self, obj: shapely.geometry.LineString | shapely.geometry.Polygon) -> None:
         """Adds nodes and edges from obj into collection."""
         if isinstance(obj, shapely.geometry.LineString):
             inds = [self.nodes[c] for c in obj.coords]
@@ -97,7 +125,7 @@ class NodesEdges:
 
         elif isinstance(obj, shapely.geometry.Polygon):
             inds = [self.nodes[c] for c in obj.boundary.coords]
-            
+
             for e in connectRoundTrip(inds):
                 oe = orient(e)
                 if oe is not None:
@@ -106,7 +134,7 @@ class NodesEdges:
         else:
             raise TypeError("Invalid type for add, %r" % type(obj))
 
-    def check(self, tol : float) -> None:
+    def check(self, tol: float) -> None:
         """Checks consistency of the internal representation."""
         logging.info(" checking graph consistency")
         logging.info(" tolerance is set to {}".format(tol))
@@ -133,10 +161,10 @@ class NodesEdges:
         assert (max_edge_node == len(self.nodes) - 1)
 
 
-def triangulate(hucs : watershed_workflow.split_hucs.SplitHUCs,
-                internal_boundaries : Optional[List[shapely.geometry.LineString]] = None,
-                hole_points : Optional[List[shapely.geometry.Point]] = None,
-                tol : float = 1.0,
+def triangulate(hucs: watershed_workflow.split_hucs.SplitHUCs,
+                internal_boundaries: Optional[List[shapely.geometry.LineString]] = None,
+                hole_points: Optional[List[shapely.geometry.Point]] = None,
+                tol: float = 1.0,
                 **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
@@ -165,7 +193,7 @@ def triangulate(hucs : watershed_workflow.split_hucs.SplitHUCs,
     logging.info("Triangulating...")
 
     # get a list of required boundaries, both interior and exterior
-    linestrings : List[shapely.geometry.LineStrings] = []
+    linestrings: List[shapely.geometry.LineStrings] = []
 
     # -- internal boundaries may include a river mesh and must go first
     if internal_boundaries is not None:
@@ -258,7 +286,8 @@ def refineByRiverDistance(near_distance, near_area, away_distance, away_area, ri
     if type(rivers[0]) == shapely.geometry.Polygon:
         river_multiline = shapely.geometry.MultiPolygon(rivers)
     else:
-        river_multiline = shapely.geometry.MultiLineString([r.linestring for river in rivers for r in river])
+        river_multiline = shapely.geometry.MultiLineString(
+            [r.linestring for river in rivers for r in river])
 
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on size gradation from a river."""
@@ -279,7 +308,6 @@ def refineByPolygons(polygons, areas):
     Triangle area must be smaller than the area limit for the polygon when the triangle
     centroid is within the polygon.
     """
-
     def refine(vertices, area):
         """A function for use with watershed_workflow.triangulate.triangulate's refinement_func argument based on polygon area limits."""
         bary = np.sum(np.array(vertices), axis=0) / 3
@@ -310,5 +338,3 @@ def refineByMaxEdgeLength(edge_length):
         return bool(edge_lengths.max() > edge_length)
 
     return refine
-
-

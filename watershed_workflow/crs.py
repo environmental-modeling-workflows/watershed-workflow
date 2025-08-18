@@ -44,26 +44,76 @@ if typing.TYPE_CHECKING:
     import xarray
 
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def isNative(crs : CRS) -> bool:
-    """Is this crs in the native format?"""
+def isNative(crs: CRS) -> bool:
+    """Check if CRS is in the native format.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Coordinate reference system to check.
+        
+    Returns
+    -------
+    bool
+        True if CRS is in native format.
+    """
     return type(crs) == type(to_proj(crs))
 
 
-def from_proj(crs : CRS) -> CRS:
-    """Converts a Proj CRS to the workflow CRS standard."""
+def from_proj(crs: CRS) -> CRS:
+    """Convert a Proj CRS to the workflow CRS standard.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Proj CRS object to convert.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS standard (currently identical to input).
+    """
     return crs
 
 
-def to_proj(crs : CRS) -> CRS:
-    """Converts a workflow CRS standard to a Proj4 CRS."""
+def to_proj(crs: CRS) -> CRS:
+    """Convert workflow CRS standard to a Proj CRS.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Workflow CRS to convert.
+        
+    Returns
+    -------
+    CRS
+        Proj CRS object (currently identical to input).
+    """
     return crs
 
 
-def from_rasterio(crs : rasterio.crs.CRS) -> CRS:
-    """Converts from rasterio CRS to the workflow CRS standard."""
+def from_rasterio(crs: rasterio.crs.CRS) -> CRS:
+    """Convert rasterio CRS to workflow CRS standard.
+    
+    Parameters
+    ----------
+    crs : rasterio.crs.CRS
+        Rasterio CRS object to convert.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS standard.
+        
+    Notes
+    -----
+    Attempts to use authority codes first for better bounds handling,
+    falls back to general user input conversion.
+    """
     try:
         # from authority seems to get better results with bounds?
         return CRS.from_authority(*crs.to_authority())
@@ -71,19 +121,57 @@ def from_rasterio(crs : rasterio.crs.CRS) -> CRS:
         return CRS.from_user_input(crs)
 
 
-def to_rasterio(crs : CRS) -> rasterio.crs.CRS:
-    """Converts a workflow CRS to a rasterio CRS."""
+def to_rasterio(crs: CRS) -> rasterio.crs.CRS:
+    """Convert workflow CRS to rasterio CRS.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Workflow CRS to convert.
+        
+    Returns
+    -------
+    rasterio.crs.CRS
+        Rasterio CRS object.
+    """
     import rasterio.crs
     return rasterio.crs.CRS.from_user_input(crs)
 
 
-def from_epsg(epsg : int) -> CRS:
-    """Converts from an EPSG code to a workflow CRS."""
+def from_epsg(epsg: int) -> CRS:
+    """Convert EPSG code to workflow CRS.
+    
+    Parameters
+    ----------
+    epsg : int
+        EPSG code identifying the coordinate reference system.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS object.
+    """
     return CRS.from_epsg(epsg)
 
 
-def to_epsg(crs : CRS) -> int:
-    """Attempts to convert to an EPSG code."""
+def to_epsg(crs: CRS) -> int:
+    """Convert CRS to EPSG code.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Workflow CRS to convert.
+        
+    Returns
+    -------
+    int
+        EPSG code.
+        
+    Raises
+    ------
+    ValueError
+        If CRS cannot be represented as an EPSG code.
+    """
     auth, code = crs.to_authority()
     if auth == 'EPSG':
         return code
@@ -91,39 +179,112 @@ def to_epsg(crs : CRS) -> int:
         raise ValueError('Cannot convert CRS to EPSG code.')
 
 
-def from_cartopy(crs : cartopy.crs.CRS) -> CRS:
-    """Converts a cartopy CRS to a workflow CRS."""
+def from_cartopy(crs: cartopy.crs.CRS) -> CRS:
+    """Convert cartopy CRS to workflow CRS.
+    
+    Parameters
+    ----------
+    crs : cartopy.crs.CRS
+        Cartopy CRS object to convert.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS object.
+    """
     return CRS.from_user_input(crs)
 
 
-def to_cartopy(crs : CRS) -> cartopy.crs.CRS:
-    """Converts a workflow CRS to a cartopy.crs.Projection.
-
+def to_cartopy(crs: CRS) -> cartopy.crs.CRS:
+    """Convert workflow CRS to cartopy CRS.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Workflow CRS to convert.
+        
+    Returns
+    -------
+    cartopy.crs.CRS
+        Cartopy CRS object.
+        
+    Notes
+    -----
+    Requires cartopy version 0.20.0 or higher.
     Adopted from: https://pyproj4.github.io/pyproj/stable/crs_compatibility.html
     """
     import packaging.version
     assert packaging.version.Version(cartopy.__version__) >= packaging.version.Version('0.20.0')
     import cartopy.crs as ccrs
     return ccrs.CRS(crs)
-    
 
-def from_string(string : str) -> CRS:
-    """Returns a CRS from a proj string"""
+
+def from_string(string: str) -> CRS:
+    """Create CRS from proj string specification.
+    
+    Parameters
+    ----------
+    string : str
+        Proj string specification of coordinate reference system.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS object.
+    """
     return CRS.from_string(string)
 
 
-def from_wkt(string : str) -> CRS:
-    """Returns a CRS from a WKT string specification"""
+def from_wkt(string: str) -> CRS:
+    """Create CRS from Well-Known Text (WKT) string.
+    
+    Parameters
+    ----------
+    string : str
+        WKT string specification of coordinate reference system.
+        
+    Returns
+    -------
+    CRS
+        Workflow CRS object.
+    """
     return CRS.from_wkt(string)
 
 
-def to_wkt(crs : CRS) -> str:
-    """Returns the WKT string of a CRS."""
+def to_wkt(crs: CRS) -> str:
+    """Convert CRS to Well-Known Text (WKT) string.
+    
+    Parameters
+    ----------
+    crs : CRS
+        Workflow CRS to convert.
+        
+    Returns
+    -------
+    str
+        WKT string representation of the CRS.
+    """
     return crs.to_wkt()
 
 
-def from_xarray(array : xarray.DataArray) -> CRS | None:
-    """Tries to find a CRS from the xarray DataSet or DataArray."""
+def from_xarray(array: xarray.DataArray) -> CRS | None:
+    """Extract CRS from xarray DataArray.
+    
+    Parameters
+    ----------
+    array : xarray.DataArray
+        xarray DataArray that may contain CRS information.
+        
+    Returns
+    -------
+    CRS or None
+        Extracted CRS if found, None otherwise.
+        
+    Notes
+    -----
+    Attempts to find CRS from rioxarray extension first, then from
+    spatial_ref attributes.
+    """
     try:
         rio_crs = array.rio.crs
     except AttributeError:
@@ -140,7 +301,7 @@ def from_xarray(array : xarray.DataArray) -> CRS | None:
         pass
     else:
         return from_wkt(wkt)
-    
+
     return None
 
 
@@ -164,6 +325,19 @@ daymet_crs_km = from_string(
 latlon_crs = from_epsg(4269)
 
 
-def isEqual(crs1 : CRS, crs2 : CRS) -> bool:
-    """Tries to guess at the equality of two CRS objects."""
+def isEqual(crs1: CRS, crs2: CRS) -> bool:
+    """Check if two CRS objects are equal.
+    
+    Parameters
+    ----------
+    crs1 : CRS
+        First CRS to compare.
+    crs2 : CRS
+        Second CRS to compare.
+        
+    Returns
+    -------
+    bool
+        True if CRS objects are considered equal.
+    """
     return crs1 == crs2

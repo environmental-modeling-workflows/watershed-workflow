@@ -1,5 +1,6 @@
 """I/O Utilities"""
 
+from typing import Optional, Dict, Union, Any
 import os
 import numpy as np
 import logging
@@ -7,28 +8,45 @@ import h5py
 import cftime
 import rasterio.transform
 import xarray as xr
+import pandas as pd
 
 import watershed_workflow.crs
 
-def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar='noleap'):
-    """Writes an xarray.Dataset and attributes to an HDF5 file.
+
+def writeDatasetToHDF5(filename: str,
+                       dataset: xr.Dataset,
+                       attributes: Optional[Dict[str, Any]] = None,
+                       time0: Optional[Union[str, cftime.datetime]] = None,
+                       calendar: str = 'noleap') -> None:
+    """
+    Write an xarray.Dataset and attributes to an HDF5 file.
 
     Parameters
     ----------
     filename : str
         Name of the file to write.
     dataset : xarray.Dataset
-        Dataset containing the data to write.
-    attributes : dict
-        Dictionary of attributes to write to the HDF5 file.
-    time0 : str or datetime.date object, optional
-        Time to use as the zero time for the time series.  If not provided, the first
-        time in the time series is used.
+        Dataset containing the data to write. Must have 'time', 'x', and 'y' coordinates.
+    attributes : dict, optional
+        Dictionary of attributes to write to the HDF5 file. Default is None.
+    time0 : str or cftime.datetime, optional
+        Time to use as the zero time for the time series. If not provided, the first
+        time in the time series is used. If string, should be in 'YYYY-MM-DD' format.
+    calendar : str, optional
+        Calendar type to use for time conversion. Default is 'noleap'.
 
-    Returns
-    -------
-    None
-
+    Raises
+    ------
+    KeyError
+        If required coordinates ('time', 'x', 'y') are missing from dataset.
+    ValueError
+        If dataset dimensions don't match expected shapes.
+        
+    Notes
+    -----
+    The function writes time as seconds since time0, with y coordinates in reverse order
+    to match typical geospatial conventions. Data arrays are also flipped vertically
+    to match the y coordinate ordering.
     """
     try:
         os.remove(filename)
@@ -41,11 +59,11 @@ def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar=
     # construct the x,y arrays from the dataset coordinates
     x = dataset.x.values
     y = dataset.y.values
-    
+
     if time0 is None:
         time0 = times[0]
 
-    if type(time0) is str:
+    if isinstance(time0, str):
         time0_split = time0.split('-')
         time0 = cftime.datetime(int(time0_split[0]),
                                 int(time0_split[1]),
@@ -84,25 +102,38 @@ def writeDatasetToHDF5(filename, dataset, attributes=None, time0=None, calendar=
                 fid.attrs[key] = val
 
 
-def writeTimeseriesToHDF5(filename, ts, attributes=None, time0=None):
-    """Writes a time series and attributes to an HDF5 file.
+def writeTimeseriesToHDF5(filename: str,
+                          ts: Union[Dict[str, Any], pd.DataFrame],
+                          attributes: Optional[Dict[str, Any]] = None,
+                          time0: Optional[Union[str, cftime.datetime]] = None) -> None:
+    """
+    Write a time series and attributes to an HDF5 file.
 
     Parameters
     ----------
     filename : str
         Name of the file to write.
-    ts : dict or dataframe
-        Dictionary or dataframe of time series, with keys being the name of the time series
-        and values being the time series data.
+    ts : dict or pandas.DataFrame
+        Dictionary or DataFrame of time series data. Must contain a 'time [datetime]' key/column
+        with datetime values. Other keys/columns contain the time series data.
     attributes : dict, optional
-        Dictionary of attributes to write to the HDF5 file.
-    time0 : str or datetime.date object, optional
-        Time to use as the zero time for the time series.  If not provided, the first
-        time in the time series is used.
+        Dictionary of attributes to write to the HDF5 file. Default is None.
+    time0 : str or cftime.datetime, optional
+        Time to use as the zero time for the time series. If not provided, the first
+        time in the time series is used. If string, should be in 'YYYY-MM-DD' format.
 
-    Returns
-    -------
-    None
+    Raises
+    ------
+    KeyError
+        If 'time [datetime]' key is not found in the input data.
+    ValueError
+        If time0 string format is invalid.
+        
+    Notes
+    -----
+    Time values are converted to seconds since time0 and stored as 32-bit integers.
+    The function automatically adds 'origin date', 'start date', and 'end date' 
+    attributes to the output file.
     """
     try:
         os.remove(filename)
@@ -115,7 +146,7 @@ def writeTimeseriesToHDF5(filename, ts, attributes=None, time0=None):
 
     if time0 is None:
         time0 = times.values[0]
-    if type(time0) is str:
+    if isinstance(time0, str):
         time0 = cftime.datetime.strptime(time0, '%Y-%m-%d').date()
     if attributes is None:
         attributes = dict()

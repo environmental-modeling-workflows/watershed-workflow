@@ -190,11 +190,10 @@ class ManagerMODISAppEEARS:
 
         buffer = 0.01
         feather_bounds = list(bounds_ll[:])
-        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
-        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
-        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
-        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
-        return tuple(feather_bounds)
+        return (np.round(feather_bounds[0] - buffer, 4),
+                np.round(feather_bounds[1] - buffer, 4),
+                np.round(feather_bounds[2] + buffer, 4),
+                np.round(feather_bounds[3] + buffer, 4))
 
     def _constructRequest(self,
                           bounds_ll : Tuple[float,float,float,float],

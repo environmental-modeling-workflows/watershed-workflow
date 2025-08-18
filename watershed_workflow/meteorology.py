@@ -3,15 +3,36 @@
 DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
 hdf5 files that models can read.
 """
+from typing import Tuple
 
 import logging
 import numpy as np
 import xarray as xr
 import datetime
 
-def allocatePrecipitation(precip : xr.DataArray,
-                          air_temp : xr.DataArray,
-                          transition_temp : float):
+
+def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
+                          transition_temp: float) -> Tuple[xr.DataArray, xr.DataArray]:
+    """Allocates precipitation between rain and snow based on temperature.
+
+    Parameters
+    ----------
+    precip : xr.DataArray
+        Total precipitation data.
+    air_temp : xr.DataArray
+        Air temperature data.
+    transition_temp : float
+        Temperature threshold for rain/snow transition. If < 100, assumed
+        to be in Celsius; otherwise Kelvin.
+
+    Returns
+    -------
+    rain : xr.DataArray
+        Rain precipitation (when temp >= transition_temp).
+    snow : xr.DataArray
+        Snow precipitation (when temp < transition_temp).
+
+    """
     if transition_temp < 100:
         tt_K = transition_temp + 273.15
     else:
@@ -20,17 +41,27 @@ def allocatePrecipitation(precip : xr.DataArray,
     rain = xr.where(air_temp >= tt_K, precip, 0)
     snow = xr.where(air_temp < tt_K, precip, 0)
     return rain, snow
-    
 
-def convertDayMetToATS(dat : xr.Dataset,
-                       transition_temp : float = 0.) -> xr.Dataset:
+
+def convertDayMetToATS(dat: xr.Dataset, transition_temp: float = 0.) -> xr.Dataset:
     """Convert xarray.Dataset Daymet datasets to daily average data in standard form.
 
     This:
-
     - takes tmin and tmax to compute a mean
     - splits rain and snow precip based on mean air temp relative to transition_temp [C]
     - standardizes units and names for ATS
+
+    Parameters
+    ----------
+    dat : xr.Dataset
+        Input Daymet dataset with variables: tmin, tmax, prcp, srad, dayl, vp.
+    transition_temp : float, optional
+        Temperature threshold for rain/snow split in Celsius. Default is 0.
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset with ATS-compatible variable names and units.
 
     """
     logging.info('Converting to ATS met input')
@@ -41,8 +72,7 @@ def convertDayMetToATS(dat : xr.Dataset,
 
     # note that all of these can live in the same dataset since they
     # share the same coordinates/times
-    dout = xr.Dataset(coords=dat.coords,
-                      attrs=dat.attrs.copy())
+    dout = xr.Dataset(coords=dat.coords, attrs=dat.attrs.copy())
 
     mean_air_temp_c = (dat['tmin'] + dat['tmax']) / 2.0
     dout['air temperature [K]'] = 273.15 + mean_air_temp_c  # K
@@ -57,9 +87,9 @@ def convertDayMetToATS(dat : xr.Dataset,
     return dout
 
 
-def convertAORCToATS(dat : xr.Dataset,
-                     transition_temp : float = 0.,
-                     daily : bool = False) -> xr.Dataset:
+def convertAORCToATS(dat: xr.Dataset,
+                     transition_temp: float = 0.,
+                     daily: bool = False) -> xr.Dataset:
     """Convert xarray.Dataset AORC datasets to standard form.
 
     This:
@@ -74,8 +104,7 @@ def convertAORCToATS(dat : xr.Dataset,
 
     # note that all of these can live in the same dataset since they
     # share the same coordinates/times
-    dout = xr.Dataset(coords=dat.coords,
-                      attrs=dat.attrs.copy())
+    dout = xr.Dataset(coords=dat.coords, attrs=dat.attrs.copy())
 
     dout['air temperature [K]'] = dat['TMP_2maboveground']
     dout['incoming shortwave radiation [W m^-2]'] = dat['DSWRF_surface']
@@ -84,8 +113,8 @@ def convertAORCToATS(dat : xr.Dataset,
         / (0.622 + dat['SPFH_2maboveground'])
 
     dout.attrs['wind speed reference height [m]'] = 10.
-    dout['wind speed [m s^-1]'] = np.sqrt(np.pow(dat['UGRD_10maboveground'], 2) + 
-                                          np.pow(dat['VGRD_10maboveground'], 2))
+    dout['wind speed [m s^-1]'] = np.sqrt(
+        np.pow(dat['UGRD_10maboveground'], 2) + np.pow(dat['VGRD_10maboveground'], 2))
 
     # convert mm --> m, hour --> s to get m/s
     dout['precipitation total [m s^-1]'] = dat['APCP_surface'] / 1000 / 3600
@@ -93,10 +122,9 @@ def convertAORCToATS(dat : xr.Dataset,
     if daily:
         # take daily averages
         pass
-    
+
     # allocate precip
     dout['precipitation rain [m s^-1]'], dout['precipitation snow [m SWE s^-1]'] = \
         allocatePrecipitation(dout['precipitation total [m s^-1]'],
                               dout['air temperature [K]'], transition_temp)
     return dout
-

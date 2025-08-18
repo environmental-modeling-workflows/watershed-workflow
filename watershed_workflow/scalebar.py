@@ -7,33 +7,62 @@ was staged at:
 
 """
 
+from typing import Tuple, Callable, Union, Optional, Dict, Any
 import numpy as np
+from matplotlib import pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.geodesic as cgeo
 
 
-def _axes_to_lonlat(ax, coords):
-    """(lon, lat) from axes coordinates."""
+def _axes_to_lonlat(ax: plt.Axes, coords: Union[Tuple[float, float],
+                                                  np.ndarray]) -> Tuple[float, float]:
+    """Convert axes coordinates to (lon, lat).
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        CartoPy axes object.
+    coords : Tuple[float, float] or np.ndarray
+        Coordinates in axes coordinate system.
+
+    Returns
+    -------
+    Tuple[float, float]
+        Longitude and latitude coordinates.
+    """
     display = ax.transAxes.transform(coords)
     data = ax.transData.inverted().transform(display)
     lonlat = ccrs.PlateCarree().transform_point(*data, ax.projection)
     return lonlat
 
 
-def _upper_bound(start, direction, distance, dist_func):
-    """A point farther than distance from start, in the given direction.
+def _upper_bound(start: np.ndarray, direction: np.ndarray, distance: float,
+                 dist_func: Callable[[np.ndarray, np.ndarray], float]) -> np.ndarray:
+    """Find a point farther than distance from start, in the given direction.
 
     It doesn't matter which coordinate system start is given in, as long
     as dist_func takes points in that coordinate system.
 
-    Args:
-        start:     Starting point for the line.
-        direction  Nonzero (2, 1)-shaped array, a direction vector.
-        distance:  Positive distance to go past.
-        dist_func: A two-argument function which returns distance.
+    Parameters
+    ----------
+    start : np.ndarray
+        Starting point for the line.
+    direction : np.ndarray
+        Nonzero (2,)-shaped array, a direction vector.
+    distance : float
+        Positive distance to go past.
+    dist_func : Callable
+        A two-argument function which returns distance between points.
 
-    Returns:
-        Coordinates of a point (a (2, 1)-shaped NumPy array).
+    Returns
+    -------
+    np.ndarray
+        Coordinates of a point farther than distance from start.
+
+    Raises
+    ------
+    ValueError
+        If distance is not positive or direction vector is zero.
     """
     if distance <= 0:
         raise ValueError(f"Minimum distance is not positive: {distance}")
@@ -52,21 +81,36 @@ def _upper_bound(start, direction, distance, dist_func):
     return end
 
 
-def _distance_along_line(start, end, distance, dist_func, tol):
-    """Point at a distance from start on the linestring  from start to end.
+def _distance_along_line(start: np.ndarray, end: np.ndarray, distance: float,
+                         dist_func: Callable[[np.ndarray, np.ndarray],
+                                             float], tol: float) -> np.ndarray:
+    """Find point at a distance from start on the linestring from start to end.
 
     It doesn't matter which coordinate system start is given in, as long
     as dist_func takes points in that coordinate system.
 
-    Args:
-        start:     Starting point for the line.
-        end:       Outer bound on point's location.
-        distance:  Positive distance to travel.
-        dist_func: Two-argument function which returns distance.
-        tol:       Relative error in distance to allow.
+    Parameters
+    ----------
+    start : np.ndarray
+        Starting point for the line.
+    end : np.ndarray
+        Outer bound on point's location.
+    distance : float
+        Positive distance to travel.
+    dist_func : Callable
+        Two-argument function which returns distance between points.
+    tol : float
+        Relative error in distance to allow.
 
-    Returns:
-        Coordinates of a point (a (2, 1)-shaped NumPy array).
+    Returns
+    -------
+    np.ndarray
+        Coordinates of a point at the specified distance from start.
+
+    Raises
+    ------
+    ValueError
+        If end is closer to start than given distance, or tolerance is not positive.
     """
     initial_distance = dist_func(start, end)
     if initial_distance < distance:
@@ -93,18 +137,30 @@ def _distance_along_line(start, end, distance, dist_func, tol):
     return right
 
 
-def _point_along_line(ax, start, distance, angle=0, tol=0.01):
-    """Point at a given distance from start at a given angle.
+def _point_along_line(ax: plt.Axes,
+                      start: np.ndarray,
+                      distance: float,
+                      angle: float = 0,
+                      tol: float = 0.01) -> np.ndarray:
+    """Find point at a given distance from start at a given angle.
 
-    Args:
-        ax:       CartoPy axes.
-        start:    Starting point for the line in axes coordinates.
-        distance: Positive physical distance to travel.
-        angle:    Anti-clockwise angle for the bar, in radians. Default: 0
-        tol:      Relative error in distance to allow. Default: 0.01
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        CartoPy axes object.
+    start : np.ndarray
+        Starting point for the line in axes coordinates.
+    distance : float
+        Positive physical distance to travel (in meters).
+    angle : float, optional
+        Anti-clockwise angle for the bar, in radians. Default is 0.
+    tol : float, optional
+        Relative error in distance to allow. Default is 0.01.
 
-    Returns:
-        Coordinates of a point (a (2, 1)-shaped NumPy array).
+    Returns
+    -------
+    np.ndarray
+        Coordinates of a point at the specified distance and angle.
     """
     # Direction vector of the line in axes coordinates.
     direction = np.array([np.cos(angle), np.sin(angle)])
@@ -125,44 +181,59 @@ def _point_along_line(ax, start, distance, angle=0, tol=0.01):
     return _distance_along_line(start, end, distance, dist_func, tol)
 
 
-def scalebar(ax,
-             location,
-             length,
-             metres_per_unit=1000,
-             unit_name='km',
-             tol=0.01,
-             angle=0,
-             color='black',
-             linewidth=3,
-             text_offset=0.005,
-             ha='center',
-             va='bottom',
-             plot_kwargs=None,
-             text_kwargs=None,
-             **kwargs):
+def scalebar(ax: plt.Axes,
+             location: Union[Tuple[float, float], np.ndarray],
+             length: float,
+             metres_per_unit: float = 1000,
+             unit_name: str = 'km',
+             tol: float = 0.01,
+             angle: float = 0,
+             color: str = 'black',
+             linewidth: float = 3,
+             text_offset: float = 0.005,
+             ha: str = 'center',
+             va: str = 'bottom',
+             plot_kwargs: Optional[Dict[str, Any]] = None,
+             text_kwargs: Optional[Dict[str, Any]] = None,
+             **kwargs: Any) -> None:
     """Add a scale bar to CartoPy axes.
 
     For angles between 0 and 90 the text and line may be plotted at
     slightly different angles for unknown reasons. To work around this,
     override the 'rotation' keyword argument with text_kwargs.
 
-    Args:
-        ax:              CartoPy axes.
-        location:        Position of left-side of bar in axes coordinates.
-        length:          Geodesic length of the scale bar.
-        metres_per_unit: Number of metres in the given unit. Default: 1000
-        unit_name:       Name of the given unit. Default: 'km'
-        tol:             Allowed relative error in length of bar. Default: 0.01
-        angle:           Anti-clockwise rotation of the bar.
-        color:           Color of the bar and text. Default: 'black'
-        linewidth:       Same argument as for plot.
-        text_offset:     Perpendicular offset for text in axes coordinates.
-                         Default: 0.005
-        ha:              Horizontal alignment. Default: 'center'
-        va:              Vertical alignment. Default: 'bottom'
-        **plot_kwargs:   Keyword arguments for plot, overridden by **kwargs.
-        **text_kwargs:   Keyword arguments for text, overridden by **kwargs.
-        **kwargs:        Keyword arguments for both plot and text.
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        CartoPy axes object.
+    location : Tuple[float, float] or np.ndarray
+        Position of left-side of bar in axes coordinates.
+    length : float
+        Geodesic length of the scale bar in specified units.
+    metres_per_unit : float, optional
+        Number of metres in the given unit. Default is 1000 (km).
+    unit_name : str, optional
+        Name of the given unit. Default is 'km'.
+    tol : float, optional
+        Allowed relative error in length of bar. Default is 0.01.
+    angle : float, optional
+        Anti-clockwise rotation of the bar in degrees. Default is 0.
+    color : str, optional
+        Color of the bar and text. Default is 'black'.
+    linewidth : float, optional
+        Line width for the scale bar. Default is 3.
+    text_offset : float, optional
+        Perpendicular offset for text in axes coordinates. Default is 0.005.
+    ha : str, optional
+        Horizontal alignment of text. Default is 'center'.
+    va : str, optional
+        Vertical alignment of text. Default is 'bottom'.
+    plot_kwargs : Dict[str, Any], optional
+        Keyword arguments for the plot call. Overridden by **kwargs.
+    text_kwargs : Dict[str, Any], optional
+        Keyword arguments for the text call. Overridden by **kwargs.
+    **kwargs : Any
+        Additional keyword arguments passed to both plot and text calls.
     """
     # Setup kwargs, update plot_kwargs and text_kwargs.
     if plot_kwargs is None:

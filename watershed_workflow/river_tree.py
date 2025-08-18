@@ -46,6 +46,7 @@ import watershed_workflow.sources.standard_names as names
 
 _tol = 1.e-7
 
+
 class _RowView:
     """A helper class, this is what is returned in a call to node.properties.
 
@@ -55,34 +56,32 @@ class _RowView:
     Copy-on-Write mechanism -- we really want a reference, not a copy.
 
     """
-    def __init__(self,
-                 df : gpd.GeoDataFrame,
-                 index : int | str):
+    def __init__(self, df: gpd.GeoDataFrame, index: int | str):
         self._df = df
         self._index = index
 
     def __len__(self) -> int:
         return len(self._df.keys())
-        
-    def __getitem__(self, k : str) -> Any:
+
+    def __getitem__(self, k: str) -> Any:
         if k == 'index':
             return self._index
         else:
             return self._df.at[self._index, k]
 
-    def __setitem__(self, k : str, v : Any) -> None:
+    def __setitem__(self, k: str, v: Any) -> None:
         self._df.loc[self._index, k] = v
 
     def __iter__(self) -> Any:
         return self._df.keys()
 
-    def __contains__(self, k : str) -> bool:
+    def __contains__(self, k: str) -> bool:
         return k in self._df.keys()
 
     def keys(self) -> Any:
         return self._df.keys()
 
-    def __repr__(self) ->str:
+    def __repr__(self) -> str:
         return repr(self._df.loc[self._index])
 
 
@@ -92,16 +91,18 @@ class _MySortedList(sortedcontainers.SortedKeyList):
         # can be equal for two different linestrings (if they share
         # the same first segment angle), we also order (secondarily)
         # by id to make an arbitrary but now total ordering of nodes.
-        return super(_MySortedList, self).__init__(iterable, key=lambda node : (node.angle,id(node)))
-    
+        return super(_MySortedList, self).__init__(iterable,
+                                                   key=lambda node: (node.angle, id(node)))
+
+
 class River(watershed_workflow.tinytree.Tree):
     """A tree structure whose node data is stored in a pandas DataFrame, accessed by an index."""
     ListType = _MySortedList
 
     def __init__(self,
-                 index : int | str,
-                 df : gpd.GeoDataFrame,
-                 children : Optional[List[River]] = None):
+                 index: int | str,
+                 df: gpd.GeoDataFrame,
+                 children: Optional[List[River]] = None):
         """Do not call me.  Instead use the class factory methods, one of:
 
         - construct_rivers_by_geometry() # generic data
@@ -117,8 +118,8 @@ class River(watershed_workflow.tinytree.Tree):
 
     def __iter__(self):
         return self.preOrder()
-            
-    def addChild(self, child_or_index : River | str | int) -> River:
+
+    def addChild(self, child_or_index: River | str | int) -> River:
         """Append a child (upstream) reach to this reach."""
         if isinstance(child_or_index, River):
             super(River, self).addChild(child_or_index)
@@ -132,37 +133,37 @@ class River(watershed_workflow.tinytree.Tree):
         return self.df.at[self.index, 'geometry']
 
     @linestring.setter
-    def linestring(self, value : shapely.geometry.LineString):
+    def linestring(self, value: shapely.geometry.LineString):
         self.df.loc[self.index, 'geometry'] = value
 
     @property
     def crs(self) -> CRS:
         return self.df.crs
-        
+
     @property
-    def properties(self):
+    def properties(self) -> _RowView:
         return _RowView(self.df, self.index)
 
     @properties.setter
-    def properties(self, value):
+    def properties(self, value) -> None:
         self.df.loc[self.index, value.keys()] = tuple(value.values())
 
-    def __getitem__(self, name : str) -> Any:
+    def __getitem__(self, name: str) -> Any:
         """Faster/preferred getter for properties"""
         if name == 'index':
             return self.index
         else:
             return self.df.at[self.index, name]
 
-    def __setitem__(self, name : str, value : Any) -> None:
+    def __setitem__(self, name: str, value: Any) -> None:
         """Faster/preferred setter for properties"""
         self.df.loc[self.index, name] = value
 
-    def __contains__(self, name : str) -> bool:
+    def __contains__(self, name: str) -> bool:
         return self.df.__contains__(name)
 
     @property
-    def angle(self):
+    def angle(self) -> float:
         """Returns the angle, in radians, from node.parent.linestring to node.linestring, in a clockwise sense."""
         if self.parent is None:
             return 0.0
@@ -170,16 +171,50 @@ class River(watershed_workflow.tinytree.Tree):
             return watershed_workflow.utils.computeAngle(self.parent.linestring, self.linestring)
 
     def plot(self, *args, **kwargs):
-        """Plot the rivers."""
+        """Plot the rivers.
+        
+        Parameters
+        ----------
+        *args
+          Positional arguments passed to watershed_workflow.plot.linestringsWithCoords.
+        **kwargs
+          Keyword arguments passed to watershed_workflow.plot.linestringsWithCoords.
+          See that function for available parameters.
+        
+        Returns
+        -------
+        matplotlib figure or axes
+          The plotting result from linestringsWithCoords.
+        """
         inds = [r.index for r in self]
         return watershed_workflow.plot.linestringsWithCoords(self.df.loc[inds], *args, **kwargs)
-    
+
     def explore(self, column=names.ID, m=None, marker=None, name=None, **kwargs):
-        """Open a map!"""
+        """Open an interactive map using Folium.
+        
+        Parameters
+        ----------
+        column : str, optional
+          Column name to use for coloring/styling the rivers. Defaults to the ID column.
+        m : folium.Map, optional
+          Existing Folium map to add rivers to. If None, creates a new map.
+        marker : bool, optional
+          Whether to add coordinate markers for each vertex. Defaults to None (no markers).
+        name : str, optional
+          Name for the layer in the map. If None, attempts to use NAME or ID property.
+        **kwargs
+          Keyword arguments passed to geopandas.GeoDataFrame.explore().
+          See that function for available parameters like color, cmap, tooltip, popup, etc.
+        
+        Returns
+        -------
+        folium.Map
+          Interactive map with the river network displayed.
+        """
         # get a name
         if column == names.ID and names.ID not in self.df:
-            self.df[names.ID+"_as_column"] = self.df.index.astype('string')
-            column = names.ID+"_as_column"
+            self.df[names.ID + "_as_column"] = self.df.index.astype('string')
+            column = names.ID + "_as_column"
 
         if name is None:
             try:
@@ -189,25 +224,22 @@ class River(watershed_workflow.tinytree.Tree):
                     name = self[names.ID]
                 except KeyError:
                     name = self.index
-                
+
         kwargs.setdefault('tooltip', False)
 
-        default_props = [pname for pname in [names.NAME,
-                                             'gnis_name',
-                                             'ftype',
-                                             names.ORDER,
-                                             names.DIVERGENCE,
-                                             names.HYDROSEQ,
-                                             names.DOWNSTREAM_HYDROSEQ,
-                                             names.UPSTREAM_HYDROSEQ,
-                                             names.LENGTH,
-                                             names.CATCHMENT_AREA, ] if pname in self.df]
+        default_props = [
+            pname for pname in [
+                names.NAME, 'gnis_name', 'ftype', names.ORDER, names.DIVERGENCE, names.HYDROSEQ,
+                names.DOWNSTREAM_HYDROSEQ, names.UPSTREAM_HYDROSEQ, names.LENGTH,
+                names.CATCHMENT_AREA,
+            ] if pname in self.df
+        ]
         for p in self.df.keys():
             if len(default_props) >= 8:
                 break
             if p not in default_props and p != 'geometry':
                 default_props.append(p)
-        kwargs.setdefault('popup', [names.ID,]+default_props)
+        kwargs.setdefault('popup', [names.ID, ] + default_props)
 
         if 'color' not in kwargs:
             kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_bolds)
@@ -231,7 +263,7 @@ class River(watershed_workflow.tinytree.Tree):
             kwargs2['style_kwds']['fillOpacity'] = 1
 
             if names.ID in self.df:
-                new_id_name = names.ID+'-copy'
+                new_id_name = names.ID + '-copy'
             else:
                 new_id_name = names.ID
 
@@ -242,17 +274,19 @@ class River(watershed_workflow.tinytree.Tree):
                 if disp_mode in kwargs2 and isinstance(kwargs2[disp_mode], list):
                     if names.ID in kwargs2[disp_mode]:
                         kwargs2[disp_mode].remove(names.ID)
-                    kwargs2[disp_mode].insert(0,'coord')
-                    kwargs2[disp_mode].insert(0,names.ID)
+                    kwargs2[disp_mode].insert(0, 'coord')
+                    kwargs2[disp_mode].insert(0, names.ID)
 
-            m = marker_df.explore(column=column, m=m, name=self[names.NAME]+' coordinates', **kwargs2)
+            m = marker_df.explore(column=column,
+                                  m=m,
+                                  name=self[names.NAME] + ' coordinates',
+                                  **kwargs2)
         return m
-    
 
     #
     # methods that act on topology and geometry -- high level API
     #
-    def split(self, i : int) -> Tuple[River, River]:
+    def split(self, i: int) -> Tuple[River, River]:
         """Split the reach at the ith coordinate of the linestring.
 
         Note that this does not split the catchment!
@@ -280,10 +314,12 @@ class River(watershed_workflow.tinytree.Tree):
 
         if names.DRAINAGE_AREA in upstream_props:
             if names.CATCHMENT_AREA in self.properties:
-                upstream_props[names.DRAINAGE_AREA] = self[names.DRAINAGE_AREA] - self[names.CATCHMENT_AREA]
+                upstream_props[
+                    names.DRAINAGE_AREA] = self[names.DRAINAGE_AREA] - self[names.CATCHMENT_AREA]
 
         if names.HYDROSEQ in upstream_props:
-            upstream_props[names.HYDROSEQ] = (self[names.HYDROSEQ] + self.parent[names.HYDROSEQ]) / 2.0
+            upstream_props[names.HYDROSEQ] = (self[names.HYDROSEQ]
+                                              + self.parent[names.HYDROSEQ]) / 2.0
             if names.UPSTREAM_HYDROSEQ in upstream_props:
                 self[names.UPSTREAM_HYDROSEQ] = upstream_props[names.HYDROSEQ]
             if names.DOWNSTREAM_HYDROSEQ in upstream_props:
@@ -305,10 +341,10 @@ class River(watershed_workflow.tinytree.Tree):
         # new node
         # -- create a valid index and add the row to the dataframe
         if pandas.api.types.is_integer_dtype(self.df.index.dtype):
-            new_index = pd.Series(max(self.df.index)+1).astype(self.df.index.dtype)[0]
+            new_index = pd.Series(max(self.df.index) + 1).astype(self.df.index.dtype)[0]
         elif isinstance(self.index, str):
             if self.index[-1].isalpha():
-                new_index = self.index[:-1] + chr(ord(self.index[-1])+1)
+                new_index = self.index[:-1] + chr(ord(self.index[-1]) + 1)
             else:
                 new_index = str(self.index) + 'a'
         else:
@@ -335,19 +371,38 @@ class River(watershed_workflow.tinytree.Tree):
         self.addChild(new_node)
         return new_node, self
 
-    def splitAtArclen(self, s : float):
-        """Inserts a coordinate at arclen s, then splits at that coordinate."""
+    def splitAtArclen(self, s: float) -> Tuple[River, River]:
+        """Inserts a coordinate at arclen s, then splits at that coordinate.
+        
+        Parameters
+        ----------
+        s : float
+          Arc length distance from the downstream end of the reach at which
+          to split the reach. Must be between 0 and the total reach length.
+        
+        Returns
+        -------
+        Tuple[River, River]
+          Tuple of (upstream_node, downstream_node) after splitting.
+        """
         i = self.insertCoordinateByArclen(s)
         return self.split(i)
 
-    def merge(self, merge_reach : bool = True) -> None:
-        """Merges this with its parent."""
+    def merge(self, merge_reach: bool = True) -> None:
+        """Merges this node with its parent.
+        
+        Parameters
+        ----------
+        merge_reach : bool, optional
+          Whether to merge the linestring geometries. If True, combines the
+          linestrings. If False, only merges properties. Defaults to True.
+        """
         parent = self.parent
 
         if merge_reach:
             assert (len(list(self.siblings)) == 0)
-            new_seg = shapely.geometry.LineString(list(self.linestring.coords)[0:-1]+
-                                                  list(parent.linestring.coords))
+            new_seg = shapely.geometry.LineString(
+                list(self.linestring.coords)[0:-1] + list(parent.linestring.coords))
             parent.linestring = new_seg
 
         # fix properties
@@ -369,22 +424,27 @@ class River(watershed_workflow.tinytree.Tree):
         for child in self.children:
             parent.addChild(child)
 
-            
     def prune(self) -> None:
-        """Removes this node and all below it, merging properties."""
+        """Removes this node and all below it, merging properties.
+        
+        This method removes the entire subtree rooted at this node, but first
+        merges all properties (like catchment areas) up to the parent node.
+        
+        Raises
+        ------
+        ValueError
+          If called on a node with no parent (cannot prune the root).
+        """
         if self.parent is None:
             raise ValueError("Cannot prune a branch with no parent.")
 
         for node in self.postOrder():
             node.merge(False)
 
-            
     #
     # methods that act on coordinates only
     #
-    def moveCoordinate(self,
-                       i : int,
-                       xy : Tuple[float,float] | Tuple[float,float,float]) -> None:
+    def moveCoordinate(self, i: int, xy: Tuple[float, float] | Tuple[float, float, float]) -> None:
         """Moves the ith coordinate of self.linestring to a new location."""
         if i < 0:
             i = len(self.linestring.coords) + i
@@ -392,7 +452,7 @@ class River(watershed_workflow.tinytree.Tree):
         coords[i] = xy
         self.linestring = shapely.geometry.LineString(coords)
 
-    def insertCoordinate(self, i : int, xy : Tuple[float,float]) -> int:
+    def insertCoordinate(self, i: int, xy: Tuple[float, float]) -> int:
         """If it doesn't already exist, inserts a new coordinate before the ith coordinate.
 
         Returns the index of the new (or preexisting) coordinate.
@@ -401,9 +461,9 @@ class River(watershed_workflow.tinytree.Tree):
             i = len(self.linestring.coords) + i
         coords = list(self.linestring.coords)
 
-        if watershed_workflow.utils.isClose(xy, coords[i-1]):
+        if watershed_workflow.utils.isClose(xy, coords[i - 1]):
             # don't insert and existing point
-            return i-1
+            return i - 1
         elif i < len(coords) and watershed_workflow.utils.isClose(xy, coords[i]):
             return i
         else:
@@ -411,99 +471,132 @@ class River(watershed_workflow.tinytree.Tree):
             self.linestring = shapely.geometry.LineString(coords)
             return i
 
-    def insertCoordinateByArclen(self, s : float) -> int:
+    def insertCoordinateByArclen(self, s: float) -> int:
         """Inserts a new coordinate at a given arclen, returning the index of that coordinate.
 
-        Note that arclen is measured from the downstream end!
+        Parameters
+        ----------
+        s : float
+          Arc length distance from the downstream end of the reach at which
+          to insert the new coordinate. Must be between 0 and the total 
+          reach length.
+
+        Returns
+        -------
+        int
+          Index of the newly inserted coordinate in the linestring.
+
+        Note
+        ----
+        Arc length is measured from the downstream end of the reach.
         """
         sp = self.linestring.length - s
-        
+
         coords = np.array(self.linestring.coords)
         dcoords = coords[1:] - coords[:-1]
         ds = np.linalg.norm(dcoords, axis=1)
         point_arclens = np.cumsum(ds)
         i = np.where(point_arclens > sp)[0][0]
         p = self.linestring.interpolate(sp)
-        return self.insertCoordinate(i+1, p)
+        return self.insertCoordinate(i + 1, p)
 
-    def appendCoordinate(self, xy : Tuple[float,float]) -> None:
+    def appendCoordinate(self, xy: Tuple[float, float]) -> None:
         """Appends a coordinate at the end (downstream) of the linestring."""
         coords = list(self.linestring.coords) + [xy, ]
         self.linestring = shapely.geometry.LineString(coords)
 
-    def extendCoordinates(self, xys : List[Tuple[float,float]]) -> None:
+    def extendCoordinates(self, xys: List[Tuple[float, float]]) -> None:
         """Appends multiple coordinates at the end (downstream) of the linestring."""
         coords = list(self.linestring.coords) + xys
         self.linestring = shapely.geometry.LineString(coords)
 
-    def prependCoordinates(self, xys : List[Tuple[float,float]]) -> None:
+    def prependCoordinates(self, xys: List[Tuple[float, float]]) -> None:
         """Prepends multiple coordinates at the beginning (upstream) of the linestring."""
         coords = xys + list(self.linestring.coords)
         self.linestring = shapely.geometry.LineString(coords)
 
-    def popCoordinate(self, i : int) -> Tuple[float,float]:
+    def popCoordinate(self, i: int) -> Tuple[float, float]:
         """Removes the ith coordinate and returns its value."""
         coords = list(self.linestring.coords)
         c = coords.pop(i)
         self.linestring = shapely.geometry.LineString(coords)
         return c
 
-
     #
     # Methods that act on the network and its properties
     #
-    def accumulate(self,
-                   to_accumulate : str,
-                   to_save : Optional[str] = None,
-                   op : Callable = sum):
-        """Accumulates a property across the river tree."""
+    def accumulate(self, to_accumulate: str, to_save: Optional[str] = None, op: Callable = sum):
+        """Accumulates a property across the river tree.
+        
+        Parameters
+        ----------
+        to_accumulate : str
+          Name of the property to accumulate from child nodes.
+        to_save : str, optional
+          Name of the property to store the accumulated result in. 
+          If None, the result is not saved to the node.
+        op : Callable, optional
+          Operation to use for accumulation. Defaults to sum.
+        
+        Returns
+        -------
+        Any
+          The accumulated value for this node and all its children.
+        """
         val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
         val = op([val, self[to_accumulate]])
         if to_save is not None:
             self[to_save] = val
         return val
-    
-    def getNode(self, index : int | str) -> River | None:
+
+    def getNode(self, index: int | str) -> River | None:
         """return node for a given index"""
         try:
             node = next(node for node in self if node.index == index)
         except StopIteration:
             node = None
         return node
-    
-    def findNode(self, lambd : Callable) -> River | None:
+
+    def findNode(self, lambd: Callable) -> River | None:
         """Find a node, returning the first whose lambda application is true, or None"""
         try:
             return next(n for n in self.preOrder() if lambd(n))
         except StopIteration:
             return None
+
+    def assignOrder(self) -> None:
+        """Working from leaves to trunk, assign stream order property.
         
-    def assignOrder(self):
-        """Working from leave to trunk, assign stream order property"""
-        self.df[self.ORDER] = -1
+        This method assigns stream order values to all reaches in the river network
+        following the Strahler stream ordering system. Orders are calculated from
+        leaf nodes (order 1) toward the trunk, where confluences of streams of 
+        equal order increment the order by 1.
+        """
+        self.df[names.ORDER] = -1
         for leaf in self.leaf_nodes:
-            leaf[self.ORDER] = 1
+            leaf[names.ORDER] = 1
 
             node = leaf
-            while node.parent[self.ORDER] == -1 and all(c[self.ORDER] > 0 for c in node.siblings):
+            while node.parent[names.ORDER] == -1 and all(c[names.ORDER] > 0 for c in node.siblings):
                 node = node.parent
-                order = max(c[self.ORDER] for c in node.children)
+                order = max(c[names.ORDER] for c in node.children)
                 if len(node.children) > 1:
                     order += 1
-                node[self.ORDER] = order
+                node[names.ORDER] = order
 
-    def _isContinuous(self, child, tol : float = _tol) -> bool:
+    def _isContinuous(self, child, tol: float = _tol) -> bool:
         """Is a given child continuous with self?"""
-        return watershed_workflow.utils.isClose(child.linestring.coords[-1], self.linestring.coords[0], tol)
+        return watershed_workflow.utils.isClose(child.linestring.coords[-1],
+                                                self.linestring.coords[0], tol)
 
-    def isLocallyContinuous(self, tol : float = _tol) -> bool:
+    def isLocallyContinuous(self, tol: float = _tol) -> bool:
         """Is this node continuous with its parent and children?"""
         res = all(self._isContinuous(child, tol=_tol) for child in self.children)
         if self.parent is not None:
             res = res and self.parent._isContinuous(self, tol=_tol)
         return res
 
-    def isContinuous(self, tol : float = _tol) -> bool:
+    def isContinuous(self, tol: float = _tol) -> bool:
         """Checks geometric continuity of the river.
 
         Confirms that all upstream children's downstream coordinate
@@ -512,12 +605,12 @@ class River(watershed_workflow.tinytree.Tree):
         return all(self._isContinuous(child, tol) for child in self.children) and \
             all(child.isContinuous(tol) for child in self.children)
 
-    def _makeContinuous(self, child : River) -> None:
+    def _makeContinuous(self, child: River) -> None:
         child_coords = list(child.linestring.coords)
         child_coords[-1] = list(self.linestring.coords)[0]
         child.linestring = shapely.geometry.LineString(child_coords)
 
-    def makeContinuous(self, tol : float = _tol) -> None:
+    def makeContinuous(self, tol: float = _tol) -> None:
         """Sometimes there can be small gaps between linestrings of river
         tree if river is constructed using hydroseq and Snap
         option is not used. Here we make them consistent.
@@ -532,18 +625,19 @@ class River(watershed_workflow.tinytree.Tree):
     def isLocallyMonotonic(self) -> bool:
         """Checks for monotonically decreasing elevation as we march downstream in this reach."""
         coords = np.array(self.linestring.coords)
-        if max(coords[1:,2] - coords[:-1,2]) > 0:
+        if max(coords[1:, 2] - coords[:-1, 2]) > 0:
             return False
-            
+
         for child in self.children:
             if self.linestring.coords[0][2] > child.linestring.coords[-1][2]:
                 return False
         return True
-        
-    def isMonotonic(self, known_depressions = None) -> bool:
+
+    def isMonotonic(self, known_depressions=None) -> bool:
         if known_depressions is None:
             known_depressions = []
-        return all(reach.isLocallyMonotonic() for reach in self if reach.index not in known_depressions)
+        return all(reach.isLocallyMonotonic() for reach in self
+                   if reach.index not in known_depressions)
 
     def isHydroseqConsistent(self) -> bool:
         """Confirms that hydrosequence is valid."""
@@ -554,7 +648,7 @@ class River(watershed_workflow.tinytree.Tree):
         return self[names.HYDROSEQ] < self.children[0][names.HYDROSEQ] and \
             all(child.isHydroseqConsistent() for child in self.children)
 
-    def isConsistent(self, tol : float = _tol) -> bool:
+    def isConsistent(self, tol: float = _tol) -> bool:
         """Validity checking of the tree."""
         good = self.isContinuous(tol)
         if names.HYDROSEQ in self:
@@ -594,24 +688,24 @@ class River(watershed_workflow.tinytree.Tree):
 
         # -- create a new index
         assert 'new_preorder_index' not in new_df.columns
-        new_df['new_preorder_index'] = -np.ones((len(new_df),), 'i')
-        new_preorder_indices = dict((n.index, i) for (i,n) in enumerate(self))
-        new_df.loc[list(new_preorder_indices.keys()), 'new_preorder_index'] = pd.Series(new_preorder_indices)
+        new_df['new_preorder_index'] = -np.ones((len(new_df), ), 'i')
+        new_preorder_indices = dict((n.index, i) for (i, n) in enumerate(self))
+        new_df.loc[list(new_preorder_indices.keys()),
+                   'new_preorder_index'] = pd.Series(new_preorder_indices)
 
         # -- assign the new index as the index, then sort by this index
         new_df = new_df.set_index('new_preorder_index', drop=True).sort_index()
 
         # -- pass out to all reaches to make sure all have a reference
         #    to the same dataframe, and update the index of the reach
-        for i,reach in enumerate(self):
+        for i, reach in enumerate(self):
             reach.index = i
             reach.df = new_df
 
     #
     # methods that convert this to another object
     #
-    def to_crs(self, crs : CRS) -> None:
-
+    def to_crs(self, crs: CRS) -> None:
         """Warp the coordinate system."""
         self.df.to_crs(crs, inplace=True)
 
@@ -620,7 +714,7 @@ class River(watershed_workflow.tinytree.Tree):
         # reset the dataframe to be tight on this tree, and we can
         # rely on rows being in preOrder
         self.resetDataFrame()
-        
+
         # move the parent into the dataframe
         def _parent_index(n):
             if n.parent is None:
@@ -640,7 +734,7 @@ class River(watershed_workflow.tinytree.Tree):
         """Represent this as a shapely.geometry.MultiLineString"""
         return shapely.geometry.MultiLineString([r.linestring for r in self])
 
-    def to_file(self, filename : str, **kwargs) -> None:
+    def to_file(self, filename: str, **kwargs) -> None:
         """Save the network for this river only to a geopandas file.
 
         Note this file can be reloaded via:
@@ -649,8 +743,8 @@ class River(watershed_workflow.tinytree.Tree):
 
         """
         self.to_dataframe().to_file(filename, **kwargs)
-    
-    def copy(self, df : gpd.GeoDataFrame) -> River:
+
+    def copy(self, df: gpd.GeoDataFrame) -> River:
         """Shallow copy using a provided DataFrame"""
         if df is None:
             df = self.df
@@ -672,13 +766,29 @@ class River(watershed_workflow.tinytree.Tree):
     # Factory functions
     #
     @classmethod
-    def constructRiversByGeometry(cls, df, tol : float = _tol):
+    def constructRiversByGeometry(cls, df, tol: float = _tol) -> List[River]:
         """Forms a list of River trees from a list of reaches by looking for
         close endpoints of those reaches.
 
-        Note that this expects that endpoints of a reach coincide with
-        beginpoints of their downstream reach, and does not work for
-        cases where the junction is at a midpoint of a reach.
+        Parameters
+        ----------
+        df : gpd.GeoDataFrame
+          GeoDataFrame containing reach linestrings. Must have a 'geometry' 
+          column with LineString geometries.
+        tol : float, optional
+          Geometric tolerance for matching reach endpoints to beginpoints.
+          Defaults to _tol (1e-7).
+
+        Returns
+        -------
+        list[River]
+          List of River objects, each representing a river network tree.
+
+        Note
+        ----
+        This expects that endpoints of a reach coincide with beginpoints of 
+        their downstream reach, and does not work for cases where the junction 
+        is at a midpoint of a reach.
         """
         logging.debug("Generating Rivers")
 
@@ -690,7 +800,7 @@ class River(watershed_workflow.tinytree.Tree):
         kdtree = cKDTree(coords)
 
         # make a node for each linestring
-        nodes = [cls(i,df) for i in df.index]
+        nodes = [cls(i, df) for i in df.index]
 
         # match nodes to their parent through the kdtree
         rivers = []
@@ -710,7 +820,8 @@ class River(watershed_workflow.tinytree.Tree):
                 my_tan = my_tan / np.linalg.norm(my_tan)
 
                 other_tans = [
-                    np.array(df.geometry[c].coords[1]) - np.array(df.geometry[c].coords[0]) for c in closest
+                    np.array(df.geometry[c].coords[1]) - np.array(df.geometry[c].coords[0])
+                    for c in closest
                 ]
                 other_tans = [ot / np.linalg.norm(ot) for ot in other_tans]
                 dots = [np.inner(ot, my_tan) for ot in other_tans]
@@ -729,15 +840,25 @@ class River(watershed_workflow.tinytree.Tree):
         assert (len(rivers) > 0)
         return rivers
 
-    
     @classmethod
-    def constructRiversByHydroseq(cls, df):
+    def constructRiversByHydroseq(cls, df) -> List[River]:
         """Given a list of linestrings, create a list of rivers using the
         HydroSeq maps provided in NHDPlus datasets.
+
+        Parameters
+        ----------
+        df : gpd.GeoDataFrame
+          GeoDataFrame containing reach linestrings with NHDPlus attributes.
+          Must contain columns for HYDROSEQ and DOWNSTREAM_HYDROSEQ as defined
+          in watershed_workflow.sources.standard_names.
+
+        Returns
+        -------
+        list[River]
+          List of River objects, each representing a river network tree.
         """
         # create a map from hydroseq to node
-        hydro_seq_ids = dict(zip(df[names.HYDROSEQ],
-                                 (cls(i,df) for i in df.index)))
+        hydro_seq_ids = dict(zip(df[names.HYDROSEQ], (cls(i, df) for i in df.index)))
 
         roots = []
         for hs_id, node in hydro_seq_ids.items():
@@ -749,8 +870,19 @@ class River(watershed_workflow.tinytree.Tree):
         return roots
 
     @classmethod
-    def constructRiversByDataFrame(cls, df):
+    def constructRiversByDataFrame(cls, df) -> List[River]:
         """Create a list of rivers from a dataframe that includes a 'parent' column.
+        
+        Parameters
+        ----------
+        df : gpd.GeoDataFrame
+          GeoDataFrame containing reach linestrings with parent-child relationships.
+          Must contain PARENT and ID columns as defined in standard_names.
+        
+        Returns
+        -------
+        list[River]
+          List of River objects, each representing a river network tree.
         """
         assert names.PARENT in df
         assert names.ID in df
@@ -767,12 +899,25 @@ class River(watershed_workflow.tinytree.Tree):
                 nodes[parent].addChild(node)
         return roots
 
-        
+
 #
 # Helper functions
 #
-def getNode(rivers, index):
-    """Finds the node, by index, in a list of rivers"""
+def getNode(rivers, index) -> Optional[River]:
+    """Finds the node, by index, in a list of rivers.
+    
+    Parameters
+    ----------
+    rivers : list[River]
+      List of River objects to search through.
+    index : int or str
+      Index of the node to find.
+    
+    Returns
+    -------
+    River or None
+      The River node with the specified index, or None if not found.
+    """
     for river in rivers:
         n = river.getNode(index)
         if n is not None:
@@ -780,15 +925,34 @@ def getNode(rivers, index):
     return None
 
 
-def combineSiblings(n1 : River,
-                    n2 : River,
-                    new_ls : Optional[shapely.geometry.LineString] = None,
-                    ds : Optional[float] = None) -> River:
+def combineSiblings(n1: River,
+                    n2: River,
+                    new_ls: Optional[shapely.geometry.LineString] = None,
+                    ds: Optional[float] = None) -> River:
     """Combines two sibling nodes, merging catchments and metadata.
 
-    Note the resulting reach is either provided (by new_ls) or is
-    computed by interpolating discrete nodes every ds.
+    Parameters
+    ----------
+    n1 : River
+      First sibling node to combine.
+    n2 : River  
+      Second sibling node to combine.
+    new_ls : shapely.geometry.LineString, optional
+      Linestring geometry for the combined reach. If None, the geometry
+      is computed by interpolating discrete nodes every ds meters.
+    ds : float, optional
+      Distance between interpolated points when computing new geometry.
+      Required if new_ls is None.
 
+    Returns
+    -------
+    River
+      The combined river node (n1 is modified and returned).
+
+    Note
+    ----
+    The resulting reach is either provided (by new_ls) or is
+    computed by interpolating discrete nodes every ds.
     """
     assert (n1.isSiblingOf(n2))
 
@@ -798,15 +962,18 @@ def combineSiblings(n1 : River,
         npoints = int(avg_length // ds) + 2
         ds1 = np.linspace(0, n1.linestring.length, npoints)
         points1 = n1.linestring.interpolate(ds1)
-    
+
         ds2 = np.linspace(0, n2.linestring.length, npoints)
         points2 = n2.linestring.interpolate(ds2)
 
-        points = [watershed_workflow.utils.computeMidpoint(p1.coords[0], p2.coords[0]) for (p1,p2) in zip(points1, points2)]
+        points = [
+            watershed_workflow.utils.computeMidpoint(p1.coords[0], p2.coords[0])
+            for (p1, p2) in zip(points1, points2)
+        ]
         new_ls = shapely.geometry.LineString(points)
 
     n1.linestring = new_ls
-    
+
     if names.CATCHMENT_AREA in n1:
         n1[names.CATCHMENT_AREA] += n2[names.CATCHMENT_AREA]
 
@@ -819,7 +986,7 @@ def combineSiblings(n1 : River,
     for child in n1.children:
         if not watershed_workflow.utils.isClose(child.linestring.coords[-1], new_ls.coords[0]):
             child.appendCoordinate(new_ls.coords[0])
-            
+
     for child in n2.children:
         if not watershed_workflow.utils.isClose(child.linestring.coords[-1], new_ls.coords[0]):
             child.appendCoordinate(new_ls.coords[0])
@@ -835,9 +1002,9 @@ def combineSiblings(n1 : River,
 #
 # Construction method
 #
-def createRivers(reaches : gpd.GeoDataFrame,
-                 method : Literal['geometry','hydroseq','native'] = 'geometry',
-                 tol : float = _tol) -> List[River]:
+def createRivers(reaches: gpd.GeoDataFrame,
+                 method: Literal['geometry', 'hydroseq', 'native'] = 'geometry',
+                 tol: float = _tol) -> List[River]:
     """Constructs River objects from a list of reaches.
 
     Parameters
@@ -875,10 +1042,10 @@ def createRivers(reaches : gpd.GeoDataFrame,
 #
 # Helper functions on lists of rivers
 #
-def determineOutletToReachMap(rivers : List[River],
-                              outlets : gpd.GeoDataFrame,
-                              reach_ID_column : str = 'reach_ID',
-                              measure_tol : float = 15) -> gpd.GeoDataFrame:
+def determineOutletToReachMap(rivers: List[River],
+                              outlets: gpd.GeoDataFrame,
+                              reach_ID_column: str = 'reach_ID',
+                              measure_tol: float = 15) -> gpd.GeoDataFrame:
     """Given a list of rivers and a set of gages, find the reach in
     rivers and mark where on the reach to put the effective gage.
     
@@ -920,7 +1087,7 @@ def determineOutletToReachMap(rivers : List[River],
         measure = outlets.loc[index, 'measure']
 
         for ri, river in enumerate(rivers):
-            node = river.findNode(lambda n : n[names.ID] == reach_ID)
+            node = river.findNode(lambda n: n[names.ID] == reach_ID)
             if node is not None:
                 river_indices.append(ri)
                 reach_indices.append(node.index)
@@ -938,7 +1105,7 @@ def determineOutletToReachMap(rivers : List[River],
                     new_geometry.append(shapely.geometry.Point(node.linestring.coords[-1]))
                 elif loc == 1:
                     new_geometry.append(shapely.geometry.Point(node.linestring.coords[0]))
-                    
+
                 locations_on_reach.append(loc)
                 break
 
@@ -949,16 +1116,16 @@ def determineOutletToReachMap(rivers : List[River],
     outlets['geometry'] = new_geometry
     outlets = outlets.set_geometry('geometry')
     return outlets
-    
 
-def accumulateCatchments(rivers : List[River],
-                         outlets : gpd.GeoDataFrame,
-                         reach_ID_column : str = 'reach_ID') -> gpd.GeoDataFrame:
-    """Given a dataframe of outlets, compute contributing areas for each one.""
+
+def accumulateCatchments(rivers: List[River],
+                         outlets: gpd.GeoDataFrame,
+                         reach_ID_column: str = 'reach_ID') -> gpd.GeoDataFrame:
+    """Given a dataframe of outlets, compute contributing areas for each one.
     
-    Parameters:
-    -----------
-    rivers: list[River]
+    Parameters
+    ----------
+    rivers : list[River]
       Rivers from which outlet reaches are potentially from 
     outlets : gpd.GeoDataFrame
       GeoDataFrame containing at least the following columns
@@ -968,6 +1135,8 @@ def accumulateCatchments(rivers : List[River],
         the outlet
 
       Likely this is satisfied by calling determineOutletToReachMap()
+    reach_ID_column : str, optional
+      Name of the column containing the reach ID. Defaults to 'reach_ID'.
 
     Returns
     -------
@@ -987,11 +1156,11 @@ def accumulateCatchments(rivers : List[River],
         node = rivers[river_index].getNode(reach_index)
         assert node is not None
         loc = outlets.loc[index, 'location_on_reach']
-        
 
         if loc == 0:
             print('computing from downstream')
-            ca = shapely.unary_union([n[names.CATCHMENT] for n in node.preOrder() if n[names.CATCHMENT] is not None])
+            ca = shapely.unary_union(
+                [n[names.CATCHMENT] for n in node.preOrder() if n[names.CATCHMENT] is not None])
         else:
             print('computing from upstream')
             ca = shapely.unary_union([n[names.CATCHMENT] for child in node.children \
@@ -1000,10 +1169,10 @@ def accumulateCatchments(rivers : List[River],
 
     outlets[names.CATCHMENT] = gpd.GeoSeries(catchments, outlets.index)
     return outlets
-    
 
-def accumulateIncrementalCatchments(rivers : List[Rivers],
-                                    outlets : gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+
+def accumulateIncrementalCatchments(rivers: List[River],
+                                    outlets: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Given a list of outlet_indices, form the incremental contributing areas.
     
     Parameters:
@@ -1026,23 +1195,26 @@ def accumulateIncrementalCatchments(rivers : List[Rivers],
 
     """
     # sort by number of total children, decreasing.  This ensures that we can work down the tree
-    roots = [rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
-             for index in outlets.index]
+    roots = [
+        rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
+        for index in outlets.index
+    ]
     assert all(root is not None for root in roots)
     outlets['num_iterated_children'] = [len(root) for root in roots]
-    
+
     outlets = outlets.sort_values(by='num_iterated_children', ascending=False)
-    
+
     outlets.pop('num_iterated_children')
 
     # recompute roots in the new order
-    roots = [rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
-             for index in outlets.index]
+    roots = [
+        rivers[outlets.loc[index, 'river_index']].getNode(outlets.loc[index, 'reach_index'])
+        for index in outlets.index
+    ]
     assert all(root is not None for root in roots)
 
     stopping_ids = [root.index for root in roots]
 
-        
     def _truncated_tree_iter(n):
         if n.index in stopping_ids:
             print(f'stoppping at {n["comid"]}')
@@ -1067,7 +1239,7 @@ def accumulateIncrementalCatchments(rivers : List[Rivers],
     for root, index in zip(roots, outlets.index):
         print()
         print(f'Computing CA for {index}')
-        print('-'*40)
+        print('-' * 40)
         loc = outlets.loc[index, 'location_on_reach']
 
         catches = []
@@ -1086,23 +1258,28 @@ def accumulateIncrementalCatchments(rivers : List[Rivers],
 #
 # Cleanup methods -- merge and prune
 #
-def mergeShortReaches(river : River,
-                      tol : float) -> None:
+def mergeShortReaches(river: River, tol: Optional[float]) -> None:
     """Remove inner branches that are short, combining branchpoints as needed.
 
     This function merges the "short" linestring into the child
     linestring if it is a junction tributary with one child or into
     the parent linestring otherwise.
 
-    Note if tol is None, the tol is taken from the reach property TARGET_SEGMENT_LENGTH.
+    Parameters
+    ----------
+    river : River
+      The river network to process.
+    tol : float, optional
+      Length threshold below which reaches will be merged. If None, the 
+      tolerance is taken from the reach property TARGET_SEGMENT_LENGTH.
 
     """
     # do-not-merge flag:
     #    1 -> do not merge upstream of this reach
     #   -1 -> do not merge downstream of this reach
     if 'do-not-merge' not in river.df:
-        river.df['do-not-merge'] = [0,] * len(river)
-    
+        river.df['do-not-merge'] = [0, ] * len(river)
+
     for node in list(river):
         if tol is None:
             ltol = node[names.TARGET_SEGMENT_LENGTH]
@@ -1110,11 +1287,11 @@ def mergeShortReaches(river : River,
             ltol = tol
         if node.linestring.length < ltol and node.parent is not None:
             nname = node[names.ID] if names.ID in node.properties else node.index
-            logging.info(
-                "  ...cleaned inner linestring of length %g at centroid %r with id %r" %
-                (node.linestring.length, node.linestring.centroid.coords[0], nname))
+            logging.info("  ...cleaned inner linestring of length %g at centroid %r with id %r" %
+                         (node.linestring.length, node.linestring.centroid.coords[0], nname))
 
-            if len(list(node.siblings)) > 0 and len(node.children) == 1 and node['do-not-merge'] != 1:
+            if len(list(node.siblings)) > 0 and len(
+                    node.children) == 1 and node['do-not-merge'] != 1:
                 # junction tributary with one child
                 node.children[0].merge()
             elif len(node.children) == 0 and node['do-not-merge'] != -1:
@@ -1129,11 +1306,24 @@ def mergeShortReaches(river : River,
 
                 assert (len(list(node.siblings)) == 0)
                 node.merge()
-            
 
-def pruneByLineStringLength(river : River,
-                            prune_tol : Optional[float] = None) -> int:
-    """Removes any leaf linestrings that are shorter than prune_tol"""
+
+def pruneByLineStringLength(river: River, prune_tol: Optional[float] = None) -> int:
+    """Removes any leaf linestrings that are shorter than prune_tol.
+    
+    Parameters
+    ----------
+    river : River
+      The river network to prune.
+    prune_tol : float, optional
+      Length threshold below which leaf reaches will be removed. 
+      If None, uses the TARGET_SEGMENT_LENGTH property from each leaf.
+    
+    Returns
+    -------
+    int
+      Number of reaches that were pruned.
+    """
     count = 0
     iter_count = 1
     while iter_count > 0:
@@ -1153,13 +1343,29 @@ def pruneByLineStringLength(river : River,
     return count
 
 
-def pruneByArea(river : River,
-                area : float,
-                prop : str = names.DRAINAGE_AREA):
+def pruneByArea(river: River, area: float, prop: str = names.DRAINAGE_AREA) -> int:
     """Removes, IN PLACE, reaches whose total contributing area is less than area km^2.
 
-    Note this requires NHDPlus data to have been used and the
-    'DivergenceRoutedDrainAreaSqKm' property (or whatever is selected) to have been set.
+    Parameters
+    ----------
+    river : River
+      The river network to prune.
+    area : float
+      Area threshold in km^2. Reaches with contributing area below this
+      value will be removed.
+    prop : str, optional
+      Name of the property containing drainage area values. 
+      Defaults to DRAINAGE_AREA from standard_names.
+
+    Returns
+    -------
+    int
+      Number of reaches that were pruned.
+
+    Note
+    ----
+    This requires NHDPlus data to have been used and the drainage area
+    property to have been set.
     """
     count = 0
     for node in river.preOrder():
@@ -1176,9 +1382,9 @@ def pruneByArea(river : River,
     return count
 
 
-def pruneRiversByArea(rivers : List[River],
-                      area : float,
-                      prop : str = names.DRAINAGE_AREA) -> List[River]:
+def pruneRiversByArea(rivers: List[River],
+                      area: float,
+                      prop: str = names.DRAINAGE_AREA) -> List[River]:
     """Both prunes reaches and filters rivers whose contributing area is less than area."""
     num_reaches = sum(len(river) for river in rivers)
     count = 0
@@ -1191,9 +1397,9 @@ def pruneRiversByArea(rivers : List[River],
             count += len(river)
     logging.info(f"... pruned {count} of {num_reaches}")
     return sufficiently_big_rivers
-    
 
-def filterDiversions(rivers : List[River]) -> List[River]:
+
+def filterDiversions(rivers: List[River]) -> List[River]:
     """Filteres diversions, but not braids."""
     logging.info("Remove diversions...")
     non_diversions = []
@@ -1227,8 +1433,8 @@ def filterDiversions(rivers : List[River]) -> List[River]:
 
     return non_diversions
 
-    
-def removeBraids(rivers : List[River]) -> None:
+
+def removeBraids(rivers: List[River]) -> None:
     """Remove braids, but not diversions."""
     logging.debug("Removing braided sections...")
     for river in rivers:
@@ -1240,7 +1446,7 @@ def removeBraids(rivers : List[River]) -> None:
                 # is a braid or a diversion?
                 logging.info(f"  Found a braid with upstream = {leaf[names.UPSTREAM_HYDROSEQ]}")
                 upstream_hydroseq = leaf[names.UPSTREAM_HYDROSEQ]
-                if river.findNode(lambda n : n[names.HYDROSEQ] == upstream_hydroseq) is not None:
+                if river.findNode(lambda n: n[names.HYDROSEQ] == upstream_hydroseq) is not None:
                     # braid!
                     try:
                         joiner = next(n for n in leaf.pathToRoot()
@@ -1257,7 +1463,7 @@ def removeBraids(rivers : List[River]) -> None:
                       f' from a river of length {len(river)}')
 
 
-def filterDivergences(rivers : List[River]) -> List[River]:
+def filterDivergences(rivers: List[River]) -> List[River]:
     """Removes both diversions and braids.
 
     Braids are divergences that return to the river network, and so
@@ -1299,9 +1505,8 @@ def filterDivergences(rivers : List[River]) -> List[River]:
 
     return non_divergences
 
-    
-def filterSmallRivers(rivers : List[River],
-                      count : int) -> List[River]:
+
+def filterSmallRivers(rivers: List[River], count: int) -> List[River]:
     """Remove any rivers with fewer than count reaches."""
     logging.info(f"Removing rivers with fewer than {count} reaches.")
     new_rivers = []
@@ -1316,8 +1521,7 @@ def filterSmallRivers(rivers : List[River],
     return new_rivers
 
 
-def simplify(rivers : List[River],
-             tol : float) -> None:
+def simplify(rivers: List[River], tol: float) -> None:
     """Simplify, IN PLACE, all reaches."""
     if len(rivers) == 0:
         return
@@ -1328,11 +1532,23 @@ def simplify(rivers : List[River],
             river.df.simplify(tol)
 
 
-def isClose(river1 : River,
-            river2 : River,
-            tol : float):
-    """Equivalence of rivers."""
-    return all((watershed_workflow.utils.isClose(r1.linestring, r2.linestring, tol) and
-                    len(r1.children) == len(r2.children))
-                   for (r1,r2) in zip(river1.preOrder(), river2.preOrder()))
+def isClose(river1: River, river2: River, tol: float) -> bool:
+    """Equivalence of rivers.
     
+    Parameters
+    ----------
+    river1 : River
+      First river to compare.
+    river2 : River
+      Second river to compare.
+    tol : float
+      Tolerance for geometric comparison.
+    
+    Returns
+    -------
+    bool
+      True if the rivers are equivalent within the given tolerance.
+    """
+    return all((watershed_workflow.utils.isClose(r1.linestring, r2.linestring, tol)
+                and len(r1.children) == len(r2.children))
+               for (r1, r2) in zip(river1.preOrder(), river2.preOrder()))

@@ -8,6 +8,7 @@ dataframe manipulations to merge soil type regions with shared values,
 etc.
 
 """
+from typing import Tuple, List, Optional
 
 import numpy as np
 import logging
@@ -18,7 +19,8 @@ import rosetta
 import watershed_workflow.config
 import watershed_workflow.sources.standard_names as names
 
-def computeVanGenuchtenModel_Rosetta(data):
+
+def computeVanGenuchtenModel_Rosetta(data: np.ndarray) -> pd.DataFrame:
     """Return van Genuchten model parameters using Rosetta v3 model.
 
     (Zhang and Schaap, 2017 WRR)
@@ -40,11 +42,11 @@ def computeVanGenuchtenModel_Rosetta(data):
     #
     # tranpose for backward compatibility!
     if data.ndim == 1:
-        data = [list(data), ]
+        data_l = [list(data), ]
     else:
-        data = [list(entry) for entry in data.transpose()]
+        data_l = [list(entry) for entry in data.transpose()]
 
-    soildata = rosetta.SoilData.from_array(data)
+    soildata = rosetta.SoilData.from_array(data_l)
     result_mean, result_std, codes = rosetta.rosetta(3, soildata)
     logging.info(f'  ... done')
     result_mean = np.array(result_mean)
@@ -57,7 +59,7 @@ def computeVanGenuchtenModel_Rosetta(data):
         'Rosetta log van Genuchten alpha [cm^-1]', 'Rosetta log van Genuchten n [-]',
         'Rosetta log Ksat [um s^-1]'
     ],
-                          dtype=float)
+                      dtype=float)
     df['Rosetta residual volumetric water content [cm^3 cm^-3]'] = result_mean[:, 0]
     df['Rosetta saturated volumetric water content [cm^3 cm^-3]'] = result_mean[:, 1]
     df['Rosetta log van Genuchten alpha [cm^-1]'] = result_mean[:, 2]
@@ -67,7 +69,7 @@ def computeVanGenuchtenModel_Rosetta(data):
     return df
 
 
-def computeVanGenuchtenModelFromSSURGO(df):
+def computeVanGenuchtenModelFromSSURGO(df: pd.DataFrame) -> pd.DataFrame:
     """Get van Genutchen model parameters using Rosetta v3.
     
     Parameters
@@ -91,7 +93,7 @@ def computeVanGenuchtenModelFromSSURGO(df):
 
     # need to transpose the data so that the array have the shape (nvar, nsample)
     data = df_rosetta[rosetta_input_header].values.T
-    vgm =  computeVanGenuchtenModel_Rosetta(data)
+    vgm = computeVanGenuchtenModel_Rosetta(data)
 
     n_shapes = len(df_rosetta)
     n_resp = len(vgm["Rosetta residual volumetric water content [cm^3 cm^-3]"])
@@ -110,8 +112,20 @@ def computeVanGenuchtenModelFromSSURGO(df):
     return merged
 
 
-def convertRosettaToATS(df):
-    """Converts units from aggregated, Rosetta standard-parameters to ATS."""
+def convertRosettaToATS(df: pd.DataFrame) -> pd.DataFrame:
+    """Converts units from aggregated, Rosetta standard-parameters to ATS.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with Rosetta parameters to convert.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with parameters converted to ATS units and naming conventions.
+
+    """
     df_new = pd.DataFrame()
     for k in df.keys():
         if k == 'Rosetta log Ksat [um s^-1]':
@@ -142,8 +156,22 @@ def convertRosettaToATS(df):
     return df_new
 
 
-def _whiten(observations):
-    """This returns the mean/std deviation for use in unwhiten."""
+def _whiten(observations: np.ndarray) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    """Returns whitened observations and statistics for use in unwhiten.
+
+    Parameters
+    ----------
+    observations : np.ndarray
+        Input observations to whiten.
+
+    Returns
+    -------
+    whitened : np.ndarray
+        Whitened observations (zero mean, unit variance).
+    stats : tuple of np.ndarray
+        Tuple containing (means, standard_deviations) for unwhitening.
+
+    """
     means = np.mean(observations, axis=0)
     whitened = observations - np.expand_dims(means, 0)
     std = np.std(whitened, axis=0)
@@ -152,13 +180,28 @@ def _whiten(observations):
     return whitened, (means, std)
 
 
-def _unwhiten(observations, dat):
-    """This does the inverse of _whiten"""
+def _unwhiten(observations: np.ndarray, dat: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    """Applies the inverse of whitening transformation.
+
+    Parameters
+    ----------
+    observations : np.ndarray
+        Whitened observations to transform back.
+    dat : tuple of np.ndarray
+        Statistics from _whiten: (means, standard_deviations).
+
+    Returns
+    -------
+    np.ndarray
+        Un-whitened observations with original scale and offset.
+
+    """
     means, std = dat
     return observations * np.expand_dims(std, 0) + np.expand_dims(means, 0)
 
 
-def cluster(rasters, nbins):
+def cluster(rasters: np.ndarray,
+            nbins: int) -> Tuple[np.ndarray, np.ndarray, Tuple[float, np.ndarray]]:
     """Given a bunch of raster bands, cluster into nbins.
 
     Returns the coloring map of the clusters.  This is used to fill in
@@ -202,7 +245,7 @@ def cluster(rasters, nbins):
     return codebook, codes_nan.reshape(in_shp), (dist1, dist2)
 
 
-def computeVGAlphaFromPermeability(perm, poro):
+def computeVGAlphaFromPermeability(perm: np.ndarray, poro: np.ndarray) -> np.ndarray:
     """Compute van Genuchten alpha from permeability and porosity.
 
     Uses the relationship from Guarracino WRR 2007.
@@ -230,7 +273,7 @@ def computeVGAlphaFromPermeability(perm, poro):
 
 
 # make a bedrock dataframe
-def getDefaultBedrockProperties():
+def getDefaultBedrockProperties() -> pd.DataFrame:
     """Simple helper function to get a one-row dataframe with bedrock properties.
 
     Returns
@@ -245,10 +288,11 @@ def getDefaultBedrockProperties():
     df = pd.DataFrame()
     df['ats_id'] = [999, ]
     df[names.ID] = [999, ]
-    df[names.NAME] = ['bedrock',]
+    df[names.NAME] = ['bedrock', ]
     df['porosity [-]'] = [poro, ]
     df['permeability [m^2]'] = [perm, ]
-    df['van Genuchten alpha [Pa^-1]'] = computeVGAlphaFromPermeability(perm, poro)
+    df['van Genuchten alpha [Pa^-1]'] = computeVGAlphaFromPermeability(np.array([perm,]),
+                                                                       np.array([poro,]))
     df['van Genuchten n [-]'] = 3.0
     df['residual saturation [-]'] = 0.01
     df['source'] = 'n/a'
@@ -256,12 +300,12 @@ def getDefaultBedrockProperties():
     return df
 
 
-def mangleGLHYMPSProperties(shapes : gpd.GeoDataFrame,
-                            min_porosity : float = 0.01,
-                            max_permeability : float = np.inf,
-                            max_vg_alpha : float = np.inf,
-                            residual_saturation : float = 0.01,
-                            van_genuchten_n : float = 2.0) -> gpd.GeoDataFrame:
+def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
+                            min_porosity: float = 0.01,
+                            max_permeability: float = np.inf,
+                            max_vg_alpha: float = np.inf,
+                            residual_saturation: float = 0.01,
+                            van_genuchten_n: float = 2.0) -> gpd.GeoDataFrame:
     """GLHYMPs properties need their units changed and variables renamed.
 
     Parameters
@@ -297,28 +341,26 @@ def mangleGLHYMPSProperties(shapes : gpd.GeoDataFrame,
     # derived properties
     # - this scaling law has trouble for really small porosity,
     # - especially high permeability low porosity
-    vg_alpha = np.minimum(computeVGAlphaFromPermeability(Ksat, poro),
-                          max_vg_alpha)
+    vg_alpha = np.minimum(computeVGAlphaFromPermeability(Ksat, poro), max_vg_alpha)
 
-    properties = gpd.GeoDataFrame(
-        data={
-            names.ID: ids,
-            names.NAME: [f'GLHYMPS-{id}' for id in ids],
-            'source': 'GLHYMPS',
-            'permeability [m^2]': Ksat,
-            'logk_stdev [-]': Ksat_std,
-            'porosity [-]': poro,
-            'van Genuchten alpha [Pa^-1]': vg_alpha,
-            'van Genuchten n [-]': van_genuchten_n,
-            'residual saturation [-]': residual_saturation,
-            #'description' : descriptions,
-        },
-        geometry=shapes.geometry,
-        crs=shapes.crs)
+    properties = gpd.GeoDataFrame(data={
+        names.ID: ids,
+        names.NAME: [f'GLHYMPS-{id}' for id in ids],
+        'source': 'GLHYMPS',
+        'permeability [m^2]': Ksat,
+        'logk_stdev [-]': Ksat_std,
+        'porosity [-]': poro,
+        'van Genuchten alpha [Pa^-1]': vg_alpha,
+        'van Genuchten n [-]': van_genuchten_n,
+        'residual saturation [-]': residual_saturation,
+        #'description' : descriptions,
+    },
+                                  geometry=shapes.geometry,
+                                  crs=shapes.crs)
     return properties
 
 
-def dropDuplicates(df):
+def dropDuplicates(df: pd.DataFrame) -> pd.DataFrame:
     """Search for duplicate soils which differ only by ID, and rename them, returning a new df.
 
     Parameters

@@ -1,5 +1,5 @@
 """A module for working with multi-polys, a MultiLine that together forms a Polygon"""
-from typing import Optional, Tuple, List, Iterable, Any
+from typing import Optional, Tuple, List, Iterable, Any, Sequence
 
 import logging
 import numpy as np
@@ -428,7 +428,7 @@ def removeHoles(polygons : Iterable[shapely.geometry.Polygon],
                     try:
                         i, poly = next(
                             (i, poly) for (i, poly) in enumerate(polygons)
-                            if watershed_workflow.utils.non_point_intersection(poly, hole))
+                            if watershed_workflow.utils.isNonPointIntersection(poly, hole))
                         logging.debug(f'      placing in shape {i}')
                         polygons[i] = poly.union(hole)
                         if hasattr(poly, 'properties'):
@@ -444,16 +444,17 @@ def removeHoles(polygons : Iterable[shapely.geometry.Polygon],
     return polygons, big_holes
 
 
-def partition(list_of_shapes : Iterable[shapely.geometry.Polygon],
+def partition(list_of_shapes : Sequence[shapely.geometry.Polygon],
               abs_tol : float = _abs_tol,
               rel_tol : float =_rel_tol) -> List[shapely.geometry.Polygon]:
     """Given a list of shapes which mostly share boundaries, make sure
     they partition the space.  Often HUC boundaries have minor
     overlaps and underlaps -- here we try to account for wiggles.
 
-    Modifies the list.
-
     """
+    # make a copy to return
+    list_of_shapes = [s for s in list_of_shapes]
+    
     # deal with overlaps
     for i in range(len(list_of_shapes)):
         s1 = list_of_shapes[i]
@@ -464,7 +465,7 @@ def partition(list_of_shapes : Iterable[shapely.geometry.Polygon],
                 if watershed_workflow.utils.isVolumetricIntersection(s1, s2):
                     s2 = s2.difference(s1)
                     if isinstance(s2, shapely.geometry.base.BaseMultipartGeometry):
-                        s2 = biggest(s2)
+                        s2 = findBiggest(s2)
                     list_of_shapes[j] = s2
             except shapely.errors.TopologicalError as err:
                 raise shapely.errors.TopologicalError(f'When intersection polygons {i} and {j}: '
@@ -475,14 +476,16 @@ def partition(list_of_shapes : Iterable[shapely.geometry.Polygon],
     return list_of_shapes
 
 
-def intersectAndSplit(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> \
-        Tuple[List[List[None | shapely.geometry.LineString]], List[shapely.geometry.LineString]]:
+def intersectAndSplit(list_of_shapes : Sequence[shapely.geometry.Polygon]) -> \
+        Tuple[List[shapely.geometry.LineString],
+              List[List[None | shapely.geometry.LineString]]]:
+              
     """Given a list of shapes which share boundaries (i.e. they partition
     some space), return a compilation of their linestrings.
 
     Parameters
     ----------
-    list_of_shapes : list[shapely.geometry.Polygon]
+    list_of_shapes : Sequence[shapely.geometry.Polygon]
       The polygons to intersect and split, of length N.
 
     Returns
@@ -501,17 +504,16 @@ def intersectAndSplit(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> \
             if i != j and watershed_workflow.utils.isNonPointIntersection(s1, s2):
                 inter = s1.intersection(s2)
 
-                if type(inter) is shapely.geometry.MultiLineString:
+                if isinstance(inter, shapely.geometry.MultiLineString):
                     inter = shapely.ops.linemerge(inter)
 
-                if type(inter) is shapely.geometry.GeometryCollection:
-
+                if isinstance(inter, shapely.geometry.GeometryCollection):
                     parts_lines = [l for l in inter if isinstance(l, shapely.geometry.LineString)]
                     parts_points = [p for p in inter if isinstance(p, shapely.geometry.Point)]
                     parts_polys = [p for p in inter if isinstance(p, shapely.geometry.Polygon)]
 
                     mls = shapely.geometry.MultiLineString(parts_lines)
-                    left_over_polys = []
+                    left_over_polys : List[shapely.geometry.Polygon] = []
                     for poly in parts_polys:
                         mps = poly.intersection(mls)
 
@@ -520,28 +522,26 @@ def intersectAndSplit(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> \
                         parts_lines.append(
                             shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
                     inter = shapely.ops.linemerge(parts_lines)
-                    # if (isinstance(mps, shapely.geometry.MultiPoint)) and (len(mps) == 2):
-                    #     parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))
-                    # else:
-                    #     left_over_polys.append(poly)
-                    # mls_poly = shapely.geometry.MultiLineString([poly.exterior for poly in left_over_polys])
-                    # inter_with_polyrings =  shapely.geometry.MultiLineString(parts_lines+list(mls_poly))
-                    # inter = shapely.ops.linemerge(inter_with_polyrings)
 
-                if type(inter) is shapely.geometry.GeometryCollection or \
-                   type(inter) is shapely.geometry.MultiLineString:
+                if isinstance(inter, shapely.geometry.GeometryCollection) or \
+                   isinstance(inter, shapely.geometry.MultiLineString):
 
                     logging.info(
                         f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter.geoms)}'
                     )
-                    err = RuntimeError('HUC intersection yielded collection of odd types')
-                    err.polys = list_of_shapes
-                    err.i_p1 = i
-                    err.p1 = s1
-                    err.i_p2 = j
-                    err.p2 = s2
-                    err.inter = inter
-                    raise err
+
+                    class IntersectionError(RuntimeError):
+                        def __init__(self, msg, list_of_shapes, i_p1, p1, i_p2, p2, intersection):
+                            super(self, IntersectionError).__init__(msg)
+                            self.polys = list_of_shapes
+                            self.i_p1 = i_p1
+                            self.p1 = p1
+                            self.i_p2 = i_p2
+                            self.p2 = p2
+                            self.inter = intersection
+                    raise IntersectionError('HUC intersection yielded collection of odd types',
+                                            list_of_shapes, i, s1, j, s2, inter)
+
 
                 if type(inter) is not shapely.geometry.LineString:
 
@@ -573,88 +573,6 @@ def intersectAndSplit(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> \
     return uniques_r, intersections
 
 
-def computeNonOverlappingPolygons(polys : gpd.GeoDataFrame,
-                                  abs_tol : float = _abs_tol,
-                                  rel_tol : float = _rel_tol,
-                                  remove_all_interior : bool =True) -> List[shapely.geometry.Polygon]:
-    """Given a list of overlapping contributing area polygons, compute a nonoverlapping set.
-
-    Often we wish to use SplitHucs constructed from the "delta
-    contributing area", e.g. the full domain is defined by a single
-    polygon, then multiple gages on the river network CAs are used to
-    form the subdomains.
-
-    This splits the overlapping contributing areas into the delta
-    contributing area for each gage, returning a non-overlapping set
-    of polygons, one per original polygon.
-
-    Properties are presereved.
-
-    Parameters
-    ----------
-    polys : list[shapely.geometry.Polygon]
-      The overlapping CAs
-
-    Returns
-    -------
-    partition : list[shapely.geometry.Polygon]
-      The non-overlapping delta CAs.
-    holes : list[shapely.geometry.Polygon]
-      Holes in the partition that are bigger than the tolerance.
-
-    """
-    assert names.ID in polys.keys()
-    assert all(isinstance(p, shapely.geometry.Polygon) for p in polys)
-
-    if 'area' not in polys.keys():
-        polys['area'] = polys.geometry.area
-    polys = polys.sort_values(by='area', ascending=False)
-
-
-    # form the tree
-    logging.info(f'Create {len(roots)} roots')
-
-    def print(r, ntabs):
-        logging.info(' '*ntabs + f'node {r["ID"]}')
-        for n in r.children:
-            print(n, ntabs + 1)
-
-    for i, root in enumerate(roots):
-        logging.info(f'Root {i}:')
-        print(root, 1)
-
-    assert all(hasattr(node, 'properties') for root in roots for node in root.preOrder())
-
-    # now, at each level, subtract all the containing children.  note
-    # we want to work down the tree here
-    big_holes = []
-    for root in roots:
-        for node in root.preOrder():
-            if len(node.children) > 0:
-                logging.info('First Remove Holes')
-                child_polys, holes = removeHoles([c.poly for c in node.children], abs_tol, rel_tol,
-                                                 remove_all_interior)
-                big_holes.extend(holes)
-                upstream = shapely.ops.unary_union(child_polys + holes)
-                assert isinstance(node.poly, shapely.geometry.Polygon)
-                node.poly = node.poly.difference(upstream)
-                if isinstance(node.poly, shapely.geometry.MultiPolygon):
-                    node.poly = biggest(list(node.poly))
-                assert isinstance(node.poly, shapely.geometry.Polygon)
-
-    def getPoly(node):
-        poly = node.poly
-        poly.properties = node.properties
-        return poly
-
-    partition = [getPoly(n) for n in root.preOrder()]
-    #return partition, big_holes
-
-    logging.info('Second Remove Holes')
-    partition, holes = removeHoles(partition, abs_tol, rel_tol, remove_all_interior)
-    assert all(hasattr(p, 'properties') for p in partition)
-    return partition, holes
-
-
 def findBiggest(list_of_shapes : Iterable[shapely.geometry.Polygon]) -> shapely.geometry.Polygon:
+    """Finds the biggest (by area) polygon."""
     return next(reversed(sorted(list_of_shapes, key=lambda a: a.area)))

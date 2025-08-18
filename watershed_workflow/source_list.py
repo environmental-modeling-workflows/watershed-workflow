@@ -141,12 +141,26 @@ def getSources(args) -> Dict[str, Any]:
         sources['DEM'] = dem_sources[source_dem]
 
     try:
-        source_soil = args.source_soil
+        source_soil = args.soil_structure
     except AttributeError:
         pass
     else:
-        sources['soil type'] = soil_sources[source_soil]
+        sources['soil structure'] = structure_sources[source_soil]
 
+    try:
+        source_geo = args.geologic_structure
+    except AttributeError:
+        pass
+    else:
+        sources['geologic structure'] = structure_sources[source_geo]
+
+    try:
+        source_dtb = args.dtb_structure
+    except AttributeError:
+        pass
+    else:
+        sources['depth to bedrock'] = structure_sources[source_dtb]
+        
     try:
         land_cover = args.land_cover
     except AttributeError:

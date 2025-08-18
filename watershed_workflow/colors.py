@@ -1,13 +1,16 @@
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Optional, Callable, Any, Sequence, Literal, TypedDict, NotRequired, cast
+
+Segment = Tuple[float, ...]
+Channel = Literal["red", "green", "blue", "alpha"]
+SegmentData = Dict[Channel, Sequence[Segment]]
 
 try:
-    from matplotlib.colors import Color # type: ignore
+    from matplotlib.colors import Color  # type: ignore
 except ImportError:
-    Color = Union[
-        str,                       # named color, hex, grayscale str, shorthand
-        Tuple[float, float, float],         # RGB
-        Tuple[float, float, float, float],  # RGBA
-    ]
+    Color = Union[str,  # named color, hex, grayscale str, shorthand
+                  Tuple[float, float, float],  # RGB
+                  Tuple[float, float, float, float],  # RGBA
+                  ]
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,12 +21,10 @@ import collections
 import random
 import colorsys
 
-    
-
 #
 # Lists of disparate color palettes
 #
-enumerated_palettes : Dict[int, List[Color]] = {
+enumerated_palettes: Dict[int, List[Color]] = {
     1: [
         '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf',
         '#999999'
@@ -41,55 +42,69 @@ enumerated_palettes : Dict[int, List[Color]] = {
 }
 
 
+def isNearlyGrey(color: Color, tolerance: float = 0.1) -> bool:
+    """Determines whether a color is nearly grey.
 
-def isNearlyGrey(color : Color,
-                 tolerance : float = 0.1) -> bool:
-    """
-    Determines whether a color is nearly grey.
+    Parameters
+    ----------
+    color : Color
+        Color to test for greyness.
+    tolerance : float, optional
+        Tolerance for RGB component differences. Default is 0.1.
+
+    Returns
+    -------
+    bool
+        True if color is nearly grey (RGB components within tolerance).
     """
     # Ensure the color hash is valid
-    r,g,b,a = matplotlib.colors.to_rgba(color)
+    r, g, b, a = matplotlib.colors.to_rgba(color)
 
     # Check if the RGB values are within the tolerance range
     return abs(r - g) <= tolerance and abs(g - b) <= tolerance and abs(b - r) <= tolerance
 
 
-def measureBoldness(color : Color) -> float:
-    """
-    Calculate a vibrancy and boldness score for a given color hash.
+def measureBoldness(color: Color) -> float:
+    """Calculate a vibrancy and boldness score for a given color.
 
-    Returns:
-        float: A score representing how vibrant and bold the color is (0 to 100).
+    Parameters
+    ----------
+    color : Color
+        Color to measure boldness for.
+
+    Returns
+    -------
+    float
+        A score representing how vibrant and bold the color is (0 to 100).
     """
-    r,g,b,a = matplotlib.colors.to_rgba(color)
+    r, g, b, a = matplotlib.colors.to_rgba(color)
 
     # Convert RGB to HSL for better vibrancy measurement
     h, l, s = colorsys.rgb_to_hls(r, g, b)
 
     # Calculate vibrancy score (saturation and brightness impact vibrancy)
-    vibrancy = s * (1 - abs(2 * l - 1))
+    vibrancy = s * (1 - abs(2*l - 1))
 
     # Calculate boldness score (intensity of RGB components)
-    boldness = (r + g + b) / 3
+    boldness = (r+g+b) / 3
 
     # Combine vibrancy and boldness into a single score (weighted average)
-    score = (0.6 * vibrancy + 0.4 * boldness) * 100
+    score = (0.6*vibrancy + 0.4*boldness) * 100
 
     return round(score, 2)
 
 
-
 # create a very big list of non-grey colors
-_my_not_random = random.Random(7) #2
+_my_not_random = random.Random(7)  #2
 xkcd_colors = [c for c in matplotlib.colors.XKCD_COLORS.values() if not isNearlyGrey(c)]
 _my_not_random.shuffle(xkcd_colors)
 
 _xkcd_by_bold = list(reversed(sorted(xkcd_colors, key=measureBoldness)))
 
-xkcd_bolds = _xkcd_by_bold[0:len(_xkcd_by_bold)//4]
+xkcd_bolds = _xkcd_by_bold[0:len(_xkcd_by_bold) // 4]
 _my_not_random.shuffle(xkcd_bolds)
 
-xkcd_muted = _xkcd_by_bold[len(_xkcd_by_bold)//2:3*len(_xkcd_by_bold)//4]
+xkcd_muted = _xkcd_by_bold[len(_xkcd_by_bold) // 2:3 * len(_xkcd_by_bold) // 4]
 _my_not_random.shuffle(xkcd_muted)
 
 #random.shuffle(xkcd_colors)
@@ -97,14 +112,35 @@ enumerated_palettes[5] = xkcd_colors
 
 # create a bigish list of greyish colors
 
-
-
 # this gives us way more unique colors to cycle through in plots
 matplotlib.rcParams['axes.prop_cycle'] = matplotlib.rcsetup.cycler(color=xkcd_bolds)
 
 
-def enumerated_colors(count, palette=1, chain=True):
-    """Gets an enumerated list of count independent colors."""
+def enumerated_colors(count: int,
+                      palette: Union[int, List[Color]] = 1,
+                      chain: bool = True) -> List[Color]:
+    """Gets an enumerated list of count independent colors.
+
+    Parameters
+    ----------
+    count : int
+        Number of colors to return.
+    palette : int or List[Color], optional
+        Palette identifier (int) or explicit list of colors. Default is 1.
+    chain : bool, optional
+        If True, cycle through palette colors when count exceeds palette size.
+        Default is True.
+
+    Returns
+    -------
+    List[Color]
+        List of colors from the specified palette.
+
+    Raises
+    ------
+    ValueError
+        If no enumerated palette of sufficient length exists and chain is False.
+    """
     if isinstance(palette, int):
         p = enumerated_palettes[palette]
     else:
@@ -112,15 +148,8 @@ def enumerated_colors(count, palette=1, chain=True):
 
     if count <= len(p):
         return p[0:count]
-    else:
-        for p in enumerated_palettes.values():
-            if count <= len(p):
-                return p[0:count]
 
-    if chain:
-        # must chain...
-        p = enumerated_palettes[palette]
-
+    elif chain:
         def chain_iter(p):
             while True:
                 for c in p:
@@ -133,28 +162,44 @@ def enumerated_colors(count, palette=1, chain=True):
 
 
 # black-zero jet is jet, but with the 0-value set to black, with an immediate jump to blue
-def blackzerojet_cmap(data):
-    blackzerojet_dict = {
-        'blue': [[0.0, 0.0, 0.0], [0.0, 0.0, 0.5], [0.11, 1, 1], [0.34000000000000002, 1, 1],
-                 [0.65000000000000002, 0, 0], [1, 0, 0]],
-        'green': [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.125, 0, 0], [0.375, 1, 1],
-                  [0.64000000000000001, 1, 1], [0.91000000000000003, 0, 0], [1, 0, 0]],
-        'red': [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.34999999999999998, 0, 0],
-                [0.66000000000000003, 1, 1], [0.89000000000000001, 1, 1], [1, 0.5, 0.5]]
+def blackzerojet_cmap(data: np.ndarray) -> 'matplotlib.colors.LinearSegmentedColormap':
+    """Create a jet colormap with zero values set to black.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Data array used to determine color scaling.
+
+    Returns
+    -------
+    matplotlib.colors.LinearSegmentedColormap
+        Custom colormap with zero values as black.
+    """
+    blackzerojet_dict : SegmentData = {
+        'blue':  [(0.0, 0.0, 0.0), (0.0, 0.0, 0.5), (0.1, 1.0, 1.0),   (0.34, 1.0, 1.0),  (0.65, 0.0, 0.0), (1.0, 0.0, 0.0)],
+        'green': [(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.125, 0.0, 0.0), (0.375, 1.0, 1.0), (0.64, 1.0, 1.0), (0.9, 0.0, 0.0), (1.0, 0.0, 0.0)],
+        'red':   [(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.35, 0.0, 0.0),  (0.66, 1.0, 1.0),  (0.89, 1.0, 1.0), (1.0, 0.5, 0.5)]
     }
     minval = data[np.where(data > 0.)[0]].min()
     maxval = data[np.where(data > 0.)[0]].max()
     oneminval = .9 * minval / maxval
+
     for color in ['blue', 'green', 'red']:
-        for i in range(1, len(blackzerojet_dict[color])):
-            blackzerojet_dict[color][i][0] = blackzerojet_dict[color][i][0] * (
-                1-oneminval) + oneminval
+        c = cast(Channel, color)
+        blackzerojet_dict[c] = [(e[0] * (1-oneminval) + oneminval, e[1], e[2]) for e in blackzerojet_dict[c]]
 
     return matplotlib.colors.LinearSegmentedColormap('blackzerojet', blackzerojet_dict)
 
 
 # ice color map
-def ice_cmap():
+def ice_cmap() -> 'matplotlib.colors.LinearSegmentedColormap':
+    """Create an ice-themed colormap.
+
+    Returns
+    -------
+    matplotlib.colors.LinearSegmentedColormap
+        Ice-themed colormap from white to blue.
+    """
     x = np.linspace(0, 1, 7)
     b = np.array([1, 1, 1, 1, 1, 0.8, 0.6])
     g = np.array([1, 0.993, 0.973, 0.94, 0.893, 0.667, 0.48])
@@ -163,12 +208,23 @@ def ice_cmap():
     bb = np.array([x, b, b]).transpose()
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
-    ice_dict = { 'blue': bb, 'green': gg, 'red': rr }
+    ice_dict : SegmentData = {
+        'blue': [tuple(e) for e in bb],
+        'green': [tuple(e) for e in gg],
+        'red': [tuple(e) for e in rr],
+    }
     return matplotlib.colors.LinearSegmentedColormap('ice', ice_dict)
 
 
 # water color map
-def water_cmap():
+def water_cmap() -> 'matplotlib.colors.LinearSegmentedColormap':
+    """Create a water-themed colormap.
+
+    Returns
+    -------
+    matplotlib.colors.LinearSegmentedColormap
+        Water-themed colormap from white to dark blue.
+    """
     x = np.linspace(0, 1, 8)
     b = np.array([1.0, 1.0, 1.0, 1.0, 0.8, 0.6, 0.4, 0.2])
     g = np.array([1.0, 0.8, 0.6, 0.4, 0.2, 0.0, 0.0, 0.0])
@@ -177,12 +233,23 @@ def water_cmap():
     bb = np.array([x, b, b]).transpose()
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
-    water_dict = { 'blue': bb, 'green': gg, 'red': rr }
+    water_dict : SegmentData = {
+        'blue': [tuple(e) for e in bb],
+        'green': [tuple(e) for e in gg],
+        'red': [tuple(e) for e in rr],
+    }
     return matplotlib.colors.LinearSegmentedColormap('water', water_dict)
 
 
 # water color map
-def gas_cmap():
+def gas_cmap() -> 'matplotlib.colors.LinearSegmentedColormap':
+    """Create a gas-themed colormap.
+
+    Returns
+    -------
+    matplotlib.colors.LinearSegmentedColormap
+        Gas-themed colormap from white to red.
+    """
     x = np.linspace(0, 1, 8)
     r = np.array([1.0, 1.0, 1.0, 1.0, 0.8, 0.6, 0.4, 0.2])
     #    g = np.array([1.0, 0.8, 0.6, 0.4, 0.2, 0.0, 0.0, 0.0])
@@ -192,19 +259,28 @@ def gas_cmap():
     bb = np.array([x, b, b]).transpose()
     gg = np.array([x, g, g]).transpose()
     rr = np.array([x, r, r]).transpose()
-    gas_dict = { 'blue': bb, 'green': gg, 'red': rr }
+    gas_dict : SegmentData = {
+        'blue': [tuple(e) for e in bb],
+        'green': [tuple(e) for e in gg],
+        'red': [tuple(e) for e in rr],
+    }
     return matplotlib.colors.LinearSegmentedColormap('gas', gas_dict)
 
 
 # jet-by-index
-def cm_mapper(vmin=0., vmax=1., cmap=None, norm=None, get_sm=False):
+def cm_mapper(
+    vmin: float = 0.,
+    vmax: float = 1.,
+    cmap: Optional[Union[str, matplotlib.colors.Colormap]] = None,
+    norm: Optional[matplotlib.colors.Normalize] = None,
+) -> Callable[[float], Tuple[float, float, float, float]]:
     """Provide a function that maps scalars to colors in a given colormap.
 
     Parameters
     ----------
     vmin, vmax : scalar
       Min and max scalars to be mapped.
-    cmap : str or matplotlib.cmap instance
+    cmap : str or matplotlib.colors.Colormap instance
       The colormap to discretize.
     norm : optional, matplotlib Norm object
       A normalization.
@@ -225,28 +301,27 @@ def cm_mapper(vmin=0., vmax=1., cmap=None, norm=None, get_sm=False):
 
     """
     if cmap is None:
-        cmap = matplotlib.cm.jet
+        cmap = plt.get_cmap('jet')
     if norm is None:
         norm = matplotlib.colors.Normalize(vmin, vmax)
     sm = matplotlib.cm.ScalarMappable(norm, cmap)
 
     def mapper(value):
         return sm.to_rgba(value)
-
-    if get_sm:
-        return mapper, sm
-    else:
-        return mapper
+    return mapper
 
 
-def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
+def cm_discrete(
+    ncolors: int,
+    cmap: Union[str, matplotlib.colors.Colormap] = plt.get_cmap('jet')
+) -> 'matplotlib.colors.LinearSegmentedColormap':
     """Calculate a discrete colormap with N entries from the continuous colormap cmap.
 
     Parameters
     ----------
     ncolors : int
       Number of colors.
-    cmap : str or matplotlib.cmap instance, optional
+    cmap : str or matplotlib.colors.Colormap instance, optional
       The colormap to discretize.  Default is 'jet'.
 
     Returns
@@ -264,31 +339,41 @@ def cm_discrete(ncolors, cmap=matplotlib.cm.jet):
             plt.plot(x, x**i, color=colors[i])
 
     """
-    if type(cmap) == str:
+    if isinstance(cmap, str):
         cmap = plt.get_cmap(cmap)
     colors_i = np.concatenate((np.linspace(0, 1., ncolors), (0., 0., 0., 0.)))
     colors_rgba = cmap(colors_i)
     indices = np.linspace(0, 1., ncolors + 1)
-    cdict = {}
-    for ki, key in enumerate(('red', 'green', 'blue')):
-        cdict[key] = [(indices[i], colors_rgba[i - 1, ki], colors_rgba[i, ki])
-                      for i in range(ncolors + 1)]
+
+    cdict : SegmentData = {
+        'blue': [(indices[i], colors_rgba[i - 1, 0], colors_rgba[i, 0]) for i in range(ncolors + 1)],
+        'green': [(indices[i], colors_rgba[i - 1, 1], colors_rgba[i, 1]) for i in range(ncolors + 1)],
+        'red': [(indices[i], colors_rgba[i - 1, 2], colors_rgba[i, 2]) for i in range(ncolors + 1)],
+    }
+
     # Return colormap object.
     return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%ncolors, cdict, 1024)
 
 
-def float_list_type(mystring):
-    """Convert string-form list of doubles into list of doubles."""
-    colors = []
-    for f in mystring.strip("(").strip(")").strip("[").strip("]").split(","):
-        try:
-            colors.append(float(f))
-        except:
-            colors.append(f)
-    return colors
+def desaturate(color: Color,
+               amount: float = 0.4,
+               is_hsv: bool = False) -> np.ndarray:
+    """Desaturate a color by reducing its saturation.
 
+    Parameters
+    ----------
+    color : Color or np.ndarray
+        Color to desaturate. Can be in RGB or HSV format.
+    amount : float, optional
+        Amount of desaturation to apply (0-1). Default is 0.4.
+    is_hsv : bool, optional
+        If True, input color is in HSV format. Default is False (RGB).
 
-def desaturate(color, amount=0.4, is_hsv=False):
+    Returns
+    -------
+    np.ndarray
+        Desaturated color in RGB format.
+    """
     if not is_hsv:
         hsv = matplotlib.colors.rgb_to_hsv(matplotlib.colors.to_rgb(color))
     else:
@@ -298,17 +383,49 @@ def desaturate(color, amount=0.4, is_hsv=False):
     return matplotlib.colors.hsv_to_rgb(hsv)
 
 
-def darken(color, fraction=0.6):
+def darken(color: Color, fraction: float = 0.6) -> Tuple[float, float, float]:
+    """Darken a color by reducing its brightness.
+
+    Parameters
+    ----------
+    color : Color
+        Color to darken.
+    fraction : float, optional
+        Fraction of brightness to remove (0-1). Default is 0.6.
+
+    Returns
+    -------
+    Tuple[float, float, float]
+        Darkened color in RGB format.
+    """
     rgb = np.array(matplotlib.colors.to_rgb(color))
     return tuple(np.maximum(rgb - fraction*rgb, 0))
 
 
-def lighten(color, fraction=0.6):
+def lighten(color: Color, fraction: float = 0.6) -> Tuple[float, float, float]:
+    """Lighten a color by increasing its brightness.
+
+    Parameters
+    ----------
+    color : Color
+        Color to lighten.
+    fraction : float, optional
+        Fraction of brightness to add (0-1). Default is 0.6.
+
+    Returns
+    -------
+    Tuple[float, float, float]
+        Lightened color in RGB format.
+    """
     rgb = np.array(matplotlib.colors.to_rgb(color))
     return tuple(np.minimum(rgb + fraction * (1-rgb), 1))
 
 
-def createIndexedColormap(indices, cmap=None):
+def createIndexedColormap(
+    indices: Union[List[int], np.ndarray],
+    cmap: Optional[Union[str, matplotlib.colors.Colormap]] = None,
+) -> Tuple[List[int], 'matplotlib.colors.ListedColormap', 'matplotlib.colors.BoundaryNorm',
+           List[int], List[str]]:
     """Generates an indexed colormap and labels for imaging, e.g. soil indices.
     Parameters
     ----------
@@ -342,9 +459,13 @@ def createIndexedColormap(indices, cmap=None):
                 cm_values = enumerated_colors(len(indices), palette=i)
         if cm_values is None:
             cmap = 'gist_rainbow'
+    if isinstance(cmap, str):
+        cmap = plt.get_cmap(cmap)
+        
     if cm_values is None:
-        cm = cm_mapper(0, len(indices) - 1, cmap=matplotlib.cm.get_cmap(cmap))
+        cm = cm_mapper(0, len(indices) - 1, cmap)
         cm_values = [cm(i) for i in range(0, len(indices))]
+
     cmap = matplotlib.colors.ListedColormap(cm_values)
     ticks = indices + [indices[-1] + 1, ]
     norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
@@ -400,8 +521,44 @@ indices for each triangle (tri_{label_lower}):
 """
 
 
-def _createColormapCreator(label, all_colors):
-    def _createColormap(indices=None, formatted=False):
+def _createColormapCreator(
+    label: str, all_colors: Dict[int, Tuple[str, Color]]
+) -> Callable[[Optional[List[int]], bool],
+              Tuple[List[int], 'matplotlib.colors.ListedColormap', 'matplotlib.colors.BoundaryNorm',
+                    List[float], List[str]]]:
+    """Create a colormap creator function for specific color sets.
+
+    Parameters
+    ----------
+    label : str
+        Label for the colormap type (e.g., 'NLCD', 'MODIS').
+    all_colors : Dict[int, Tuple[str, Color]]
+        Dictionary mapping indices to (name, color) tuples.
+
+    Returns
+    -------
+    Callable
+        Function that creates colormaps for the specified color set.
+    """
+    def _createColormap(
+        indices: Optional[List[int]] = None,
+        formatted: bool = False
+    ) -> Tuple[List[int], 'matplotlib.colors.ListedColormap', 'matplotlib.colors.BoundaryNorm',
+               List[float], List[str]]:
+        """Create colormap for specified indices.
+
+        Parameters
+        ----------
+        indices : List[int], optional
+            List of color indices to include. If None, uses all available.
+        formatted : bool, optional
+            If True, format long labels with line breaks. Default is False.
+
+        Returns
+        -------
+        Tuple[List[int], matplotlib.colors.ListedColormap, matplotlib.colors.BoundaryNorm, List[float], List[str]]
+            Tuple containing indices, colormap, normalization, tick positions, and labels.
+        """
         if indices is None:
             indices = list(all_colors.keys())
 
@@ -443,13 +600,19 @@ def _createColormapCreator(label, all_colors):
 
 
 import watershed_workflow.sources.manager_nlcd
+
 createNLCDColormap = _createColormapCreator('NLCD', watershed_workflow.sources.manager_nlcd.colors)
 
 import watershed_workflow.sources.manager_modis_appeears
-createMODISColormap = _createColormapCreator('MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
+
+createMODISColormap = _createColormapCreator(
+    'MODIS', watershed_workflow.sources.manager_modis_appeears.colors)
 
 
-def createIndexedColorbar(ncolors, cmap, labels=None, **kwargs):
+def createIndexedColorbar(ncolors: int,
+                          cmap: matplotlib.colors.Colormap,
+                          labels: Optional[List[str]] = None,
+                          **kwargs: Any) -> 'matplotlib.colorbar.Colorbar':
     """Add an indexed colorbar based on a given colormap.
 
     This sets ticks in the middle of each color range, adds the
@@ -459,7 +622,7 @@ def createIndexedColorbar(ncolors, cmap, labels=None, **kwargs):
     ----------
     ncolors : int
       Number of colors to display.
-    cmap : matplotlib.cmap instance
+    cmap : matplotlib.colors.Colormap instance
       The colormap used in the image.
     labels : list
       Optional list of label strings that equal to the number of
@@ -487,11 +650,12 @@ def createIndexedColorbar(ncolors, cmap, labels=None, **kwargs):
 
     colorbar = plt.colorbar(mappable, **kwargs)
     ticks = np.linspace(0, ncolors, ncolors)
-    colorbar.set_ticks(ticks)  # set tick locations
+    colorbar.set_ticks(list(ticks))  # set tick locations
+
     # set tick labels
     if labels is not None:
         assert (len(labels) == len(ticks))
         colorbar.set_ticklabels(labels)
     else:
-        colorbar.set_ticklabels(range(ncolors))
+        colorbar.set_ticklabels([str(i) for i in range(ncolors)])
     return colorbar

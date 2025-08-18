@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
     import matplotlib.axes
 
     from watershed_workflow.crs import CRS
-    
+
 import datetime, cftime
 import logging
 import numpy as np
@@ -32,60 +32,139 @@ import watershed_workflow.warp
 
 _tol = 1.e-7
 
+
 #
 # Geometric utilities
 #
-def computeDistance(p1 : Tuple[float,float],
-                    p2 : Tuple[float,float]) -> float:
-    """Distance between two points in tuple form"""
+def computeDistance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    """Compute Euclidean distance between two points.
+    
+    Parameters
+    ----------
+    p1 : tuple of float
+        First point as (x, y) coordinates.
+    p2 : tuple of float
+        Second point as (x, y) coordinates.
+        
+    Returns
+    -------
+    float
+        Euclidean distance between the two points.
+    """
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
-def computeTriangleArea(p1 : Tuple[float,float],
-                        p2 : Tuple[float,float],
-                        p3 : Tuple[float,float]) -> float:
-    """Area of a triangle in 2D"""
-    return 0.5 * (p2[0] * p3[1] - p3[0] * p2[1] - p1[0] * p3[1] + p3[0] * p1[1]
-               + p1[0] * p2[1] - p2[0] * p1[1])
+def computeTriangleArea(p1: Tuple[float, float], p2: Tuple[float, float],
+                        p3: Tuple[float, float]) -> float:
+    """Compute the area of a triangle given three vertices.
+    
+    Parameters
+    ----------
+    p1 : tuple of float
+        First vertex as (x, y) coordinates.
+    p2 : tuple of float
+        Second vertex as (x, y) coordinates.
+    p3 : tuple of float
+        Third vertex as (x, y) coordinates.
+        
+    Returns
+    -------
+    float
+        Area of the triangle.
+    """
+    return 0.5 * (p2[0] * p3[1] - p3[0] * p2[1] - p1[0] * p3[1] + p3[0] * p1[1] + p1[0] * p2[1]
+                  - p2[0] * p1[1])
 
-def computeTriangleCentroid(p1 : Tuple[float,float],
-                            p2 : Tuple[float,float],
-                            p3 : Tuple[float,float]) -> float:
-    """Centroid of a triangle in 2D"""
-    return np.array([p1,p2,p3]).mean(axis=0)
+
+def computeTriangleCentroid(p1: Tuple[float, float], p2: Tuple[float, float],
+                            p3: Tuple[float, float]) -> Tuple[float, float]:
+    """Compute the centroid of a triangle given three vertices.
+    
+    Parameters
+    ----------
+    p1 : tuple of float
+        First vertex as (x, y) coordinates.
+    p2 : tuple of float
+        Second vertex as (x, y) coordinates.
+    p3 : tuple of float
+        Third vertex as (x, y) coordinates.
+        
+    Returns
+    -------
+    tuple of float
+        Centroid of the triangle as (x, y) coordinates.
+    """
+    return np.array([p1, p2, p3]).mean(axis=0)
 
 
-def isCollinear(p1 : Tuple[float,float],
-                p2 : Tuple[float,float],
-                p3 : Tuple[float,float],
-                tol : float = 1e-6) -> bool:
-    """this function checks if three points are collinear for given tolerance value"""
+def isCollinear(p1: Tuple[float, float],
+                p2: Tuple[float, float],
+                p3: Tuple[float, float],
+                tol: float = 1e-6) -> bool:
+    """Check if three points are collinear within a given tolerance.
+    
+    Parameters
+    ----------
+    p1 : tuple of float
+        First point as (x, y) coordinates.
+    p2 : tuple of float
+        Second point as (x, y) coordinates.
+    p3 : tuple of float
+        Third point as (x, y) coordinates.
+    tol : float, optional
+        Tolerance for collinearity test. Default is 1e-6.
+        
+    Returns
+    -------
+    bool
+        True if the three points are collinear within tolerance.
+    """
     x1, y1 = p2[0] - p1[0], p2[1] - p1[1]
     x2, y2 = p3[0] - p1[0], p3[1] - p1[1]
     return abs(x1*y2 - x2*y1) < tol
 
 
-def computeArea(vertices : Iterable[Tuple[float]]) -> float:
-    """Area of polygons in 2D"""
+def computeArea(vertices: Iterable[Tuple[float]]) -> float:
+    """Compute the area of a polygon given its vertices.
+    
+    Parameters
+    ----------
+    vertices : iterable of tuple
+        Vertices of the polygon as coordinate tuples.
+        
+    Returns
+    -------
+    float
+        Area of the polygon.
+    """
     area = shapely.geometry.Polygon(vertices).area
     return area
 
 
-def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
-                 v2 : Tuple[float, float] | shapely.geometry.LineString) -> float:
-    """Given two 2D vectors represented as len 2 arrays or tuples,
-    find the angle (in degrees) of 2 relative to 1 in a clockwise
-    notion.
-
+def computeAngle(v1: Tuple[float, float] | shapely.geometry.LineString,
+                 v2: Tuple[float, float] | shapely.geometry.LineString) -> float:
+    """Compute the angle (in degrees) of v2 relative to v1 in clockwise direction.
+    
+    Parameters
+    ----------
+    v1 : tuple of float or shapely.geometry.LineString
+        First vector as (x, y) coordinates or downstream-oriented LineString.
+    v2 : tuple of float or shapely.geometry.LineString
+        Second vector as (x, y) coordinates or downstream-oriented LineString.
+        
+    Returns
+    -------
+    float
+        Angle in degrees of v2 relative to v1 in clockwise direction (0-360).
     """
     if isinstance(v1, shapely.geometry.LineString):
         if isinstance(v2, shapely.geometry.LineString):
             assert isClose(v1.coords[0], v2.coords[-1])
-        
-        c1 = np.array(v1.coords[0:2])[:,0:2]
+
+        c1 = np.array(v1.coords[0:2])[:, 0:2]
         return computeAngle(c1[1] - c1[0], v2)
     if isinstance(v2, shapely.geometry.LineString):
-        c2 = np.array(v2.coords[-2:])[:,0:2]
+        c2 = np.array(v2.coords[-2:])[:, 0:2]
         return computeAngle(v1, c2[0] - c2[1])
 
     x1, y1 = v1
@@ -105,19 +184,26 @@ def computeAngle(v1 : Tuple[float, float] | shapely.geometry.LineString,
     if clockwise_angle < 0:
         clockwise_angle += 360
 
-    return clockwise_angle    
+    return clockwise_angle
 
+
+def projectVectorAtAngle(v1: Tuple[float, float] | shapely.geometry.LineString, angle: float,
+                         distance: float) -> Tuple[float, float]:
+    """Project a vector from v1 at a specified angle and distance.
     
-
-def projectVectorAtAngle(v1 : Tuple[float,float] | shapely.geometry.LineString,
-                        angle : float,
-                        distance : float) -> Tuple[float,float]:
-    """Given a vector v1 (or one that can be computed from a
-    downstream-oriented linestring), find the vector v2 such that
-    ||v2|| == distance and computeAngle(v1,v2) == angle.
-
-    angle is in degrees
-
+    Parameters
+    ----------
+    v1 : tuple of float or shapely.geometry.LineString
+        Reference vector as (x, y) coordinates or downstream-oriented LineString.
+    angle : float
+        Angle in degrees for the projection.
+    distance : float
+        Distance (magnitude) of the projected vector.
+        
+    Returns
+    -------
+    tuple of float
+        Projected vector as (x, y) coordinates with specified angle and distance.
     """
     if isinstance(v1, shapely.geometry.LineString):
         c1 = np.array(v1.coords[0:2])
@@ -137,32 +223,65 @@ def projectVectorAtAngle(v1 : Tuple[float,float] | shapely.geometry.LineString,
     # Compute the components of vec2 using the distance and angle2
     x2 = distance * math.cos(angle2)
     y2 = distance * math.sin(angle2)
-    return (x2, y2)    
+    return (x2, y2)
 
+
+def computeMidpoint(p1: Tuple[float, float] | np.ndarray,
+                    p2: Tuple[float, float] | np.ndarray) -> Tuple[float, float]:
+    """Compute the midpoint between two points.
     
-def computeMidpoint(p1 : Tuple[float,float],
-                    p2 : Tuple[float,float]) -> Tuple[float,float]:
-
-    """Returns the midpoint of two points"""
+    Parameters
+    ----------
+    p1 : tuple of float
+        First point as (x, y) coordinates.
+    p2 : tuple of float
+        Second point as (x, y) coordinates.
+        
+    Returns
+    -------
+    tuple of float
+        Midpoint as (x, y) coordinates.
+    """
     return ((p1[0] + p2[0]) / 2., (p1[1] + p2[1]) / 2.)
 
 
-def findClosestPointIndex(point : Tuple[float, float],
-                          points : npt.ArrayLike) -> int:
-    """Returns the index of closest point from an array of points"""
+def findClosestPointIndex(point: Tuple[float, float], points: npt.ArrayLike) -> int:
+    """Find the index of the closest point in an array of points.
+    
+    Parameters
+    ----------
+    point : tuple of float
+        Reference point as (x, y) coordinates.
+    points : array_like
+        Array of points to search, shape (n, 2).
+        
+    Returns
+    -------
+    int
+        Index of the closest point in the points array.
+    """
     points2 = np.asarray(points)
     point2 = np.array(point)
     dist = np.sum((points2 - point2)**2, axis=1)
     return int(np.argmin(dist))
 
 
-def cluster(points : np.ndarray,
-            tol : float) -> Tuple[np.ndarray, np.ndarray]:
-    """Given a list of points, determine a list of clusters.
-
-    Each cluster is within tol of each other.
-
-    Returns (cluster_index, cluster_centroid)
+def cluster(points: np.ndarray, tol: float) -> Tuple[np.ndarray, np.ndarray]:
+    """Cluster points based on distance tolerance.
+    
+    Parameters
+    ----------
+    points : np.ndarray
+        Array of points to cluster, shape (n, 2).
+    tol : float
+        Distance tolerance for clustering.
+        
+    Returns
+    -------
+    tuple of np.ndarray
+        Tuple containing (cluster_indices, cluster_centroids) where cluster_indices
+        is an array of cluster assignments and cluster_centroids are the centroid
+        coordinates of each cluster.
     """
     import scipy.cluster.hierarchy as hcluster
     if type(points) is list:
@@ -170,9 +289,10 @@ def cluster(points : np.ndarray,
 
     if len(points) > 1:
         indices = hcluster.fclusterdata(points, tol, criterion='distance')
-        centroids = np.array([points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())])
+        centroids = np.array(
+            [points[indices == (i + 1)].mean(axis=0) for i in range(indices.max())])
     else:
-        indices = np.array([1,]*len(points))
+        indices = np.array([1, ] * len(points))
         centroids = points
     return indices - 1, centroids
 
@@ -181,8 +301,20 @@ def cluster(points : np.ndarray,
 # Shape utilities
 #
 
-def flatten(list_of_shps : Any) -> List[BaseGeometry]:
-    """Flattens a list of shapes, that may contain Multi-objects, into a list without multi-objects"""
+
+def flatten(list_of_shps: Any) -> List[BaseGeometry]:
+    """Flatten a list of shapes by expanding Multi-objects into individual geometries.
+    
+    Parameters
+    ----------
+    list_of_shps : iterable
+        List of shapely geometry objects, may contain Multi-objects.
+        
+    Returns
+    -------
+    list of BaseGeometry
+        Flattened list containing only single geometry objects.
+    """
     new_list = []
     for shp in list_of_shps:
         if isinstance(shp, shapely.geometry.MultiLineString) or \
@@ -194,9 +326,31 @@ def flatten(list_of_shps : Any) -> List[BaseGeometry]:
     return new_list
 
 
-def recenter(objects : Iterable[BaseGeometry],
-             centering : bool = True) -> Tuple[Iterable[BaseGeometry], shapely.geometry.Point]:
-    """Centers a collection of objects by removing their collective centroid"""
+def recenter(
+    objects: Iterable[BaseGeometry],
+    centering: bool | str | shapely.geometry.Point = True
+) -> Tuple[List[BaseGeometry], shapely.geometry.Point]:
+    """Center a collection of objects by translating to remove their centroid.
+    
+    Parameters
+    ----------
+    objects : iterable of BaseGeometry
+        Collection of shapely geometry objects to center.
+    centering : bool, str, or shapely.geometry.Point, optional
+        Centering method: True or 'geometric' for geometric center,
+        'mass' for center of mass, or Point for custom center.
+        
+    Returns
+    -------
+    tuple
+        Tuple containing (centered_objects, centroid_point) where centered_objects
+        is the list of translated geometries and centroid_point is the original centroid.
+        
+    Raises
+    ------
+    ValueError
+        If centering method is not recognized.
+    """
     if type(centering) is shapely.geometry.Point:
         centroid = centering
     elif centering is True or centering == 'geometric':
@@ -221,46 +375,104 @@ def recenter(objects : Iterable[BaseGeometry],
     return new_objs, centroid
 
 
-def intersects(shp1 : BaseGeometry,
-               shp2 : BaseGeometry) -> bool:
-    """Checks whether an intersection exists.
+def intersects(shp1: BaseGeometry, shp2: BaseGeometry) -> bool:
+    """Check whether two geometries intersect.
     
-    Note that intersection being empty and intersects are not always reliably
-    the same... we avoid using shapely.intersects() for this reason.
+    Parameters
+    ----------
+    shp1 : BaseGeometry
+        First shapely geometry object.
+    shp2 : BaseGeometry
+        Second shapely geometry object.
+        
+    Returns
+    -------
+    bool
+        True if geometries intersect, False otherwise.
+        
+    Notes
+    -----
+    This function computes the actual intersection rather than using
+    shapely.intersects() for more reliable results.
     """
     inter = shp1.intersection(shp2)
     return not isEmpty(inter)
 
 
-def isNonPointIntersection(shp1 : BaseGeometry,
-                           shp2 : BaseGeometry) -> bool:
-    """Checks whether an intersection is larger than a point.
+def isNonPointIntersection(shp1: BaseGeometry, shp2: BaseGeometry) -> bool:
+    """Check whether two geometries intersect with more than just a point.
     
-    Note that intersection being empty and intersects are not always reliably
-    the same... we avoid using intersects() for this reason.
+    Parameters
+    ----------
+    shp1 : BaseGeometry
+        First shapely geometry object.
+    shp2 : BaseGeometry
+        Second shapely geometry object.
+        
+    Returns
+    -------
+    bool
+        True if geometries intersect with line or area, False if no intersection
+        or point intersection only.
+        
+    Notes
+    -----
+    This function computes the actual intersection to check its dimensionality.
     """
     inter = shp1.intersection(shp2)
     return not (isEmpty(inter) or \
                 isinstance(inter, shapely.geometry.Point))
 
 
-def isVolumetricIntersection(shp1 : BaseGeometry,
-                             shp2 : BaseGeometry) -> bool:
-    """Checks whether an intersection includes volume and not just points and lines."""
+def isVolumetricIntersection(shp1: BaseGeometry, shp2: BaseGeometry) -> bool:
+    """Check whether two geometries have a volumetric (area) intersection.
+    
+    Parameters
+    ----------
+    shp1 : BaseGeometry
+        First shapely geometry object.
+    shp2 : BaseGeometry
+        Second shapely geometry object.
+        
+    Returns
+    -------
+    bool
+        True if intersection has positive area, False otherwise.
+    """
     inter = shp1.intersection(shp2)
     return inter.area > 0
 
 
-def filterToShape(df : gpd.GeoDataFrame,
-                  shape : BaseGeometry,
-                  shape_crs : CRS,
-                  method : str = 'contains',
-                  tol : Optional[float] = None) -> gpd.GeoDataFrame:
-    """Filters out reaches (or reaches in rivers) not inside the HUCs provided.
-
-    method is one of 'contains' or 'intersects' to indicate whether
-    to include things entirely in shape or partially in shape,
-    respectively.
+def filterToShape(df: gpd.GeoDataFrame,
+                  shape: BaseGeometry,
+                  shape_crs: CRS,
+                  method: str = 'contains',
+                  tol: Optional[float] = None) -> gpd.GeoDataFrame:
+    """Filter GeoDataFrame features based on spatial relationship with shape.
+    
+    Parameters
+    ----------
+    df : gpd.GeoDataFrame
+        GeoDataFrame to filter.
+    shape : BaseGeometry
+        Shapely geometry to use as filter.
+    shape_crs : CRS
+        Coordinate reference system of the shape.
+    method : str, optional
+        Spatial relationship method: 'contains', 'intersects', or
+        'non_point_intersection'. Default is 'contains'.
+    tol : float, optional
+        Tolerance for spatial operations. Uses default if None.
+        
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Filtered GeoDataFrame containing features that satisfy the spatial relationship.
+        
+    Raises
+    ------
+    ValueError
+        If method is not one of the supported options.
     """
     if shape_crs != df.crs:
         shape = watershed_workflow.warp.shply(shape, shape_crs, df.crs)
@@ -275,25 +487,63 @@ def filterToShape(df : gpd.GeoDataFrame,
     elif method == 'non_point_intersection':
         op = lambda a: isNonPointIntersection(shape, a)
     else:
-        raise ValueError("method must be one of 'intersects', 'contains', or 'non_point_intersection'")
+        raise ValueError(
+            "method must be one of 'intersects', 'contains', or 'non_point_intersection'")
 
     return df[df.geometry.apply(op)]
 
 
-def isEmpty(shply : BaseGeometry | None) -> bool:
+def isEmpty(shply: BaseGeometry | None) -> bool:
+    """Check if a shapely geometry is None or empty.
+    
+    Parameters
+    ----------
+    shply : BaseGeometry or None
+        Shapely geometry object to check.
+        
+    Returns
+    -------
+    bool
+        True if geometry is None or empty.
+    """
     return shply is None or shply.is_empty
 
 
-def isConvex(points : Iterable[Tuple[float,float]]) -> bool:
+def isConvex(points: Iterable[Tuple[float, float]]) -> bool:
+    """Check if a set of points forms a convex polygon.
+    
+    Parameters
+    ----------
+    points : iterable of tuple
+        Points as coordinate tuples to check for convexity.
+        
+    Returns
+    -------
+    bool
+        True if points form a convex polygon.
+    """
     poly = shapely.geometry.Polygon(points)
     return math.isclose(poly.area, poly.convex_hull.area, rel_tol=1e-4)
 
 
-def breakLineStringCollinearity(linestring_coords : np.ndarray,
-                             tol : float = 1e-5) -> np.ndarray:
-    """This functions removes collinearity from a node linestring by making small pertubations orthogonal to the linestring"""
+def breakLineStringCollinearity(linestring_coords: np.ndarray, tol: float = 1e-5) -> np.ndarray:
+    """Remove collinearity from linestring by adding small orthogonal perturbations.
+    
+    Parameters
+    ----------
+    linestring_coords : np.ndarray
+        Array of linestring coordinates, shape (n, 2).
+    tol : float, optional
+        Tolerance for collinearity detection and perturbation size. Default is 1e-5.
+        
+    Returns
+    -------
+    np.ndarray
+        Modified coordinates with collinearity removed.
+    """
     # traversing along the linestring, checking 3 consecutive points at a time
-    for i, (p0, p1, p2) in enumerate(zip(linestring_coords, linestring_coords[1:], linestring_coords[2:])):
+    for i, (p0, p1,
+            p2) in enumerate(zip(linestring_coords, linestring_coords[1:], linestring_coords[2:])):
         # treating collinearity through a small pertubation
         if isCollinear(p0, p1, p2, tol=tol):
             dp = p2 - p0
@@ -303,19 +553,50 @@ def breakLineStringCollinearity(linestring_coords : np.ndarray,
     return linestring_coords
 
 
-def reverseLineString(ls):
+def reverseLineString(ls: shapely.geometry.LineString) -> shapely.geometry.LineString:
+    """Reverse the direction of a LineString.
+    
+    Parameters
+    ----------
+    ls : shapely.geometry.LineString
+        LineString to reverse.
+        
+    Returns
+    -------
+    shapely.geometry.LineString
+        LineString with reversed coordinate order.
+    """
     return shapely.geometry.LineString(reversed(ls.coords))
 
 
-def isClose(s1 : BaseGeometry,
-            s2 : BaseGeometry,
-            tol : float = _tol) -> bool:
-    """Are two shapely shapes topologically equivalent and geometrically close?
-
-    Note this deals with things like rotations of polygons (clock-rotating the
-    coordinates of the same shape are still close) and other gotchas that keep
-    you from just comparing coordinates.
+def isClose(s1: BaseGeometry, s2: BaseGeometry, tol: float = _tol) -> bool:
+    """Check if two shapely geometries are topologically equivalent and geometrically close.
+    
+    Parameters
+    ----------
+    s1 : BaseGeometry
+        First shapely geometry object.
+    s2 : BaseGeometry
+        Second shapely geometry object.
+    tol : float, optional
+        Tolerance for geometric comparison. Default uses module tolerance.
+        
+    Returns
+    -------
+    bool
+        True if geometries are topologically equivalent and geometrically close.
+        
+    Notes
+    -----
+    This function handles complex cases like polygon rotations and coordinate
+    ordering that simple coordinate comparison would miss.
+        
+    Raises
+    ------
+    NotImplementedError
+        If geometry type is not supported.
     """
+
     # deal with Multi* or list objects
     def is_multi(thing):
         if isinstance(thing, shapely.geometry.MultiPoint):
@@ -420,29 +701,70 @@ def isClose(s1 : BaseGeometry,
         raise NotImplementedError("Not implemented for type '%r'" % type(s1))
 
 
-def contains(s1 : BaseGeometry,
-             s2 : BaseGeometry,
-             tol : float = _tol) -> bool:
-    """A contains algorithm that deals with close/roundoff issues"""
+def contains(s1: BaseGeometry, s2: BaseGeometry, tol: float = _tol) -> bool:
+    """Check if one geometry contains another with tolerance for roundoff issues.
+    
+    Parameters
+    ----------
+    s1 : BaseGeometry
+        Container geometry.
+    s2 : BaseGeometry
+        Geometry to test for containment.
+    tol : float, optional
+        Tolerance buffer for containment test. Default uses module tolerance.
+        
+    Returns
+    -------
+    bool
+        True if s1 contains s2 within tolerance.
+    """
     return s1.buffer(tol, 2).contains(s2)
 
 
 class CutError(Exception):
-    def __init__(self, message, line, seg, cutline):
+    """Exception raised when cutting geometries fails.
+    
+    Parameters
+    ----------
+    message : str
+        Error message.
+    line : shapely.geometry.LineString
+        The line being cut.
+    seg : shapely.geometry.LineString
+        The segment causing issues.
+    cutline : shapely.geometry.LineString
+        The cutting line.
+    """
+    def __init__(self, message: str, line: shapely.geometry.LineString,
+                 seg: shapely.geometry.LineString, cutline: shapely.geometry.LineString) -> None:
         super(Exception, self).__init__(message)
         self.line = line
         self.seg = seg
         self.cutline = cutline
 
 
-def cut(line1 : shapely.geometry.LineString,
-        line2 : shapely.geometry.LineString) -> Tuple[List[shapely.geometry.LineString],
-                                                      List[shapely.geometry.LineString]]:
-    """Cuts two linestrings at their (one) intersection point."""
+def cut(
+    line1: shapely.geometry.LineString, line2: shapely.geometry.LineString
+) -> Tuple[List[shapely.geometry.LineString], List[shapely.geometry.LineString]]:
+    """Cut two LineStrings at their intersection point.
+    
+    Parameters
+    ----------
+    line1 : shapely.geometry.LineString
+        First LineString to cut.
+    line2 : shapely.geometry.LineString
+        Second LineString to cut.
+        
+    Returns
+    -------
+    tuple of list
+        Tuple containing (line1_segments, line2_segments) where each is a list
+        of LineString segments created by the cut operation.
+    """
     return list(shapely.ops.split(line1, line2).geoms), \
         list(shapely.ops.split(line2, line1).geoms)
 
-        
+
 # def cut(line : shapely.geometry.LineString,
 #         cutline : shapely.geometry.LineString,
 #         tol : float = 1.e-5) -> List[shapely.geometry.LineString]:
@@ -515,11 +837,22 @@ def cut(line1 : shapely.geometry.LineString,
 #     return segs
 
 
-def inNeighborhood(shp1 : BaseGeometry,
-                   shp2 : BaseGeometry,
-                   tol : float = 0.1):
-    """Determines if two shapes can possibly intersect by performing a
-    quick check of their bounding boxes.
+def inNeighborhood(shp1: BaseGeometry, shp2: BaseGeometry, tol: float = 0.1) -> bool:
+    """Check if two geometries can possibly intersect using bounding box test.
+    
+    Parameters
+    ----------
+    shp1 : BaseGeometry
+        First shapely geometry object.
+    shp2 : BaseGeometry
+        Second shapely geometry object.
+    tol : float, optional
+        Tolerance for bounding box expansion. Default is 0.1.
+        
+    Returns
+    -------
+    bool
+        True if bounding boxes indicate possible intersection.
     """
     minx1, miny1, maxx1, maxy1 = shp1.bounds
     minx2, miny2, maxx2, maxy2 = shp2.bounds
@@ -531,10 +864,24 @@ def inNeighborhood(shp1 : BaseGeometry,
     return True
 
 
-def intersectPointToSegment(point : shapely.geometry.Point,
-                            seg_start : shapely.geometry.Point,
-                            seg_end : shapely.geometry.Point) -> shapely.geometry.Point:
-    """Finds the nearest point on a line linestring to a point"""
+def intersectPointToSegment(point: shapely.geometry.Point, seg_start: shapely.geometry.Point,
+                            seg_end: shapely.geometry.Point) -> shapely.geometry.Point:
+    """Find the nearest point on a line segment to a given point.
+    
+    Parameters
+    ----------
+    point : shapely.geometry.Point
+        Point to find nearest location for.
+    seg_start : shapely.geometry.Point
+        Start point of the line segment.
+    seg_end : shapely.geometry.Point
+        End point of the line segment.
+        
+    Returns
+    -------
+    shapely.geometry.Point
+        Nearest point on the line segment to the input point.
+    """
     seg_magnitude = seg_end.distance(seg_start)
     assert (seg_magnitude > _tol)
     u = ((point.x - seg_start.x) * (seg_end.x - seg_start.x) +
@@ -553,12 +900,26 @@ def intersectPointToSegment(point : shapely.geometry.Point,
         return shapely.geometry.Point([ix, iy])
 
 
-def findNearestPoint(point : shapely.geometry.Point,
-                     line : shapely.geometry.LineString,
-                     tol : Optional[float] = None) -> shapely.geometry.Point | None:
-    """Returns the nearest coordinate on the line to point.  
-
-    Note point is expected as coordinates."""
+def findNearestPoint(point: shapely.geometry.Point | Tuple[float, float],
+                     line: shapely.geometry.LineString,
+                     tol: Optional[float] = None) -> Tuple[float, float] | None:
+    """Find the nearest point on a LineString to a given point.
+    
+    Parameters
+    ----------
+    point : shapely.geometry.Point or tuple of float
+        Point to find nearest location for.
+    line : shapely.geometry.LineString
+        LineString to search along.
+    tol : float, optional
+        Distance tolerance. If provided, returns None if nearest point
+        is farther than tolerance.
+        
+    Returns
+    -------
+    tuple of float or None
+        Nearest point coordinates as (x, y) tuple, or None if outside tolerance.
+    """
     if tol is None:
         if isinstance(point, tuple):
             point = shapely.geometry.Point(point)
@@ -575,43 +936,97 @@ def findNearestPoint(point : shapely.geometry.Point,
         return None
 
 
-def removeThirdDimension(geom : shapely.geometry.base.BaseGeometry) -> shapely.geometry.base.BaseGeometry:
-    """Removes the third dimension of a shapely object."""
+def removeThirdDimension(
+        geom: shapely.geometry.base.BaseGeometry) -> shapely.geometry.base.BaseGeometry:
+    """Remove the third dimension (Z-coordinate) from a shapely geometry.
+    
+    Parameters
+    ----------
+    geom : shapely.geometry.base.BaseGeometry
+        Input geometry that may have Z-coordinates.
+        
+    Returns
+    -------
+    shapely.geometry.base.BaseGeometry
+        Geometry with only X and Y coordinates.
+    """
     def _drop_z(*args):
-        return tuple(filter(None, [args[0],args[1]]))
+        return tuple(filter(None, [args[0], args[1]]))
+
     return shapely.ops.transform(_drop_z, geom)
 
 
-def computeSegmentLengths(ls : shapely.geometry.LineString) -> np.ndarray:
-    """Computes the incremental segment length between each coord of ls."""
+def computeSegmentLengths(ls: shapely.geometry.LineString) -> np.ndarray:
+    """Compute the length of each segment in a LineString.
+    
+    Parameters
+    ----------
+    ls : shapely.geometry.LineString
+        LineString to analyze.
+        
+    Returns
+    -------
+    np.ndarray
+        Array of segment lengths, shape (n-1,) for n coordinates.
+    """
     coords = np.array(ls.coords)
     return np.linalg.norm((coords[1:] - coords[:-1]), axis=1)
 
 
-def computeArclengths(ls : shapely.geometry.LineString) -> np.ndarray:
-    """Computes the arclength of each coord in ls."""
-    ds = computeSegmentLengths(ls)
-    return np.cumsum(np.concatenate([[0.0,], ds]))
-
-
-def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
-                           name : str,
-                           assert_on_zero : bool = False,
-                           ax : Optional[matplotlib.axes.Axes] = None,
-                           color : Optional[str | Tuple] = None) -> None:
-    """Computes min, median, and max segment length across all linestrings."""
-    seg_mins : List[float] = []
-    seg_maxs : List[float] = []
-    seg_meds : List[float] = []
-    seg_lens : List[np.ndarray] = []
-    geom_lens : List[float] = []
+def computeArclengths(ls: shapely.geometry.LineString) -> np.ndarray:
+    """Compute cumulative arc length at each coordinate in a LineString.
     
+    Parameters
+    ----------
+    ls : shapely.geometry.LineString
+        LineString to analyze.
+        
+    Returns
+    -------
+    np.ndarray
+        Array of cumulative arc lengths, shape (n,) for n coordinates.
+    """
+    ds = computeSegmentLengths(ls)
+    return np.cumsum(np.concatenate([[0.0, ], ds]))
+
+
+def logMinMaxMedianSegment(iterable: Iterable[shapely.geometry.LineString],
+                           name: str,
+                           assert_on_zero: bool = False,
+                           ax: Optional[matplotlib.axes.Axes] = None,
+                           color: Optional[str | Tuple] = None) -> None:
+    """Log statistics and optionally plot histogram of segment lengths.
+    
+    Parameters
+    ----------
+    iterable : iterable of shapely.geometry.LineString
+        Collection of LineStrings to analyze.
+    name : str
+        Name for logging and plot labels.
+    assert_on_zero : bool, optional
+        If True, raise assertion error if any segment has zero length.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot histogram on. No plot if None.
+    color : str or tuple, optional
+        Color for histogram plot.
+        
+    Raises
+    ------
+    AssertionError
+        If assert_on_zero is True and zero-length segments are found.
+    """
+    seg_mins: List[float] = []
+    seg_maxs: List[float] = []
+    seg_meds: List[float] = []
+    seg_lens: List[np.ndarray] = []
+    geom_lens: List[float] = []
+
     for ls in iterable:
         geom_lens.append(ls.length)
         seg_len = computeSegmentLengths(ls)
         seg_lens.append(seg_len)
         if assert_on_zero:
-            assert(min(seg_len) > 1.e-10)
+            assert (min(seg_len) > 1.e-10)
 
     seg_lens_a = np.concatenate(seg_lens)
     seg_diags = np.min(seg_lens_a), np.median(seg_lens_a), np.max(seg_lens_a)
@@ -620,14 +1035,20 @@ def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
     geom_diags = (min(geom_lens_a), np.median(geom_lens_a), max(geom_lens_a))
 
     if ax is not None:
-        ax.hist(seg_lens_a, max(len(seg_lens_a)//20, 10), color=color, label=name)
+        ax.hist(seg_lens_a, max(len(seg_lens_a) // 20, 10), color=color, label=name)
         ax.set_xlabel('segment length')
         ax.set_ylabel('count')
         ax.legend()
-                  
-    logging.info(f"  {name}: min seg length: \t{seg_diags[0]:16.10f} \tmin geom length: \t{geom_diags[0]:16.10f}")
-    logging.info(f"  {name}: med seg length: \t{seg_diags[1]:16.10f} \tmed geom length: \t{geom_diags[1]:16.10f}")
-    logging.info(f"  {name}: max seg length: \t{seg_diags[2]:16.10f} \tmax geom length: \t{geom_diags[2]:16.10f}")
+
+    logging.info(
+        f"  {name}: min seg length: \t{seg_diags[0]:16.10f} \tmin geom length: \t{geom_diags[0]:16.10f}"
+    )
+    logging.info(
+        f"  {name}: med seg length: \t{seg_diags[1]:16.10f} \tmed geom length: \t{geom_diags[1]:16.10f}"
+    )
+    logging.info(
+        f"  {name}: max seg length: \t{seg_diags[2]:16.10f} \tmax geom length: \t{geom_diags[2]:16.10f}"
+    )
     logging.info('')
     return
 
@@ -640,19 +1061,18 @@ def logMinMaxMedianSegment(iterable : Iterable[shapely.geometry.LineString],
 #
 # fiona utilities -- probably need to go away?
 #
-def generateRings(obj):
-    """Generator for a fiona shape's coordinates object and yield rings.
+def generateRings(obj: Any) -> Iterable[List[Tuple[float, float]]]:
+    """Generate coordinate rings from a fiona shape object.
 
-    As long as the input is conforming, the type of the geometry doesn't matter.
+    Parameters
+    ----------
+    obj : dict
+        Fiona shape dictionary with 'coordinates' or 'geometry' key.
 
-    Parameter
-    ---------
-    obj : fiona shape
-
-    Returns
-    -------
-    rings : iterator
-      Iterates over rings, each of which is a list of coordinate tuples.    
+    Yields
+    ------
+    list of tuple
+        Each ring as a list of coordinate tuples.
     """
     def _generateRings(coords):
         for e in coords:
@@ -669,20 +1089,18 @@ def generateRings(obj):
         yield r
 
 
-def generateCoords(obj):
-    """Generator for a fiona geometry's coordinates.
+def generateCoords(obj: Any) -> Iterable[Tuple[float, float]]:
+    """Generate all coordinates from a fiona geometry object.
 
-    As long as the input is conforming, the type of the geometry doesn't
-    matter.
+    Parameters
+    ----------
+    obj : dict
+        Fiona shape dictionary with 'coordinates' or 'geometry' key.
 
-    Parameter
-    ---------
-    obj : fiona shape
-
-    Returns
-    -------
-    coord : iterator
-      Iterates over coordinate tuples.
+    Yields
+    ------
+    tuple of float
+        Individual coordinate tuples.
     """
     if 'geometry' in obj:
         obj = obj['geometry']

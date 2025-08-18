@@ -14,7 +14,7 @@ your PYTHONPATH.
 
 """
 
-from typing import Optional, List, Tuple, Dict, Any
+from typing import Optional, List, Tuple, Dict, Any, Callable
 
 import os
 import numpy as np
@@ -47,7 +47,22 @@ except Exception:
 #
 # Note, this can only work with __dict__ classes, not slotted classes.
 #
-def cache(func):
+def cache(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
+    """A caching decorator for instance methods.
+    
+    This decorator caches the result of a method call in an instance attribute.
+    Note: Only works with __dict__ classes, not slotted classes.
+    
+    Parameters
+    ----------
+    func : Callable[[Any], Any]
+        The function to cache.
+        
+    Returns
+    -------
+    Callable[[Any], Any]
+        The wrapped function with caching.
+    """
     @functools.wraps(func)
     def cache_func(self):
         cname = '_' + func.__name__
@@ -66,7 +81,19 @@ class SideSet:
     cell_list: list[int]
     side_list: list[int]
 
-    def validate(self, cell_faces):
+    def validate(self, cell_faces: List[List[int]]) -> None:
+        """Validate the side set against cell faces.
+        
+        Parameters
+        ----------
+        cell_faces : List[List[int]]
+            List of cell face connections.
+            
+        Raises
+        ------
+        AssertionError
+            If validation fails.
+        """
         ncells = len(cell_faces)
         for c, s in zip(self.cell_list, self.side_list):
             assert (0 <= c < ncells)
@@ -82,7 +109,21 @@ class LabeledSet:
     ent_ids: List[Any]
     to_extrude: bool = False
 
-    def validate(self, size, is_tuple=False):
+    def validate(self, size: int, is_tuple: bool = False) -> None:
+        """Validate the labeled set.
+        
+        Parameters
+        ----------
+        size : int
+            Expected size for validation.
+        is_tuple : bool, optional
+            Whether entities are tuples (edges). Default is False.
+            
+        Raises
+        ------
+        AssertionError
+            If validation fails.
+        """
         if is_tuple:
             # edges
             self.ent_ids = [(int(e[0]), int(e[1])) for e in self.ent_ids]
@@ -99,18 +140,57 @@ class LabeledSet:
 class _ExtrusionHelper:
     """Helper class for extruding 2D --> 3D"""
     ncells_tall: int
-    ncells_2D: list[int]
+    ncells_2D: int
 
-    def col_to_id(self, column, z_cell):
-        """Maps 2D cell ID and index in the vertical to a 3D cell ID"""
+    def col_to_id(self, column: int, z_cell: int) -> int:
+        """Maps 2D cell ID and index in the vertical to a 3D cell ID.
+        
+        Parameters
+        ----------
+        column : int
+            2D cell ID.
+        z_cell : int
+            Index in the vertical direction.
+            
+        Returns
+        -------
+        int
+            3D cell ID.
+        """
         return z_cell + column * self.ncells_tall
 
-    def vertex_to_id(self, vertex, z_vertex):
-        """Maps 2D vertex ID and index in the vertical to a 3D vertex ID"""
+    def vertex_to_id(self, vertex: int, z_vertex: int) -> int:
+        """Maps 2D vertex ID and index in the vertical to a 3D vertex ID.
+        
+        Parameters
+        ----------
+        vertex : int
+            2D vertex ID.
+        z_vertex : int
+            Index in the vertical direction.
+            
+        Returns
+        -------
+        int
+            3D vertex ID.
+        """
         return z_vertex + vertex * (self.ncells_tall + 1)
 
-    def edge_to_id(self, edge, z_cell):
-        """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face"""
+    def edge_to_id(self, edge: int, z_cell: int) -> int:
+        """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face.
+        
+        Parameters
+        ----------
+        edge : int
+            2D edge hash.
+        z_cell : int
+            Index in the vertical direction.
+            
+        Returns
+        -------
+        int
+            3D face ID.
+        """
         return (self.ncells_tall + 1) * self.ncells_2D + z_cell + edge * self.ncells_tall
 
 
@@ -143,12 +223,12 @@ class Mesh2D:
     """
     coords = attr.ib(validator=attr.validators.instance_of(np.ndarray))
     _conn = attr.ib()
-    labeled_sets : List[LabeledSet] = attr.ib(factory=list)
-    crs : Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
-    eps : float = attr.ib(default=0.001)
-    _check_handedness : bool = attr.ib(default=True)
-    _validate : bool = attr.ib(default=False)
-    cell_data : Optional[pandas.DataFrame]
+    labeled_sets: List[LabeledSet] = attr.ib(factory=list)
+    crs: Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    eps: float = attr.ib(default=0.001)
+    _check_handedness: bool = attr.ib(default=True)
+    _validate: bool = attr.ib(default=False)
+    cell_data: Optional[pandas.DataFrame] = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         if self._check_handedness:
@@ -163,19 +243,47 @@ class Mesh2D:
         return self._conn
 
     @property
-    def dim(self):
+    def dim(self) -> int:
+        """Spatial dimension of the mesh.
+        
+        Returns
+        -------
+        int
+            Number of spatial dimensions.
+        """
         return self.coords.shape[1]
 
     @property
-    def num_cells(self):
+    def num_cells(self) -> int:
+        """Number of cells in the mesh.
+        
+        Returns
+        -------
+        int
+            Number of cells.
+        """
         return len(self.conn)
 
     @property
-    def num_vertices(self):
+    def num_vertices(self) -> int:
+        """Number of vertices in the mesh.
+        
+        Returns
+        -------
+        int
+            Number of vertices.
+        """
         return self.coords.shape[0]
 
     @property
-    def num_edges(self):
+    def num_edges(self) -> int:
+        """Number of edges in the mesh.
+        
+        Returns
+        -------
+        int
+            Number of edges.
+        """
         return len(self.edges)
 
     @property
@@ -183,9 +291,22 @@ class Mesh2D:
         return self.edges_to_cells.keys()
 
     @staticmethod
-    def edge_hash(i, j):
-        """Hashes edges in a direction-independent way."""
-        return tuple(sorted((i, j)))
+    def edge_hash(i: int, j: int) -> Tuple[int, int]:
+        """Hashes edges in a direction-independent way.
+        
+        Parameters
+        ----------
+        i : int
+            First vertex index.
+        j : int
+            Second vertex index.
+            
+        Returns
+        -------
+        Tuple[int, int]
+            Sorted tuple of vertex indices.
+        """
+        return (i,j) if i < j else (j,i)
 
     @property
     @cache
@@ -202,7 +323,19 @@ class Mesh2D:
                 e2c[e].append(i)
         return e2c
 
-    def cell_edges(self, conn):
+    def cell_edges(self, conn: List[int]):
+        """Generator for edges of a cell.
+        
+        Parameters
+        ----------
+        conn : List[int]
+            Cell connectivity (vertex indices).
+            
+        Yields
+        ------
+        Tuple[int, int]
+            Edge as a tuple of vertex indices.
+        """
         for i in range(len(conn)):
             yield self.edge_hash(conn[i], conn[(i+1) % len(conn)])
 
@@ -235,7 +368,7 @@ class Mesh2D:
     def boundary_vertices(self):
         return [e[0] for e in self.boundary_edges]
 
-    def checkHandedness(self):
+    def checkHandedness(self) -> None:
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
         for conn in self._conn:
             points = np.array([self.coords[c] for c in conn])
@@ -306,8 +439,15 @@ class Mesh2D:
         if hasattr(self, '_centroids'):
             del self._centroids
 
-    def plot(self, facecolors=None, ax=None, cmap=None, vmin=None, vmax=None, norm=None,
-             colorbar=True, **kwargs) -> mpc.PolyCollection:
+    def plot(self,
+             facecolors=None,
+             ax=None,
+             cmap=None,
+             vmin=None,
+             vmax=None,
+             norm=None,
+             colorbar=True,
+             **kwargs) -> mpc.PolyCollection:
         """Plot the flattened 2D mesh."""
         from matplotlib import pyplot as plt
 
@@ -317,7 +457,7 @@ class Mesh2D:
         kwargs.setdefault('linewidth', 0.5)
 
         if isinstance(facecolors, str) and facecolors == 'elevation':
-            facecolors = self.centroids[:,-1]
+            facecolors = self.centroids[:, -1]
             if cmap is None:
                 cmap = 'terrain'
 
@@ -333,7 +473,7 @@ class Mesh2D:
         if norm is None:
             norm = plt.Normalize(vmin=vmin, vmax=vmax)
         if isinstance(cmap, str):
-            cmap = plt.colormaps[cmap]        
+            cmap = plt.colormaps[cmap]
 
         # build the collection of gons
         verts = [[self.coords[i, 0:2] for i in f] for f in self.conn]
@@ -348,18 +488,33 @@ class Mesh2D:
         if colorbar:
             gons.set(array=facecolors, cmap=cmap)
             plt.colorbar(gons, ax=ax)
-            
-        return gons
-        
 
-    def writeVTK(self, filename) -> None:
-        """Writes to VTK."""
+        return gons
+
+    def writeVTK(self, filename: str) -> None:
+        """Writes to VTK.
+        
+        Parameters
+        ----------
+        filename : str
+            Output VTK filename.
+        """
         import watershed_workflow.vtk_io
         assert (all(len(c) == 3 for c in self.conn))
         watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
 
-    def transform(self, mat=None, shift=None) -> None:
-        """Transform a 2D mesh"""
+    def transform(self,
+                  mat: Optional[np.ndarray] = None,
+                  shift: Optional[np.ndarray] = None) -> None:
+        """Transform a 2D mesh.
+        
+        Parameters
+        ----------
+        mat : np.ndarray, optional
+            3x3 transformation matrix. Default is identity.
+        shift : np.ndarray, optional
+            3-element translation vector. Default is zero.
+        """
         if mat is None:
             mat = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if shift is None:
@@ -660,7 +815,8 @@ class Mesh2D:
         #
         # Order those vertices, and collect a list of coincident vertices for removal.
         logging.info("-- Finding duplicates and ordering conn_cell_to_vertex")
-        vertices_to_kill = dict()  # coincident vertices (key = vertex to remove, val = coincident vertex)
+        vertices_to_kill = dict(
+        )  # coincident vertices (key = vertex to remove, val = coincident vertex)
         for i in range(len(dual_cells)):
             c = dual_cells[i]
 
@@ -720,7 +876,8 @@ class Mesh2D:
                     cn = c[up_i:] + c[0:up_i]
                 else:
                     # I screwed up... debug me!
-                    logging.info("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(up_i, dn_i, c))
+                    logging.info("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(
+                        up_i, dn_i, c))
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
 
@@ -865,12 +1022,12 @@ class Mesh3D:
     _face_to_vertex_conn = attr.ib()
     _cell_to_face_conn = attr.ib()
 
-    labeled_sets : List[LabeledSet] = attr.ib(factory=list)
-    side_sets : List[SideSet] = attr.ib(factory=list)
-    material_ids : List[np.ndarray] = attr.ib(factory=list)
-    crs : Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
-    eps : float = attr.ib(default=0.001)
-    _validate : bool = attr.ib(default=False)
+    labeled_sets: List[LabeledSet] = attr.ib(factory=list)
+    side_sets: List[SideSet] = attr.ib(factory=list)
+    material_ids: List[np.ndarray] = attr.ib(factory=list)
+    crs: Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    eps: float = attr.ib(default=0.001)
+    _validate: bool = attr.ib(default=False)
 
     def __attrs_post_init__(self):
         if self._validate:
@@ -948,14 +1105,18 @@ class Mesh3D:
             i += 1
         return i
 
-    def writeVTK(self, filename):
+    def writeVTK(self, filename: str) -> None:
         """Writes to VTK.
 
         Note, this just writes the topology/geometry information, for
         WEDGE type meshes (extruded triangles).  No labeled sets are
         written.  Prefer to use write_exodus() for a fully featured
         mesh.
-
+        
+        Parameters
+        ----------
+        filename : str
+            Output VTK filename.
         """
         import watershed_workflow.vtk_io
         assert (all(len(c) == 5 for c in self.cell_to_face_conn))
@@ -963,12 +1124,21 @@ class Mesh3D:
         for c2f in self.cell_to_face_conn:
             fup = c2f[0]
             fdn = c2f[1]
-            assert (len(self.face_to_vertex_conn[fup]) == 3 and len(self.face_to_vertex_conn[fdn]) == 3)
+            assert (len(self.face_to_vertex_conn[fup]) == 3
+                    and len(self.face_to_vertex_conn[fdn]) == 3)
             wedges.append(self.face_to_vertex_conn[fup] + self.face_to_vertex_conn[fdn])
         watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
 
-    def writeExodus(self, filename, face_block_mode="one block") -> None:
-        """Write the 3D mesh to ExodusII using arbitrary polyhedra spec"""
+    def writeExodus(self, filename: str, face_block_mode: str = "one block") -> None:
+        """Write the 3D mesh to ExodusII using arbitrary polyhedra spec.
+        
+        Parameters
+        ----------
+        filename : str
+            Output Exodus filename.
+        face_block_mode : str, optional
+            Face block mode. Default is "one block".
+        """
         if exodus is None:
             raise ImportError(
                 "The python ExodusII wrappers were not found, please see the installation documentation to install Exodus"
@@ -1136,7 +1306,11 @@ class Mesh3D:
         e.close()
 
     @staticmethod
-    def summarizeExtrusion(layer_types, layer_data, ncells_per_layer, mat_ids, surface_cell_id=0) -> None:
+    def summarizeExtrusion(layer_types,
+                           layer_data,
+                           ncells_per_layer,
+                           mat_ids,
+                           surface_cell_id=0) -> None:
         """
         Summarizes extruded data by printing info to log file.
 
@@ -1297,9 +1471,9 @@ class Mesh3D:
                     # layer thickness is given by a function evaluation of x,y
                     for vertex_col in range(mesh2D.coords.shape[0]):
                         layer_bottom[vertex_col] = coords[vertex_col, cell_layer_start,
-                                                        2] - layer_datum(
-                                                            coords[vertex_col, 0, 0], coords[vertex_col,
-                                                                                           0, 1])
+                                                          2] - layer_datum(
+                                                              coords[vertex_col, 0, 0],
+                                                              coords[vertex_col, 0, 1])
 
                 elif layer_type.lower() == 'vertex':
                     # layer bottom specifically provided through thickness
@@ -1470,7 +1644,7 @@ class Mesh3D:
         return m3
 
 
-def computeTelescopeFactor(ncells : int, dz : float, layer_dz : float) -> float:
+def computeTelescopeFactor(ncells: int, dz: float, layer_dz: float) -> float:
     """Calculates a telescoping factor to fill a given layer.
 
     Calculates a constant geometric factor, such that a layer of thickness
@@ -1512,15 +1686,15 @@ def computeTelescopeFactor(ncells : int, dz : float, layer_dz : float) -> float:
     return res.root
 
 
-def optimizeDzs(dz_begin : float,
-                dz_end : float,
-                thickness : float,
-                num_cells : int,
-                p_thickness : float = 1000,
-                p_dz : float = 10000,
-                p_increasing : float = 1000,
-                p_smooth : float = 10,
-                tol : float = 1) -> Tuple[np.ndarray, float]:
+def optimizeDzs(dz_begin: float,
+                dz_end: float,
+                thickness: float,
+                num_cells: int,
+                p_thickness: float = 1000,
+                p_dz: float = 10000,
+                p_increasing: float = 1000,
+                p_smooth: float = 10,
+                tol: float = 1) -> Tuple[np.ndarray, float]:
     """Tries to optimize dzs"""
     pad_thickness = thickness + dz_begin + dz_end
 
@@ -1558,7 +1732,7 @@ def optimizeDzs(dz_begin : float,
     return dzs, res
 
 
-def transformRotation(radians : float) -> np.ndarray:
+def transformRotation(radians: float) -> np.ndarray:
     return np.array([[np.cos(radians), np.sin(radians), 0], [-np.sin(radians),
                                                              np.cos(radians), 0], [0, 0, 1]])
 
@@ -1568,8 +1742,8 @@ def createSubmesh(m2 : Mesh2D,
         -> Tuple[Dict[int,int], Dict[int, int], Mesh2D]:
     """Given a shape that contains some cells of m2, create the submesh."""
     # create the new coordinates and a map
-    new_coords_i : List[int] = []
-    new_coords_map : Dict[int,int] = dict()
+    new_coords_i: List[int] = []
+    new_coords_map: Dict[int, int] = dict()
     for i, c in enumerate(m2.coords):
         if shp.intersects(shapely.geometry.Point(c[0], c[1])):
             new_coords_map[i] = len(new_coords_i)
@@ -1577,8 +1751,8 @@ def createSubmesh(m2 : Mesh2D,
     new_coords = np.array([m2.coords[i] for i in new_coords_i])
 
     # create the new conn and map
-    new_conns : List[List[int]] = []
-    new_conn_map : Dict[int, int] = dict()
+    new_conns: List[List[int]] = []
+    new_conn_map: Dict[int, int] = dict()
     for j, conn in enumerate(m2.conn):
         if all(i in new_coords_i for i in conn):
             new_conn = [new_coords_map[i] for i in conn]
@@ -1586,7 +1760,7 @@ def createSubmesh(m2 : Mesh2D,
             new_conns.append(new_conn)
 
     # new labeled sets
-    new_labeled_sets : List[LabeledSet] = []
+    new_labeled_sets: List[LabeledSet] = []
     for ls in m2.labeled_sets:
         if (ls.entity == 'CELL'):
             new_ent_ids = [new_conn_map[e] for e in ls.ent_ids if e in new_conn_map.keys()]
@@ -1605,7 +1779,7 @@ def createSubmesh(m2 : Mesh2D,
     return new_coords_map, new_conn_map, new_mesh
 
 
-def mergeMeshes(meshes : List[Mesh2D]) -> Mesh2D:
+def mergeMeshes(meshes: List[Mesh2D]) -> Mesh2D:
     """ Combines multiple 2D meshes into a single mesh. 
 
     It is assumed that the meshes to be combined have common vertices
@@ -1633,7 +1807,7 @@ def mergeMeshes(meshes : List[Mesh2D]) -> Mesh2D:
     return m2_combined
 
 
-def mergeTwoMeshes(mesh1 : Mesh2D, mesh2 : Mesh2D) -> Mesh2D:
+def mergeTwoMeshes(mesh1: Mesh2D, mesh2: Mesh2D) -> Mesh2D:
     """merge two meshes (mesh.Mesh2D objects)"""
     # --THIS OPTION TO BE ADDED LATER-- #transfer_labeled_sets=True
     assert len(mesh1.labeled_sets) + len(mesh2.labeled_sets) == 0, \
@@ -1684,4 +1858,3 @@ def mergeTwoMeshes(mesh1 : Mesh2D, mesh2 : Mesh2D) -> Mesh2D:
     #     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh2.labeled_sets
 
     return m2_combined
-

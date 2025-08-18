@@ -145,9 +145,9 @@ class ManagerAORC:
             The coordinate reference system of the geometry. If not provided, it defaults
             to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
         start_year : int, optional
-            The starting year for the data download. Defaults to the class-level _START_YEAR.
+            The starting year for the data download. Defaults to the class-level _START.
         end_year : int, optional
-            The ending year for the data download. Defaults to the class-level _END_YEAR.
+            The ending year for the data download. Defaults to the class-level _END.
         buffer : float, optional
             Buffer the bounds by this amount, in degrees. The default is 0.05.
         force : bool, optional
@@ -224,7 +224,7 @@ class ManagerAORC:
                    force_download : bool = False,
                    buffer : float = 0.01) -> xr.Dataset:
         if start is None:
-            start = self._START_YEAR
+            start = self._START
         start = self._cleanDate(start)
         assert not isinstance(start, str)
         start_year = start.year
