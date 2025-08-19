@@ -1,7 +1,7 @@
 """Functions used in interacting with data, either pandas DataFrames or xarray DataArrays."""
-
-from typing import Union, List, Iterable, Tuple, Any, Optional, Literal, overload
+from typing import Union, List, Iterable, Tuple, Any, Optional, Literal, overload, Sequence
 from xarray.core.types import InterpOptions
+import numpy.typing as npt
 
 import warnings
 import cftime
@@ -13,30 +13,24 @@ import xarray as xr
 import rasterio.transform
 import rasterio.features
 import shapely.geometry
-import scipy.spatial
 import scipy.signal
 import scipy.stats
 import scipy.ndimage
+import scipy.interpolate
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 ValidTime = Union[cftime._cftime.datetime, pd.Timestamp, datetime.datetime, np.datetime64]
-ValidTimeSeries = Union[pd.Series, np.ndarray, List[ValidTime]]
-CFTimeSeries = Union[pd.Series, np.ndarray, List[cftime._cftime.datetime]]
-CFTimeNoLeapSeries = Union[pd.Series, np.ndarray, List[cftime.DatetimeNoLeap]]
-
 
 #
 # Helper functions
 #
-def _convertTimesToCFTime(time_values: ValidTimeSeries) -> CFTimeSeries:
+def convertTimesToCFTime(time_values: Sequence[ValidTime]) -> npt.NDArray[cftime._cftime.datetime]:
     """Convert an iterable of datetime objects to cftime object.
     
     This function accepts various datetime types and converts them to
-    cftime Gregorian calendar while preserving the input container
-    type. Raises an error if any input date represents the 366th day
-    of a year (leap day in DayMet convention).
+    cftime Gregorian calendar.
     
     Parameters
     ----------
@@ -46,62 +40,32 @@ def _convertTimesToCFTime(time_values: ValidTimeSeries) -> CFTimeSeries:
         
     Returns
     -------
-    Container of cftime.DatetimeGregorian objects with same type as input:
-    - pandas.Series if input is pandas.Series
-    - numpy.ndarray if input is numpy.ndarray  
-    - List otherwise
-
-    Raises
-    ------
-    ValueError
-        If the calendars do not match.
+    List[cftime._cftime.datetime]
+        List of cftime objects, likely in the Gregorian calendar.
 
     """
-    # Determine input type and convert to list for processing
-    if isinstance(time_values, (pd.Series, np.ndarray)):
-        input_type = type(time_values)
-        time_list = list(time_values)
-    else:
-        input_type = list
-        time_list = list(time_values)
-
     # Handle empty input
-    if len(time_list) == 0:
-        if input_type == pd.Series:
-            return pd.Series([], dtype=object)
-        elif input_type == np.ndarray:
-            return np.array([], dtype=object)
-        else:
-            return []
+    if len(time_values) == 0:
+        return np.array([], dtype=cftime.DatetimeGregorian)
 
     # Get a sample time and conditional on type
-    sample_time = time_list[0]
+    sample_time = time_values[0]
     if isinstance(sample_time, cftime._cftime.datetime):
-        return time_values
-    elif isinstance(sample_time, (np.datetime64, datetime.datetime)):
-        time_list = pd.to_datetime(time_list).tolist()
+        return np.array(time_values)
 
-    if not isinstance(time_list[0], pd.Timestamp):
-        raise TypeError(f'Cannot convert items of type {type(time_list[0])} to cftime.')
+    if isinstance(sample_time, (np.datetime64, datetime.datetime)):
+        time_values = pd.to_datetime(time_values).tolist()
+
+    if not isinstance(time_values[0], pd.Timestamp):
+        raise TypeError(f'Cannot convert items of type {type(time_values[0])} to cftime.')
 
     # convert pd.Timestamp to cftime
-    ret = [
-        cftime.DatetimeGregorian(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond)
-        for t in time_list
-    ]
-
-    # Return in the same container type as input
-    if input_type == pd.Series:
-        return pd.Series(ret, dtype=object)
-    elif input_type == np.ndarray:
-        return np.array(ret, dtype=object)
-    else:
-        return ret
+    res = [cftime.DatetimeGregorian(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond) for t in time_values]
+    return np.array(res)
 
 
-def _convertTimesToCFTimeNoleap(time_values: CFTimeSeries) -> CFTimeNoLeapSeries:
-    """
-    Convert an iterable of cftime objects on any calendar to cftime DatetimeNoLeap calendar.
+def convertTimesToCFTimeNoleap(time_values: Sequence[cftime._cftime.datetime]) -> npt.NDArray[cftime.DatetimeNoLeap]:
+    """Convert an iterable of cftime objects on any calendar to cftime DatetimeNoLeap calendar.
     
     This function accepts various datetime types and converts them to cftime NoLeap
     calendar while preserving the input container type. Raises an error if any
@@ -110,15 +74,12 @@ def _convertTimesToCFTimeNoleap(time_values: CFTimeSeries) -> CFTimeNoLeapSeries
     Parameters
     ----------
     time_values
-        Iterable of datetime objects (numpy datetime64, pandas Timestamp, 
+        Sequence of datetime objects (numpy datetime64, pandas Timestamp, 
         Python datetime, or cftime objects). All elements must be the same type.
         
     Returns
     -------
-    Container of cftime.DatetimeNoLeap objects with same type as input:
-    - pandas.Series if input is pandas.Series
-    - numpy.ndarray if input is numpy.ndarray  
-    - List otherwise
+    Container of cftime.DatetimeNoLeap objects.
         
     Raises
     ------
@@ -126,46 +87,33 @@ def _convertTimesToCFTimeNoleap(time_values: CFTimeSeries) -> CFTimeNoLeapSeries
         If any date in the input represents the 366th day of a year (leap day).
     """
     if len(time_values) == 0:
-        if isinstance(time_values, np.ndarray):
-            return np.array([], dtype='object')
-        else:
-            return type(time_values)()
+        return np.array([], dtype=cftime.DatetimeNoLeap)
 
     dayofyr = [t.dayofyr for t in time_values]
 
     if max(dayofyr) == 366:
         raise ValueError(f"Input contains leap day(s) (366th day of year)")
 
-    time_values_noleap = [
+    return np.array([
         cftime.DatetimeNoLeap(t.year, 1, 1, t.hour, t.minute, t.second, t.microsecond)
         + datetime.timedelta(days=(t.dayofyr - 1)) for t in time_values
-    ]
-
-    # Return in the same container type as input
-    if isinstance(time_values, pd.Series):
-        return pd.Series(time_values_noleap, dtype=object)
-    elif isinstance(time_values, np.ndarray):
-        return np.array(time_values_noleap, dtype=object)
-    else:
-        return time_values_noleap
+    ])
 
 
-def _createNoleapMask(
-        time_values: Union[pd.Series,
-                           np.ndarray]) -> Tuple[Union[pd.Series, np.ndarray], List[bool]]:
-    """
-    Create a mask that is true for any non-leap-day (day 366).
+def createNoleapMask(time_values : Sequence[ValidTime]
+                     ) -> Tuple[npt.NDArray[cftime.DatetimeNoLeap], npt.NDArray[bool]]:
+    """Create a mask that is true for any non-leap-day (day 366).
     
     Parameters
     ----------
-    time_values : pandas.Series or numpy.ndarray
+    time_values : Sequence[ValidTime]
         Time values to filter for leap days.
         
     Returns
     -------
-    time_in_cftime : pandas.Series or numpy.ndarray
+    Sequence[cftime.DatetimeNoLeap]
         Time values converted to cftime format with leap days filtered.
-    mask : list of bool
+    List[bool]
         Boolean mask where True indicates non-leap days.
     """
     # no times --> no leap days
@@ -177,46 +125,13 @@ def _createNoleapMask(
         return time_values, [True, ] * len(time_values)
 
     # Get the time column is in cftime format
-    time_in_cftime = _convertTimesToCFTime(time_values)
-    assert not isinstance(time_in_cftime, list)
-    mask = [(t.dayofyr != 366) for t in time_in_cftime]
-
+    time_in_cftime = convertTimesToCFTime(time_values)
+    mask = np.array([(t.dayofyr != 366) for t in time_in_cftime])
     return time_in_cftime[mask], mask
 
 
-def _generateRegularTimes(start_time: cftime.datetime, end_time: cftime.datetime,
-                          interval: int) -> List[cftime.datetime]:
-    """
-    Generate regular cftime grid between start and end times.
-    
-    Parameters
-    ----------
-    start_time : cftime.datetime
-        Start time for the grid.
-    end_time : cftime.datetime
-        End time for the grid.
-    interval : int
-        Interval in days between grid points.
-        
-    Returns
-    -------
-    list of cftime.datetime
-        Regular time grid.
-    """
-    regular_times = []
-    current_time = cftime.DatetimeNoLeap(start_time.year, start_time.month, start_time.day)
-
-    while current_time <= end_time:
-        regular_times.append(current_time)
-        current_time = current_time + datetime.timedelta(days=interval)
-
-    return regular_times
-
-
-def _convertDataFrameToDataset(df: pd.DataFrame, time_column: str,
-                               columns: List[str] | None) -> Tuple[List[str], xr.Dataset]:
-    """
-    Convert DataFrame to Dataset for shared processing.
+def _convertDataFrameToDataset(df: pd.DataFrame, time_column: str) -> xr.Dataset:
+    """Convert DataFrame to Dataset for shared processing.
     
     Parameters
     ----------
@@ -224,13 +139,9 @@ def _convertDataFrameToDataset(df: pd.DataFrame, time_column: str,
         Input DataFrame containing time series data.
     time_column : str
         Name of the time column.
-    columns : list of str or None
-        Columns to include. If None, all numeric columns are used.
         
     Returns
     -------
-    columns_out : list of str
-        List of column names that were converted.
     dataset : xarray.Dataset
         Dataset containing the converted data.
         
@@ -245,25 +156,9 @@ def _convertDataFrameToDataset(df: pd.DataFrame, time_column: str,
     # Sort by time
     df_sorted = df.sort_values(time_column).copy()
 
-    # Identify columns to average
-    if columns is None:
-        # Get all numeric columns except time column
-        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
-        columns_out = [col for col in numeric_cols if col != time_column]
-    else:
-        # Validate specified columns
-        missing_cols = [col for col in columns if col not in df.columns]
-        if missing_cols:
-            raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
-
-        # Filter to only numeric columns from the specified list
-        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
-        columns_out = [col for col in columns if col in numeric_cols and col != time_column]
-
-        # Warn if any specified columns are non-numeric
-        non_numeric_specified = [col for col in columns if col not in numeric_cols]
-        if non_numeric_specified:
-            warnings.warn(f"Non-numeric columns will be ignored: {non_numeric_specified}")
+    # Get all numeric columns except time column
+    numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+    columns_out = [col for col in numeric_cols if col != time_column]
 
     # Create Dataset from numeric columns
     data_vars = {}
@@ -275,13 +170,11 @@ def _convertDataFrameToDataset(df: pd.DataFrame, time_column: str,
     if len(data_vars) == 0:
         raise ValueError(f"No numeric columns provided or found.")
 
-    return columns_out, xr.Dataset(data_vars)
+    return xr.Dataset(data_vars)
 
 
-def _convertDatasetToDataFrame(ds: xr.Dataset, time_column: str, output_times: pd.Series,
-                               columns: List[str]) -> pd.DataFrame:
-    """
-    Convert Dataset back to DataFrame format.
+def _convertDatasetToDataFrame(ds: xr.Dataset, time_column: str, output_times: pd.Series) -> pd.DataFrame:
+    """Convert Dataset back to DataFrame format.
     
     Parameters
     ----------
@@ -291,8 +184,6 @@ def _convertDatasetToDataFrame(ds: xr.Dataset, time_column: str, output_times: p
         Name of the time column to use.
     output_times : pandas.Series
         Time values to use for the output DataFrame.
-    columns : list of str
-        Column names to include in the output.
         
     Returns
     -------
@@ -301,16 +192,11 @@ def _convertDatasetToDataFrame(ds: xr.Dataset, time_column: str, output_times: p
     """
     result_df = ds.to_dataframe().reset_index()
     result_df[time_column] = output_times
-
-    # Ensure column order: time column first, then others in original order
-    cols_order = [time_column] + [col for col in columns if col in result_df.columns]
-    result_df = result_df[cols_order]
     return result_df
 
 
 def computeMode(da: xr.DataArray, time_dim: str = 'time') -> xr.DataArray:
-    """
-    Compute the mode along the time dimension of a DataArray.
+    """Compute the mode along the time dimension of a DataArray.
     
     Parameters
     ----------
@@ -384,8 +270,7 @@ def computeMode(da: xr.DataArray, time_dim: str = 'time') -> xr.DataArray:
 # filter leap day
 #
 def filterLeapDay_DataFrame(df: pd.DataFrame, time_column: str = 'time') -> pd.DataFrame:
-    """
-    Remove day 366 (Dec 31) from leap years and convert time column to CFTime noleap calendar.
+    """Remove day 366 (Dec 31) from leap years and convert time column to CFTime noleap calendar.
     
     Parameters
     ----------
@@ -430,7 +315,7 @@ def filterLeapDay_DataFrame(df: pd.DataFrame, time_column: str = 'time') -> pd.D
 
     # Get the time column is in cftime format, and a mask that is True for any non-leap-days
     try:
-        time_series_cftime, mask = _createNoleapMask(time_series)
+        time_series_cftime, mask = createNoleapMask(time_series)
     except Exception as e:
         raise ValueError(f"Could not convert column '{time_column}' to cftime: {e}")
 
@@ -438,15 +323,14 @@ def filterLeapDay_DataFrame(df: pd.DataFrame, time_column: str = 'time') -> pd.D
     df_filtered = df[mask].reset_index(drop=True)
 
     # Convert the time column to CFTime noleap calendar
-    df_filtered[time_column] = _convertTimesToCFTimeNoleap(time_series_cftime)
+    df_filtered[time_column] = convertTimesToCFTimeNoleap(time_series_cftime)
 
     return df_filtered
 
 
 def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset,
                          time_dim: str = 'time') -> xr.DataArray | xr.Dataset:
-    """
-    Remove day 366 (Dec 31) from leap years and convert time dimension to CFTime noleap calendar.
+    """Remove day 366 (Dec 31) from leap years and convert time dimension to CFTime noleap calendar.
     
     Parameters
     ----------
@@ -490,13 +374,13 @@ def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset,
         return da
 
     # Create mask for values to keep (exclude day 366 in leap years)
-    time_array_cftime, mask = _createNoleapMask(time_series.values)
+    time_array_cftime, mask = createNoleapMask(time_series.values)
 
     # Apply the filter to the DataArray
     da_filtered = da.isel({ time_dim: mask })
 
     # Convert the filtered time values to cftime noleap
-    time_array_noleap = _convertTimesToCFTimeNoleap(time_array_cftime)
+    time_array_noleap = convertTimesToCFTimeNoleap(time_array_cftime)
 
     # Replace the time coordinate with cftime noleap
     da_filtered = da_filtered.assign_coords({ time_dim: time_array_noleap })
@@ -542,8 +426,7 @@ def filterLeapDay(data: pd.DataFrame, time_column: str = 'time') -> pd.DataFrame
 
 def filterLeapDay(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
                   time_column: str = 'time') -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
-    """
-    Remove day 366 (Dec 31) from leap years and convert time to CFTime noleap calendar.
+    """Remove day 366 (Dec 31) from leap years and convert time to CFTime noleap calendar.
     
     This function automatically selects the appropriate implementation based on the
     input data type: DataFrame, DataArray, or Dataset.
@@ -605,129 +488,22 @@ def filterLeapDay(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
                         f"Got {type(data).__name__}")
 
 
-#
-# interpolate onto a regular time interval
-#
-def _interpolateDataset(ds: xr.Dataset,
-                        regular_times: List[cftime.datetime],
+def interpolate_Dataset(ds: xr.Dataset | xr.DataArray,
+                        time_values: Sequence[ValidTime],
                         time_dim: str = 'time',
-                        method: 'InterpOptions' = 'linear',
-                        limit: Optional[int] = None) -> xr.Dataset:
-    """
-    Interpolate xr Dataset to regular time intervals.
-    
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Input Dataset to interpolate.
-    regular_times : list of cftime.datetime
-        Regular time grid to interpolate to.
-    time_dim : str, optional
-        Name of the time dimension. Default is 'time'.
-    method : str, optional
-        Interpolation method. Default is 'linear'.
-    limit : int, optional
-        Maximum number of consecutive NaNs to fill.
-        
-    Returns
-    -------
-    xr.Dataset
-        Interpolated Dataset on regular time grid.
-    """
-    # Interpolate to regular grid
-    ds_interp = ds.interp(
-        { time_dim: regular_times },
-        method=method,
-        kwargs={ 'fill_value': 'extrapolate'} if method in ['linear', 'nearest'] else {})
-
-    # Apply limit if specified
-    if limit is not None:
-        for var in ds_interp.data_vars:
-            # Find gaps larger than limit
-            is_nan = np.isnan(ds_interp[var].values)
-            if np.any(is_nan):
-                # Identify consecutive NaN groups
-                diff = np.diff(np.concatenate(([False], is_nan, [False])).astype(int))
-                starts = np.where(diff == 1)[0]
-                ends = np.where(diff == -1)[0]
-
-                # Restore NaNs for gaps larger than limit
-                for start, end in zip(starts, ends):
-                    if end - start > limit:
-                        ds_interp[var].values[start:end] = np.nan
-
-    return ds_interp
-
-
-def interpolateToRegular_DataArray(da: xr.DataArray,
-                                   interval: Optional[Literal[1, 5]] = 1,
-                                   time_dim: str = 'time',
-                                   method: 'InterpOptions' = 'linear',
-                                   limit: Optional[int] = None) -> xr.DataArray:
-    """
-    Interpolate DataArray with cftime calendar to regular 1- or 5-day intervals.
-    
-    Parameters
-    ----------
-    da : xr.DataArray
-        Input DataArray with a time dimension containing cftime objects.
-    interval : {1, 5}, optional
-        Time interval in days for the regular grid. Default is 1.
-    time_dim : str, optional
-        Name of the time dimension. Default is 'time'.
-    method : str, optional
-        Interpolation method. Default is 'linear'.
-    limit : int, optional
-        Maximum number of consecutive NaNs to fill. Default is None (no limit).
-        
-    Returns
-    -------
-    xr.DataArray
-        DataArray with regular time intervals and interpolated values.
-        
-    Raises
-    ------
-    ValueError
-        If time dimension is not found or interval is not 1 or 5.
-    """
-    # Create temporary Dataset for interpolation
-    temp_ds = xr.Dataset({da.name or 'data': da})
-
-    # Interpolate
-    interp_ds = interpolateToRegular_Dataset(temp_ds, interval, time_dim, method, limit)
-
-    # Extract the DataArray
-    result = interp_ds[da.name or 'data']
-
-    # Preserve original attributes
-    result.attrs = da.attrs.copy()
-    return result
-
-
-def interpolateToRegular_Dataset(ds: xr.Dataset,
-                                 interval: Optional[Literal[1, 5]] = 1,
-                                 time_dim: str = 'time',
-                                 method: 'InterpOptions' = 'linear',
-                                 limit: Optional[int] = None,
-                                 variables: Optional[List[str]] = None) -> xr.Dataset:
-    """
-    Interpolate Dataset with cftime calendar to regular 1- or 5-day intervals.
+                        method: InterpOptions = 'linear') -> xr.Dataset:
+    """Interpolate Dataset to arbitrary times.
     
     Parameters
     ----------
     ds : xr.Dataset
         Input Dataset with a time dimension containing cftime objects.
-    interval : {1, 5}, optional
-        Time interval in days for the regular grid. Default is 1.
-    time_dim : str, optional
+    time_values : Sequence[ValidTime]
+        Time values to interpolate to.
+    time_dim : str
         Name of the time dimension. Default is 'time'.
     method : str, optional
         Interpolation method. Default is 'linear'.
-    limit : int, optional
-        Maximum number of consecutive NaNs to fill. Default is None (no limit).
-    variables : list of str, optional
-        List of variables to interpolate. If None, interpolates all variables
-        with the time dimension.
         
     Returns
     -------
@@ -742,69 +518,35 @@ def interpolateToRegular_Dataset(ds: xr.Dataset,
     if time_dim not in ds.dims:
         raise ValueError(f"Data must have a '{time_dim}' dimension")
 
-    if interval not in [1, 5]:
-        raise ValueError(f"Interval must be 1 or 5, got {interval}")
-
-    # Get time range
-    time_values = ds[time_dim].values
-    start_time = min(time_values)
-    end_time = max(time_values)
-
-    # Generate regular times
-    regular_times = _generateRegularTimes(start_time, end_time, interval)
-
-    # Select variables to interpolate
-    if variables is None:
-        # Interpolate all variables that have the time dimension
-        ds_to_interp = ds
-    else:
-        # Validate variables
-        missing = [v for v in variables if v not in ds.data_vars]
-        if missing:
-            raise ValueError(f"Variables not found in Dataset: {missing}")
-
-        # Select only specified variables (plus coordinates)
-        ds_to_interp = ds[variables]
-
-    # Interpolate
-    result = _interpolateDataset(ds_to_interp, regular_times, time_dim, method, limit)
-
-    # Add back any variables that weren't interpolated
-    for var in ds.data_vars:
-        if var not in result.data_vars:
-            if time_dim not in ds[var].dims:
-                # Variable doesn't have time dimension, just copy it
-                result[var] = ds[var]
-
+    result = ds.interp({ time_dim: time_values },
+                       method=method,
+                       kwargs={ 'fill_value': 'extrapolate'} if method in ['linear', 'nearest'] else {})
+    
     # Preserve Dataset attributes
     result.attrs = ds.attrs.copy()
-
     return result
 
 
-def interpolateToRegular_DataFrame(df: pd.DataFrame,
-                                   interval: Optional[Literal[1, 5]] = 1,
-                                   time_column: str = 'time',
-                                   method: 'InterpOptions' = 'linear',
-                                   limit: Optional[int] = None,
-                                   columns: Optional[List[str]] = None) -> pd.DataFrame:
-    """
-    Interpolate DataFrame with cftime calendar to regular 1- or 5-day intervals.
+def interpolate_DataFrame(df: pd.DataFrame,
+                          time_values: Sequence[ValidTime],
+                          time_column: str = 'time',
+                          method: InterpOptions = 'linear') -> pd.DataFrame:
+    """Interpolate DataFrame to arbitrary times.
+
+    NOTE: this is not the same as pandas.interpolate(), but more like
+    pandas.reindex(time_values).interpolate() with scipy-based
+    interpolation options.
     
     Parameters
     ----------
     df : pandas.DataFrame
         Input DataFrame with a time column containing cftime objects.
+    time_values : Sequence[ValidTime]
+        Time values to interpolate to.
     time_column : str
         Name of the column containing cftime datetime objects.
-    interval : {1, 5}, optional
-        Time interval in days for the regular grid. Default is 1.
     method : str, optional
         Interpolation method. Default is 'linear'.
-    limit : int, optional
-        Maximum number of consecutive NaNs to fill. Default is None (no limit).
-    columns : list of str, optional
-        List of columns to interpolate. If None, interpolates all numeric columns.
         
     Returns
     -------
@@ -815,72 +557,53 @@ def interpolateToRegular_DataFrame(df: pd.DataFrame,
     ------
     ValueError
         If time_column is not found or interval is not 1 or 5.
+
     """
-    # Validate inputs
-    if interval not in [1, 5]:
-        raise ValueError(f"Interval must be 1 or 5, got {interval}")
+    # get a dataset
+    ds = _convertDataFrameToDataset(df, time_column)
 
-    # Get time range
-    time_values = df[time_column].values
-    start_time = min(time_values)
-    end_time = max(time_values)
-
-    # Generate regular times
-    regular_times = _generateRegularTimes(start_time, end_time, interval)
-
-    # convert from df to ds
-    columns_to_interp, ds = _convertDataFrameToDataset(df, time_column, columns)
-
-    # Interpolate
-    ds_interp = _interpolateDataset(ds, regular_times, time_column, method, limit)
+    # interpolate using dataset function
+    interp_ds = interpolate_Dataset(ds, time_values, time_column, method)
 
     # Convert back to DataFrame
-    return _convertDatasetToDataFrame(ds_interp, time_column, regular_times, columns_to_interp)
+    return _convertDatasetToDataFrame(interp_ds, time_column, interp_ds[time_column])
+
 
 
 @overload
-def interpolateToRegular(data: xr.Dataset,
-                         interval: Literal[1, 5] = ...,
-                         time_dim: str = ...,
-                         method: InterpOptions = ...,
-                         limit: Optional[int] = None,
-                         variables: Optional[List[str]] = None,
-                         ) -> xr.Dataset:
+def interpolate(data: xr.Dataset,
+                time_values: Sequence[ValidTime] = ...,
+                time_dim: str = ...,
+                method: InterpOptions = ...,
+                ) -> xr.Dataset:
     ...
 
 
 @overload
-def interpolateToRegular(data: xr.DataArray,
-                         interval: Literal[1, 5] = ...,
-                         time_dim: str = ...,
-                         method: InterpOptions = ...,
-                         limit: Optional[int] = None,
-                         variables: Optional[List[str]] = None,
-                         ) -> xr.DataArray:
+def interpolate(data: xr.DataArray,
+                time_values: Sequence[ValidTime] = ...,
+                time_dim: str = ...,
+                method: InterpOptions = ...,
+                ) -> xr.DataArray:
     ...
 
 
 @overload
-def interpolateToRegular(data: pd.DataFrame,
-                         interval: Literal[1, 5] = ...,
-                         time_dim: str = ...,
-                         method: InterpOptions = ...,
-                         limit: Optional[int] = None,
-                         variables: Optional[List[str]] = None,
-                         ) -> pd.DataFrame:
+def interpolate(data: pd.DataFrame,
+                time_values: Sequence[ValidTime] = ...,
+                time_dim: str = ...,
+                method: InterpOptions = ...,
+                ) -> pd.DataFrame:
     ...
 
 
-def interpolateToRegular(
-    data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
-    interval: Optional[Literal[1, 5]] = 1,
-    time_dim: str = 'time',
-    method: InterpOptions = 'linear',
-    limit: Optional[int] = None,
-    variables: Optional[List[str]] = None,
-) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+def interpolate(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+                time_values: Sequence[ValidTime] = ...,
+                time_dim: str = 'time',
+                method: InterpOptions = 'linear'
+                ) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
     """
-    Interpolate data with cftime calendar to regular 1- or 5-day intervals.
+    Interpolate data to new times.
     
     This function automatically selects the appropriate implementation based on the
     input data type: DataFrame, DataArray, or Dataset.
@@ -889,19 +612,13 @@ def interpolateToRegular(
     ----------
     data : pandas.DataFrame, xr.DataArray, or xr.Dataset
         Input data containing time series with cftime calendar.
-    interval : {1, 5}, optional
-        Time interval in days for the regular grid. Default is 1.
+    time_values : Sequence[ValidTime]
+        Time values to interpolate to.
     time_dim : str, optional
         For DataFrame: Name of the time column (required).
         For Dataset/DataArray: Name of the time dimension (default: 'time').
     method : str, optional
         Interpolation method. Default is 'linear'.
-    limit : int, optional
-        Maximum number of consecutive NaNs to fill. Default is None (no limit).
-    variables : list of str, optional
-        For DataFrame: List of columns to interpolate.
-        For Dataset: List of variables to interpolate.
-        For DataArray: Ignored.
         
     Returns
     -------
@@ -917,23 +634,68 @@ def interpolateToRegular(
         
     See Also
     --------
-    interpolateToRegular_DataFrame : DataFrame-specific implementation
-    interpolateToRegular_DataArray : DataArray-specific implementation  
-    interpolateToRegular_Dataset : Dataset-specific implementation
+    interpolate_DataFrame : DataFrame-specific implementation
+    interpolate_Dataset : Dataset-specific implementation
     """
-    if isinstance(data, xr.Dataset):
-        return interpolateToRegular_Dataset(data, interval, time_dim, method, limit, variables)
-
-    elif isinstance(data, xr.DataArray):
-        return interpolateToRegular_DataArray(data, interval, time_dim, method, limit)
-
+    if isinstance(data, (xr.Dataset, xr.DataArray)):
+        return interpolate_Dataset(data, time_values, time_dim, method)
     elif isinstance(data, pd.DataFrame):
-        return interpolateToRegular_DataFrame(data, interval, time_dim, method, limit, variables)
-
+        return interpolate_DataFrame(data, time_values, time_dim, method)
     else:
         raise TypeError(f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
                         f"Got {type(data).__name__}")
 
+
+def interpolateToRegular(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
+                         interval : int = 1,
+                         time_dim: str = 'time',
+                         method: InterpOptions = 'linear'
+                         ) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """
+    Interpolate data to new times.
+    
+    This function automatically selects the appropriate implementation based on the
+    input data type: DataFrame, DataArray, or Dataset.
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Input data containing time series with cftime calendar.
+    time_values : Sequence[ValidTime]
+        Time values to interpolate to.
+    time_dim : str, optional
+        For DataFrame: Name of the time column (required).
+        For Dataset/DataArray: Name of the time dimension (default: 'time').
+    method : str, optional
+        Interpolation method. Default is 'linear'.
+        
+    Returns
+    -------
+    pandas.DataFrame, xr.DataArray, or xr.Dataset
+        Same type as input with regular time intervals and interpolated values.
+        
+    Raises
+    ------
+    TypeError
+        If data is not a DataFrame, DataArray, or Dataset.
+    ValueError
+        If required parameters are missing or invalid.
+        
+    See Also
+    --------
+    interpolate_DataFrame : DataFrame-specific implementation
+    interpolate_Dataset : Dataset-specific implementation
+    """
+    start_year = data[time_dim].values[0].year
+    end_year = data[time_dim].values[-1].year
+
+    calendar = None
+    if isinstance(data[time_dim].values[0], cftime.DatetimeNoLeap):
+        calendar = 'noleap'
+        
+    new_times = xr.date_range(data[time_dim].values[0], data[time_dim].values[-1], freq=f'{interval}D', calendar=calendar)
+    return interpolate(data, new_times, time_dim, method)
+    
 
 #
 # Compute an annual average
@@ -1036,8 +798,7 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
                                  time_column: str = 'time',
                                  start_date: Union[str, datetime.datetime,
                                                    cftime.datetime] = '2020-1-1',
-                                 output_nyears: int = 2,
-                                 columns: Optional[List[str]] = None) -> pd.DataFrame:
+                                 output_nyears: int = 2) -> pd.DataFrame:
     """
     Average DataFrame values across years and repeat for specified number of years.
     
@@ -1051,9 +812,6 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
         Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
     output_nyears : int
         Number of years to repeat the averaged pattern.
-    columns : list of str, optional
-        List of columns to average. If None, averages all numeric columns.
-        Non-numeric columns are always ignored.
         
     Returns
     -------
@@ -1065,7 +823,6 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
     ------
     ValueError
         If time_column is not found or contains invalid data.
-        If specified columns are not found in the DataFrame.
         
     Notes
     -----
@@ -1081,13 +838,13 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
     start_cftime = _parseStartDate(start_date)
 
     # get a dataset
-    columns_to_avg, ds = _convertDataFrameToDataset(df, time_column, columns)
+    ds = _convertDataFrameToDataset(df, time_column)
 
     # Compute averages using shared function
     averaged_ds, output_times = _computeAverageYear(ds, time_column, start_cftime, output_nyears)
 
     # Convert back to DataFrame
-    return _convertDatasetToDataFrame(averaged_ds, time_column, output_times, columns_to_avg)
+    return _convertDatasetToDataFrame(averaged_ds, time_column, output_times)
 
 
 def computeAverageYear_DataArray(da: xr.DataArray,
@@ -1250,8 +1007,7 @@ def computeAverageYear_Dataset(ds: xr.Dataset,
 def computeAverageYear(data: xr.Dataset,
                        time_column: str,
                        start_year: int,
-                       output_nyears: int,
-                       columns: Optional[List[str]] = None) -> xr.Dataset:
+                       output_nyears: int) -> xr.Dataset:
     ...
 
 
@@ -1259,8 +1015,7 @@ def computeAverageYear(data: xr.Dataset,
 def computeAverageYear(data: xr.DataArray,
                        time_column: str,
                        start_year: int,
-                       output_nyears: int,
-                       columns: None = None) -> xr.DataArray:
+                       output_nyears: int) -> xr.DataArray:
     ...
 
 
@@ -1268,8 +1023,7 @@ def computeAverageYear(data: xr.DataArray,
 def computeAverageYear(data: pd.DataFrame,
                        time_column: str,
                        start_year: int,
-                       output_nyears: int,
-                       columns: Optional[List[str]] = None) -> pd.DataFrame:
+                       output_nyears: int) -> pd.DataFrame:
     ...
 
 
@@ -1277,8 +1031,7 @@ def computeAverageYear(
         data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
         time_column: str,
         start_year: int,
-        output_nyears: int,
-        columns: Optional[List[str]] = None) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+        output_nyears: int) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
     """
     Average data values across years and repeat for specified number of years.
     
@@ -1297,10 +1050,6 @@ def computeAverageYear(
         Start year for the output time series.
     output_nyears : int, optional
         Number of years to repeat the averaged pattern. Default is 1.
-    columns : list of str, optional
-        For DataFrame: List of columns to average (default: all numeric columns).
-        For Dataset: List of variables to average (default: all with time dimension).
-        For DataArray: Ignored.
         
     Returns
     -------
@@ -1315,7 +1064,6 @@ def computeAverageYear(
         If DataFrame is provided without time_column.
     ValueError
         If time column/dimension is not found or contains invalid data.
-        If specified columns/variables don't exist.
         
     Notes
     -----
@@ -1338,17 +1086,15 @@ def computeAverageYear(
     if isinstance(data, pd.DataFrame):
         if time_column is None:
             raise TypeError("time_column parameter is required for DataFrame input")
-        return computeAverageYear_DataFrame(data, time_column, start_date, output_nyears, columns)
+        return computeAverageYear_DataFrame(data, time_column, start_date, output_nyears)
 
     elif isinstance(data, xr.DataArray):
-        if columns is not None:
-            warnings.warn("'columns' parameter is ignored for DataArray input")
         return computeAverageYear_DataArray(data, time_column, start_date, output_nyears)
 
     elif isinstance(data, xr.Dataset):
         # Dataset can use custom time dimension name
         time_dim = time_column or time_column
-        return computeAverageYear_Dataset(data, time_dim, start_date, output_nyears, columns)
+        return computeAverageYear_Dataset(data, time_dim, start_date, output_nyears)
 
     else:
         raise TypeError(f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "
@@ -1443,7 +1189,6 @@ def smoothTimeSeries_Array(data: np.ndarray,
 def smoothTimeSeries_DataFrame(df: pd.DataFrame,
                                time_column: str = 'time',
                                method: Literal['savgol', 'rolling_mean'] = 'savgol',
-                               columns: Optional[List[str]] = None,
                                **kwargs) -> pd.DataFrame:
     """
     Smooth time series data in a DataFrame along the time dimension.
@@ -1457,8 +1202,6 @@ def smoothTimeSeries_DataFrame(df: pd.DataFrame,
         Name of the time column.
     method : {'savgol', 'rolling_mean'}, optional
         Smoothing method. Default is 'savgol'.
-    columns : list of str, optional
-        Columns to smooth. If None, smooths all numeric columns except time.
     **kwargs : dict
         Method-specific parameters passed to smoothing function.
         
@@ -1474,14 +1217,12 @@ def smoothTimeSeries_DataFrame(df: pd.DataFrame,
     Returns
     -------
     pandas.DataFrame
-        DataFrame with smoothed data. Non-numeric columns and unspecified
-        columns are preserved unchanged.
+        DataFrame with smoothed data.
         
     Raises
     ------
     ValueError
-        If time_column is not found, specified columns don't exist, or
-        any column to be smoothed contains NaN values.
+        If any column to be smoothed contains NaN values.
         
     Notes
     -----
@@ -1498,23 +1239,8 @@ def smoothTimeSeries_DataFrame(df: pd.DataFrame,
     df_sorted = df.sort_values(time_column).copy()
 
     # Identify columns to smooth
-    if columns is None:
-        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
-        columns_to_smooth = [col for col in numeric_cols if col != time_column]
-    else:
-        # Validate columns
-        missing_cols = [col for col in columns if col not in df.columns]
-        if missing_cols:
-            raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
-
-        # Filter to numeric columns only
-        numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
-        columns_to_smooth = [col for col in columns if col in numeric_cols]
-
-        # Warn about non-numeric columns
-        non_numeric = [col for col in columns if col not in numeric_cols]
-        if non_numeric:
-            warnings.warn(f"Non-numeric columns will not be smoothed: {non_numeric}")
+    numeric_cols = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+    columns_to_smooth = [col for col in numeric_cols if col != time_column]
 
     # Apply smoothing to each column
     result = df_sorted.copy()
@@ -1651,7 +1377,6 @@ def smoothTimeSeries_Dataset(ds: xr.Dataset,
 def smoothTimeSeries(data: xr.DataArray,
                      time_dim: str = ...,
                      method: Literal['savgol', 'rolling_mean'] = ...,
-                     columns: Optional[List[str]] = ...,
                      **kwargs) -> xr.DataArray:
     ...
 
@@ -1660,7 +1385,6 @@ def smoothTimeSeries(data: xr.DataArray,
 def smoothTimeSeries(data: xr.Dataset,
                      time_dim: str = ...,
                      method: Literal['savgol', 'rolling_mean'] = ...,
-                     columns: Optional[List[str]] = ...,
                      **kwargs) -> xr.Dataset:
     ...
 
@@ -1669,7 +1393,6 @@ def smoothTimeSeries(data: xr.Dataset,
 def smoothTimeSeries(data: pd.DataFrame,
                      time_dim: str = ...,
                      method: Literal['savgol', 'rolling_mean'] = ...,
-                     columns: Optional[List[str]] = ...,
                      **kwargs) -> pd.DataFrame:
     ...
 
@@ -1677,7 +1400,6 @@ def smoothTimeSeries(data: pd.DataFrame,
 def smoothTimeSeries(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
                      time_dim: str = 'time',
                      method: Literal['savgol', 'rolling_mean'] = 'savgol',
-                     columns: Optional[List[str]] = None,
                      **kwargs) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
     """
     Smooth time series data using specified method.
@@ -1695,10 +1417,6 @@ def smoothTimeSeries(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
         For Dataset: Ignored (use time_dim instead).
     method : {'savgol', 'rolling_mean'}, optional
         Smoothing method. Default is 'savgol'.
-    columns : list of str, optional
-        For DataFrame: Columns to smooth (default: all numeric columns).
-        For Dataset: Variables to smooth (default: all with time dimension).
-        For DataArray: Ignored.
     time_dim : str, optional
         For DataArray/Dataset: Name of time dimension (default: 'time').
         For DataFrame: Ignored (use time_dim instead).
@@ -1730,17 +1448,14 @@ def smoothTimeSeries(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
         If smoothing parameters are invalid.
     """
     if isinstance(data, pd.DataFrame):
-        return smoothTimeSeries_DataFrame(data, time_dim, method, columns, **kwargs)
+        return smoothTimeSeries_DataFrame(data, time_dim, method, **kwargs)
 
     elif isinstance(data, xr.DataArray):
         # DataArray uses time_dim parameter
-        if columns is not None:
-            warnings.warn("'columns' parameter is ignored for DataArray input")
         return smoothTimeSeries_DataArray(data, time_dim, method, **kwargs)
 
     elif isinstance(data, xr.Dataset):
-        # For Dataset, columns parameter maps to variables
-        return smoothTimeSeries_Dataset(data, time_dim, method, columns, **kwargs)
+        return smoothTimeSeries_Dataset(data, time_dim, method, **kwargs)
 
     else:
         raise TypeError(f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "

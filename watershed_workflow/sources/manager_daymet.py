@@ -188,8 +188,8 @@ class ManagerDaymet:
 
         new_x = ds.x * 1000
         new_y = ds.y * 1000
-        new_time = watershed_workflow.data._convertTimesToCFTimeNoleap(
-            watershed_workflow.data._convertTimesToCFTime(ds_combined['time'].values))
+        new_time = watershed_workflow.data.convertTimesToCFTimeNoleap(
+            watershed_workflow.data.convertTimesToCFTime(ds_combined['time'].values))
 
         ds_combined = ds_combined.assign_coords(x=new_x, y=new_y, time=new_time)
         ds_combined.x.attrs = attrs_ref

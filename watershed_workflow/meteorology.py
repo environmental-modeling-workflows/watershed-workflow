@@ -10,9 +10,10 @@ import numpy as np
 import xarray as xr
 import datetime
 
+import watershed_workflow.data
 
 def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
-                          transition_temp: float) -> Tuple[xr.DataArray, xr.DataArray]:
+                          transition_temperature: float) -> Tuple[xr.DataArray, xr.DataArray]:
     """Allocates precipitation between rain and snow based on temperature.
 
     Parameters
@@ -21,41 +22,41 @@ def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
         Total precipitation data.
     air_temp : xr.DataArray
         Air temperature data.
-    transition_temp : float
+    transition_temperature : float
         Temperature threshold for rain/snow transition. If < 100, assumed
         to be in Celsius; otherwise Kelvin.
 
     Returns
     -------
     rain : xr.DataArray
-        Rain precipitation (when temp >= transition_temp).
+        Rain precipitation (when temp >= transition_temperature).
     snow : xr.DataArray
-        Snow precipitation (when temp < transition_temp).
+        Snow precipitation (when temp < transition_temperature).
 
     """
-    if transition_temp < 100:
-        tt_K = transition_temp + 273.15
+    if transition_temperature < 100:
+        tt_K = transition_temperature + 273.15
     else:
-        tt_K = transition_temp
+        tt_K = transition_temperature
 
     rain = xr.where(air_temp >= tt_K, precip, 0)
     snow = xr.where(air_temp < tt_K, precip, 0)
     return rain, snow
 
 
-def convertDayMetToATS(dat: xr.Dataset, transition_temp: float = 0.) -> xr.Dataset:
+def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> xr.Dataset:
     """Convert xarray.Dataset Daymet datasets to daily average data in standard form.
 
     This:
     - takes tmin and tmax to compute a mean
-    - splits rain and snow precip based on mean air temp relative to transition_temp [C]
+    - splits rain and snow precip based on mean air temp relative to transition_temperature [C]
     - standardizes units and names for ATS
 
     Parameters
     ----------
     dat : xr.Dataset
         Input Daymet dataset with variables: tmin, tmax, prcp, srad, dayl, vp.
-    transition_temp : float, optional
+    transition_temperature : float, optional
         Temperature threshold for rain/snow split in Celsius. Default is 0.
 
     Returns
@@ -64,7 +65,7 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temp: float = 0.) -> xr.Datas
         Dataset with ATS-compatible variable names and units.
 
     """
-    logging.info('Converting to ATS met input')
+    logging.info('Converting DayMet to ATS met input')
 
     # make missing values (-9999) as NaNs to do math while propagating NaNs
     for key in dat.keys():
@@ -83,24 +84,41 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temp: float = 0.) -> xr.Datas
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl'] / 86400  # Wm2
     dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
     dout['precipitation rain [m s^-1]'], dout['precipitation snow [m SWE s^-1]'] = \
-        allocatePrecipitation(precip_ms, mean_air_temp_c, transition_temp)
+        allocatePrecipitation(precip_ms, mean_air_temp_c, transition_temperature)
     return dout
 
 
 def convertAORCToATS(dat: xr.Dataset,
-                     transition_temp: float = 0.,
-                     daily: bool = False) -> xr.Dataset:
-    """Convert xarray.Dataset AORC datasets to standard form.
+                     transition_temperature: float = 0.,
+                     n_hourly: int = 24,
+                     remove_leap_day: bool = False) -> xr.Dataset:
+    """Convert xarray.Dataset AORC datasets to standard ATS format output.
 
-    This:
+    - computes specific humidity and surface pressure to vapor pressure
+    - computes total wind speed from component wind speeds
+    - converts precip units to m/s
+    - allocates precip to snow and rain based on transition temp
 
-    - takes tmin and tmax to compute a mean
-    - splits rain and snow precip based on mean air temp
-    - standardizes units and names for ATS
+    Parameters
+    ----------
+    dat : xr.Dataset
+      Input including AORC raw data.
+    transition_temperature : float
+      Temperature to transition from snow to rain [C].  Default is 0 C.
+    n_hourly : int
+      Convert data from 1-hourly to n_hourly to reduce data needs.
+      Defaults to 24 hours (daily data).
+    remove_leap_day : bool
+      If True, removes day 366 any leap year (not Feb 30!).  Deafult
+      is False.
 
-    If daily, also converts to daily-averaged data.
+    Returns
+    -------
+    xr.Dataset
+      Dataset with ATS-standard names/units met forcing.
+    
     """
-    logging.info('Converting to ATS met input')
+    logging.info('Converting AORC to ATS met input')
 
     # note that all of these can live in the same dataset since they
     # share the same coordinates/times
@@ -119,12 +137,17 @@ def convertAORCToATS(dat: xr.Dataset,
     # convert mm --> m, hour --> s to get m/s
     dout['precipitation total [m s^-1]'] = dat['APCP_surface'] / 1000 / 3600
 
-    if daily:
-        # take daily averages
-        pass
-
     # allocate precip
     dout['precipitation rain [m s^-1]'], dout['precipitation snow [m SWE s^-1]'] = \
         allocatePrecipitation(dout['precipitation total [m s^-1]'],
-                              dout['air temperature [K]'], transition_temp)
+                              dout['air temperature [K]'], transition_temperature)
+
+
+    # convert times to standard time convention and remove leap day
+    dout['time'] = watershed_workflow.data.convertTimesToCFTime(dout['time'].values)
+    if remove_leap_day:
+        dout = watershed_workflow.data.filterLeapDay_DataFrame(dout)
+
+    # group to n-hourly and take the mean
+    dout = dout.resample(time=datetime.timedelta(hours=n_hourly)).mean()
     return dout

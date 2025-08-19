@@ -14,15 +14,14 @@ import watershed_workflow.data as wwd
 
 
 class TestConvertTimesToCFTimeNoleap:
-    """Test class for _convertTimesToCFTimeNoleap helper function."""
+    """Test class for convertTimesToCFTimeNoleap helper function."""
 
     def test_numpy_datetime64_array_input_output(self):
         """Test numpy array input returns numpy array output."""
         dates = np.array(['2000-01-01T12:30:45', '2000-02-28T06:15:30'], dtype='datetime64[s]')
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
-        assert isinstance(result, np.ndarray)
         assert len(result) == 2
         assert all(isinstance(t, cftime.DatetimeNoLeap) for t in result)
         
@@ -37,40 +36,35 @@ class TestConvertTimesToCFTimeNoleap:
     def test_pandas_series_input_output(self):
         """Test pandas Series input returns pandas Series output."""
         dates = pd.Series(pd.date_range('2000-01-01', '2000-01-03', freq='D'))
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
-        assert isinstance(result, pd.Series)
         assert len(result) == 3
         assert all(isinstance(t, cftime.DatetimeNoLeap) for t in result)
 
     def test_list_input_output(self):
         """Test list input returns list output."""
         dates = [datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2)]
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, list)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         assert len(result) == 2
         assert all(isinstance(t, cftime.DatetimeNoLeap) for t in result)
 
     def test_tuple_input_returns_list(self):
         """Test tuple input returns list output."""
         dates = (datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2))
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, list)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         assert len(result) == 2
         assert all(isinstance(t, cftime.DatetimeNoLeap) for t in result)
 
     def test_numpy_datetime64_with_leap_day_raises_error(self):
         """Test that numpy datetime64 with leap day raises ValueError."""
         dates = np.array(['2000-01-01', '2000-12-31'], dtype='datetime64[D]')  # 2000-12-31 is day 366
-        r1 = wwd._convertTimesToCFTime(dates)
+        r1 = wwd.convertTimesToCFTime(dates)
         
         with pytest.raises(ValueError, match="Input contains leap day"):
-            wwd._convertTimesToCFTimeNoleap(r1)
+            wwd.convertTimesToCFTimeNoleap(r1)
 
     def test_pandas_timestamp_with_leap_day_raises_error(self):
         """Test that pandas Timestamp with leap day raises ValueError."""
@@ -78,10 +72,10 @@ class TestConvertTimesToCFTimeNoleap:
             pd.Timestamp('2000-01-01'),
             pd.Timestamp('2000-12-31')  # Day 366 in leap year
         ])
-        r1 = wwd._convertTimesToCFTime(dates)
+        r1 = wwd.convertTimesToCFTime(dates)
         
         with pytest.raises(ValueError, match="Input contains leap day"):
-            wwd._convertTimesToCFTimeNoleap(r1)
+            wwd.convertTimesToCFTimeNoleap(r1)
 
     def test_python_datetime_with_leap_day_raises_error(self):
         """Test that Python datetime with leap day raises ValueError."""
@@ -89,10 +83,10 @@ class TestConvertTimesToCFTimeNoleap:
             datetime.datetime(2000, 1, 1),
             datetime.datetime(2000, 12, 31)  # Day 366 in leap year
         ]
-        r1 = wwd._convertTimesToCFTime(dates)
+        r1 = wwd.convertTimesToCFTime(dates)
         
         with pytest.raises(ValueError, match="Input contains leap day"):
-            wwd._convertTimesToCFTimeNoleap(r1)
+            wwd.convertTimesToCFTimeNoleap(r1)
 
     def test_cftime_with_leap_day_raises_error(self):
         """Test that cftime objects with leap day raise ValueError."""
@@ -100,20 +94,20 @@ class TestConvertTimesToCFTimeNoleap:
             cftime.DatetimeGregorian(2000, 1, 1),
             cftime.DatetimeGregorian(2000, 12, 31)  # Day 366 in leap year
         ]
-        r1 = wwd._convertTimesToCFTime(dates)
+        r1 = wwd.convertTimesToCFTime(dates)
         
         with pytest.raises(ValueError, match="Input contains leap day"):
-            wwd._convertTimesToCFTimeNoleap(dates)
+            wwd.convertTimesToCFTimeNoleap(dates)
         with pytest.raises(ValueError, match="Input contains leap day"):
-            wwd._convertTimesToCFTimeNoleap(r1)
+            wwd.convertTimesToCFTimeNoleap(r1)
 
     def test_multiple_leap_days_error_message(self):
         """Test that error message includes all leap days found."""
         dates = np.array(['2000-12-31', '2004-12-31'], dtype='datetime64[D]')
-        r1 = wwd._convertTimesToCFTime(dates)
+        r1 = wwd.convertTimesToCFTime(dates)
         
         with pytest.raises(ValueError) as exc_info:
-            wwd._convertTimesToCFTimeNoleap(r1)
+            wwd.convertTimesToCFTimeNoleap(r1)
         
         error_message = str(exc_info.value)
         assert "Input contains leap day" in error_message
@@ -124,8 +118,8 @@ class TestConvertTimesToCFTimeNoleap:
             datetime.datetime(2001, 1, 1),
             datetime.datetime(2001, 12, 31)  # Day 365 in non-leap year
         ]
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
         assert len(result) == 2
         assert result[1].month == 12
@@ -134,8 +128,8 @@ class TestConvertTimesToCFTimeNoleap:
     def test_feb_29_allowed(self):
         """Test that Feb 29 in leap years is allowed (not removed)."""
         dates = [datetime.datetime(2000, 2, 29)]  # Feb 29 is day 60, not 366
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
         assert len(result) == 1
         assert result[0].month == 3
@@ -144,28 +138,15 @@ class TestConvertTimesToCFTimeNoleap:
     def test_empty_numpy_array(self):
         """Test handling of empty numpy array."""
         dates = np.array([], dtype='datetime64[D]')
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, np.ndarray)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         assert len(result) == 0
 
     def test_empty_pandas_series(self):
         """Test handling of empty pandas Series."""
         dates = pd.Series([], dtype='datetime64[ns]')
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, pd.Series)
-        assert len(result) == 0
-
-    def test_empty_list(self):
-        """Test handling of empty list."""
-        dates = []
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, list)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         assert len(result) == 0
 
     def test_time_attributes_preserved_pandas(self):
@@ -174,16 +155,15 @@ class TestConvertTimesToCFTimeNoleap:
             pd.Timestamp('2000-01-01 14:30:45'),
             pd.Timestamp('2000-01-02 16:25:30')
         ])
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
-        assert isinstance(result, pd.Series)
-        assert result.iloc[0].hour == 14
-        assert result.iloc[0].minute == 30
-        assert result.iloc[0].second == 45
-        assert result.iloc[1].hour == 16
-        assert result.iloc[1].minute == 25
-        assert result.iloc[1].second == 30
+        assert result[0].hour == 14
+        assert result[0].minute == 30
+        assert result[0].second == 45
+        assert result[1].hour == 16
+        assert result[1].minute == 25
+        assert result[1].second == 30
 
     def test_time_attributes_preserved_python_datetime(self):
         """Test that time attributes are preserved for Python datetime."""
@@ -191,8 +171,8 @@ class TestConvertTimesToCFTimeNoleap:
             datetime.datetime(2000, 1, 1, 9, 15, 30),
             datetime.datetime(2000, 1, 2, 14, 45, 50)
         ]
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
         assert result[0].hour == 9
         assert result[0].minute == 15
@@ -204,8 +184,8 @@ class TestConvertTimesToCFTimeNoleap:
     def test_time_attributes_preserved_numpy_datetime64(self):
         """Test that time attributes are preserved for numpy datetime64."""
         dates = np.array(['2000-01-01T12:30:45', '2000-01-02T18:15:20'], dtype='datetime64[s]')
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
         assert result[0].hour == 12
         assert result[0].minute == 30
@@ -217,10 +197,8 @@ class TestConvertTimesToCFTimeNoleap:
     def test_numpy_datetime64_microsecond_precision(self):
         """Test that microsecond precision is preserved."""
         dates = np.array(['2000-01-01T12:30:45.123456'], dtype='datetime64[us]')
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
-        
-        assert isinstance(result, np.ndarray)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         assert result[0].microsecond == 123456
 
     def test_consistency_across_input_types(self):
@@ -232,22 +210,22 @@ class TestConvertTimesToCFTimeNoleap:
         array_input = np.array([base_date], dtype=object)
         series_input = pd.Series([pd.Timestamp(base_date)])
         
-        list_input2 = wwd._convertTimesToCFTime(list_input)
-        list_result = wwd._convertTimesToCFTimeNoleap(list_input2)
+        list_input2 = wwd.convertTimesToCFTime(list_input)
+        list_result = wwd.convertTimesToCFTimeNoleap(list_input2)
 
-        array_input2 = wwd._convertTimesToCFTime(array_input)
-        array_result = wwd._convertTimesToCFTimeNoleap(array_input2)
+        array_input2 = wwd.convertTimesToCFTime(array_input)
+        array_result = wwd.convertTimesToCFTimeNoleap(array_input2)
 
-        series_input2 = wwd._convertTimesToCFTime(series_input)
-        series_result = wwd._convertTimesToCFTimeNoleap(series_input2)
+        series_input2 = wwd.convertTimesToCFTime(series_input)
+        series_result = wwd.convertTimesToCFTimeNoleap(series_input2)
         
         # All should produce equivalent cftime objects
-        assert list_result[0].year == array_result[0].year == series_result.iloc[0].year
-        assert list_result[0].month == array_result[0].month == series_result.iloc[0].month
-        assert list_result[0].day == array_result[0].day == series_result.iloc[0].day
-        assert list_result[0].hour == array_result[0].hour == series_result.iloc[0].hour
-        assert list_result[0].minute == array_result[0].minute == series_result.iloc[0].minute
-        assert list_result[0].second == array_result[0].second == series_result.iloc[0].second
+        assert list_result[0].year == array_result[0].year == series_result[0].year
+        assert list_result[0].month == array_result[0].month == series_result[0].month
+        assert list_result[0].day == array_result[0].day == series_result[0].day
+        assert list_result[0].hour == array_result[0].hour == series_result[0].hour
+        assert list_result[0].minute == array_result[0].minute == series_result[0].minute
+        assert list_result[0].second == array_result[0].second == series_result[0].second
 
     def test_mixed_years_some_leap_some_not(self):
         """Test dataset spanning multiple years with some leap years."""
@@ -259,8 +237,8 @@ class TestConvertTimesToCFTimeNoleap:
             datetime.datetime(2001, 12, 31),  # Day 365 in non-leap year (allowed)
         ]
 
-        r1 = wwd._convertTimesToCFTime(dates)
-        result = wwd._convertTimesToCFTimeNoleap(r1)
+        r1 = wwd.convertTimesToCFTime(dates)
+        result = wwd.convertTimesToCFTimeNoleap(r1)
         
         assert len(result) == 4
         assert all(isinstance(t, cftime.DatetimeNoLeap) for t in result)
@@ -274,14 +252,14 @@ class TestConvertTimesToCFTimeNoleap:
         """Test numpy datetime64 with different time precisions."""
         # Test with day precision
         dates_day = np.array(['2000-01-01', '2000-01-02'], dtype='datetime64[D]')
-        r1_day = wwd._convertTimesToCFTime(dates_day)
-        result_day = wwd._convertTimesToCFTimeNoleap(r1_day)
+        r1_day = wwd.convertTimesToCFTime(dates_day)
+        result_day = wwd.convertTimesToCFTimeNoleap(r1_day)
         assert all(t.hour == 0 and t.minute == 0 and t.second == 0 for t in result_day)
         
         # Test with second precision
         dates_sec = np.array(['2000-01-01T12:30:45'], dtype='datetime64[s]')
-        r1_sec = wwd._convertTimesToCFTime(dates_sec)
-        result_sec = wwd._convertTimesToCFTimeNoleap(r1_sec)
+        r1_sec = wwd.convertTimesToCFTime(dates_sec)
+        result_sec = wwd.convertTimesToCFTimeNoleap(r1_sec)
         assert result_sec[0].hour == 12
         assert result_sec[0].minute == 30
         assert result_sec[0].second == 45
@@ -957,22 +935,11 @@ class TestInterpolateToRegular:
     
     def test_selective_interpolation(self, sample_dataset):
         """Test interpolating only specific variables."""
-        result = wwd.interpolateToRegular(sample_dataset, variables=['temperature'])
+        result = wwd.interpolateToRegular(sample_dataset)
         
         # Temperature should be interpolated
         assert len(result.temperature) == 15
         
-        # Humidity does not exist, it is also on time and time has changed.
-        assert 'humidity' not in result.data_vars
-    
-    def test_limit_parameter(self, sample_dataarray):
-        """Test limit parameter for gap filling."""
-        result = wwd.interpolateToRegular(sample_dataarray, limit=2)
-        
-        assert len(result.time) == 15
-        # Large gaps should have NaNs
-        # (exact behavior depends on gap size and limit)
-    
     def test_different_methods(self, sample_dataarray):
         """Test different interpolation methods."""
         for method in ['linear', 'nearest', 'zero']:
@@ -995,33 +962,8 @@ class TestInterpolateToRegular:
         """Test that invalid input type raises error."""
         data = [1, 2, 3, 4]
         
-        with pytest.raises(TypeError, match="Input data must be"):
+        with pytest.raises(TypeError):
             wwd.interpolateToRegular(data)
-    
-    def test_invalid_interval_raises(self, sample_dataarray):
-        """Test that invalid interval raises error."""
-        with pytest.raises(ValueError, match="Interval must be 1 or 5"):
-            wwd.interpolateToRegular(sample_dataarray, interval=3)
-
-
-class TestInterpolationHelpers:
-    
-    def test_generate_regular_times(self):
-        """Test regular time generation."""
-        start = cftime.DatetimeNoLeap(2020, 1, 1)
-        end = cftime.DatetimeNoLeap(2020, 1, 11)
-        
-        # 1-day interval
-        times_1 = wwd._generateRegularTimes(start, end, 1)
-        assert len(times_1) == 11
-        assert times_1[0] == start
-        assert times_1[-1] == end
-        
-        # 5-day interval
-        times_5 = wwd._generateRegularTimes(start, end, 5)
-        assert len(times_5) == 3  # Jan 1, 6, 11 (but 11 > 10, so only 2)
-        assert times_5[0] == start
-        assert times_5[1] == cftime.DatetimeNoLeap(2020, 1, 6)
     
 
 class TestAverageAcrossYearsDataFrame:
@@ -1060,33 +1002,6 @@ class TestAverageAcrossYearsDataFrame:
         # Check length
         assert len(result) == 365
     
-    def test_specific_columns(self, sample_multiyear_df):
-        """Test averaging specific columns."""
-        result = wwd.computeAverageYear_DataFrame(
-            sample_multiyear_df, 'time', 2025, 1,
-            columns=['temperature']
-        )
-        
-        # Should only include time and temperature
-        assert set(result.columns) == {'time', 'temperature'}
-        assert 'humidity' not in result.columns
-    
-    def test_non_numeric_columns_ignored(self, sample_multiyear_df):
-        """Test that non-numeric columns are ignored with warning."""
-        with warnings.catch_warnings(record=True) as w:
-            result = wwd.computeAverageYear_DataFrame(
-                sample_multiyear_df, 'time', 2025, 1,
-                columns=['temperature', 'station', 'notes']
-            )
-            
-            # Should have warning about non-numeric columns
-            assert len(w) == 1
-            assert 'Non-numeric columns will be ignored' in str(w[0].message)
-            assert 'station' in str(w[0].message)
-            assert 'notes' in str(w[0].message)
-        
-        # Result should only have numeric columns
-        assert set(result.columns) == {'time', 'temperature'}
     
     def test_averaging_accuracy(self, sample_multiyear_df):
         """Test that averaging is mathematically correct."""
@@ -1118,14 +1033,6 @@ class TestAverageAcrossYearsDataFrame:
         # Pattern should repeat
         assert result.loc[0, 'temperature'] == result.loc[365, 'temperature']
         assert result.loc[0, 'temperature'] == result.loc[730, 'temperature']
-    
-    def test_missing_columns_error(self, sample_multiyear_df):
-        """Test error when specified columns don't exist."""
-        with pytest.raises(ValueError, match="Columns not found"):
-            wwd.computeAverageYear_DataFrame(
-                sample_multiyear_df, 'time', 2025, 1,
-                columns=['nonexistent']
-            )
     
     def test_empty_numeric_columns(self):
         """Test handling when no numeric columns to average."""
@@ -1272,15 +1179,6 @@ class TestSmoothOverloaded:
         assert np.var(result['signal'].values) < np.var(sample_dataset['signal'].values)
         assert np.array_equal(result['static'].values, sample_dataset['static'].values)
     
-    def test_dataset_specific_variables(self, sample_dataset):
-        """Test Dataset smoothing with specific variables."""
-        result = wwd.smoothTimeSeries(sample_dataset, columns=['signal'], method='rolling_mean', window=5)
-        
-        # Only 'signal' should be smoothed
-        valid_idx = ~np.isnan(result['signal'].values)
-        assert np.var(result['signal'].values[valid_idx]) < np.var(sample_dataset['signal'].values[valid_idx])
-        assert np.array_equal(result['signal2'].values, sample_dataset['signal2'].values)
-    
     def test_dataset_time_dim_parameter(self, sample_data):
         """Test Dataset with time_dim parameter."""
         times, signal = sample_data
@@ -1298,16 +1196,6 @@ class TestSmoothOverloaded:
         
         with pytest.raises(TypeError, match="Input data must be"):
             wwd.smoothTimeSeries(data)
-    
-    def test_dataarray_ignores_columns(self, sample_dataarray):
-        """Test that DataArray ignores columns parameter."""
-        with warnings.catch_warnings(record=True) as w:
-            result = wwd.smoothTimeSeries(sample_dataarray, columns=['ignored'], method='savgol')
-            
-            assert len(w) == 1
-            assert "'columns' parameter is ignored for DataArray" in str(w[0].message)
-        
-        assert isinstance(result, xr.DataArray)
     
     def test_nan_raises_error(self, sample_data):
         """Test that NaN values raise errors."""
