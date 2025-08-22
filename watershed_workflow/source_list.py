@@ -24,7 +24,6 @@ from watershed_workflow.sources.manager_nlcd import ManagerNLCD
 
 # DayMet THREDDS API is disabled -- this only works for previously-downloaded files!
 from watershed_workflow.sources.manager_daymet import ManagerDaymet
-
 from watershed_workflow.sources.manager_aorc import ManagerAORC
 
 from watershed_workflow.sources.manager_modis_appeears import ManagerMODISAppEEARS
@@ -65,8 +64,8 @@ default_structure_source = 'NRCS SSURGO'
 
 # available and default land cover
 land_cover_sources : Dict[str,Any] = {
-    'NLCD (L48)': ManagerNLCD(layer='cover', location='L48'),
-    'NLCD (AK)': ManagerNLCD(layer='cover', location='AK'),
+    'NLCD (L48)': ManagerNLCD(location='L48'),
+    'NLCD (AK)': ManagerNLCD(location='AK'),
     'MODIS': ManagerMODISAppEEARS()
 }
 default_land_cover = 'NLCD (L48)'
