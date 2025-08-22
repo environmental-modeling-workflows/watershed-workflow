@@ -67,7 +67,6 @@ class ManagerDaymet(ManagerDataset):
         bounds: list = attr.field(default=None)
         start_year: int = attr.field(default=None) 
         end_year: int = attr.field(default=None)
-        filenames: list = attr.field(default=None)
 
     def __init__(self):
         # DayMet native data properties
@@ -99,8 +98,9 @@ class ManagerDaymet(ManagerDataset):
     def _download(self, 
                   var : str,
                   year : int,
-                  bounds : list[float],
-                  force : bool = False) -> str:
+                  bounds_str : List[str],
+                  filename : str,
+                  force : bool = False) -> None:
         """Download a NetCDF file covering the bounds.
 
         Parameters
@@ -109,29 +109,17 @@ class ManagerDaymet(ManagerDataset):
           Name the variable, see table in the class documentation.
         year : int
           A year in the valid range (currently 1980-2023)
-        bounds : [xmin, ymin, xmax, ymax]
+        bounds_str : [xmin, ymin, xmax, ymax]
           Desired bounds, in the LatLon CRS.
         force : bool, optional
           If true, re-download even if a file already exists.
-
-        Returns
-        -------
         filename : str
           Resulting NetCDF file.
         """
-        logging.info("Collecting DayMet file to tile bounds: {}".format(bounds))
+        logging.info("Collecting DayMet file to tile bounds: {}".format(bounds_str))
 
         # check directory structure
         os.makedirs(self.names.folder_name(), exist_ok=True)
-
-        # get the target filename
-        bounds_str = [f"{b:.4f}" for b in bounds]
-        filename = self.names.file_name(var=var,
-                                        year=year,
-                                        north=bounds_str[3],
-                                        east=bounds_str[2],
-                                        west=bounds_str[0],
-                                        south=bounds_str[1])
 
         if (not os.path.exists(filename)) or force:
             url_dict = { 'year': str(year), 'variable': var }
@@ -154,8 +142,6 @@ class ManagerDaymet(ManagerDataset):
 
         else:
             logging.info("  Using existing: {}".format(filename))
-
-        return filename
 
 
     def _cleanBounds(self, geometry : shapely.geometry.Polygon) -> list[float]:
@@ -195,30 +181,10 @@ class ManagerDaymet(ManagerDataset):
         # Get bounds for API requests
         bounds = self._cleanBounds(geometry)
         
-        # Check if all files exist
-        all_files_exist = True
-        filenames = []
-        
-        for var in variables:
-            filename_var = []
-            for year in range(start_year, end_year + 1):
-                # Check if file exists without downloading
-                bounds_str = [f"{b:.4f}" for b in bounds]
-                filename = self.names.file_name(var=var,
-                                               year=year,
-                                               north=bounds_str[3],
-                                               east=bounds_str[2],
-                                               west=bounds_str[0],
-                                               south=bounds_str[1])
-                filename_var.append(filename)
-                if not os.path.exists(filename):
-                    all_files_exist = False
-            filenames.append(filename_var)
-        
         # Create DayMet-specific request with download info
         daymet_request = self.Request(
             manager=request.manager,
-            is_ready=all_files_exist,
+            is_ready=True,
             geometry=request.geometry,
             start=request.start,
             end=request.end,
@@ -226,7 +192,6 @@ class ManagerDaymet(ManagerDataset):
             bounds=bounds,
             start_year=start_year,
             end_year=end_year,
-            filenames=filenames
         )
         
         return daymet_request
@@ -290,15 +255,27 @@ class ManagerDaymet(ManagerDataset):
         bounds = request.bounds
         start_year = request.start_year
         end_year = request.end_year
-        filenames = request.filenames
+
+        # get the target filename
+        bounds_str = [f"{b:.4f}" for b in bounds]
+
 
         # Download any missing files
-        for i, var in enumerate(variables):
-            for j, year in enumerate(range(start_year, end_year + 1)):
-                filename = filenames[i][j]
+        filenames = []
+        for var in variables:
+            vfiles = []
+            for year in range(start_year, end_year + 1):
+                filename = self.names.file_name(var=var,
+                                                year=year,
+                                                north=bounds_str[3],
+                                                east=bounds_str[2],
+                                                west=bounds_str[0],
+                                                south=bounds_str[1])
+                vfiles.append(filename)
                 if not os.path.exists(filename):
                     # Download the file
-                    self._download(var, year, bounds, force=False)
+                    self._download(var, year, bounds_str, filename)
+            filenames.append(vfiles)
 
         # Open and return dataset (base class handles time clipping and CRS)
         return self._openFiles(filenames, variables)
