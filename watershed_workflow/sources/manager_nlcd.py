@@ -3,13 +3,17 @@ import os, sys
 import logging
 
 import xarray as xr
+import rioxarray # needed to get rio, even though not used.
 import geopandas as gpd
 import shapely.geometry
+import cftime
 
-from typing import Tuple
+from typing import Tuple, List, Optional
 import pygeohydro
+import pygeohydro.helpers
 
 from watershed_workflow.crs import CRS
+from watershed_workflow.sources.manager_dataset import ManagerDataset
 
 
 colors = {
@@ -40,20 +44,18 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-class ManagerNLCD:
-    """National Land Cover Database provides a raster for indexed land cover types
-    [NLCD]_.
+class ManagerNLCD(ManagerDataset):
+    """National Land Cover Database manager for single-year snapshots.
+
+    Supports variables: cover, impervious, canopy, descriptor.
+    Each manager instance represents a single year of NLCD data.
 
     Parameters
     ----------
-    layer : str, optional
-      Layer of interest.  Default is `"cover`", should also be one for at
-      least imperviousness, maybe others?
-    year : int, optional
-      Year of dataset.  Defaults to the most current available at the location.
     location : str, optional
-      Location code.  Default is `"L48`" (lower 48), valid include `"AK`"
-      (Alaska), `"HI`" (Hawaii, and `"PR`" (Puerto Rico).
+        Location code ('L48', 'AK', 'HI', 'PR'). Default 'L48'.
+    year : int, optional
+        NLCD data year. If None, uses most recent available for location.
 
     .. [NLCD] https://www.mrlc.gov/
 
@@ -61,74 +63,124 @@ class ManagerNLCD:
     colors = colors
     indices = indices
 
-    def __init__(self, layer='cover', year=None, location='L48'):
-        self.layer, self.year, self.location = self.validateInput(layer, year, location)
-        self.layer_name = 'NLCD_{1}_{0}_{2}'.format(self.layer, self.year, self.location)
-        self.name = 'National Land Cover Database (NLCD) Layer: {}'.format(self.layer_name)
+    def __init__(self, location='L48', year=None):
+        """Initialize NLCD manager for specific location and year.
+        
+        Parameters
+        ----------
+        location : str, optional
+            Location code ('L48', 'AK', 'HI', 'PR'). Default 'L48'.
+        year : int, optional
+            NLCD data year. If None, uses most recent available for location.
+        """
+        self.location = self._validateLocation(location)
+        self.year = self._validateYear(year, location)
+        
+        # NLCD is non-temporal - each instance represents one year snapshot
+        native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
+        super().__init__(
+            name=f'NLCD {self.year} {self.location}',
+            source='pygeohydro',
+            native_resolution=0.00027,  # ~30m in degrees (approximately 30m at mid-latitudes)
+            native_crs_in=native_crs,    # Expected input CRS
+            native_crs_out=native_crs,   # Output data CRS
+            native_start=None,           # Non-temporal data
+            native_end=None,             # Non-temporal data
+            valid_variables=['cover', 'impervious', 'canopy', 'descriptor'],
+            default_variables=['cover']
+        )
 
-    def validateInput(self, layer, year, location):
-        """Validates input to the __init__ method."""
-        valid_layers = ['cover', 'impervious', 'canopy', 'descriptor']
-        if layer not in valid_layers:
-            raise ValueError('NLCD invalid layer "{}" requested, valid are: {}'.format(
-                layer, valid_layers))
-
+    def _validateLocation(self, location):
+        """Validate location parameter."""
         valid_locations = ['L48', 'AK', 'HI', 'PR']
         if location not in valid_locations:
-            raise ValueError('NLCD invalid location "{}" requested, valid are: {}'.format(
-                location, valid_locations))
+            raise ValueError(f'NLCD invalid location "{location}", valid are: {valid_locations}')
+        return location
 
+    def _validateYear(self, year, location):
+        """Validate year for given location."""
         valid_years = {
             'L48': [2021, 2019, 2016, 2013, 2011, 2008, 2006, 2004, 2001],
             'AK': [2016, 2011, 2001],
-            'HI': [2001, ],
-            'PR': [2001, ],
+            'HI': [2001],
+            'PR': [2001]
         }
+        
         if year is None:
-            year = valid_years[location][0]
-        else:
-            if year not in valid_years[location]:
-                raise ValueError(
-                    'NLCD invalid year "{}" requested for location {}, valid are: {}'.format(
-                        year, location, valid_years[location]))
+            return valid_years[location][0]  # Most recent
+        
+        if year not in valid_years[location]:
+            raise ValueError(f'NLCD invalid year "{year}" for location {location}, '
+                            f'valid are: {valid_years[location]}')
+        return year
 
-        return layer, year, location
-
-    def getDataset(self,
-                   geometry : shapely.geometry.base.BaseGeometry,
-                   geometry_crs : CRS) -> xr.DataArray:
-        """
-        Retrieves the NLCD dataset for a given geometry.
-
+    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+        """Request NLCD data - ready immediately.
+        
         Parameters
         ----------
-        geometry : shapely.geometry.base.BaseGeometry
-            The geometry for which the dataset is to be retrieved. 
-        geometry_crs : str, optional
-            The coordinate reference system of the geometry. If not provided, it defaults
-            to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
-
+        request : ManagerDataset.Request
+            Dataset request with preprocessed parameters.
+            
         Returns
         -------
-        xarray.DataArray
-            The NLCD dataset corresponding to the provided geometry.
+        ManagerDataset.Request
+            Updated request marked as ready.
         """
+        request.is_ready = True
+        return request
 
-        from_tuple = False
+    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+        """Fetch NLCD data for the request.
         
-        geom_df = gpd.GeoDataFrame(geometry=[geometry,], crs=geometry_crs)
-
-        dataset = pygeohydro.nlcd_bygeom(
-            geom_df, 
-            resolution=30, 
-            years={self.layer: self.year},
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Dataset request with preprocessed parameters.
+            
+        Returns
+        -------
+        xr.Dataset
+            Dataset with requested NLCD variables for the specified year.
+        """
+        # Extract parameters from request
+        geometry = request.geometry
+        variables = request.variables
+        
+        assert variables is not None, "Variables should not be None for multi-variable NLCD data"
+        
+        # Create GeoDataFrame with native CRS (geometry is already in native_crs_in)
+        geom_df = gpd.GeoDataFrame(geometry=[geometry], crs=self.native_crs_in)
+        
+        # Build years dict for pygeohydro - single year for all variables
+        years_dict = {var: [self.year] for var in variables}
+        
+        # Fetch data using pygeohydro
+        data_dict = pygeohydro.nlcd_bygeom(
+            geom_df,
+            resolution=30,  # Use 30 meters (pygeohydro expects meters)
+            years=years_dict,
             region=self.location,
         )
-
-        assert len(dataset) == 1
-        dset = dataset[0]
-        assert len(dset) == 1
-        return dset[next(k for k in dset.keys())]
+        
+        # Extract the dataset (dict key is GeoDataFrame index, we have index 0)
+        raw_dataset = data_dict[0]
+        
+        # Create final dataset with variable names as keys (not prefixed)
+        final_dataset = xr.Dataset()
+        for var in variables:
+            # pygeohydro returns variables as 'var_year'
+            source_key = f'{var}_{self.year}'
+            if source_key in raw_dataset:
+                final_dataset[var] = raw_dataset[source_key]
+            else:
+                raise ValueError(f"Variable {var} for year {self.year} not found in pygeohydro response")
+        
+        # Add metadata attributes
+        final_dataset.attrs['nlcd_year'] = self.year
+        final_dataset.attrs['nlcd_location'] = self.location
+        
+        return final_dataset
     
 
 

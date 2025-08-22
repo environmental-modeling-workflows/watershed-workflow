@@ -12,6 +12,7 @@ import datetime
 
 import watershed_workflow.data
 
+
 def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
                           transition_temperature: float) -> Tuple[xr.DataArray, xr.DataArray]:
     """Allocates precipitation between rain and snow based on temperature.

@@ -1,80 +1,109 @@
 """Basic manager for interacting with raster files.
 """
+from typing import Tuple, List, Optional
 
-import numpy as np
-import attr
+import os
 import xarray as xr
 import shapely
 import rioxarray
-from typing import Tuple
-import geopandas as gpd
-from shapely.geometry import mapping
-import watershed_workflow.crs
+import cftime
 import logging
 
-
-@attr.s
-class ManagerRaster:
-    """A simple class for reading rasters.
-
-    Parameters
-    ----------
-    filename : str
-      Path to the raster file.
-    """
-    _filename = attr.ib(type=str)
-    name = 'raster'
+import watershed_workflow.crs
+from watershed_workflow.crs import CRS
+from watershed_workflow.sources.manager_dataset import ManagerDataset
 
 
-    def getDataset(self,
-                   geometry : shapely.geometry.Polygon | \
-                              shapely.geometry.MultiPolygon | \
-                              Tuple[float,float,float,float],
-                   geometry_crs : watershed_workflow.crs.CRS,
-                   band : int = -1) -> xr.DataArray:
-        """Read a raster as a dataset on this shape, clipping to the shape.
+class ManagerRaster(ManagerDataset):
+    """A simple class for reading rasters."""
+
+    def __init__(self, filename: str):
+        """Initialize raster manager.
         
         Parameters
         ----------
-        geometry : shapely.geometry.Polygon | \
-                   shapely.geometry.MultiPolygon | \
-                   Tuple[float,float,float,float]
-          Shape to provide bounds of the raster.
-        geometry_crs : watershed_workflow.crs.CRS
-          CRS of the shape.
-        band : int,optional
-          Default is 1, the first band (1-indexed).
-
-        Returns
-        -------
-        dataset : xr.DataArray
-          Dataset containing the raster.
-
-        Note that the raster provided is in its native CRS (which is in the
-        rasterio profile), not the shape's CRS.
+        filename : str
+            Path to the raster file.
         """
-        if isinstance(geometry, shapely.geometry.base.BaseGeometry):
-            bounds = geometry.bounds
-        else:
-            bounds = geometry
-
-        if not self._filename.lower().endswith('.tif'):
-            dataset = rioxarray.open_rasterio(self._filename, chunk='auto')
-        else:
-            dataset = rioxarray.open_rasterio(self._filename, cache=False)
-        assert isinstance(dataset, xr.Dataset) or isinstance(dataset, xr.DataArray)
-        dataset = dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(geometry_crs))
-
-        if len(dataset.shape) > 2:
-            if band > 0:
-                dataset_out = dataset[band-1,:,:]
-                dataset_out.rio.write_crs(dataset.rio.crs)
-                dataset = dataset_out
-
-            elif dataset.shape[0] == 1:
-                dataset_out = dataset[0,:,:]
-                dataset_out.rio.write_crs(dataset.rio.crs)
-                dataset = dataset_out
+        self.filename = filename
         
-        return dataset
+        # Inspect raster to get native properties
+        with rioxarray.open_rasterio(filename) as temp_ds:
+            # Get native CRS
+            native_crs = temp_ds.rio.crs
+            
+            # Get native resolution (approximate from first pixel)
+            if len(temp_ds.coords['x']) > 1 and len(temp_ds.coords['y']) > 1:
+                x_res = abs(float(temp_ds.coords['x'][1] - temp_ds.coords['x'][0]))
+                y_res = abs(float(temp_ds.coords['y'][1] - temp_ds.coords['y'][0]))
+                native_resolution = max(x_res, y_res)
+            else:
+                native_resolution = 1.0  # fallback
+            
+            # Create variable names for each band
+            if hasattr(temp_ds, 'band'):
+                valid_variables = [f'band_{i}' for i in range(1, len(temp_ds.band) + 1)]
+                default_variables = [valid_variables[0]]  # First band as default
+            else:
+                valid_variables = None
+                default_variables = None
+        
+        # Use basename of file as name
+        name = f'raster: "{os.path.basename(filename)}"'
+        
+        # Use absolute path as source for complete provenance
+        source = os.path.abspath(filename)
+        
+        # Initialize base class
+        super().__init__(
+            name, source,
+            native_resolution, native_crs, native_crs,
+            None, None, valid_variables, default_variables
+        )
+
+    def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:
+        """Request the data -- ready upon request."""
+        request.is_ready = True
+        return request
+
+
+    def _fetchDataset(self, request : ManagerDataset.Request) -> xr.Dataset:
+        """Fetch the data."""
+        bounds = request.geometry.bounds
+        
+        # Open raster and clip to bounds
+        if not self.filename.lower().endswith('.tif'):
+            dataset = rioxarray.open_rasterio(self.filename, chunk='auto')
+        else:
+            dataset = rioxarray.open_rasterio(self.filename, cache=False)
+            
+        # Clip to bounds
+        dataset = dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(self.native_crs_out))
+        
+        # Convert to Dataset with band variables
+        result_dataset = xr.Dataset()
+        
+        if request.variables is None:
+            # single-variable case
+            if len(dataset.shape) > 2:
+                result_dataset['raster'] = dataset[0, :, :]  # Take first band
+            else:
+                result_dataset['raster'] = dataset
+
+        else:
+            for var in request.variables:
+                assert var.startswith('band_')
+                band_idx = int(var.split('_')[1]) - 1  # Convert to 0-indexed
+                if len(dataset.shape) > 2 and band_idx < dataset.shape[0]:
+                    band_data = dataset[band_idx, :, :]
+                    band_data = band_data.drop_vars('band', errors='ignore')
+                    result_dataset[var] = band_data
+                elif len(dataset.shape) == 2:  # Single band raster
+                    if band_idx == 0:
+                        result_dataset[var] = dataset
+                else:
+                    raise ValueError(f"Band {band_idx + 1} not available in raster")
+
+        return result_dataset
+
   
