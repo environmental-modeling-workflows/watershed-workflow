@@ -40,18 +40,11 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
             self.name = 'GLHYMPS version 2.0'
             self.names = watershed_workflow.sources.names.Names(
                 self.name, os.path.join('soil_structure', 'GLHYMPS'), '', 'GLHYMPS.shp')
-            super(ManagerGLHYMPS, self).__init__(self.names.file_name())
+            super(ManagerGLHYMPS, self).__init__(self.names.file_name(), id_name='OBJECTID_1')
         else:
             self.name = filename
             self.names = None
-            super(ManagerGLHYMPS, self).__init__(self.name)
-
-    def _getShapesByGeometry(self,
-                            geom : BaseGeometry,
-                            geom_crs : CRS) -> geopandas.GeoDataFrame:
-        """Read the file and filter to get shapes."""
-        filename = self._download()
-        return super(ManagerGLHYMPS, self).getShapesByGeometry(geom, geom_crs)
+            super(ManagerGLHYMPS, self).__init__(self.name, id_name='OBJECTID_1')
 
     def _download(self):
         """Download the files, returning downloaded filename."""
@@ -67,35 +60,37 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
-    def getShapesByGeometry(self, geom, geom_crs, **kwargs):
-        """Read shapes and process properties.
+    def _getShapesByGeometry(self, geometry_gdf: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
+        """Fetch shapes for the given geometry, ensuring file exists first.
 
         Parameters
         ----------
-        bounds : bounds tuple [x_min, y_min, x_max, y_max]
-          bounds in which to find GLHYMPS shapes.
-        crs : CRS
-          CRS of the bounds.
-        min_porosity : optional, double in [0,1]
-          Some GLHYMPs formations have zero porosity, and this breaks
-          most codes.  This allows the user to set the minimum valid
-          porosity.  Defaults to 0.01 (1%).
-        max_permeability : optional, double > 0
-          Some GLHYMPs formations (fractured bedrock?) have very 
-          high permeability, and this results in very slow runs.  This
-          allows the user to set a maximum valid permeability [m^2].
-          Defaults to inf.
+        geometry_gdf : geopandas.GeoDataFrame
+            GeoDataFrame with geometries in native_crs_in to search for shapes.
 
         Returns
         -------
-        profile : dict
-            Fiona profile of the shapefile.
-        shapes : list
-            List of fiona shapes that match the index or bounds.
-        properties : pandas dataframe
-            Dataframe including geologic properties.
-
+        geopandas.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
         """
-        shapes = self._getShapesByGeometry(geom, geom_crs)
-        props = watershed_workflow.soil_properties.mangleGLHYMPSProperties(shapes, **kwargs)
-        return props
+        # Ensure GLHYMPS file exists before attempting to read
+        self._download()
+        return super()._getShapesByGeometry(geometry_gdf)
+
+    def _getShapesByID(self, ids: list[str]) -> geopandas.GeoDataFrame:
+        """Fetch shapes by ID list, ensuring file exists first.
+
+        Parameters
+        ----------
+        ids : list[str]
+            List of IDs to retrieve.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
+        """
+        # Ensure GLHYMPS file exists before attempting to read
+        self._download()
+        return super()._getShapesByID(ids)
+

@@ -375,7 +375,7 @@ class ManagerDataset(abc.ABC):
             if geometry_crs is not None:
                 raise ValueError("geometry_crs should not be provided with GeoDataFrame")
             geometry_crs = geometry.crs
-            polygon = geometry.unary_union
+            polygon = geometry.union_all()
         elif isinstance(geometry, shapely.geometry.Polygon):
             if geometry_crs is None:
                 raise ValueError("geometry_crs is required when geometry is a Polygon")
