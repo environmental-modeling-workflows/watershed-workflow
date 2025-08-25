@@ -46,7 +46,7 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
             self.names = None
             super(ManagerGLHYMPS, self).__init__(self.name, id_name='OBJECTID_1')
 
-    def _download(self):
+    def _download(self, force : bool = False):
         """Download the files, returning downloaded filename."""
         # check directory structure
         if self.names is None:
