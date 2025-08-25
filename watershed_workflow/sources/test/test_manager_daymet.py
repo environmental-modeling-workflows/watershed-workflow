@@ -13,7 +13,7 @@ from watershed_workflow.crs import CRS
 from watershed_workflow.sources.manager_daymet import ManagerDaymet
 
 
-pytest.skip("Skipping all DayMet tests -- the API is now black.", allow_module_level=True)
+pytest.skip("Skipping all DayMet tests -- the THREDDS API is deprecated.", allow_module_level=True)
 
 @pytest.fixture
 def small_daymet_geometry():
