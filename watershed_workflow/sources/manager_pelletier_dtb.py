@@ -55,7 +55,7 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
         super(ManagerPelletierDTB, self).__init__(resolved_filename)
 
 
-    def _download(self):
+    def _download(self, force : bool = False):
         """Validate the files exist, returning the filename."""
         filename = self.names.file_name()
         logging.info('  from file: {}'.format(filename))

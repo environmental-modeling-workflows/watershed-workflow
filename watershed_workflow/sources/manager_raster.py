@@ -1,6 +1,6 @@
 """Basic manager for interacting with raster files.
 """
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Iterable
 
 import os
 import xarray as xr
@@ -17,7 +17,13 @@ from watershed_workflow.sources.manager_dataset import ManagerDataset
 class ManagerRaster(ManagerDataset):
     """A simple class for reading rasters."""
 
-    def __init__(self, filename: str):
+    def __init__(self,
+                 filename : str,
+                 url : str | None,
+                 native_resolution : float | None,
+                 native_crs : CRS | None,
+                 bands : Iterable[str] | int | None,
+                 ):
         """Initialize raster manager.
         
         Parameters
@@ -26,40 +32,90 @@ class ManagerRaster(ManagerDataset):
             Path to the raster file.
         """
         self.filename = filename
-        
-        # Inspect raster to get native properties
-        with rioxarray.open_rasterio(filename) as temp_ds:
-            # Get native CRS
-            native_crs = temp_ds.rio.crs
-            
-            # Get native resolution (approximate from first pixel)
-            if len(temp_ds.coords['x']) > 1 and len(temp_ds.coords['y']) > 1:
-                x_res = abs(float(temp_ds.coords['x'][1] - temp_ds.coords['x'][0]))
-                y_res = abs(float(temp_ds.coords['y'][1] - temp_ds.coords['y'][0]))
-                native_resolution = max(x_res, y_res)
-            else:
-                native_resolution = 1.0  # fallback
-            
-            # Create variable names for each band
-            if hasattr(temp_ds, 'band'):
-                valid_variables = [f'band_{i}' for i in range(1, len(temp_ds.band) + 1)]
-                default_variables = [valid_variables[0]]  # First band as default
-            else:
-                valid_variables = None
-                default_variables = None
+        self.url = url
         
         # Use basename of file as name
         name = f'raster: "{os.path.basename(filename)}"'
         
         # Use absolute path as source for complete provenance
         source = os.path.abspath(filename)
-        
+
+        if bands is None:
+            valid_variables = None
+            default_variables = None
+        elif isinstance(bands, int):
+            valid_variables = [f'band {i+1}' for i in range(num_bands)]
+            default_variables = [valid_variables[0],]
+        else:
+            valid_variables = bands
+            default_variables = [valid_variables[0],]
+
         # Initialize base class
         super().__init__(
             name, source,
             native_resolution, native_crs, native_crs,
             None, None, valid_variables, default_variables
         )
+
+
+    def requestDataset(self, *args, **kwargs):
+        """Establish a request for a dataset for the given geometry and time range.
+
+        Parameters
+        ----------
+        geometry : shapely.geometry.Polygon | gpd.GeoDataFrame
+            Input geometry.
+        geometry_crs : CRS, optional
+            Coordinate system of geometry (required if geometry is Polygon).
+        start : str | int | cftime._cftime.datetime | None, optional
+            Start date.
+        end : str | int | cftime._cftime.datetime | None, optional
+            End date.
+        variables : List[str], optional
+            Variables to retrieve. For multi-variable datasets, defaults to
+            default_variables if None. Ignored for single-variable datasets.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset for the requested geometry and time range.
+        """
+        # first download -- this is done here and not in _request so
+        # that we can set the resolution and CRS for input geometry
+        # manipulation.
+        if !os.path.isfile(self.filename) and self.url is not None:
+            self._download()
+
+        # Inspect raster to get native properties
+        with rioxarray.open_rasterio(filename) as temp_ds:
+            # Get native CRS
+            self.native_crs_in = temp_ds.rio.crs
+            self.native_crs_out = temp_ds.rio.crs
+            
+            # Get native resolution (approximate from first pixel)
+            if len(temp_ds.coords['x']) > 1 and len(temp_ds.coords['y']) > 1:
+                x_res = abs(float(temp_ds.coords['x'][1] - temp_ds.coords['x'][0]))
+                y_res = abs(float(temp_ds.coords['y'][1] - temp_ds.coords['y'][0]))
+                self.native_resolution = max(x_res, y_res)
+            else:
+                self.native_resolution = 1.0  # fallback
+            
+            # Create variable names for each band
+            if self.valid_variables is None:
+                if hasattr(temp_ds, 'band'):
+                    # pull from bands
+                    self.valid_variables = [f'band_{i}' for i in temp_ds.band.values]
+
+                    # First band as default
+                    self.default_variables = [self.valid_variables[0],]
+                elif len(d.values.shape) == 3:
+                    num_bands = d.values.shape[0]
+                    self.valid_variables = [f'band_{i}' for i in range(num_bands)]
+                    self.default_variables = [self.valid_variables[0],]
+
+        # now do parameter processing using this info
+        super().requestDataset(*args, **kwargs)
+
 
     def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:
         """Request the data -- ready upon request."""
@@ -107,3 +163,10 @@ class ManagerRaster(ManagerDataset):
         return result_dataset
 
   
+    def _download(self, force : bool = False):
+        """A default download implementation."""
+        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+        if not os.path.exists(self.filename) or force:
+            source_utils.download(self.url, self.filename, force)
+        
+        
