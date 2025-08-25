@@ -1,5 +1,5 @@
 """Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
-from typing import Tuple, Dict, Optional, List
+from typing import Tuple, Dict, Optional, List, overload
 
 import os, sys
 import logging
@@ -18,6 +18,7 @@ import watershed_workflow.sources.names
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
+from watershed_workflow.sources.manager_dataset import ManagerDataset
 
 _colors = {
     -1: ('Unclassified', (0, 0, 0)),
@@ -48,16 +49,15 @@ for k, v in _colors.items():
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-@attr.define
-class Task:
-    task_id: str
-    variables: list
-    filenames: dict = attr.Factory(dict)
-    urls: dict = attr.Factory(dict)
-    shas: dict = attr.Factory(dict)
 
 
-class ManagerMODISAppEEARS:
+class ManagerMODISAppEEARS(ManagerDataset):
+    @attr.define  
+    class Request(ManagerDataset.Request):
+        """MODIS AppEEARS-specific request that includes Task information."""
+        task_id: str = attr.field(default="")
+        filenames: dict = attr.field(factory=dict)
+        urls: dict = attr.field(factory=dict)
     """MODIS data through the AppEEARS data portal.
 
     Note this portal requires authentication -- please enter a
@@ -106,18 +106,38 @@ class ManagerMODISAppEEARS:
     colors = colors
     indices = indices
 
-    def __init__(self,
-                 login_token : Optional[str] = None,
-                 remove_leap_day : bool = True):
+    def __init__(self, login_token : Optional[str] = None):
         """Create a new manager for MODIS data."""
-        self.name : str = 'MODIS'
+        
+        # Native MODIS properties for base class
+        import cftime
+        native_resolution = 500.0  # 500m resolution for both LAI and LULC
+        native_start = cftime.datetime(2002, 7, 1, calendar='standard')  
+        native_end = cftime.datetime(2021, 1, 1, calendar='standard')
+        native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
+        valid_variables = ['LAI', 'LULC']
+        default_variables = ['LAI', 'LULC']
+        
+        # Initialize base class with correct parameter order
+        super().__init__(
+            name='MODIS',
+            source='AppEEARS',
+            native_resolution=native_resolution,
+            native_crs_in=native_crs,
+            native_crs_out=native_crs,
+            native_start=native_start,
+            native_end=native_end,
+            valid_variables=valid_variables,
+            default_variables=default_variables
+        )
+        
+        # AppEEARS-specific initialization
         self.names = watershed_workflow.sources.names.Names(
-            self.name, 'land_cover', self.name,
+            self.name, 'land_cover', 'MODIS',
             'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
         self.login_token = login_token
         if not os.path.isdir(self.names.folder_name()):
             os.makedirs(self.names.folder_name())
-        self.tasks : List[Task] = []
 
     def _authenticate(self,
                       username : Optional[str] = None,
@@ -164,20 +184,7 @@ class ManagerMODISAppEEARS:
                                         ymax=ymax)
         return filename
 
-    def _cleanDate(self,
-                   date : str | datetime.datetime | datetime.date) -> str:
-        """Returns a string of the format needed for use in the filename and request."""
-        if isinstance(date, str):
-            date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-        elif isinstance(date, datetime.datetime):
-            date = date.date()
-        assert isinstance(date, datetime.date)
-        if date < self._START:
-            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
-        if date > self._END:
-            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
-        return date.strftime('%m-%d-%Y')
-
+    
     def _cleanBounds(self,
                      geometry : shapely.geometry.base.BaseGeometry | Tuple[float, float, float, float],
                      crs : CRS) -> Tuple[float,float,float,float]:
@@ -195,29 +202,29 @@ class ManagerMODISAppEEARS:
                 np.round(feather_bounds[2] + buffer, 4),
                 np.round(feather_bounds[3] + buffer, 4))
 
+    
     def _constructRequest(self,
                           bounds_ll : Tuple[float,float,float,float],
                           start : str,
                           end : str,
-                          variables : List[str]) -> Task:
+                          variables : List[str]) -> str:
         """Create an AppEEARS request to download the variable from start to
         finish.  Note that this does not do the download -- it only creates
         the request.
 
         Parameters
         ----------
-        start : int
-          Year to start, must be XXXX -- YYYY.  Defaults to XXXX
-        end : int
-          Year to end (inclusive), must be XXXX -- YYYY and greater
-          than start.  Defaults to YYYY
+        start : str
+          Start date string in MM-DD-YYYY format
+        end : str
+          End date string in MM-DD-YYYY format
         variables : list
           List of variables to collect.
         
         Returns
         -------
-        token : int??
-          Integer token for downloading this data.
+        str
+          Task ID for the AppEEARS request.
 
         """
         if self.login_token is None:
@@ -267,26 +274,19 @@ class ManagerMODISAppEEARS:
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
         r.raise_for_status()
 
-        task = Task(r.json()['task_id'],
-                    variables,
-                    filenames=dict(
-                        (v, self._filename(bounds_ll, start, end, v)) for v in variables))
-        self.tasks.append(task)
-        logging.info(f'Requesting dataset on {bounds_ll} response task_id {task.task_id}')
-        return task
+        task_id = r.json()['task_id']
+        logging.info(f'Requesting dataset on {bounds_ll} response task_id {task_id}')
+        return task_id
 
-    def _checkStatus(self,
-                     task : Optional[Task] = None) -> str | bool:
-        """Checks and prints the status of the task.
+    def _checkStatus(self, request: ManagerDataset.Request) -> str | bool:
+        """Checks and prints the status of the AppEEARS request.
 
         Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
         """
         if self.login_token is None:
             self.login_token = self._authenticate()
-        if task is None:
-            task = self.tasks[0]
 
-        logging.info(f'Checking status of task: {task.task_id}')
+        logging.info(f'Checking status of task: {request.task_id}')
         r = requests.get(self._STATUS_URL,
                          headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
                          verify=source_utils.getVerifyOption())
@@ -302,7 +302,7 @@ class ManagerMODISAppEEARS:
                 return 'UNKNOWN'
             else:
                 for entry in json:
-                    if entry['task_id'] == task.task_id:
+                    if entry['task_id'] == request.task_id:
                         logging.info(entry)
                         if 'status' in entry and 'done' == entry['status']:
                             return True
@@ -311,15 +311,12 @@ class ManagerMODISAppEEARS:
             logging.info('... status not found')
             return 'UNKNOWN'
 
-    def _checkBundleURL(self,
-                        task : Optional[Task] = None) -> bool:
+    def _checkBundleURL(self, request: ManagerDataset.Request) -> bool:
         if self.login_token is None:
             self.login_token = self._authenticate()
-        if task is None:
-            task = self.tasks[0]
 
-        logging.info(f'Checking for bundle of task: {task.task_id}')
-        r = requests.get(self._BUNDLE_URL_TEMPLATE.format(task.task_id),
+        logging.info(f'Checking for bundle of task: {request.task_id}')
+        r = requests.get(self._BUNDLE_URL_TEMPLATE.format(request.task_id),
                          headers={ 'Authorization': 'Bearer {0}'.format(self.login_token) },
                          verify=source_utils.getVerifyOption())
 
@@ -336,49 +333,32 @@ class ManagerMODISAppEEARS:
                 return False
 
             # bundle exists -- find the url and sha for each varname
-            for var in task.variables:
+            for var in request.variables:
                 product = self._PRODUCTS[var]['product']
                 found = False
                 for entry in r.json()['files']:
                     if entry['file_name'].startswith(product):
                         logging.info(f'... bundle found {entry["file_name"]}')
                         assert (entry['file_name'].endswith('.nc'))
-                        task.urls[var] = self._BUNDLE_URL_TEMPLATE.format(
-                            task.task_id) + '/' + entry['file_id']
+                        request.urls[var] = self._BUNDLE_URL_TEMPLATE.format(
+                            request.task_id) + '/' + entry['file_id']
                         found = True
                 assert (found)
             return True
 
-    def is_ready(self, task : Optional[Task] = None) -> str | bool:
-        """Actually knowing if it is ready is a bit tricky because Appeears does not appear to be saving its status after it is complete."""
-        status = self._checkStatus(task)
-        if status != False:  # note this matches True or UNKNOWN
-            return self._checkBundleURL(task)
-        else:
-            return status
-
-    def _download(self, task : Optional[Task] = None) -> bool:
-        """Downloads the provided task.
-
-        If file_id is not provided, is_ready() will be called.
-        If file_id is provided, it is assumed is_ready() is True.
-
-        If task is not provided, the first in the queue is used.
-        """
-        if task is None:
-            task = self.tasks[0]
-
-        if len(task.urls) == 0:
-            ready = self._checkBundleURL(task)
+    def _download(self, request: ManagerDataset.Request) -> bool:
+        """Downloads the data for the provided request."""
+        if len(request.urls) == 0:
+            ready = self._checkBundleURL(request)
         else:
             ready = True
 
         if ready:
-            assert (len(task.filenames) == len(task.urls))
-            assert (len(task.variables) == len(task.urls))
-            for var in task.variables:
-                url = task.urls[var]
-                filename = task.filenames[var]
+            assert (len(request.filenames) == len(request.urls))
+            assert (len(request.variables) == len(request.urls))
+            for var in request.variables:
+                url = request.urls[var]
+                filename = request.filenames[var]
                 logging.info("  Downloading: {}".format(url))
                 logging.info("      to file: {}".format(filename))
                 good = source_utils.download(
@@ -388,10 +368,13 @@ class ManagerMODISAppEEARS:
         else:
             return False
 
-    def _readData(self, task : Task) -> Dict[str, xr.DataArray]:
-        """Read all files for a task, returning the data in the order of variables requested in the task."""
-        darrays = dict((var, self._readFile(task.filenames[var], var)) for var in task.variables)
-        return darrays
+    def _readData(self, request) -> xr.Dataset:
+        """Read all files for a request, returning the data as a Dataset."""
+        darrays = dict((var, self._readFile(request.filenames[var], var)) for var in request.variables)
+
+        # Convert to Dataset
+        dataset = xr.Dataset(darrays)
+        return dataset
 
     def _readFile(self, filename : str, variable : str) -> xr.DataArray:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
@@ -405,136 +388,117 @@ class ManagerMODISAppEEARS:
         assert data.rio.crs is not None
         return data
 
-    def getDataset(self,
-                   geometry : Optional[shapely.geometry.base.BaseGeometry | Tuple[float,float,float,float]]= None,
-                   crs : Optional[CRS] = None,
-                   start : Optional[str | datetime.datetime | datetime.date] = None,
-                   end : Optional[str | datetime.datetime | datetime.date] = None,
-                   variables : Optional[List[str]] = None,
-                   force_download : Optional[bool] = False,
-                   task : Optional[Task] = None,
-                   filenames : Optional[List[str]] = None) -> Dict[str, xr.DataArray] | Task:
-        """Get dataset corresponding to MODIS data from the AppEEARS data portal.
+    
+    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+        """Request MODIS data from AppEEARS - may not be ready immediately.
+        
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request object containing geometry, dates, and variables.
+            
+        Returns
+        -------
+        ManagerDataset.Request
+            MODIS request object with AppEEARS task information.
+        """
+        # Geometry is already in native_crs_in (WGS84), get bounds directly
+        appeears_bounds = request.geometry.bounds
+        
+        # Convert dates to strings for AppEEARS API
+        start_str = request.start.strftime('%m-%d-%Y')
+        end_str = request.end.strftime('%m-%d-%Y')
+        
+        # Create filenames for caching
+        filenames = dict((v, self._filename(appeears_bounds, start_str, end_str, v)) 
+                        for v in request.variables)
+        
+        # Check for existing files
+        if all(os.path.isfile(filename) for filename in filenames.values()):
+            # Data already exists locally
+            modis_request = self.Request(
+                manager=request.manager,
+                is_ready=True,
+                geometry=request.geometry,
+                start=request.start,
+                end=request.end,
+                variables=request.variables,
+                task_id="",  # No remote task needed
+                filenames=filenames,
+                urls={}
+            )
+            return modis_request
+        
+        # Need to create AppEEARS request
+        task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
+        
+        # Create MODIS-specific request with AppEEARS task info
+        modis_request = self.Request(
+            manager=request.manager,
+            is_ready=False,  # Will be set when AppEEARS processing completes
+            geometry=request.geometry,
+            start=request.start,
+            end=request.end,
+            variables=request.variables,
+            task_id=task_id,
+            filenames=filenames,
+            urls={}  # Will be populated when ready
+        )
+        
+        return modis_request
 
-        Note that AppEEARS requires the constrution of a request, and
-        then prepares the data for you.  As a result, the raster may
-        (if you've downloaded it previously, or it doesn't take very
-        long) or may not be ready instantly.  
+
+    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+        """Implementation of abstract method to fetch MODIS data.
 
         Parameters
         ----------
-        geometry : fiona or shapely shape, or [xmin, ymin, xmax, ymax]
-          Collect a file that covers this shape or bounds.
-        crs : CRS object
-          Coordinate system of the above geometry
-        start : str or datetime.date object, optional
-          Date for the beginning of the data, in YYYY-MM-DD. Valid is
-          >= 2002-07-01.
-        end : str or datetime.date object, optional
-          Date for the end of the data, in YYYY-MM-DD. Valid is
-          <= 2020-12-30.
-        variables : str or list, optional
-          Variable to download, currently one of {LAI, LULC}.  Default
-          is both LAI and LULC.
-        force_download : bool, optional
-          Force a new file to be downloaded.  Default is False.
-        task : (str, str) tuple of task_id, filename
-          If a request has already been created, use this task to
-          access the data rather than creating a new request.  Default
-          means to create a new request.
-        filenames : list of str, optional
-            If a list of filenames is provided, use these rather than creating a new request.
-        
+        request : ManagerDataset.Request
+            Request object containing AppEEARS task information.
+
         Returns
         -------
-        dict : { variable : (profile, times, data) }
-          Returns a dictionary of (variable, data) pairs. For each
-          variable, profile is a dictionary of standard raster profile
-          information, times is an array of datetime objects of length
-          NTIMES, and data is an array of shape (NTIMES, NX, NY) storing
-          the actual values.
-
-        OR
-
-        task : (task_id, filename)
-          If the data is not yet ready after the wait time, returns a
-          task tuple for use in a future call to getDataset().
-
+        xr.Dataset
+            Dataset containing the requested MODIS data.
         """
-        if filenames is not None:
-            # read the file
-            assert variables is not None, "Must provide variables if providing filenames."
-            darrays = dict((var, self._readFile(filename, var)) for (filename, var) in zip(filenames, variables))
-            return darrays
-
-        if task is None and filenames is None:
-            if geometry is None or crs is None:
-                raise RuntimeError(
-                    'Must provide either polgyon_or_bounds and crs or task arguments.')
-
-            # clean the variables list
-            if variables is None:
-                variables = ['LAI', 'LULC']
-            for var in variables:
-                if var not in self._PRODUCTS:
-                    err = 'FileManagerMODISAppEEARS cannot provide variable {variable}.  Valid are: '
-                    raise ValueError(err + ', '.join(self._PRODUCTS.keys()))
-
-            # clean bounds
-            bounds = self._cleanBounds(geometry, crs)
-
-            # check start and end times
-            if start is None:
-                start = self._START
-            if end is None:
-                end = self._END
-            start_str = self._cleanDate(start)
-            end_str = self._cleanDate(end)
-
-            # create a task
-            task = Task('',
-                        variables,
-                        filenames=dict(
-                            (v, self._filename(bounds, start_str, end_str, v)) for v in variables))
-
-            # check for existing file
-            for filename in task.filenames.values():
-                logging.info(f'... searching for: {filename}')
-            if all(os.path.isfile(filename) for filename in task.filenames.values()):
-                if force_download:
-                    for filename in task.filenames:
-                        try:
-                            os.remove(filename)
-                        except FileNotFoundError:
-                            pass
-                else:
-                    return self._readData(task)
-
-        if len(task.task_id) == 0:
-            # create the task
-            assert variables is not None
-            task = self._constructRequest(bounds, start_str, end_str, variables)
-
-        if self._download(task):
-            return self._readData(task)
-        return task
-
-    def wait(self, task, interval=120, tries=100):
-        """Blocking -- waits for a task to end."""
-        count = 0
-        success = False
-        res = task
-        while count < tries and not success:
-            res = self.getDataset(task=res)
-            if isinstance(res, Task):
-                logging.info('sleeping...')
-                time.sleep(interval)
-                count += 1
-            else:
-                success = True
-                break
-
-        if success:
-            return res
+        # If data exists locally, read it directly
+        if all(os.path.isfile(filename) for filename in request.filenames.values()):
+            return self._readData(request)
+        
+        # Otherwise, download from AppEEARS
+        if self._download(request):
+            return self._readData(request)
         else:
-            raise RuntimeError(f'Unable to get data after {interval*tries} seconds.')
+            raise RuntimeError(f"Unable to download MODIS data for task {request.task_id}")
+
+
+    def isReady(self, request: ManagerDataset.Request) -> bool:
+        """Check if MODIS data request is ready for download.
+        
+        Overrides base class to check AppEEARS processing status and bundle availability.
+        
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            MODIS request object with AppEEARS task information.
+            
+        Returns
+        -------
+        bool
+            True if data is ready for download, False otherwise.
+        """
+        if request.is_ready:
+            return True
+        
+        # Check AppEEARS status
+        status = self._checkStatus(request)
+        if status != False:  # note this matches True or UNKNOWN
+            ready = self._checkBundleURL(request)
+            if ready:
+                request.is_ready = True
+            return ready
+        else:
+            return False
+
+
+

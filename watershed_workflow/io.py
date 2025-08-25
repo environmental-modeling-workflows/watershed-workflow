@@ -72,6 +72,9 @@ def writeDatasetToHDF5(filename: str,
     if attributes is None:
         attributes = dict()
     attributes['origin date'] = str(time0)
+    if dataset.attrs is not None:
+        attributes.update(dataset.attrs)
+    
     times = np.array([(t - time0).total_seconds() for t in times])
     times = times.astype(np.int32)
     logging.info('Writing HDF5 file: {}'.format(filename))

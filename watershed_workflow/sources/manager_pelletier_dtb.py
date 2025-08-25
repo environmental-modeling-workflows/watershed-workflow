@@ -39,43 +39,23 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
     """
     def __init__(self, filename=None):
         if filename is None:
-            self.name = 'Pelletier DTB'
+            # Use default file location via Names system
             self.names = watershed_workflow.sources.names.Names(
-                self.name,
+                'Pelletier DTB',
                 os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
                              'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
-            super(ManagerPelletierDTB, self).__init__(self.names.file_name())
+            filename = self.names.file_name()
         else:
-            self.name = filename
+            # Use provided filename directly
             self.names = None
-            super(ManagerPelletierDTB, self).__init__(self.name)
+            
+        # Initialize ManagerRaster with the resolved filename
+        # ManagerRaster will set name and source attributes appropriately
+        super(ManagerPelletierDTB, self).__init__(filename, None, None, None, None)
 
-    def getDataset(self, 
-                   geometry : shapely.geometry.base.BaseGeometry,
-                   geometry_crs : CRS,
-                   band : int = 1) -> xr.DataArray:
-        """Read the DTB raster.
 
-        Parameters
-        ----------
-        geometry : shapely.geometry.base.BaseGeometry
-          Subset the raster to cover this shape.
-        geometry_crs : CRS
-          CRS of the geometry
-
-        Returns
-        -------
-        xr.DataArray
-        """
-        filename = self._download()
-        raster = super(ManagerPelletierDTB, self).getDataset(geometry, geometry_crs, band)
-        return raster
-
-    def _download(self):
-        """Download the files, returning downloaded filename."""
-        # check directory structure
-        if self.names is None:
-            return self.name
+    def _download(self, force : bool = False):
+        """Validate the files exist, returning the filename."""
         filename = self.names.file_name()
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):

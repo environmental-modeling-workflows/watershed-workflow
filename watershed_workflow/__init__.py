@@ -31,6 +31,7 @@ from matplotlib import pyplot as plt
 import folium
 import folium.plugins
 
+import watershed_workflow.sources
 import watershed_workflow.crs
 import watershed_workflow.utils
 import watershed_workflow.sources.standard_names as names
@@ -780,7 +781,22 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
         m2.coords = new_points
 
 
-def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
+def getDataset(source : Any,
+               watershed : shapely.geometry.Polygon,
+               crs : watershed_workflow.crs.CRS,
+               start : Optional[str | cftime._cftime.datetime] = None,
+               end : Optional[str | cftime._cftime.datetime] = None,
+               interval : Optional[str] = None) -> xr.Dataset:
+    """Download a dataset as covered by the watershed."""
+    source.getDataset(watershed, crs, start, end)
+    
+               
+               
+               
+
+
+def getDatasetOnMesh(source : Any,
+                     m2 : watershed_workflow.mesh.Mesh2D,
                      data : xr.DataArray,
                      **kwargs) -> np.ndarray:
     """Interpolate xarray data onto cell centroids of a mesh."""

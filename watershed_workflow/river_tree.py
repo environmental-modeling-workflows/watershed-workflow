@@ -688,7 +688,7 @@ class River(watershed_workflow.tinytree.Tree):
 
         # -- create a new index
         assert 'new_preorder_index' not in new_df.columns
-        new_df['new_preorder_index'] = -np.ones((len(new_df), ), 'i')
+        new_df['new_preorder_index'] = -np.ones((len(new_df), ), 'int64')
         new_preorder_indices = dict((n.index, i) for (i, n) in enumerate(self))
         new_df.loc[list(new_preorder_indices.keys()),
                    'new_preorder_index'] = pd.Series(new_preorder_indices)
