@@ -2,8 +2,10 @@ from typing import List, Optional
 from shapely.geometry.base import BaseGeometry
 from pyproj import CRS
 import geopandas as gpd
-from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
+
+import watershed_workflow.crs
 import watershed_workflow.sources.standard_names as names
+from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
 
 
 class ManagerWBD(ManagerHyRiver):
@@ -15,12 +17,10 @@ class ManagerWBD(ManagerHyRiver):
         self._level : Optional[int] = None
         
         # WBD data is typically in lat/lon coordinates
-        import watershed_workflow.crs
-        native_crs_in = watershed_workflow.crs.latlon_crs
+        native_crs_in = watershed_workflow.crs.from_epsg(4269)
         native_resolution = 0.001  # ~100m at mid-latitudes
         
         super().__init__(protocol_name, native_crs_in, native_resolution)
-
         self.name = 'WBD'
 
     def set(self, **kwargs):
