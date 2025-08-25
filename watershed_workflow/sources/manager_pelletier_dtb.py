@@ -44,15 +44,14 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
                 'Pelletier DTB',
                 os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
                              'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
-            resolved_filename = self._download()  # Validate file exists
+            filename = self.names.file_name()
         else:
             # Use provided filename directly
             self.names = None
-            resolved_filename = filename
             
         # Initialize ManagerRaster with the resolved filename
         # ManagerRaster will set name and source attributes appropriately
-        super(ManagerPelletierDTB, self).__init__(resolved_filename)
+        super(ManagerPelletierDTB, self).__init__(filename, None, None, None, None)
 
 
     def _download(self, force : bool = False):

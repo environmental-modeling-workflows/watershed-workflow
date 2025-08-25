@@ -5,12 +5,13 @@ import shapely.geometry
 import geopandas as gpd
 
 import watershed_workflow.config
-import watershed_workflow.sources.manager_basin3d as manager_basin3d
 import watershed_workflow.crs
 import watershed_workflow.sources.standard_names as names
 
 
 pytest.skip("Skipping all Basin-3D tests -- Basin-3D is not in the default environment.", allow_module_level=True)
+
+import watershed_workflow.sources.manager_basin3d as manager_basin3d
 
 
 @pytest.fixture

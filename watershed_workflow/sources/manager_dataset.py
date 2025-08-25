@@ -133,36 +133,6 @@ class ManagerDataset(abc.ABC):
         self.native_calendar = self._detectCalendar()
 
 
-    def getDataset(self, geometry, geometry_crs=None,
-                   start=None, end=None, variables=None):
-        """Get dataset for the given geometry and time range.
-
-        Blocking request.
-
-        Parameters
-        ----------
-        geometry : shapely.geometry.Polygon | gpd.GeoDataFrame
-            Input geometry.
-        geometry_crs : CRS, optional
-            Coordinate system of geometry (required if geometry is Polygon).
-        start : str | int | cftime._cftime.datetime | None, optional
-            Start date.
-        end : str | int | cftime._cftime.datetime | None, optional
-            End date.
-        variables : List[str], optional
-            Variables to retrieve. For multi-variable datasets, defaults to
-            default_variables if None. Ignored for single-variable datasets.
-
-        Returns
-        -------
-        xr.Dataset
-            Dataset for the requested geometry and time range.
-        """
-        request = self.requestDataset(geometry, geometry_crs, start, end, variables)
-        data = self.waitForDataset(request)
-        return data
-
-
     def requestDataset(self, geometry, geometry_crs=None,
                        start=None, end=None, variables=None):
         """Establish a request for a dataset for the given geometry and time range.
@@ -186,6 +156,9 @@ class ManagerDataset(abc.ABC):
         xr.Dataset
             Dataset for the requested geometry and time range.
         """
+        # prerequest processing
+        self._prerequestDataset()
+
         # Use extracted parameter processing
         request = self._preprocessParameters(geometry, geometry_crs, start, end, variables)
 
@@ -241,6 +214,45 @@ class ManagerDataset(abc.ABC):
 
         data = self.fetchRequest(request)
         return data
+
+
+    def getDataset(self, geometry, geometry_crs=None,
+                   start=None, end=None, variables=None):
+        """Get dataset for the given geometry and time range.
+
+        Blocking request.
+
+        Parameters
+        ----------
+        geometry : shapely.geometry.Polygon | gpd.GeoDataFrame
+            Input geometry.
+        geometry_crs : CRS, optional
+            Coordinate system of geometry (required if geometry is Polygon).
+        start : str | int | cftime._cftime.datetime | None, optional
+            Start date.
+        end : str | int | cftime._cftime.datetime | None, optional
+            End date.
+        variables : List[str], optional
+            Variables to retrieve. For multi-variable datasets, defaults to
+            default_variables if None. Ignored for single-variable datasets.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset for the requested geometry and time range.
+        """
+        request = self.requestDataset(geometry, geometry_crs, start, end, variables)
+        data = self.waitForDataset(request)
+        return data
+
+
+    def _prerequestDataset(self) -> None:
+        """Managers should overload this method to do stuff prior to processing.
+
+        This can be used to update native variables if they cannot be
+        known on construction (e.g. downloaded files).
+        """
+        pass
 
 
     @abc.abstractmethod
