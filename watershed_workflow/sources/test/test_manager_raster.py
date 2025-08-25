@@ -36,8 +36,11 @@ def test_manager_raster_initialization(raster_manager, dtb_raster_path):
     assert raster_manager.filename == dtb_raster_path
     assert raster_manager.name == f'raster: "{os.path.basename(dtb_raster_path)}"'
     assert raster_manager.source == os.path.abspath(dtb_raster_path)
+    
     assert raster_manager.native_start is None  # Non-temporal
     assert raster_manager.native_end is None    # Non-temporal
+
+    raster_manager._prerequestDataset()
     assert raster_manager.native_crs_in is not None
     assert raster_manager.native_crs_out is not None
     assert raster_manager.native_resolution > 0
@@ -48,6 +51,8 @@ def test_manager_raster_initialization(raster_manager, dtb_raster_path):
 
 def test_manager_raster_variables(raster_manager):
     """Test that variables are set up correctly for band access."""
+    raster_manager._prerequestDataset()
+
     # Should have at least one variable
     assert len(raster_manager.valid_variables) >= 1
     
@@ -80,6 +85,7 @@ def test_request_dataset_async_interface(raster_manager, test_geometry):
 
 def test_getDataset_with_specific_variable(raster_manager, test_geometry):
     """Test getDataset method with specific variable selection."""
+    raster_manager._prerequestDataset()
     geometry_crs = watershed_workflow.crs.latlon_crs
     
     # Request specific variable (first one)
@@ -131,6 +137,7 @@ def test_getDataset_default_behavior(raster_manager, test_geometry, dtb_raster_p
 
 def test_getDataset_with_multiple_variables(raster_manager, test_geometry):
     """Test getDataset method with multiple variables."""
+    raster_manager._prerequestDataset()
     geometry_crs = watershed_workflow.crs.latlon_crs
     
     # Request multiple variables if available
@@ -172,9 +179,10 @@ def test_invalid_variable_raises_error(raster_manager, test_geometry):
 def test_file_not_found_raises_error():
     """Test that non-existent file raises appropriate error."""
     nonexistent_file = 'path/to/nonexistent/file.tif'
+    raster_manager = ManagerRaster(nonexistent_file)
     
     with pytest.raises((FileNotFoundError, OSError)):
-        ManagerRaster(nonexistent_file)
+        raster_manager._prerequestDataset()
 
 
 def test_invalid_band_request_raises_error(raster_manager, test_geometry):
@@ -202,12 +210,14 @@ def test_single_variable_case_returns_raster_variable(raster_manager, test_geome
     result = single_mgr.getDataset(test_geometry, geometry_crs)
     
     assert isinstance(result, xr.Dataset)
-    assert 'raster' in result.data_vars
+    assert 'band_1' in result.data_vars
     assert len(result.data_vars) == 1
 
 
 def test_manager_properties_match_file_properties(raster_manager, dtb_raster_path):
     """Test that manager properties correctly reflect the raster file properties."""
+    raster_manager._prerequestDataset()
+    
     # Open the file directly to compare properties
     import rioxarray
     

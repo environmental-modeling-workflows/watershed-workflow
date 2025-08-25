@@ -20,7 +20,7 @@ def shapefile_path():
 @pytest.fixture
 def multi_shape_path():
     """Path to shapefile with multiple shapes for row index testing"""
-    return os.path.join('examples', 'Coweeta', 'input_data', 'GLHYMPS', 'GLHYMPS.shp')
+    return os.path.join('examples', 'Coweeta', 'input_data', 'soil_structure', 'GLHYMPS', 'GLHYMPS.shp')
 
 
 @pytest.fixture

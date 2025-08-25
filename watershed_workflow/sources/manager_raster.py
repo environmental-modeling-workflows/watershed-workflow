@@ -19,10 +19,10 @@ class ManagerRaster(ManagerDataset):
 
     def __init__(self,
                  filename : str,
-                 url : str | None,
-                 native_resolution : float | None,
-                 native_crs : CRS | None,
-                 bands : Iterable[str] | int | None,
+                 url : Optional[str] = None,
+                 native_resolution : Optional[float] = None,
+                 native_crs : Optional[CRS] = None,
+                 bands : Optional[Iterable[str] | int] = None,
                  ):
         """Initialize raster manager.
         
@@ -58,36 +58,15 @@ class ManagerRaster(ManagerDataset):
         )
 
 
-    def requestDataset(self, *args, **kwargs):
-        """Establish a request for a dataset for the given geometry and time range.
-
-        Parameters
-        ----------
-        geometry : shapely.geometry.Polygon | gpd.GeoDataFrame
-            Input geometry.
-        geometry_crs : CRS, optional
-            Coordinate system of geometry (required if geometry is Polygon).
-        start : str | int | cftime._cftime.datetime | None, optional
-            Start date.
-        end : str | int | cftime._cftime.datetime | None, optional
-            End date.
-        variables : List[str], optional
-            Variables to retrieve. For multi-variable datasets, defaults to
-            default_variables if None. Ignored for single-variable datasets.
-
-        Returns
-        -------
-        xr.Dataset
-            Dataset for the requested geometry and time range.
-        """
+    def _prerequestDataset(self) -> None:
         # first download -- this is done here and not in _request so
         # that we can set the resolution and CRS for input geometry
         # manipulation.
-        if !os.path.isfile(self.filename) and self.url is not None:
+        if not os.path.isfile(self.filename) and self.url is not None:
             self._download()
 
         # Inspect raster to get native properties
-        with rioxarray.open_rasterio(filename) as temp_ds:
+        with rioxarray.open_rasterio(self.filename) as temp_ds:
             # Get native CRS
             self.native_crs_in = temp_ds.rio.crs
             self.native_crs_out = temp_ds.rio.crs
@@ -112,9 +91,6 @@ class ManagerRaster(ManagerDataset):
                     num_bands = d.values.shape[0]
                     self.valid_variables = [f'band_{i}' for i in range(num_bands)]
                     self.default_variables = [self.valid_variables[0],]
-
-        # now do parameter processing using this info
-        super().requestDataset(*args, **kwargs)
 
 
     def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:
