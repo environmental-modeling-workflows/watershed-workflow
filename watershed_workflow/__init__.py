@@ -102,7 +102,8 @@ def findHUC(source : Any,
         if search_level > source.lowest_level:
             return hint
 
-        subhus = getShapesByID(source, hint, crs, level=search_level)
+        source.setLevel(search_level)
+        subhus = source.getShapesByID(hint, out_crs=crs)
 
         for index, subhu in zip(subhus.index, subhus.geometry):
             inhuc = _in_huc(shply, subhu)
@@ -123,7 +124,7 @@ def findHUC(source : Any,
     radius = math.sqrt(shape.area / math.pi)
     shape_s = shape.buffer(-shrink_factor * radius)
 
-    hint_hu = getShapesByID(source, hint, in_crs)
+    hint_hu = source.getShapesByID(hint, out_crs=in_crs)
     inhuc = _in_huc(shape_s, hint_hu.geometry.iloc[0])
     if inhuc != 2:
         raise RuntimeError(f"{source.__class__}: shape not found in hinted HUC '{hint}'")

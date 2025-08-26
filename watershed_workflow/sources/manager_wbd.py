@@ -1,6 +1,6 @@
 from typing import List, Optional
-from shapely.geometry.base import BaseGeometry
-from pyproj import CRS
+import logging
+
 import geopandas as gpd
 
 import watershed_workflow.crs
@@ -36,12 +36,9 @@ class ManagerWBD(ManagerHyRiver):
             self._layer = f'wbd{level:02d}'
             self._id_name = f'huc{level}'
         
-    def getShapesByID(self,
-                      hucs : List[str] | str) -> gpd.GeoDataFrame:
+    def _getShapesByID(self,
+                      hucs : List[str]) -> gpd.GeoDataFrame:
         """Finds all HUs in the WBD dataset of a given level contained in a list of HUCs.""" 
-        if isinstance(hucs, str):
-            hucs = [hucs,]
-
         req_levels = set(len(l) for l in hucs)
         if len(req_levels) != 1:
             raise ValueError("FileManagerWBD.getShapesByID can only be called with a list of HUCs of the same level")
@@ -50,21 +47,14 @@ class ManagerWBD(ManagerHyRiver):
         if self._level is not None and self._level != req_level:
             level = self._level
             self.setLevel(req_level)
-            geom_df = self.getShapesByID(hucs)
+            geom_df = self._getShapesByID(hucs)
             self.setLevel(level)
-            df = self.getShapesByGeometry(geom_df.union_all(), geom_df.crs)
 
-            df[names.HUC] = df[f'huc{self._level}']
-            df[names.AREA] = df[f'areasqkm']
-            
+            df = self.getShapesByGeometry(geom_df.union_all(), geom_df.crs, geom_df.crs)
             return df.loc[df.index.to_series().apply(lambda l : any(l.startswith(huc) for huc in hucs))]
         else:
             self.setLevel(req_level)
-            df = super(ManagerWBD, self).getShapesByID(hucs)
-
-            df[names.HUC] = df[f'huc{req_level}']
-            df[names.AREA] = df[f'areasqkm']
-
+            df = super(ManagerWBD, self)._getShapesByID(hucs)
             return df
 
     def _addStandardNames(self, df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
