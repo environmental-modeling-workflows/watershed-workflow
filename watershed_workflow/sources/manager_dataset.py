@@ -83,7 +83,19 @@ class ManagerDataset(abc.ABC):
         geometry: shapely.geometry.Polygon
         start: cftime._cftime.datetime
         end: cftime._cftime.datetime
-        variables: list
+        variables: List
+        out_crs : Optional[CRS] = None
+        resampling : Optional[str] = None
+
+        def copyFromExisting(self, other):
+            self.manager = other.manager
+            self.is_ready = other.is_ready
+            self.geometry = other.geometry
+            self.start = other.start
+            self.end = other.end
+            self.variables = other.variables
+            self.out_crs = other.out_crs
+            self.resampling = other.resampling
 
 
     def __init__(self, 
@@ -134,7 +146,9 @@ class ManagerDataset(abc.ABC):
 
 
     def requestDataset(self, geometry, geometry_crs=None,
-                       start=None, end=None, variables=None):
+                       start=None, end=None, variables=None,
+                       out_crs=None, resampling=None
+                       ):
         """Establish a request for a dataset for the given geometry and time range.
 
         Parameters
@@ -150,17 +164,29 @@ class ManagerDataset(abc.ABC):
         variables : List[str], optional
             Variables to retrieve. For multi-variable datasets, defaults to
             default_variables if None. Ignored for single-variable datasets.
+        out_crs : CRS, optional
+            If provided, resamples the data into this CRS.
+        resampling : str, optional
+            If out_crs is provided, this gives the resampling method.
+            Note that the right choice here can depend upon the data
+            type -- for instance 'nearest' (the default) is good for
+            categorical data but 'bilinear' may be better for
+            continuous data.  See rasterio.warp.reproject for a list
+            of options.
 
         Returns
         -------
         xr.Dataset
             Dataset for the requested geometry and time range.
+
         """
-        # prerequest processing
+        # pre-request allows downloading files, etc
         self._prerequestDataset()
 
         # Use extracted parameter processing
         request = self._preprocessParameters(geometry, geometry_crs, start, end, variables)
+        request.out_crs = out_crs
+        request.resampling = resampling
 
         # Get dataset
         request = self._requestDataset(request)
@@ -217,7 +243,9 @@ class ManagerDataset(abc.ABC):
 
 
     def getDataset(self, geometry, geometry_crs=None,
-                   start=None, end=None, variables=None):
+                   start=None, end=None, variables=None,
+                   out_crs=None, resampling=None,
+                   ):
         """Get dataset for the given geometry and time range.
 
         Blocking request.
@@ -241,7 +269,7 @@ class ManagerDataset(abc.ABC):
         xr.Dataset
             Dataset for the requested geometry and time range.
         """
-        request = self.requestDataset(geometry, geometry_crs, start, end, variables)
+        request = self.requestDataset(geometry, geometry_crs, start, end, variables, out_crs, resampling)
         data = self.waitForDataset(request)
         return data
 
@@ -417,12 +445,13 @@ class ManagerDataset(abc.ABC):
                 if var not in self.valid_variables:
                     raise ValueError(f"Invalid variable '{var}'. Valid variables: {', '.join(self.valid_variables)}")
 
-        return self.Request(self, False, polygon, parsed_start, parsed_end, variables)
+        return ManagerDataset.Request(self, False, polygon, parsed_start, parsed_end, variables)
 
 
     def _postprocessDataset(self,
                             request : Request,
-                            dataset : xr.Dataset):
+                            dataset : xr.Dataset,
+                            ):
         """Time dtype converions and clipping, check CRS is applied, and check post conditions."""
         # check the CRS out
         assert hasattr(dataset, 'rio')
@@ -442,6 +471,10 @@ class ManagerDataset(abc.ABC):
             # Clip in time if temporal data
             dataset = dataset.sel(time=slice(request.start, request.end))
 
+        # change coordinate system if requested
+        if request.out_crs is not None:
+            dataset = watershed_workflow.warp.dataset(dataset, request.out_crs, request.resampling)
+            
         # Add name and source to dataset attributes
         dataset.attrs['name'] = self.name
         dataset.attrs['source'] = self.source

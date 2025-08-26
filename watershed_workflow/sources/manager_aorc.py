@@ -20,10 +20,6 @@ import attr
 
 
 class ManagerAORC(ManagerDataset):
-    @attr.define
-    class Request(ManagerDataset.Request):
-        """AORC-specific request that includes filename for cached data."""
-        filename: str = attr.field(default="")
     """AORC dataset.
 
     Explore the Analysis Of Record for Calibration (AORC) version 1.1 data
@@ -85,6 +81,14 @@ class ManagerAORC(ManagerDataset):
     1979–2015 and 2016–present.
 
     """
+
+    class Request(ManagerDataset.Request):
+        """AORC-specific request that includes filename for cached data."""
+        def __init__(self,
+                     request : ManagerDataset.Request,
+                     filename : str = ''):
+            super().copyFromExisting(request)
+            self.filename = filename
     
     # AORC constants
     VALID_VARIABLES = ['APCP_surface', 'DLWRF_surface',
@@ -230,16 +234,8 @@ class ManagerAORC(ManagerDataset):
         filename = self._download(request.geometry, start_year, end_year, force=False)
         
         # Create new AORC-specific request with filename
-        aorc_request = self.Request(
-            manager=request.manager,
-            is_ready=True,
-            geometry=request.geometry,
-            start=request.start,
-            end=request.end,
-            variables=request.variables,
-            filename=filename
-        )
-        
+        aorc_request = self.Request(request, filename)
+        aorc_request.is_ready = True
         return aorc_request
 
 

@@ -33,6 +33,9 @@ class ManagerRaster(ManagerDataset):
         """
         self.filename = filename
         self.url = url
+
+        # a flag to only preprocess once
+        self._file_preprocessed = False
         
         # Use basename of file as name
         name = f'raster: "{os.path.basename(filename)}"'
@@ -65,32 +68,36 @@ class ManagerRaster(ManagerDataset):
         if not os.path.isfile(self.filename) and self.url is not None:
             self._download()
 
-        # Inspect raster to get native properties
-        with rioxarray.open_rasterio(self.filename) as temp_ds:
-            # Get native CRS
-            self.native_crs_in = temp_ds.rio.crs
-            self.native_crs_out = temp_ds.rio.crs
-            
-            # Get native resolution (approximate from first pixel)
-            if len(temp_ds.coords['x']) > 1 and len(temp_ds.coords['y']) > 1:
-                x_res = abs(float(temp_ds.coords['x'][1] - temp_ds.coords['x'][0]))
-                y_res = abs(float(temp_ds.coords['y'][1] - temp_ds.coords['y'][0]))
-                self.native_resolution = max(x_res, y_res)
-            else:
-                self.native_resolution = 1.0  # fallback
-            
-            # Create variable names for each band
-            if self.valid_variables is None:
-                if hasattr(temp_ds, 'band'):
-                    # pull from bands
-                    self.valid_variables = [f'band_{i}' for i in temp_ds.band.values]
+        if not self._file_preprocessed:
+            # Inspect raster to get native properties
+            with rioxarray.open_rasterio(self.filename) as temp_ds:
+                # Get native CRS
+                self.native_crs_in = temp_ds.rio.crs
+                self.native_crs_out = temp_ds.rio.crs
 
-                    # First band as default
-                    self.default_variables = [self.valid_variables[0],]
-                elif len(d.values.shape) == 3:
-                    num_bands = d.values.shape[0]
-                    self.valid_variables = [f'band_{i}' for i in range(num_bands)]
-                    self.default_variables = [self.valid_variables[0],]
+                # Get native resolution (approximate from first pixel)
+                if len(temp_ds.coords['x']) > 1 and len(temp_ds.coords['y']) > 1:
+                    x_res = abs(float(temp_ds.coords['x'][1] - temp_ds.coords['x'][0]))
+                    y_res = abs(float(temp_ds.coords['y'][1] - temp_ds.coords['y'][0]))
+                    self.native_resolution = max(x_res, y_res)
+                else:
+                    self.native_resolution = 1.0  # fallback
+
+                # Create variable names for each band
+                if self.valid_variables is None:
+                    if hasattr(temp_ds, 'band'):
+                        # pull from bands
+                        self.valid_variables = [f'band_{i}' for i in temp_ds.band.values]
+
+                        # First band as default
+                        self.default_variables = [self.valid_variables[0],]
+                    elif len(d.values.shape) == 3:
+                        num_bands = d.values.shape[0]
+                        self.valid_variables = [f'band_{i}' for i in range(num_bands)]
+                        self.default_variables = [self.valid_variables[0],]
+
+            # only do this work once
+            self._file_preprocessed = True
 
 
     def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:

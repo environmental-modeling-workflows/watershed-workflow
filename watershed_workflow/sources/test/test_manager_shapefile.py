@@ -53,14 +53,14 @@ def test_constructor_basic(shapefile_path):
     ms = ManagerShapefile(shapefile_path)
     assert ms.name.startswith('shapefile: ')
     assert ms.source == os.path.abspath(shapefile_path)
-    assert ms._filename == shapefile_path
-    assert ms._id_name is None
+    assert ms.filename == shapefile_path
+    assert ms.id_name is None
 
 
 def test_constructor_with_id_field(shapefile_path):
     """Test constructor with ID field specified"""
     ms = ManagerShapefile(shapefile_path, id_name='OBJECTID')
-    assert ms._id_name == 'OBJECTID'
+    assert ms.id_name == 'OBJECTID'
 
 
 def test_getShapes_backward_compatibility(manager_no_id):

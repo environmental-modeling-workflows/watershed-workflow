@@ -64,6 +64,17 @@ class ManagerHyRiver(ManagerShapes):
         # Initialize base class
         super().__init__(name, source, native_crs_in, native_resolution, id_name)
 
+    def _getShapes(self):
+        """Fetch all shapes in a dataset.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
+        """
+        raise NotImplementedError(f'Manager source {self.source} does not support getting all shapes.')
+
+
     def _getShapesByGeometry(self, geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         """Fetch shapes for the given geometry using HyRiver API.
 

@@ -186,7 +186,8 @@ class ManagerNHD(ManagerHyRiver):
         for k, v in self._renames.items():
             _tryRename(df, k, v)
         return df
-            
+
+
     def _getShapesByGeometry(self, geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         """Fetch NHD shapes by geometry, including catchments if requested.
 

@@ -76,9 +76,35 @@ class ManagerShapes(abc.ABC):
         self.native_resolution = native_resolution
         self.native_id_field = native_id_field
 
+
+    def getShapes(self,
+                  out_crs : Optional[CRS] = None,
+                  digits : Optional[int] = -1,
+                  remove_third_dimension : Optional[bool] = True,
+                  ):
+        """Get all shapes in a manager."""
+        # pre-request allows downloading files, etc, to set the final metadata
+        self._prerequestDataset()
+
+        # access the data
+        df = self._getShapes()
+
+        # Add standard names (derived class specific)
+        df = self._addStandardNames(df)
+        
+        # postprocess to coerce shapes into expected form
+        df = self._postprocessShapes(df, out_crs=out_crs, digits=digits,
+                                     remove_third_dimension=remove_third_dimension)
+        return df
+    
+        
     def getShapesByGeometry(self,
                            geometry: shapely.geometry.base.BaseGeometry | gpd.GeoDataFrame,
-                           geometry_crs: Optional[CRS] = None) -> gpd.GeoDataFrame:
+                           geometry_crs: Optional[CRS] = None,
+                           out_crs : Optional[CRS] = None,
+                           digits : Optional[int] = -1,
+                           remove_third_dimension : Optional[bool] = True,
+                            ) -> gpd.GeoDataFrame:
         """Get shapes that intersect with the given geometry.
 
         Parameters
@@ -96,6 +122,9 @@ class ManagerShapes(abc.ABC):
             GeoDataFrame containing shapes that intersect the geometry,
             with standardized column names and ID indexing.
         """
+        # pre-request allows downloading files, etc, to set the final metadata
+        self._prerequestDataset()
+
         # Handle input geometry - create GeoDataFrame for derived class
         if isinstance(geometry, gpd.GeoDataFrame):
             if geometry_crs is not None:
@@ -125,12 +154,16 @@ class ManagerShapes(abc.ABC):
         df = self._addStandardNames(df)
         
         # Postprocess using filter geometry
-        df = self._postprocessShapes(df, filter_polygon, filter_crs)
+        df = self._postprocessShapes(df, filter_polygon, filter_crs, out_crs, digits, remove_third_dimension)
         
         return df
 
     def getShapesByID(self,
-                     ids: List[str] | str) -> gpd.GeoDataFrame:
+                      ids: List[str] | str,
+                      out_crs : Optional[CRS] = None,
+                      digits : Optional[int] = -1,
+                      remove_third_dimension : Optional[bool] = True,
+                      ) -> gpd.GeoDataFrame:
         """Get shapes by their ID values.
 
         Parameters
@@ -144,6 +177,9 @@ class ManagerShapes(abc.ABC):
             GeoDataFrame containing the requested shapes,
             with standardized column names and ID indexing.
         """
+        # pre-request allows downloading files, etc, to set the final metadata
+        self._prerequestDataset()
+
         # Ensure ids is a list
         if isinstance(ids, str):
             ids = [ids]
@@ -155,15 +191,23 @@ class ManagerShapes(abc.ABC):
         df = self._addStandardNames(df)
         
         # Postprocess (base class standard operations)
-        df = self._postprocessShapes(df)
-        
+        df = self._postprocessShapes(df, out_crs=out_crs, digits=digits,
+                                     remove_third_dimension=remove_third_dimension)
         return df
 
+
+    def _prerequestDataset(self):
+        pass
+    
 
     def _postprocessShapes(self,
                           df: gpd.GeoDataFrame,
                           filter_geometry: Optional[shapely.geometry.base.BaseGeometry] = None,
-                          filter_geometry_crs: Optional[CRS] = None) -> gpd.GeoDataFrame:
+                          filter_geometry_crs: Optional[CRS] = None,
+                          out_crs : Optional[CRS] = None,
+                          digits : Optional[int] = -1,
+                          remove_third_dimension : Optional[bool] = True,
+                           ) -> gpd.GeoDataFrame:
         """Apply standard postprocessing to shapes.
 
         Parameters
@@ -196,16 +240,48 @@ class ManagerShapes(abc.ABC):
         
         # Set ID as index
         df = df.set_index(names.ID, drop=False)
-        
+
         # Filter by geometry intersection if requested (using unbuffered geometry)
+        # Note that filter is only done by the primary geometry column
         if filter_geometry is not None and filter_geometry_crs is not None:
             # Transform filter geometry to same CRS as shapes
             if not watershed_workflow.crs.isEqual(filter_geometry_crs, df.crs):
                 filter_geometry = watershed_workflow.warp.shply(
                     filter_geometry, filter_geometry_crs, df.crs)
+
+                # Filter to only intersecting shapes
+                df = df[df.intersects(filter_geometry)]
+
+        # do things to ALL geometry columns
+        orig_geometry = df.geometry.name
+        for col in df.select_dtypes('geometry'):
+            df.set_geometry(col, inplace=True)
+
+            # occassionally data APIs provide all MultiGeometries,
+            # when in fact they are a single LineString/Polygon
+            def _combine(shp):
+                if isinstance(shp, shapely.geometry.MultiLineString):
+                    return shapely.line_merge(shp)
+                elif isinstance(shp, shapely.geometry.MultiPolygon):
+                    return shapely.union_all(shp.geoms)
+                return shp
+            df['geometry'] = df.geometry.apply(_combine)
             
-            # Filter to only intersecting shapes
-            df = df[df.intersects(filter_geometry)]
+            # remove the third z-dimension
+            if remove_third_dimension:
+                # often we end up with mixed data -- some 2D, some 3D, which makes
+                # it hard to deal with intersections.  Remove all z coordinates.
+                df[col] = df[col].apply(watershed_workflow.utils.removeThirdDimension)
+
+            # change the crs
+            if out_crs is not None:
+                df = df.to_crs(out_crs)
+
+            # round to digits
+            if digits >= 0:
+                df = df.set_precision(10**-digits)
+                
+        df.set_geometry(orig_geometry, inplace=True)
         
         # Add metadata to attributes
         df.attrs['name'] = self.name
@@ -213,6 +289,19 @@ class ManagerShapes(abc.ABC):
         
         return df
 
+
+    @abc.abstractmethod
+    def _getShapes(self):
+        """Fetch all shapes in a dataset.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
+        """
+        pass
+
+    
     @abc.abstractmethod
     def _getShapesByGeometry(self,
                             geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:

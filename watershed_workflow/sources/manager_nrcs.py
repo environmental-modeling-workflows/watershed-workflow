@@ -301,6 +301,18 @@ class ManagerNRCS(ManagerShapes):
         self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
+        
+    def _getShapes(self):
+        """Fetch all shapes in a dataset.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
+        """
+        raise NotImplementedError(f'ManagerNRCS does not support getting all shapes.')
+
+
     def _getShapesByGeometry(self, geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         """Fetch NRCS soil shapes and properties for the given geometry.
 

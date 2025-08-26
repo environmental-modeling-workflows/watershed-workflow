@@ -86,6 +86,17 @@ class ManagerBasin3D(ManagerShapes):
         )
 
         
+    def _getShapes(self):
+        """Fetch all shapes in a dataset.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and CRS properly set.
+        """
+        raise NotImplementedError(f'ManagerBasin3D does not support getting all shapes.')
+
+
     def _getShapesByGeometry(self, geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         """Query Basin3D monitoring features by bounding box.
         

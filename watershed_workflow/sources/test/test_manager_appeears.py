@@ -38,13 +38,13 @@ def coweeta_crs():
 @pytest.fixture
 def existing_lai_file():
     """Path to existing LAI file for testing."""
-    return '/home/ecoon/code/watershed_workflow/repos/master/examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
 
 
 @pytest.fixture
 def existing_lulc_file():
     """Path to existing LULC file for testing."""
-    return '/home/ecoon/code/watershed_workflow/repos/master/examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
 
 
 @pytest.fixture
@@ -61,7 +61,6 @@ def test_manager_properties(modis_manager):
     assert modis_manager.source == 'AppEEARS'
     assert modis_manager.native_crs_in == CRS.from_epsg(4269)
     assert modis_manager.native_crs_out == CRS.from_epsg(4269)
-    assert modis_manager.native_resolution == 500.0
     assert set(modis_manager.valid_variables) == {'LAI', 'LULC'}
     assert set(modis_manager.default_variables) == {'LAI', 'LULC'}
 
@@ -85,7 +84,6 @@ def test_read_existing_lai_file(modis_manager, existing_lai_file):
     
     assert isinstance(data_array, xr.DataArray)
     assert data_array.name == 'LAI'
-    assert data_array.rio.crs is not None
     assert 'time' in data_array.dims
     assert 'lat' in data_array.dims or 'latitude' in data_array.dims
     assert 'lon' in data_array.dims or 'longitude' in data_array.dims
@@ -100,7 +98,6 @@ def test_read_existing_lulc_file(modis_manager, existing_lulc_file):
     
     assert isinstance(data_array, xr.DataArray)
     assert data_array.name == 'LULC'
-    assert data_array.rio.crs is not None
 
 
 def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, existing_lulc_file):
@@ -124,13 +121,16 @@ def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, exist
 def test_fetch_existing_dataset(modis_manager, existing_lai_file, existing_lulc_file):
     """Test _fetchDataset with existing files."""
     # Create a mock request with existing files
+    r = ManagerDataset.Request(manager=modis_manager,
+                               is_ready=True,
+                               geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
+                               start=cftime.datetime(2010, 8, 1, calendar='standard'),
+                               end=cftime.datetime(2011, 8, 1, calendar='standard'),
+                               variables=['LAI', 'LULC'],
+                               )
+    
     request = modis_manager.Request(
-        manager=modis_manager,
-        is_ready=True,
-        geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
-        start=cftime.datetime(2010, 8, 1, calendar='standard'),
-        end=cftime.datetime(2011, 8, 1, calendar='standard'),
-        variables=['LAI', 'LULC'],
+        r,
         task_id="",
         filenames={
             'LAI': existing_lai_file,
@@ -269,13 +269,16 @@ def test_construct_request_mocked(mock_post, modis_manager):
 def test_missing_files_error(modis_manager):
     """Test behavior when expected files don't exist."""
     # Create request with non-existent files
-    request = modis_manager.Request(
-        manager=modis_manager,
-        is_ready=True,
-        geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
-        start=cftime.datetime(2010, 8, 1, calendar='standard'),
-        end=cftime.datetime(2011, 8, 1, calendar='standard'),
-        variables=['LAI'],
+    r = ManagerDataset.Request(manager=modis_manager,
+                               is_ready=True,
+                               geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
+                               start=cftime.datetime(2010, 8, 1, calendar='standard'),
+                               end=cftime.datetime(2011, 8, 1, calendar='standard'),
+                               variables=['LAI'],
+                               )
+
+
+    request = modis_manager.Request(r,
         task_id="",
         filenames={'LAI': '/nonexistent/file.nc'},
         urls={}

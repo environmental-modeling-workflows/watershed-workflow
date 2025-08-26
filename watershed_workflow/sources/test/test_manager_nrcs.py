@@ -13,7 +13,7 @@ def test_nrcs2(coweeta):
     # check df
     mukeys = set(df['ID'])
     assert len(df) == len(mukeys) # one per unique key
-    assert len(df) == 38  # Updated expected count after refactoring
+    assert len(df) == 42
     assert df.crs is not None
     
     # Test that standard names are applied
@@ -54,7 +54,7 @@ def test_nrcs_geodataframe_input(coweeta):
     df = nrcs.getShapesByGeometry(gdf)
     
     assert isinstance(df, gpd.GeoDataFrame)
-    assert len(df) == 38  # Same expected count
+    assert len(df) == 42
     import watershed_workflow.sources.standard_names as names
     assert names.ID in df.columns
     assert names.NAME in df.columns

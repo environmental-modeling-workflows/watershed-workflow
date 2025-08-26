@@ -50,14 +50,7 @@ indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
 
-
 class ManagerMODISAppEEARS(ManagerDataset):
-    @attr.define  
-    class Request(ManagerDataset.Request):
-        """MODIS AppEEARS-specific request that includes Task information."""
-        task_id: str = attr.field(default="")
-        filenames: dict = attr.field(factory=dict)
-        urls: dict = attr.field(factory=dict)
     """MODIS data through the AppEEARS data portal.
 
     Note this portal requires authentication -- please enter a
@@ -84,6 +77,20 @@ class ManagerMODISAppEEARS(ManagerDataset):
        https://appeears.earthdatacloud.nasa.gov/api/?python#introduction
 
     """
+
+    class Request(ManagerDataset.Request):
+        """MODIS AppEEARS-specific request that includes Task information."""
+        def __init__(self,
+                     request : ManagerDataset.Request,
+                     task_id : str = "",
+                     filenames : Optional[Dict[str, str]] = None,
+                     urls : Optional[Dict[str, str]] = None):
+            super().copyFromExisting(request)
+            self.task_id = task_id
+            self.filenames = filenames
+            self.urls = urls
+
+
     _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"  # URL for AppEEARS rest requests
     _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
     _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
@@ -111,7 +118,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         
         # Native MODIS properties for base class
         import cftime
-        native_resolution = 500.0  # 500m resolution for both LAI and LULC
+        native_resolution = 500.0 * 9.e-6 # in native_crs
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')  
         native_end = cftime.datetime(2021, 1, 1, calendar='standard')
         native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
@@ -183,24 +190,6 @@ class ManagerMODISAppEEARS(ManagerDataset):
                                         ymin=ymin,
                                         ymax=ymax)
         return filename
-
-    
-    def _cleanBounds(self,
-                     geometry : shapely.geometry.base.BaseGeometry | Tuple[float, float, float, float],
-                     crs : CRS) -> Tuple[float,float,float,float]:
-        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        if isinstance(geometry, shapely.geometry.base.BaseGeometry):
-            bounds = geometry.bounds
-        else:
-            bounds = geometry
-        bounds_ll = watershed_workflow.warp.bounds(bounds, crs, watershed_workflow.crs.latlon_crs)
-
-        buffer = 0.01
-        feather_bounds = list(bounds_ll[:])
-        return (np.round(feather_bounds[0] - buffer, 4),
-                np.round(feather_bounds[1] - buffer, 4),
-                np.round(feather_bounds[2] + buffer, 4),
-                np.round(feather_bounds[3] + buffer, 4))
 
     
     def _constructRequest(self,
@@ -368,6 +357,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         else:
             return False
 
+        
     def _readData(self, request) -> xr.Dataset:
         """Read all files for a request, returning the data as a Dataset."""
         darrays = dict((var, self._readFile(request.filenames[var], var)) for var in request.variables)
@@ -376,6 +366,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         dataset = xr.Dataset(darrays)
         return dataset
 
+    
     def _readFile(self, filename : str, variable : str) -> xr.DataArray:
         """Open the file and get the data -- currently these reads it all, which may not be necessary."""
         with xr.open_dataset(filename) as fid:
@@ -383,9 +374,6 @@ class ManagerMODISAppEEARS(ManagerDataset):
             data = fid[layer]
 
         data.name = variable
-        if data.rio.crs is None:
-            data.rio.write_crs(watershed_workflow.crs.latlon_crs, inplace=True)
-        assert data.rio.crs is not None
         return data
 
     
@@ -403,7 +391,8 @@ class ManagerMODISAppEEARS(ManagerDataset):
             MODIS request object with AppEEARS task information.
         """
         # Geometry is already in native_crs_in (WGS84), get bounds directly
-        appeears_bounds = request.geometry.bounds
+        appeears_bounds = [np.round(b, 4) for b in request.geometry.bounds]
+        logging.info(f'Building request for bounds: {appeears_bounds}')
         
         # Convert dates to strings for AppEEARS API
         start_str = request.start.strftime('%m-%d-%Y')
@@ -412,38 +401,36 @@ class ManagerMODISAppEEARS(ManagerDataset):
         # Create filenames for caching
         filenames = dict((v, self._filename(appeears_bounds, start_str, end_str, v)) 
                         for v in request.variables)
+        logging.info('Requires files:')
+        for fname in filenames.values():
+            logging.info(f' ... {fname}')
+
         
         # Check for existing files
         if all(os.path.isfile(filename) for filename in filenames.values()):
+            logging.info('files exist locally.')
             # Data already exists locally
             modis_request = self.Request(
-                manager=request.manager,
-                is_ready=True,
-                geometry=request.geometry,
-                start=request.start,
-                end=request.end,
-                variables=request.variables,
+                request,
                 task_id="",  # No remote task needed
                 filenames=filenames,
                 urls={}
             )
-            return modis_request
+            modis_request.is_ready = True
+
+        else:
+            logging.info('building request.')
+
+            # Need to create AppEEARS request
+            task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
         
-        # Need to create AppEEARS request
-        task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
-        
-        # Create MODIS-specific request with AppEEARS task info
-        modis_request = self.Request(
-            manager=request.manager,
-            is_ready=False,  # Will be set when AppEEARS processing completes
-            geometry=request.geometry,
-            start=request.start,
-            end=request.end,
-            variables=request.variables,
-            task_id=task_id,
-            filenames=filenames,
-            urls={}  # Will be populated when ready
-        )
+            # Create MODIS-specific request with AppEEARS task info
+            modis_request = self.Request(
+                request,
+                task_id=task_id,
+                filenames=filenames,
+                urls={}  # Will be populated when ready
+            )
         
         return modis_request
 

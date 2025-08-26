@@ -177,8 +177,6 @@ def shplys(shps: list, old_crs: CRS, new_crs: CRS) -> list:
 
 def dataset(ds: xr.Dataset,
             target_crs: CRS,
-            lat_dim: str = "latitude",
-            lon_dim: str = "longitude",
             resampling_method: str = "nearest") -> xr.Dataset:
     """
     Reproject an xarray Dataset from its current CRS to a target CRS using rioxarray.
@@ -190,10 +188,6 @@ def dataset(ds: xr.Dataset,
         Input dataset with CRS information (ds.rio.crs must be set)
     target_crs : pyproj.CRS
         Target coordinate reference system as a pyproj.CRS object
-    lat_dim : str, default "latitude"
-        Name of the latitude dimension in the input dataset
-    lon_dim : str, default "longitude"
-        Name of the longitude dimension in the input dataset
     resampling_method : str, default "nearest"
         Resampling method for reprojection (nearest, bilinear, cubic, etc.)
         
