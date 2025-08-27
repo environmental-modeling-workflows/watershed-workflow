@@ -3,6 +3,7 @@ from typing import Union, List, Iterable, Tuple, Any, Optional, Literal, overloa
 from xarray.core.types import InterpOptions
 import numpy.typing as npt
 
+import logging
 import warnings
 import cftime
 import datetime
@@ -1928,7 +1929,7 @@ def interpolateValues(points: np.ndarray,
     coords = xr.Dataset({coord_names[0]: ("points", x), coord_names[1]: ("points", y)})
 
     interpolated = data.interp(coords, method=method)
-    return interpolated.values
+    return interpolated.as_numpy()
 
 
 def imputeHoles2D(arr: xr.DataArray, nodata: Any = np.nan, method: str = 'cubic') -> xr.DataArray:

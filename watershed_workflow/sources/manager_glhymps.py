@@ -8,7 +8,6 @@ from shapely.geometry.base import BaseGeometry
 
 import watershed_workflow.sources.manager_shapefile
 import watershed_workflow.sources.names
-import watershed_workflow.soil_properties
 from watershed_workflow.crs import CRS
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
@@ -46,6 +45,7 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
             self.names = None
             super(ManagerGLHYMPS, self).__init__(self.name, id_name='OBJECTID_1')
 
+            
     def _download(self, force : bool = False):
         """Download the files, returning downloaded filename."""
         # check directory structure
@@ -60,6 +60,7 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
+    
     def _getShapesByGeometry(self, geometry_gdf: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
         """Fetch shapes for the given geometry, ensuring file exists first.
 
@@ -77,6 +78,7 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
         self._download()
         return super()._getShapesByGeometry(geometry_gdf)
 
+    
     def _getShapesByID(self, ids: list[str]) -> geopandas.GeoDataFrame:
         """Fetch shapes by ID list, ensuring file exists first.
 

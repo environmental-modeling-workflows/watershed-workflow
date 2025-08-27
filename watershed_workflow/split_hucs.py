@@ -7,6 +7,7 @@ import collections
 import copy
 import itertools
 from matplotlib import pyplot as plt
+import matplotlib.colors
 import folium
 import folium.plugins
 import geopandas as gpd
@@ -282,9 +283,10 @@ class SplitHUCs:
                 name : str = 'watersheds',
                 **kwargs):
         """Open a map!"""
-        # get a name
         if column == names.ID and names.ID not in self.df:
-            self.df[names.ID+"_as_column"] = self.df.index.astype('string')
+            newname = names.ID+"_as_column"
+            if newname not in df:
+                self.df[newname] = self.df.index.astype('string')
             column = names.ID+"_as_column"
 
         kwargs.setdefault('tooltip', False)
@@ -302,8 +304,10 @@ class SplitHUCs:
                 default_props.append(p)
         kwargs.setdefault('popup', [names.ID,]+default_props)
 
-        kwargs.setdefault('cmap', watershed_workflow.colors.xkcd_muted)
+        kwargs.setdefault('cmap', matplotlib.colors.ListedColormap(watershed_workflow.colors.xkcd_muted))
         kwargs.setdefault('legend', True)
+        kwargs.setdefault('vmin', self.df[column].values.min())
+        kwargs.setdefault('vmax', self.df[column].values.max())
 
         # style
         style_kwds = kwargs.setdefault('style_kwds', dict())

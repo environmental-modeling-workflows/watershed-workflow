@@ -38,13 +38,13 @@ def coweeta_crs():
 @pytest.fixture
 def existing_lai_file():
     """Path to existing LAI file for testing."""
-    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.4080.nc'
 
 
 @pytest.fixture
 def existing_lulc_file():
     """Path to existing LULC file for testing."""
-    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.408.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.4080.nc'
 
 
 @pytest.fixture
@@ -150,7 +150,7 @@ def test_getDataset_with_existing_files(modis_manager, coweeta_geometry, coweeta
     """Test blocking getDataset with existing files."""
     start, end = coweeta_date_range
     
-    request_in = ManagerDataset.Request(modis_manager, False, coweeta_geometry, start, end, ['LAI'])
+    request_in = ManagerDataset.Request(modis_manager, True, coweeta_geometry, start, end, ['LAI'])
     request_out = modis_manager._requestDataset(request_in)
     dataset = modis_manager.fetchRequest(request_out)
         

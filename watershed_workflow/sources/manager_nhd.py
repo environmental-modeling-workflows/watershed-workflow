@@ -54,7 +54,7 @@ mr_renames = { 'GNIS_NAME' : names.NAME,
 
 def _tryRename(df, old, new):
     try:
-        df[new] = df[old]
+        df[new] = df.pop(old)
     except KeyError:
         pass
 

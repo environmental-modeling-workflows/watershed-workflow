@@ -80,7 +80,6 @@ def test_getShapesByGeometry_with_geometry_crs(manager_no_id, test_geometry, tes
     assert isinstance(result, gpd.GeoDataFrame)
     assert names.ID in result.columns
     assert names.NAME in result.columns
-    assert result.index.name == names.ID
     
     # Should have intersecting shapes
     assert len(result) > 0
@@ -97,7 +96,6 @@ def test_getShapesByGeometry_with_geodataframe(manager_no_id, test_geometry, tes
     assert isinstance(result, gpd.GeoDataFrame)
     assert names.ID in result.columns
     assert names.NAME in result.columns
-    assert result.index.name == names.ID
 
 
 def test_getShapesByID_row_indices(manager_multi_shapes):

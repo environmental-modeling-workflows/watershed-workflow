@@ -155,7 +155,6 @@ class ManagerShapes(abc.ABC):
         
         # Postprocess using filter geometry
         df = self._postprocessShapes(df, filter_polygon, filter_crs, out_crs, digits, remove_third_dimension)
-        
         return df
 
     def getShapesByID(self,
@@ -238,9 +237,6 @@ class ManagerShapes(abc.ABC):
             # Generate names from ID if not provided
             df[names.NAME] = df[names.ID].astype(str)
         
-        # Set ID as index
-        df = df.set_index(names.ID, drop=False)
-
         # Filter by geometry intersection if requested (using unbuffered geometry)
         # Note that filter is only done by the primary geometry column
         if filter_geometry is not None and filter_geometry_crs is not None:
@@ -255,7 +251,8 @@ class ManagerShapes(abc.ABC):
         # do things to ALL geometry columns
         orig_geometry = df.geometry.name
         for col in df.select_dtypes('geometry'):
-            df.set_geometry(col, inplace=True)
+            logging.info(f'fixing column: {col}')
+            df = df.set_geometry(col)
 
             # occassionally data APIs provide all MultiGeometries,
             # when in fact they are a single LineString/Polygon
@@ -265,7 +262,7 @@ class ManagerShapes(abc.ABC):
                 elif isinstance(shp, shapely.geometry.MultiPolygon):
                     return shapely.union_all(shp.geoms)
                 return shp
-            df['geometry'] = df.geometry.apply(_combine)
+            df[col] = df[col].apply(_combine)
             
             # remove the third z-dimension
             if remove_third_dimension:
@@ -281,11 +278,14 @@ class ManagerShapes(abc.ABC):
             if digits >= 0:
                 df = df.set_precision(10**-digits)
                 
-        df.set_geometry(orig_geometry, inplace=True)
+        df = df.set_geometry(orig_geometry)
         
         # Add metadata to attributes
         df.attrs['name'] = self.name
         df.attrs['source'] = self.source
+
+        if hasattr(df.index, 'name') and df.index.name == names.ID:
+            df = df.reset_index()
         
         return df
 

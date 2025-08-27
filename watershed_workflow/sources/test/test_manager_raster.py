@@ -15,7 +15,7 @@ from watershed_workflow.sources.manager_raster import ManagerRaster
 @pytest.fixture
 def dtb_raster_path():
     """Path to the DTB test raster file."""
-    return os.path.join('examples', 'Coweeta', 'input_data', 'DTB', 'DTB.tif')
+    return os.path.join('examples', 'Coweeta', 'input_data', 'soil_structure', 'DTB', 'DTB.tif')
 
 
 @pytest.fixture

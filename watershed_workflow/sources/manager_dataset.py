@@ -186,7 +186,7 @@ class ManagerDataset(abc.ABC):
         # Use extracted parameter processing
         request = self._preprocessParameters(geometry, geometry_crs, start, end, variables)
         request.out_crs = out_crs
-        request.resampling = resampling
+        request.resampling = resampling if resampling is not None else 'nearest'
 
         # Get dataset
         request = self._requestDataset(request)
@@ -473,6 +473,14 @@ class ManagerDataset(abc.ABC):
 
         # change coordinate system if requested
         if request.out_crs is not None:
+            # guess the coordinate names -- they must be in x,y
+            if 'x' in dataset.coords and 'y' in dataset.coords:
+                pass
+            elif 'lon' in dataset.coords and 'lat' in dataset.coords:
+                dataset = dataset.rename({'lon' : 'x', 'lat' : 'y'})
+            elif 'longitude' in dataset.coords and 'latitude' in dataset.coords:
+                dataset = dataset.rename({'longitude' : 'x', 'latitude' : 'y'})
+            
             dataset = watershed_workflow.warp.dataset(dataset, request.out_crs, request.resampling)
             
         # Add name and source to dataset attributes

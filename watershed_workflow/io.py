@@ -144,8 +144,8 @@ def writeTimeseriesToHDF5(filename: str,
         pass
 
     keys = list(ts.keys())
-    keys.remove('time [datetime]')
-    times = ts['time [datetime]']
+    keys.remove('time')
+    times = ts['time']
 
     if time0 is None:
         time0 = times.values[0]

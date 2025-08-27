@@ -105,19 +105,19 @@ def findHUC(source : Any,
         source.setLevel(search_level)
         subhus = source.getShapesByID(hint, out_crs=crs)
 
-        for index, subhu in zip(subhus.index, subhus.geometry):
+        for ID, subhu in zip(subhus[names.ID], subhus.geometry):
             inhuc = _in_huc(shply, subhu)
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                logging.info(f'  subhuc: {index} contains')
-                return _findHUC(source, shply, crs, index)
+                logging.info(f'  subhuc: {ID} contains')
+                return _findHUC(source, shply, crs, ID)
             elif inhuc == 1:
-                logging.info(f'  subhuc: {index} partially contains')
+                logging.info(f'  subhuc: {ID} partially contains')
                 # partially contained in try_huc, return this
                 return hint
             else:
-                logging.info(f'  subhuc: {index} does not contain')
+                logging.info(f'  subhuc: {ID} does not contain')
         assert False
 
     # must shrink the poly a bit in case it is close to or on a boundary
@@ -713,8 +713,8 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 
 
 
-def getDatasetOnMesh(data : xr.DataArray,
-                     m2 : watershed_workflow.mesh.Mesh2D,
+def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
+                     data : xr.DataArray,
                      **kwargs) -> np.ndarray:
     """Interpolate xarray data onto cell centroids of a mesh."""
     mesh_points = m2.centroids
@@ -724,8 +724,7 @@ def getDatasetOnMesh(data : xr.DataArray,
     if not np.issubdtype(interpolated_data.dtype, data.dtype):
         interpolated_data = interpolated_data.astype(data.dtype)
     
-    # Flatten the interpolated data to ensure it is a 1D array
-    return interpolated_data.flatten()
+    return interpolated_data
 
 
 def getShapePropertiesOnMesh(m2 : watershed_workflow.mesh.Mesh2D,

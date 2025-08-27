@@ -193,7 +193,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
 
     
     def _constructRequest(self,
-                          bounds_ll : Tuple[float,float,float,float],
+                          bounds_ll : Tuple[str,str,str,str],
                           start : str,
                           end : str,
                           variables : List[str]) -> str:
@@ -362,6 +362,11 @@ class ManagerMODISAppEEARS(ManagerDataset):
         """Read all files for a request, returning the data as a Dataset."""
         darrays = dict((var, self._readFile(request.filenames[var], var)) for var in request.variables)
 
+        # keep independent times for LAI (which is every 3-6 days) and
+        # LULC (which is once a yearish)
+        for k,v in darrays.items():
+            darrays[k] = darrays[k].rename({'time': f'time_{k}'})
+
         # Convert to Dataset
         dataset = xr.Dataset(darrays)
         return dataset
@@ -391,7 +396,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
             MODIS request object with AppEEARS task information.
         """
         # Geometry is already in native_crs_in (WGS84), get bounds directly
-        appeears_bounds = [np.round(b, 4) for b in request.geometry.bounds]
+        appeears_bounds = [f'{b:.4f}' for b in request.geometry.bounds]
         logging.info(f'Building request for bounds: {appeears_bounds}')
         
         # Convert dates to strings for AppEEARS API

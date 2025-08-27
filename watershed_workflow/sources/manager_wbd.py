@@ -51,7 +51,7 @@ class ManagerWBD(ManagerHyRiver):
             self.setLevel(level)
 
             df = self.getShapesByGeometry(geom_df.union_all(), geom_df.crs, geom_df.crs)
-            return df.loc[df.index.to_series().apply(lambda l : any(l.startswith(huc) for huc in hucs))]
+            return df[df.ID.apply(lambda l : any(l.startswith(huc) for huc in hucs))]
         else:
             self.setLevel(req_level)
             df = super(ManagerWBD, self)._getShapesByID(hucs)

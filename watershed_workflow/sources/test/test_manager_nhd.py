@@ -59,7 +59,6 @@ def test_nhd_waterdata_get_by_geometry(nhd_waterdata, coweeta):
     # Check standard naming
     assert names.ID in reaches.columns
     assert names.NAME in reaches.columns
-    assert reaches.index.name == names.ID
     
     # Check that some NHD-specific columns are present
     expected_cols = [names.LENGTH, names.CATCHMENT_AREA, names.ORDER, names.DRAINAGE_AREA]

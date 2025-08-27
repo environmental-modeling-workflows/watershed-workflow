@@ -17,7 +17,7 @@ bounds8_ll = np.array([-75.5722117, 41.487746, -74.5581047, 42.4624454])
 def test_wbd_get() -> None:
     wbd = ManagerWBD()
     huc = wbd.getShapesByID('02040101')
-    bounds = huc.loc['02040101'].geometry.bounds
+    bounds = huc[huc.ID=='02040101'].geometry.bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 def test_wbd_get_many() -> None:
@@ -25,8 +25,8 @@ def test_wbd_get_many() -> None:
     wbd.setLevel(12)
     huc = wbd.getShapesByID('02040101')
     print(huc)
-    assert len(huc) == len(set(huc.index)) # unique
-    assert all(l.startswith('02040101') for l in huc.index) # all in the HUC8
+    assert len(huc) == len(set(huc.ID)) # unique
+    assert all(l.startswith('02040101') for l in huc.ID) # all in the HUC8
     assert (len(huc) == 38) # right number
 
 def test_wbd_get_geometry() -> None:
@@ -43,7 +43,7 @@ def test_wbd_get_geometry() -> None:
 def test_wbd_waterdata_get() -> None:
     wbd = ManagerWBD(protocol_name='WaterData')
     huc = wbd.getShapesByID('02040101')
-    bounds = huc.loc['02040101'].geometry.bounds
+    bounds = huc[huc.ID=='02040101'].geometry.bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
 def test_wbd_waterdata_get_many() -> None:
@@ -51,8 +51,8 @@ def test_wbd_waterdata_get_many() -> None:
     wbd.setLevel(12)
     huc = wbd.getShapesByID('02040101')
     print(huc)
-    assert len(huc) == len(set(huc.index)) # unique
-    assert all(l.startswith('02040101') for l in huc.index) # all in the HUC8
+    assert len(huc) == len(set(huc.ID)) # unique
+    assert all(l.startswith('02040101') for l in huc.ID) # all in the HUC8
     assert (len(huc) == 38) # right number
 
 def test_wbd_waterdata_get_geometry() -> None:
