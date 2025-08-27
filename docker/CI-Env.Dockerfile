@@ -1,4 +1,4 @@
-# Does everything through running tests...
+# Does everything except running tests...
 #
 # Stage 1 -- setup base CI environment
 #
@@ -45,9 +45,6 @@ RUN --mount=type=cache,target=/opt/conda/pkgs \
 
 ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
 ENV PATH="$COMPILERS/bin:$PATH"
-ENV CC=$COMPILERS/bin/gcc
-ENV CXX=$COMPILERS/bin/g++
-ENV FC=$COMPILERS/bin/gfortran
 
 #
 # Stage 2 -- add in the pip
