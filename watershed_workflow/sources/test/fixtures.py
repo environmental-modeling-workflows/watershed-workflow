@@ -6,6 +6,6 @@ import watershed_workflow.crs
 
 @pytest.fixture
 def coweeta():
-    ms = ManagerShapefile(os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_basin.shp'))
+    ms = ManagerShapefile(os.path.join('examples', 'Coweeta', 'input_data', 'coweeta_simplified.shp'))
     shp = ms.getShapes()
-    return shp.to_crs(watershed_workflow.crs.latlon_crs)
+    return shp.to_crs(watershed_workflow.crs.from_epsg(4269))

@@ -23,19 +23,6 @@ def modis_manager():
 
 
 @pytest.fixture
-def coweeta_geometry():
-    """Small test geometry matching the existing MODIS files."""
-    # Geometry that matches the existing file bounds: 35.0133x-83.4943_35.0889x-83.408
-    return shapely.geometry.box(-83.4943, 35.0133, -83.408, 35.0889)
-
-
-@pytest.fixture
-def coweeta_crs():
-    """CRS for coweeta geometry (WGS84)."""
-    return CRS.from_epsg(4269)
-
-
-@pytest.fixture
 def existing_lai_file():
     """Path to existing LAI file for testing."""
     return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.4080.nc'
@@ -118,40 +105,13 @@ def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, exist
     assert len(dataset.data_vars) == 2
 
 
-def test_fetch_existing_dataset(modis_manager, existing_lai_file, existing_lulc_file):
-    """Test _fetchDataset with existing files."""
-    # Create a mock request with existing files
-    r = ManagerDataset.Request(manager=modis_manager,
-                               is_ready=True,
-                               geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
-                               start=cftime.datetime(2010, 8, 1, calendar='standard'),
-                               end=cftime.datetime(2011, 8, 1, calendar='standard'),
-                               variables=['LAI', 'LULC'],
-                               )
-    
-    request = modis_manager.Request(
-        r,
-        task_id="",
-        filenames={
-            'LAI': existing_lai_file,
-            'LULC': existing_lulc_file
-        },
-        urls={}
-    )
-    
-    dataset = modis_manager._fetchDataset(request)
-    
-    assert isinstance(dataset, xr.Dataset)
-    assert 'LAI' in dataset.data_vars
-    assert 'LULC' in dataset.data_vars
-
-
-def test_getDataset_with_existing_files(modis_manager, coweeta_geometry, coweeta_crs, coweeta_date_range, existing_lai_file, existing_lulc_file):
+def test_getDataset_with_existing_files(modis_manager, coweeta, coweeta_date_range, existing_lai_file, existing_lulc_file):
     """Test blocking getDataset with existing files."""
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
     
-    request_in = ManagerDataset.Request(modis_manager, True, coweeta_geometry, start, end, ['LAI'])
-    request_out = modis_manager._requestDataset(request_in)
+    request_out = modis_manager.requestDataset(coweeta_geometry, coweeta_crs, start, end, ['LAI'])
     dataset = modis_manager.fetchRequest(request_out)
         
     assert isinstance(dataset, xr.Dataset)
@@ -160,8 +120,11 @@ def test_getDataset_with_existing_files(modis_manager, coweeta_geometry, coweeta
     assert dataset.attrs['source'] == 'AppEEARS'
 
 
-def test_request_fetch_pattern(modis_manager, coweeta_geometry, coweeta_crs, coweeta_date_range, existing_lai_file):
+def test_request_fetch_pattern(modis_manager, coweeta, coweeta_date_range, existing_lai_file):
     """Test non-blocking request/fetch pattern."""
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
+
     if not os.path.exists(existing_lai_file):
         pytest.skip("Test file not available")
     
@@ -188,8 +151,10 @@ def test_request_fetch_pattern(modis_manager, coweeta_geometry, coweeta_crs, cow
         assert 'LAI' in dataset.data_vars
 
 
-def test_invalid_variable_error(modis_manager, coweeta_geometry, coweeta_crs, coweeta_date_range):
+def test_invalid_variable_error(modis_manager, coweeta, coweeta_date_range):
     """Test error handling for invalid variables."""
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
     
     with pytest.raises(ValueError, match="Invalid variable"):
@@ -200,8 +165,10 @@ def test_invalid_variable_error(modis_manager, coweeta_geometry, coweeta_crs, co
         )
 
 
-def test_date_validation_errors(modis_manager, coweeta_geometry, coweeta_crs):
+def test_date_validation_errors(modis_manager, coweeta):
     """Test date validation against MODIS bounds."""
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
     # Test start date before MODIS start (2002)
     with pytest.raises(ValueError, match="Start date .* is before dataset start"):
         modis_manager.getDataset(
@@ -213,14 +180,16 @@ def test_date_validation_errors(modis_manager, coweeta_geometry, coweeta_crs):
     # Test end date after MODIS end (2021)
     with pytest.raises(ValueError, match="End date .* is after dataset end"):
         modis_manager.getDataset(
-            coweeta_geometry, coweeta_crs,
+            coweeta,
             start='2020-01-01', end='2025-01-01',
             variables=['LAI']
         )
 
 
-def test_default_variables(modis_manager, coweeta_geometry, coweeta_crs, coweeta_date_range, existing_lai_file, existing_lulc_file):
+def test_default_variables(modis_manager, coweeta, coweeta_date_range, existing_lai_file, existing_lulc_file):
     """Test that default variables work when none specified."""
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
     
     # Mock filename generation
