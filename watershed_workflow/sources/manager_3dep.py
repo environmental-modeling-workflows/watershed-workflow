@@ -2,6 +2,7 @@
 
 from typing import Tuple, Optional, List
 import cftime
+import logging
 
 import shapely.geometry
 import xarray as xr
@@ -9,9 +10,10 @@ import py3dep
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-from watershed_workflow.sources.manager_dataset import ManagerDataset
 
-class Manager3DEP(ManagerDataset):
+from . import manager_dataset
+
+class Manager3DEP(manager_dataset.ManagerDataset):
     """3D Elevation Program (3DEP) data manager.
     
     Provides access to USGS 3DEP elevation and derived products through
@@ -28,10 +30,10 @@ class Manager3DEP(ManagerDataset):
             Resolution in meters. Valid resolutions are: 60, 30, or 10.
         """
         self._resolution = resolution
-        resolution_in_degrees = resolution * 9e-6
+        resolution_in_degrees = 2 * resolution * 9e-6
 
-        out_crs = CRS.from_epsg(5070)  # CONUS Albers Equal Area
         in_crs = CRS.from_epsg(4326)  # lat-long
+        out_crs = CRS.from_epsg(5070)  # CONUS Albers Equal Area
 
         valid_variables = [
             'DEM', 'Hillshade Gray', 'Aspect Degrees', 'Aspect Map',
@@ -45,13 +47,14 @@ class Manager3DEP(ManagerDataset):
         super().__init__('3DEP', 'py3dep', resolution_in_degrees, in_crs, out_crs,
                          None, None, valid_variables, default_variables)
 
-    def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request : manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Request the data -- ready upon request."""
         request.is_ready = True
         return request
 
 
-    def _fetchDataset(self, request : ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request : manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Implementation of abstract method to get 3DEP data."""
 
         # Base class ensures these for multi-variable, time independent class
@@ -60,6 +63,7 @@ class Manager3DEP(ManagerDataset):
         assert request.end is None
         
         # Use instance resolution and native CRS
+        logging.info(f'Getting DEM with map of area = {request.geometry.area}')
         result = py3dep.get_map(request.variables, request.geometry, self._resolution, 
                                geo_crs=self.native_crs_in, crs=self.native_crs_out)
         

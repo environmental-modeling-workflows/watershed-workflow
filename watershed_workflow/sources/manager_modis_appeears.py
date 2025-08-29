@@ -13,12 +13,13 @@ import rasterio.transform
 import xarray as xr
 
 import watershed_workflow.config
-import watershed_workflow.sources.utils as source_utils
-import watershed_workflow.sources.names
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
-from watershed_workflow.sources.manager_dataset import ManagerDataset
+
+from . import utils as source_utils
+from . import filenames
+from . import manager_dataset
 
 _colors = {
     -1: ('Unclassified', (0, 0, 0)),
@@ -50,7 +51,7 @@ indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
 
-class ManagerMODISAppEEARS(ManagerDataset):
+class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     """MODIS data through the AppEEARS data portal.
 
     Note this portal requires authentication -- please enter a
@@ -78,10 +79,10 @@ class ManagerMODISAppEEARS(ManagerDataset):
 
     """
 
-    class Request(ManagerDataset.Request):
+    class Request(manager_dataset.ManagerDataset.Request):
         """MODIS AppEEARS-specific request that includes Task information."""
         def __init__(self,
-                     request : ManagerDataset.Request,
+                     request : manager_dataset.ManagerDataset.Request,
                      task_id : str = "",
                      filenames : Optional[Dict[str, str]] = None,
                      urls : Optional[Dict[str, str]] = None):
@@ -139,9 +140,8 @@ class ManagerMODISAppEEARS(ManagerDataset):
         )
         
         # AppEEARS-specific initialization
-        self.names = watershed_workflow.sources.names.Names(
-            self.name, 'land_cover', 'MODIS',
-            'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
+        self.names = filenames.Names(self.name, 'land_cover', 'MODIS',
+                                     'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
         self.login_token = login_token
         if not os.path.isdir(self.names.folder_name()):
             os.makedirs(self.names.folder_name())
@@ -176,8 +176,8 @@ class ManagerMODISAppEEARS(ManagerDataset):
             lr.raise_for_status()
             return lr.json()['token']
         except Exception as err:
-            logging.warn('Unable to authenticate at Appeears database:')
-            logging.warn('Message: {err}')
+            logging.info('Unable to authenticate at Appeears database:')
+            logging.info('Message: {err}')
             return None
 
     def _filename(self, bounds_ll, start, end, variable):
@@ -258,6 +258,10 @@ class ManagerMODISAppEEARS(ManagerDataset):
 
         # submit the task request
         logging.info('Constructing Task:')
+        logging.info('-------------------')
+        logging.info('JSON:')
+        logging.info(self._TASK_URL)
+        logging.info(task_data)
         r = requests.post(self._TASK_URL,
                           json=task_data,
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
@@ -267,7 +271,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         logging.info(f'Requesting dataset on {bounds_ll} response task_id {task_id}')
         return task_id
 
-    def _checkStatus(self, request: ManagerDataset.Request) -> str | bool:
+    def _checkStatus(self, request: manager_dataset.ManagerDataset.Request) -> str | bool:
         """Checks and prints the status of the AppEEARS request.
 
         Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
@@ -300,7 +304,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
             logging.info('... status not found')
             return 'UNKNOWN'
 
-    def _checkBundleURL(self, request: ManagerDataset.Request) -> bool:
+    def _checkBundleURL(self, request: manager_dataset.ManagerDataset.Request) -> bool:
         if self.login_token is None:
             self.login_token = self._authenticate()
 
@@ -335,7 +339,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
                 assert (found)
             return True
 
-    def _download(self, request: ManagerDataset.Request) -> bool:
+    def _download(self, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Downloads the data for the provided request."""
         if len(request.urls) == 0:
             ready = self._checkBundleURL(request)
@@ -382,7 +386,8 @@ class ManagerMODISAppEEARS(ManagerDataset):
         return data
 
     
-    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Request MODIS data from AppEEARS - may not be ready immediately.
         
         Parameters
@@ -396,7 +401,8 @@ class ManagerMODISAppEEARS(ManagerDataset):
             MODIS request object with AppEEARS task information.
         """
         # Geometry is already in native_crs_in (WGS84), get bounds directly
-        appeears_bounds = [f'{b:.4f}' for b in request.geometry.bounds]
+        appeears_bounds = [np.round(b,4) for b in request.geometry.bounds]
+        appeears_bounds_str = [f'{b:.4f}' for b in appeears_bounds]
         logging.info(f'Building request for bounds: {appeears_bounds}')
         
         # Convert dates to strings for AppEEARS API
@@ -404,7 +410,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         end_str = request.end.strftime('%m-%d-%Y')
         
         # Create filenames for caching
-        filenames = dict((v, self._filename(appeears_bounds, start_str, end_str, v)) 
+        filenames = dict((v, self._filename(appeears_bounds_str, start_str, end_str, v)) 
                         for v in request.variables)
         logging.info('Requires files:')
         for fname in filenames.values():
@@ -440,7 +446,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
         return modis_request
 
 
-    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Implementation of abstract method to fetch MODIS data.
 
         Parameters
@@ -464,7 +470,7 @@ class ManagerMODISAppEEARS(ManagerDataset):
             raise RuntimeError(f"Unable to download MODIS data for task {request.task_id}")
 
 
-    def isReady(self, request: ManagerDataset.Request) -> bool:
+    def isReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Check if MODIS data request is ready for download.
         
         Overrides base class to check AppEEARS processing status and bundle availability.

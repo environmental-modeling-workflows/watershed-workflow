@@ -25,13 +25,13 @@ def modis_manager():
 @pytest.fixture
 def existing_lai_file():
     """Path to existing LAI file for testing."""
-    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.4080.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LAI_08-01-2010_08-01-2011_35.0782x-83.4826_35.0237x-83.4178.nc'
 
 
 @pytest.fixture
 def existing_lulc_file():
     """Path to existing LULC file for testing."""
-    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0889x-83.4943_35.0133x-83.4080.nc'
+    return './examples/Coweeta/input_data/land_cover/MODIS/modis_LULC_08-01-2010_08-01-2011_35.0782x-83.4826_35.0237x-83.4178.nc'
 
 
 @pytest.fixture

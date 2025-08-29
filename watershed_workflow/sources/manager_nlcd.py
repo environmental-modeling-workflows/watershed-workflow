@@ -13,7 +13,8 @@ import pygeohydro
 import pygeohydro.helpers
 
 from watershed_workflow.crs import CRS
-from watershed_workflow.sources.manager_dataset import ManagerDataset
+
+from . import manager_dataset
 
 
 colors = {
@@ -44,7 +45,7 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-class ManagerNLCD(ManagerDataset):
+class ManagerNLCD(manager_dataset.ManagerDataset):
     """National Land Cover Database manager for single-year snapshots.
 
     Supports variables: cover, impervious, canopy, descriptor.
@@ -114,7 +115,8 @@ class ManagerNLCD(ManagerDataset):
                             f'valid are: {valid_years[location]}')
         return year
 
-    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Request NLCD data - ready immediately.
         
         Parameters
@@ -130,7 +132,7 @@ class ManagerNLCD(ManagerDataset):
         request.is_ready = True
         return request
 
-    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Fetch NLCD data for the request.
         
         Parameters

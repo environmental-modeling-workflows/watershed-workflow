@@ -6,20 +6,19 @@ import numpy as np
 import xarray as xr
 import shapely
 import cftime, datetime
-
+import logging
 import s3fs
-# import zarr
-# import dask
-
-import watershed_workflow.sources.manager_raster
-import watershed_workflow.sources.names
-import watershed_workflow.crs
-from watershed_workflow.crs import CRS
-from watershed_workflow.sources.manager_dataset import ManagerDataset
 import attr
 
+import watershed_workflow.crs
+from watershed_workflow.crs import CRS
 
-class ManagerAORC(ManagerDataset):
+from . import manager_raster
+from . import filenames
+from . import manager_dataset
+
+
+class ManagerAORC(manager_dataset.ManagerDataset):
     """AORC dataset.
 
     Explore the Analysis Of Record for Calibration (AORC) version 1.1 data
@@ -82,10 +81,10 @@ class ManagerAORC(ManagerDataset):
 
     """
 
-    class Request(ManagerDataset.Request):
+    class Request(manager_dataset.ManagerDataset.Request):
         """AORC-specific request that includes filename for cached data."""
         def __init__(self,
-                     request : ManagerDataset.Request,
+                     request : manager_dataset.ManagerDataset.Request,
                      filename : str = ''):
             super().copyFromExisting(request)
             self.filename = filename
@@ -120,13 +119,11 @@ class ManagerAORC(ManagerDataset):
         )
         
         # File naming for cached downloads
-        self.names = watershed_workflow.sources.names.Names(
-            self.name, 'meteorology', 'aorc', 'aorc_{start_year}-{end_year}_{north}x{west}_{south}x{east}.nc')
+        self.names = filenames.Names(self.name, 'meteorology', 'aorc',
+                                     'aorc_{start_year}-{end_year}_{north}x{west}_{south}x{east}.nc')
 
         # Check directory structure
-        print(f'making directory: {self.names.folder_name()}')
         os.makedirs(self.names.folder_name(), exist_ok=True)
-
 
     def _cleanBounds(self, geometry : shapely.geometry.Polygon) -> list[float]:
         """Extract bounds from geometry already in native CRS and buffered by base class."""
@@ -206,7 +203,8 @@ class ManagerAORC(ManagerDataset):
         return filename
 
     
-    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Request AORC data - ready upon download completion.
         
         Parameters
@@ -239,7 +237,7 @@ class ManagerAORC(ManagerDataset):
         return aorc_request
 
 
-    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Implementation of abstract method to fetch AORC data.
 
         Parameters
@@ -261,7 +259,7 @@ class ManagerAORC(ManagerDataset):
             dataset = dataset[request.variables]
         
         # Ensure CRS is properly set
-        if not hasattr(dataset, 'rio') or dataset.rio.crs is None:
+        if hasattr(dataset, 'rio') and dataset.rio.crs is None:
             dataset = dataset.rio.write_crs(self.native_crs_out)
             
         return dataset

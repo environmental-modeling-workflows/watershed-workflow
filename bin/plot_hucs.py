@@ -7,12 +7,12 @@ from matplotlib import pyplot as plt
 
 import watershed_workflow
 import watershed_workflow.ui
-import watershed_workflow.source_list
+import watershed_workflow.sources
 import watershed_workflow.bin_utils
 
 def get_args():
     # set up parser
-    parser = watershed_workflow.ui.get_basic_argparse(__doc__+'\n\n'+watershed_workflow.source_list.__doc__)
+    parser = watershed_workflow.ui.get_basic_argparse(__doc__+'\n\n'+watershed_workflow.sources.__doc__)
     watershed_workflow.ui.projection(parser)
     watershed_workflow.ui.huc_arg(parser)
     watershed_workflow.ui.huc_level_arg(parser)
@@ -29,7 +29,7 @@ def get_args():
     return parser.parse_args()
 
 def plot_hucs(args):
-    sources = watershed_workflow.source_list.get_sources(args)
+    sources = watershed_workflow.sources.get_sources(args)
 
     if args.level == 0:
         args.level = len(args.HUC)

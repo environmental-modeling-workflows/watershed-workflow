@@ -4,17 +4,17 @@ import logging
 import numpy as np
 import pandas, geopandas
 import shapely
-from shapely.geometry.base import BaseGeometry
 
-import watershed_workflow.sources.manager_shapefile
-import watershed_workflow.sources.names
 from watershed_workflow.crs import CRS
+
+from . import manager_shapefile
+from . import filenames
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = { 'GLHYMPS version 2.0': 'https://doi.org/10.5683/SP2/TTJNIU'}
 
 
-class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefile):
+class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
     """The [GLHYMPS]_ global hydrogeology map provides global values of a
     two-layer (unconsolidated, consolidated) structure.
 
@@ -37,7 +37,7 @@ class ManagerGLHYMPS(watershed_workflow.sources.manager_shapefile.ManagerShapefi
     def __init__(self, filename=None):
         if filename is None:
             self.name = 'GLHYMPS version 2.0'
-            self.names = watershed_workflow.sources.names.Names(
+            self.names = filenames.Names(
                 self.name, os.path.join('soil_structure', 'GLHYMPS'), '', 'GLHYMPS.shp')
             super(ManagerGLHYMPS, self).__init__(self.names.file_name(), id_name='OBJECTID_1')
         else:

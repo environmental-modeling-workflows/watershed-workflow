@@ -184,6 +184,7 @@ class ManagerDataset(abc.ABC):
         self._prerequestDataset()
 
         # Use extracted parameter processing
+        logging.info('calling preprocess')
         request = self._preprocessParameters(geometry, geometry_crs, start, end, variables)
         request.out_crs = out_crs
         request.resampling = resampling if resampling is not None else 'nearest'
@@ -410,6 +411,7 @@ class ManagerDataset(abc.ABC):
             The "future" object storing the metadata for the data request.
         
         """
+        logging.info('prepocess called!')
         # Process geometry
         if isinstance(geometry, gpd.GeoDataFrame):
             if geometry_crs is not None:
@@ -425,7 +427,10 @@ class ManagerDataset(abc.ABC):
 
         # Transform to native input CRS and buffer
         polygon = watershed_workflow.warp.shply(polygon, geometry_crs, self.native_crs_in)
+        logging.info(f'incoming shape area = {polygon.area}')
+        logging.info(f'buffering incoming shape by = {self.native_resolution}')
         polygon = polygon.buffer(self.native_resolution)
+        logging.info(f'buffered shape area = {polygon.area}')
 
         # Parse and validate dates
         parsed_start = self._parseDate(start, True)
@@ -458,7 +463,8 @@ class ManagerDataset(abc.ABC):
         if dataset.rio.crs is None:
             dataset = dataset.rio.write_crs(self.native_crs_out)
         else:
-            assert watershed_workflow.crs.isEqual(watershed_workflow.crs.from_rasterio(dataset.rio.crs), self.native_crs_out)
+            assert watershed_workflow.crs.isEqual(watershed_workflow.crs.from_rasterio(dataset.rio.crs),
+                                           self.native_crs_out)
 
         # make sure the time dimension is in the right calendar and dtype, and clip if needed
         if 'time' in dataset.dims:

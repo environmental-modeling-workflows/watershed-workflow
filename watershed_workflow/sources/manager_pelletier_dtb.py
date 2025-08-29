@@ -3,11 +3,12 @@ import os, sys
 import logging
 import xarray as xr
 import shapely.geometry
+import numpy as np
 
-import watershed_workflow.sources.manager_raster
-import watershed_workflow.sources.names
 from watershed_workflow.crs import CRS
 
+from . import manager_raster
+from . import filenames
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = {
@@ -16,7 +17,7 @@ urls = {
 }
 
 
-class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaster):
+class ManagerPelletierDTB(manager_raster.ManagerRaster):
     """The [PelletierDTB]_ global soil regolith sediment map provides global values of
     depth to bedrock at a 1km spatial resolution.
 
@@ -40,7 +41,7 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
     def __init__(self, filename=None):
         if filename is None:
             # Use default file location via Names system
-            self.names = watershed_workflow.sources.names.Names(
+            self.names = filenames.Names(
                 'Pelletier DTB',
                 os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
                              'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
@@ -64,3 +65,15 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
             logging.error(self.__doc__)
             raise RuntimeError(f'PelletierDTB download file {filename} not found.')
         return filename
+
+
+    def _fetchDataset(self, request : manager_raster.ManagerRaster.Request) -> xr.Dataset:
+        """Fetch the data."""
+        dset = super(ManagerPelletierDTB, self)._fetchDataset(request)
+
+        # DTB in pelletier is an int with -1 indicating nodata
+        dset['band_1'] = dset['band_1'].astype("float32")
+        dset['band_1'].encoding["_FillValue"] = np.nan
+        dset.encoding["_FillValue"] = np.nan
+        dset['band_1'].where(dset['band_1'] < 0)
+        return dset

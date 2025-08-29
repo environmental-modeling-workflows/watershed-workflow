@@ -1277,8 +1277,8 @@ def mergeShortReaches(river: River, tol: Optional[float]) -> None:
     # do-not-merge flag:
     #    1 -> do not merge upstream of this reach
     #   -1 -> do not merge downstream of this reach
-    if 'do-not-merge' not in river.df:
-        river.df['do-not-merge'] = [0, ] * len(river)
+    if 'do-not-merge' not in river.df.keys():
+        river.df['do-not-merge'] = [0, ] * len(river.df)
 
     for node in list(river):
         if tol is None:

@@ -11,15 +11,16 @@ import xarray as xr
 import rioxarray
 import cftime
 
-import watershed_workflow.sources.utils as source_utils
-import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.crs
-from watershed_workflow.sources.manager_dataset import ManagerDataset
 from watershed_workflow.crs import CRS
 
+from . import utils as source_utils
+from . import filenames
+from . import manager_dataset
 
-class ManagerSoilGrids2017(ManagerDataset):
+
+class ManagerSoilGrids2017(manager_dataset.ManagerDataset):
     """SoilGrids 250m (2017) datasets.
 
     SoilGrids 2017 maintains, to date, the only complete
@@ -62,11 +63,11 @@ class ManagerSoilGrids2017(ManagerDataset):
         # Set up names helper
         if variant == 'US':
             name = 'SoilGrids2017_US'
-            self.names = watershed_workflow.sources.names.Names(
+            self.names = filenames.Names(
                 name, 'soil_structure', name, '{variable}_M_{soillevel}250m_ll_us.tif')
         else:
             name = 'SoilGrids2017'
-            self.names = watershed_workflow.sources.names.Names(
+            self.names = filenames.Names(
                 name, 'soil_structure', name, '{variable}_M_{soillevel}250m_ll.tif')
         
         # Initialize ManagerDataset
@@ -82,7 +83,8 @@ class ManagerSoilGrids2017(ManagerDataset):
             default_variables=[self.BEDROCK_VARIABLE]
         )
 
-    def _requestDataset(self, request: ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Download all required files for the request.
         
         Parameters
@@ -104,7 +106,7 @@ class ManagerSoilGrids2017(ManagerDataset):
         request.is_ready = True
         return request
     
-    def _fetchDataset(self, request: ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Fetch the dataset for the request.
         
         Parameters
@@ -132,7 +134,7 @@ class ManagerSoilGrids2017(ManagerDataset):
             
             # Load raster and clip to bounds
             dataset = rioxarray.open_rasterio(filename, cache=False)
-            dataset = dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(self.native_crs_out))
+            dataset = dataset.rio.clip_box(*bounds, crs=watershed_workflow.crs.to_rasterio(self.native_crs_in))
             
             # Convert to DataArray (remove band dimension if single band)
             if len(dataset.shape) > 2:

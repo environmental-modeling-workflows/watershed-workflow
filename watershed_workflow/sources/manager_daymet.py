@@ -11,15 +11,16 @@ import shapely.geometry
 import cftime, datetime
 import xarray as xr
 
-import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 import watershed_workflow.warp
-import watershed_workflow.sources.names
-from watershed_workflow.sources.manager_dataset import ManagerDataset
+
+from . import utils as source_utils
+from . import filenames
+from . import manager_dataset
 
 
-class ManagerDaymet(ManagerDataset):
+class ManagerDaymet(manager_dataset.ManagerDataset):
     """Daymet meterological datasets.
 
     Daymet is a historic, spatially interpolated product which ingests large
@@ -62,7 +63,7 @@ class ManagerDaymet(ManagerDataset):
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
 
     @attr.define
-    class Request(ManagerDataset.Request):
+    class Request(manager_dataset.ManagerDataset.Request):
         """DayMet-specific request that adds download information."""
         bounds: list = attr.field(default=None)
         start_year: int = attr.field(default=None) 
@@ -91,7 +92,7 @@ class ManagerDaymet(ManagerDataset):
             valid_variables=valid_variables,
             default_variables=default_variables
         )
-        self.names = watershed_workflow.sources.names.Names(
+        self.names = filenames.Names(
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
@@ -150,7 +151,8 @@ class ManagerDaymet(ManagerDataset):
         bounds_ll = geometry.bounds
         return [np.round(b, 4) for b in bounds_ll]
 
-    def _requestDataset(self, request: ManagerDataset.Request) -> 'ManagerDaymet.Request':
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> Request:
         """Request DayMet data - check if files exist or need downloading.
         
         Parameters
@@ -160,7 +162,7 @@ class ManagerDaymet(ManagerDataset):
             
         Returns
         -------
-        ManagerDaymet.Request
+        Request
             DayMet-specific request with download info and readiness status.
         """
         # Extract parameters from request
@@ -237,12 +239,12 @@ class ManagerDaymet(ManagerDataset):
         
         return ds_combined
 
-    def _fetchDataset(self, request: 'ManagerDaymet.Request') -> xr.Dataset:
+    def _fetchDataset(self, request: Request) -> xr.Dataset:
         """Fetch DayMet data for the request.
         
         Parameters
         ----------
-        request : ManagerDaymet.Request
+        request : Request
             DayMet-specific request with preprocessed parameters and download info.
             
         Returns

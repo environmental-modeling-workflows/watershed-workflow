@@ -1,14 +1,13 @@
 from typing import List, Optional
 import logging
-
 import geopandas as gpd
 
 import watershed_workflow.crs
-import watershed_workflow.sources.standard_names as names
-from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
 
+from . import standard_names as names
+from . import manager_hyriver
 
-class ManagerWBD(ManagerHyRiver):
+class ManagerWBD(manager_hyriver.ManagerHyRiver):
     """Leverages pygeohydro to download WBD data."""
     lowest_level = 12
 
@@ -41,7 +40,7 @@ class ManagerWBD(ManagerHyRiver):
         """Finds all HUs in the WBD dataset of a given level contained in a list of HUCs.""" 
         req_levels = set(len(l) for l in hucs)
         if len(req_levels) != 1:
-            raise ValueError("FileManagerWBD.getShapesByID can only be called with a list of HUCs of the same level")
+            raise ValueError("ManagerWBD.getShapesByID can only be called with a list of HUCs of the same level")
         req_level = req_levels.pop()
 
         if self._level is not None and self._level != req_level:
@@ -54,7 +53,7 @@ class ManagerWBD(ManagerHyRiver):
             return df[df.ID.apply(lambda l : any(l.startswith(huc) for huc in hucs))]
         else:
             self.setLevel(req_level)
-            df = super(ManagerWBD, self)._getShapesByID(hucs)
+            df = super()._getShapesByID(hucs)
             return df
 
     def _addStandardNames(self, df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:

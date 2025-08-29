@@ -11,10 +11,11 @@ import logging
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-from watershed_workflow.sources.manager_dataset import ManagerDataset
+
+from . import manager_dataset
 
 
-class ManagerRaster(ManagerDataset):
+class ManagerRaster(manager_dataset.ManagerDataset):
     """A simple class for reading rasters."""
 
     def __init__(self,
@@ -100,13 +101,14 @@ class ManagerRaster(ManagerDataset):
             self._file_preprocessed = True
 
 
-    def _requestDataset(self, request : ManagerDataset.Request) -> ManagerDataset.Request:
+    def _requestDataset(self, request : manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
         """Request the data -- ready upon request."""
         request.is_ready = True
         return request
 
 
-    def _fetchDataset(self, request : ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request : manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Fetch the data."""
         bounds = request.geometry.bounds
         

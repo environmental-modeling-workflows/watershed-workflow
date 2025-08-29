@@ -31,11 +31,10 @@ from matplotlib import pyplot as plt
 import folium
 import folium.plugins
 
-import watershed_workflow.sources
 import watershed_workflow.crs
 import watershed_workflow.utils
+import watershed_workflow.sources
 import watershed_workflow.sources.standard_names as names
-import watershed_workflow.source_list
 
 import watershed_workflow.river_tree
 from watershed_workflow.river_tree import River
@@ -704,11 +703,11 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 
     # create the 3D points
     if mesh_points.shape[1] == 3:
-        mesh_points[:,2] = elev
+        mesh_points[:,2] = elev.values
     else:
         new_points = np.zeros((len(mesh_points), 3), 'd')
         new_points[:, 0:2] = mesh_points
-        new_points[:, 2] = elev
+        new_points[:, 2] = elev.values
         m2.coords = new_points
 
 

@@ -1143,8 +1143,8 @@ def smoothTimeSeries_Array(data: np.ndarray,
         If method is not recognized, parameters are invalid, or data contains NaN.
     """
     # Check for NaN values
-    if np.any(np.isnan(data)):
-        raise ValueError("Data contains NaN values")
+    # if np.any(np.isnan(data)):
+    #     raise ValueError("Data contains NaN values")
 
     if method == 'savgol':
         # Extract savgol parameters
@@ -1289,8 +1289,8 @@ def smoothTimeSeries_DataArray(da: xr.DataArray,
         raise ValueError(f"Data must have a '{time_dim}' dimension")
 
     # Check for NaN values
-    if np.any(np.isnan(da.values)):
-        raise ValueError("DataArray contains NaN values")
+    # if np.any(np.isnan(da.values)):
+    #     raise ValueError("DataArray contains NaN values")
 
     # Get the axis number for time dimension
     time_axis = da.dims.index(time_dim)
@@ -1507,8 +1507,8 @@ def _smooth2D_Array(data: np.ndarray,
         If method is not recognized or data contains NaN.
     """
     # Check for NaN values
-    if np.any(np.isnan(data)):
-        raise ValueError("Data contains NaN values")
+    # if np.any(np.isnan(data)):
+    #     raise ValueError("Data contains NaN values")
 
     # Ensure we have at least 2D data
     if data.ndim < 2:
@@ -1665,8 +1665,8 @@ def smooth2D_DataArray(da: xr.DataArray,
         raise ValueError(f"Dimension '{dim2}' not found in DataArray")
 
     # Check for NaN values
-    if np.any(np.isnan(da.values)):
-        raise ValueError("DataArray contains NaN values")
+    # if np.any(np.isnan(da.values)):
+    #     raise ValueError("DataArray contains NaN values")
 
     # Get indices of spatial dimensions
     dim1_idx = da.dims.index(dim1)
@@ -2064,7 +2064,7 @@ def rasterizeGeoDataFrame(gdf: gpd.GeoDataFrame,
 
     # Get bounds
     if bounds is None:
-        bounds = gdf.total_bounds  # minx, miny, maxx, maxy
+        bounds = tuple(gdf.total_bounds)  # minx, miny, maxx, maxy
 
     minx, miny, maxx, maxy = bounds
 

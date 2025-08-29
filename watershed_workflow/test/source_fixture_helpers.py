@@ -19,7 +19,7 @@ Note, you probably need to also commit the updated files to the repo!
 import fiona
 import pickle
 import watershed_workflow.io
-import watershed_workflow.source_list
+import watershed_workflow.sources
 import watershed_workflow.crs
 import watershed_workflow.utils
 
@@ -32,7 +32,7 @@ def read_and_process_dump(pkl_dump_file):
         d = pickle.load(fid)
 
     # collect all HUCs needed
-    nhdp = watershed_workflow.source_list.FileManagerNHDPlus()
+    nhdp = watershed_workflow.sources.FileManagerNHDPlus()
     hucs = dict()
     hydro_reqs = list()
     for huc, v in d.items():

@@ -10,11 +10,11 @@ import watershed_workflow.utils
 import watershed_workflow.crs
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
-from watershed_workflow.sources.manager_shapes import ManagerShapes
 
-import watershed_workflow.sources.standard_names as names
+from . import manager_shapes
+from . import standard_names as names
 
-class ManagerShapefile(ManagerShapes):
+class ManagerShapefile(manager_shapes.ManagerShapes):
     """A simple class for reading shapefiles.
 
     Parameters

@@ -15,7 +15,8 @@ import logging
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
 import watershed_workflow.warp
-import watershed_workflow.sources.standard_names as names
+
+from . import standard_names as names
 
 
 class ManagerShapes(abc.ABC):

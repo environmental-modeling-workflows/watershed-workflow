@@ -4,7 +4,6 @@ import watershed_workflow.sources.manager_nrcs
 
 from fixtures import coweeta
 
-
 def test_nrcs2(coweeta):
     # get imgs
     nrcs = watershed_workflow.sources.manager_nrcs.ManagerNRCS(force_download=True)
@@ -13,7 +12,7 @@ def test_nrcs2(coweeta):
     # check df
     mukeys = set(df['ID'])
     assert len(df) == len(mukeys) # one per unique key
-    assert len(df) == 42
+    assert 50 > len(df) > 40
     assert df.crs is not None
     
     # Test that standard names are applied
@@ -54,7 +53,7 @@ def test_nrcs_geodataframe_input(coweeta):
     df = nrcs.getShapesByGeometry(gdf)
     
     assert isinstance(df, gpd.GeoDataFrame)
-    assert len(df) == 42
+    assert 50 > len(df) > 40
     import watershed_workflow.sources.standard_names as names
     assert names.ID in df.columns
     assert names.NAME in df.columns

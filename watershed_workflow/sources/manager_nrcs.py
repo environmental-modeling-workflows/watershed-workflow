@@ -18,13 +18,14 @@ import shapely.geometry
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-import watershed_workflow.sources.names
 import watershed_workflow.warp
 import watershed_workflow.utils
 import watershed_workflow.soil_properties
-import watershed_workflow.sources.utils as source_utils
-import watershed_workflow.sources.standard_names as snames
-from watershed_workflow.sources.manager_shapes import ManagerShapes
+
+from . import filenames
+from . import utils as source_utils
+from . import standard_names as names
+from . import manager_shapes
 
 _query_template_props = """
 SELECT
@@ -248,7 +249,7 @@ def aggregateMukeyValues(df : gpd.GeoDataFrame,
     return df_mukey
 
 
-class ManagerNRCS(ManagerShapes):
+class ManagerNRCS(manager_shapes.ManagerShapes):
     """The National Resources Conservation Service's SSURGO Database [NRCS]_
     contains a huge amount of information about soil texture, parameters, and
     structure, and are provided as shape files containing soil type
@@ -293,7 +294,7 @@ class ManagerNRCS(ManagerShapes):
         # NRCS-specific setup
         self.fstring = '{:.4f}_{:.4f}_{:.4f}_{:.4f}'
         self.qstring = self.fstring.replace('_', ',')
-        self.name_manager = watershed_workflow.sources.names.Names(
+        self.name_manager = filenames.Names(
             self.name, os.path.join('soil_structure', 'SSURGO'), '', 'SSURGO_%s.shp' % self.fstring)
 
         #self.url_spatial = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
@@ -331,13 +332,13 @@ class ManagerNRCS(ManagerShapes):
         
         try:
             # Try with the union geometry first
-            shapes = self._downloadShapes(union_geometry, self.native_crs_in)
+            shapes = self._download(union_geometry)
         except requests.HTTPError as e:
             if '500 Server Error' in str(e):
                 # If union fails, try with each geometry individually
                 shape_dfs = []
                 for _, row in geometry_gdf.iterrows():
-                    individual_shapes = self._downloadShapes(row.geometry, self.native_crs_in)
+                    individual_shapes = self._download(row.geometry)
                     shape_dfs.append(individual_shapes[['mukey', 'geometry']])
                 shapes = pd.concat(shape_dfs)
             else:
@@ -351,7 +352,7 @@ class ManagerNRCS(ManagerShapes):
         assert shapes.crs is not None
 
         # Get properties - use bounds for filename generation
-        bounds = self._cleanBounds(union_geometry, self.native_crs_in)
+        bounds = self._cleanBounds(union_geometry)
         filename = self.name_manager.file_name(*bounds)
         data_filename = filename[:-4] + "_properties.csv"
         props = self._getProperties(shapes['mukey'], data_filename)
@@ -360,6 +361,7 @@ class ManagerNRCS(ManagerShapes):
         df = shapes.merge(props, on='mukey')
         return df
 
+    
     def _getShapesByID(self, ids: List[str]) -> gpd.GeoDataFrame:
         """Fetch NRCS shapes by MUKEY IDs.
 
@@ -393,17 +395,16 @@ class ManagerNRCS(ManagerShapes):
             GeoDataFrame with standard column names added.
         """
         # Add ID column from MUKEY
-        df[snames.ID] = df['mukey'].astype('string')
+        df[names.ID] = df['mukey'].astype('string')
         
         # Add standard name
-        df[snames.NAME] = [f'NRCS-{mukey}' for mukey in df['mukey']]
-        
+        df[names.NAME] = [f'NRCS-{mukey}' for mukey in df['mukey']]
         return df
 
     
-    def _downloadShapes(self,
-                        geometry : shapely.geometry.base.BaseGeometry,
-                        geometry_crs : CRS) -> gpd.GeoDataFrame:
+    def _download(self,
+                  geometry : shapely.geometry.base.BaseGeometry
+                  ) -> gpd.GeoDataFrame:
         """Downloads and reads soil shapefiles.
 
         This accepts only a bounding box.
@@ -419,7 +420,7 @@ class ManagerNRCS(ManagerShapes):
         -------
         gpd.GeoDataFrame
         """
-        bounds = self._cleanBounds(geometry, geometry_crs)
+        bounds = self._cleanBounds(geometry)
         os.makedirs(self.name_manager.data_dir(), exist_ok=True)
         filename = self.name_manager.file_name(*bounds)
 
@@ -526,19 +527,8 @@ class ManagerNRCS(ManagerShapes):
         df_ats.reset_index(inplace=True)
         return df_ats
 
-
-    def _cleanBounds(self, 
-                     geometry : shapely.geometry.base.BaseGeometry,
-                     geometry_crs : CRS,
-                     buffer : float = 0.0001) -> Tuple[float,float,float,float]:
-        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        bounds_ll = watershed_workflow.warp.shply(geometry, geometry_crs,
-                                                  watershed_workflow.crs.latlon_crs).bounds
-        feather_bounds = list(bounds_ll[:])
-        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
-        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
-        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
-        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
-        return tuple(feather_bounds)
-
+    
+    def _cleanBounds(self, geometry : shapely.geometry.base.BaseGeometry
+                     ) -> Tuple[float,float,float,float]:
+        return tuple(np.round(b, 4) for b in geometry.bounds)
     

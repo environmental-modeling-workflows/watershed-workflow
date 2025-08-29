@@ -6,7 +6,7 @@ import geopandas as gpd
 
 import watershed_workflow.crs
 import watershed_workflow.sources.utils
-import watershed_workflow.source_list
+import watershed_workflow.sources
 
 verb_to_level = { 0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG, 3: logging.DEBUG }
 
@@ -282,27 +282,27 @@ def huc_source_options(parser):
     """Add options for sources."""
     parser.add_argument('--source-huc',
                         type=str,
-                        default=watershed_workflow.source_list.default_huc_source,
-                        choices=set(watershed_workflow.source_list.huc_sources.keys()),
+                        default=watershed_workflow.sources.default_huc_source,
+                        choices=set(watershed_workflow.sources.huc_sources.keys()),
                         help='Hydrologic unit shapefile dataset.  (default = "{}")'.format(
-                            watershed_workflow.source_list.default_huc_source))
+                            watershed_workflow.sources.default_huc_source))
 
 
 def dem_source_options(parser):
     """Add options for sources."""
     parser.add_argument('--source-dem',
                         type=str,
-                        default=watershed_workflow.source_list.default_dem_source,
-                        choices=set(watershed_workflow.source_list.dem_sources.keys()),
+                        default=watershed_workflow.sources.default_dem_source,
+                        choices=set(watershed_workflow.sources.dem_sources.keys()),
                         help='Digital Elevation Model dataset.  (default = "{}")'.format(
-                            watershed_workflow.source_list.default_dem_source))
+                            watershed_workflow.sources.default_dem_source))
 
 
 def hydro_source_options(parser):
     """Add options for sources."""
     parser.add_argument('--source-hydro',
                         type=str,
-                        default=watershed_workflow.source_list.default_hydrography_source,
-                        choices=set(watershed_workflow.source_list.hydrography_sources.keys()),
+                        default=watershed_workflow.sources.default_hydrography_source,
+                        choices=set(watershed_workflow.sources.hydrography_sources.keys()),
                         help='Hydrography dataset.  (default = "{}"'.format(
-                            watershed_workflow.source_list.default_hydrography_source))
+                            watershed_workflow.sources.default_hydrography_source))

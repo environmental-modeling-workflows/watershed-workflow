@@ -5,8 +5,10 @@ import pandas as pd
 
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
-from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
-import watershed_workflow.sources.standard_names as names
+
+from . import standard_names as names
+from . import manager_hyriver
+
 
 waterdata_ids = {'nhdflowline_network' : 'comid',
                   'catchmentsp' : 'featureid',
@@ -55,17 +57,21 @@ mr_renames = { 'GNIS_NAME' : names.NAME,
 def _tryRename(df, old, new):
     try:
         df[new] = df.pop(old)
+        return new
     except KeyError:
-        pass
+        return None
 
-class ManagerNHD(ManagerHyRiver):
+
+class ManagerNHD(manager_hyriver.ManagerHyRiver):
     """Leverages pynhd to download NHD data and its supporting shapes."""
     lowest_level = 12
 
     def __init__(self,
                  dataset_name: str,
                  layer: Optional[str] = None,
-                 catchments: Optional[bool] = True):
+                 catchments: Optional[bool] = True,
+                 fewer_columns : Optional[bool] = True,
+                 ):
         """Initialize NHD manager.
         
         Parameters
@@ -76,8 +82,13 @@ class ManagerNHD(ManagerHyRiver):
             Layer name, defaults to protocol-specific default.
         catchments : bool, optional
             Whether to fetch catchments with flowlines, defaults to True.
+        fewer_columns : bool, optional
+            Whether to remove some of the QA/QC columns from the
+            dataframe, defaults to True.
+
         """
         self._catchment_layer = None
+        self._fewer_columns = fewer_columns
         
         if dataset_name == 'NHDPlus MR v2.1':
             self._protocol_name = 'WaterData'
@@ -150,10 +161,10 @@ class ManagerNHD(ManagerHyRiver):
             
             # Get catchments using HyRiver directly (no recursive catchment fetching)
             ids = df[old_id_name].tolist()
-            cas_raw = ManagerHyRiver._getShapesByID(self, ids)
+            cas_raw = manager_hyriver.ManagerHyRiver._getShapesByID(self, ids)
             
             # Apply standard names to catchments
-            cas_raw = self._addStandardNames(cas_raw)
+            cas_raw = self._addStandardNames(cas_raw, False)
 
             # Merge catchments with flowlines
             df = pd.merge(df, cas_raw, how='outer', left_on=old_id_name,
@@ -165,7 +176,10 @@ class ManagerNHD(ManagerHyRiver):
 
         return df
 
-    def _addStandardNames(self, df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    def _addStandardNames(self,
+                          df: gpd.GeoDataFrame,
+                          fewer_columns : Optional[bool] = None,
+                          ) -> gpd.GeoDataFrame:
         """Convert native column names to standard names.
 
         Parameters
@@ -178,13 +192,28 @@ class ManagerNHD(ManagerHyRiver):
         gpd.GeoDataFrame
             GeoDataFrame with standard column names added.
         """
+        print('Called addStandardNames:')
+        print(list(df.keys()))
         # Add ID column from native ID field
         if self.native_id_field in df.columns:
             df[names.ID] = df[self.native_id_field].astype('string')
         
         # Add other standard name mappings
+        renames = []
         for k, v in self._renames.items():
-            _tryRename(df, k, v)
+            res = _tryRename(df, k, v)
+            if res is not None:
+                renames.append(res)
+
+        # remove QA/QC codes
+        if fewer_columns is None:
+            fewer_columns = self._fewer_columns
+        if fewer_columns:
+            renames.extend(['geometry', names.ID, self.native_id_field])
+            df = df[renames]
+
+        print(list(df.keys()))
+        print('-----')
         return df
 
 
