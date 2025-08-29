@@ -257,18 +257,13 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         }
 
         # submit the task request
-        logging.info('Constructing Task:')
-        logging.info('-------------------')
-        logging.info('JSON:')
-        logging.info(self._TASK_URL)
-        logging.info(task_data)
         r = requests.post(self._TASK_URL,
                           json=task_data,
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
         r.raise_for_status()
 
         task_id = r.json()['task_id']
-        logging.info(f'Requesting dataset on {bounds_ll} response task_id {task_id}')
+        logging.info(f'Requested AppEEARS MODIS dataset on {bounds_ll} yielded task_id {task_id}')
         return task_id
 
     def _checkStatus(self, request: manager_dataset.ManagerDataset.Request) -> str | bool:
@@ -298,8 +293,10 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
                     if entry['task_id'] == request.task_id:
                         logging.info(entry)
                         if 'status' in entry and 'done' == entry['status']:
+                            logging.info('... is ready!')
                             return True
                         else:
+                            logging.info('... is NOT ready!')
                             return False
             logging.info('... status not found')
             return 'UNKNOWN'
@@ -412,14 +409,14 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         # Create filenames for caching
         filenames = dict((v, self._filename(appeears_bounds_str, start_str, end_str, v)) 
                         for v in request.variables)
-        logging.info('Requires files:')
+        logging.info('... requires files:')
         for fname in filenames.values():
             logging.info(f' ... {fname}')
 
         
         # Check for existing files
         if all(os.path.isfile(filename) for filename in filenames.values()):
-            logging.info('files exist locally.')
+            logging.info('... files exist locally.')
             # Data already exists locally
             modis_request = self.Request(
                 request,
@@ -430,7 +427,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             modis_request.is_ready = True
 
         else:
-            logging.info('building request.')
+            logging.info('... building request.')
 
             # Need to create AppEEARS request
             task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
