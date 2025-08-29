@@ -192,8 +192,6 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
         gpd.GeoDataFrame
             GeoDataFrame with standard column names added.
         """
-        print('Called addStandardNames:')
-        print(list(df.keys()))
         # Add ID column from native ID field
         if self.native_id_field in df.columns:
             df[names.ID] = df[self.native_id_field].astype('string')
@@ -212,8 +210,6 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
             renames.extend(['geometry', names.ID, self.native_id_field])
             df = df[renames]
 
-        print(list(df.keys()))
-        print('-----')
         return df
 
 

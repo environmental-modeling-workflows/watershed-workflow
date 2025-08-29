@@ -140,12 +140,10 @@ def test_catchments_functionality(coweeta):
     reaches_no_catchments = nhd_no_catchments.getShapesByGeometry(coweeta)
     
     # With catchments should have more columns (catchment-related columns with _ca suffix)
-    catchment_cols = [col for col in reaches_with_catchments.columns if col.endswith('_ca')]
-    assert len(catchment_cols) > 0, "Should have catchment columns when catchments=True"
+    assert 'catchment' in reaches_with_catchments, "Should have catchment columns when catchments=True"
     
     # Without catchments should have fewer columns
-    no_catchment_cols = [col for col in reaches_no_catchments.columns if col.endswith('_ca')]
-    assert len(no_catchment_cols) == 0, "Should not have catchment columns when catchments=False"
+    assert 'catchment' not in reaches_no_catchments, "Should not have catchment columns when catchments=False"
 
 
 def test_standard_naming_applied(nhd_waterdata, coweeta):

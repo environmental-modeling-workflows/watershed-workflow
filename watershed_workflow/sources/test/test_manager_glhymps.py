@@ -16,7 +16,7 @@ def test_glhymps_coweeta(coweeta):
     """Test GLHYMPS manager using Coweeta example data."""
     # Use the local Coweeta GLHYMPS file
     glhymps_file = os.path.join(os.path.dirname(__file__), '..', '..', '..',
-                                'examples', 'Coweeta', 'input_data', 'GLHYMPS', 'GLHYMPS.shp')
+                                'examples', 'Coweeta', 'input_data', 'soil_structure', 'GLHYMPS', 'GLHYMPS.shp')
     glhymps_file = os.path.abspath(glhymps_file)
     
     # Skip test if file doesn't exist

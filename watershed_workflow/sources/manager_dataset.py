@@ -359,6 +359,10 @@ class ManagerDataset(abc.ABC):
             else:
                 return cftime.datetime(date, 12, 31, calendar=self.native_calendar)
         elif isinstance(date, cftime._cftime.datetime):
+            if date.calendar != self.native_calendar:
+                var = 'start' if is_start else 'end'
+                raise ValueError(f'Invalid value passed for {var}: expected date for calendar '
+                                 f'"{self.native_calendar}" but got date in calendar "{date.calendar}".')
             return date
         else:
             raise TypeError(f"Unsupported date type: {type(date)}")
