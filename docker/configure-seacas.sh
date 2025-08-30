@@ -2,9 +2,9 @@
 # your Anaconda environment's installation, but this is set by default
 # on conda activate.
 
-#CC=`which gcc`
-#CXX=`which g++`  # `which g++` for Linux
-#FC=`which gfortran`
+CC=${COMPILERS}/bin/gcc
+CXX=${COMPILERS}/bin/g++
+FC=${COMPILERS}/bin/gfortran
 
 SEACAS_SRC_DIR=${SEACAS_DIR}/src/seacas
 
@@ -25,8 +25,8 @@ cmake \
     -D CMAKE_CXX_COMPILER:FILEPATH=${CXX} \
     -D CMAKE_C_COMPILER:FILEPATH=${CC} \
     -D CMAKE_Fortran_COMPILER:FILEPATH=${FC} \
-    -D CMAKE_AR:FILEPATH=/opt/conda/envs/watershed_workflow_tools/bin/gcc-ar \
-    -D CMAKE_RANLIB:FILEPATH=/opt/conda/envs/watershed_workflow_tools/bin/gcc-ranlib \
+    -D CMAKE_AR:FILEPATH=${COMPILERS}/bin/gcc-ar \
+    -D CMAKE_RANLIB:FILEPATH=${COMPILERS}/bin/gcc-ranlib \
     -D SEACASProj_SKIP_FORTRANCINTERFACE_VERIFY_TEST:BOOL=ON \
     -D TPL_ENABLE_Netcdf:BOOL=ON \
     -D TPL_ENABLE_HDF5:BOOL=ON \

@@ -57,7 +57,7 @@ def start_docker(data_library, workdir, port, pull='missing', tag='master', for_
         raise FileNotFoundError(f'Working directory {abspath_workdir} does not exist.')
 
     cmd = ['docker', 'run', '-it', '--rm', # remove the image after completion
-           '-p', f'{port}:8888', # port here is the host port
+           '-p', f'{port}:9999', # port here is the host port
            '--pull', pull, # options for whether to update
            '-e', 'JUPYTER_ENABLE_LAB=yes', # use jupyterlab, not notebook
            '-v', f'{abspath_data_library}:/home/jovyan/data:delegated', # volume for data
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--ats', action='store_true', help='Use docker image with ATS and ats_input_spec included.')
     parser.add_argument('--rc', type=str, default=None, help='Configuration file, see below.')
     parser.add_argument('--data-library', type=str, default=None, help='Location of data library.')
-    parser.add_argument('-p', '--port', type=int, default='8888', help='Port to open for jupyterlab.')
+    parser.add_argument('-p', '--port', type=int, default='9999', help='Port to open for jupyterlab.')
     parser.add_argument('--pull', action='store_true', help='Pull latest changes from dockerhub')
     parser.add_argument('-t', '--tag', type=str, default='master',
                         help='Tag of the watershed_workflow container.')
@@ -90,5 +90,5 @@ if __name__ == '__main__':
     if args.pull:
         pull = 'always'
     else:
-        pull = 'ifneeded'
+        pull = 'missing'
     start_docker(data_library, args.WORKDIR, args.port, pull=pull, tag=args.tag, for_ats=args.ats)

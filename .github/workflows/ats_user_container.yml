@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: ATS User docker image
 
 on:
@@ -8,16 +6,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # The type of runner that the job will run on
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+            platform: linux/arm64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Extract branch name
         id: extract_branch
         run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
+
+      - name: Extract short sha name
+        id: extract_short_sha
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
 
       - name: Extract docker tag name
         id: extract_tag
@@ -26,6 +38,22 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Check to see if USER_ENV_DOCKER_TAG exists for current branch
+        run: |
+          # check to see if manifest for requested image exists, echo $? returns 0 if it exists 
+          docker manifest inspect ${{secrets.DOCKER_HUB_USERNAME}}/watershed_workflow:${{ env.BRANCH_TAG }} > /dev/null 2>&1 ;
+          # returns 0 if image exists, 1 if it is missing (so default to master if 1)
+          if [ $? -eq 1 ]; then
+            echo "USER_ENV_BRANCH=master" >> $GITHUB_ENV
+          else
+            echo "USER_ENV_BRANCH=${{ env.BRANCH_TAG }}" >> $GITHUB_ENV
+          fi 
+
+      - name: check environment variable
+        run: |
+          # verify that logic above has worked
+          echo ${{ env.USER_ENV_BRANCH }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -37,13 +65,49 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: ./
+          context: .
           file: ./docker/ATS-User-Env.Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}
-          build-args: DOCKER_TAG=${{ env.BRANCH_TAG }}
+          push: false
+          load: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
+          build-args: USER_ENV_DOCKER_TAG=${{ env.USER_ENV_BRANCH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Manually push to avoid creating manifest
+        id: docker_push
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}-${{ matrix.arch }}-${{ env.GITHUB_SHORT_SHA }}
+
+  fix-manifest:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4     
+
+      - name: Extract branch name
+        id: extract_branch
+        run: echo "BRANCH_NAME=$GITHUB_REF_NAME" >> $GITHUB_ENV
+
+      - name: Extract short sha name
+        id: extract_short_sha
+        run: echo "GITHUB_SHORT_SHA=$(echo ${GITHUB_SHA::7})" >> $GITHUB_ENV
+
+      - name: Extract docker tag name
+        id: extract_tag
+        run: echo "BRANCH_TAG=$(echo ${GITHUB_REF_NAME} | sed 's/[^[:alnum:]\.\_\-]/-/g')" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{secrets.DOCKER_HUB_USERNAME}}
+          password: ${{secrets.DOCKER_HUB_ACCESS_TOKEN}}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }} \
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}-amd64-${{ env.GITHUB_SHORT_SHA }} \
+            --amend ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}-arm64-${{ env.GITHUB_SHORT_SHA }}
+
+          docker manifest push ${{ secrets.DOCKER_HUB_USERNAME }}/watershed_workflow-ats:${{ env.BRANCH_TAG }}
