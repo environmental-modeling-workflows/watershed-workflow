@@ -8,3 +8,14 @@ watershed_workflow.egg-info/PKG-INFO
 *checkpoint.ipynb
 docs/build
 docs/deploy
+.ipynb_checkpoints
+examples/**/*.parquet
+examples/**/*.pickle
+examples/**/*.h5
+examples/**/*.nc
+examples/**/*.xml
+examples/**/*.csv
+examples/**/*.exo
+CLAUDE*
+.claude
+cache
