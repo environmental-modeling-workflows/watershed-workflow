@@ -1,0 +1,16 @@
+[
+    {
+        "name": "2.0 (stable)",
+        "version": "2.0",
+        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/stable/",
+        "preferred": "2.0"
+    },
+    {
+        "version": "1.6",
+        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/1.6/",
+    },
+    {
+        "version": "dev",
+        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/dev/",
+    }
+]

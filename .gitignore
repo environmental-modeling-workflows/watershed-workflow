@@ -6,3 +6,5 @@ watershed_workflow.egg-info/PKG-INFO
 *.txt
 .DS_Store
 *checkpoint.ipynb
+docks/build
+docks/deploy
