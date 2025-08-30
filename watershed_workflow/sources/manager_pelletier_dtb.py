@@ -3,11 +3,12 @@ import os, sys
 import logging
 import xarray as xr
 import shapely.geometry
+import numpy as np
 
-import watershed_workflow.sources.manager_raster
-import watershed_workflow.sources.names
 from watershed_workflow.crs import CRS
 
+from . import manager_raster
+from . import filenames
 
 # No API for getting GLHYMPS locally -- must download the whole thing.
 urls = {
@@ -16,7 +17,7 @@ urls = {
 }
 
 
-class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaster):
+class ManagerPelletierDTB(manager_raster.ManagerRaster):
     """The [PelletierDTB]_ global soil regolith sediment map provides global values of
     depth to bedrock at a 1km spatial resolution.
 
@@ -39,43 +40,23 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
     """
     def __init__(self, filename=None):
         if filename is None:
-            self.name = 'Pelletier DTB'
-            self.names = watershed_workflow.sources.names.Names(
-                self.name,
+            # Use default file location via Names system
+            self.names = filenames.Names(
+                'Pelletier DTB',
                 os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
                              'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
-            super(ManagerPelletierDTB, self).__init__(self.names.file_name())
+            filename = self.names.file_name()
         else:
-            self.name = filename
+            # Use provided filename directly
             self.names = None
-            super(ManagerPelletierDTB, self).__init__(self.name)
+            
+        # Initialize ManagerRaster with the resolved filename
+        # ManagerRaster will set name and source attributes appropriately
+        super(ManagerPelletierDTB, self).__init__(filename, None, None, None, None)
 
-    def getDataset(self, 
-                   geometry : shapely.geometry.base.BaseGeometry,
-                   geometry_crs : CRS,
-                   band : int = 1) -> xr.DataArray:
-        """Read the DTB raster.
 
-        Parameters
-        ----------
-        geometry : shapely.geometry.base.BaseGeometry
-          Subset the raster to cover this shape.
-        geometry_crs : CRS
-          CRS of the geometry
-
-        Returns
-        -------
-        xr.DataArray
-        """
-        filename = self._download()
-        raster = super(ManagerPelletierDTB, self).getDataset(geometry, geometry_crs, band)
-        return raster
-
-    def _download(self):
-        """Download the files, returning downloaded filename."""
-        # check directory structure
-        if self.names is None:
-            return self.name
+    def _download(self, force : bool = False):
+        """Validate the files exist, returning the filename."""
         filename = self.names.file_name()
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
@@ -84,3 +65,15 @@ class ManagerPelletierDTB(watershed_workflow.sources.manager_raster.ManagerRaste
             logging.error(self.__doc__)
             raise RuntimeError(f'PelletierDTB download file {filename} not found.')
         return filename
+
+
+    def _fetchDataset(self, request : manager_raster.ManagerRaster.Request) -> xr.Dataset:
+        """Fetch the data."""
+        dset = super(ManagerPelletierDTB, self)._fetchDataset(request)
+
+        # DTB in pelletier is an int with -1 indicating nodata
+        dset['band_1'] = dset['band_1'].astype("float32")
+        dset['band_1'].encoding["_FillValue"] = np.nan
+        dset.encoding["_FillValue"] = np.nan
+        dset['band_1'].where(dset['band_1'] < 0)
+        return dset

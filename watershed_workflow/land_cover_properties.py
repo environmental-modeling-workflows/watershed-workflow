@@ -21,7 +21,6 @@ from watershed_workflow.sources.manager_modis_appeears import colors as modis_co
 def computeTimeSeries(lai: xarray.DataArray,
                       lc: xarray.DataArray,
                       unique_lc: Optional[Iterable[int]] = None,
-                      lc_idx: int = -1,
                       polygon: Optional[shapely.geometry.Polygon] = None,
                       polygon_crs: Optional[CRS] = None,
                       **kwargs) -> pd.DataFrame:
@@ -36,8 +35,6 @@ def computeTimeSeries(lai: xarray.DataArray,
       The LULC data.
     unique_lc : list
       List of unique land cover types.  If None, will be computed from raster.
-    lc_idx : int
-      Index of the land cover type to use for the time series. Default is -1 (lastest year).
     polygon : shapely.Polygon, optional
       If provided, restricts the lai and lc data to the polygon.
     polygon_crs : CRS, optional
@@ -61,14 +58,15 @@ def computeTimeSeries(lai: xarray.DataArray,
     # find the unique land cover types
     if unique_lc is None:
         unique_lc = list(np.unique(lc.values[~np.isnan(lc.values)]))
-
+        
     # average lai for all pixels in the mask and of the lc type
     df = pd.DataFrame()
-    df['time [datetime]'] = lai['time']
+    df['time'] = lai['time']
 
+    assert len(lc.shape) == 2
     for ilc in unique_lc:
         time_series = [
-            lai.values[itime][np.where(lc.values[lc_idx] == ilc)].mean()
+            lai.values[itime][np.where(lc.values == ilc)].mean()
             for itime in range(len(lai['time']))
         ]
         col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
@@ -244,7 +242,7 @@ def applyCrosswalk(crosswalk: Dict[int, List[Tuple[int, float]]],
         return f'{nlcd_names[nlcd_id][0]} LAI [-]'
 
     nlcd_lai = pd.DataFrame()
-    nlcd_lai['time [datetime]'] = modis_lai['time [datetime]']
+    nlcd_lai['time'] = modis_lai['time']
 
     if unique_nlcd is None:
         unique_nlcd = list(crosswalk.keys())
@@ -311,9 +309,9 @@ def plotLAI(df: pd.DataFrame,
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-    lai_date = np.array([datetime.datetime(t.year, t.month, t.day) for t in df["time [datetime]"]])
+    lai_date = np.array([datetime.datetime(t.year, t.month, t.day) for t in df["time"]])
     for column in df:
-        if column != 'time [datetime]':
+        if column != 'time':
             name = column.strip(' LAI [-]')
             index = info.indices[name]
             color = info.colors[index][1]

@@ -12,6 +12,7 @@ import datetime
 
 import watershed_workflow.data
 
+
 def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
                           transition_temperature: float) -> Tuple[xr.DataArray, xr.DataArray]:
     """Allocates precipitation between rain and snow based on temperature.
@@ -90,7 +91,7 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> x
 
 def convertAORCToATS(dat: xr.Dataset,
                      transition_temperature: float = 0.,
-                     n_hourly: int = 24,
+                     resample_interval: int = 1,
                      remove_leap_day: bool = False) -> xr.Dataset:
     """Convert xarray.Dataset AORC datasets to standard ATS format output.
 
@@ -148,6 +149,4 @@ def convertAORCToATS(dat: xr.Dataset,
     if remove_leap_day:
         dout = watershed_workflow.data.filterLeapDay_DataFrame(dout)
 
-    # group to n-hourly and take the mean
-    dout = dout.resample(time=datetime.timedelta(hours=n_hourly)).mean()
     return dout

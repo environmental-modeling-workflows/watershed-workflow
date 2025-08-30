@@ -1,11 +1,14 @@
 from typing import List, Optional
 from shapely.geometry.base import BaseGeometry
-from pyproj import CRS
 import geopandas as gpd
 import pandas as pd
 
-from watershed_workflow.sources.manager_hyriver import ManagerHyRiver
-import watershed_workflow.sources.standard_names as names
+from watershed_workflow.crs import CRS
+import watershed_workflow.crs
+
+from . import standard_names as names
+from . import manager_hyriver
+
 
 waterdata_ids = {'nhdflowline_network' : 'comid',
                   'catchmentsp' : 'featureid',
@@ -53,22 +56,42 @@ mr_renames = { 'GNIS_NAME' : names.NAME,
 
 def _tryRename(df, old, new):
     try:
-        df[new] = df[old]
+        df[new] = df.pop(old)
+        return new
     except KeyError:
-        pass
+        return None
 
-class ManagerNHD(ManagerHyRiver):
+
+class ManagerNHD(manager_hyriver.ManagerHyRiver):
     """Leverages pynhd to download NHD data and its supporting shapes."""
     lowest_level = 12
 
     def __init__(self,
-                 protocol : str,
-                 layer : Optional[str] = None,
-                 catchments : Optional[bool] = True):
-        self._catchment_layer = None
+                 dataset_name: str,
+                 layer: Optional[str] = None,
+                 catchments: Optional[bool] = True,
+                 fewer_columns : Optional[bool] = True,
+                 ):
+        """Initialize NHD manager.
         
-        if protocol == 'NHDPlus MR v2.1':
-            self._protocol = 'WaterData'
+        Parameters
+        ----------
+        dataset_name : str
+            NHD dataset name ('NHDPlus MR v2.1', 'NHDPlus HR', 'NHD MR').
+        layer : str, optional
+            Layer name, defaults to protocol-specific default.
+        catchments : bool, optional
+            Whether to fetch catchments with flowlines, defaults to True.
+        fewer_columns : bool, optional
+            Whether to remove some of the QA/QC columns from the
+            dataframe, defaults to True.
+
+        """
+        self._catchment_layer = None
+        self._fewer_columns = fewer_columns
+        
+        if dataset_name == 'NHDPlus MR v2.1':
+            self._protocol_name = 'WaterData'
             self._ids = waterdata_ids
             self._renames = waterdata_renames
             if layer is None:
@@ -76,8 +99,8 @@ class ManagerNHD(ManagerHyRiver):
             if layer == 'nhdflowline_network':
                 self._catchment_layer = 'catchmentsp'
 
-        elif protocol == 'NHDPlus HR':
-            self._protocol = 'NHDPlusHR'
+        elif dataset_name == 'NHDPlus HR':
+            self._protocol_name = 'NHDPlusHR'
             self._ids = hr_ids
             self._renames = hr_renames
             if layer is None:
@@ -85,63 +108,153 @@ class ManagerNHD(ManagerHyRiver):
             if layer == 'flowline':
                 self._catchment_layer = 'catchment'
 
-        elif protocol == 'NHD MR':
-            self._protocol = 'NHD'
+        elif dataset_name == 'NHD MR':
+            self._protocol_name = 'NHD'
             self._ids = mr_ids
             self._renames = mr_renames
             if layer is None:
                 layer = 'flowline_mr'
 
         else:
-            raise ValueError(f'Invalid ManagerNHD protocol {protocol}')
+            raise ValueError(f'Invalid ManagerNHD dataset_name {dataset_name}')
 
-        super(ManagerNHD, self).__init__(self._protocol)
-        self.name = protocol # override
-        self.setLayer(layer)
-        self._catchments = catchments
-        
-    def setLayer(self, layer : str) -> None:
-        self._layer = layer
+        # NHD data is typically in lat/lon coordinates
+        native_crs_in = watershed_workflow.crs.latlon_crs
+        # Rough resolution estimate for degree-based data
+        native_resolution = 0.001  # ~100m at mid-latitudes
+
+        # Get ID name for this layer
         if layer in self._ids:
-            self._id_name = self._ids[layer]
+            id_name = self._ids[layer]
         else:
-            self._id_name = self._layer
+            id_name = layer
+
+        super().__init__(self._protocol_name, native_crs_in, native_resolution, layer, id_name)
+        self.name = dataset_name
+        self._catchments = catchments
 
     def getCatchments(self,
                       df : gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-        if self._catchment_layer is not None:
-            # also get catchments
-            old_layer = self._layer
-            self.setLayer(self._catchment_layer)
-            ids = df.index
-            cas_raw = super(ManagerNHD, self).getShapesByID(ids)
-            self.setLayer(old_layer)
-
-            df = pd.merge(df, cas_raw, how='outer', left_on=names.ID,
-                          right_on=names.ID, suffixes=(None, '_ca'))
-        return df
-
-    def addStandardNames(self, df):
-        for k,v in self._renames.items():
-            _tryRename(df, k, v)
-        return df
+        """Add catchment data to flowline data.
+        
+        Parameters
+        ----------
+        df : gpd.GeoDataFrame
+            GeoDataFrame with flowline data and ID column.
             
-    def getShapesByGeometry(self,
-                            geometry : BaseGeometry,
-                            geometry_crs : CRS) -> gpd.GeoDataFrame:
-        df = super(ManagerNHD, self).getShapesByGeometry(geometry, geometry_crs)
-        if self._catchments:
-            df = self.getCatchments(df)
-        df = self.addStandardNames(df)        
-        return df
-    
-    def getShapesByID(self,
-                      ids : List[str] | str) -> gpd.GeoDataFrame:
-        df = super(ManagerNHD, self).getShapesByID(ids)
-        if self._catchments:
-            df = self.getCatchments(df)
-        df = self.addStandardNames(df)        
-        return df
-    
+        Returns
+        -------
+        gpd.GeoDataFrame
+            GeoDataFrame with catchment data merged in.
+        """
+        if self._catchment_layer is not None:
+            # Save current layer and switch to catchment layer
+            old_layer = self._layer
+            old_id_name = self._id_name
+            
+            # Set catchment layer properties
+            self._layer = self._catchment_layer
+            if self._catchment_layer in self._ids:
+                self._id_name = self._ids[self._catchment_layer]
+            else:
+                self._id_name = self._catchment_layer
+            
+            # Get catchments using HyRiver directly (no recursive catchment fetching)
+            ids = df[old_id_name].tolist()
+            cas_raw = manager_hyriver.ManagerHyRiver._getShapesByID(self, ids)
+            
+            # Apply standard names to catchments
+            cas_raw = self._addStandardNames(cas_raw, False)
 
+            # Merge catchments with flowlines
+            df = pd.merge(df, cas_raw, how='outer', left_on=old_id_name,
+                          right_on=self._id_name, suffixes=(None, '_ca'))
+
+            # Restore original layer properties
+            self._layer = old_layer
+            self._id_name = old_id_name
+
+        return df
+
+    def _addStandardNames(self,
+                          df: gpd.GeoDataFrame,
+                          fewer_columns : Optional[bool] = None,
+                          ) -> gpd.GeoDataFrame:
+        """Convert native column names to standard names.
+
+        Parameters
+        ----------
+        df : gpd.GeoDataFrame
+            GeoDataFrame with native column names.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            GeoDataFrame with standard column names added.
+        """
+        # Add ID column from native ID field
+        if self.native_id_field in df.columns:
+            df[names.ID] = df[self.native_id_field].astype('string')
+        
+        # Add other standard name mappings
+        renames = []
+        for k, v in self._renames.items():
+            res = _tryRename(df, k, v)
+            if res is not None:
+                renames.append(res)
+
+        # remove QA/QC codes
+        if fewer_columns is None:
+            fewer_columns = self._fewer_columns
+        if fewer_columns:
+            renames.extend(['geometry', names.ID, self.native_id_field])
+            df = df[renames]
+
+        return df
+
+
+    def _getShapesByGeometry(self, geometry_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+        """Fetch NHD shapes by geometry, including catchments if requested.
+
+        Parameters
+        ----------
+        geometry_gdf : gpd.GeoDataFrame
+            GeoDataFrame with geometries in native_crs_in to search for shapes.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and catchments if requested.
+        """
+        # Get base shapes from HyRiver
+        df = super()._getShapesByGeometry(geometry_gdf)
+        
+        # Add catchments if requested
+        if self._catchments:
+            df = self.getCatchments(df)
+        
+        return df
+    
+    def _getShapesByID(self, ids) -> gpd.GeoDataFrame:
+        """Fetch NHD shapes by ID, including catchments if requested.
+
+        Parameters
+        ----------
+        ids : List[str]
+            List of IDs to retrieve.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            Raw GeoDataFrame with native column names and catchments if requested.
+        """
+        # Get base shapes from HyRiver
+        df = super()._getShapesByID(ids)
+        
+        # Add catchments if requested
+        if self._catchments:
+            df = self.getCatchments(df)
+        
+        return df
+    
 

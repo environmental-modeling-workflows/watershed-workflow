@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Union, Optional, Callable, Any, Sequence, Literal, TypedDict, NotRequired, cast
+from typing import List, Dict, Tuple, Union, Optional, Callable, Any, Sequence, Literal, TypedDict, cast
 
 Segment = Tuple[float, ...]
 Channel = Literal["red", "green", "blue", "alpha"]

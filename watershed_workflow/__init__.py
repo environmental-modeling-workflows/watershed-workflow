@@ -33,8 +33,8 @@ import folium.plugins
 
 import watershed_workflow.crs
 import watershed_workflow.utils
+import watershed_workflow.sources
 import watershed_workflow.sources.standard_names as names
-import watershed_workflow.source_list
 
 import watershed_workflow.river_tree
 from watershed_workflow.river_tree import River
@@ -48,76 +48,6 @@ import watershed_workflow.triangulation
 import watershed_workflow.river_mesh
 import watershed_workflow.condition
 import watershed_workflow.data
-
-
-def _coerceShapes(df : gpd.GeoDataFrame,
-                  crs : Optional[watershed_workflow.crs.CRS] = None,
-                  digits : Optional[int] = None) -> gpd.GeoDataFrame:
-    # often we end up with mixed data -- some 2D, some 3D, which makes
-    # it hard to deal with intersections.  Remove all z coordinates.
-    df['geometry'] = df.geometry.apply(watershed_workflow.utils.removeThirdDimension)
-
-    # often data APIs provide all MultiGeometries, when in fact they are a single LineString/Polygon
-    def _combine(shp : shapely.geometry.base.BaseGeometry) -> shapely.geometry.base.BaseGeometry:
-        if isinstance(shp, shapely.geometry.MultiLineString):
-            return shapely.line_merge(shp)
-        elif isinstance(shp, shapely.geometry.MultiPolygon):
-            return shapely.union_all(shp.geoms)
-        return shp
-    df['geometry'] = df.geometry.apply(_combine)
-
-    # change the crs
-    if crs is not None:
-        old_geo = df.active_geometry_name
-        for col in df.select_dtypes('geometry'):
-            df = df.set_geometry(col).to_crs(crs)
-        df = df.set_geometry(old_geo)
-
-    # round to s fixed number of digits -- this may get deprecated in
-    # favor of using the grid option to shapely 2.0's
-    # union/intersection
-    if digits is not None:
-        df = df.set_precision(10**-digits)
-    return df
-
-
-def getShapes(source : Any,
-              crs : Optional[watershed_workflow.crs.CRS] = None,
-              digits : Optional[int] = None,
-              **kwargs) -> gpd.GeoDataFrame:
-    if isinstance(source, str):
-        source = watershed_workflow.source_list.ManagerShapefile(source)
-    df = source.getShapes()
-    df = _coerceShapes(df, crs, digits)
-    return df
-              
-
-def getShapesByID(source : Any,
-                  ids : Any,
-                  crs : Optional[watershed_workflow.crs.CRS] = None,
-                  digits : Optional[int] = None,
-                  **kwargs) -> gpd.GeoDataFrame:
-    if isinstance(ids, str):
-        ids = [ids,]
-    elif not isinstance(ids, Iterable):
-        ids = [ids,]
-
-    if len(kwargs) > 0:
-        source.set(**kwargs)
-    df = source.getShapesByID(ids)
-    df = _coerceShapes(df, crs, digits)
-    return df
-
-
-def getShapesByGeometry(source : Any,
-                        geom : shapely.geometry.base.BaseGeometry,
-                        geom_crs : watershed_workflow.crs.CRS,
-                        crs : Optional[watershed_workflow.crs.CRS] = None,
-                        digits : Optional[int] = None,
-                        **kwargs) -> gpd.GeoDataFrame:
-    df = source.getShapesByGeometry(geom, geom_crs, **kwargs)
-    df = _coerceShapes(df, crs, digits)
-    return df
 
 
 #
@@ -171,28 +101,29 @@ def findHUC(source : Any,
         if search_level > source.lowest_level:
             return hint
 
-        subhus = getShapesByID(source, hint, crs, level=search_level)
+        source.setLevel(search_level)
+        subhus = source.getShapesByID(hint, out_crs=crs)
 
-        for index, subhu in zip(subhus.index, subhus.geometry):
+        for ID, subhu in zip(subhus[names.ID], subhus.geometry):
             inhuc = _in_huc(shply, subhu)
 
             if inhuc == 2:
                 # fully contained in try_huc, recurse
-                logging.info(f'  subhuc: {index} contains')
-                return _findHUC(source, shply, crs, index)
+                logging.info(f'  subhuc: {ID} contains')
+                return _findHUC(source, shply, crs, ID)
             elif inhuc == 1:
-                logging.info(f'  subhuc: {index} partially contains')
+                logging.info(f'  subhuc: {ID} partially contains')
                 # partially contained in try_huc, return this
                 return hint
             else:
-                logging.info(f'  subhuc: {index} does not contain')
+                logging.info(f'  subhuc: {ID} does not contain')
         assert False
 
     # must shrink the poly a bit in case it is close to or on a boundary
     radius = math.sqrt(shape.area / math.pi)
     shape_s = shape.buffer(-shrink_factor * radius)
 
-    hint_hu = getShapesByID(source, hint, in_crs)
+    hint_hu = source.getShapesByID(hint, out_crs=in_crs)
     inhuc = _in_huc(shape_s, hint_hu.geometry.iloc[0])
     if inhuc != 2:
         raise RuntimeError(f"{source.__class__}: shape not found in hinted HUC '{hint}'")
@@ -772,12 +703,13 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
 
     # create the 3D points
     if mesh_points.shape[1] == 3:
-        mesh_points[:,2] = elev
+        mesh_points[:,2] = elev.values
     else:
         new_points = np.zeros((len(mesh_points), 3), 'd')
         new_points[:, 0:2] = mesh_points
-        new_points[:, 2] = elev
+        new_points[:, 2] = elev.values
         m2.coords = new_points
+
 
 
 def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
@@ -785,15 +717,13 @@ def getDatasetOnMesh(m2 : watershed_workflow.mesh.Mesh2D,
                      **kwargs) -> np.ndarray:
     """Interpolate xarray data onto cell centroids of a mesh."""
     mesh_points = m2.centroids
-    
     interpolated_data = watershed_workflow.data.interpolateValues(mesh_points, m2.crs, data, **kwargs)
     
     # Ensure the data type of the interpolated data matches the input data
     if not np.issubdtype(interpolated_data.dtype, data.dtype):
         interpolated_data = interpolated_data.astype(data.dtype)
     
-    # Flatten the interpolated data to ensure it is a 1D array
-    return interpolated_data.flatten()
+    return interpolated_data
 
 
 def getShapePropertiesOnMesh(m2 : watershed_workflow.mesh.Mesh2D,

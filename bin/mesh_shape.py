@@ -6,13 +6,13 @@ import logging
 
 import watershed_workflow
 import watershed_workflow.ui
-import watershed_workflow.source_list
+import watershed_workflow.sources
 import watershed_workflow.bin_utils
 
 def get_args():
     # set up parser
     parser = watershed_workflow.ui.get_basic_argparse(__doc__+'\n\n'+
-                                                      watershed_workflow.source_list.__doc__)
+                                                      watershed_workflow.sources.__doc__)
     watershed_workflow.ui.projection(parser)
     watershed_workflow.ui.inshape_args(parser)
     watershed_workflow.ui.huc_hint_options(parser)
@@ -31,7 +31,7 @@ def get_args():
     return parser.parse_args()
 
 def mesh_shapes(args):
-    sources = watershed_workflow.source_list.get_sources(args)
+    sources = watershed_workflow.sources.get_sources(args)
 
     logging.info("")
     logging.info("Meshing shapes from: {}".format(args.input_file))

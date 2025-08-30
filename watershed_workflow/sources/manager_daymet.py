@@ -1,7 +1,7 @@
 """Manager for interacting with DayMet datasets."""
 from typing import List, Optional
 
-
+import attr
 import os, sys
 import logging
 import numpy as np
@@ -11,14 +11,16 @@ import shapely.geometry
 import cftime, datetime
 import xarray as xr
 
-import watershed_workflow.sources.utils as source_utils
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 import watershed_workflow.warp
-import watershed_workflow.sources.names
+
+from . import utils as source_utils
+from . import filenames
+from . import manager_dataset
 
 
-class ManagerDaymet:
+class ManagerDaymet(manager_dataset.ManagerDataset):
     """Daymet meterological datasets.
 
     Daymet is a historic, spatially interpolated product which ingests large
@@ -57,23 +59,49 @@ class ManagerDaymet:
     .. [Daymet] https://daymet.ornl.gov
     """
 
-    _START = cftime.datetime(1980, 1, 1, calendar='noleap')
-    _END = cftime.datetime(2024, 1, 1, calendar='noleap')
-    VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
-    DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
+    # DayMet-specific constants
     URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
 
+    @attr.define
+    class Request(manager_dataset.ManagerDataset.Request):
+        """DayMet-specific request that adds download information."""
+        bounds: list = attr.field(default=None)
+        start_year: int = attr.field(default=None) 
+        end_year: int = attr.field(default=None)
+
     def __init__(self):
-        self.name = 'DayMet 1km'
-        self.names = watershed_workflow.sources.names.Names(
+        # DayMet native data properties
+        native_resolution = 1000.0  # 1km resolution in meters
+        native_start = cftime.datetime(1980, 1, 1, calendar='noleap')
+        native_end = cftime.datetime(2023, 12, 31, calendar='noleap')
+        native_crs_daymet = CRS.from_proj4(
+            '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
+        )
+        valid_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
+        default_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
+        
+        # Initialize base class with native properties
+        super().__init__(
+            name='DayMet 1km',
+            source='ORNL DAAC THREDDS API', 
+            native_resolution=native_resolution,
+            native_crs_in=CRS.from_epsg(4326),      # Accept WGS84 input  
+            native_crs_out=native_crs_daymet,       # Return in DayMet LCC projection
+            native_start=native_start,
+            native_end=native_end,
+            valid_variables=valid_variables,
+            default_variables=default_variables
+        )
+        self.names = filenames.Names(
             self.name, 'meteorology', 'daymet',
             'daymet_{var}_{year}_{north}x{west}_{south}x{east}.nc')
 
     def _download(self, 
                   var : str,
                   year : int,
-                  bounds : list[float],
-                  force : bool = False) -> str:
+                  bounds_str : List[str],
+                  filename : str,
+                  force : bool = False) -> None:
         """Download a NetCDF file covering the bounds.
 
         Parameters
@@ -81,30 +109,18 @@ class ManagerDaymet:
         var : str
           Name the variable, see table in the class documentation.
         year : int
-          A year in the valid range (currently 1980-2018)
-        bounds : [xmin, ymin, xmax, ymax]
+          A year in the valid range (currently 1980-2023)
+        bounds_str : [xmin, ymin, xmax, ymax]
           Desired bounds, in the LatLon CRS.
         force : bool, optional
           If true, re-download even if a file already exists.
-
-        Returns
-        -------
         filename : str
           Resulting NetCDF file.
         """
-        logging.info("Collecting DayMet file to tile bounds: {}".format(bounds))
+        logging.info("Collecting DayMet file to tile bounds: {}".format(bounds_str))
 
         # check directory structure
         os.makedirs(self.names.folder_name(), exist_ok=True)
-
-        # get the target filename
-        bounds_str = [f"{b:.4f}" for b in bounds]
-        filename = self.names.file_name(var=var,
-                                        year=year,
-                                        north=bounds_str[3],
-                                        east=bounds_str[2],
-                                        west=bounds_str[0],
-                                        south=bounds_str[1])
 
         if (not os.path.exists(filename)) or force:
             url_dict = { 'year': str(year), 'variable': var }
@@ -128,36 +144,59 @@ class ManagerDaymet:
         else:
             logging.info("  Using existing: {}".format(filename))
 
-        return filename
 
-    def _cleanDate(self, date : str | cftime.DatetimeNoLeap) -> cftime.DatetimeNoLeap:
-        """Returns a string of the format needed for use in the filename and request."""
-        if type(date) is str:
-            date_split = date.split('-')
-            date = cftime.datetime(int(date_split[0]),
-                                   int(date_split[1]),
-                                   int(date_split[2]),
-                                   calendar='noleap')
-        if date < self._START:
-            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
-        if date > self._END:
-            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
-        return date
+    def _cleanBounds(self, geometry : shapely.geometry.Polygon) -> list[float]:
+        """Compute bounds in lat-lon CRS for DayMet API requests."""
+        # geometry is already in WGS84 (native_crs_in), so just get bounds
+        bounds_ll = geometry.bounds
+        return [np.round(b, 4) for b in bounds_ll]
 
-    def _cleanBounds(self, 
-                     geometry : shapely.geometry.base.BaseGeometry,
-                     geometry_crs : CRS,
-                     buffer : float) -> list[float]:
-        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        bounds_ll = watershed_workflow.warp.shply(geometry, geometry_crs,
-                                                  watershed_workflow.crs.latlon_crs).bounds
-        feather_bounds = list(bounds_ll[:])
-        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
-        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
-        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
-        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
-        return feather_bounds
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> Request:
+        """Request DayMet data - check if files exist or need downloading.
+        
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Dataset request with preprocessed parameters.
+            
+        Returns
+        -------
+        Request
+            DayMet-specific request with download info and readiness status.
+        """
+        # Extract parameters from request
+        geometry = request.geometry
+        start = request.start
+        end = request.end
+        variables = request.variables
+        
+        assert start is not None, "Start date is required for DayMet data"
+        assert end is not None, "End date is required for DayMet data"
+        assert variables is not None, "Variables are required for DayMet data"
 
+        start_year = start.year
+        end_year = (end - datetime.timedelta(days=1)).year
+        if start_year > end_year:
+            raise RuntimeError(f"Start year {start_year} is after end year {end_year}")
+
+        # Get bounds for API requests
+        bounds = self._cleanBounds(geometry)
+        
+        # Create DayMet-specific request with download info
+        daymet_request = self.Request(
+            manager=request.manager,
+            is_ready=True,
+            geometry=request.geometry,
+            start=request.start,
+            end=request.end,
+            variables=request.variables,
+            bounds=bounds,
+            start_year=start_year,
+            end_year=end_year,
+        )
+        
+        return daymet_request
 
     def _openFiles(self,
                    filenames : List[List[str]],
@@ -186,8 +225,8 @@ class ManagerDaymet:
         attrs_ref = ds_combined.x.attrs 
         attrs_ref['units'] = 'm'
 
-        new_x = ds.x * 1000
-        new_y = ds.y * 1000
+        new_x = ds_combined.x * 1000
+        new_y = ds_combined.y * 1000
         new_time = watershed_workflow.data.convertTimesToCFTimeNoleap(
             watershed_workflow.data.convertTimesToCFTime(ds_combined['time'].values))
 
@@ -197,93 +236,49 @@ class ManagerDaymet:
 
         # deal with attrs
         ds_combined.attrs = ds_concat.attrs
-        try:
-            crs = next(da.rio.crs for da in ds_list_allvars if da.rio.crs is not None)
-        except StopIteration:
-            crs = watershed_workflow.crs.daymet_crs
-
-        ds_combined.rio.write_crs(crs, inplace=True)
-        for vname in ds_combined.variables:
-            ds_combined[vname] = ds_combined[vname].rio.write_crs(crs)
+        
         return ds_combined
 
-    def getDataset(self,
-                   geometry : shapely.geometry.base.BaseGeometry,
-                   geometry_crs : CRS,
-                   start : Optional[str | cftime.DatetimeNoLeap] = None,
-                   end : Optional[str | cftime.DatetimeNoLeap] = None,
-                   variables : Optional[List[str]] = None,
-                   force_download : bool = False,
-                   buffer : float = 0.01) -> xr.Dataset:
-        """Gets file for a single year and single variable.
-
+    def _fetchDataset(self, request: Request) -> xr.Dataset:
+        """Fetch DayMet data for the request.
+        
         Parameters
         ----------
-        geometry : shapely.geometry.base.BaseGeometry
-            The geometry for which the dataset is to be retrieved. 
-        geometry_crs : str, optional
-            The coordinate reference system of the geometry. If not provided, it defaults
-            to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
-        start : str or datetime.date object, optional
-          Date for the beginning of the data, in YYYY-MM-DD. Valid is
-          >= 2002-07-01.
-        end : str or datetime.date object, optional
-          Date for the end of the data, in YYYY-MM-DD. Valid is
-          < the current month (DayMet updates monthly.)
-        variables : str or list, optional
-          Name the variables to download, see class-level
-          documentation for choices.  Default is
-          [prcp,tmin,tmax,vp,srad].
-        force_download : bool
-          Download or re-download the file if true.
-        buffer : float
-          Buffer the bounds by this amount, in degrees. The default is 0.01.
-
+        request : Request
+            DayMet-specific request with preprocessed parameters and download info.
+            
         Returns
         -------
-        xarray.Dataset
-          Dataset object containing the met data.
+        xr.Dataset
+            Dataset containing the requested DayMet data.
         """
-        if start is None:
-            start = self._START
-        start = self._cleanDate(start)
-        assert not isinstance(start, str)
-        start_year = start.year
+        # Extract parameters from DayMet request
+        variables = request.variables
+        bounds = request.bounds
+        start_year = request.start_year
+        end_year = request.end_year
 
-        if end is None:
-            end = self._END
-        end = self._cleanDate(end)
-        assert not isinstance(end, str)
-        end_year = (end - datetime.timedelta(days=1)).year
-        if start_year > end_year:
-            raise RuntimeError(
-                f"Provided start year {start_year} is after provided end year {end_year}")
+        # get the target filename
+        bounds_str = [f"{b:.4f}" for b in bounds]
 
-        if variables is None:
-            variables = self.DEFAULT_VARIABLES
-        for var in variables:
-            if var not in self.VALID_VARIABLES:
-                raise ValueError("DayMet data supports variables: {} (not {})".format(
-                    ', '.join(self.VALID_VARIABLES), var))
 
-        # clean bounds
-        bounds = self._cleanBounds(geometry, geometry_crs, buffer=buffer)
-
-        # download files
+        # Download any missing files
         filenames = []
         for var in variables:
-            filename_var = []
+            vfiles = []
             for year in range(start_year, end_year + 1):
-                fname = self._download(var, year, bounds, force=force_download)
-                filename_var.append(fname)
-            filenames.append(filename_var)
+                filename = self.names.file_name(var=var,
+                                                year=year,
+                                                north=bounds_str[3],
+                                                east=bounds_str[2],
+                                                west=bounds_str[0],
+                                                south=bounds_str[1])
+                vfiles.append(filename)
+                if not os.path.exists(filename):
+                    # Download the file
+                    self._download(var, year, bounds_str, filename)
+            filenames.append(vfiles)
 
-        # open files
-        ds = self._openFiles(filenames, variables)
-        ds_sel = ds.sel(time=slice(start, end))
-        ds_sel.attrs = ds.attrs
+        # Open and return dataset (base class handles time clipping and CRS)
+        return self._openFiles(filenames, variables)
 
-        ds_sel.rio.write_crs(ds.rio.crs, inplace=True)
-        for vname in ds_sel.variables:
-            ds_sel[vname] = ds_sel[vname].rio.write_crs(ds.rio.crs)
-        return ds_sel

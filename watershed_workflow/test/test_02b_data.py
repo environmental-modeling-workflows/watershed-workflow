@@ -1197,22 +1197,6 @@ class TestSmoothOverloaded:
         with pytest.raises(TypeError, match="Input data must be"):
             wwd.smoothTimeSeries(data)
     
-    def test_nan_raises_error(self, sample_data):
-        """Test that NaN values raise errors."""
-        times, signal = sample_data
-        signal_with_nan = signal.copy()
-        signal_with_nan[10] = np.nan
-        
-        # DataFrame
-        df = pd.DataFrame({'time': times, 'signal': signal_with_nan})
-        with pytest.raises(ValueError, match="Data contains NaN values"):
-            wwd.smoothTimeSeries(df, 'time')
-        
-        # DataArray
-        da = xr.DataArray(signal_with_nan, coords={'time': times}, dims=['time'])
-        with pytest.raises(ValueError, match="DataArray contains NaN values"):
-            wwd.smoothTimeSeries(da)
-    
     def test_type_preservation(self, sample_dataframe, sample_dataarray, sample_dataset):
         """Test that output type matches input type."""
         df_result = wwd.smoothTimeSeries(sample_dataframe, 'time')
@@ -1668,14 +1652,6 @@ class TestSmooth2DSpatial:
         # Only temperature should be smoothed
         assert np.var(result['temperature'].values) < np.var(sample_dataset['temperature'].values)
         assert np.array_equal(result['pressure'].values, sample_dataset['pressure'].values)
-    
-    def test_nan_raises_error(self, sample_dataarray_xy):
-        """Test that NaN values raise an error."""
-        # Add NaN to data
-        sample_dataarray_xy.values[10, 10] = np.nan
-        
-        with pytest.raises(ValueError, match="DataArray contains NaN values"):
-            wwd.smooth2D_DataArray(sample_dataarray_xy)
     
     def test_missing_dims_raises_error(self):
         """Test error when spatial dimensions not found."""

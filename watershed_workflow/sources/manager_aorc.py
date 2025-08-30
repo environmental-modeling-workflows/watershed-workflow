@@ -6,17 +6,19 @@ import numpy as np
 import xarray as xr
 import shapely
 import cftime, datetime
-
+import logging
 import s3fs
-# import zarr
-# import dask
+import attr
 
-import watershed_workflow.sources.manager_raster
-import watershed_workflow.sources.names
+import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
+from . import manager_raster
+from . import filenames
+from . import manager_dataset
 
-class ManagerAORC:
+
+class ManagerAORC(manager_dataset.ManagerDataset):
     """AORC dataset.
 
     Explore the Analysis Of Record for Calibration (AORC) version 1.1 data
@@ -78,102 +80,87 @@ class ManagerAORC:
     1979–2015 and 2016–present.
 
     """
-    _START = cftime.datetime(2007, 1, 1, calendar='noleap')
-    _END = cftime.datetime(2025, 1, 1, calendar='noleap')
 
+    class Request(manager_dataset.ManagerDataset.Request):
+        """AORC-specific request that includes filename for cached data."""
+        def __init__(self,
+                     request : manager_dataset.ManagerDataset.Request,
+                     filename : str = ''):
+            super().copyFromExisting(request)
+            self.filename = filename
+    
+    # AORC constants
     VALID_VARIABLES = ['APCP_surface', 'DLWRF_surface',
                        'DSWRF_surface', 'PRES_surface', 'SPFH_2maboveground',
                        'TMP_2maboveground', 'UGRD_10maboveground', 'VGRD_10maboveground']
     DEFAULT_VARIABLES = ['APCP_surface', 'DLWRF_surface',
                          'DSWRF_surface', 'PRES_surface', 'SPFH_2maboveground',
                          'TMP_2maboveground', 'UGRD_10maboveground', 'VGRD_10maboveground']
-    URL = f's3://noaa-nws-aorc-v1-1-1km'
+    URL = 's3://noaa-nws-aorc-v1-1-1km'
 
     def __init__(self):
-        self.name = 'AORC'
-        self.names = watershed_workflow.sources.names.Names(
-            self.name, 'meteorology', 'aorc', 'aorc_{start_year}-{end_year}_{north}x{west}_{south}x{east}.nc')
+        # AORC native data properties
+        native_start = cftime.datetime(2007, 1, 1, calendar='standard')
+        native_end = cftime.datetime(2024, 12, 31, calendar='standard')
+        native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
+        native_resolution = 0.00833333  # ~1km in degrees (approximately 1km at mid-latitudes)
+        
+        # Initialize base class with correct parameter order
+        super().__init__(
+            name='AORC v1.1',
+            source='NOAA AWS S3 Zarr',
+            native_resolution=native_resolution,
+            native_crs_in=native_crs,
+            native_crs_out=native_crs,
+            native_start=native_start,
+            native_end=native_end,
+            valid_variables=self.VALID_VARIABLES,
+            default_variables=self.DEFAULT_VARIABLES
+        )
+        
+        # File naming for cached downloads
+        self.names = filenames.Names(self.name, 'meteorology', 'aorc',
+                                     'aorc_{start_year}-{end_year}_{north}x{west}_{south}x{east}.nc')
 
-        # check directory structure
+        # Check directory structure
         os.makedirs(self.names.folder_name(), exist_ok=True)
 
-
-    def _cleanDate(self, date : str | cftime.DatetimeNoLeap) -> cftime.DatetimeNoLeap:
-        """Returns a string of the format needed for use in the filename and request."""
-        if type(date) is str:
-            date_split = date.split('-')
-            date = cftime.datetime(int(date_split[0]),
-                                   int(date_split[1]),
-                                   int(date_split[2]),
-                                   calendar='noleap')
-        if date < self._START:
-            raise ValueError(f"Invalid date {date}, must be after {self._START}.")
-        if date > self._END:
-            raise ValueError(f"Invalid date {date}, must be before {self._END}.")
-        return date
-
-    def _cleanBounds(self, 
-                     geometry : shapely.geometry.base.BaseGeometry,
-                     geometry_crs : CRS,
-                     buffer : float) -> list[float]:
-        """Compute bounds in the required CRS from a polygon or bounds in a given crs"""
-        bounds_ll = watershed_workflow.warp.shply(geometry, geometry_crs,
-                                                  watershed_workflow.crs.latlon_crs).bounds
-        feather_bounds = list(bounds_ll[:])
-        feather_bounds[0] = np.round(feather_bounds[0] - buffer, 4)
-        feather_bounds[1] = np.round(feather_bounds[1] - buffer, 4)
-        feather_bounds[2] = np.round(feather_bounds[2] + buffer, 4)
-        feather_bounds[3] = np.round(feather_bounds[3] + buffer, 4)
-        return feather_bounds
+    def _cleanBounds(self, geometry : shapely.geometry.Polygon) -> list[float]:
+        """Extract bounds from geometry already in native CRS and buffered by base class."""
+        bounds = geometry.bounds
+        return [np.round(b, 4) for b in bounds]
         
 
     def _download(self,
-                  geometry : shapely.geometry.base.BaseGeometry,
-                  geometry_crs: CRS,
+                  geometry : shapely.geometry.Polygon,
                   start_year : int,
                   end_year : int,
-                  buffer : float = 0.01,
                   force : bool = False) -> str:
-        """This method downloads AORC data for a specified geometry and time range.
+        """Download AORC data for geometry and time range from S3 Zarr.
 
         Parameters
         ----------
-        geometry : gpd.GeoDataFrame | gpd.GeoSeries | Tuple[float, float, float, float]
-            The geometry for which the dataset is to be retrieved. It can be a GeoDataFrame,
-            GeoSeries, or a tuple representing the bounding box (minx, miny, maxx, maxy).
-        geometry_crs : str, optional
-            The coordinate reference system of the geometry. If not provided, it defaults
-            to the CRS of the geometry if available, otherwise assumes 'epsg:4326'.
-        start_year : int, optional
-            The starting year for the data download. Defaults to the class-level _START.
-        end_year : int, optional
-            The ending year for the data download. Defaults to the class-level _END.
-        buffer : float, optional
-            Buffer the bounds by this amount, in degrees. The default is 0.05.
+        geometry : shapely.geometry.Polygon
+            Geometry in native CRS already transformed and buffered by base class.
+        start_year : int
+            Starting year for data download.
+        end_year : int
+            Ending year for data download.
         force : bool, optional
             If true, re-download even if a file already exists.
 
         Returns
         -------
         str
-            The filename of the downloaded dataset.
-
-            
-        This function starts a Dask cluster
-
-        This is not required but it speeds up computations. Here we
-        start a local cluster that uses the cores available on the
-        computer running the notebook server. There are many other
-        ways to set up Dask clusters that can scale larger than this.
-        If you are running this on your local machine add this -
-        dask.config.set(temporary_directory='/dask-worker-space') -
-        under import dask
-
+            The filename of the cached dataset.
         """
+        # check directory structure
+        os.makedirs(self.names.folder_name(), exist_ok=True)
+
         dataset_years = list(range(start_year, end_year+1))
 
-        # Reproject the geometry to the AORC CRS
-        bounds = self._cleanBounds(geometry, geometry_crs, buffer)
+        # Get bounds from geometry (already in native CRS and buffered)
+        bounds = self._cleanBounds(geometry)
         
         # get the subset filename
         filename = self.names.file_name(start_year=start_year,
@@ -216,27 +203,63 @@ class ManagerAORC:
         return filename
 
     
-    def getDataset(self, 
-                   geometry : shapely.geometry.base.BaseGeometry,
-                   geometry_crs : CRS,
-                   start : Optional[str | cftime.DatetimeNoLeap] = None,
-                   end : Optional[str | cftime.DatetimeNoLeap] = None,
-                   force_download : bool = False,
-                   buffer : float = 0.01) -> xr.Dataset:
-        if start is None:
-            start = self._START
-        start = self._cleanDate(start)
-        assert not isinstance(start, str)
-        start_year = start.year
+    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+                        ) -> manager_dataset.ManagerDataset.Request:
+        """Request AORC data - ready upon download completion.
+        
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request object containing geometry, dates, and variables.
+            
+        Returns
+        -------
+        ManagerDataset.Request
+            New AORC request object with filename and is_ready flag set.
+        """
+        assert request.start is not None
+        assert request.end is not None
+        assert request.variables is not None
 
-        if end is None:
-            end = self._END
-        end = self._cleanDate(end)
-        assert not isinstance(end, str)
-        end_year = (end - datetime.timedelta(days=1)).year
+        # Convert dates to years
+        start_year = request.start.year
+        end_year = request.end.year
         if start_year > end_year:
             raise RuntimeError(
                 f"Provided start year {start_year} is after provided end year {end_year}")
 
-        filename = self._download(geometry, geometry_crs, start_year, end_year, buffer, force_download)
-        return xr.open_dataset(filename)
+        # Download data to cache (this may take time)
+        filename = self._download(request.geometry, start_year, end_year, force=False)
+        
+        # Create new AORC-specific request with filename
+        aorc_request = self.Request(request, filename)
+        aorc_request.is_ready = True
+        return aorc_request
+
+
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
+        """Implementation of abstract method to fetch AORC data.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request object containing cached data reference.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing the requested AORC data.
+        """
+        # Open cached dataset
+        dataset = xr.open_dataset(request.filename)
+        
+        # Filter to requested variables only
+        if request.variables != self.valid_variables:
+            # Only keep requested variables
+            dataset = dataset[request.variables]
+        
+        # Ensure CRS is properly set
+        if hasattr(dataset, 'rio') and dataset.rio.crs is None:
+            dataset = dataset.rio.write_crs(self.native_crs_out)
+            
+        return dataset
