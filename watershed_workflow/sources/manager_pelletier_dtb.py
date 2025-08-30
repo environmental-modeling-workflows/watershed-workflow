@@ -29,7 +29,7 @@ class ManagerPelletierDTB(manager_raster.ManagerRaster):
 
        which should yield a set of tif files, 
 
-       Global_Soil_Regolith_Sediment_1304/data/*.tif
+       Global_Soil_Regolith_Sediment_1304/data/\\*.tif
 
     .. [PelletierDTB] Pelletier, J.D., P.D. Broxton, P. Hazenberg,
        X. Zeng, P.A. Troch, G. Niu, Z.C. Williams, M.A. Brunke, and

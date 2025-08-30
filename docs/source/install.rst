@@ -1,9 +1,9 @@
 Installation and Setup
 =========================
 
-All code in this package is pure python3, though it can be tricky to
-get all of the dependencies to coexist because of their need for GIS
-libraries.
+All code in this package is pure python3, but we rely on a few
+packages that build C and C++ libraries as well.  While a pypi and
+conda package are in the works, they are not done yet.
 
 Once the code is installed, typical usage builds on two directories:
 the data library and the working directory.  Watershed Workflow
@@ -20,15 +20,14 @@ settings.
 Summary of Dependencies and their Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Standard packages needed include `argparse` and `subprocess`, and for
-testing, `pytest` and `dist_utils`.  Standard math packages include
-`numpy`, `matplotlib`, and `scipy`.  Soil properties often come in
-geodatabase files, which are best read with `pandas`.
+We build extensively on GeoPandas and Xarray/rioxarray for data
+structures that work with geographic information.
 
-GIS work is typically done using expensive/closed source and GUI-based
-tools.  For this work, we instead build on extremely high-quality,
-open-source packages for GIS in python: `fiona`, `rasterio`, `shapely`
-and `cartopy`.
+Additionally, we rely on a lot of external data sources (e.g. DAACs,
+USGS, MRLC, AORC), APIs (AppEEARS), and meta-data packages that
+provide programmatic access to these APIs (HyRiver).  This package
+would not be possible without a LOT of other researchers; we build on
+their work extensively.  See below for citations.
 
 **Optional:** Mesh generation of 2D, "map view" surface meshes uses
 the open source library Triangle, which can be wrapped for python
@@ -131,13 +130,6 @@ documentation, testing, etc:
 The expectation is that you have installed jupyterlab and/or related
 packages in your own base environment or elsewhere, and will simply
 use the watershed_workflow environment as a kernel within Jupyter.
-
-    
-Check your python installation:
-
-.. code-block:: console
-                
-     python -c 'import numpy, matplotlib, scipy, rasterio, fiona, shapely, cartopy, meshpy.triangle; print("SUCCESS")'
 
      
 Installing ExodusII (optional)

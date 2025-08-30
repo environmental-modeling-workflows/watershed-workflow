@@ -13,7 +13,6 @@ SplitHUCs
 +++++++++
 .. automodule:: watershed_workflow.split_hucs
    :members:
-                
 
 RiverTree
 +++++++++

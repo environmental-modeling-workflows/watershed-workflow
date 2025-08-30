@@ -6,37 +6,39 @@ bounds (spatial and/or temporal), the sources typically use REST-APIs
 or other web-based services to locate, download, unzip, and file
 datasets, which are then stored indefinitely for future use.  These
 datasets are stored in a local data store whose location is specified
-in the :ref:`Package configuration` file.
+in the :ref:`Package Configuration` file.
 
-The following sections lay out the source list, which is simply a way
-of getting and working with default sources, and the broad classes of
-sources frequently used in workflows.
+The following sections lay out the sources subpackage, which is simply
+a way of getting and working with default sources, and the broad
+classes of sources frequently used in workflows.
 
 .. autosummary::
    :nosignatures:
 
-      watershed_workflow.sources.manager_nhd._FileManagerNHD
-      watershed_workflow.sources.manager_ned.FileManagerNED
-      watershed_workflow.sources.manager_nlcd.FileManagerNLCD
-      watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS
-      watershed_workflow.sources.manager_nrcs.FileManagerNRCS
-      watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS
-      watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017
-      watershed_workflow.sources.manager_daymet.FileManagerDaymet
-      watershed_workflow.sources.manager_raster.FileManagerRaster
-      watershed_workflow.sources.manager_shape.FileManagerShape
+      watershed_workflow.sources.manager_shapefile.ManagerShapefile
+      watershed_workflow.sources.manager_raster.ManagerRaster
+      watershed_workflow.sources.manager_wbd.ManagerWBD
+      watershed_workflow.sources.manager_nhd.ManagerNHD
+      watershed_workflow.sources.manager_3dep.Manager3DEP
+      watershed_workflow.sources.manager_nrcs.ManagerNRCS
+      watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS
+      watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017
+      watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB
+      watershed_workflow.sources.manager_nlcd.ManagerNLCD
+      watershed_workflow.sources.manager_daymet.ManagerDaymet
+      watershed_workflow.sources.manager_aorc.ManagerAORC
+      watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS
 
 
 Source List
 +++++++++++
 
-.. automodule:: watershed_workflow.source_list
-        :members:
+Most users will access sources through the dictionaries of types of
+sources created here.  In particular, `getDefaultSources()` will be
+the standard starting point.
 
-Implementing a new data source for an existing type of data should
-follow the API for existing implementations.  This makes it easy to
-use it with the existing high level API.  See the
-:ref:`Sources API` for how managers are used within the API.
+.. automodule:: watershed_workflow.sources
+        :members:
 
 
 Watershed boundaries and hydrography
@@ -73,12 +75,23 @@ represented as a shape.
 
 Currently two ways of getting watershed boundaries are supported --
 USGS HUC delineations and user-provided shape files.  Watershed
-boundaries read from shapefiles can use the :ref:`Generic shapefiles`
-manager.
+boundaries read from shapefiles can use the shapefile manager.
 
-.. autoclass:: watershed_workflow.sources.manager_nhd._FileManagerNHD
-      :members: get_huc, get_hucs, get_hydro
+.. autoclass:: watershed_workflow.sources.manager_shapefile.ManagerShapefile
+      :members:
                
+.. autoclass:: watershed_workflow.sources.manager_wbd.ManagerWBD
+      :members:
+
+Getting the reaches used to construct rivers is done as either
+shapefiles as above, or through NHD datasets, which include NHD Medium
+Resolution, NHD Medium Resolution v2.1 (preferred) and NHD High Res.
+
+
+.. autoclass:: watershed_workflow.sources.manager_nhd.ManagerNHD
+      :members:
+
+         
 Digital Elevation Models
 ++++++++++++++++++++++++
 
@@ -97,9 +110,13 @@ ensure that extremely high-resolution queries do not look
 stairstepped; this improves mesh quality in meshes near the resolution
 of the underlying elevation dataset.
 
-.. autoclass:: watershed_workflow.sources.manager_ned.FileManagerNED
-        :members: get_raster
+.. autoclass:: watershed_workflow.sources.manager_raster.ManagerRaster
+        :members:
 
+.. autoclass:: watershed_workflow.sources.manager_3dep.Manager3DEP
+        :members:
+
+           
 Land Cover
 ++++++++++
 
@@ -111,11 +128,11 @@ generated and then used to generate and affect processes and process
 parameters.  Additionally, leaf area index (LAI) is used frequently in
 determining potential evapotranspiration.
 
-.. autoclass:: watershed_workflow.sources.manager_nlcd.FileManagerNLCD
-        :members: get_raster               
+.. autoclass:: watershed_workflow.sources.manager_nlcd.ManagerNLCD
+        :members:
 
-.. autoclass:: watershed_workflow.sources.manager_modis_appeears.FileManagerMODISAppEEARS
-        :members: get_data
+.. autoclass:: watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS
+        :members:
 
 
 Soil structure and properties
@@ -127,34 +144,32 @@ parameterizations.  Similarly, depth to bedrock and other subsurface
 data can be essential in these types of simulations.  Often these are
 mapped into the simulation mesh.
 
-.. autoclass:: watershed_workflow.sources.manager_nrcs.FileManagerNRCS
-        :members: get_shapes, get_shapes_and_properties
+.. autoclass:: watershed_workflow.sources.manager_nrcs.ManagerNRCS
+        :members:
 
-.. autoclass:: watershed_workflow.sources.manager_glhymps.FileManagerGLHYMPS
-        :members: get_shapes, get_shapes_and_properties
+.. autoclass:: watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS
+        :members:
 
-.. autoclass:: watershed_workflow.sources.manager_soilgrids_2017.FileManagerSoilGrids2017
-        :members: get_raster
+.. autoclass:: watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB
+        :members:
+
+.. autoclass:: watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017
+        :members:
            
 
 Meteorology
 +++++++++++
 
-Meteorological data is used for forcing hydrologic models.
+Meteorological data is used for forcing hydrologic models.  Note that
+we keep DayMet here, but it is currently deprecated and unusable due
+to the NASA DAAC THREDDS API being down indefinitely.  Use AORC
+instead.
 
-.. autoclass:: watershed_workflow.sources.manager_daymet.FileManagerDaymet
-        :members: get_data
+.. autoclass:: watershed_workflow.sources.manager_aorc.ManagerAORC
+        :members:
 
+.. autoclass:: watershed_workflow.sources.manager_daymet.ManagerDaymet
+        :members:
                   
-Generic Files
-+++++++++++++
-
-We also provide readers for user-provided rasters and shapefiles for
-generic use.
-
-.. autoclass:: watershed_workflow.sources.manager_raster.FileManagerRaster
-        :members: get_raster               
-   
-.. autoclass:: watershed_workflow.sources.manager_shape.FileManagerShape
-        :members: get_shape, get_shapes
+                  
 

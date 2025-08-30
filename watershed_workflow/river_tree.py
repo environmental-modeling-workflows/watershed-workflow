@@ -184,7 +184,7 @@ class River(watershed_workflow.tinytree.Tree):
         Returns
         -------
         matplotlib figure or axes
-          The plotting result from linestringsWithCoords.
+            The plotting result from linestringsWithCoords.
         """
         inds = [r.index for r in self]
         return watershed_workflow.plot.linestringsWithCoords(self.df.loc[inds], *args, **kwargs)
@@ -209,7 +209,7 @@ class River(watershed_workflow.tinytree.Tree):
         Returns
         -------
         folium.Map
-          Interactive map with the river network displayed.
+            Interactive map with the river network displayed.
         """
         # get a name
         if column == names.ID and names.ID not in self.df:
@@ -477,14 +477,14 @@ class River(watershed_workflow.tinytree.Tree):
         Parameters
         ----------
         s : float
-          Arc length distance from the downstream end of the reach at which
-          to insert the new coordinate. Must be between 0 and the total 
-          reach length.
+            Arc length distance from the downstream end of the reach at which
+            to insert the new coordinate. Must be between 0 and the total 
+            reach length.
 
         Returns
         -------
         int
-          Index of the newly inserted coordinate in the linestring.
+            Index of the newly inserted coordinate in the linestring.
 
         Note
         ----
@@ -541,7 +541,7 @@ class River(watershed_workflow.tinytree.Tree):
         Returns
         -------
         Any
-          The accumulated value for this node and all its children.
+            The accumulated value for this node and all its children.
         """
         val = op(child.accumulate(to_accumulate, to_save, op) for child in self.children)
         val = op([val, self[to_accumulate]])
@@ -773,16 +773,16 @@ class River(watershed_workflow.tinytree.Tree):
         Parameters
         ----------
         df : gpd.GeoDataFrame
-          GeoDataFrame containing reach linestrings. Must have a 'geometry' 
-          column with LineString geometries.
+            GeoDataFrame containing reach linestrings. Must have a 'geometry' 
+            column with LineString geometries.
         tol : float, optional
-          Geometric tolerance for matching reach endpoints to beginpoints.
-          Defaults to _tol (1e-7).
+            Geometric tolerance for matching reach endpoints to beginpoints.
+            Defaults to _tol (1e-7).
 
         Returns
         -------
         list[River]
-          List of River objects, each representing a river network tree.
+            List of River objects, each representing a river network tree.
 
         Note
         ----
@@ -848,14 +848,14 @@ class River(watershed_workflow.tinytree.Tree):
         Parameters
         ----------
         df : gpd.GeoDataFrame
-          GeoDataFrame containing reach linestrings with NHDPlus attributes.
-          Must contain columns for HYDROSEQ and DOWNSTREAM_HYDROSEQ as defined
-          in watershed_workflow.sources.standard_names.
+            GeoDataFrame containing reach linestrings with NHDPlus attributes.
+            Must contain columns for HYDROSEQ and DOWNSTREAM_HYDROSEQ as defined
+            in watershed_workflow.sources.standard_names.
 
         Returns
         -------
         list[River]
-          List of River objects, each representing a river network tree.
+            List of River objects, each representing a river network tree.
         """
         # create a map from hydroseq to node
         hydro_seq_ids = dict(zip(df[names.HYDROSEQ], (cls(i, df) for i in df.index)))
@@ -882,7 +882,7 @@ class River(watershed_workflow.tinytree.Tree):
         Returns
         -------
         list[River]
-          List of River objects, each representing a river network tree.
+            List of River objects, each representing a river network tree.
         """
         assert names.PARENT in df
         assert names.ID in df
@@ -916,7 +916,7 @@ def getNode(rivers, index) -> Optional[River]:
     Returns
     -------
     River or None
-      The River node with the specified index, or None if not found.
+        The River node with the specified index, or None if not found.
     """
     for river in rivers:
         n = river.getNode(index)
@@ -934,20 +934,20 @@ def combineSiblings(n1: River,
     Parameters
     ----------
     n1 : River
-      First sibling node to combine.
+        First sibling node to combine.
     n2 : River  
-      Second sibling node to combine.
+        Second sibling node to combine.
     new_ls : shapely.geometry.LineString, optional
-      Linestring geometry for the combined reach. If None, the geometry
-      is computed by interpolating discrete nodes every ds meters.
+        Linestring geometry for the combined reach. If None, the geometry
+        is computed by interpolating discrete nodes every ds meters.
     ds : float, optional
-      Distance between interpolated points when computing new geometry.
-      Required if new_ls is None.
+        Distance between interpolated points when computing new geometry.
+        Required if new_ls is None.
 
     Returns
     -------
     River
-      The combined river node (n1 is modified and returned).
+        The combined river node (n1 is modified and returned).
 
     Note
     ----
@@ -1009,17 +1009,19 @@ def createRivers(reaches: gpd.GeoDataFrame,
 
     Parameters
     ----------
-    :reaches: The reaches to turn into rivers.
-    :method: Provide the method for constructing rivers.  Valid are:
-
-        * 'geometry' looks at coincident coordinates
-        * 'hydroseq' Valid only for NHDPlus data, this uses the
-          NHDPlus VAA tables Hydrologic Sequence.  If using this
+    reaches : gpd.GeoDataFrame
+        The reaches to turn into rivers.
+    method : str, optional
+        Provide the method for constructing rivers. Valid are:
+        
+        - 'geometry' looks at coincident coordinates
+        - 'hydroseq' Valid only for NHDPlus data, this uses the
+          NHDPlus VAA tables Hydrologic Sequence. If using this
           method, get_reaches() must have been called with both
-          'hydroseq' and 'dnhydroseq'
-          properties requested (or properties=True).
-        * 'native' Reads a natively dumped list of rivers.
-    :tol: Defines what close is in the case of method == 'geometry'
+          'hydroseq' and 'dnhydroseq' properties requested (or properties=True).
+        - 'native' Reads a natively dumped list of rivers.
+    tol : float, optional
+        Defines what close is in the case of method == 'geometry'. Defaults to _tol.
 
     """
     if method == 'hydroseq':
@@ -1049,29 +1051,31 @@ def determineOutletToReachMap(rivers: List[River],
     """Given a list of rivers and a set of gages, find the reach in
     rivers and mark where on the reach to put the effective gage.
     
-    Parameters:
-    -----------
-    rivers: list[River]
-      Rivers from which outlet reaches are potentially from 
+    Parameters
+    ----------
+    rivers : list[River]
+        Rivers from which outlet reaches are potentially from 
     outlets : gpd.GeoDataFrame
-      GeoDataFrame containing at least the following columns
-      - reach_ID_column : ID of the reach on which the outlet lives
-      - measure : (if algorithm == 'measure tol') the % up the reach
-        from downstream of the true location of the outlet
+        GeoDataFrame containing at least the following columns
+        
+        - reach_ID_column : ID of the reach on which the outlet lives
+        - measure : (if algorithm == 'measure tol') the % up the reach
+          from downstream of the true location of the outlet
     reach_ID_column : str
-      Name of the column containing the reach ID.
+        Name of the column containing the reach ID.
 
     Returns
     -------
     geopandas.GeoDataFrame
-      An updated outlets GeoDataFrame including additionally:
-      - river_index : index into rivers indicating which river the outlet is on
-      - reach_index : index of the reach holding the outlet
-      - location_on_reach : an indicator function, 0 if the outlet
+        An updated outlets GeoDataFrame including additionally:
+        
+        - river_index : index into rivers indicating which river the outlet is on
+        - reach_index : index of the reach holding the outlet
+        - location_on_reach : an indicator function, 0 if the outlet
           should be approximated on the downstream end of the reach, 1
           if it is on the upstream end.
-      - true_geometry : the old geometry
-      - geometry : the new location of the outlet
+        - true_geometry : the old geometry
+        - geometry : the new location of the outlet
 
     """
     assert reach_ID_column in outlets
@@ -1126,23 +1130,25 @@ def accumulateCatchments(rivers: List[River],
     Parameters
     ----------
     rivers : list[River]
-      Rivers from which outlet reaches are potentially from 
+        Rivers from which outlet reaches are potentially from 
     outlets : gpd.GeoDataFrame
-      GeoDataFrame containing at least the following columns
-      - river_index : index into rivers indicating which river the outlet is on
-      - reach_index : index of the reach holding the outlet
-      - location_on_reach : indicator (0,1) of where on the reach is
-        the outlet
-
-      Likely this is satisfied by calling determineOutletToReachMap()
+        GeoDataFrame containing at least the following columns
+        
+        - river_index : index into rivers indicating which river the outlet is on
+        - reach_index : index of the reach holding the outlet
+        - location_on_reach : indicator (0,1) of where on the reach is
+          the outlet
+          
+        Likely this is satisfied by calling determineOutletToReachMap()
     reach_ID_column : str, optional
-      Name of the column containing the reach ID. Defaults to 'reach_ID'.
+        Name of the column containing the reach ID. Defaults to 'reach_ID'.
 
     Returns
     -------
     geopandas.GeoDataFrame
-      An updated outlets GeoDataFrame including additionally:
-      - catchment : polygon geometry of the contributing area to the outlet
+        An updated outlets GeoDataFrame including additionally:
+        
+        - catchment : polygon geometry of the contributing area to the outlet
     """
     assert 'river_index' in outlets
     assert 'reach_index' in outlets
@@ -1175,24 +1181,25 @@ def accumulateIncrementalCatchments(rivers: List[River],
                                     outlets: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Given a list of outlet_indices, form the incremental contributing areas.
     
-    Parameters:
-    -----------
-    rivers: list[River]
-      Rivers from which outlet reaches are potentially from 
+    Parameters
+    ----------
+    rivers : list[River]
+        Rivers from which outlet reaches are potentially from 
     outlets : gpd.GeoDataFrame
-      GeoDataFrame containing at least the following columns
-      - river_index : index into rivers indicating which river the outlet is on
-      - reach_index : index of the reach holding the outlet
-      - location_on_reach : indicator (0,1) of where on the reach is
-        the outlet
+        GeoDataFrame containing at least the following columns
+        
+        - river_index : index into rivers indicating which river the outlet is on
+        - reach_index : index of the reach holding the outlet
+        - location_on_reach : indicator (0,1) of where on the reach is
+          the outlet
 
     Returns
     -------
     geopandas.GeoDataFrame
-      An updated outlets GeoDataFrame including additionally:
-      - incremental_catchment : polygon geometry of the contributing
-        area to the outlet
-
+        An updated outlets GeoDataFrame including additionally:
+        
+        - incremental_catchment : polygon geometry of the contributing
+          area to the outlet
     """
     # sort by number of total children, decreasing.  This ensures that we can work down the tree
     roots = [
@@ -1268,10 +1275,10 @@ def mergeShortReaches(river: River, tol: Optional[float]) -> None:
     Parameters
     ----------
     river : River
-      The river network to process.
+        The river network to process.
     tol : float, optional
-      Length threshold below which reaches will be merged. If None, the 
-      tolerance is taken from the reach property TARGET_SEGMENT_LENGTH.
+        Length threshold below which reaches will be merged. If None, the 
+        tolerance is taken from the reach property TARGET_SEGMENT_LENGTH.
 
     """
     # do-not-merge flag:
@@ -1314,15 +1321,15 @@ def pruneByLineStringLength(river: River, prune_tol: Optional[float] = None) -> 
     Parameters
     ----------
     river : River
-      The river network to prune.
+        The river network to prune.
     prune_tol : float, optional
-      Length threshold below which leaf reaches will be removed. 
-      If None, uses the TARGET_SEGMENT_LENGTH property from each leaf.
+        Length threshold below which leaf reaches will be removed. 
+        If None, uses the TARGET_SEGMENT_LENGTH property from each leaf.
     
     Returns
     -------
     int
-      Number of reaches that were pruned.
+        Number of reaches that were pruned.
     """
     count = 0
     iter_count = 1
@@ -1349,18 +1356,18 @@ def pruneByArea(river: River, area: float, prop: str = names.DRAINAGE_AREA) -> i
     Parameters
     ----------
     river : River
-      The river network to prune.
+        The river network to prune.
     area : float
-      Area threshold in km^2. Reaches with contributing area below this
-      value will be removed.
+        Area threshold in km^2. Reaches with contributing area below this
+        value will be removed.
     prop : str, optional
-      Name of the property containing drainage area values. 
-      Defaults to DRAINAGE_AREA from standard_names.
+        Name of the property containing drainage area values. 
+        Defaults to DRAINAGE_AREA from standard_names.
 
     Returns
     -------
     int
-      Number of reaches that were pruned.
+        Number of reaches that were pruned.
 
     Note
     ----
@@ -1547,7 +1554,7 @@ def isClose(river1: River, river2: River, tol: float) -> bool:
     Returns
     -------
     bool
-      True if the rivers are equivalent within the given tolerance.
+        True if the rivers are equivalent within the given tolerance.
     """
     return all((watershed_workflow.utils.isClose(r1.linestring, r2.linestring, tol)
                 and len(r1.children) == len(r2.children))
