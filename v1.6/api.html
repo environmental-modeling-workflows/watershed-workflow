@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Documentation &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="High Level API" href="hilev.html" />
+    <link rel="prev" title="Workflow library Concepts" href="concepts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="hilev.html">High Level API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_huc"><code class="docutils literal notranslate"><span class="pre">get_huc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_hucs"><code class="docutils literal notranslate"><span class="pre">get_hucs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_split_form_hucs"><code class="docutils literal notranslate"><span class="pre">get_split_form_hucs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_shapes"><code class="docutils literal notranslate"><span class="pre">get_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_split_form_shapes"><code class="docutils literal notranslate"><span class="pre">get_split_form_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.find_huc"><code class="docutils literal notranslate"><span class="pre">find_huc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_reaches"><code class="docutils literal notranslate"><span class="pre">get_reaches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.construct_rivers"><code class="docutils literal notranslate"><span class="pre">construct_rivers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.simplify"><code class="docutils literal notranslate"><span class="pre">simplify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.densify"><code class="docutils literal notranslate"><span class="pre">densify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_waterbodies"><code class="docutils literal notranslate"><span class="pre">get_waterbodies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.triangulate"><code class="docutils literal notranslate"><span class="pre">triangulate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.tessalate_river_aligned"><code class="docutils literal notranslate"><span class="pre">tessalate_river_aligned()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.get_raster_on_shape"><code class="docutils literal notranslate"><span class="pre">get_raster_on_shape()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.values_from_raster"><code class="docutils literal notranslate"><span class="pre">values_from_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.elevate"><code class="docutils literal notranslate"><span class="pre">elevate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.color_raster_from_shapes"><code class="docutils literal notranslate"><span class="pre">color_raster_from_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="hilev.html#watershed_workflow.color_existing_raster_from_shapes"><code class="docutils literal notranslate"><span class="pre">color_existing_raster_from_shapes()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#module-watershed_workflow.source_list">Source List</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#digital-elevation-models">Digital Elevation Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#land-cover">Land Cover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#soil-structure-and-properties">Soil structure and properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#meteorology">Meteorology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html#generic-files">Generic Files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.split_hucs">SplitHUCs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.river_tree">RiverTree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html#module-watershed_workflow.hydrography">Hydrography</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Meshes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.mesh">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.river_mesh">River-aligned Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.triangulation">Triangulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.condition">Condition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html#module-watershed_workflow.regions">Regions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data.html#module-watershed_workflow.daymet">DayMet data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#module-watershed_workflow.soil_properties">Soil properties data manipulation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.crs">CRS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.plot">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-watershed_workflow.utils">Generic utilities</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="concepts.html" class="btn btn-neutral float-left" title="Workflow library Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hilev.html" class="btn btn-neutral float-right" title="High Level API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

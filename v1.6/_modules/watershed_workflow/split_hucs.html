@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>watershed_workflow.split_hucs &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../watershed_workflow.html">watershed_workflow</a></li>
+      <li class="breadcrumb-item active">watershed_workflow.split_hucs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for watershed_workflow.split_hucs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;A module for working with multi-polys, a MultiLine that together forms a Polygon&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">import</span> <span class="nn">shapely.geometry</span>
+<span class="kn">import</span> <span class="nn">shapely.ops</span>
+<span class="kn">import</span> <span class="nn">shapely.errors</span>
+
+<span class="kn">import</span> <span class="nn">watershed_workflow.utils</span>
+
+<span class="n">_abs_tol</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">_rel_tol</span> <span class="o">=</span> <span class="mf">1.e-5</span>
+
+
+<div class="viewcode-block" id="GeometryError">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.GeometryError">[docs]</a>
+<span class="k">class</span> <span class="nc">GeometryError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="HandledCollection">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection">[docs]</a>
+<span class="k">class</span> <span class="nc">HandledCollection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of of objects and handles for those objects.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">objs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set an object&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+<div class="viewcode-block" id="HandledCollection.add">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add">[docs]</a>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a object, returning a handle to that object&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="HandledCollection.add_many">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.add_many">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add many objects, returning a list of handles.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="HandledCollection.pop">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.pop">[docs]</a>
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a handle and its object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for the collection.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HandledCollection.handles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.handles">[docs]</a>
+    <span class="k">def</span> <span class="nf">handles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for handles&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">k</span></div>
+
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">it</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">it</span></div>
+
+
+
+<div class="viewcode-block" id="SplitHUCs">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs">[docs]</a>
+<span class="k">class</span> <span class="nc">SplitHUCs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for dealing with the multiple interacting views of HUCs</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shapes : list[Polygon]</span>
+<span class="sd">      The shapes to be split, one per subcatchment to be delineated.</span>
+<span class="sd">    abs_tol : float</span>
+<span class="sd">      Distance used in defining small holes at intersections to</span>
+<span class="sd">      ignore.</span>
+<span class="sd">    rel_tol : float</span>
+<span class="sd">      Relative to the shapes area, a tolerance for defining small</span>
+<span class="sd">      holes on intersections.</span>
+<span class="sd">    exterior_outlet : np.array((2,))</span>
+<span class="sd">      Location of the outlet of the entire domain.</span>
+<span class="sd">    polygon_outlets : np.array((len(shapes), 2))</span>
+<span class="sd">      Location of the outlets of each polygon.</span>
+
+<span class="sd">    </span>
+<span class="sd">    The resulting class instance includes the following views into</span>
+<span class="sd">    data:</span>
+
+<span class="sd">    segments : HandledCollection[LineString]</span>
+<span class="sd">      unique list of all segments, a HandledCollection of LineStrings</span>
+<span class="sd">    boundaries : HandledCollection[int]</span>
+<span class="sd">      A HandledCollection of handles into segments, identifying those</span>
+<span class="sd">      segments on the outer boundary of the collection.</span>
+<span class="sd">    intersections : HandledCollection[int]</span>
+<span class="sd">      A HandledCollection of handles into segments, identifying those</span>
+<span class="sd">      segments on the shared, inner boundaries.</span>
+<span class="sd">    gons : list[HandledCollection[int], HandledCollection[int]]</span>
+<span class="sd">      One per polygon provided, a pair of HandledCollections,</span>
+<span class="sd">      identifying the collection of handles into intersetctions and</span>
+<span class="sd">      boudaries that make up thos polygon.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">shapes</span><span class="p">,</span>
+                 <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span>
+                 <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span>
+                 <span class="n">exterior_outlet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">polygon_outlets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># all shapes are stored as a collection of collections of segments</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segments</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores segments</span>
+
+        <span class="c1"># Intersect and split the HUCs into unique segments.  Every</span>
+        <span class="c1"># segment in segments is referenced exactly once in either boundaries</span>
+        <span class="c1"># or intersections.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores handles into segments</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores handles into segments</span>
+
+        <span class="c1"># save the property dictionaries to give back upon request</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">properties</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">]</span>
+
+        <span class="c1"># save outlets</span>
+        <span class="k">if</span> <span class="n">polygon_outlets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">polygon_outlets</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">polygon_outlets</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">polygon_outlets</span>
+
+        <span class="k">if</span> <span class="n">exterior_outlet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">exterior_outlet</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exterior_outlet</span> <span class="o">=</span> <span class="n">exterior_outlet</span>
+
+        <span class="c1"># initialize</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">))</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">))</span>
+        <span class="n">uniques</span><span class="p">,</span> <span class="n">intersections</span> <span class="o">=</span> <span class="n">intersectAndSplit</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span>
+
+        <span class="n">boundary_gon</span> <span class="o">=</span> <span class="p">[</span><span class="n">HandledCollection</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+                <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+                <span class="n">bhandle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">handle</span><span class="p">,</span> <span class="p">]))</span>
+                <span class="n">boundary_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">bhandle</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                <span class="n">handles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+                <span class="n">bhandles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">add_many</span><span class="p">([</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="p">])</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">handles</span><span class="p">])</span>
+                <span class="n">boundary_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">bhandles</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Uniques from intersectAndSplit is not None, LineString, or MultiLineString?&quot;</span><span class="p">)</span>
+
+        <span class="n">intersection_gon</span> <span class="o">=</span> <span class="p">[</span><span class="n">HandledCollection</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)):</span>
+                <span class="n">inter</span> <span class="o">=</span> <span class="n">intersections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">inter</span><span class="p">):</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+                    <span class="c1">#print(&quot;Adding linestring intersection&quot;)</span>
+                    <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
+                    <span class="n">ihandle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">handle</span><span class="p">,</span> <span class="p">]))</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ihandle</span><span class="p">)</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ihandle</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="n">handles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inter</span><span class="p">))</span>
+                    <span class="n">ihandles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="p">])</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">handles</span><span class="p">])</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">ihandles</span><span class="p">)</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span><span class="n">ihandles</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="s2">&quot;Intersections from intersectAndSplit is not None, LineString, or MultiLineString?&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># the list of shapes, each entry in the list is a tuple</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gons</span> <span class="o">=</span> <span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">boundary_gon</span><span class="p">,</span> <span class="n">intersection_gon</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="SplitHUCs.polygon">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygon">[docs]</a>
+    <span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct polygon i and return a copy.&quot;&quot;&quot;</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">boundary</span><span class="p">,</span> <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">h_boundary</span> <span class="ow">in</span> <span class="n">boundary</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">[</span><span class="n">h_boundary</span><span class="p">]:</span>
+                <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">h_intersection</span> <span class="ow">in</span> <span class="n">inter</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="p">[</span><span class="n">h_intersection</span><span class="p">]:</span>
+                <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+
+        <span class="n">ml</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">segs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">)</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span>
+        <span class="n">poly</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">poly</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.polygons">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygons">[docs]</a>
+    <span class="k">def</span> <span class="nf">polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the polygons.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">)):</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">polygon</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.spines">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.spines">[docs]</a>
+    <span class="k">def</span> <span class="nf">spines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over spines.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">b</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">i</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.exterior">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.exterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">exterior</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct boundary polygon and return a copy.&quot;&quot;&quot;</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
+                <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+        <span class="n">ml</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">segs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">([</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">ml</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.deep_copy">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.deep_copy">[docs]</a>
+    <span class="k">def</span> <span class="nf">deep_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a deep copy&quot;&quot;&quot;</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cp</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="simplify">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.simplify">[docs]</a>
+<span class="k">def</span> <span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplify, IN PLACE, all segments in the polygon representation.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">hucs</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="removeHoles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.removeHoles">[docs]</a>
+<span class="k">def</span> <span class="nf">removeHoles</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span> <span class="n">remove_all_interior</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes interior small holes between the boundaries of polygons.</span>
+
+<span class="sd">    Note this assumes the polygons are mostly disjoint.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">polygons</span> <span class="o">=</span> <span class="n">polygons</span><span class="p">[:]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Removing holes on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span><span class="si">}</span><span class="s1"> polygons&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">))</span>
+
+    <span class="c1"># first remove interior holes</span>
+    <span class="k">if</span> <span class="n">remove_all_interior</span><span class="p">:</span>
+        <span class="n">polygons2</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">exterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">polygons2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
+                <span class="n">p2</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">p1</span><span class="o">.</span><span class="n">properties</span>
+        <span class="n">polygons</span> <span class="o">=</span> <span class="n">polygons2</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- removed interior&#39;</span><span class="p">)</span>
+
+    <span class="n">union</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- union&#39;</span><span class="p">)</span>
+
+    <span class="c1"># -- deal with disjoint sections separately</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="p">[</span><span class="n">union</span><span class="p">,</span> <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># MultiPolygon --&gt; list of polygons</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">union</span><span class="p">]</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parsing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">union</span><span class="p">)</span><span class="si">}</span><span class="s1"> components for holes&#39;</span><span class="p">)</span>
+    <span class="n">big_holes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">union</span><span class="p">:</span>
+        <span class="c1"># find all holes</span>
+        <span class="k">for</span> <span class="n">hole</span> <span class="ow">in</span> <span class="n">part</span><span class="o">.</span><span class="n">interiors</span><span class="p">:</span>
+            <span class="n">hole</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">abs_tol</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&lt;</span> <span class="n">rel_tol</span> <span class="o">*</span> <span class="n">part</span><span class="o">.</span><span class="n">area</span><span class="p">:</span>
+                    <span class="c1"># give it to someone, anyone, doesn&#39;t matter who</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Found a little hole: area = </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">area</span><span class="si">}</span><span class="s1"> at </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">centroid</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">poly</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">non_point_intersection</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">hole</span><span class="p">))</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;      placing in shape </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="n">polygons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
+                            <span class="n">polygons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">properties</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Found a big hole: area = </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">area</span><span class="si">}</span><span class="s1">, leaving it alone...&#39;</span><span class="p">)</span>
+                    <span class="n">big_holes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+
+    <span class="c1"># for i, poly in enumerate(polygons):</span>
+    <span class="c1">#     if isinstance(poly,shapely.geometry.collection.GeometryCollection) or isinstance(poly,shapely.geometry.MultiPolygon):</span>
+    <span class="c1">#         polygons[i] = list(sorted(poly, key=lambda a : -a.area))[0]</span>
+    <span class="c1">#         if hasattr(poly, &#39;properties&#39;):</span>
+    <span class="c1">#                     polygons[i].properties = poly.properties</span>
+    <span class="c1"># assert(all(isinstance(p, shapely.geometry.Polygon) for p in polygons))</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- complete&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">big_holes</span></div>
+
+
+
+<div class="viewcode-block" id="partition">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.partition">[docs]</a>
+<span class="k">def</span> <span class="nf">partition</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which mostly share boundaries, make sure</span>
+<span class="sd">    they partition the space.  Often HUC boundaries have minor</span>
+<span class="sd">    overlaps and underlaps -- here we try to account for wiggles.</span>
+
+<span class="sd">    Modifies the list.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># for i, s in enumerate(list_of_shapes):</span>
+    <span class="c1">#     props = s.properties</span>
+    <span class="c1">#     s=s.buffer(1)</span>
+    <span class="c1">#     s.properties = props</span>
+    <span class="c1">#     list_of_shapes[i]=s</span>
+
+    <span class="c1"># deal with overlaps</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">)):</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">)):</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">volumetric_intersection</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+                    <span class="n">props</span> <span class="o">=</span> <span class="n">s2</span><span class="o">.</span><span class="n">properties</span>
+                    <span class="n">s2</span> <span class="o">=</span> <span class="n">s2</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseMultipartGeometry</span><span class="p">):</span>
+                        <span class="n">s2</span> <span class="o">=</span> <span class="n">biggest</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+                    <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">s2</span>
+                    <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">props</span>
+            <span class="k">except</span> <span class="n">shapely</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">TopologicalError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">shapely</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">TopologicalError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;When intersection polygons </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> and </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s1">: &#39;</span>
+                                                      <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+
+    <span class="c1"># remove holes</span>
+    <span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">holes</span> <span class="o">=</span> <span class="n">removeHoles</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_of_shapes</span></div>
+
+
+
+<div class="viewcode-block" id="intersectAndSplit">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.intersectAndSplit">[docs]</a>
+<span class="k">def</span> <span class="nf">intersectAndSplit</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which share boundaries (i.e. they partition</span>
+<span class="sd">    some space), return a compilation of their segments.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    list_of_shapes : list[shapely.geometry.Polygon]</span>
+<span class="sd">      The polygons to intersect and split, of length N.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    uniques : list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]</span>
+<span class="sd">      An N-length-list of the entities describing the exterior boundary.</span>
+<span class="sd">    intersections : list[list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]]</span>
+<span class="sd">      An NxN list of lists of the entities describing the interior boundary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">intersections</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">))]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">))]</span>
+    <span class="n">uniques</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">s2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span> <span class="ow">and</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">non_point_intersection</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+                <span class="n">inter</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="n">inter</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">:</span>
+
+                    <span class="n">parts_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">)]</span>
+                    <span class="n">parts_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">)]</span>
+                    <span class="n">parts_polys</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)]</span>
+
+                    <span class="n">mls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span><span class="n">parts_lines</span><span class="p">)</span>
+                    <span class="n">left_over_polys</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">parts_polys</span><span class="p">:</span>
+                        <span class="n">mps</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">mls</span><span class="p">)</span>
+                        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">mps</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">))</span>
+                        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">parts_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">mps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mps</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+                    <span class="n">inter</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">parts_lines</span><span class="p">)</span>
+                    <span class="c1"># if (isinstance(mps, shapely.geometry.MultiPoint)) and (len(mps) == 2):</span>
+                    <span class="c1">#     parts_lines.append(shapely.geometry.LineString([mps[0].coords[0], mps[1].coords[0]]))</span>
+                    <span class="c1"># else:</span>
+                    <span class="c1">#     left_over_polys.append(poly)</span>
+                    <span class="c1"># mls_poly = shapely.geometry.MultiLineString([poly.exterior for poly in left_over_polys])</span>
+                    <span class="c1"># inter_with_polyrings =  shapely.geometry.MultiLineString(parts_lines+list(mls_poly))</span>
+                    <span class="c1"># inter = shapely.ops.linemerge(inter_with_polyrings)</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span> <span class="ow">or</span> \
+                   <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;HUC intersection yielded collection of odd types: </span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">inter</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="p">)</span>
+                    <span class="n">err</span> <span class="o">=</span> <span class="n">GeometryError</span><span class="p">(</span><span class="s1">&#39;HUC intersection yielded collection of odd types&#39;</span><span class="p">)</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">polys</span> <span class="o">=</span> <span class="n">list_of_shapes</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">i_p1</span> <span class="o">=</span> <span class="n">i</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">p1</span> <span class="o">=</span> <span class="n">s1</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">i_p2</span> <span class="o">=</span> <span class="n">j</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">p2</span> <span class="o">=</span> <span class="n">s2</span>
+                    <span class="n">err</span><span class="o">.</span><span class="n">inter</span> <span class="o">=</span> <span class="n">inter</span>
+                    <span class="k">raise</span> <span class="n">err</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Hopefully hole in HUC intersection: (</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">) = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)))</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span> <span class="ow">and</span> \
+                   <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;things are breaking...&#39;</span><span class="p">)</span>
+
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="n">diff</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+                <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff</span>
+
+                <span class="c1"># only save once!</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">j</span><span class="p">:</span>
+                    <span class="n">intersections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">inter</span>
+
+    <span class="c1"># merge uniques, as we have a bunch of segments.</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+            <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="n">uniques_r</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_empty_shapely</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+            <span class="n">uniques_r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+    <span class="k">return</span> <span class="n">uniques_r</span><span class="p">,</span> <span class="n">intersections</span></div>
+
+
+
+<div class="viewcode-block" id="find_outlets_by_crossings">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_crossings">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_crossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug_plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;For each HUC, find all outlets using a river network&#39;s crossing points.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tol</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="c1"># next determine the outlet, and all boundary edges within x m of that outlet</span>
+    <span class="n">polygons</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+    <span class="n">poly_crossings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i_sub</span><span class="p">,</span> <span class="n">poly</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygons</span><span class="p">):</span>
+        <span class="n">my_crossings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">segment</span><span class="p">):</span>
+                <span class="n">my_crossings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">segment</span><span class="p">))</span>
+
+        <span class="c1"># cluster my_crossings to make sure that multiple crossings are only counted once</span>
+        <span class="n">my_crossing_centroids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">crossing</span> <span class="ow">in</span> <span class="n">my_crossings</span><span class="p">:</span>
+            <span class="n">my_crossing_centroids</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">crossing</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">crossing</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">my_crossing_centroids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">my_crossing_centroids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_crossing_centroids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_centroids</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cluster</span><span class="p">(</span>
+                <span class="n">my_crossing_centroids</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cluster_centroids</span> <span class="o">=</span> <span class="n">my_crossing_centroids</span>
+        <span class="n">poly_crossings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cluster_centroids</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Crossings by Polygon:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">poly_crossings</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  Polygon </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    crossing: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1"># unravel the clusters</span>
+    <span class="n">all_crossings</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">poly_crossings</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">p</span><span class="p">]</span>
+
+    <span class="c1"># cluster crossings that are within tolerance across polygons</span>
+    <span class="n">crossings_clusters_indices</span><span class="p">,</span> <span class="n">crossings_clusters_centroids</span> <span class="o">=</span> \
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cluster</span><span class="p">(</span><span class="n">all_crossings</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+
+    <span class="c1"># now group cluster ids by polygon and polygon ids by cluster</span>
+    <span class="n">poly_cluster_indices</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">cluster_poly_indices</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">lcv</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">lcv_poly</span><span class="p">,</span> <span class="n">pc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">poly_crossings</span><span class="p">):</span>
+        <span class="n">my_inds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">pc</span><span class="p">:</span>
+            <span class="n">my_inds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">crossings_clusters_indices</span><span class="p">[</span><span class="n">lcv</span><span class="p">])</span>
+            <span class="n">lcv</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">poly_cluster_indices</span><span class="p">[</span><span class="n">lcv_poly</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_inds</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">my_inds</span><span class="p">:</span>
+            <span class="n">cluster_poly_indices</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lcv_poly</span><span class="p">)</span>
+
+    <span class="c1"># assert equivalent</span>
+    <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">clusters</span> <span class="ow">in</span> <span class="n">poly_cluster_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">pi</span> <span class="ow">in</span> <span class="n">cluster_poly_indices</span><span class="p">[</span><span class="n">ci</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">ci</span><span class="p">,</span> <span class="n">polys</span> <span class="ow">in</span> <span class="n">cluster_poly_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="n">polys</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">ci</span> <span class="ow">in</span> <span class="n">poly_cluster_indices</span><span class="p">[</span><span class="n">pi</span><span class="p">])</span>
+
+    <span class="c1"># create a tree, recursively finding all polygons with only</span>
+    <span class="c1"># one crossing -- this must be an outlet -- then removing it</span>
+    <span class="c1"># from the list, hopefully leaving a downstream polygon with</span>
+    <span class="c1"># only one outlet.  This must be done N iterations, where N is</span>
+    <span class="c1"># the maximal number of polygons crossed from 0th order to</span>
+    <span class="c1"># maximal order.</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Constructing outlet list&#39;</span><span class="p">)</span>
+    <span class="n">outlets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">inlets</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">itercount</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Iteration = </span><span class="si">{</span><span class="n">itercount</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;-----------------&#39;</span><span class="p">)</span>
+        <span class="n">new_outlets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1"># look for polygons with only one crossing -- this must be an outlet.</span>
+        <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">clusters</span> <span class="ow">in</span> <span class="n">poly_cluster_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">pi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outlets</span><span class="p">:</span>
+                <span class="c1"># only one crossing cluster, this is the outlet</span>
+                <span class="n">cluster_id</span> <span class="o">=</span> <span class="n">clusters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">new_outlets</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_id</span>
+                <span class="n">cluster_poly_indices</span><span class="p">[</span><span class="n">cluster_id</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39; poly outlet </span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">cluster_id</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">last_outlet</span> <span class="o">=</span> <span class="n">cluster_id</span>
+                <span class="n">last_outlet_poly</span> <span class="o">=</span> <span class="n">pi</span>
+
+        <span class="c1"># look for clusters with only one poly -- this must be an inlet</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ci</span><span class="p">,</span> <span class="n">polys</span> <span class="ow">in</span> <span class="n">cluster_poly_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">polys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">poly_id</span> <span class="o">=</span> <span class="n">polys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">poly_cluster_indices</span><span class="p">[</span><span class="n">poly_id</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39; poly inlet </span><span class="si">{</span><span class="n">poly_id</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span>
+                <span class="n">inlets</span><span class="p">[</span><span class="n">poly_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">to_remove</span><span class="p">:</span>
+            <span class="n">cluster_poly_indices</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">debug_plot</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_outlets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">get_ax</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">shplys</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">rivers</span><span class="p">([</span><span class="n">river</span><span class="p">,</span> <span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">outlets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">outlet</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">outlet</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">],</span> <span class="p">[</span><span class="n">outlet</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">new_outlets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">outlet</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">outlet</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">],</span> <span class="p">[</span><span class="n">outlet</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">crossings_clusters_centroids</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">ci</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outlets</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="ow">and</span> <span class="n">ci</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_outlets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="n">crossing</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">crossing</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">],</span> <span class="p">[</span><span class="n">crossing</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+            <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Outlets after iteration </span><span class="si">{</span><span class="n">itercount</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="n">outlets</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_outlets</span><span class="p">)</span>
+        <span class="n">itercount</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="n">itercount</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">outlets</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_outlets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;last outlet is </span><span class="si">{</span><span class="n">last_outlet</span><span class="si">}</span><span class="s1"> in polygon </span><span class="si">{</span><span class="n">last_outlet_poly</span><span class="si">}</span><span class="s1"> at </span><span class="si">{</span><span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">last_outlet</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># create the output</span>
+    <span class="n">outlet_locs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">inlet_locs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">outlets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">outlet</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span>
+        <span class="n">outlet_locs</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">outlet</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outlet</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">pi</span><span class="p">,</span> <span class="n">cis</span> <span class="ow">in</span> <span class="n">inlets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">my_inlet_locs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">cis</span><span class="p">:</span>
+            <span class="n">inlet</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span>
+            <span class="n">my_inlet_locs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">inlet</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">inlet</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">inlet_locs</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_inlet_locs</span>
+
+    <span class="n">last_outlet_p</span> <span class="o">=</span> <span class="n">crossings_clusters_centroids</span><span class="p">[</span><span class="n">last_outlet</span><span class="p">]</span>
+    <span class="n">last_outlet_loc</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">last_outlet_p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">last_outlet_p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">hucs</span><span class="o">.</span><span class="n">exterior_outlet</span> <span class="o">=</span> <span class="n">last_outlet_loc</span>
+    <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">outlet_locs</span></div>
+
+
+
+<div class="viewcode-block" id="find_outlets_by_elevation">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_elevation">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_elevation</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">elev_raster</span><span class="p">,</span> <span class="n">elev_raster_profile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find outlets by the minimum elevation on the boundary.&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">watershed_workflow</span>
+    <span class="n">exterior</span> <span class="o">=</span> <span class="n">hucs</span><span class="o">.</span><span class="n">exterior</span><span class="p">()</span><span class="o">.</span><span class="n">exterior</span>
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">elev_raster</span><span class="p">,</span> <span class="n">elev_raster_profile</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">hucs</span><span class="o">.</span><span class="n">exterior_outlet</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">mesh_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">outlets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">():</span>
+        <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">])[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">elevate</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">elev_raster</span><span class="p">,</span> <span class="n">elev_raster_profile</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">outlets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">mesh_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]))</span>
+    <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">outlets</span></div>
+
+
+
+<div class="viewcode-block" id="find_outlets_by_hydroseq">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.find_outlets_by_hydroseq">[docs]</a>
+<span class="k">def</span> <span class="nf">find_outlets_by_hydroseq</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find outlets using the HydroSequence VAA of NHDPlus.</span>
+
+<span class="sd">    Finds the minimum hydroseq reach in each HUC, and intersects that</span>
+<span class="sd">    with the boundary to find the outlet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">polygons</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">())</span>
+    <span class="n">polygon_outlets</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">polygons</span><span class="p">()]</span>
+
+    <span class="c1"># iterate over the reaches, sorted by hydrosequence, looking for</span>
+    <span class="c1"># the first one that intersects the polygon boundary.</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">is_hydroseq_consistent</span><span class="p">())</span>
+    <span class="n">reaches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;HydrologicSequence&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">tol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">segment</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">]</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">poly_ids</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygons</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">lcv</span><span class="p">,</span> <span class="n">reach</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reaches</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">poly_i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span><span class="p">,(</span><span class="n">i</span><span class="p">,</span><span class="n">poly</span><span class="p">))</span> <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="p">,(</span><span class="n">i</span><span class="p">,</span><span class="n">poly</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">poly_ids</span><span class="p">)</span> \
+                                     <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">reach</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># find the intersection</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;hydroseq </span><span class="si">{</span><span class="n">lcv</span><span class="si">}</span><span class="s1"> is a match for polygon </span><span class="si">{</span><span class="n">poly_i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">intersect</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">reach</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">intersect</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
+                <span class="c1"># find the nearest point instead</span>
+                <span class="n">intersect</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">nearest_points</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="p">,</span> <span class="n">reach</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">intersect</span> <span class="o">=</span> <span class="n">intersect</span><span class="o">.</span><span class="n">centroid</span>
+
+            <span class="k">if</span> <span class="n">first</span><span class="p">:</span>
+                <span class="n">hucs</span><span class="o">.</span><span class="n">exterior_outlet</span> <span class="o">=</span> <span class="n">intersect</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">polygon_outlets</span><span class="p">[</span><span class="n">poly_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">intersect</span>
+            <span class="n">poly_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">poly_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">hucs</span><span class="o">.</span><span class="n">polygon_outlets</span> <span class="o">=</span> <span class="n">polygon_outlets</span></div>
+
+
+
+<div class="viewcode-block" id="computeNonOverlappingPolygons">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.computeNonOverlappingPolygons">[docs]</a>
+<span class="k">def</span> <span class="nf">computeNonOverlappingPolygons</span><span class="p">(</span><span class="n">polys</span><span class="p">,</span>
+                                  <span class="n">abs_tol</span><span class="o">=</span><span class="n">_abs_tol</span><span class="p">,</span>
+                                  <span class="n">rel_tol</span><span class="o">=</span><span class="n">_rel_tol</span><span class="p">,</span>
+                                  <span class="n">remove_all_interior</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of overlapping contributing area polygons, compute a nonoverlapping set.</span>
+
+<span class="sd">    Often we wish to use SplitHucs constructed from the &quot;delta</span>
+<span class="sd">    contributing area&quot;, e.g. the full domain is defined by a single</span>
+<span class="sd">    polygon, then multiple gages on the river network CAs are used to</span>
+<span class="sd">    form the subdomains.</span>
+
+<span class="sd">    This splits the overlapping contributing areas into the delta</span>
+<span class="sd">    contributing area for each gage, returning a non-overlapping set</span>
+<span class="sd">    of polygons, one per original polygon.</span>
+
+<span class="sd">    Properties are presereved.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    polys : list[shapely.geometry.Polygon]</span>
+<span class="sd">      The overlapping CAs</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    partition : list[shapely.geometry.Polygon]</span>
+<span class="sd">      The non-overlapping delta CAs.</span>
+<span class="sd">    holes : list[shapely.geometry.Polygon]</span>
+<span class="sd">      Holes in the partition that are bigger than the tolerance.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polys</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polys</span><span class="p">))</span>
+
+    <span class="n">sorted_polys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">polys</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># form the tree</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Create </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span><span class="si">}</span><span class="s1"> roots&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">ntabs</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">ntabs</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;node </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ntabs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">root</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">roots</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Root </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()))</span>
+
+    <span class="c1"># now, at each level, subtract all the containing children.  note</span>
+    <span class="c1"># we want to work down the tree here</span>
+    <span class="n">big_holes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">preOrder</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;First Remove Holes&#39;</span><span class="p">)</span>
+                <span class="n">child_polys</span><span class="p">,</span> <span class="n">holes</span> <span class="o">=</span> <span class="n">removeHoles</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">poly</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">],</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">,</span>
+                                                 <span class="n">remove_all_interior</span><span class="p">)</span>
+                <span class="n">big_holes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">holes</span><span class="p">)</span>
+                <span class="n">upstream</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">child_polys</span> <span class="o">+</span> <span class="n">holes</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">))</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">poly</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">poly</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">upstream</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">):</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">poly</span> <span class="o">=</span> <span class="n">biggest</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">poly</span><span class="p">))</span>
+                <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">getPoly</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">poly</span>
+        <span class="n">poly</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">properties</span>
+        <span class="k">return</span> <span class="n">poly</span>
+
+    <span class="n">partition</span> <span class="o">=</span> <span class="p">[</span><span class="n">getPoly</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()]</span>
+    <span class="c1">#return partition, big_holes</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Second Remove Holes&#39;</span><span class="p">)</span>
+    <span class="n">partition</span><span class="p">,</span> <span class="n">holes</span> <span class="o">=</span> <span class="n">removeHoles</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">,</span> <span class="n">remove_all_interior</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">partition</span><span class="p">,</span> <span class="n">holes</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">biggest</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">area</span><span class="p">)))</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

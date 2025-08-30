@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Manipulation &mdash; Watershed Workflow 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities" href="utilities.html" />
+    <link rel="prev" title="Meshing" href="mesh.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Watershed Workflow
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/mesh_coweeta.html">Example: mesh a delineated watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.daymet">DayMet data manipulation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.daymet.convertToATS"><code class="docutils literal notranslate"><span class="pre">convertToATS()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-watershed_workflow.soil_properties">Soil properties data manipulation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.vgm_Rosetta"><code class="docutils literal notranslate"><span class="pre">vgm_Rosetta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.vgm_from_SSURGO"><code class="docutils literal notranslate"><span class="pre">vgm_from_SSURGO()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.to_ATS"><code class="docutils literal notranslate"><span class="pre">to_ATS()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.cluster"><code class="docutils literal notranslate"><span class="pre">cluster()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.alpha_from_permeability"><code class="docutils literal notranslate"><span class="pre">alpha_from_permeability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.get_bedrock_properties"><code class="docutils literal notranslate"><span class="pre">get_bedrock_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.mangle_glhymps_properties"><code class="docutils literal notranslate"><span class="pre">mangle_glhymps_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#watershed_workflow.soil_properties.drop_duplicates"><code class="docutils literal notranslate"><span class="pre">drop_duplicates()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Watershed Workflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">Data Manipulation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-manipulation">
+<h1>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Link to this heading"></a></h1>
+<section id="module-watershed_workflow.daymet">
+<span id="daymet-data-manipulation"></span><h2>DayMet data manipulation<a class="headerlink" href="#module-watershed_workflow.daymet" title="Link to this heading"></a></h2>
+<p>Manipulate DayMet data structures.</p>
+<p>DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
+hdf5 files that models can read.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.daymet.convertToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.daymet.</span></span><span class="sig-name descname"><span class="pre">convertToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/daymet.html#convertToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.daymet.convertToATS" title="Link to this definition"></a></dt>
+<dd><p>Convert dictionary of Daymet datasets to daily average data in standard form.</p>
+<p>This:</p>
+<ul class="simple">
+<li><p>takes tmin and tmax to compute a mean</p></li>
+<li><p>splits rain and snow precip based on mean air temp</p></li>
+<li><p>standardizes units and names for ATS</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>partition_temp</strong></p></li>
+<li><p><strong>int</strong></p></li>
+<li><p><strong>degC.</strong> (<em>Temperature in degC used for partition snow and rain from precipitation. Default is 0</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.soil_properties">
+<span id="soil-properties-data-manipulation"></span><h2>Soil properties data manipulation<a class="headerlink" href="#module-watershed_workflow.soil_properties" title="Link to this heading"></a></h2>
+<p>Functions for manipulating soil properties.</p>
+<p>Computes soil properties such as permeability, porosity, and van Genutchen
+parameters given texture properties using the Rosetta model.</p>
+<p>Also provides functions for gap filling soil data via clustering,
+dataframe manipulations to merge soil type regions with shared values,
+etc.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.vgm_Rosetta">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_Rosetta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_Rosetta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_Rosetta" title="Link to this definition"></a></dt>
+<dd><p>Return van Genuchten model parameters using Rosetta v3 model.</p>
+<p>(Zhang and Schaap, 2017 WRR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>numpy.ndarray</em><em>(</em><em>nvar</em><em>, </em><em>nsamples</em><em>)</em>) – Input data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>van Genuchten model parameters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.vgm_from_SSURGO">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">vgm_from_SSURGO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#vgm_from_SSURGO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.vgm_from_SSURGO" title="Link to this definition"></a></dt>
+<dd><p>Get van Genutchen model parameters using Rosetta v3.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – SSURGO properties dataframe, from manager_nrcs.FileManagerNRCS().get_properties()</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>df with new properties defining the van Genuchten model.  Note
+that this may be smaller than df as entries in df that have NaN
+values in soil composition (and therefore cannot calculate a
+VGM) will be dropped.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.to_ATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">to_ATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#to_ATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.to_ATS" title="Link to this definition"></a></dt>
+<dd><p>Converts units from aggregated, Rosetta standard-parameters to ATS.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.cluster">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rasters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.cluster" title="Link to this definition"></a></dt>
+<dd><p>Given a bunch of raster bands, cluster into nbins.</p>
+<p>Returns the coloring map of the clusters.  This is used to fill in
+missing soil property data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rasters</strong> (<em>np.ndarray</em><em>(</em><em>(</em><em>nx</em><em>,</em><em>ny</em><em>,</em><em>nbands</em><em>)</em><em>)</em>) – nbands rasters providing spatial information on which to be clustered.</p></li>
+<li><p><strong>nbins</strong> (<em>int</em>) – Number of bins to cluster into.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>codebook</strong> (<em>np.ndarray((nbins,nbands))</em>) – The nbins centroids of the clusters.</p></li>
+<li><p><strong>codes</strong> (<em>np.ndarray((nx, ny), int)</em>) – Which cluster each point belongs to.</p></li>
+<li><p><strong>distortion</strong> (<em>(float, np.ndarray((nx*ny))</em>) – The distortion of the kmeans, and the distance between the
+observation and its nearest code.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.alpha_from_permeability">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">alpha_from_permeability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poro</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#alpha_from_permeability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.alpha_from_permeability" title="Link to this definition"></a></dt>
+<dd><p>Compute van Genuchten alpha from permeability and porosity.</p>
+<p>Uses the relationship from Guarracino WRR 2007.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>perm</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Permeability, in [m^2]</p></li>
+<li><p><strong>poro</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Porosity, [-]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alpha</strong> – van Genuchten alpha, in [Pa^-1]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array(double)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.get_bedrock_properties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">get_bedrock_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#get_bedrock_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.get_bedrock_properties" title="Link to this definition"></a></dt>
+<dd><p>Simple helper function to get a one-row dataframe with bedrock properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sane default bedrock soil properties.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.mangle_glhymps_properties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">mangle_glhymps_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_porosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_permeability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vg_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#mangle_glhymps_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.mangle_glhymps_properties" title="Link to this definition"></a></dt>
+<dd><p>GLHYMPs properties need their units changed and variables renamed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shapes</strong> (<em>list</em><em>[</em><em>dict</em><em>] or </em><em>list</em><em>[</em><em>shapely + properties</em><em>]</em>) – The raw result from FileManagerGLHYMPS.get_shapes()</p></li>
+<li><p><strong>min_porosity</strong> (<em>float</em><em>, </em><em>optional</em>) – Some GLHYMPS entries have 0 porosity; this sets a floor on that
+value.  Default is 0.01.</p></li>
+<li><p><strong>max_permeability</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the permeability.</p></li>
+<li><p><strong>max_vg_alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the vG alpha.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The resulting properties in standard form, names, and units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.drop_duplicates">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">drop_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#drop_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.drop_duplicates" title="Link to this definition"></a></dt>
+<dd><p>Search for duplicate soils which differ only by ID, and rename them, returning a new df.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – A data frame that contains only properties (e.g. permeability,
+porosity, WRM) and is indexed by some native ID.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p><strong>df_new</strong> – After this is called, df_new will:</p>
+<ol class="arabic simple">
+<li><p>have a new column, named by df’s index name, containing a tuple of all
+of the original indices that had the same properties.</p></li>
+<li><p>be reduced in number of rows relative to df such that soil
+properties are now unique</p></li>
+</ol>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mesh.html" class="btn btn-neutral float-left" title="Meshing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019-202X, UT Battelle, Ethan Coon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
