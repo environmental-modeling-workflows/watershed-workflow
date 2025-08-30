@@ -66,7 +66,7 @@ exclude_patterns = []
 #html_theme = 'sphinx_book_theme'
 html_theme = "pydata_sphinx_theme"
 html_title = "Watershed Workflow"
-#html_favicon = "static/images/favicon.ico"
+#html_favicon = "_static/images/favicon.ico"
 
 html_sidebars = {
     "**" : ["version",
@@ -79,12 +79,12 @@ html_sidebars = {
 html_theme_options = {
     # "logo": {
     #     "alt_text": "Watershed Workflow documentation -- Home",
-        # "image_light": "static/images/logo_full.png",
-        # "image_dark": "static/images/logo_full.png", # todo -- make a dark logo!
+        # "image_light": "_static/images/logo_full.png",
+        # "image_dark": "_static/images/logo_full.png", # todo -- make a dark logo!
     # },
     "secondary_sidebar_items": [],
     "switcher": {
-        "json_url": "https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/static/versions.json",
+        "json_url": "https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json",
         "version_match": 'v2.0',
     },
 #    "navbar_start" : ["navbar-logo", ],
@@ -93,7 +93,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+html_static_path = ['_static']
 
 
 html_css_files = [
