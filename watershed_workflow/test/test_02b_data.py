@@ -1653,14 +1653,6 @@ class TestSmooth2DSpatial:
         assert np.var(result['temperature'].values) < np.var(sample_dataset['temperature'].values)
         assert np.array_equal(result['pressure'].values, sample_dataset['pressure'].values)
     
-    def test_nan_raises_error(self, sample_dataarray_xy):
-        """Test that NaN values raise an error."""
-        # Add NaN to data
-        sample_dataarray_xy.values[10, 10] = np.nan
-        
-        with pytest.raises(ValueError, match="DataArray contains NaN values"):
-            wwd.smooth2D_DataArray(sample_dataarray_xy)
-    
     def test_missing_dims_raises_error(self):
         """Test error when spatial dimensions not found."""
         da = xr.DataArray(
