@@ -7,10 +7,10 @@
     },
     {
         "version": "1.6",
-        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/1.6/",
+        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/1.6/"
     },
     {
         "version": "dev",
-        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/dev/",
+        "url": "https://environmental-modeling-workflows.github.io/watershed-workflow/dev/"
     }
 ]
