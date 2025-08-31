@@ -14,9 +14,9 @@ National Hydrologic Data across resolutions
 
 .. code-block:: console
 
-   python bin/plot_hucs.py --source-huc=NHD --source-hydro=NHD --output-filename=docs/_static/gallery_sources_nhd.png 060102020103
+   python bin/plot_hucs.py --source-huc=NHD --source-hydro=NHD --output-filename=docs/_static/images/gallery_sources_nhd.png 060102020103
 
-.. image:: _static/gallery_sources_nhd.png
+.. image:: _static/images/gallery_sources_nhd.png
  
 
 

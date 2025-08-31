@@ -2,7 +2,7 @@
 Watershed Workflow
 ******************
 
-.. image:: _static/watershed_workflow.png
+.. image:: _static/images/watershed_workflow.png
 
 Watershed Workflow is a python-based, open source chain of tools for
 generating meshes and other data inputs for hyper-resolution
