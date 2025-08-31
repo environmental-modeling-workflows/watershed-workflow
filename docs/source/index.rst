@@ -15,7 +15,7 @@ Browse the code at: https://github.com/environmental-modeling-workflow/watershed
    :caption: Contents:
 
    Introduction <intro>
-   examples/mesh_coweeta.ipynb
+   Examples <examples>
    Installation <install>
    Concepts <concepts>
    API Documentation <api>
