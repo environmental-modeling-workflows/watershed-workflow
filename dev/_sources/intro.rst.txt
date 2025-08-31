@@ -2,7 +2,7 @@
 Watershed Workflow
 *******************
 
-.. image:: _static/watershed_workflow.png
+.. image:: _static/images/watershed_workflow.png
 
 .. include:: ../AUTHORS.rst
 
