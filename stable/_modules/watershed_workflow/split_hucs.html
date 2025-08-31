@@ -1,0 +1,1121 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.split_hucs &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom_theme.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/split_hucs';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../_static/main.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.split_hucs</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.split_hucs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;A module for working with multi-polys, a MultiLine that together forms a Polygon&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">folium</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">folium.plugins</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.geometry</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.ops</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.errors</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.plot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources.standard_names</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">names</span>
+
+<span class="n">_abs_tol</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">_rel_tol</span> <span class="o">=</span> <span class="mf">1.e-5</span>
+
+
+<div class="viewcode-block" id="HandledCollection">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HandledCollection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of of objects and handles for those objects.</span>
+
+<span class="sd">    Semantics of this are a bit odd -- it is somewhat like a list and</span>
+<span class="sd">    somewhat like a dict.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the HandledCollection</span>
+
+<span class="sd">        May be called with 0, 1, or 2 args:</span>
+
+<span class="sd">        - If 0, an empty HandledCollection is created.</span>
+<span class="sd">        - If 1, the argument is the handled objects, and handles are</span>
+<span class="sd">          generated on the fly.</span>
+<span class="sd">        - If 2, both handles (which must be unique) and objects are</span>
+<span class="sd">          provided, in that order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">handles</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">objs</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">h</span><span class="p">,</span><span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span> <span class="n">objs</span><span class="p">):</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;HandledCollection takes 0, 1 or 2 arguments&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an object&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set an object&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+<div class="viewcode-block" id="HandledCollection.append">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.append">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a object, returning a handle to that object&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="HandledCollection.extend">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.extend">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add many objects, returning a list of handles.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="HandledCollection.pop">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.pop">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a handle and its object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for the collection.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">v</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HandledCollection.handles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.handles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for handles&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">k</span></div>
+
+
+<div class="viewcode-block" id="HandledCollection.keys">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.HandledCollection.keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generator for handles&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">k</span></div>
+
+            
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">v</span>
+            
+    <span class="k">def</span><span class="w"> </span><span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">it</span></div>
+
+
+
+<div class="viewcode-block" id="SplitHUCs">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitHUCs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for dealing with the multiple interacting views of HUCs</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shapes : list[Polygon]</span>
+<span class="sd">      The shapes to be split, one per subcatchment to be delineated.</span>
+<span class="sd">    abs_tol : float</span>
+<span class="sd">      Distance used in defining small holes at intersections to</span>
+<span class="sd">      ignore.</span>
+<span class="sd">    rel_tol : float</span>
+<span class="sd">      Relative to the shapes area, a tolerance for defining small</span>
+<span class="sd">      holes on intersections.</span>
+<span class="sd">    exterior_outlet : np.array((2,))</span>
+<span class="sd">      Location of the outlet of the entire domain.</span>
+<span class="sd">    polygon_outlets : np.array((len(shapes), 2))</span>
+<span class="sd">      Location of the outlets of each polygon.</span>
+
+<span class="sd">    </span>
+<span class="sd">    The resulting class instance includes the following views into</span>
+<span class="sd">    data:</span>
+
+<span class="sd">    linestrings : HandledCollection[LineString]</span>
+<span class="sd">      unique list of all linestrings, a HandledCollection of LineStrings</span>
+<span class="sd">    boundaries : HandledCollection[int]</span>
+<span class="sd">      A HandledCollection of handles into linestrings, identifying those</span>
+<span class="sd">      linestrings on the outer boundary of the collection.</span>
+<span class="sd">    intersections : HandledCollection[int]</span>
+<span class="sd">      A HandledCollection of handles into linestrings, identifying those</span>
+<span class="sd">      linestrings on the shared, inner boundaries.</span>
+<span class="sd">    gons : list[HandledCollection[int], HandledCollection[int]]</span>
+<span class="sd">      One per polygon provided, a pair of HandledCollections,</span>
+<span class="sd">      identifying the collection of handles into intersetctions and</span>
+<span class="sd">      boudaries that make up thos polygon.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">df</span> <span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+                 <span class="n">abs_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_abs_tol</span><span class="p">,</span>
+                 <span class="n">rel_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_rel_tol</span><span class="p">,</span>
+                 <span class="n">exterior_outlet</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+
+        <span class="c1"># all shapes are stored as a collection of collections of linestrings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores linestrings</span>
+
+        <span class="c1"># Intersect and split the HUCs into unique linestrings.  Every</span>
+        <span class="c1"># linestring in linestrings is referenced exactly once in either boundaries</span>
+        <span class="c1"># or intersections.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores handles into linestrings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">()</span>  <span class="c1"># stores handles into linestrings</span>
+
+        <span class="c1"># save the exterior outlet</span>
+        <span class="k">if</span> <span class="n">exterior_outlet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exterior_outlet</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exterior_outlet</span> <span class="o">=</span> <span class="n">exterior_outlet</span>
+
+        <span class="c1"># initialize</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">)</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">)</span>
+        <span class="n">uniques</span><span class="p">,</span> <span class="n">intersections</span> <span class="o">=</span> <span class="n">intersectAndSplit</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span>
+
+        <span class="n">boundary_gon</span> <span class="o">=</span> <span class="p">[</span><span class="n">HandledCollection</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+                <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+                <span class="n">bhandle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">handle</span><span class="p">,</span> <span class="p">]))</span>
+                <span class="n">boundary_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bhandle</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                <span class="n">handles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span>
+                <span class="n">bhandles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="p">])</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">handles</span><span class="p">])</span>
+                <span class="n">boundary_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">bhandles</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Uniques from intersectAndSplit is not None, LineString, or MultiLineString?&quot;</span><span class="p">)</span>
+
+        <span class="n">intersection_gon</span> <span class="o">=</span> <span class="p">[</span><span class="n">HandledCollection</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)):</span>
+                <span class="n">inter</span> <span class="o">=</span> <span class="n">intersections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">(</span><span class="n">inter</span><span class="p">):</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+                    <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
+                    <span class="n">ihandle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">handle</span><span class="p">,</span> <span class="p">]))</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ihandle</span><span class="p">)</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ihandle</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="n">handles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inter</span><span class="p">))</span>
+                    <span class="n">ihandles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">HandledCollection</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="p">])</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">handles</span><span class="p">])</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ihandles</span><span class="p">)</span>
+                    <span class="n">intersection_gon</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ihandles</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="s2">&quot;Intersections from intersectAndSplit is not None, LineString, or MultiLineString?&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># the list of shapes, each entry in the list is a tuple</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gons</span> <span class="o">=</span> <span class="p">[(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">boundary_gon</span><span class="p">,</span> <span class="n">intersection_gon</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">crs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span> <span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">obj_handles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">handles</span><span class="p">())</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="p">)</span>
+        <span class="n">tmp_df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">({</span><span class="s1">&#39;geometry&#39;</span><span class="p">:</span><span class="n">shapes</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">tmp_df</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span> <span class="o">=</span> <span class="n">HandledCollection</span><span class="p">(</span><span class="n">obj_handles</span><span class="p">,</span> <span class="n">tmp_df</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        
+<div class="viewcode-block" id="SplitHUCs.update">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recomputes all polygons&quot;&quot;&quot;</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">computePolygon</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">geom</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.computePolygon">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.computePolygon">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computePolygon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span> <span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct polygon i and return a copy.&quot;&quot;&quot;</span>
+        <span class="n">linestrings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">boundary</span><span class="p">,</span> <span class="n">inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">h_boundary</span> <span class="ow">in</span> <span class="n">boundary</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">[</span><span class="n">h_boundary</span><span class="p">]:</span>
+                <span class="n">linestrings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">h_intersection</span> <span class="ow">in</span> <span class="n">inter</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="p">[</span><span class="n">h_intersection</span><span class="p">]:</span>
+                <span class="n">linestrings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+
+        <span class="n">ml</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">linestrings</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ml</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ls</span> <span class="ow">in</span> <span class="n">linestrings</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;computePolygon(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">) failed as linemerged components do not form a LineString but a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">poly</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.polygons">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.polygons">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">polygons</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the polygons.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="n">g</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
+
+<div class="viewcode-block" id="SplitHUCs.plot">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot as polygons (boundaries only).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">linestringsWithCoords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">boundary</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SplitHUCs.plotAsLinestrings">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.plotAsLinestrings">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plotAsLinestrings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot not as polygons, but individual linestrings.&quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">linestringsWithCoords</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">explore_linestrings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="SplitHUCs.explore">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.explore">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">explore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">column</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span>
+                <span class="n">m</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">name</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;watersheds&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open a map!&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="o">==</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span> <span class="ow">and</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">:</span>
+            <span class="n">newname</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="o">+</span><span class="s2">&quot;_as_column&quot;</span>
+            <span class="k">if</span> <span class="n">newname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">newname</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">)</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="o">+</span><span class="s2">&quot;_as_column&quot;</span>
+
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;tooltip&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">default_props</span> <span class="o">=</span> <span class="p">[</span><span class="n">pname</span> <span class="k">for</span> <span class="n">pname</span> <span class="ow">in</span> <span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">NAME</span><span class="p">,</span>
+                                             <span class="n">names</span><span class="o">.</span><span class="n">HUC</span><span class="p">,</span>
+                                             <span class="s1">&#39;tohuc&#39;</span><span class="p">,</span>
+                                             <span class="n">names</span><span class="o">.</span><span class="n">AREA</span><span class="p">,</span>
+                                             <span class="s1">&#39;hutype&#39;</span><span class="p">,</span>
+                                             <span class="s1">&#39;states&#39;</span><span class="p">,</span> <span class="p">]</span> <span class="k">if</span> <span class="n">pname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">default_props</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">7</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">default_props</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">!=</span> <span class="s1">&#39;geometry&#39;</span><span class="p">:</span>
+                <span class="n">default_props</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;popup&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">,]</span><span class="o">+</span><span class="n">default_props</span><span class="p">)</span>
+
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;cmap&#39;</span><span class="p">,</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">ListedColormap</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">xkcd_muted</span><span class="p">))</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;legend&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;vmin&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;vmax&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+        <span class="c1"># style</span>
+        <span class="n">style_kwds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;style_kwds&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="n">style_kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;fillOpacity&#39;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+        <span class="n">style_kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;weight&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="c1"># highlight style</span>
+        <span class="n">highlight_kwds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;highlight_kwds&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="n">highlight_kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;fillOpacity&#39;</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">)</span>
+
+        <span class="c1"># default explore</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="n">column</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">marker</span><span class="p">:</span>
+            <span class="c1"># don&#39;t reuse -- some versions keep the various *_kwds</span>
+            <span class="c1"># dictionaries by reference</span>
+            <span class="n">kwargs2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            
+            <span class="c1"># explore the coordinates too!</span>
+            <span class="n">marker_kwds</span> <span class="o">=</span> <span class="n">kwargs2</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;marker_kwds&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+            <span class="n">marker_kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">kwargs2</span><span class="p">[</span><span class="s1">&#39;style_kwds&#39;</span><span class="p">][</span><span class="s1">&#39;fillOpacity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">:</span>
+                <span class="n">new_id_name</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="o">+</span><span class="s1">&#39;-copy&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_id_name</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span>
+
+            <span class="n">marker_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">([</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">geometry</span><span class="p">])</span> \
+                               <span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">new_id_name</span><span class="p">,</span> <span class="s1">&#39;coord&#39;</span><span class="p">])</span>
+
+            <span class="k">for</span> <span class="n">disp_mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;tooltip&#39;</span><span class="p">,</span> <span class="s1">&#39;popup&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">disp_mode</span> <span class="ow">in</span> <span class="n">kwargs2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kwargs2</span><span class="p">[</span><span class="n">disp_mode</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">ID</span> <span class="ow">in</span> <span class="n">kwargs2</span><span class="p">[</span><span class="n">disp_mode</span><span class="p">]:</span>
+                        <span class="n">kwargs2</span><span class="p">[</span><span class="n">disp_mode</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">)</span>
+                    <span class="n">kwargs2</span><span class="p">[</span><span class="n">disp_mode</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;coord&#39;</span><span class="p">)</span>
+                    <span class="n">kwargs2</span><span class="p">[</span><span class="n">disp_mode</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">)</span>
+
+            <span class="n">m</span> <span class="o">=</span> <span class="n">marker_df</span><span class="o">.</span><span class="n">explore</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="n">column</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="o">+</span><span class="s1">&#39; coordinates&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span></div>
+
+        
+    
+<div class="viewcode-block" id="SplitHUCs.spines">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.spines">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">spines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over spines.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">b</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">intersections</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">i</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exterior</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct boundary polygon and return a copy.&quot;&quot;&quot;</span>
+        <span class="n">linestrings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundaries</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
+                <span class="n">linestrings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+        <span class="n">ml</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">linestrings</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">([</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">ml</span><span class="p">])</span>
+        
+<div class="viewcode-block" id="SplitHUCs.deepcopy">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.SplitHUCs.deepcopy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a deep copy&quot;&quot;&quot;</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cp</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gons</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="simplify">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.simplify">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span> <span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span>
+             <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplify, IN PLACE, all linestrings in the polygon representation.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">linestring</span> <span class="ow">in</span> <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">linestring</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="removeHoles">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.removeHoles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">removeHoles</span><span class="p">(</span><span class="n">polygons</span> <span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">],</span>
+                <span class="n">abs_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_abs_tol</span><span class="p">,</span>
+                <span class="n">rel_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_rel_tol</span><span class="p">,</span>
+                <span class="n">remove_all_interior</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> \
+                <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes interior small holes between the boundaries of polygons.</span>
+
+<span class="sd">    Note this assumes the polygons are mostly disjoint.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">polygons</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Removing holes on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span><span class="si">}</span><span class="s1"> polygons&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">)</span>
+
+    <span class="c1"># first remove interior holes</span>
+    <span class="k">if</span> <span class="n">remove_all_interior</span><span class="p">:</span>
+        <span class="n">polygons2</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">exterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">polygons2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
+                <span class="n">p2</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">p1</span><span class="o">.</span><span class="n">properties</span>
+        <span class="n">polygons</span> <span class="o">=</span> <span class="n">polygons2</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- removed interior&#39;</span><span class="p">)</span>
+
+    <span class="n">union</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- union&#39;</span><span class="p">)</span>
+
+    <span class="c1"># -- deal with disjoint sections separately</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="p">[</span><span class="n">union</span><span class="p">,</span> <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># MultiPolygon --&gt; list of polygons</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">union</span><span class="p">]</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parsing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">union</span><span class="p">)</span><span class="si">}</span><span class="s1"> components for holes&#39;</span><span class="p">)</span>
+    <span class="n">big_holes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">union</span><span class="p">:</span>
+        <span class="c1"># find all holes</span>
+        <span class="k">for</span> <span class="n">hole</span> <span class="ow">in</span> <span class="n">part</span><span class="o">.</span><span class="n">interiors</span><span class="p">:</span>
+            <span class="n">hole</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">abs_tol</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="n">hole</span><span class="o">.</span><span class="n">area</span> <span class="o">&lt;</span> <span class="n">rel_tol</span> <span class="o">*</span> <span class="n">part</span><span class="o">.</span><span class="n">area</span><span class="p">:</span>
+                    <span class="c1"># give it to someone, anyone, doesn&#39;t matter who</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Found a little hole: area = </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">area</span><span class="si">}</span><span class="s1"> at </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">centroid</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">poly</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">poly</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">polygons</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isNonPointIntersection</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">hole</span><span class="p">))</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;      placing in shape </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="n">polygons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">):</span>
+                            <span class="n">polygons</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">properties</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Found a big hole: area = </span><span class="si">{</span><span class="n">hole</span><span class="o">.</span><span class="n">area</span><span class="si">}</span><span class="s1">, leaving it alone...&#39;</span><span class="p">)</span>
+                    <span class="n">big_holes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  -- complete&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">polygons</span><span class="p">,</span> <span class="n">big_holes</span></div>
+
+
+
+<div class="viewcode-block" id="partition">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.partition">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">partition</span><span class="p">(</span><span class="n">list_of_shapes</span> <span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">],</span>
+              <span class="n">abs_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_abs_tol</span><span class="p">,</span>
+              <span class="n">rel_tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span><span class="n">_rel_tol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which mostly share boundaries, make sure</span>
+<span class="sd">    they partition the space.  Often HUC boundaries have minor</span>
+<span class="sd">    overlaps and underlaps -- here we try to account for wiggles.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># make a copy to return</span>
+    <span class="n">list_of_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
+    
+    <span class="c1"># deal with overlaps</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">)):</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">)):</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isVolumetricIntersection</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+                    <span class="n">s2</span> <span class="o">=</span> <span class="n">s2</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseMultipartGeometry</span><span class="p">):</span>
+                        <span class="n">s2</span> <span class="o">=</span> <span class="n">findBiggest</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+                    <span class="n">list_of_shapes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">s2</span>
+            <span class="k">except</span> <span class="n">shapely</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">TopologicalError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">shapely</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">TopologicalError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;When intersection polygons </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> and </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s1">: &#39;</span>
+                                                      <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+
+    <span class="c1"># remove holes</span>
+    <span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">holes</span> <span class="o">=</span> <span class="n">removeHoles</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">abs_tol</span><span class="p">,</span> <span class="n">rel_tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_of_shapes</span></div>
+
+
+
+<div class="viewcode-block" id="intersectAndSplit">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.intersectAndSplit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">intersectAndSplit</span><span class="p">(</span><span class="n">list_of_shapes</span> <span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">])</span> <span class="o">-&gt;</span> \
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">],</span>
+              <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="kc">None</span> <span class="o">|</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">]]]:</span>
+<span class="w">              </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a list of shapes which share boundaries (i.e. they partition</span>
+<span class="sd">    some space), return a compilation of their linestrings.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    list_of_shapes : Sequence[shapely.geometry.Polygon]</span>
+<span class="sd">      The polygons to intersect and split, of length N.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    uniques : list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]</span>
+<span class="sd">      An N-length-list of the entities describing the exterior boundary.</span>
+<span class="sd">    intersections : list[list[None | shapely.geometry.LineString | shapely.geometry.MultiLineString]]</span>
+<span class="sd">      An NxN list of lists of the entities describing the interior boundary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">intersections</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">))]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">))]</span>
+    <span class="n">uniques</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">list_of_shapes</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">s2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span> <span class="ow">and</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isNonPointIntersection</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+                <span class="n">inter</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">):</span>
+                    <span class="n">inter</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">):</span>
+                    <span class="n">parts_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">)]</span>
+                    <span class="n">parts_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">)]</span>
+                    <span class="n">parts_polys</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">inter</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)]</span>
+
+                    <span class="n">mls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span><span class="n">parts_lines</span><span class="p">)</span>
+                    <span class="n">left_over_polys</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">parts_polys</span><span class="p">:</span>
+                        <span class="n">mps</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">mls</span><span class="p">)</span>
+
+                        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mps</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">)</span>
+                        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">mps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+                        <span class="n">parts_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">mps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mps</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+                    <span class="n">inter</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">parts_lines</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">)</span> <span class="ow">or</span> \
+                   <span class="nb">isinstance</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">):</span>
+
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;HUC intersection yielded collection of odd types: </span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">inter</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="p">)</span>
+
+                    <span class="k">class</span><span class="w"> </span><span class="nc">IntersectionError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+                        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">i_p1</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">i_p2</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">intersection</span><span class="p">):</span>
+                            <span class="nb">super</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IntersectionError</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">polys</span> <span class="o">=</span> <span class="n">list_of_shapes</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">i_p1</span> <span class="o">=</span> <span class="n">i_p1</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">p1</span> <span class="o">=</span> <span class="n">p1</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">i_p2</span> <span class="o">=</span> <span class="n">i_p2</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">p2</span> <span class="o">=</span> <span class="n">p2</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">inter</span> <span class="o">=</span> <span class="n">intersection</span>
+                    <span class="k">raise</span> <span class="n">IntersectionError</span><span class="p">(</span><span class="s1">&#39;HUC intersection yielded collection of odd types&#39;</span><span class="p">,</span>
+                                            <span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">inter</span><span class="p">)</span>
+
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">:</span>
+
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Hopefully hole in HUC intersection: (</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">) = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)))</span>
+
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span> <span class="ow">and</span> \
+                   <span class="nb">type</span><span class="p">(</span><span class="n">inter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;things are breaking...&#39;</span><span class="p">)</span>
+
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+                    <span class="n">diff</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+                <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff</span>
+
+                <span class="c1"># only save once!</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">j</span><span class="p">:</span>
+                    <span class="n">intersections</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">inter</span>
+
+    <span class="c1"># merge uniques, as we have a bunch of linestrings.</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="ow">is</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">:</span>
+            <span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">linemerge</span><span class="p">(</span><span class="n">uniques</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="n">uniques_r</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">uniques</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uniques</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+            <span class="n">uniques_r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+    <span class="k">return</span> <span class="n">uniques_r</span><span class="p">,</span> <span class="n">intersections</span></div>
+
+
+
+<div class="viewcode-block" id="findBiggest">
+<a class="viewcode-back" href="../../geometry.html#watershed_workflow.split_hucs.findBiggest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">findBiggest</span><span class="p">(</span><span class="n">list_of_shapes</span> <span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the biggest (by area) polygon.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">list_of_shapes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">area</span><span class="p">)))</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

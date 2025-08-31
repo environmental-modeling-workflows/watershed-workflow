@@ -1,0 +1,855 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.triangulation &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom_theme.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/triangulation';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../_static/main.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.triangulation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.triangulation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Triangulates polygons&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Iterator</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">la</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.spatial</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.river_tree</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.split_hucs</span>
+
+
+<div class="viewcode-block" id="Nodes">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.Nodes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Nodes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of nodes that are indexed in the order they are added.</span>
+
+<span class="sd">    Note this uses round() for an efficient solution, which is</span>
+<span class="sd">    potentially fragile if numbers were not generated consistently.</span>
+<span class="sd">    In this use case, however, it should be safe -- numbers were</span>
+<span class="sd">    originally rounded (in watershed_workflow.config), and then any function which</span>
+<span class="sd">    inserted new points or moved points were always careful to ensure</span>
+<span class="sd">    that all duplicates were always assigned the identical values --</span>
+<span class="sd">    i.e. all math was done BEFORE assignment.  So duplicates have</span>
+<span class="sd">    identical representations in floating point.  This suggests we</span>
+<span class="sd">    shouldn&#39;t have to round here at all, but we do anyway to keep</span>
+<span class="sd">    things cleaner.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decimals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Nodes collection.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        decimals : int, optional</span>
+<span class="sd">            Number of decimal places for rounding coordinates. Default is 3.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decimals</span> <span class="o">=</span> <span class="n">decimals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Length is tracked by the counter&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get item index, setting if default.&quot;&quot;&quot;</span>
+        <span class="c1"># Note this implementation could be optimized, and should be</span>
+        <span class="c1"># done so assuming keys are NOT there, which is the most</span>
+        <span class="c1"># likely case.</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decimals</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterable collection&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">k</span></div>
+
+
+
+<div class="viewcode-block" id="connectOnewayTrip">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.connectOnewayTrip">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">connectOnewayTrip</span><span class="p">(</span><span class="n">inds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect indices in edges in a oneway fashion&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">inds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">inds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="connectRoundTrip">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.connectRoundTrip">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">connectRoundTrip</span><span class="p">(</span><span class="n">inds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect indices in edges in a round-trip fashion&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">connectOnewayTrip</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span> <span class="o">+</span> <span class="p">[(</span><span class="n">inds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="orient">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.orient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orient</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orient an edge consistently.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    e : Tuple[int, int]</span>
+<span class="sd">        Edge as tuple of two vertex indices.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Optional[Tuple[int, int]]</span>
+<span class="sd">        Oriented edge or None if vertices are identical.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="NodesEdges">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodesEdges</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A collection of nodes and edges.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">objlist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span> <span class="o">|</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize NodesEdges collection.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        objlist : Optional[List[shapely.geometry.LineString | shapely.geometry.Polygon]], optional</span>
+<span class="sd">            List of geometry objects to add. Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">Nodes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">objlist</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objlist</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NodesEdges.add">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span> <span class="o">|</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds nodes and edges from obj into collection.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">):</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">coords</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">connectOnewayTrip</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
+                <span class="n">oe</span> <span class="o">=</span> <span class="n">orient</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">oe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oe</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">coords</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">connectRoundTrip</span><span class="p">(</span><span class="n">inds</span><span class="p">):</span>
+                <span class="n">oe</span> <span class="o">=</span> <span class="n">orient</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">oe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">oe</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Invalid type for add, </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="NodesEdges.check">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.NodesEdges.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks consistency of the internal representation.&quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; checking graph consistency&quot;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; tolerance is set to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tol</span><span class="p">))</span>
+        <span class="n">min_dist</span> <span class="o">=</span> <span class="mf">1.e10</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">))</span>
+        <span class="n">kdtree</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">cKDTree</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+        <span class="n">bad_pairs</span> <span class="o">=</span> <span class="n">kdtree</span><span class="o">.</span><span class="n">query_pairs</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+
+        <span class="c1"># Retrieve the coordinates for each bad pair</span>
+        <span class="n">bad_pair_coords</span> <span class="o">=</span> <span class="p">[(</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">bad_pairs</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_pairs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tol= </span><span class="si">{}</span><span class="s1"> is too large, try decrease tolerance!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tol</span><span class="p">)</span>
+                             <span class="o">+</span> <span class="s1">&#39;or check bad pairs=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bad_pair_coords</span><span class="p">))</span>
+
+        <span class="n">min_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="n">max_node</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">min_node</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">max_node</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">min_edge_node</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">max_edge_node</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">min_edge_node</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">max_edge_node</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="triangulate">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.triangulate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">,</span>
+                <span class="n">internal_boundaries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">hole_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Triangulates HUCs and rivers.</span>
+
+<span class="sd">    Note, refinement of a given triangle is done if any of the provided</span>
+<span class="sd">    criteria is met.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">        A split-form HUC object from, e.g., get_split_form_hucs()</span>
+<span class="sd">    internal_boundaries : list, optional</span>
+<span class="sd">        List of shapely objects or RiverTrees or other iterable</span>
+<span class="sd">        collections of coordinates used as internal boundaries that</span>
+<span class="sd">        must be included in the mesh.</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh).</span>
+<span class="sd">    tol : float, optional</span>
+<span class="sd">        Set tolerance for minimum distance between two nodes. The unit</span>
+<span class="sd">        is the same as that of the watershed&#39;s CRS. The default is 1.</span>
+
+<span class="sd">    Additional keyword arguments include all options for meshpy.triangle.build()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">meshpy.triangle</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Triangulating...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># get a list of required boundaries, both interior and exterior</span>
+    <span class="n">linestrings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineStrings</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># -- internal boundaries may include a river mesh and must go first</span>
+    <span class="k">if</span> <span class="n">internal_boundaries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">linestrings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">internal_boundaries</span><span class="p">)</span>
+    <span class="n">linestrings</span> <span class="o">=</span> <span class="n">linestrings</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">)</span>
+
+    <span class="c1"># convert to nodes and edges</span>
+    <span class="n">nodes_edges</span> <span class="o">=</span> <span class="n">NodesEdges</span><span class="p">(</span><span class="n">linestrings</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;   </span><span class="si">%i</span><span class="s2"> points and </span><span class="si">%i</span><span class="s2"> facets&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes_edges</span><span class="o">.</span><span class="n">nodes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes_edges</span><span class="o">.</span><span class="n">edges</span><span class="p">)))</span>
+    <span class="n">nodes_edges</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; building graph data structures&quot;</span><span class="p">)</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">meshpy</span><span class="o">.</span><span class="n">triangle</span><span class="o">.</span><span class="n">MeshInfo</span><span class="p">()</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes_edges</span><span class="o">.</span><span class="n">nodes</span><span class="p">))</span>
+
+    <span class="n">pdata</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">p</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">]</span>
+    <span class="n">info</span><span class="o">.</span><span class="n">set_points</span><span class="p">(</span><span class="n">pdata</span><span class="p">)</span>
+    <span class="n">fdata</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">nodes_edges</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
+    <span class="n">info</span><span class="o">.</span><span class="n">set_facets</span><span class="p">(</span><span class="n">fdata</span><span class="p">)</span>
+
+    <span class="c1"># add hole points, which should include the river mesh interior</span>
+    <span class="k">if</span> <span class="n">hole_points</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">set_holes</span><span class="p">(</span><span class="n">hole_points</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; triangle.build...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># pop this option if false, which silences the warning if it does</span>
+    <span class="c1"># not exist but we didn&#39;t ask for it anyway.</span>
+    <span class="k">if</span> <span class="s1">&#39;enforce_delaunay&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;enforce_delaunay&#39;</span><span class="p">]:</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;enforce_delaunay&#39;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">meshpy</span><span class="o">.</span><span class="n">triangle</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># our modification to meshpy.triangle is not present, try without it</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;enforce_delaunay&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">err</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Triangulate: &#39;--enforce-delaunay&#39; option requires a hacked `meshpy.triangle`.  Proceeding without this option because it is not recognized.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">mesh</span> <span class="o">=</span> <span class="n">meshpy</span><span class="o">.</span><span class="n">triangle</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">mesh_tris</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ...built: </span><span class="si">%i</span><span class="s2"> mesh points and </span><span class="si">%i</span><span class="s2"> triangles&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">mesh_tris</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">mesh_points</span><span class="p">,</span> <span class="n">mesh_tris</span></div>
+
+
+
+<div class="viewcode-block" id="refineByMaxArea">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refineByMaxArea">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refineByMaxArea</span><span class="p">(</span><span class="n">max_area</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a refinement function based on max area, for use with Triangle.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A function for use with watershed_workflow.triangulate.triangulate&#39;s refinement_func argument based on a global max area.&quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">area</span> <span class="o">&gt;</span> <span class="n">max_area</span><span class="p">)</span>
+        <span class="c1"># if area &lt; 1.e-5:</span>
+        <span class="c1">#     raise RuntimeError(&quot;TinyTriangle Error&quot;)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">return</span> <span class="n">refine</span></div>
+
+
+
+<div class="viewcode-block" id="refineByRiverDistance">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refineByRiverDistance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refineByRiverDistance</span><span class="p">(</span><span class="n">near_distance</span><span class="p">,</span> <span class="n">near_area</span><span class="p">,</span> <span class="n">away_distance</span><span class="p">,</span> <span class="n">away_area</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a graded refinement function based upon a distance function from rivers, for use with Triangle.</span>
+
+<span class="sd">    Triangle area must be smaller than near_area when the triangle</span>
+<span class="sd">    centroid is within near_distance from the river network.</span>
+<span class="sd">    Area must be smaller than away_area when the triangle</span>
+<span class="sd">    centroid is at least away_distance from the river network.</span>
+<span class="sd">    Area must be smaller than a linear interpolant between</span>
+<span class="sd">    near_area and away_area when between</span>
+<span class="sd">    near_distance and away_distance from the river</span>
+<span class="sd">    network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_area_valid</span><span class="p">(</span><span class="n">distance</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A function to make sure max area scales with distance from river network</span>
+<span class="sd">        </span>
+<span class="sd">        Units in [m]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">&gt;</span> <span class="n">away_distance</span><span class="p">:</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="n">away_area</span>
+        <span class="k">elif</span> <span class="n">distance</span> <span class="o">&lt;</span> <span class="n">near_distance</span><span class="p">:</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="n">near_area</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="n">near_area</span> <span class="o">+</span> <span class="p">(</span><span class="n">distance</span><span class="o">-</span><span class="n">near_distance</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">away_distance</span>
+                                                           <span class="o">-</span><span class="n">near_distance</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">away_area</span><span class="o">-</span><span class="n">near_area</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">area</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">:</span>
+        <span class="n">river_multiline</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">river_multiline</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A function for use with watershed_workflow.triangulate.triangulate&#39;s refinement_func argument based on size gradation from a river.&quot;&quot;&quot;</span>
+        <span class="n">bary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vertices</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+        <span class="n">bary_p</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">bary</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bary</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">bary_p</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">river_multiline</span><span class="p">)</span>
+        <span class="n">max_area</span> <span class="o">=</span> <span class="n">max_area_valid</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">area</span> <span class="o">&gt;</span> <span class="n">max_area_valid</span><span class="p">(</span><span class="n">distance</span><span class="p">))</span>
+        <span class="c1">#logging.debug(&quot;refine? area = %g, distance = %g, max_area = %g: refine = %r&quot;%(area,distance,max_area,res))</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">return</span> <span class="n">refine</span></div>
+
+
+
+<div class="viewcode-block" id="refineByPolygons">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refineByPolygons">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refineByPolygons</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">areas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a graded refinement function based upon polygon area limits, for use with Triangle.</span>
+
+<span class="sd">    Triangle area must be smaller than the area limit for the polygon when the triangle</span>
+<span class="sd">    centroid is within the polygon.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A function for use with watershed_workflow.triangulate.triangulate&#39;s refinement_func argument based on polygon area limits.&quot;&quot;&quot;</span>
+        <span class="n">bary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vertices</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+        <span class="n">bary_p</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">bary</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bary</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Check if a single area value is provided</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">areas</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">max_area</span> <span class="o">=</span> <span class="n">areas</span>
+            <span class="k">for</span> <span class="n">polygon</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">polygon</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">bary_p</span><span class="p">)</span> <span class="ow">and</span> <span class="n">area</span> <span class="o">&gt;</span> <span class="n">max_area</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Assume areas is a list of area limits</span>
+            <span class="k">for</span> <span class="n">polygon</span><span class="p">,</span> <span class="n">max_area</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">polygons</span><span class="p">,</span> <span class="n">areas</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">polygon</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">bary_p</span><span class="p">)</span> <span class="ow">and</span> <span class="n">area</span> <span class="o">&gt;</span> <span class="n">max_area</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">refine</span></div>
+
+
+
+<div class="viewcode-block" id="refineByMaxEdgeLength">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.triangulation.refineByMaxEdgeLength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refineByMaxEdgeLength</span><span class="p">(</span><span class="n">edge_length</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a refinement function based on max edge length, for use with Triangle.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refine</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">area</span><span class="p">):</span>
+        <span class="n">verts4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">edge_lengths</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">verts4</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">verts4</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">edge_lengths</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">edge_length</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">refine</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

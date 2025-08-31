@@ -1,0 +1,1245 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;These high-level functions attempt to &quot;do what the user means.&quot;</span>
+<span class="sd">They group other, lower-level functions into common sets of</span>
+<span class="sd">operations.  The &quot;default workflow&quot; is nearly entirely built from</span>
+<span class="sd">calls to this namespace.  If the user needs to deviate from the</span>
+<span class="sd">default workflow, they can then call the lower level functions.</span>
+
+<span class="sd">This top level module provides functionality for getting shapes and</span>
+<span class="sd">rasters representing watershed boundaries, river networks, digital</span>
+<span class="sd">elevation models, and other GIS datasets and then processing those</span>
+<span class="sd">data sets for use in simulations.</span>
+
+<span class="sd">Functions here that get shapes and rasters should be used instead of</span>
+<span class="sd">directly using the source managers, because they additionally do</span>
+<span class="sd">things like convert coordinate systems, get the data into common</span>
+<span class="sd">data structures, etc.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_version</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="n">_version</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.geometry</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">folium</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">folium.plugins</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources.standard_names</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">names</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.river_tree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">watershed_workflow.river_tree</span><span class="w"> </span><span class="kn">import</span> <span class="n">River</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.split_hucs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">watershed_workflow.split_hucs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitHUCs</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.hydrography</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.resampling</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.angles</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.triangulation</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.river_mesh</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.condition</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.data</span>
+
+
+<span class="c1">#</span>
+<span class="c1"># functions for relating objects</span>
+<span class="c1"># -----------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="findHUC">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.findHUC">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">findHUC</span><span class="p">(</span><span class="n">source</span> <span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+            <span class="n">shape</span> <span class="p">:</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">,</span>
+            <span class="n">in_crs</span> <span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">CRS</span><span class="p">,</span>
+            <span class="n">hint</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">shrink_factor</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.e-5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the smallest HUC containing shape.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : source-type</span>
+<span class="sd">        Source object providing a getShapes() method that gets HUCs by ID.</span>
+<span class="sd">    shape : shapely.geometry.Polygon</span>
+<span class="sd">        Find this shape in a HUC.</span>
+<span class="sd">    in_crs : watershed_workflow.crs.CRS</span>
+<span class="sd">        CRS of shape.</span>
+<span class="sd">    hint : str</span>
+<span class="sd">        HUC in which to start searching.  This should be at least as long as</span>
+<span class="sd">        the indexing file size -- HUC 2 or longer for WBD, 4 or longer for NHD</span>
+<span class="sd">        Plus, or 8 or longer for NHD.</span>
+<span class="sd">    shrink_factor : float, optional</span>
+<span class="sd">        A fraction of the radius of shape to shrink prior for checking</span>
+<span class="sd">        containment within HUCs.  This fixes cases where shape is on a HUC</span>
+<span class="sd">        boundary with potentially some numerical error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ------- </span>
+<span class="sd">    out : str</span>
+<span class="sd">        The smallest containing HUC.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_in_huc</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">huc_shply</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks whether shply is in huc_shply&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">huc_shply</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">shply</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">huc_shply</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">shply</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_findHUC</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Searches in hint to find shp.&quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;searching: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">hint</span><span class="p">)</span>
+        <span class="n">hint_level</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+        <span class="n">search_level</span> <span class="o">=</span> <span class="n">hint_level</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">search_level</span> <span class="o">&gt;</span> <span class="n">source</span><span class="o">.</span><span class="n">lowest_level</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hint</span>
+
+        <span class="n">source</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">search_level</span><span class="p">)</span>
+        <span class="n">subhus</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">getShapesByID</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ID</span><span class="p">,</span> <span class="n">subhu</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">subhus</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">],</span> <span class="n">subhus</span><span class="o">.</span><span class="n">geometry</span><span class="p">):</span>
+            <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shply</span><span class="p">,</span> <span class="n">subhu</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># fully contained in try_huc, recurse</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  subhuc: </span><span class="si">{</span><span class="n">ID</span><span class="si">}</span><span class="s1"> contains&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">_findHUC</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shply</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">ID</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">inhuc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  subhuc: </span><span class="si">{</span><span class="n">ID</span><span class="si">}</span><span class="s1"> partially contains&#39;</span><span class="p">)</span>
+                <span class="c1"># partially contained in try_huc, return this</span>
+                <span class="k">return</span> <span class="n">hint</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  subhuc: </span><span class="si">{</span><span class="n">ID</span><span class="si">}</span><span class="s1"> does not contain&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span>
+
+    <span class="c1"># must shrink the poly a bit in case it is close to or on a boundary</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">area</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">shape_s</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">shrink_factor</span> <span class="o">*</span> <span class="n">radius</span><span class="p">)</span>
+
+    <span class="n">hint_hu</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">getShapesByID</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="n">in_crs</span><span class="p">)</span>
+    <span class="n">inhuc</span> <span class="o">=</span> <span class="n">_in_huc</span><span class="p">(</span><span class="n">shape_s</span><span class="p">,</span> <span class="n">hint_hu</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">inhuc</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">: shape not found in hinted HUC &#39;</span><span class="si">{</span><span class="n">hint</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">_findHUC</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">shape_s</span><span class="p">,</span> <span class="n">in_crs</span><span class="p">,</span> <span class="n">hint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="reduceRivers">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.reduceRivers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reduceRivers</span><span class="p">(</span><span class="n">rivers</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">],</span>
+                 <span class="n">ignore_small_rivers</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">keep_n_rivers</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">prune_by_area</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+                 <span class="n">area_property</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">DRAINAGE_AREA</span><span class="p">,</span>
+                 <span class="n">remove_diversions</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">remove_braided_divergences</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">tol</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduce the extent of the river network through a variety of methods.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rivers : list(river_tree.River)</span>
+<span class="sd">        A list of rivers to reduce.</span>
+<span class="sd">    ignore_small_rivers : int, optional</span>
+<span class="sd">        If provided and positive, removes rivers whose number of</span>
+<span class="sd">        reaches is less than this value.  If negative, keeps the N</span>
+<span class="sd">        biggest (in number of reaches) rivers, where N is the negative</span>
+<span class="sd">        of the provided value (e.g. -2 keeps the biggest 2 rivers).</span>
+<span class="sd">    prune_by_area : float, optional</span>
+<span class="sd">        If provided, remove reaches whose total contributing area is</span>
+<span class="sd">        less than this tol.  NOTE: only valid for reaches that include</span>
+<span class="sd">        a contributing area property (e.g. NHDPlus).</span>
+<span class="sd">    area_property : str, optional=&#39;DivergenceRoutedDrainAreaSqKm&#39;</span>
+<span class="sd">        Name of the area property to use for determining reach CA.</span>
+<span class="sd">        Note that this defines the units of prune_by_area value.</span>
+<span class="sd">    remove_diversions : bool, optional=False</span>
+<span class="sd">        If true, remove diversions (see documentation of</span>
+<span class="sd">        modify_rivers_remove_divergences()).</span>
+<span class="sd">    remove_braided_divergences : bool, optional=False</span>
+<span class="sd">        If true, remove braided divergences (see documentation of</span>
+<span class="sd">        modify_rivers_remove_divergences()).</span>
+<span class="sd">    tol : float, optional=0.1</span>
+<span class="sd">        Defines what close is in the case of method == &#39;geometry&#39;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ------- </span>
+<span class="sd">    out : list(river_tree.River)</span>
+<span class="sd">        A list of rivers, as River objects.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">keep_n_rivers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removing all but the biggest </span><span class="si">{</span><span class="n">keep_n_rivers</span><span class="si">}</span><span class="s2"> rivers&quot;</span><span class="p">)</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">keep_n_rivers</span><span class="p">]</span>
+        
+    <span class="k">if</span> <span class="n">ignore_small_rivers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">filterSmallRivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">ignore_small_rivers</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prune_by_area</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removing rivers with area &lt; </span><span class="si">{</span><span class="n">prune_by_area</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">area_property</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">prune_by_area</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">remove_diversions</span> <span class="ow">and</span> <span class="n">remove_braided_divergences</span><span class="p">:</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">filterDivergences</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">remove_diversions</span><span class="p">:</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">filterDiversions</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">remove_braided_divergences</span><span class="p">:</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">removeBraids</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prune_by_area</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">pruneRiversByArea</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">prune_by_area</span><span class="p">,</span> <span class="n">area_property</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ignore_small_rivers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">filterSmallRivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">ignore_small_rivers</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rivers</span></div>
+
+
+
+<div class="viewcode-block" id="simplify">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.simplify">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify</span><span class="p">(</span><span class="n">hucs</span> <span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span>
+             <span class="n">rivers</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">],</span>
+             <span class="n">reach_segment_target_length</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+             <span class="n">huc_segment_target_length</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">river_close_distance</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+             <span class="n">river_far_distance</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">500.0</span><span class="p">,</span>
+             <span class="n">resample_by_reach_property</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="n">min_angle</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+             <span class="n">junction_min_angle</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+             <span class="n">snap_triple_junctions_tol</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">plot_diagnostics</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="n">keep_points</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simplifies, in place, the HUC and river shapes to create constrained, discrete segments.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">       A split-form HUC object containing all reaches.</span>
+<span class="sd">    rivers : list(River)</span>
+<span class="sd">       A list of river objects.</span>
+<span class="sd">    huc_segment_target_length : float</span>
+<span class="sd">       Target length of a typical triangle edge away from the river.</span>
+<span class="sd">    reach_segment_target_length : float</span>
+<span class="sd">       Target length of a typical triangle edge at the river.</span>
+
+<span class="sd">    waterbodies : list(shply), optional</span>
+<span class="sd">        A list of waterbodies.</span>
+<span class="sd">    simplify_hucs : float, optional</span>
+<span class="sd">        If provided, simply the hucs by moving points at most this</span>
+<span class="sd">        many units (see also shapely.simplify).  Units are that of the</span>
+<span class="sd">        CRS of shapes.</span>
+<span class="sd">    simplify_rivers : float, optional</span>
+<span class="sd">        If provided, simply the rivers by moving points at most this</span>
+<span class="sd">        many units (see also shapely.simplify).  Units are that of the</span>
+<span class="sd">        CRS of shapes.  If not provided, use the simplify_hucs value.</span>
+<span class="sd">        Provide 0 to make no changes to the rivers.</span>
+<span class="sd">    simplify_waterbodies : float, optional</span>
+<span class="sd">        Simplify the waterbodies.  If not provided, uses the</span>
+<span class="sd">        simplify_hucs value.  Provide 0 to make no changes to the</span>
+<span class="sd">        waterbodies.</span>
+<span class="sd">    prune_tol : float, optional = simplify_rivers</span>
+<span class="sd">        Prune leaf reaches that are smaller than this tolerance.  If</span>
+<span class="sd">        not provided, uses simplify_rivers value.  Provide 0 to not do</span>
+<span class="sd">        this step.</span>
+<span class="sd">    merge_tol : float, optional = simplify_rivers</span>
+<span class="sd">        Merges reaches that are smaller than this tolerance with their</span>
+<span class="sd">        downstream parent reach.  Note that if there is a branchpoint</span>
+<span class="sd">        at the downstream node of the small reach, it will get moved</span>
+<span class="sd">        to the upstream node.  If not provided, uses simplify_rivers</span>
+<span class="sd">        value.  Provide 0 to not do this step.</span>
+<span class="sd">    snap_tol : float, optional = 0.75 * simplify_rivers</span>
+<span class="sd">        Tolerance used for snapping rivers to nearby huc boundaries.</span>
+<span class="sd">        Provide 0 to not snap.</span>
+<span class="sd">    snap_triple_junctions_tol : float, optional = 3 * snap_tol</span>
+<span class="sd">        Tolerance used for snapping river triple junctions to huc</span>
+<span class="sd">        triple junctions.</span>
+<span class="sd">    snap_reach_endpoints_tol : float, optional = 2 * snap_tol</span>
+<span class="sd">        Tolerance used for snapping reach junctions to huc boundaries.</span>
+<span class="sd">    snap_waterbodies_tol : float, optional = snap_tol</span>
+<span class="sd">        If not 0, snaps waterbody and HUC nodes that are nearly</span>
+<span class="sd">        coincident to be discretely coincident.  Note this is not</span>
+<span class="sd">        recommended; prefer to include major waterbodies in the HUC</span>
+<span class="sd">        network.</span>
+<span class="sd">    cut_intersections : bool, optional = False</span>
+<span class="sd">        If true, force intersections of the river network and the HUC</span>
+<span class="sd">        boundary to occur at a coincident node by adding nodes as</span>
+<span class="sd">        needed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Simplifying&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Presimplify to remove colinear, coincident points.&quot;</span><span class="p">)</span>
+    <span class="n">presimplify</span> <span class="o">=</span> <span class="mf">1.e-4</span> <span class="o">*</span> <span class="n">reach_segment_target_length</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">presimplify</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">presimplify</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pruning leaf reaches &lt; </span><span class="si">{</span><span class="n">reach_segment_target_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">pruneByLineStringLength</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Merging internal reaches &lt; </span><span class="si">{</span><span class="n">reach_segment_target_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">mergeShortReaches</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="mf">0.75</span><span class="o">*</span><span class="n">reach_segment_target_length</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+        
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Snapping discrete points to make rivers and HUCs discretely consistent.&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; -- snapping HUC triple junctions to reaches&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">snap_triple_junctions_tol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">snap_triple_junctions_tol</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">reach_segment_target_length</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">snapHUCsJunctions</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">snap_triple_junctions_tol</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; -- snapping reach endpoints to HUC boundaries&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">snapReachEndpoints</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">river</span><span class="o">.</span><span class="n">isContinuous</span><span class="p">()</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; -- cutting reaches at HUC boundaries&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydrography</span><span class="o">.</span><span class="n">cutAndSnapCrossings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">river</span><span class="o">.</span><span class="n">isContinuous</span><span class="p">()</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Simplification Diagnostics&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    
+    <span class="c1"># resample</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resampling HUC and river&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">huc_segment_target_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dfunc</span> <span class="o">=</span> <span class="p">(</span><span class="n">river_close_distance</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">,</span> 
+                 <span class="n">river_far_distance</span><span class="p">,</span> <span class="n">huc_segment_target_length</span><span class="p">)</span>
+        <span class="n">river_mls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span><span class="n">river</span><span class="o">.</span><span class="n">to_mls</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">])</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- resampling HUCs based on distance function </span><span class="si">{</span><span class="n">dfunc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">resampling</span><span class="o">.</span><span class="n">resampleSplitHUCs</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">dfunc</span><span class="p">,</span> <span class="n">river_mls</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="n">keep_points</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- resampling HUCs based on uniform target </span><span class="si">{</span><span class="n">reach_segment_target_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">resampling</span><span class="o">.</span><span class="n">resampleSplitHUCs</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="n">keep_points</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">resample_by_reach_property</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- resampling reaches based on TARGET_SEGMENT_LENGTH property&quot;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">resampling</span><span class="o">.</span><span class="n">resampleRivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="n">keep_points</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- resampling reaches based on uniform target </span><span class="si">{</span><span class="n">reach_segment_target_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">resampling</span><span class="o">.</span><span class="n">resampleRivers</span><span class="p">(</span><span class="n">rivers</span><span class="p">,</span> <span class="n">reach_segment_target_length</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="n">keep_points</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resampling Diagnostics&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_diagnostics</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        
+    <span class="c1"># fix bad angles</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Clean up sharp angles, both internally and at junctions.&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">angles</span><span class="o">.</span><span class="n">smoothSharpAngles</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">min_angle</span><span class="p">,</span> <span class="n">junction_min_angle</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cleaned up </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> sharp angles.&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">river</span><span class="p">),</span> <span class="s2">&quot;reach&quot;</span><span class="p">)</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">logMinMaxMedianSegment</span><span class="p">(</span><span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">,</span> <span class="s2">&quot;HUC  &quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">rivers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span></div>
+
+    
+
+<div class="viewcode-block" id="triangulate">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.triangulate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">triangulate</span><span class="p">(</span><span class="n">hucs</span> <span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span>
+                <span class="n">rivers</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">internal_boundaries</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">BaseGeometry</span> <span class="o">|</span> <span class="n">River</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">hole_points</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">diagnostics</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">verbosity</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">tol</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">refine_max_area</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">refine_distance</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">refine_polygons</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">refine_max_edge_length</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">refine_min_angle</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">enforce_delaunay</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">as_mesh</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> \
+                       <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span> <span class="o">|</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Triangulates HUCs and rivers.</span>
+
+<span class="sd">    Note, refinement of a given triangle is done if any of the provided</span>
+<span class="sd">    criteria is met.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">        A split-form HUC object from, e.g., get_split_form_hucs()</span>
+<span class="sd">    rivers : list[watershed_workflow.river_tree.River], optional</span>
+<span class="sd">        List of rivers, used to refine the triangulation in conjunction with refine_distance.</span>
+<span class="sd">    internal_boundaries : list[shapely.geometry.Polygon, watershed_workflow.river_tree.River], optional</span>
+<span class="sd">        List of objects, whose boundary (in the case of</span>
+<span class="sd">        polygons/waterbodies) or reaches (in the case of River) will</span>
+<span class="sd">        be present in the edges of the triangulation.</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
+<span class="sd">    diagnostics : bool, optional</span>
+<span class="sd">        Plot diagnostics graphs of the triangle refinement.</span>
+<span class="sd">    tol : float, optional</span>
+<span class="sd">        Set tolerance for minimum distance between two nodes. The unit is the same as </span>
+<span class="sd">        that of the watershed&#39;s CRS. The default is 1.</span>
+<span class="sd">    refine_max_area : float, optional</span>
+<span class="sd">        Refine a triangle if its area is greater than this area.</span>
+<span class="sd">    refine_polygons : [list(shapely.geometry.Polygon), list(float)], optional</span>
+<span class="sd">        Refine a triangle if it falls within the polygons and its area is greater than the area limit for the polygon</span>
+<span class="sd">    refine_distance : list(float), optional</span>
+<span class="sd">        Refine a triangle if its area is greater than a function of its</span>
+<span class="sd">        centroid&#39;s distance from the nearest point on the river network.  The</span>
+<span class="sd">        argument is given by:</span>
+
+<span class="sd">        [near_distance, near_area, far_distance, far_area]</span>
+
+<span class="sd">        Defining d as the distance from triangle centroid to the nearest point</span>
+<span class="sd">        on the river network and area as the area of the triangle in question,</span>
+<span class="sd">        refinement occurs if:</span>
+
+<span class="sd">        * d &lt; near_distance and area &gt; near_area</span>
+<span class="sd">        * d &gt; far_distance and area &gt; far_area</span>
+<span class="sd">        * otherwise, defining </span>
+<span class="sd">          d&#39; = (d - near_distance) / (far_distance - near_distance),</span>
+<span class="sd">          refining occurs if</span>
+<span class="sd">          area &gt; near_area + (far_area - near_area) * d&#39;</span>
+
+<span class="sd">        Effectively this simply writes a piecewise linear function of triangle</span>
+<span class="sd">        distance from centroid and uses that as a max area criteria.</span>
+<span class="sd">    refine_max_edge_length : float, optional</span>
+<span class="sd">        Refine a triangle if its max edge length is greater than this length.</span>
+<span class="sd">    refine_min_angle : float, optional</span>
+<span class="sd">        Try to ensure that all triangles have a minimum edge length greater</span>
+<span class="sd">        than this value.</span>
+<span class="sd">    enforce_delaunay : bool,optional, experimental</span>
+<span class="sd">        Attempt to ensure all triangles are proper Delaunay triangles.</span>
+
+<span class="sd">        .. note:</span>
+<span class="sd">            This requires a hacked version of meshpy.triangle that</span>
+<span class="sd">            supports this option.  See the patch available at</span>
+<span class="sd">            workflow_tpls/meshpy_triangle.patch</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    vertices : np.array((n_points, 2), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle vertices.</span>
+<span class="sd">    triangles : np.array((n_tris, 3), &#39;i&#39;)</span>
+<span class="sd">        For each triangle, a list of 3 indices into the vertex array that make</span>
+<span class="sd">        up that triangle.</span>
+<span class="sd">    areas : _only if diagnostics=True_, np.array((n_tris), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle areas.</span>
+<span class="sd">    distances : _only if diagnostics=True_, np.array((n_tris), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle distances from the river network.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">2</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Triangulation&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+
+    <span class="n">refine_funcs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">refine_max_area</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refineByMaxArea</span><span class="p">(</span><span class="n">refine_max_area</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">refine_distance</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refineByRiverDistance</span><span class="p">(</span><span class="o">*</span><span class="n">refine_distance</span><span class="p">,</span> <span class="n">rivers</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">refine_max_edge_length</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refineByMaxEdgeLength</span><span class="p">(</span><span class="n">refine_max_edge_length</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">refine_polygons</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refine_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">refineByPolygons</span><span class="p">(</span><span class="n">refine_polygons</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">refine_polygons</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">my_refine_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">rf</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">rf</span> <span class="ow">in</span> <span class="n">refine_funcs</span><span class="p">)</span>
+
+    <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulation</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span>
+        <span class="n">hucs</span><span class="p">,</span>
+        <span class="n">internal_boundaries</span><span class="o">=</span><span class="n">internal_boundaries</span><span class="p">,</span>
+        <span class="n">hole_points</span><span class="o">=</span><span class="n">hole_points</span><span class="p">,</span>
+        <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="n">refinement_func</span><span class="o">=</span><span class="n">my_refine_func</span><span class="p">,</span>
+        <span class="n">min_angle</span><span class="o">=</span><span class="n">refine_min_angle</span><span class="p">,</span>
+        <span class="n">enforce_delaunay</span><span class="o">=</span><span class="n">enforce_delaunay</span><span class="p">,</span>
+        <span class="n">allow_boundary_steiner</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    
+    <span class="k">if</span> <span class="n">diagnostics</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Plotting triangulation diagnostics&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">river_multiline</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span><span class="n">river</span><span class="o">.</span><span class="n">to_mls</span><span class="p">()</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">])</span>
+            <span class="n">distances_l</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">areas_l</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">needs_refine</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">triangles</span><span class="p">:</span>
+                <span class="n">verts</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[</span><span class="n">tri</span><span class="p">]</span>
+                <span class="n">bary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">verts</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+                <span class="n">bary_p</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">bary</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bary</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">distances_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bary_p</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">river_multiline</span><span class="p">))</span>
+                <span class="n">areas_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">computeTriangleArea</span><span class="p">(</span><span class="o">*</span><span class="n">verts</span><span class="p">))</span>
+                <span class="n">needs_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">my_refine_func</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">areas_l</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+            <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distances_l</span><span class="p">)</span>
+            <span class="n">areas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">areas_l</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  min area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">areas</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  max area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">areas</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+
+            <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;distance from river of triangle centroids [m]&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;count [-]&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">needs_refine</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;distance [m]&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;triangle area [m^2]&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">areas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">computeTriangleArea</span><span class="p">(</span><span class="o">*</span><span class="n">vertices</span><span class="p">[</span><span class="n">tri</span><span class="p">])</span> <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">triangles</span><span class="p">])</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  min area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">areas</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  max area = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">areas</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+
+            <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">areas</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;area [m]&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;count [-]&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">as_mesh</span><span class="p">:</span>
+            <span class="n">m2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">hucs</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">m2</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">distances</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">distances</span>
+    
+    <span class="k">if</span> <span class="n">as_mesh</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">hucs</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">triangles</span></div>
+
+
+
+<div class="viewcode-block" id="tessalateRiverAligned">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.tessalateRiverAligned">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tessalateRiverAligned</span><span class="p">(</span><span class="n">hucs</span> <span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span>
+                          <span class="n">rivers</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">],</span>
+                          <span class="n">river_width</span> <span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+                          <span class="n">internal_boundaries</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">River</span> <span class="o">|</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseGeometry</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">as_mesh</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                          <span class="n">debug</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">|</span> \
+                       <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span> <span class="o">|</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">|</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> \
+                       <span class="n">Tuple</span><span class="p">[</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">       The huc geometry to tessalate.  Note this will be adjusted if</span>
+<span class="sd">       required by the river corridor.</span>
+<span class="sd">    rivers : list[River]</span>
+<span class="sd">       The rivers to mesh with quads</span>
+<span class="sd">    river_width : float or dict or callable or boolean </span>
+<span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
+<span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
+<span class="sd">    river_n_quads : int, optional</span>
+<span class="sd">       Number of quads across the river.  Currently only 1 is</span>
+<span class="sd">       supported (the default).</span>
+<span class="sd">    hole_points : list(shapely.Point), optional</span>
+<span class="sd">        List of points inside the polygons to be left as holes/voids (excluded from mesh)</span>
+<span class="sd">    internal_boundaries : list[shapely.Polygon], optional</span>
+<span class="sd">       List of internal boundaries to embed in the domain, e.g. waterbodies.</span>
+<span class="sd">    diagnostics : bool, optional</span>
+<span class="sd">       If true, prints extra diagnostic info.</span>
+<span class="sd">    ax : matplotlib Axes object, optional</span>
+<span class="sd">       For debugging -- plots troublesome reaches as quad elements are</span>
+<span class="sd">       generated to find tricky areas.</span>
+<span class="sd">    kwargs :</span>
+<span class="sd">       All other arguments are passed to the triangulation function for refinement.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    vertices : np.array((n_vertices, 2), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle vertices.</span>
+<span class="sd">    elems : list[list[int]]</span>
+<span class="sd">        For each element, an ordered list of indices into the vertices</span>
+<span class="sd">        array that make up that cell.</span>
+<span class="sd">    areas : _only if diagnostics=True_, np.array((n_cell_vertices), &#39;d&#39;)</span>
+<span class="sd">        Array of areas.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stream-aligned Meshing&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
+
+    <span class="c1"># generate the quads</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating stream-aligned mesh...&#39;</span><span class="p">)</span>
+    <span class="n">computeWidth</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_mesh</span><span class="o">.</span><span class="n">createWidthFunction</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">river_coords</span><span class="p">,</span> <span class="n">river_elems</span><span class="p">,</span> <span class="n">river_corridors</span><span class="p">,</span> <span class="n">hole_points</span><span class="p">,</span> <span class="n">intersections</span> <span class="o">=</span> \
+        <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_mesh</span><span class="o">.</span><span class="n">createRiversMesh</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">intersections</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">river_coords</span><span class="p">,</span> <span class="n">river_elems</span><span class="p">,</span> <span class="n">intersections</span>
+
+    <span class="c1"># triangulate the rest</span>
+    <span class="k">if</span> <span class="n">internal_boundaries</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">internal_boundaries</span> <span class="o">=</span> <span class="n">river_corridors</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">internal_boundaries</span> <span class="o">=</span> <span class="n">river_corridors</span> <span class="o">+</span> <span class="n">internal_boundaries</span>
+        
+    <span class="n">tri_res</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">internal_boundaries</span><span class="p">,</span>
+                                              <span class="n">hole_points</span><span class="p">,</span> <span class="n">as_mesh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tri_res</span><span class="p">,</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tri_res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">)</span>
+    <span class="n">tri_coords</span> <span class="o">=</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">tri_elems</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">tri</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    
+    <span class="c1"># merge elements into a single output</span>
+    <span class="n">elems</span> <span class="o">=</span> <span class="n">tri_elems</span> <span class="o">+</span> <span class="n">river_elems</span>
+    <span class="c1"># note, all river verts are in the tri_verts, listed first, and in the same order!</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">tri_coords</span>
+
+    <span class="c1"># We could now recover the polygon linestrings in SplitHUCs, but don&#39;t... TBD --ETC</span>
+
+    <span class="k">if</span> <span class="n">as_mesh</span><span class="p">:</span>
+        <span class="n">m2</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">elems</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">hucs</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="n">m2</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">elems</span><span class="p">,</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">tri_res</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">tri_res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">elems</span><span class="p">)</span></div>
+
+
+        
+<div class="viewcode-block" id="elevate">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.elevate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">elevate</span><span class="p">(</span><span class="n">m2</span> <span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">,</span>
+            <span class="n">dem</span> <span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Elevate a mesh onto the provided dem, in place.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh_crs : crs-type</span>
+<span class="sd">        Mesh coordinate system.</span>
+<span class="sd">    dem : xr.DataArray</span>
+<span class="sd">        2D array forming an elevation raster.</span>
+<span class="sd">    algorithm : str, optional</span>
+<span class="sd">        Algorithm used for interpolation.  One of:</span>
+<span class="sd">        * &quot;nearest&quot; for nearest-neighbor pixels</span>
+<span class="sd">        * &quot;piecewise bilinear&quot; for interpolation (default)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    out : np.array((n_points, 3), &#39;d&#39;)</span>
+<span class="sd">        Array of triangle vertices, including a z-dimension.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span>
+    
+    <span class="c1"># index the i,j of the points, pick the elevations</span>
+    <span class="n">elev</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">interpolateValues</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># create the 3D points</span>
+    <span class="k">if</span> <span class="n">mesh_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">mesh_points</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">elev</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+        <span class="n">new_points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">mesh_points</span>
+        <span class="n">new_points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">elev</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">m2</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">new_points</span></div>
+
+
+
+
+<div class="viewcode-block" id="getDatasetOnMesh">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.getDatasetOnMesh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">getDatasetOnMesh</span><span class="p">(</span><span class="n">m2</span> <span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">,</span>
+                     <span class="n">data</span> <span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate xarray data onto cell centroids of a mesh.&quot;&quot;&quot;</span>
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">centroids</span>
+    <span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">interpolateValues</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">,</span> <span class="n">m2</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+    <span class="c1"># Ensure the data type of the interpolated data matches the input data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">interpolated_data</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">interpolated_data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">interpolated_data</span></div>
+
+
+
+<div class="viewcode-block" id="getShapePropertiesOnMesh">
+<a class="viewcode-back" href="../hilev.html#watershed_workflow.getShapePropertiesOnMesh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">getShapePropertiesOnMesh</span><span class="p">(</span><span class="n">m2</span> <span class="p">:</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh2D</span><span class="p">,</span>
+                             <span class="n">df</span> <span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
+                             <span class="n">column</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                             <span class="n">resolution</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                             <span class="n">nodata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                             <span class="o">**</span><span class="n">kwargs</span>
+                             <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Intepolate shape data onto cell centroids of a mesh.&quot;&quot;&quot;</span>
+    <span class="n">dataarray</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rasterizeGeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">getDatasetOnMesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">dataarray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">makeMap</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="n">folium</span><span class="o">.</span><span class="n">LayerControl</span><span class="p">()</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">folium</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">Fullscreen</span><span class="p">()</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">folium</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">MeasureControl</span><span class="p">()</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

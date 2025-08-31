@@ -1,0 +1,1126 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Sources &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="_static/documentation_options.js?v=4e480626"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'sources';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Structures and Shape Manipulation" href="geometry.html" />
+    <link rel="prev" title="High Level API" href="hilev.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="v2.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version v2.0</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source-list">Source List</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.getDefaultSources"><code class="docutils literal notranslate"><span class="pre">getDefaultSources()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.getSources"><code class="docutils literal notranslate"><span class="pre">getSources()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.logSources"><code class="docutils literal notranslate"><span class="pre">logSources()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed-boundaries-and-hydrography">Watershed boundaries and hydrography</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_shapefile.ManagerShapefile"><code class="docutils literal notranslate"><span class="pre">ManagerShapefile</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_wbd.ManagerWBD"><code class="docutils literal notranslate"><span class="pre">ManagerWBD</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_wbd.ManagerWBD.getAll"><code class="docutils literal notranslate"><span class="pre">ManagerWBD.getAll()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_nhd.ManagerNHD"><code class="docutils literal notranslate"><span class="pre">ManagerNHD</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_nhd.ManagerNHD.getCatchments"><code class="docutils literal notranslate"><span class="pre">ManagerNHD.getCatchments()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#digital-elevation-models">Digital Elevation Models</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_raster.ManagerRaster"><code class="docutils literal notranslate"><span class="pre">ManagerRaster</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_3dep.Manager3DEP"><code class="docutils literal notranslate"><span class="pre">Manager3DEP</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#land-cover">Land Cover</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_nlcd.ManagerNLCD"><code class="docutils literal notranslate"><span class="pre">ManagerNLCD</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS"><code class="docutils literal notranslate"><span class="pre">ManagerMODISAppEEARS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.Request"><code class="docutils literal notranslate"><span class="pre">ManagerMODISAppEEARS.Request</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.isReady"><code class="docutils literal notranslate"><span class="pre">ManagerMODISAppEEARS.isReady()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#soil-structure-and-properties">Soil structure and properties</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_nrcs.ManagerNRCS"><code class="docutils literal notranslate"><span class="pre">ManagerNRCS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS"><code class="docutils literal notranslate"><span class="pre">ManagerGLHYMPS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB"><code class="docutils literal notranslate"><span class="pre">ManagerPelletierDTB</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017"><code class="docutils literal notranslate"><span class="pre">ManagerSoilGrids2017</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#meteorology">Meteorology</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_aorc.ManagerAORC"><code class="docutils literal notranslate"><span class="pre">ManagerAORC</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_aorc.ManagerAORC.Request"><code class="docutils literal notranslate"><span class="pre">ManagerAORC.Request</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_daymet.ManagerDaymet"><code class="docutils literal notranslate"><span class="pre">ManagerDaymet</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.sources.manager_daymet.ManagerDaymet.Request"><code class="docutils literal notranslate"><span class="pre">ManagerDaymet.Request</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="api.html" class="nav-link">API Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Data Sources</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="data-sources">
+<h1>Data Sources<a class="headerlink" href="#data-sources" title="Link to this heading">#</a></h1>
+<p>Watershed Workflow stores a library of sources, which provide
+functionality to access data as if it was local.  Given appropriate
+bounds (spatial and/or temporal), the sources typically use REST-APIs
+or other web-based services to locate, download, unzip, and file
+datasets, which are then stored indefinitely for future use.  These
+datasets are stored in a local data store whose location is specified
+in the <span class="xref std std-ref">Package Configuration</span> file.</p>
+<p>The following sections lay out the sources subpackage, which is simply
+a way of getting and working with default sources, and the broad
+classes of sources frequently used in workflows.</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_shapefile.ManagerShapefile" title="watershed_workflow.sources.manager_shapefile.ManagerShapefile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_shapefile.ManagerShapefile</span></code></a></p></td>
+<td><p>A simple class for reading shapefiles.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_raster.ManagerRaster" title="watershed_workflow.sources.manager_raster.ManagerRaster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_raster.ManagerRaster</span></code></a></p></td>
+<td><p>A simple class for reading rasters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_wbd.ManagerWBD" title="watershed_workflow.sources.manager_wbd.ManagerWBD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_wbd.ManagerWBD</span></code></a></p></td>
+<td><p>Leverages pygeohydro to download WBD data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_nhd.ManagerNHD" title="watershed_workflow.sources.manager_nhd.ManagerNHD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_nhd.ManagerNHD</span></code></a></p></td>
+<td><p>Leverages pynhd to download NHD data and its supporting shapes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_3dep.Manager3DEP" title="watershed_workflow.sources.manager_3dep.Manager3DEP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_3dep.Manager3DEP</span></code></a></p></td>
+<td><p>3D Elevation Program (3DEP) data manager.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_nrcs.ManagerNRCS" title="watershed_workflow.sources.manager_nrcs.ManagerNRCS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_nrcs.ManagerNRCS</span></code></a></p></td>
+<td><p>The National Resources Conservation Service's SSURGO Database <a class="reference internal" href="#nrcs" id="id1"><span>[NRCS]</span></a> contains a huge amount of information about soil texture, parameters, and structure, and are provided as shape files containing soil type delineations with map-unit-keys (MUKEYs).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS" title="watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS</span></code></a></p></td>
+<td><p>The <a class="reference internal" href="#glhymps" id="id2"><span>[GLHYMPS]</span></a> global hydrogeology map provides global values of a two-layer (unconsolidated, consolidated) structure.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017" title="watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017</span></code></a></p></td>
+<td><p>SoilGrids 250m (2017) datasets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB" title="watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB</span></code></a></p></td>
+<td><p>The <a class="reference internal" href="#pelletierdtb" id="id3"><span>[PelletierDTB]</span></a> global soil regolith sediment map provides global values of depth to bedrock at a 1km spatial resolution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_nlcd.ManagerNLCD" title="watershed_workflow.sources.manager_nlcd.ManagerNLCD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_nlcd.ManagerNLCD</span></code></a></p></td>
+<td><p>National Land Cover Database manager for single-year snapshots.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_daymet.ManagerDaymet" title="watershed_workflow.sources.manager_daymet.ManagerDaymet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_daymet.ManagerDaymet</span></code></a></p></td>
+<td><p>Daymet meterological datasets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_aorc.ManagerAORC" title="watershed_workflow.sources.manager_aorc.ManagerAORC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_aorc.ManagerAORC</span></code></a></p></td>
+<td><p>AORC dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS" title="watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS</span></code></a></p></td>
+<td><p>MODIS data through the AppEEARS data portal.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="source-list">
+<h2>Source List<a class="headerlink" href="#source-list" title="Link to this heading">#</a></h2>
+<p>Most users will access sources through the dictionaries of types of
+sources created here.  In particular, <cite>getDefaultSources()</cite> will be
+the standard starting point.</p>
+<p id="module-watershed_workflow.sources">This module provides a dictionary of sources, broken out by data type, and a
+dictionary of default sources.</p>
+<p>These dictionaries are provided as module-local (singleton) variables.</p>
+<ul class="simple">
+<li><p>huc_sources : A dictionary of sources that provide USGS HUC boundaries.</p></li>
+<li><p>hydrography_sources : A dictionary of sources that provide river reaches by HUC.</p></li>
+<li><p>dem_sources : A dictionary of available digital elevation models.</p></li>
+<li><p>soil_sources : A dictionary of available sources for soil properties.</p></li>
+<li><p>land_cover_sources : A dictionary of available land cover datasets.</p></li>
+</ul>
+<p>#</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.sources.getDefaultSources">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.</span></span><span class="sig-name descname"><span class="pre">getDefaultSources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources.html#getDefaultSources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.getDefaultSources" title="Link to this definition">#</a></dt>
+<dd><p>Provides a default set of data sources.</p>
+<p>Returns a dictionary with default sources for each type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.sources.getSources">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.</span></span><span class="sig-name descname"><span class="pre">getSources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources.html#getSources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.getSources" title="Link to this definition">#</a></dt>
+<dd><p>Parsers the command line argument struct from argparse and provides an
+updated set of data sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>struct</em>) – A python struct generated from an argparse.ArgumentParser object with
+source options set by watershed_workflow.ui.*_source_options</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sources</strong> – Dictionary of defaults for each of “HUC”, “hydrography”, “DEM”, “soil
+type”, and “land cover”.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.sources.logSources">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.</span></span><span class="sig-name descname"><span class="pre">logSources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources.html#logSources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.logSources" title="Link to this definition">#</a></dt>
+<dd><p>Pretty print source dictionary to log.</p>
+</dd></dl>
+
+</section>
+<section id="watershed-boundaries-and-hydrography">
+<h2>Watershed boundaries and hydrography<a class="headerlink" href="#watershed-boundaries-and-hydrography" title="Link to this heading">#</a></h2>
+<p>Watershed boundary datasets and hydrography datasets together form the
+geographic structure of a watershed.  Watershed boundary datasets are
+typically formed through analysis of elevation datasets, collecting
+within the same watershed all parts of the land surface which drain to
+a common river outlet.  Watersheds are hierarchical, ranging in scale
+from small primary watersheds which drain into first order streams to
+full river basins which drain into an ocean.  In the United States,
+the USGS formally calculates hydrologic units and identifies them
+using Hydrologic Unit Codes, or HUCs, which respect this hierarchy.
+HUC 2 regions (e.g. the Upper Colorado River or the Tennessee River
+Basin) are the largest in areal extent, while HUC 12s, or
+sub-watersheds, are the smallest, representing on the order of 100
+square kilometers.  Watershed Workflow uses HUCs as an organizing unit
+for working with data, primarily because most datasets in the US are
+organized by the HUC, but also because they form physically useful
+domains for simulation.</p>
+<p>Hydrography datasets provide surveys of river networks, which form the
+drainage network of watersheds and are where most of the fast-time
+scale dynamics occur.  Some hydrologic models (for instance river
+routing models, dam operations management models, and many flood
+models) directly use the river network as their simulation domain,
+while others (for instance the class of integrated, distributed models
+described here) can use the river network to refine meshes near the
+rivers and therefore improve resolution where fast dynamics are
+occuring.  Watershed boundary and Hydrography datasets are typically
+available as GIS shapefiles, where each watershed boundary or reach is
+represented as a shape.</p>
+<p>Currently two ways of getting watershed boundaries are supported –
+USGS HUC delineations and user-provided shape files.  Watershed
+boundaries read from shapefiles can use the shapefile manager.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_shapefile.ManagerShapefile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_shapefile.</span></span><span class="sig-name descname"><span class="pre">ManagerShapefile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_shapefile.html#ManagerShapefile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_shapefile.ManagerShapefile" title="Link to this definition">#</a></dt>
+<dd><p>A simple class for reading shapefiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the shapefile.</p></li>
+<li><p><strong>id_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the ID field in the shapefile.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_wbd.ManagerWBD">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_wbd.</span></span><span class="sig-name descname"><span class="pre">ManagerWBD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'WBD'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_wbd.html#ManagerWBD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_wbd.ManagerWBD" title="Link to this definition">#</a></dt>
+<dd><p>Leverages pygeohydro to download WBD data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_wbd.ManagerWBD.getAll">
+<span class="sig-name descname"><span class="pre">getAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GeoDataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_wbd.html#ManagerWBD.getAll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_wbd.ManagerWBD.getAll" title="Link to this definition">#</a></dt>
+<dd><p>Download all HUCs at a given level.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Getting the reaches used to construct rivers is done as either
+shapefiles as above, or through NHD datasets, which include NHD Medium
+Resolution, NHD Medium Resolution v2.1 (preferred) and NHD High Res.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_nhd.ManagerNHD">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_nhd.</span></span><span class="sig-name descname"><span class="pre">ManagerNHD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">catchments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fewer_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nhd.html#ManagerNHD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nhd.ManagerNHD" title="Link to this definition">#</a></dt>
+<dd><p>Leverages pynhd to download NHD data and its supporting shapes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_nhd.ManagerNHD.getCatchments">
+<span class="sig-name descname"><span class="pre">getCatchments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GeoDataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nhd.html#ManagerNHD.getCatchments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nhd.ManagerNHD.getCatchments" title="Link to this definition">#</a></dt>
+<dd><p>Add catchment data to flowline data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>gpd.GeoDataFrame</em>) – GeoDataFrame with flowline data and ID column.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>GeoDataFrame with catchment data merged in.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gpd.GeoDataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="digital-elevation-models">
+<h2>Digital Elevation Models<a class="headerlink" href="#digital-elevation-models" title="Link to this heading">#</a></h2>
+<p>For any distributed, integrated hydrologic model, elevation datasets
+are critical.  These set the local spatial gradients that drive flow
+in Richards and overload flow equations, and are necessary to form a
+mesh, whether structured or unstructured, for simulation.  Elevation
+datasets are typically stored as raster images.</p>
+<p>Then workflows can query the raster for interpolated elevations at
+points on a mesh, river, or other locations of interest.  Internally,
+affine coordinate system transformations are hidden; the coordinate
+system of the requested points are mapped to that of the raster and
+interpolated.  By default, piecewise bilinear interpolation is used to
+ensure that extremely high-resolution queries do not look
+stairstepped; this improves mesh quality in meshes near the resolution
+of the underlying elevation dataset.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_raster.ManagerRaster">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_raster.</span></span><span class="sig-name descname"><span class="pre">ManagerRaster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">native_resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">native_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_raster.html#ManagerRaster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_raster.ManagerRaster" title="Link to this definition">#</a></dt>
+<dd><p>A simple class for reading rasters.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_3dep.Manager3DEP">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_3dep.</span></span><span class="sig-name descname"><span class="pre">Manager3DEP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_3dep.html#Manager3DEP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_3dep.Manager3DEP" title="Link to this definition">#</a></dt>
+<dd><p>3D Elevation Program (3DEP) data manager.</p>
+<p>Provides access to USGS 3DEP elevation and derived products through
+the py3dep library. Supports multiple resolution options and various
+topographic layers including DEM, slope, aspect, and hillshade products.</p>
+</dd></dl>
+
+</section>
+<section id="land-cover">
+<h2>Land Cover<a class="headerlink" href="#land-cover" title="Link to this heading">#</a></h2>
+<p>Land cover datasets set everything from impervious surfaces to plant
+function and therefore evaportranspiration, and are used in some
+integrated hydrologic models for a wide range of processes.  Land
+cover is used to define a collection of indices on which mesh sets are
+generated and then used to generate and affect processes and process
+parameters.  Additionally, leaf area index (LAI) is used frequently in
+determining potential evapotranspiration.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_nlcd.ManagerNLCD">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_nlcd.</span></span><span class="sig-name descname"><span class="pre">ManagerNLCD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'L48'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nlcd.html#ManagerNLCD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nlcd.ManagerNLCD" title="Link to this definition">#</a></dt>
+<dd><p>National Land Cover Database manager for single-year snapshots.</p>
+<p>Supports variables: cover, impervious, canopy, descriptor.
+Each manager instance represents a single year of NLCD data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>location</strong> (<em>str</em><em>, </em><em>optional</em>) – Location code (‘L48’, ‘AK’, ‘HI’, ‘PR’). Default ‘L48’.</p></li>
+<li><p><strong>year</strong> (<em>int</em><em>, </em><em>optional</em>) – NLCD data year. If None, uses most recent available for location.</p></li>
+<li><p><strong>https</strong> (<em>..</em><em> [</em><em>NLCD</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_modis_appeears.</span></span><span class="sig-name descname"><span class="pre">ManagerMODISAppEEARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">login_token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_modis_appeears.html#ManagerMODISAppEEARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS" title="Link to this definition">#</a></dt>
+<dd><p>MODIS data through the AppEEARS data portal.</p>
+<p>Note this portal requires authentication – please enter a
+username and password in your .watershed_workflowrc file.  For
+now, as this is not the highest security data portal or workflow
+package, we expect you to store this password in plaintext.  Maybe
+we can improve this?  If it bothers you, please ask how you can
+contribute (the developers of this package are not security
+experts!)</p>
+<p>To enter the username and password, register for a login in the
+AppEEARs data portal at:</p>
+<p>Currently the variables supported here include LAI and estimated
+ET.</p>
+<p>All data returned includes a time variable, which is in units of
+[days past Jan 1, 2000, 0:00:00.</p>
+<p>Note this is implemented based on the API documentation here:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://appeears.earthdatacloud.nasa.gov/api/?python#introduction">https://appeears.earthdatacloud.nasa.gov/api/?python#introduction</a></p>
+</div></blockquote>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.Request">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_modis_appeears.html#ManagerMODISAppEEARS.Request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.Request" title="Link to this definition">#</a></dt>
+<dd><p>MODIS AppEEARS-specific request that includes Task information.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.isReady">
+<span class="sig-name descname"><span class="pre">isReady</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Request</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_modis_appeears.html#ManagerMODISAppEEARS.isReady"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_modis_appeears.ManagerMODISAppEEARS.isReady" title="Link to this definition">#</a></dt>
+<dd><p>Check if MODIS data request is ready for download.</p>
+<p>Overrides base class to check AppEEARS processing status and bundle availability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>ManagerDataset.Request</em>) – MODIS request object with AppEEARS task information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if data is ready for download, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="soil-structure-and-properties">
+<h2>Soil structure and properties<a class="headerlink" href="#soil-structure-and-properties" title="Link to this heading">#</a></h2>
+<p>Soil structure and hydrologic properties (i.e. porosity, permeability,
+water retention curves) are often derived from texture
+parameterizations.  Similarly, depth to bedrock and other subsurface
+data can be essential in these types of simulations.  Often these are
+mapped into the simulation mesh.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_nrcs.ManagerNRCS">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_nrcs.</span></span><span class="sig-name descname"><span class="pre">ManagerNRCS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_download</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_nrcs.html#ManagerNRCS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_nrcs.ManagerNRCS" title="Link to this definition">#</a></dt>
+<dd><p>The National Resources Conservation Service’s SSURGO Database <a class="reference internal" href="#nrcs" id="id4"><span>[NRCS]</span></a>
+contains a huge amount of information about soil texture, parameters, and
+structure, and are provided as shape files containing soil type
+delineations with map-unit-keys (MUKEYs).  These are re-broadcast onto a
+raster (much like gSSURGO, which is unfortunately not readable by open
+tools) and used to index soil parameterizations for simulation.</p>
+<p>Data is accessed via two web APIs – the first for spatial
+(shapefiles) survey information, the second for properties.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://sdmdataaccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs">https://sdmdataaccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs</a></p></li>
+<li><p><a class="reference external" href="https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest">https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest</a></p></li>
+</ul>
+<p>TODO: Functionality for mapping from MUKEY to soil parameters.</p>
+<div role="list" class="citation-list">
+<div class="citation" id="nrcs" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>NRCS<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id4">2</a>)</span>
+<p>Soil Survey Staff, Natural Resources Conservation
+Service, United States Department of Agriculture. Web Soil
+Survey. Available online at
+<a class="reference external" href="https://websoilsurvey.nrcs.usda.gov/">https://websoilsurvey.nrcs.usda.gov/</a>. Accessed
+[month/day/year].</p>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_glhymps.</span></span><span class="sig-name descname"><span class="pre">ManagerGLHYMPS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_glhymps.html#ManagerGLHYMPS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_glhymps.ManagerGLHYMPS" title="Link to this definition">#</a></dt>
+<dd><p>The <a class="reference internal" href="#glhymps" id="id5"><span>[GLHYMPS]</span></a> global hydrogeology map provides global values of a
+two-layer (unconsolidated, consolidated) structure.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GLHYMPS does not have an API, and is a large (~4GB)
+download.  Download the file from the below citation DOI and
+unzip the file into:</p>
+<p>&lt;data_directory&gt;/soil_structure/GLHYMPS/</p>
+<p>which should yield GLHYMPS.shp (amongst other files).</p>
+</div>
+<div role="list" class="citation-list">
+<div class="citation" id="glhymps" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>GLHYMPS<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id5">2</a>)</span>
+<p>Huscroft, J.; Gleeson, T.; Hartmann, J.; Börker, J.,
+2018, “Compiling and mapping global permeability of the
+unconsolidated and consolidated Earth: GLobal HYdrogeology MaPS
+2.0 (GLHYMPS 2.0). [Supporting Data]”,
+<a class="reference external" href="https://doi.org/10.5683/SP2/TTJNIU">https://doi.org/10.5683/SP2/TTJNIU</a>, Scholars Portal Dataverse,
+V1</p>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_pelletier_dtb.</span></span><span class="sig-name descname"><span class="pre">ManagerPelletierDTB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_pelletier_dtb.html#ManagerPelletierDTB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_pelletier_dtb.ManagerPelletierDTB" title="Link to this definition">#</a></dt>
+<dd><p>The <a class="reference internal" href="#pelletierdtb" id="id6"><span>[PelletierDTB]</span></a> global soil regolith sediment map provides global values of
+depth to bedrock at a 1km spatial resolution.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pelletier DTB is served through ORNL’s DAAC, does not
+have an API, and is a large (~1GB) download.  Download the file
+from the below citation DOI and unzip the file into:</p>
+<p>&lt;data_directory&gt;/soil_structure/PelletierDTB/</p>
+<p>which should yield a set of tif files,</p>
+<p>Global_Soil_Regolith_Sediment_1304/data/*.tif</p>
+</div>
+<div role="list" class="citation-list">
+<div class="citation" id="pelletierdtb" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>PelletierDTB<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id6">2</a>)</span>
+<p>Pelletier, J.D., P.D. Broxton, P. Hazenberg,
+X. Zeng, P.A. Troch, G. Niu, Z.C. Williams, M.A. Brunke, and
+D. Gochis. 2016. Global 1-km Gridded Thickness of Soil,
+Regolith, and Sedimentary Deposit Layers. ORNL DAAC, Oak Ridge,
+Tennessee, USA. <a class="reference external" href="http://dx.doi.org/10.3334/ORNLDAAC/1304">http://dx.doi.org/10.3334/ORNLDAAC/1304</a></p>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_soilgrids_2017.</span></span><span class="sig-name descname"><span class="pre">ManagerSoilGrids2017</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_soilgrids_2017.html#ManagerSoilGrids2017"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_soilgrids_2017.ManagerSoilGrids2017" title="Link to this definition">#</a></dt>
+<dd><p>SoilGrids 250m (2017) datasets.</p>
+<p>SoilGrids 2017 maintains, to date, the only complete
+characterization of all soil properties needed for a hydrologic
+model.  The resolution is decent, and the accuracy is ok, but most
+importantly it is complete.</p>
+<div role="list" class="citation-list">
+<div class="citation" id="soilgrids2017" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>SoilGrids2017<span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://www.isric.org/explore/soilgrids/faq-soilgrids-2017">https://www.isric.org/explore/soilgrids/faq-soilgrids-2017</a></p>
+</div>
+<div class="citation" id="hengl2014soilgrids" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>hengl2014soilgrids<span class="fn-bracket">]</span></span>
+<p>Hengl, Tomislav, et al. “SoilGrids1km—global soil information based on automated mapping.” PloS one 9.8 (2014): e105992.</p>
+</div>
+<div class="citation" id="hengl2017soilgrids" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>hengl2017soilgrids<span class="fn-bracket">]</span></span>
+<p>Hengl, Tomislav, et al. “SoilGrids250m: Global gridded soil information based on machine learning.” PLoS one 12.2 (2017): e0169748.</p>
+</div>
+</div>
+<p>See the above link for a complete listing of potential variable
+names; included here are a subset used by this code.  That said,
+any 2017 filename can be used with this source manager.</p>
+<p>Variables available with layer information:</p>
+<ul class="simple">
+<li><p>BLDFIE_layer_1 through BLDFIE_layer_7: Bulk density of fine earth [kg m^-3]</p></li>
+<li><p>CLYPPT_layer_1 through CLYPPT_layer_7: Percent clay [%]</p></li>
+<li><p>SLTPPT_layer_1 through SLTPPT_layer_7: Percent silt [%]</p></li>
+<li><p>SNDPPT_layer_1 through SNDPPT_layer_7: Percent sand [%]</p></li>
+<li><p>WWP_layer_1 through WWP_layer_7: Soil water capacity % at wilting point [%]</p></li>
+<li><p>BDTICM: Absolute depth to continuous, unfractured bedrock [cm]</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="meteorology">
+<h2>Meteorology<a class="headerlink" href="#meteorology" title="Link to this heading">#</a></h2>
+<p>Meteorological data is used for forcing hydrologic models.  Note that
+we keep DayMet here, but it is currently deprecated and unusable due
+to the NASA DAAC THREDDS API being down indefinitely.  Use AORC
+instead.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_aorc.ManagerAORC">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_aorc.</span></span><span class="sig-name descname"><span class="pre">ManagerAORC</span></span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_aorc.html#ManagerAORC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_aorc.ManagerAORC" title="Link to this definition">#</a></dt>
+<dd><p>AORC dataset.</p>
+<p>Explore the Analysis Of Record for Calibration (AORC) version 1.1 data</p>
+<p><a class="reference external" href="https://registry.opendata.aws/noaa-nws-aorc/">https://registry.opendata.aws/noaa-nws-aorc/</a></p>
+<p>Using Xarray, Dask and hvPlot to explore the AORC version 1.1
+data. We read from a cloud-optimized Zarr dataset that is part of
+the NOAA Open Data Dissemination (NODD) program and we use a Dask
+cluster to parallelize the computation and reading of data chunks.</p>
+<p>AORC variables available to use:
+- APCP_surface
+- DLWRF_surface
+- DSWRF_surface
+- PRES_surface
+- SPFH_2maboveground
+- TMP_2maboveground
+- UGRD_10maboveground
+- VGRD_10maboveground</p>
+<p>There are eight variables representing the meteorological conditions</p>
+<ul class="simple">
+<li><p>Total Precipitaion (APCP_surface): Hourly total precipitation
+(kgm-2 or mm) for Calibration (AORC) dataset</p></li>
+<li><p>Air Temperature (TMP_2maboveground): Temperature (at 2 m
+above-ground-level (AGL)) (K)</p></li>
+<li><p>Specific Humidity (SPFH_2maboveground): Specific humidity (at 2
+m AGL) (g g-1)</p></li>
+<li><p>Downward Long-Wave Radiation Flux (DLWRF_surface): (1) longwave
+(infrared) and (2) radiation flux (at the surface) (W m-2)</p></li>
+<li><p>Downward Short-Wave Radiation Flux (DSWRF_surface): (1) Downward
+shortwave (solar) and (2) radiation flux (at the surface) (W
+m-2)</p></li>
+<li><p>Pressure (PRES_surface): Air pressure (at the surface) (Pa)</p></li>
+<li><p>U-Component of Wind (UGRD_10maboveground): U (west-east) -
+components of the wind (at 10 m AGL) (m s-1)</p></li>
+<li><p>V-Component of Wind (VGRD_10maboveground): V (south-north) -
+components of the wind (at 10 m AGL) (m s-1)</p></li>
+</ul>
+<p><strong>Precipitation and Temperature</strong></p>
+<p>The gridded AORC precipitation dataset contains one-hour
+Accumulated Surface Precipitation (APCP) ending at the “top” of
+each hour, in liquid water-equivalent units (kg m-2 to the nearest
+0.1 kg m-2), while the gridded AORC temperature dataset is
+comprised of instantaneous, 2 m above-ground-level (AGL)
+temperatures at the top of each hour (in Kelvin, to the nearest
+0.1).</p>
+<p><strong>Specific Humidity, Pressure, Downward Radiation, Wind</strong></p>
+<p>The development process for the six additional dataset components
+of the Conus AORC [i.e., specific humidity at 2m above ground (kg
+kg-1); downward longwave and shortwave radiation fluxes at the
+surface (W m-2); terrain-level pressure (Pa); and west-east and
+south-north wind components at 10 m above ground (m s-1)] has two
+distinct periods, based on datasets and methodology applied:
+1979–2015 and 2016–present.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_aorc.ManagerAORC.Request">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_aorc.html#ManagerAORC.Request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_aorc.ManagerAORC.Request" title="Link to this definition">#</a></dt>
+<dd><p>AORC-specific request that includes filename for cached data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_daymet.ManagerDaymet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">watershed_workflow.sources.manager_daymet.</span></span><span class="sig-name descname"><span class="pre">ManagerDaymet</span></span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_daymet.html#ManagerDaymet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_daymet.ManagerDaymet" title="Link to this definition">#</a></dt>
+<dd><p>Daymet meterological datasets.</p>
+<p>Daymet is a historic, spatially interpolated product which ingests large
+number of point-sources of meterological data, aggregates them to daily
+time series, and spatially interpolates them onto a 1km gridded product that
+covers all of North America from 1980 to present <a class="reference internal" href="#daymet" id="id7"><span>[Daymet]</span></a>.</p>
+<p>Variable names and descriptions</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>units</p></th>
+<th class="head"><p>description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>prcp</p></td>
+<td><p><span class="math notranslate nohighlight">\(mm / day\)</span></p></td>
+<td><p>Total daily precipitation</p></td>
+</tr>
+<tr class="row-odd"><td><p>tmin, tmax</p></td>
+<td><p><span class="math notranslate nohighlight">\(^\circ C\)</span></p></td>
+<td><p>Min/max daily air temperature</p></td>
+</tr>
+<tr class="row-even"><td><p>srad</p></td>
+<td><p><span class="math notranslate nohighlight">\(W / m^2\)</span></p></td>
+<td><p>Incoming solar radiation - per DAYLIT time!</p></td>
+</tr>
+<tr class="row-odd"><td><p>vp</p></td>
+<td><p><span class="math notranslate nohighlight">\(Pa\)</span></p></td>
+<td><p>Vapor pressure</p></td>
+</tr>
+<tr class="row-even"><td><p>swe</p></td>
+<td><p><span class="math notranslate nohighlight">\(Kg / m^2\)</span></p></td>
+<td><p>Snow water equivalent</p></td>
+</tr>
+<tr class="row-odd"><td><p>dayl</p></td>
+<td><p><span class="math notranslate nohighlight">\(s / day\)</span></p></td>
+<td><p>Duration of sunlight</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div role="list" class="citation-list">
+<div class="citation" id="daymet" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">Daymet</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://daymet.ornl.gov">https://daymet.ornl.gov</a></p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.sources.manager_daymet.ManagerDaymet.Request">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ManagerDataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_ready</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/watershed_workflow/sources/manager_daymet.html#ManagerDaymet.Request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.sources.manager_daymet.ManagerDaymet.Request" title="Link to this definition">#</a></dt>
+<dd><p>DayMet-specific request that adds download information.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="hilev.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">High Level API</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="geometry.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Data Structures and Shape Manipulation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

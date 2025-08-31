@@ -1,0 +1,1771 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Manipulation &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="_static/documentation_options.js?v=4e480626"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'data';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities" href="utilities.html" />
+    <link rel="prev" title="Meshing" href="mesh.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="v2.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version v2.0</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="hilev.html">High Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geometry.html">Geometry and Shape Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Meshes</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.data">Dataset manipulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.computeAverageYear"><code class="docutils literal notranslate"><span class="pre">computeAverageYear()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.computeAverageYear_DataArray"><code class="docutils literal notranslate"><span class="pre">computeAverageYear_DataArray()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.computeAverageYear_DataFrame"><code class="docutils literal notranslate"><span class="pre">computeAverageYear_DataFrame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.computeAverageYear_Dataset"><code class="docutils literal notranslate"><span class="pre">computeAverageYear_Dataset()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.computeMode"><code class="docutils literal notranslate"><span class="pre">computeMode()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.convertTimesToCFTime"><code class="docutils literal notranslate"><span class="pre">convertTimesToCFTime()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.convertTimesToCFTimeNoleap"><code class="docutils literal notranslate"><span class="pre">convertTimesToCFTimeNoleap()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.createNoleapMask"><code class="docutils literal notranslate"><span class="pre">createNoleapMask()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.filterLeapDay"><code class="docutils literal notranslate"><span class="pre">filterLeapDay()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.filterLeapDay_DataFrame"><code class="docutils literal notranslate"><span class="pre">filterLeapDay_DataFrame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.filterLeapDay_xarray"><code class="docutils literal notranslate"><span class="pre">filterLeapDay_xarray()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.imputeHoles2D"><code class="docutils literal notranslate"><span class="pre">imputeHoles2D()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.interpolate"><code class="docutils literal notranslate"><span class="pre">interpolate()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.interpolateToRegular"><code class="docutils literal notranslate"><span class="pre">interpolateToRegular()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.interpolateValues"><code class="docutils literal notranslate"><span class="pre">interpolateValues()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.interpolate_DataFrame"><code class="docutils literal notranslate"><span class="pre">interpolate_DataFrame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.interpolate_Dataset"><code class="docutils literal notranslate"><span class="pre">interpolate_Dataset()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.rasterizeGeoDataFrame"><code class="docutils literal notranslate"><span class="pre">rasterizeGeoDataFrame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smooth2D"><code class="docutils literal notranslate"><span class="pre">smooth2D()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smooth2D_DataArray"><code class="docutils literal notranslate"><span class="pre">smooth2D_DataArray()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smooth2D_Dataset"><code class="docutils literal notranslate"><span class="pre">smooth2D_Dataset()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smoothTimeSeries"><code class="docutils literal notranslate"><span class="pre">smoothTimeSeries()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smoothTimeSeries_Array"><code class="docutils literal notranslate"><span class="pre">smoothTimeSeries_Array()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smoothTimeSeries_DataArray"><code class="docutils literal notranslate"><span class="pre">smoothTimeSeries_DataArray()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smoothTimeSeries_DataFrame"><code class="docutils literal notranslate"><span class="pre">smoothTimeSeries_DataFrame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.data.smoothTimeSeries_Dataset"><code class="docutils literal notranslate"><span class="pre">smoothTimeSeries_Dataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.soil_properties">Soil properties data manipulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.cluster"><code class="docutils literal notranslate"><span class="pre">cluster()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.computeVGAlphaFromPermeability"><code class="docutils literal notranslate"><span class="pre">computeVGAlphaFromPermeability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO"><code class="docutils literal notranslate"><span class="pre">computeVanGenuchtenModelFromSSURGO()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta"><code class="docutils literal notranslate"><span class="pre">computeVanGenuchtenModel_Rosetta()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.convertRosettaToATS"><code class="docutils literal notranslate"><span class="pre">convertRosettaToATS()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.dropDuplicates"><code class="docutils literal notranslate"><span class="pre">dropDuplicates()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.getDefaultBedrockProperties"><code class="docutils literal notranslate"><span class="pre">getDefaultBedrockProperties()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.soil_properties.mangleGLHYMPSProperties"><code class="docutils literal notranslate"><span class="pre">mangleGLHYMPSProperties()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.meteorology">Meteorology data manipulation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.meteorology.allocatePrecipitation"><code class="docutils literal notranslate"><span class="pre">allocatePrecipitation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.meteorology.convertAORCToATS"><code class="docutils literal notranslate"><span class="pre">convertAORCToATS()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.meteorology.convertDayMetToATS"><code class="docutils literal notranslate"><span class="pre">convertDayMetToATS()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="api.html" class="nav-link">API Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Data Manipulation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="data-manipulation">
+<h1>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Link to this heading">#</a></h1>
+<section id="module-watershed_workflow.data">
+<span id="dataset-manipulation"></span><h2>Dataset manipulation<a class="headerlink" href="#module-watershed_workflow.data" title="Link to this heading">#</a></h2>
+<p>Functions used in interacting with data, either pandas DataFrames or xarray DataArrays.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.computeAverageYear">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#computeAverageYear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.computeAverageYear" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Average data values across years and repeat for specified number of years.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataFrame, DataArray, or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em><em>, </em><em>xr.DataArray</em><em>, or </em><em>xr.Dataset</em>) – Input data with cftime noleap calendar dates at 1- or 5-day intervals.</p></li>
+<li><p><strong>time_column</strong> (<em>str</em><em>, </em><em>optional</em>) – For DataFrame: Name of the time column (required).
+For Dataset: Name of the time dimension (default: ‘time’).
+For DataArray: Ignored (always uses ‘time’ dimension).</p></li>
+<li><p><strong>start_year</strong> (<em>int</em>) – Start year for the output time series.</p></li>
+<li><p><strong>output_nyears</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of years to repeat the averaged pattern. Default is 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with averaged values repeated for the specified number
+of years, starting from start_date.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame, xr.DataArray, or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataFrame, DataArray, or Dataset.
+    If DataFrame is provided without time_column.</p></li>
+<li><p><strong>ValueError</strong> – If time column/dimension is not found or contains invalid data.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function computes the average value for each day of year (1-365) across all
+years in the input data. For 5-day intervals, it averages values at days 1, 6,
+11, etc. The resulting pattern is then repeated for output_nyears starting from
+start_date.</p>
+<p>Missing values (NaN) are ignored in the averaging process.</p>
+<p>For DataFrames, only numeric columns are included in the output</p>
+<p>For DataArrays all attributes are preserved</p>
+<dl class="simple">
+<dt>For Datasets</dt><dd><ul class="simple">
+<li><p>Variables without the time dimension are preserved unchanged</p></li>
+<li><p>All attributes and encodings are preserved</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.computeAverageYear_DataArray">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear_DataArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'2020-1-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#computeAverageYear_DataArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.computeAverageYear_DataArray" title="Link to this definition">#</a></dt>
+<dd><p>Average DataArray values across years and repeat for specified number of years.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>da</strong> (<em>xr.DataArray</em>) – Input DataArray with cftime noleap calendar dates at 1- or 5-day intervals.</p></li>
+<li><p><strong>start_date</strong> (<em>str</em><em>, </em><em>datetime</em><em>, or </em><em>cftime.datetime</em>) – Start date for the output time series. If string, should be ‘YYYY-MM-DD’ format.</p></li>
+<li><p><strong>output_nyears</strong> (<em>int</em>) – Number of years to repeat the averaged pattern.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the time dimension. Default is ‘time’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataArray with averaged values repeated for the specified number of years,
+starting from start_date. All attributes are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time dimension is not found.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function computes the average value for each day of year (1-365) across all
+years in the input data. The resulting 365-day pattern is then repeated for
+output_nyears starting from start_date.</p>
+<p>This is particularly useful for creating climatological datasets or for
+generating synthetic time series based on historical patterns.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.computeAverageYear_DataFrame">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear_DataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'2020-1-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#computeAverageYear_DataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.computeAverageYear_DataFrame" title="Link to this definition">#</a></dt>
+<dd><p>Average DataFrame values across years and repeat for specified number of years.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Input DataFrame with cftime noleap calendar dates at 1- or 5-day intervals.</p></li>
+<li><p><strong>time_column</strong> (<em>str</em>) – Name of the column containing cftime datetime objects.</p></li>
+<li><p><strong>start_date</strong> (<em>str</em><em>, </em><em>datetime</em><em>, or </em><em>cftime.datetime</em>) – Start date for the output time series. If string, should be ‘YYYY-MM-DD’ format.</p></li>
+<li><p><strong>output_nyears</strong> (<em>int</em>) – Number of years to repeat the averaged pattern.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with averaged values repeated for the specified number of years,
+starting from start_date. Only includes the time column and averaged numeric columns.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time_column is not found or contains invalid data.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function computes the average value for each day of year (1-365) across all
+years in the input data. For 5-day intervals, it averages values at days 1, 6,
+11, etc. The resulting pattern is then repeated for output_nyears starting from
+start_date.</p>
+<p>Missing values (NaN) are ignored in the averaging process.
+Non-numeric columns are excluded from the output.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.computeAverageYear_Dataset">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeAverageYear_Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'2020-1-1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#computeAverageYear_Dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.computeAverageYear_Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Average Dataset values across years and repeat for specified number of years.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input Dataset with cftime noleap calendar dates at 1- or 5-day intervals.</p></li>
+<li><p><strong>start_date</strong> (<em>str</em><em>, </em><em>datetime</em><em>, or </em><em>cftime.datetime</em>) – Start date for the output time series. If string, should be ‘YYYY-MM-DD’ format.</p></li>
+<li><p><strong>output_nyears</strong> (<em>int</em>) – Number of years to repeat the averaged pattern.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the time dimension. Default is ‘time’.</p></li>
+<li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to average. If None, averages all variables with the
+time dimension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with averaged values repeated for the specified number of years,
+starting from start_date. All attributes are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time dimension is not found or if specified variables don’t exist.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Variables without the time dimension are preserved unchanged in the output.</p>
+<p>For each variable with the time dimension, the function computes the average
+value for each day of year across all years in the input data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.computeMode">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">computeMode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#computeMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.computeMode" title="Link to this definition">#</a></dt>
+<dd><p>Compute the mode along the time dimension of a DataArray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>da</strong> (<em>xr.DataArray</em>) – Input DataArray. Can contain any data type that scipy.stats.mode can handle.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the time dimension along which to compute the mode. Default is ‘time’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataArray with the mode computed along the time dimension. The time dimension
+is removed from the output. All other dimensions, coordinates, and attributes
+are preserved. In case of multiple modes, returns the smallest value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the specified time dimension is not found in the DataArray.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For continuous data, the mode may not be meaningful. This function is most
+useful for discrete or categorical data.</p>
+<p>When multiple values have the same highest frequency (multiple modes),
+scipy.stats.mode returns the smallest of these values.</p>
+<p>NaN values are ignored in the mode calculation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.convertTimesToCFTime">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">convertTimesToCFTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#convertTimesToCFTime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.convertTimesToCFTime" title="Link to this definition">#</a></dt>
+<dd><p>Convert an iterable of datetime objects to cftime object.</p>
+<p>This function accepts various datetime types and converts them to
+cftime Gregorian calendar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_values</strong> – Iterable of datetime objects (numpy datetime64, pandas Timestamp,
+Python datetime, or cftime objects). All elements must be the same type.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of cftime objects, likely in the Gregorian calendar.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[cftime._cftime.datetime]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.convertTimesToCFTimeNoleap">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">convertTimesToCFTimeNoleap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">DatetimeNoLeap</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#convertTimesToCFTimeNoleap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.convertTimesToCFTimeNoleap" title="Link to this definition">#</a></dt>
+<dd><p>Convert an iterable of cftime objects on any calendar to cftime DatetimeNoLeap calendar.</p>
+<p>This function accepts various datetime types and converts them to cftime NoLeap
+calendar while preserving the input container type. Raises an error if any
+input date represents the 366th day of a year (leap day in DayMet convention).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_values</strong> – Sequence of datetime objects (numpy datetime64, pandas Timestamp,
+Python datetime, or cftime objects). All elements must be the same type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Container of cftime.DatetimeNoLeap objects.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If any date in the input represents the 366th day of a year (leap day).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.createNoleapMask">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">createNoleapMask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">DatetimeNoLeap</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#createNoleapMask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.createNoleapMask" title="Link to this definition">#</a></dt>
+<dd><p>Create a mask that is true for any non-leap-day (day 366).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_values</strong> (<em>Sequence</em><em>[</em><em>ValidTime</em><em>]</em>) – Time values to filter for leap days.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>Sequence[cftime.DatetimeNoLeap]</em> – Time values converted to cftime format with leap days filtered.</p></li>
+<li><p><em>List[bool]</em> – Boolean mask where True indicates non-leap days.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.filterLeapDay">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">filterLeapDay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#filterLeapDay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.filterLeapDay" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">filterLeapDay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">filterLeapDay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Remove day 366 (Dec 31) from leap years and convert time to CFTime noleap calendar.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataFrame, DataArray, or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em><em>, </em><em>xr.DataArray</em><em>, or </em><em>xr.Dataset</em>) – Input data containing time series information to filter.</p></li>
+<li><p><strong>time_column</strong> (<em>str</em><em>, </em><em>optional</em>) – For DataFrame: Name of the column containing datetime data (required).
+For Dataset: Name of the time dimension (defaults to ‘time’).
+For DataArray: Ignored (always uses ‘time’ dimension).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with day 366 of leap years removed and time
+converted to cftime noleap calendar format.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame, xr.DataArray, or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataFrame, DataArray, or Dataset.
+    If DataFrame is provided without time_column.</p></li>
+<li><p><strong>ValueError</strong> – If time column/dimension is not found or cannot be converted to datetime.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Day 366 only occurs on December 31st in leap years. The function assumes that
+the input time data is not already in cftime noleap format, as noleap
+calendars by definition do not have day 366.</p>
+<dl class="simple">
+<dt>For DataFrames:</dt><dd><ul class="simple">
+<li><p>time_column parameter is required</p></li>
+<li><p>DataFrame index is reset after filtering</p></li>
+</ul>
+</dd>
+<dt>For DataArrays &amp; Datasets:</dt><dd><ul class="simple">
+<li><p>time_column parameter specifies the time dimension (default: ‘time’)</p></li>
+<li><p>All attributes including rasterio-specific ones are preserved</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#watershed_workflow.data.filterLeapDay_DataFrame" title="watershed_workflow.data.filterLeapDay_DataFrame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filterLeapDay_DataFrame</span></code></a></dt><dd><p>DataFrame-specific implementation</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">filterLeapDay_DataArray</span></code></dt><dd><p>DataArray-specific implementation</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">filterLeapDay_Dataset</span></code></dt><dd><p>Dataset-specific implementation</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.filterLeapDay_DataFrame">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">filterLeapDay_DataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#filterLeapDay_DataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.filterLeapDay_DataFrame" title="Link to this definition">#</a></dt>
+<dd><p>Remove day 366 (Dec 31) from leap years and convert time column to CFTime noleap calendar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – Input DataFrame containing time series data.</p></li>
+<li><p><strong>time_column</strong> – Name of the column containing datetime data. Must be convertible to pandas datetime.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with day 366 of leap years removed and time column converted to
+cftime noleap calendar format.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>time_column</cite> is not found in the DataFrame.
+    If the time column cannot be converted to datetime format.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Day 366 only occurs on December 31st in leap years. The function assumes that
+the input time column is not already in cftime noleap format, as noleap
+calendars by definition do not have day 366.</p>
+<p>The DataFrame index is reset after filtering to ensure continuous indexing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.filterLeapDay_xarray">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">filterLeapDay_xarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#filterLeapDay_xarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.filterLeapDay_xarray" title="Link to this definition">#</a></dt>
+<dd><p>Remove day 366 (Dec 31) from leap years and convert time dimension to CFTime noleap calendar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>da</strong> (<em>xr.DataArray</em>) – Input DataArray with a time dimension. The time dimension must contain
+datetime-like values that can be converted to pandas datetime.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataArray with day 366 of leap years removed and time dimension converted to
+cftime noleap calendar format. All attributes, including rasterio-specific
+attributes like ‘nodata’ and ‘crs’, are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the DataArray does not have a ‘time’ dimension.
+    If the time dimension cannot be converted to datetime format.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Day 366 only occurs on December 31st in leap years. The function assumes that
+the input time dimension is not already in cftime noleap format, as noleap
+calendars by definition do not have day 366.</p>
+<p>For rasterio-based DataArrays, this function preserves the coordinate reference
+system (CRS) and nodata value attributes. All other attributes are also preserved.</p>
+<p>The time dimension name is preserved, but its values are replaced with cftime
+noleap calendar objects.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.imputeHoles2D">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">imputeHoles2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cubic'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#imputeHoles2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.imputeHoles2D" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate values for missing data in rasters using scipy griddata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arr</strong> (<em>xarray.DataArray</em>) – Input raster data with missing values to interpolate.</p></li>
+<li><p><strong>nodata</strong> (<em>Any</em><em>, </em><em>optional</em>) – Value representing missing data. Default is numpy.nan.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method for scipy.interpolate.griddata.
+Valid options: ‘linear’, ‘nearest’, ‘cubic’. Default is ‘cubic’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interpolated array with missing values filled.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function may raise an error if there are holes on the boundary.
+The interpolation is performed using scipy.interpolate.griddata with
+the specified method.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.interpolate">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Ellipsis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#interpolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.interpolate" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Ellipsis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Ellipsis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Interpolate data to new times.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataFrame, DataArray, or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em><em>, </em><em>xr.DataArray</em><em>, or </em><em>xr.Dataset</em>) – Input data containing time series with cftime calendar.</p></li>
+<li><p><strong>time_values</strong> (<em>Sequence</em><em>[</em><em>ValidTime</em><em>]</em>) – Time values to interpolate to.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – For DataFrame: Name of the time column (required).
+For Dataset/DataArray: Name of the time dimension (default: ‘time’).</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method. Default is ‘linear’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with regular time intervals and interpolated values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame, xr.DataArray, or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataFrame, DataArray, or Dataset.</p></li>
+<li><p><strong>ValueError</strong> – If required parameters are missing or invalid.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#watershed_workflow.data.interpolate_DataFrame" title="watershed_workflow.data.interpolate_DataFrame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_DataFrame</span></code></a></dt><dd><p>DataFrame-specific implementation</p>
+</dd>
+<dt><a class="reference internal" href="#watershed_workflow.data.interpolate_Dataset" title="watershed_workflow.data.interpolate_Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_Dataset</span></code></a></dt><dd><p>Dataset-specific implementation</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.interpolateToRegular">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolateToRegular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#interpolateToRegular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.interpolateToRegular" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate data to new times.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataFrame, DataArray, or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em><em>, </em><em>xr.DataArray</em><em>, or </em><em>xr.Dataset</em>) – Input data containing time series with cftime calendar.</p></li>
+<li><p><strong>time_values</strong> (<em>Sequence</em><em>[</em><em>ValidTime</em><em>]</em>) – Time values to interpolate to.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – For DataFrame: Name of the time column (required).
+For Dataset/DataArray: Name of the time dimension (default: ‘time’).</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method. Default is ‘linear’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with regular time intervals and interpolated values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame, xr.DataArray, or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataFrame, DataArray, or Dataset.</p></li>
+<li><p><strong>ValueError</strong> – If required parameters are missing or invalid.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#watershed_workflow.data.interpolate_DataFrame" title="watershed_workflow.data.interpolate_DataFrame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_DataFrame</span></code></a></dt><dd><p>DataFrame-specific implementation</p>
+</dd>
+<dt><a class="reference internal" href="#watershed_workflow.data.interpolate_Dataset" title="watershed_workflow.data.interpolate_Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_Dataset</span></code></a></dt><dd><p>Dataset-specific implementation</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.interpolateValues">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolateValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#interpolateValues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.interpolateValues" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate values from a 2D grid-based DataArray at given x, y or lat, lon points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>np.ndarray</em>) – A (N, 2) array of coordinates. Each row should contain an (x, y) or (lon, lat) pair.</p></li>
+<li><p><strong>points_crs</strong> (<em>CRS</em>) – A coordinate system for the points.</p></li>
+<li><p><strong>data</strong> (<em>xr.DataArray</em>) – A DataArray with coordinates either (‘x’, ‘y’) or (‘lon’, ‘lat’).</p></li>
+<li><p><strong>method</strong> (<em>{'linear'</em><em>, </em><em>'nearest'</em><em>, </em><em>'cubic'}</em>) – Interpolation method to use.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 1D array of interpolated values with length N.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If DataArray does not have suitable coordinates for interpolation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.interpolate_DataFrame">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolate_DataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#interpolate_DataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.interpolate_DataFrame" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate DataFrame to arbitrary times.</p>
+<p>NOTE: this is not the same as pandas.interpolate(), but more like
+pandas.reindex(time_values).interpolate() with scipy-based
+interpolation options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Input DataFrame with a time column containing cftime objects.</p></li>
+<li><p><strong>time_values</strong> (<em>Sequence</em><em>[</em><em>ValidTime</em><em>]</em>) – Time values to interpolate to.</p></li>
+<li><p><strong>time_column</strong> (<em>str</em>) – Name of the column containing cftime datetime objects.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method. Default is ‘linear’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with regular time intervals and interpolated values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time_column is not found or interval is not 1 or 5.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.interpolate_Dataset">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">interpolate_Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'linear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nearest'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'zero'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'slinear'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quadratic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cubic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'quintic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'polynomial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'barycentric'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'krogh'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pchip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'spline'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'akima'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'makima'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#interpolate_Dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.interpolate_Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate Dataset to arbitrary times.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input Dataset with a time dimension containing cftime objects.</p></li>
+<li><p><strong>time_values</strong> (<em>Sequence</em><em>[</em><em>ValidTime</em><em>]</em>) – Time values to interpolate to.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em>) – Name of the time dimension. Default is ‘time’.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method. Default is ‘linear’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with regular time intervals and interpolated values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time dimension is not found or interval is not 1 or 5.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.rasterizeGeoDataFrame">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">rasterizeGeoDataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#rasterizeGeoDataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.rasterizeGeoDataFrame" title="Link to this definition">#</a></dt>
+<dd><p>Convert a GeoDataFrame to a rasterized DataArray based on a column’s values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gdf</strong> (<em>geopandas.GeoDataFrame</em>) – Input GeoDataFrame containing geometries and data.</p></li>
+<li><p><strong>column</strong> (<em>str</em>) – Name of the column containing values to rasterize. Must be a numeric type.</p></li>
+<li><p><strong>resolution</strong> (<em>float</em>) – Spatial resolution of the output raster in the units of the GeoDataFrame’s CRS.
+This defines the size of each pixel.</p></li>
+<li><p><strong>bounds</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Bounding box as (minx, miny, maxx, maxy). If None, bounds are computed
+from the GeoDataFrame’s total bounds.</p></li>
+<li><p><strong>nodata</strong> (<em>int</em><em> or </em><em>float</em><em>, </em><em>optional</em>) – Value to use for pixels not covered by any geometry. If None, defaults
+to NaN for float columns and -999 for integer columns.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rasterized data with dimensions (‘y’, ‘x’) and coordinates defined by
+the spatial extent and resolution. Areas outside geometries are set to
+the nodata value. The data type matches the column’s data type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If column is not found in the GeoDataFrame.
+    If column is not numeric type.
+    If GeoDataFrame is empty.
+    If resolution is not positive.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function uses rasterio’s rasterization capabilities to burn geometries
+into a raster. When geometries overlap, the value from the last geometry
+in the GeoDataFrame is used.</p>
+<p>The output DataArray includes the CRS information in its attributes if
+the GeoDataFrame has a CRS defined.</p>
+<p>The dtype of the output array matches the dtype of the input column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smooth2D">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smooth2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'uniform'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'gaussian'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'box'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smooth2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smooth2D" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smooth2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'uniform'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'gaussian'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'box'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span></dt>
+<dd><p>Apply 2D spatial smoothing to data.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataArray or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.DataArray</em><em> or </em><em>xr.Dataset</em>) – Input data with at least 2 spatial dimensions. Must not contain NaN values
+in data to be smoothed.</p></li>
+<li><p><strong>dim1</strong> (<em>str</em><em>, </em><em>optional</em>) – First spatial dimension. If None, will try to find ‘x’ or ‘lon’.</p></li>
+<li><p><strong>dim2</strong> (<em>str</em><em>, </em><em>optional</em>) – Second spatial dimension. If None, will try to find ‘y’ or ‘lat’.</p></li>
+<li><p><strong>method</strong> (<em>{'uniform'</em><em>, </em><em>'gaussian'</em><em>, </em><em>'box'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘gaussian’.</p></li>
+<li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – For Dataset: Variables to smooth (default: all with both spatial dims).
+For DataArray: Ignored.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Method-specific parameters:</p>
+<dl class="simple">
+<dt>For ‘uniform’:</dt><dd><ul>
+<li><p>size : int or tuple of int (default: 3)
+Filter size in pixels.</p></li>
+</ul>
+</dd>
+<dt>For ‘gaussian’:</dt><dd><ul>
+<li><p>sigma : float or tuple of float (default: 1.0)
+Standard deviation of Gaussian kernel.</p></li>
+<li><p>truncate : float (default: 4.0)
+Truncate filter at this many standard deviations.</p></li>
+</ul>
+</dd>
+<dt>For ‘box’:</dt><dd><ul>
+<li><p>kernel_size : int or tuple of int (default: 3)
+Size of box filter.</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with spatially smoothed data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataArray or Dataset.</p></li>
+<li><p><strong>ValueError</strong> – If spatial dimensions are not found or data contains NaN values.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Smooth a DataArray with Gaussian filter:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">smoothed</span> <span class="o">=</span> <span class="n">smooth2D</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Smooth specific variables in a Dataset:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">da1</span><span class="p">,</span> <span class="s1">&#39;pressure&#39;</span><span class="p">:</span> <span class="n">da2</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">smoothed</span> <span class="o">=</span> <span class="n">smooth2D</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;temp&#39;</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Use custom dimension names:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">smoothed</span> <span class="o">=</span> <span class="n">smooth2D</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=</span><span class="s1">&#39;x_coord&#39;</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=</span><span class="s1">&#39;y_coord&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smooth2D_DataArray">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smooth2D_DataArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'uniform'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'gaussian'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'box'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smooth2D_DataArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smooth2D_DataArray" title="Link to this definition">#</a></dt>
+<dd><p>Apply 2D spatial smoothing to a DataArray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>da</strong> (<em>xr.DataArray</em>) – Input DataArray with at least 2 spatial dimensions. Must not contain NaN values.</p></li>
+<li><p><strong>dim1</strong> (<em>str</em><em>, </em><em>optional</em>) – First spatial dimension. If None, will try to find ‘x’ or ‘lon’.</p></li>
+<li><p><strong>dim2</strong> (<em>str</em><em>, </em><em>optional</em>) – Second spatial dimension. If None, will try to find ‘y’ or ‘lat’.</p></li>
+<li><p><strong>method</strong> (<em>{'uniform'</em><em>, </em><em>'gaussian'</em><em>, </em><em>'box'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘gaussian’.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Method-specific parameters passed to smoothing function.</p>
+<dl class="simple">
+<dt>For ‘uniform’:</dt><dd><ul>
+<li><p>size : int or tuple of int (default: 3)</p></li>
+</ul>
+</dd>
+<dt>For ‘gaussian’:</dt><dd><ul>
+<li><p>sigma : float or tuple of float (default: 1.0)</p></li>
+<li><p>truncate : float (default: 4.0)</p></li>
+</ul>
+</dd>
+<dt>For ‘box’:</dt><dd><ul>
+<li><p>kernel_size : int or tuple of int (default: 3)</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataArray with smoothed spatial data. All attributes and coordinates
+are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If spatial dimensions are not found or data contains NaN values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The smoothing is applied in 2D to each slice along non-spatial dimensions.
+For example, if the data has dimensions (time, lat, lon), smoothing is
+applied to each time slice independently.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smooth2D_Dataset">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smooth2D_Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'uniform'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'gaussian'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'box'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smooth2D_Dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smooth2D_Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Apply 2D spatial smoothing to variables in a Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input Dataset with at least 2 spatial dimensions. Variables to be smoothed
+must not contain NaN values.</p></li>
+<li><p><strong>dim1</strong> (<em>str</em><em>, </em><em>optional</em>) – First spatial dimension. If None, will try to find ‘x’ or ‘lon’.</p></li>
+<li><p><strong>dim2</strong> (<em>str</em><em>, </em><em>optional</em>) – Second spatial dimension. If None, will try to find ‘y’ or ‘lat’.</p></li>
+<li><p><strong>method</strong> (<em>{'uniform'</em><em>, </em><em>'gaussian'</em><em>, </em><em>'box'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘gaussian’.</p></li>
+<li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Variables to smooth. If None, smooths all variables that have both
+spatial dimensions.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Method-specific parameters passed to smoothing function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with smoothed spatial data. Variables without both spatial
+dimensions are preserved unchanged. All attributes are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If spatial dimensions are not found, specified variables don’t exist,
+    or any variable to be smoothed contains NaN values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Only variables that contain both spatial dimensions are smoothed. Other
+variables are copied unchanged to the output.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smoothTimeSeries">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smoothTimeSeries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smoothTimeSeries" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Smooth time series data using specified method.</p>
+<p>This function automatically selects the appropriate implementation based on the
+input data type: DataFrame, DataArray, or Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em><em>, </em><em>xr.DataArray</em><em>, or </em><em>xr.Dataset</em>) – Input data with time series. Must not contain NaN values in data to be smoothed.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – For DataFrame: Name of the time column (required).
+For DataArray: Ignored.
+For Dataset: Ignored (use time_dim instead).</p></li>
+<li><p><strong>method</strong> (<em>{'savgol'</em><em>, </em><em>'rolling_mean'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘savgol’.</p></li>
+<li><p><strong>time_dim</strong> – For DataArray/Dataset: Name of time dimension (default: ‘time’).
+For DataFrame: Ignored (use time_dim instead).</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Method-specific parameters:</p>
+<dl class="simple">
+<dt>For ‘savgol’:</dt><dd><ul>
+<li><p>window_length : int, odd number (default: 7)</p></li>
+<li><p>polyorder : int (default: 3)</p></li>
+<li><p>mode : {‘mirror’, ‘constant’, ‘nearest’, ‘wrap’, ‘interp’} (default: ‘interp’)</p></li>
+</ul>
+</dd>
+<dt>For ‘rolling_mean’:</dt><dd><ul>
+<li><p>window : int (default: 5)</p></li>
+<li><p>center : bool (default: True)</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same type as input with smoothed data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame, xr.DataArray, or xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If data is not a DataFrame, DataArray, or Dataset.
+    If DataFrame is provided without time_dim.</p></li>
+<li><p><strong>ValueError</strong> – If time column/dimension is not found.
+    If data contains NaN values.
+    If smoothing parameters are invalid.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smoothTimeSeries_Array">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries_Array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smoothTimeSeries_Array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smoothTimeSeries_Array" title="Link to this definition">#</a></dt>
+<dd><p>Smooth time series data using specified method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – Array of data to smooth. Must not contain NaN values.</p></li>
+<li><p><strong>method</strong> (<em>{'savgol'</em><em>, </em><em>'rolling_mean'}</em>) – Smoothing method to use.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis along which to smooth. Default is -1 (last axis).</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Method-specific parameters.</p>
+<dl class="simple">
+<dt>For ‘savgol’:</dt><dd><ul>
+<li><p>window_length : int, odd number (default: 7)</p></li>
+<li><p>polyorder : int (default: 3)</p></li>
+<li><p>mode : str (default: ‘interp’)</p></li>
+</ul>
+</dd>
+<dt>For ‘rolling_mean’:</dt><dd><ul>
+<li><p>window : int (default: 5)</p></li>
+<li><p>center : bool (default: True)</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Smoothed data array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If method is not recognized, parameters are invalid, or data contains NaN.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smoothTimeSeries_DataArray">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries_DataArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smoothTimeSeries_DataArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smoothTimeSeries_DataArray" title="Link to this definition">#</a></dt>
+<dd><p>Smooth time series data in a DataArray along the time dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>da</strong> (<em>xr.DataArray</em>) – Input DataArray with time series data. Must not contain NaN values.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the time dimension. Default is ‘time’.</p></li>
+<li><p><strong>method</strong> (<em>{'savgol'</em><em>, </em><em>'rolling_mean'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘savgol’.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Method-specific parameters passed to smoothing function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataArray with smoothed data. All attributes and coordinates are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time dimension is not found or data contains NaN values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For multidimensional arrays, smoothing is applied along the time dimension
+for each combination of other dimensions (e.g., each spatial point).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smoothTimeSeries_DataFrame">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries_DataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smoothTimeSeries_DataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smoothTimeSeries_DataFrame" title="Link to this definition">#</a></dt>
+<dd><p>Smooth time series data in a DataFrame along the time dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – Input DataFrame with time series data. Must not contain NaN values
+in columns to be smoothed.</p></li>
+<li><p><strong>time_column</strong> (<em>str</em>) – Name of the time column.</p></li>
+<li><p><strong>method</strong> (<em>{'savgol'</em><em>, </em><em>'rolling_mean'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘savgol’.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Method-specific parameters passed to smoothing function.</p>
+<dl class="simple">
+<dt>For ‘savgol’:</dt><dd><ul>
+<li><p>window_length : int, odd number (default: 7)</p></li>
+<li><p>polyorder : int (default: 3)</p></li>
+<li><p>mode : {‘mirror’, ‘constant’, ‘nearest’, ‘wrap’, ‘interp’} (default: ‘interp’)</p></li>
+</ul>
+</dd>
+<dt>For ‘rolling_mean’:</dt><dd><ul>
+<li><p>window : int (default: 5)</p></li>
+<li><p>center : bool (default: True)</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with smoothed data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any column to be smoothed contains NaN values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The Savitzky-Golay filter is useful for smoothing noisy data while preserving
+important features like peaks. The rolling mean provides simple moving average
+smoothing.</p>
+<p>Data is sorted by time before smoothing to ensure correct temporal ordering.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.data.smoothTimeSeries_Dataset">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.data.</span></span><span class="sig-name descname"><span class="pre">smoothTimeSeries_Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'savgol'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'rolling_mean'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'savgol'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/data.html#smoothTimeSeries_Dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.data.smoothTimeSeries_Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Smooth time series data in a Dataset along the time dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input Dataset with time series data. Variables to be smoothed must
+not contain NaN values.</p></li>
+<li><p><strong>time_dim</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the time dimension. Default is ‘time’.</p></li>
+<li><p><strong>method</strong> (<em>{'savgol'</em><em>, </em><em>'rolling_mean'}</em><em>, </em><em>optional</em>) – Smoothing method. Default is ‘savgol’.</p></li>
+<li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Variables to smooth. If None, smooths all variables with the time dimension.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Method-specific parameters passed to smoothing function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with smoothed data. Variables without the time dimension are
+preserved unchanged. All attributes are preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If time dimension is not found, specified variables don’t exist,
+    or any variable to be smoothed contains NaN values.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Variables without the time dimension are copied unchanged to the output.</p>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.soil_properties">
+<span id="soil-properties-data-manipulation"></span><h2>Soil properties data manipulation<a class="headerlink" href="#module-watershed_workflow.soil_properties" title="Link to this heading">#</a></h2>
+<p>Functions for manipulating soil properties.</p>
+<p>Computes soil properties such as permeability, porosity, and van Genutchen
+parameters given texture properties using the Rosetta model.</p>
+<p>Also provides functions for gap filling soil data via clustering,
+dataframe manipulations to merge soil type regions with shared values,
+etc.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.cluster">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rasters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.cluster" title="Link to this definition">#</a></dt>
+<dd><p>Given a bunch of raster bands, cluster into nbins.</p>
+<p>Returns the coloring map of the clusters.  This is used to fill in
+missing soil property data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rasters</strong> (<em>np.ndarray</em><em>(</em><em>(</em><em>nx</em><em>,</em><em>ny</em><em>,</em><em>nbands</em><em>)</em><em>)</em>) – nbands rasters providing spatial information on which to be clustered.</p></li>
+<li><p><strong>nbins</strong> (<em>int</em>) – Number of bins to cluster into.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>codebook</strong> (<em>np.ndarray((nbins,nbands))</em>) – The nbins centroids of the clusters.</p></li>
+<li><p><strong>codes</strong> (<em>np.ndarray((nx, ny), int)</em>) – Which cluster each point belongs to.</p></li>
+<li><p><strong>distortion</strong> (<em>(float, np.ndarray((nx*ny))</em>) – The distortion of the kmeans, and the distance between the
+observation and its nearest code.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.computeVGAlphaFromPermeability">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">computeVGAlphaFromPermeability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poro</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#computeVGAlphaFromPermeability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.computeVGAlphaFromPermeability" title="Link to this definition">#</a></dt>
+<dd><p>Compute van Genuchten alpha from permeability and porosity.</p>
+<p>Uses the relationship from Guarracino WRR 2007.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>perm</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Permeability, in [m^2]</p></li>
+<li><p><strong>poro</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Porosity, [-]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alpha</strong> – van Genuchten alpha, in [Pa^-1]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array(double)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">computeVanGenuchtenModelFromSSURGO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#computeVanGenuchtenModelFromSSURGO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO" title="Link to this definition">#</a></dt>
+<dd><p>Get van Genutchen model parameters using Rosetta v3.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – SSURGO properties dataframe, from manager_nrcs.FileManagerNRCS().get_properties()</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>df with new properties defining the van Genuchten model.  Note
+that this may be smaller than df as entries in df that have NaN
+values in soil composition (and therefore cannot calculate a
+VGM) will be dropped.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">computeVanGenuchtenModel_Rosetta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#computeVanGenuchtenModel_Rosetta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta" title="Link to this definition">#</a></dt>
+<dd><p>Return van Genuchten model parameters using Rosetta v3 model.</p>
+<p>(Zhang and Schaap, 2017 WRR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>numpy.ndarray</em><em>(</em><em>nvar</em><em>, </em><em>nsamples</em><em>)</em>) – Input data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>van Genuchten model parameters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.convertRosettaToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">convertRosettaToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#convertRosettaToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.convertRosettaToATS" title="Link to this definition">#</a></dt>
+<dd><p>Converts units from aggregated, Rosetta standard-parameters to ATS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame with Rosetta parameters to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with parameters converted to ATS units and naming conventions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.dropDuplicates">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">dropDuplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#dropDuplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.dropDuplicates" title="Link to this definition">#</a></dt>
+<dd><p>Search for duplicate soils which differ only by ID, and rename them, returning a new df.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – A data frame that contains only properties (e.g. permeability,
+porosity, WRM) and is indexed by some native ID.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p><strong>df_new</strong> – After this is called, df_new will:</p>
+<ol class="arabic simple">
+<li><p>have a new column, named by df’s index name, containing a tuple of all
+of the original indices that had the same properties.</p></li>
+<li><p>be reduced in number of rows relative to df such that soil
+properties are now unique</p></li>
+</ol>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.getDefaultBedrockProperties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">getDefaultBedrockProperties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#getDefaultBedrockProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.getDefaultBedrockProperties" title="Link to this definition">#</a></dt>
+<dd><p>Simple helper function to get a one-row dataframe with bedrock properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sane default bedrock soil properties.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.soil_properties.mangleGLHYMPSProperties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.soil_properties.</span></span><span class="sig-name descname"><span class="pre">mangleGLHYMPSProperties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_porosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_permeability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vg_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">van_genuchten_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GeoDataFrame</span></span></span><a class="reference internal" href="_modules/watershed_workflow/soil_properties.html#mangleGLHYMPSProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.soil_properties.mangleGLHYMPSProperties" title="Link to this definition">#</a></dt>
+<dd><p>GLHYMPs properties need their units changed and variables renamed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shapes</strong> (<em>gpd.GeoDataFrame</em>)</p></li>
+<li><p><strong>min_porosity</strong> (<em>float</em><em>, </em><em>optional</em>) – Some GLHYMPS entries have 0 porosity; this sets a floor on that
+value.  Default is 0.01.</p></li>
+<li><p><strong>max_permeability</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the permeability.</p></li>
+<li><p><strong>max_vg_alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the vG alpha.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The resulting properties in standard form, names, and units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.meteorology">
+<span id="meteorology-data-manipulation"></span><h2>Meteorology data manipulation<a class="headerlink" href="#module-watershed_workflow.meteorology" title="Link to this heading">#</a></h2>
+<p>Manipulate DayMet data structures.</p>
+<p>DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
+hdf5 files that models can read.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.meteorology.allocatePrecipitation">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.meteorology.</span></span><span class="sig-name descname"><span class="pre">allocatePrecipitation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">air_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataArray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/watershed_workflow/meteorology.html#allocatePrecipitation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.meteorology.allocatePrecipitation" title="Link to this definition">#</a></dt>
+<dd><p>Allocates precipitation between rain and snow based on temperature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>precip</strong> (<em>xr.DataArray</em>) – Total precipitation data.</p></li>
+<li><p><strong>air_temp</strong> (<em>xr.DataArray</em>) – Air temperature data.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em>) – Temperature threshold for rain/snow transition. If &lt; 100, assumed
+to be in Celsius; otherwise Kelvin.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>rain</strong> (<em>xr.DataArray</em>) – Rain precipitation (when temp &gt;= transition_temperature).</p></li>
+<li><p><strong>snow</strong> (<em>xr.DataArray</em>) – Snow precipitation (when temp &lt; transition_temperature).</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.meteorology.convertAORCToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.meteorology.</span></span><span class="sig-name descname"><span class="pre">convertAORCToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_leap_day</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/meteorology.html#convertAORCToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.meteorology.convertAORCToATS" title="Link to this definition">#</a></dt>
+<dd><p>Convert xarray.Dataset AORC datasets to standard ATS format output.</p>
+<ul class="simple">
+<li><p>computes specific humidity and surface pressure to vapor pressure</p></li>
+<li><p>computes total wind speed from component wind speeds</p></li>
+<li><p>converts precip units to m/s</p></li>
+<li><p>allocates precip to snow and rain based on transition temp</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> (<em>xr.Dataset</em>) – Input including AORC raw data.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em>) – Temperature to transition from snow to rain [C].  Default is 0 C.</p></li>
+<li><p><strong>n_hourly</strong> (<em>int</em>) – Convert data from 1-hourly to n_hourly to reduce data needs.
+Defaults to 24 hours (daily data).</p></li>
+<li><p><strong>remove_leap_day</strong> (<em>bool</em>) – If True, removes day 366 any leap year (not Feb 30!).  Deafult
+is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with ATS-standard names/units met forcing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.meteorology.convertDayMetToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.meteorology.</span></span><span class="sig-name descname"><span class="pre">convertDayMetToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/watershed_workflow/meteorology.html#convertDayMetToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.meteorology.convertDayMetToATS" title="Link to this definition">#</a></dt>
+<dd><p>Convert xarray.Dataset Daymet datasets to daily average data in standard form.</p>
+<p>This:
+- takes tmin and tmax to compute a mean
+- splits rain and snow precip based on mean air temp relative to transition_temperature [C]
+- standardizes units and names for ATS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> (<em>xr.Dataset</em>) – Input Daymet dataset with variables: tmin, tmax, prcp, srad, dayl, vp.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em><em>, </em><em>optional</em>) – Temperature threshold for rain/snow split in Celsius. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with ATS-compatible variable names and units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mesh.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Meshing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="utilities.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Utilities</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

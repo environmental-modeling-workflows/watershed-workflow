@@ -1,0 +1,954 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Working with MODIS for Land Cover and LAI data &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=4e480626"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/get_MODIS_LAI';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mixed-Element Mesh for the Coweeta Watershed" href="coweeta_stream_aligned_mesh.html" />
+    <link rel="prev" title="AORC Data" href="get_AORC_met_data.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="v2.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version v2.0</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="toy_problem_stream_aligned_mesh.html">Mixed-element Meshing - Toy Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparison_of_soil_structure.html">Soil Structural Data Comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_AORC_met_data.html">AORC Data</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Working with MODIS for Land Cover and LAI data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coweeta_stream_aligned_mesh.html">Mixed-Element Mesh for the Coweeta Watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coweeta_ats.html">Complete Workflow for generating ATS input for Coweeta</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-modis-data-from-appears">Download MODIS data from AppEARS</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#get-the-watershed">Get the watershed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#download-the-data">Download the data</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-time-series-of-lai">Compute time series of LAI</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#form-the-dynamic-time-series">Form the dynamic time-series.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#form-data-for-a-typical-year">Form data for a typical year</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../examples.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Working with MODIS for Land Cover and LAI data</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="working-with-modis-for-land-cover-and-lai-data">
+<h1>Working with MODIS for Land Cover and LAI data<a class="headerlink" href="#working-with-modis-for-land-cover-and-lai-data" title="Link to this heading">#</a></h1>
+<section id="download-modis-data-from-appears">
+<h2>Download MODIS data from AppEARS<a class="headerlink" href="#download-modis-data-from-appears" title="Link to this heading">#</a></h2>
+<p>MODIS provides satellite image data including ET, LAI and etc.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.ui</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cftime</span><span class="o">,</span><span class="w"> </span><span class="nn">datetime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.land_cover_properties</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.data</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">watershed_shapefile</span> <span class="o">=</span> <span class="s1">&#39;Coweeta/input_data/coweeta_basin.shp&#39;</span>
+<span class="n">crs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">default_crs</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="get-the-watershed">
+<h3>Get the watershed<a class="headerlink" href="#get-the-watershed" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">watershed_shapes</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerShapefile</span><span class="p">(</span><span class="n">watershed_shapefile</span><span class="p">)</span><span class="o">.</span><span class="n">getShapes</span><span class="p">(</span><span class="n">out_crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+<span class="n">watershed</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">watershed_shapes</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">watershed</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">bounds</span> <span class="o">=</span> <span class="n">watershed</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">bounds</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-29 14:32:50,821 - root - INFO: fixing column: geometry
+2025-08-29 14:32:50,826 - root - INFO: Removing holes on 1 polygons
+2025-08-29 14:32:50,826 - root - INFO:   -- removed interior
+2025-08-29 14:32:50,826 - root - INFO:   -- union
+2025-08-29 14:32:50,827 - root - INFO: Parsing 1 components for holes
+2025-08-29 14:32:50,827 - root - INFO:   -- complete
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(1129295.2795668324, 1404623.589635828, 1134445.5249643093, 1410000.8473600943)
+5150.245397476945 5377.257724266266
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="download-the-data">
+<h3>Download the data<a class="headerlink" href="#download-the-data" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerMODISAppEEARS</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start_year</span> <span class="o">=</span> <span class="mi">2010</span>
+<span class="n">end_year</span> <span class="o">=</span> <span class="mi">2014</span>
+
+<span class="n">startdate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">start_year</span><span class="si">}</span><span class="s2">-1-1&quot;</span>
+<span class="n">enddate</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end_year</span><span class="si">}</span><span class="s2">-12-31&quot;</span>
+
+<span class="c1"># note that AppEEARS typically takes a few minutes to prepare your data.  Therefore we return a task, which can be re-checked later.  </span>
+<span class="c1"># So you could launch this call more-or-less immediately upon entering your workflow, continue the workflow, then call wait after</span>
+<span class="c1"># all your other work is done.  Here we just immediately call wait, which checks every few minutes to see if AppEEARs is ready.</span>
+<span class="n">task</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">requestDataset</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="p">)</span> 
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-29 14:32:50,853 - root - INFO: Incoming shape area = 0.0035508368181677618
+2025-08-29 14:32:50,854 - root - INFO: ... buffering incoming shape by = 0.0045000000000000005
+2025-08-29 14:32:50,854 - root - INFO: ... buffered shape area = 0.004621760927923991
+2025-08-29 14:32:50,855 - root - INFO: Building request for bounds: [np.float64(-83.494), np.float64(35.0139), np.float64(-83.4061), np.float64(35.0873)]
+2025-08-29 14:32:50,855 - root - INFO: ... requires files:
+2025-08-29 14:32:50,856 - root - INFO:  ... /home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LAI_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc
+2025-08-29 14:32:50,856 - root - INFO:  ... /home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LULC_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc
+2025-08-29 14:32:50,856 - root - INFO: ... building request.
+2025-08-29 14:32:53,417 - root - INFO: Requested AppEEARS MODIS dataset on [np.float64(-83.494), np.float64(35.0139), np.float64(-83.4061), np.float64(35.0873)] yielded task_id 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># This task_id is the magic key used to identify with AppEEARs what job you&#39;re referring to.  It gets used to check the status of the job, and download the result when it is ready.</span>
+<span class="c1"># Note that AppEEARs will send you an email when the job is done!</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>48ee1016-64d7-4918-b0c7-d2c5df8f2280
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Do other stuff...</span>
+<span class="c1">#</span>
+
+<span class="c1"># check whether the request is done</span>
+<span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">isReady</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="c1"># fetch the request</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">fetchDataset</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-29 14:32:53,461 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:53,647 - root - INFO: ... http error
+2025-08-29 14:32:53,649 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:53,874 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:32:53,875 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># call this as many times as you want until it works!</span>
+<span class="c1">#</span>
+<span class="c1"># Note that you can also check the status of your request on the AppEEARS website.  Login and click on &quot;Explore&quot; to see your running tasks.</span>
+<span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">isReady</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="c1"># fetch the request</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">fetchDataset</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-29 14:32:53,916 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:54,239 - root - INFO: ... http error
+2025-08-29 14:32:54,241 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:54,594 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:32:54,595 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># then when you really need the data, you can just wait.  This simply calls isReady then sleeps, in a loop, until isReady returns true.</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">waitForDataset</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-29 14:32:54,625 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:54,860 - root - INFO: ... http error
+2025-08-29 14:32:54,862 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:55,201 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:32:55,203 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:32:55,205 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:34:55,206 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:34:55,408 - root - INFO: ... http error
+2025-08-29 14:34:55,410 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:34:55,638 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:34:55,638 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:34:55,639 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:36:55,639 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:36:55,830 - root - INFO: ... http error
+2025-08-29 14:36:55,831 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:36:56,059 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:36:56,059 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:36:56,059 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:38:56,060 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:38:56,567 - root - INFO: ... http error
+2025-08-29 14:38:56,568 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:38:56,845 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:38:56,846 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:38:56,847 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:40:56,847 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:40:57,141 - root - INFO: ... http error
+2025-08-29 14:40:57,142 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:40:57,399 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:40:57,400 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:40:57,400 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:42:57,400 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:42:57,614 - root - INFO: ... http error
+2025-08-29 14:42:57,615 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:42:57,880 - root - INFO: ... HTTPError checking for bundle:
+2025-08-29 14:42:57,882 - root - INFO: 404 Client Error: NOT FOUND for url: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:42:57,884 - root - INFO: MODIS request not ready, sleeping 120s...
+2025-08-29 14:44:57,886 - root - INFO: Checking status of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:44:58,089 - root - INFO: ... http error
+2025-08-29 14:44:58,091 - root - INFO: Checking for bundle of task: 48ee1016-64d7-4918-b0c7-d2c5df8f2280
+2025-08-29 14:44:58,365 - root - INFO: ... bundle found MCD15A3H.061_500m_aid0001.nc
+2025-08-29 14:44:58,367 - root - INFO: ... bundle found MCD12Q1.061_500m_aid0001.nc
+2025-08-29 14:44:58,369 - root - INFO:   Downloading: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280/c8414426-7d83-4c50-8054-a87ce4286bec
+2025-08-29 14:44:58,371 - root - INFO:       to file: /home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LAI_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc
+2025-08-29 14:44:58,372 - root - INFO: Downloading: &quot;https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280/c8414426-7d83-4c50-8054-a87ce4286bec&quot;
+2025-08-29 14:44:58,374 - root - INFO:          to: &quot;/home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LAI_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc&quot;
+2025-08-29 14:45:07,039 - root - INFO:   Downloading: https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280/b8e8496e-48ec-49d3-b240-dafb55b44e3d
+2025-08-29 14:45:07,041 - root - INFO:       to file: /home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LULC_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc
+2025-08-29 14:45:07,043 - root - INFO: Downloading: &quot;https://appeears.earthdatacloud.nasa.gov/api/bundle/48ee1016-64d7-4918-b0c7-d2c5df8f2280/b8e8496e-48ec-49d3-b240-dafb55b44e3d&quot;
+2025-08-29 14:45:07,044 - root - INFO:          to: &quot;/home/ecoon/code/watershed_workflow/data/land_cover/MODIS/modis_LULC_01-01-2010_12-31-2014_35.0873x-83.4940_35.0139x-83.4061.nc&quot;
+</pre></div>
+</div>
+</div>
+</div>
+<p>Check for outliers in the data, and fix if needed.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># LAI extent</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;LAI:&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;LAI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;LAI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+<span class="c1"># LULC extent</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;LULC:&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;LULC&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;LULC&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+<span class="n">modis_data</span> <span class="o">=</span> <span class="n">data</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>LAI: 0.0 7.0
+LULC: 4.0 8.0
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="compute-time-series-of-lai">
+<h2>Compute time series of LAI<a class="headerlink" href="#compute-time-series-of-lai" title="Link to this heading">#</a></h2>
+<p>First, MODIS is “real” data, and so has leap year.  Our runs do not include leap year, so we first convert to a noleap calendar by dropping leap day data.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># MODIS data comes with time-dependent LAI AND time-dependent LULC -- just take the mode to find the most common LULC</span>
+<span class="n">modis_data</span><span class="p">[</span><span class="s1">&#39;LULC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">computeMode</span><span class="p">(</span><span class="n">modis_data</span><span class="p">[</span><span class="s1">&#39;LULC&#39;</span><span class="p">],</span> <span class="s1">&#39;time_LULC&#39;</span><span class="p">)</span>
+
+<span class="c1"># now it is safe to have only one time</span>
+<span class="n">modis_data</span> <span class="o">=</span> <span class="n">modis_data</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s1">&#39;time_LAI&#39;</span><span class="p">:</span><span class="s1">&#39;time&#39;</span><span class="p">})</span>
+
+<span class="c1"># remove leap day (366th day of any leap year) to match our Noleap Calendar</span>
+<span class="n">modis_data</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">filterLeapDay</span><span class="p">(</span><span class="n">modis_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="form-the-dynamic-time-series">
+<h3>Form the dynamic time-series.<a class="headerlink" href="#form-the-dynamic-time-series" title="Link to this heading">#</a></h3>
+<p>The raw data is integrated in space by intersecting each LULC index with the LAI raster and summing over that mask.  This is done for each time of LAI observation to form a time series.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># compute the dynamic time series</span>
+<span class="n">lai_df</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">land_cover_properties</span><span class="o">.</span><span class="n">computeTimeSeries</span><span class="p">(</span><span class="n">modis_data</span><span class="p">[</span><span class="s1">&#39;LAI&#39;</span><span class="p">],</span> <span class="n">modis_data</span><span class="p">[</span><span class="s1">&#39;LULC&#39;</span><span class="p">],</span> 
+                                                                      <span class="n">polygon</span><span class="o">=</span><span class="n">watershed</span><span class="o">.</span><span class="n">exterior</span><span class="p">,</span> <span class="n">polygon_crs</span><span class="o">=</span><span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+<span class="n">lai_df</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>time</th>
+      <th>Deciduous Broadleaf Forests LAI [-]</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2009-12-31 00:00:00</td>
+      <td>0.540426</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2010-01-01 00:00:00</td>
+      <td>0.540426</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2010-01-05 00:00:00</td>
+      <td>0.589362</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2010-01-09 00:00:00</td>
+      <td>0.579787</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2010-01-13 00:00:00</td>
+      <td>0.642553</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>456</th>
+      <td>2014-12-15 00:00:00</td>
+      <td>0.704255</td>
+    </tr>
+    <tr>
+      <th>457</th>
+      <td>2014-12-19 00:00:00</td>
+      <td>0.461702</td>
+    </tr>
+    <tr>
+      <th>458</th>
+      <td>2014-12-23 00:00:00</td>
+      <td>0.718085</td>
+    </tr>
+    <tr>
+      <th>459</th>
+      <td>2014-12-27 00:00:00</td>
+      <td>0.589362</td>
+    </tr>
+    <tr>
+      <th>460</th>
+      <td>2014-12-31 00:00:00</td>
+      <td>0.503191</td>
+    </tr>
+  </tbody>
+</table>
+<p>461 rows × 2 columns</p>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the dynamic data</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+<span class="n">ts</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">lai_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;days since </span><span class="si">{</span><span class="n">start_year</span><span class="si">}</span><span class="s1">-01-01&#39;</span><span class="p">)</span>  
+<span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">lai_df</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">column</span> <span class="o">!=</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">lai_df</span><span class="p">[</span><span class="n">column</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">column</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Leaf Area Index [-]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/10af992c7154038d7effeb8ecaefd0c0c8b2f91c451d01946a2f692a531748f0.png" src="../_images/10af992c7154038d7effeb8ecaefd0c0c8b2f91c451d01946a2f692a531748f0.png" />
+</div>
+</div>
+</section>
+<section id="form-data-for-a-typical-year">
+<h3>Form data for a typical year<a class="headerlink" href="#form-data-for-a-typical-year" title="Link to this heading">#</a></h3>
+<p>In addition to the dynamic data, we need a typical year for cyclic steadystate spinup purposes.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># also compute a typical year of LAI</span>
+<span class="n">typical_df</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">computeAverageYear</span><span class="p">(</span><span class="n">lai_df</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">output_nyears</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> 
+                                                                  <span class="n">start_year</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the dynamic data</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+<span class="n">ts</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">typical_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s1">&#39;days since 2000-01-01&#39;</span><span class="p">)</span>  
+<span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">typical_df</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">column</span> <span class="o">!=</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">typical_df</span><span class="p">[</span><span class="n">column</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">column</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Leaf Area Index [-]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/1ce0fa03349043861eb8c094f1d3a3cc0a7a4dd90ff992183b9e6fccb3a1970a.png" src="../_images/1ce0fa03349043861eb8c094f1d3a3cc0a7a4dd90ff992183b9e6fccb3a1970a.png" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="get_AORC_met_data.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">AORC Data</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="coweeta_stream_aligned_mesh.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Mixed-Element Mesh for the Coweeta Watershed</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

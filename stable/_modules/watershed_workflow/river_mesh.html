@@ -1,0 +1,1399 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.river_mesh &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom_theme.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/river_mesh';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../_static/main.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../examples/mesh_coweeta.html">
+    Example: mesh a delineated watershed
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.river_mesh</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.river_mesh</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;creates river mesh using quad, pentagon and hexagon elements&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.axes</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.geometry</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely.ops</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.tinytree</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.angles</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.plot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">watershed_workflow.river_tree</span><span class="w"> </span><span class="kn">import</span> <span class="n">River</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">watershed_workflow.split_hucs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplitHUCs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources.standard_names</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">names</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_isNonoverlapping</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">elems</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a set of polygon shapes are nonoverlapping.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points : np.ndarray</span>
+<span class="sd">        Array of coordinate points.</span>
+<span class="sd">    elems : List[List[int]]</span>
+<span class="sd">        List of element connectivity, each element is a list of point indices.</span>
+<span class="sd">    tol : float, optional</span>
+<span class="sd">        Tolerance for area comparison, by default 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True if shapes are nonoverlapping within tolerance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shps</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">e</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">]</span>
+    <span class="n">total_area</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">unary_union</span><span class="p">(</span><span class="n">shps</span><span class="p">)</span><span class="o">.</span><span class="n">area</span>
+    <span class="n">summed_area</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">shp</span><span class="o">.</span><span class="n">area</span> <span class="k">for</span> <span class="n">shp</span> <span class="ow">in</span> <span class="n">shps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_area</span> <span class="o">-</span> <span class="n">summed_area</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_computeExpectedNumCoords</span><span class="p">(</span><span class="n">river</span><span class="p">:</span> <span class="n">River</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the number of expected coordinates for river mesh.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    river : River</span>
+<span class="sd">        River network to compute coordinates for.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        Expected number of coordinates in the river mesh.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># two outlet points</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="c1"># internal points</span>
+    <span class="n">n</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">)</span>
+
+    <span class="c1"># endpoints</span>
+    <span class="n">n</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">n</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_computeExpectedNumElems</span><span class="p">(</span><span class="n">river</span><span class="p">:</span> <span class="n">River</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the number of expected elements for river mesh.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    river : River</span>
+<span class="sd">        River network to compute elements for.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        Expected number of elements in the river mesh.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="createWidthFunction">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.createWidthFunction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">createWidthFunction</span><span class="p">(</span>
+        <span class="n">arg</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">,</span> <span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">,</span> <span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a width function from various argument types.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arg : Dict[int, float] | Callable[[int], float] | float</span>
+<span class="sd">        Width specification - can be a constant, dictionary mapping stream order to width,</span>
+<span class="sd">        or callable function.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Callable[[int], float]</span>
+<span class="sd">        Function that computes width for a given reach.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">func</span><span class="p">(</span><span class="n">reach</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">arg</span><span class="p">[</span><span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ORDER</span><span class="p">]]</span>
+
+    <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">arg</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">func</span><span class="p">(</span><span class="n">reach</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">arg</span>
+
+    <span class="k">return</span> <span class="n">func</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_plotRiver</span><span class="p">(</span><span class="n">river</span><span class="p">:</span> <span class="n">River</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot the river and elements for a debugging plot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    river : River</span>
+<span class="sd">        River network to plot.</span>
+<span class="sd">    coords : np.ndarray</span>
+<span class="sd">        Array of mesh coordinates.</span>
+<span class="sd">    ax : matplotlib.axes.Axes</span>
+<span class="sd">        Axes to plot on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="n">elems</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">])</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]</span>
+    <span class="p">])</span>
+    <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">linestringsWithCoords</span><span class="p">(</span><span class="n">elems</span><span class="o">.</span><span class="n">boundary</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="createRiversMesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.createRiversMesh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">createRiversMesh</span><span class="p">(</span><span class="n">hucs</span> <span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span>
+                     <span class="n">rivers</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">River</span><span class="p">],</span>
+                     <span class="n">computeWidth</span> <span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">,],</span> <span class="nb">float</span><span class="p">],</span>
+                     <span class="n">ax</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> \
+                     <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                           <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+                           <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">],</span>
+                           <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">],</span>
+                           <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create meshes for each river and merge them.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">        Split HUCs object for mesh adjustment.</span>
+<span class="sd">    rivers : List[River]</span>
+<span class="sd">        List of river networks to mesh.</span>
+<span class="sd">    computeWidth : Callable[[River], float]</span>
+<span class="sd">        Function to compute river width.</span>
+<span class="sd">    ax : matplotlib.axes.Axes, optional</span>
+<span class="sd">        Axes for debugging plots, by default None.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, List[List[int]], List[shapely.geometry.Polygon], List[shapely.geometry.Point], gpd.GeoDataFrame | None]</span>
+<span class="sd">        Tuple containing coordinates, elements, corridors, hole points, and intersections dataframe.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">elems</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">coords</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">corridors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">hole_points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">elems_gid_start</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+        <span class="c1"># create the mesh</span>
+        <span class="n">lcoords</span><span class="p">,</span> <span class="n">lelems</span> <span class="o">=</span> <span class="n">createRiverMesh</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">,</span> <span class="n">elems_gid_start</span><span class="p">)</span>
+        <span class="n">elems_gid_start</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lelems</span><span class="p">)</span>
+
+        <span class="c1"># adjust the HUC linestrings to include the small cross-stream</span>
+        <span class="c1"># segment</span>
+        <span class="n">adjustHUCsToRiverMesh</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">lcoords</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Plotting the river mesh&#39;</span><span class="p">)</span>
+            <span class="n">_plotRiver</span><span class="p">(</span><span class="n">river</span><span class="p">,</span> <span class="n">lcoords</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
+
+        <span class="c1"># hole point is the centroid of the outlet element</span>
+        <span class="n">hole_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lcoords</span><span class="p">[</span><span class="n">lelems</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="c1"># corridor is the trace of the outside</span>
+        <span class="n">corridors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">lcoords</span><span class="p">))</span>
+
+        <span class="c1"># shift to get a global ordering</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">lelems</span> <span class="o">=</span> <span class="p">[[</span><span class="n">j</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">lelems</span><span class="p">]</span>
+
+        <span class="n">elems</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">lelems</span><span class="p">)</span>
+        <span class="n">coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lcoords</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lcoords</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">hucs</span><span class="o">.</span><span class="n">plotAsLinestrings</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="n">all_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_isNonoverlapping</span><span class="p">(</span><span class="n">all_coords</span><span class="p">,</span> <span class="n">elems</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Found at least one intersection overlapping elements in the river mesh... searching for the first intersection now&#39;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># find overlaps</span>
+        <span class="c1"># -- create reach polygons</span>
+        <span class="n">reach_polys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">shapely</span><span class="o">.</span><span class="n">unary_union</span><span class="p">([</span>
+                <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">([</span><span class="n">all_coords</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]</span>
+            <span class="p">])</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span>
+        <span class="p">]</span>
+        <span class="n">reach_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ID</span><span class="p">]</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">]</span>
+
+        <span class="c1"># -- find pairwise intersections</span>
+        <span class="n">intersection_i</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">intersection_j</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">intersection_p</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach_polys</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach_polys</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">reach_polys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">reach_polys</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">.</span><span class="n">area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">intersection_i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reach_ids</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">intersection_j</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reach_ids</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                    <span class="n">intersection_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reach_polys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">reach_polys</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+
+        <span class="n">intersections_df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="n">intersection_i</span><span class="p">,</span>
+            <span class="s1">&#39;j&#39;</span><span class="p">:</span> <span class="n">intersection_j</span><span class="p">,</span>
+        <span class="p">},</span>
+                                            <span class="n">geometry</span><span class="o">=</span><span class="n">intersection_p</span><span class="p">,</span>
+                                            <span class="n">crs</span><span class="o">=</span><span class="n">hucs</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">intersections_df</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">intersections_df</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">all_coords</span><span class="p">,</span> <span class="n">elems</span><span class="p">,</span> <span class="n">corridors</span><span class="p">,</span> <span class="n">hole_points</span><span class="p">,</span> <span class="n">intersections_df</span></div>
+
+
+
+<div class="viewcode-block" id="createRiverMesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.createRiverMesh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">createRiverMesh</span><span class="p">(</span><span class="n">river</span><span class="p">:</span> <span class="n">River</span><span class="p">,</span>
+                    <span class="n">computeWidth</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">,</span> <span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+                    <span class="n">elems_gid_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns list of elems and river corridor polygons for a given list of river trees</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    rivers: list(River object)</span>
+<span class="sd">        List of river tree along which river meshes are to be created</span>
+<span class="sd">    widths: float or dict or callable or boolean </span>
+<span class="sd">       Width of the quads, either a float or a dictionary providing a</span>
+<span class="sd">       {StreamOrder : width} mapping.</span>
+<span class="sd">       Or a function (callable) that computer width using node properties</span>
+<span class="sd">       Or boolean, where True means, width for each reach is explicitely provided properties as &quot;width&quot;</span>
+<span class="sd">    enforce_convexity: boolean </span>
+<span class="sd">        If true, enforce convexity of the pentagons/hexagons at the</span>
+<span class="sd">        junctions.</span>
+<span class="sd">    ax : matplotlib Axes object, optional</span>
+<span class="sd">        For debugging -- plots troublesome reaches as quad elements are</span>
+<span class="sd">        generated to find tricky areas.</span>
+<span class="sd">    label : bool, optional = True</span>
+<span class="sd">        If true and ax is provided, animates the debugging plot with</span>
+<span class="sd">        reach ID labels as the user hovers over the plot.  Requires a</span>
+<span class="sd">        widget backend for matplotlib.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    corrs: list(shapely.geometry.Polygon)</span>
+<span class="sd">        List of river corridor polygons, one per river, storing the</span>
+<span class="sd">        coordinates used in elems.</span>
+<span class="sd">    elems: list(list)</span>
+<span class="sd">        List of river elements, each element a list of indices into</span>
+<span class="sd">        corr.coords.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">_computeExpectedNumCoords</span><span class="p">(</span><span class="n">river</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([[</span><span class="nb">list</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+                                       <span class="k">for</span> <span class="n">ls</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">geometry</span><span class="p">],</span>
+                                      <span class="n">index</span><span class="o">=</span><span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="c1"># project the starting point</span>
+    <span class="c1"># k tracks the index of the point/coordinate</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">debug</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>  <span class="c1"># reach index, coordinate index</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">getNode</span><span class="p">(</span><span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Debugging reach </span><span class="si">{</span><span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, coordinate </span><span class="si">{</span><span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, at </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">touch</span><span class="p">,</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">prePostInBetweenOrder</span><span class="p">():</span>
+        <span class="n">halfwidth</span> <span class="o">=</span> <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+        <span class="n">reach_elems</span> <span class="o">=</span> <span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PRE: reach = </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">, touch = </span><span class="si">{</span><span class="n">touch</span><span class="si">}</span><span class="s1">, elems = </span><span class="si">{</span><span class="n">reach_elems</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">touch</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># add paddler&#39;s right downstream point</span>
+            <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># A simple projection orthogonal to the downstream segment</span>
+                <span class="c1"># TODO -- follow the HUC boundary?</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">halfwidth</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                                                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> outlet right&quot;</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># add paddler&#39;s right internal points by two-touches projection</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                       <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">halfwidth</span><span class="p">,</span> <span class="n">halfwidth</span><span class="p">,</span>
+                                       <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> internal right&quot;</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># add the upstream point</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># add an upstream triangle tip at stream midpoint</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> leaf tip&quot;</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># add an upstream, paddler&#39;s right point based on inline junction of two reaches</span>
+                <span class="n">child_halfwidth</span> <span class="o">=</span> <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                                       <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">child_halfwidth</span><span class="p">,</span> <span class="n">halfwidth</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                       <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> inline child upstream right&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">child_elems</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]</span>
+                <span class="n">child_elems</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># add an upstream, paddler&#39;s right point based on junction of multiple reaches</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectJunction</span><span class="p">(</span><span class="n">reach</span><span class="p">,</span> <span class="n">touch</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                            <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> junction child upstream right&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">touch</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># no second point</span>
+
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># add an upstream, paddler&#39;s left pont based on inline junction of two reaches</span>
+                <span class="n">child_halfwidth</span> <span class="o">=</span> <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                       <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">halfwidth</span><span class="p">,</span>
+                                       <span class="n">child_halfwidth</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> inline child upstream left&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># add an upstream, paddler&#39;s left point based on junction of multiple reaches</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectJunction</span><span class="p">(</span><span class="n">reach</span><span class="p">,</span> <span class="n">touch</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                            <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> junction child upstream left&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># add a paddler&#39;s left internal point</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                       <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">halfwidth</span><span class="p">,</span> <span class="n">halfwidth</span><span class="p">,</span>
+                                       <span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> internal left&quot;</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># add paddler&#39;s left downstream point</span>
+            <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># A simple projection orthogonal to the downstream segment</span>
+                <span class="c1"># TODO -- follow the HUC boundary?</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="o">-</span><span class="n">halfwidth</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                                                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> outlet left&quot;</span><span class="p">)</span>
+                <span class="n">reach_elems</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">touch</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">touch</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">):</span>
+            <span class="c1"># add a mid-tributary junction point</span>
+            <span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">projectJunction</span><span class="p">(</span><span class="n">reach</span><span class="p">,</span> <span class="n">touch</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                        <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">debug</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot; -- adding coord </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">coords</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> junction midpoint&quot;</span><span class="p">)</span>
+            <span class="n">reach_elems</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">touch</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">touch</span><span class="p">][</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;POST: reach = </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">, touch = </span><span class="si">{</span><span class="n">touch</span><span class="si">}</span><span class="s1">, elems = </span><span class="si">{</span><span class="n">reach_elems</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">k</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="c1"># check convexity</span>
+    <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]):</span>
+            <span class="n">e_coords</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isConvex</span><span class="p">(</span><span class="n">e_coords</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="n">new_e_coords</span> <span class="o">=</span> <span class="n">fixConvexity</span><span class="p">(</span><span class="n">reach</span><span class="p">,</span> <span class="n">e_coords</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">c_index</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">new_e_coords</span><span class="p">):</span>
+                    <span class="n">coords</span><span class="p">[</span><span class="n">c_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">coord</span>
+
+    <span class="c1"># gather elems</span>
+    <span class="n">elems</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">postOrder</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">]]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span> <span class="o">==</span> <span class="n">_computeExpectedNumElems</span><span class="p">(</span><span class="n">river</span><span class="p">)</span>
+
+    <span class="c1"># assign GID to each elem start</span>
+    <span class="c1"># note this must be done in the same order as above elems</span>
+    <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">ELEMS_GID_START</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS_GID_START</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">river</span><span class="o">.</span><span class="n">df</span><span class="p">),</span> <span class="s1">&#39;i&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">postOrder</span><span class="p">():</span>
+        <span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS_GID_START</span><span class="p">]</span> <span class="o">=</span> <span class="n">elems_gid_start</span>
+        <span class="n">elems_gid_start</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">coords</span><span class="p">,</span> <span class="n">elems</span></div>
+
+
+
+<div class="viewcode-block" id="adjustHUCsToRiverMesh">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.adjustHUCsToRiverMesh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjustHUCsToRiverMesh</span><span class="p">(</span><span class="n">hucs</span><span class="p">:</span> <span class="n">SplitHUCs</span><span class="p">,</span> <span class="n">river</span><span class="p">:</span> <span class="n">River</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust HUC segments that touch reach endpoints to match the corridor coordinates.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hucs : SplitHUCs</span>
+<span class="sd">        Split HUCs object to adjust.</span>
+<span class="sd">    river : River</span>
+<span class="sd">        River network with mesh coordinates.</span>
+<span class="sd">    coords : np.ndarray</span>
+<span class="sd">        Array of mesh coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># downstream the river outlet</span>
+    <span class="n">remerge</span><span class="p">,</span> <span class="n">touches</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">angles</span><span class="o">.</span><span class="n">_getOutletLinestrings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">river</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adjusting HUC to match reaches at outlet&quot;</span><span class="p">)</span>
+        <span class="c1"># touches[1] is paddler&#39;s left</span>
+        <span class="n">left_old_coords</span> <span class="o">=</span> <span class="n">touches</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span>
+        <span class="n">left_new_coord</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">river</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">left_new_ls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">left_old_coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">left_new_coord</span><span class="p">,</span> <span class="p">])</span>
+
+        <span class="n">right_old_coords</span> <span class="o">=</span> <span class="n">touches</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span>
+        <span class="n">right_new_coord</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">river</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">right_new_ls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">right_old_coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">right_new_coord</span><span class="p">,</span> <span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">remerge</span><span class="p">:</span>
+            <span class="n">new_ls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">left_new_ls</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">right_new_ls</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">touches</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_ls</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">touches</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">reverseLineString</span><span class="p">(</span>
+                <span class="n">left_new_ls</span><span class="p">)</span> <span class="k">if</span> <span class="n">touches</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="n">left_new_ls</span>
+            <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">touches</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">reverseLineString</span><span class="p">(</span>
+                <span class="n">right_new_ls</span><span class="p">)</span> <span class="k">if</span> <span class="n">touches</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="n">right_new_ls</span>
+
+    <span class="c1"># adjust all upstream endpoints</span>
+    <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">:</span>
+        <span class="n">touches</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">angles</span><span class="o">.</span><span class="n">_getUpstreamLinestrings</span><span class="p">(</span><span class="n">hucs</span><span class="p">,</span> <span class="n">reach</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Adjusting HUC to match reaches at reach </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> and coordinate </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="c1"># yes, there are junctions involved...</span>
+            <span class="n">point_i</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">touch_i</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="n">touch_i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">touches</span><span class="p">[</span><span class="n">touch_i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># make sure touches before and after are reaches</span>
+                    <span class="c1">#</span>
+                    <span class="c1"># This will fail if there are two successive HUC</span>
+                    <span class="c1"># strings.  I&#39;m not sure that should ever happen,</span>
+                    <span class="c1"># but if it does, we would have to choose which</span>
+                    <span class="c1"># point to put on the reach junction element</span>
+                    <span class="c1"># coordinate, and wierd stuff would probably</span>
+                    <span class="c1"># happen in triangulation anyway.</span>
+                    <span class="k">assert</span> <span class="n">touches</span><span class="p">[</span><span class="n">touch_i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">touches</span><span class="p">[</span><span class="n">touch_i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> \
+                        <span class="sa">f</span><span class="s2">&quot;Neighboring touch at reach </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> coords </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> is wierd&quot;</span>
+
+                    <span class="k">assert</span> <span class="n">touches</span><span class="p">[(</span><span class="n">touch_i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">touches</span><span class="p">[(</span><span class="n">touch_i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="nb">len</span><span class="p">(</span><span class="n">touches</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> \
+                        <span class="sa">f</span><span class="s2">&quot;Neighboring touch at reach </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> coords </span><span class="si">{</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> is wierd&quot;</span>
+
+                    <span class="c1"># it is a HUC, insert the point</span>
+                    <span class="n">new_coord</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="n">reach</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">ELEMS</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="n">point_i</span><span class="p">]]</span>
+                    <span class="n">old_coords</span> <span class="o">=</span> <span class="n">touches</span><span class="p">[</span><span class="n">touch_i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span>
+                    <span class="n">new_ls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">old_coords</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_coord</span><span class="p">,</span> <span class="p">])</span>
+                    <span class="n">hucs</span><span class="o">.</span><span class="n">linestrings</span><span class="p">[</span><span class="n">touches</span><span class="p">[</span><span class="n">touch_i</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_ls</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">point_i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="n">touch_i</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="computeLine">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.computeLine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">computeLine</span><span class="p">(</span><span class="n">p1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">p2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute line coefficients (Ax + By + C = 0) for a line defined by two points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p1 : np.ndarray</span>
+<span class="sd">        First point coordinates.</span>
+<span class="sd">    p2 : np.ndarray</span>
+<span class="sd">        Second point coordinates.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[float, float, float]</span>
+<span class="sd">        Line coefficients (A, B, C) such that Ax + By + C = 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span></div>
+
+
+
+<div class="viewcode-block" id="translateLinePerpendicular">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.translateLinePerpendicular">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">translateLinePerpendicular</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+                               <span class="n">distance</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate a line by a specified distance in the direction perpendicular to the line.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line : Tuple[float, float, float]</span>
+<span class="sd">        Tuple of line coefficients (A, B, C).</span>
+<span class="sd">    distance : float</span>
+<span class="sd">        Scalar distance to translate the line.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[float, float, float]</span>
+<span class="sd">        Tuple of new line coefficients (A, B, C).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">line</span>
+    <span class="c1"># Normalize A and B to get the unit normal vector</span>
+    <span class="n">normal_length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normal_length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid line coefficients.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Translate C by the perpendicular distance</span>
+    <span class="n">C_new</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">distance</span><span class="o">*</span><span class="n">normal_length</span>
+    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C_new</span></div>
+
+
+
+<div class="viewcode-block" id="findIntersection">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.findIntersection">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">findIntersection</span><span class="p">(</span><span class="n">line1</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+                     <span class="n">line2</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+                     <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the intersection point of two lines given by coefficients.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    line1 : Tuple[float, float, float]</span>
+<span class="sd">        First line coefficients (A, B, C).</span>
+<span class="sd">    line2 : Tuple[float, float, float]</span>
+<span class="sd">        Second line coefficients (A, B, C).</span>
+<span class="sd">    debug : bool, optional</span>
+<span class="sd">        Whether to print debug information, by default False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray | None</span>
+<span class="sd">        Intersection point coordinates, or None if lines are parallel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A1</span><span class="p">,</span> <span class="n">B1</span><span class="p">,</span> <span class="n">C1</span> <span class="o">=</span> <span class="n">line1</span>
+    <span class="n">A2</span><span class="p">,</span> <span class="n">B2</span><span class="p">,</span> <span class="n">C2</span> <span class="o">=</span> <span class="n">line2</span>
+
+    <span class="c1"># shift the intercept to near the origin</span>
+    <span class="n">determinant</span> <span class="o">=</span> <span class="n">A1</span><span class="o">*</span><span class="n">B2</span> <span class="o">-</span> <span class="n">A2</span><span class="o">*</span><span class="n">B1</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="mf">1.e-8</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">A1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">A2</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">B1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">B2</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">C1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">C2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Parallel?  det = </span><span class="si">{</span><span class="n">determinant</span><span class="si">}</span><span class="s2"> relative </span><span class="si">{</span><span class="n">eps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">determinant</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Lines are parallel or coincident</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">B1</span><span class="o">*</span><span class="n">C2</span> <span class="o">-</span> <span class="n">B2</span><span class="o">*</span><span class="n">C1</span><span class="p">)</span> <span class="o">/</span> <span class="n">determinant</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">A2</span><span class="o">*</span><span class="n">C1</span> <span class="o">-</span> <span class="n">A1</span><span class="o">*</span><span class="n">C2</span><span class="p">)</span> <span class="o">/</span> <span class="n">determinant</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="projectOne">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.projectOne">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">projectOne</span><span class="p">(</span><span class="n">p_up</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find a point p_out that is width away from p and such that p_up --&gt; p is right-perpendicular to p --&gt; p_out.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p_up : np.ndarray</span>
+<span class="sd">        Upstream point coordinates.</span>
+<span class="sd">    p : np.ndarray</span>
+<span class="sd">        Reference point coordinates.</span>
+<span class="sd">    width : float</span>
+<span class="sd">        Distance to project perpendicular to the line.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Projected point coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c_up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p_up</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="n">dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">c_up</span><span class="p">)</span>
+    <span class="n">dp</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span>
+    <span class="n">perp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">dp</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">p</span> <span class="o">+</span> <span class="n">width</span><span class="o">*</span><span class="n">perp</span></div>
+
+
+
+<div class="viewcode-block" id="projectTwo">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.projectTwo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">projectTwo</span><span class="p">(</span><span class="n">p_up</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">p_dn</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">width1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+               <span class="n">width2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+               <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find a point that is perpendicular to the linestring p_up --&gt; p --&gt; p_dn.</span>
+
+<span class="sd">    Projects by intersecting two lines, one parallel to p_up --&gt; p and width1 away,</span>
+<span class="sd">    and one parallel to p --&gt; p_dn and width2 away.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p_up : np.ndarray</span>
+<span class="sd">        Upstream point coordinates.</span>
+<span class="sd">    p : np.ndarray</span>
+<span class="sd">        Middle point coordinates.</span>
+<span class="sd">    p_dn : np.ndarray</span>
+<span class="sd">        Downstream point coordinates.</span>
+<span class="sd">    width1 : float</span>
+<span class="sd">        Width for upstream segment.</span>
+<span class="sd">    width2 : float</span>
+<span class="sd">        Width for downstream segment.</span>
+<span class="sd">    debug : bool, optional</span>
+<span class="sd">        Whether to print debug information, by default False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Projected point coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">l1</span> <span class="o">=</span> <span class="n">computeLine</span><span class="p">(</span><span class="n">p_up</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;line defined by: </span><span class="si">{</span><span class="n">p_up</span><span class="si">}</span><span class="s2"> --&gt; </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">l1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">l1</span> <span class="o">=</span> <span class="n">translateLinePerpendicular</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">width1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  translated by </span><span class="si">{</span><span class="n">width1</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">l1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">l2</span> <span class="o">=</span> <span class="n">computeLine</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p_dn</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;line defined by: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> --&gt; </span><span class="si">{</span><span class="n">p_dn</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">l2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">l2</span> <span class="o">=</span> <span class="n">translateLinePerpendicular</span><span class="p">(</span><span class="n">l2</span><span class="p">,</span> <span class="n">width2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  translated by </span><span class="si">{</span><span class="n">width2</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">l2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">findIntersection</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">intersection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">p_up</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">width1</span><span class="o">+</span><span class="n">width2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parallel! results in intersection = </span><span class="si">{</span><span class="n">new_p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_p</span>
+
+    <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">intersection</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span> \
+         <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">width1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">width2</span><span class="p">)):</span>
+        <span class="c1"># a degenerative point often caused by differing widths and nearly parallel lines</span>
+        <span class="n">new_p1</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">p_up</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">width1</span><span class="p">)</span>
+        <span class="n">new_p2</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">p_dn</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="o">-</span><span class="n">width2</span><span class="p">)</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">computeMidpoint</span><span class="p">(</span><span class="n">new_p1</span><span class="p">,</span> <span class="n">new_p2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;results in failure of intersection, computing midpoint = </span><span class="si">{</span><span class="n">new_p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_p</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;results in intersection = </span><span class="si">{</span><span class="n">intersection</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">intersection</span></div>
+
+
+
+<div class="viewcode-block" id="projectJunction">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.projectJunction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">projectJunction</span><span class="p">(</span><span class="n">reach</span><span class="p">:</span> <span class="n">River</span><span class="p">,</span>
+                    <span class="n">child_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                    <span class="n">computeWidth</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+                    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find points around the junction between reach and its children.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reach : River</span>
+<span class="sd">        Parent reach containing the junction.</span>
+<span class="sd">    child_idx : int</span>
+<span class="sd">        Index of the child reach at the junction.</span>
+<span class="sd">    computeWidth : Callable[[River], float]</span>
+<span class="sd">        Function to compute river width.</span>
+<span class="sd">    debug : bool, optional</span>
+<span class="sd">        Whether to print debug information, by default False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Junction point coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">child_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">child_idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">projectTwo</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child_idx</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                          <span class="n">reach</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child_idx</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span>
+                          <span class="n">computeWidth</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fixConvexity">
+<a class="viewcode-back" href="../../mesh.html#watershed_workflow.river_mesh.fixConvexity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fixConvexity</span><span class="p">(</span><span class="n">reach</span><span class="p">:</span> <span class="n">River</span><span class="p">,</span> <span class="n">e_coords</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">computeWidth</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">River</span><span class="p">],</span>
+                                                                            <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snap element coordinates onto the convex hull while respecting upstream stream width.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    reach : River</span>
+<span class="sd">        River reach containing the element.</span>
+<span class="sd">    e_coords : np.ndarray</span>
+<span class="sd">        Element coordinates to fix.</span>
+<span class="sd">    computeWidth : Callable[[River], float]</span>
+<span class="sd">        Function to compute river width.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Fixed element coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">e_poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span>
+    <span class="n">e_poly_hull</span> <span class="o">=</span> <span class="n">e_poly</span><span class="o">.</span><span class="n">convex_hull</span>
+
+    <span class="c1"># snap to convex hull</span>
+    <span class="n">fix_points</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">e_coords</span><span class="p">):</span>
+        <span class="n">closest_p</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">findNearestPoint</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span>
+                                                              <span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isClose</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">closest_p</span><span class="p">,</span> <span class="mf">1.e-4</span><span class="p">):</span>
+            <span class="n">fix_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># intersect the shifted line with the convex hull to find the new point</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">child</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">child</span> <span class="o">=</span> <span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+                <span class="n">p0</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">p1</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">halfwidth</span> <span class="o">=</span> <span class="n">computeWidth</span><span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+                <span class="n">p0p</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">halfwidth</span><span class="p">)</span>
+                <span class="n">p1p</span> <span class="o">=</span> <span class="n">projectOne</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="o">-</span><span class="n">sign</span> <span class="o">*</span> <span class="n">halfwidth</span><span class="p">)</span>
+                <span class="n">ls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">p0p</span><span class="p">,</span> <span class="n">p1p</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ls</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="p">):</span>
+                    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+                    <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span><span class="p">,</span> <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">reaches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+                    <span class="n">reaches</span> <span class="o">=</span> <span class="n">reaches</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">:</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b-x&#39;</span><span class="p">)</span>
+
+                    <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;g-x&#39;</span><span class="p">)</span>
+
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ls</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ls</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;r-x&#39;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k-x&#39;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+                    <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;No intersection point with convex hull?&quot;</span>
+
+                <span class="n">new_c_p</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_c_p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">):</span>
+                    <span class="c1"># two intersections...</span>
+                    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+                    <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span><span class="p">,</span> <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">reaches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+                    <span class="n">reaches</span> <span class="o">=</span> <span class="n">reaches</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">:</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b-x&#39;</span><span class="p">)</span>
+
+                    <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;g-x&#39;</span><span class="p">)</span>
+
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ls</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ls</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;r-x&#39;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k-x&#39;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+                    <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Dual intersection points with convex hull?&quot;</span>
+
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_c_p</span><span class="p">,</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">)</span>
+                <span class="n">new_c</span> <span class="o">=</span> <span class="n">new_c_p</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">elif</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># snap it to the nearest point?</span>
+                <span class="n">new_c</span> <span class="o">=</span> <span class="n">closest_p</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># a 0th or last point should never be non-convex?</span>
+                <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">:</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b-x&#39;</span><span class="p">)</span>
+
+                <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;g-x&#39;</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">],</span> <span class="p">[</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k-x&#39;</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+                <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Do not know how to deal with non-convexity that doesn&#39;t start at the outermost children.&quot;</span>
+
+            <span class="n">e_coords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_c</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isConvex</span><span class="p">(</span><span class="n">e_coords</span><span class="p">):</span>
+        <span class="c1"># a 0th or last point should never be non-convex?</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">reaches</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach</span><span class="p">,</span> <span class="n">reach</span><span class="o">.</span><span class="n">parent</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">reach</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reaches</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">linestring</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b-x&#39;</span><span class="p">)</span>
+
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">e_coords</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;g-x&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fix_points</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">e_coords</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">],</span> <span class="p">[</span><span class="n">e_coords</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_poly_hull</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;k-x&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Cannot fix nonconvexity?&quot;</span>
+
+    <span class="k">return</span> <span class="n">e_coords</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

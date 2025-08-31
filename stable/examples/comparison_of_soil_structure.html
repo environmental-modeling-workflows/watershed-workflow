@@ -1,0 +1,1825 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Soil Structural Data Comparison &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=4e480626"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/comparison_of_soil_structure';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="AORC Data" href="get_AORC_met_data.html" />
+    <link rel="prev" title="Mixed-element Meshing - Toy Problem" href="toy_problem_stream_aligned_mesh.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="v2.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version v2.0</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="toy_problem_stream_aligned_mesh.html">Mixed-element Meshing - Toy Problem</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Soil Structural Data Comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_AORC_met_data.html">AORC Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_MODIS_LAI.html">Working with MODIS for Land Cover and LAI data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coweeta_stream_aligned_mesh.html">Mixed-Element Mesh for the Coweeta Watershed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coweeta_ats.html">Complete Workflow for generating ATS input for Coweeta</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-products">Available Products</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#glhymps">GLHYMPS</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pelletier-et-al-2016">Pelletier et al (2016)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ssurgo">SSURGO</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#soilgrids-2017">SoilGrids (2017)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../examples.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Soil Structural Data Comparison</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="soil-structural-data-comparison">
+<h1>Soil Structural Data Comparison<a class="headerlink" href="#soil-structural-data-comparison" title="Link to this heading">#</a></h1>
+<p>This notebook simply compares several different sets of soil structural data, clarifying how they can be used and noting their imperfections.</p>
+<p>To run an integrated hydrology simulation, we need at least:</p>
+<ul class="simple">
+<li><p>porosity</p></li>
+<li><p>permeability</p></li>
+<li><p>van Genuchten or other WRM, typically generated from Rosetta from texture data + bulk density</p></li>
+<li><p>soil structural model (e.g. formations + horizons or other layering strategy)</p></li>
+</ul>
+<p>For a structural model, we typically define two or three layers:  bedrock, a geologic layer, and (sometimes) a soil layer.  For the horizontal component, it is most convenient to work with formations – horizontal shapes whose bodies are assumed to be homogeneous within the shape and layer.  We can work with fields of porosity and permeability, but currently ATS does not support fields of van Genuchten parameters, and running Rosetta at every pixel seems excessive anyway.  So we prefer to avoid doing that.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># these can be turned on for development work</span>
+<span class="o">%</span><span class="k">load_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.ui</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.plot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.ui</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.sources</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># user input -- choose the HUC to work on</span>
+<span class="n">huc</span> <span class="o">=</span> <span class="s1">&#39;140200010204&#39;</span>
+<span class="n">crs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">default_crs</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># collect the HUCs from WBD</span>
+<span class="n">watershed</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerWBD</span><span class="p">()</span><span class="o">.</span><span class="n">getShapesByID</span><span class="p">([</span><span class="n">huc</span><span class="p">,],</span> <span class="n">out_crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot what we have so far -- an image of the HUC</span>
+<span class="n">watershed</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
+</pre></div>
+</div>
+<img alt="../_images/820ea4fd3e65f15d6f05961cac0dd637f37b4ff2f897b7fd9bda5d1642163522.png" src="../_images/820ea4fd3e65f15d6f05961cac0dd637f37b4ff2f897b7fd9bda5d1642163522.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">watershed</span><span class="o">.</span><span class="n">crs</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Projected CRS: EPSG:5070&gt;
+Name: NAD83 / Conus Albers
+Axis Info [cartesian]:
+- X[east]: Easting (metre)
+- Y[north]: Northing (metre)
+Area of Use:
+- name: United States (USA) - CONUS onshore - Alabama; Arizona; Arkansas; California; Colorado; Connecticut; Delaware; Florida; Georgia; Idaho; Illinois; Indiana; Iowa; Kansas; Kentucky; Louisiana; Maine; Maryland; Massachusetts; Michigan; Minnesota; Mississippi; Missouri; Montana; Nebraska; Nevada; New Hampshire; New Jersey; New Mexico; New York; North Carolina; North Dakota; Ohio; Oklahoma; Oregon; Pennsylvania; Rhode Island; South Carolina; South Dakota; Tennessee; Texas; Utah; Vermont; Virginia; Washington; West Virginia; Wisconsin; Wyoming.
+- bounds: (-124.79, 24.41, -66.91, 49.38)
+Coordinate Operation:
+- name: Conus Albers
+- method: Albers Equal Area
+Datum: North American Datum 1983
+- Ellipsoid: GRS 1980
+- Prime Meridian: Greenwich
+</pre></div>
+</div>
+</div>
+</div>
+<section id="available-products">
+<h2>Available Products<a class="headerlink" href="#available-products" title="Link to this heading">#</a></h2>
+<p>The following products are routinely available across the US (or globally).</p>
+<section id="glhymps">
+<h3>GLHYMPS<a class="headerlink" href="#glhymps" title="Link to this heading">#</a></h3>
+<p>The Global Hydrogeology Maps product provides data by shapefile/formation, and provides:</p>
+<ul class="simple">
+<li><p>porosity</p></li>
+<li><p>permeability</p></li>
+<li><p>depth-to-bedrock</p></li>
+</ul>
+<p>This dataset is fairly complete, but there are some oddities – most notably much of the DTB field seems to be 0, and a significant subset of the porosity are 0 (mostly clays, we threshold at 1% to avoid this).  But the data is pretty good and complete.  However, it is missing WRM parameters (or equivalently, texture information).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># first let&#39;s look at GLYHMPS</span>
+<span class="c1"># -- get the data</span>
+<span class="n">glhymps_mgr</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerGLHYMPS</span><span class="p">()</span>
+<span class="n">gl</span> <span class="o">=</span> <span class="n">glhymps_mgr</span><span class="o">.</span><span class="n">getShapesByGeometry</span><span class="p">(</span><span class="n">watershed</span><span class="p">,</span> <span class="n">out_crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># convert it to standard ATS datasets</span>
+<span class="n">gl</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">soil_properties</span><span class="o">.</span><span class="n">mangleGLHYMPSProperties</span><span class="p">(</span><span class="n">gl</span><span class="p">)</span>
+<span class="n">gl</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>name</th>
+      <th>source</th>
+      <th>permeability [m^2]</th>
+      <th>logk_stdev [-]</th>
+      <th>porosity [-]</th>
+      <th>van Genuchten alpha [Pa^-1]</th>
+      <th>van Genuchten n [-]</th>
+      <th>residual saturation [-]</th>
+      <th>geometry</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>715383</td>
+      <td>GLHYMPS-715383</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-939257.031 1815576.693, -9392...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>715639</td>
+      <td>GLHYMPS-715639</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-941668.093 1811291.149, -9419...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>715707</td>
+      <td>GLHYMPS-715707</td>
+      <td>GLHYMPS</td>
+      <td>1.000000e-13</td>
+      <td>2.00</td>
+      <td>0.22</td>
+      <td>0.000294</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-942876.044 1814661.915, -9427...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>715766</td>
+      <td>GLHYMPS-715766</td>
+      <td>GLHYMPS</td>
+      <td>3.162278e-13</td>
+      <td>1.80</td>
+      <td>0.09</td>
+      <td>0.000817</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-947358.28 1813697.645, -948118.709 ...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>715779</td>
+      <td>GLHYMPS-715779</td>
+      <td>GLHYMPS</td>
+      <td>1.000000e-13</td>
+      <td>2.00</td>
+      <td>0.22</td>
+      <td>0.000294</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-944025.909 1813309.319, -944527.763...</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>715796</td>
+      <td>GLHYMPS-715796</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-933660.561 1797293.053, -9335...</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>715833</td>
+      <td>GLHYMPS-715833</td>
+      <td>GLHYMPS</td>
+      <td>3.162278e-13</td>
+      <td>1.80</td>
+      <td>0.09</td>
+      <td>0.000817</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-945234.306 1808748.423, -9451...</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>726604</td>
+      <td>GLHYMPS-726604</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-941747.425 1812754.645, -9418...</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>726608</td>
+      <td>GLHYMPS-726608</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-953864.501 1813999.085, -9542...</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>726639</td>
+      <td>GLHYMPS-726639</td>
+      <td>GLHYMPS</td>
+      <td>3.162278e-13</td>
+      <td>1.80</td>
+      <td>0.09</td>
+      <td>0.000817</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-948778.786 1815596.524, -948024.977...</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>726642</td>
+      <td>GLHYMPS-726642</td>
+      <td>GLHYMPS</td>
+      <td>1.000000e-13</td>
+      <td>2.00</td>
+      <td>0.22</td>
+      <td>0.000294</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-944367.697 1813260.89, -94452...</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>726650</td>
+      <td>GLHYMPS-726650</td>
+      <td>GLHYMPS</td>
+      <td>6.309573e-16</td>
+      <td>2.50</td>
+      <td>0.19</td>
+      <td>0.000025</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>MULTIPOLYGON (((-941147.259 1799041.493, -9410...</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>726664</td>
+      <td>GLHYMPS-726664</td>
+      <td>GLHYMPS</td>
+      <td>1.000000e-13</td>
+      <td>2.00</td>
+      <td>0.22</td>
+      <td>0.000294</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-952109.643 1813503.499, -951346.338...</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>726667</td>
+      <td>GLHYMPS-726667</td>
+      <td>GLHYMPS</td>
+      <td>3.162278e-13</td>
+      <td>1.80</td>
+      <td>0.09</td>
+      <td>0.000817</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-940163.504 1810040.228, -940089.924...</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>726671</td>
+      <td>GLHYMPS-726671</td>
+      <td>GLHYMPS</td>
+      <td>3.162278e-13</td>
+      <td>1.80</td>
+      <td>0.09</td>
+      <td>0.000817</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-951971.487 1811058.543, -952225.723...</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>730801</td>
+      <td>GLHYMPS-730801</td>
+      <td>GLHYMPS</td>
+      <td>3.019952e-11</td>
+      <td>1.61</td>
+      <td>0.01</td>
+      <td>0.023953</td>
+      <td>2.0</td>
+      <td>0.01</td>
+      <td>POLYGON ((-945003.907 1820005.317, -944742.248...</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># -- print extent of properties</span>
+<span class="n">gl_logK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">gl</span><span class="p">[</span><span class="s1">&#39;permeability [m^2]&#39;</span><span class="p">][:])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;logK&#39;</span><span class="p">,</span> <span class="n">gl_logK</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">gl_logK</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+<span class="n">poro</span> <span class="o">=</span> <span class="n">gl</span><span class="p">[</span><span class="s1">&#39;porosity [-]&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;poro&#39;</span><span class="p">,</span> <span class="n">poro</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">poro</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>logK -15.2 -10.52
+poro 0.01 0.22
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gl</span><span class="o">.</span><span class="n">crs</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Projected CRS: EPSG:5070&gt;
+Name: NAD83 / Conus Albers
+Axis Info [cartesian]:
+- X[east]: Easting (metre)
+- Y[north]: Northing (metre)
+Area of Use:
+- name: United States (USA) - CONUS onshore - Alabama; Arizona; Arkansas; California; Colorado; Connecticut; Delaware; Florida; Georgia; Idaho; Illinois; Indiana; Iowa; Kansas; Kentucky; Louisiana; Maine; Maryland; Massachusetts; Michigan; Minnesota; Mississippi; Missouri; Montana; Nebraska; Nevada; New Hampshire; New Jersey; New Mexico; New York; North Carolina; North Dakota; Ohio; Oklahoma; Oregon; Pennsylvania; Rhode Island; South Carolina; South Dakota; Tennessee; Texas; Utah; Vermont; Virginia; Washington; West Virginia; Wisconsin; Wyoming.
+- bounds: (-124.79, 24.41, -66.91, 49.38)
+Coordinate Operation:
+- name: Conus Albers
+- method: Albers Equal Area
+Datum: North American Datum 1983
+- Ellipsoid: GRS 1980
+- Prime Meridian: Greenwich
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># -- color a raster by the polygons to see the structure</span>
+<span class="n">gl_color</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rasterizeGeoDataFrame</span><span class="p">(</span><span class="n">gl</span><span class="p">,</span> <span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>                                                        
+<span class="n">gl_color</span> <span class="o">=</span> <span class="n">gl_color</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the formations</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">unique_inds</span><span class="p">,</span> <span class="n">gl_cmap</span><span class="p">,</span> <span class="n">gl_norm</span><span class="p">,</span> <span class="n">gl_ticks</span><span class="p">,</span> <span class="n">gl_labels</span> <span class="o">=</span> \
+       <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">createIndexedColormap</span><span class="p">(</span><span class="n">gl</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">])</span>
+
+
+<span class="n">gl_color</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">gl_cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">gl_norm</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;GLHMPS&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;GLHMPS&#39;)
+</pre></div>
+</div>
+<img alt="../_images/dedbdf83a94c7e05ad2e03d2ca38ceab87d4d17ec9e5507d62a00314b53e9bc6.png" src="../_images/dedbdf83a94c7e05ad2e03d2ca38ceab87d4d17ec9e5507d62a00314b53e9bc6.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># generate glhymps porosity, permeability fields</span>
+<span class="c1"># -- porosity</span>
+<span class="n">gl_poro</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rasterizeGeoDataFrame</span><span class="p">(</span><span class="n">gl</span><span class="p">,</span> <span class="s1">&#39;porosity [-]&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">gl_poro</span> <span class="o">=</span> <span class="n">gl_poro</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+<span class="c1"># -- permeability</span>
+<span class="n">gl_perm</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rasterizeGeoDataFrame</span><span class="p">(</span><span class="n">gl</span><span class="p">,</span> <span class="s1">&#39;permeability [m^2]&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">gl_perm</span> <span class="o">=</span> <span class="n">gl_perm</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot porosity and perm for glhymps</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">gl_poro</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">gl_perm</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;porosity [-]&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;log permeability [m^2]&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;log permeability [m^2]&#39;)
+</pre></div>
+</div>
+<img alt="../_images/74b4de1a6eff7d3a591b3b36b254200594bf0d8efa5e9f400c3210b400845041.png" src="../_images/74b4de1a6eff7d3a591b3b36b254200594bf0d8efa5e9f400c3210b400845041.png" />
+</div>
+</div>
+</section>
+<section id="pelletier-et-al-2016">
+<h3>Pelletier et al (2016)<a class="headerlink" href="#pelletier-et-al-2016" title="Link to this heading">#</a></h3>
+<p>In Pelletier et al 2016, a global depth-to-bedrock raster was developed.  This has provided a reliable source for data about deep bedrock.</p>
+<p>Pelletier, Jon D., et al. “A gridded global data set of soil, intact regolith, and sedimentary deposit thicknesses for regional and global land surface modeling.” Journal of Advances in Modeling Earth Systems 8.1 (2016): 41-65.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pell_mgr</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerPelletierDTB</span><span class="p">()</span>
+<span class="n">pell</span> <span class="o">=</span> <span class="n">pell_mgr</span><span class="o">.</span><span class="n">getDataset</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">geometry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)[</span><span class="s1">&#39;band_1&#39;</span><span class="p">]</span>
+<span class="n">pell</span> <span class="o">=</span> <span class="n">pell</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">pell</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">geometry</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">pell</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;xarray.DataArray &#39;band_1&#39; (y: 8, x: 15)&gt; Size: 480B
+array([[nan, nan, nan,  0.,  0., nan, nan,  0.,  0.,  1.,  1., nan, nan,
+        nan, nan],
+       [nan,  2.,  1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  0.,  0., nan,
+        nan, nan],
+       [nan,  0.,  1.,  1.,  0.,  0.,  0.,  1.,  1.,  1.,  1.,  1.,  1.,
+        nan,  2.],
+       [ 1.,  1.,  0.,  0.,  1.,  0.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,
+         0., nan],
+       [nan,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,
+         1., nan],
+       [nan,  1.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.,
+         0., nan],
+       [nan, nan,  1.,  1.,  0.,  0.,  1.,  1., nan, nan,  1.,  1.,  0.,
+        nan, nan],
+       [nan, nan, nan,  0., nan, nan, nan, nan, nan, nan, nan, nan, nan,
+        nan, nan]], dtype=float32)
+Coordinates:
+  * x            (x) float64 120B -107.1 -107.1 -107.1 ... -107.0 -107.0 -107.0
+  * y            (y) float64 64B 38.89 38.88 38.87 38.86 38.85 38.85 38.84 38.83
+    spatial_ref  int64 8B 0
+Attributes:
+    DataType:       Generic
+    AREA_OR_POINT:  Area
+    scale_factor:   1.0
+    add_offset:     0.0
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot Pelletier DTB</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">pell</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.image.AxesImage at 0x7907aeac1e50&gt;
+</pre></div>
+</div>
+<img alt="../_images/52105b1c709e71cef941f9fcb2fa4d81424f3c3532f28870a04ada6d8ccde32e.png" src="../_images/52105b1c709e71cef941f9fcb2fa4d81424f3c3532f28870a04ada6d8ccde32e.png" />
+</div>
+</div>
+</section>
+<section id="ssurgo">
+<h3>SSURGO<a class="headerlink" href="#ssurgo" title="Link to this heading">#</a></h3>
+<p>The NRCS’s SSURGO/STATSGO products provide shape-based information about the top 2m of soil.  This data is provided by formation, and includes multiple formations (map-units), in which each map unit has (potentially) multiple components and each component has (potentially) multiple horizons.  Short of taking the most prevelant component, we must average, so we tend to average horizons and components and just apply this uniformly in the top 2m.  Provided include a complete set of parameters:</p>
+<ul class="simple">
+<li><p>porosity</p></li>
+<li><p>permeability</p></li>
+<li><p>bulk density</p></li>
+<li><p>texture</p></li>
+<li><p>and more…</p></li>
+</ul>
+<p>Unfortunately, while map units seem to cover the area of interest, they don’t all have at least one horizon with valid data, so some formations end up with NaN values.  So while SSURGO can be used as an “overlay” with good soil layer information, it cannot be used alone without a gap-filling plan.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># ssurgo</span>
+<span class="n">nrcs_mgr</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">sources</span><span class="o">.</span><span class="n">ManagerNRCS</span><span class="p">()</span>
+<span class="n">nrcs</span> <span class="o">=</span> <span class="n">nrcs_mgr</span><span class="o">.</span><span class="n">getShapesByGeometry</span><span class="p">(</span><span class="n">watershed</span><span class="o">.</span><span class="n">geometry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">watershed</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+<span class="n">nrcs</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mukey</th>
+      <th>geometry</th>
+      <th>residual saturation [-]</th>
+      <th>Rosetta porosity [-]</th>
+      <th>van Genuchten alpha [Pa^-1]</th>
+      <th>van Genuchten n [-]</th>
+      <th>Rosetta permeability [m^2]</th>
+      <th>thickness [m]</th>
+      <th>permeability [m^2]</th>
+      <th>porosity [-]</th>
+      <th>bulk density [g/cm^3]</th>
+      <th>total sand pct [%]</th>
+      <th>total silt pct [%]</th>
+      <th>total clay pct [%]</th>
+      <th>source</th>
+      <th>ID</th>
+      <th>name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>498185</td>
+      <td>POLYGON ((-107.01831 38.88358, -107.01841 38.8...</td>
+      <td>0.240269</td>
+      <td>0.502882</td>
+      <td>0.000092</td>
+      <td>1.319916</td>
+      <td>3.617805e-13</td>
+      <td>1.520000</td>
+      <td>2.279759e-13</td>
+      <td>0.265563</td>
+      <td>1.207632</td>
+      <td>32.946001</td>
+      <td>24.529703</td>
+      <td>42.524296</td>
+      <td>NRCS</td>
+      <td>498185</td>
+      <td>NRCS-498185</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>498188</td>
+      <td>MULTIPOLYGON (((-106.98182 38.84868, -106.9821...</td>
+      <td>0.208965</td>
+      <td>0.466656</td>
+      <td>0.000035</td>
+      <td>1.493607</td>
+      <td>3.227897e-13</td>
+      <td>0.710000</td>
+      <td>8.149200e-13</td>
+      <td>0.500000</td>
+      <td>1.230000</td>
+      <td>9.857377</td>
+      <td>66.027869</td>
+      <td>24.114754</td>
+      <td>NRCS</td>
+      <td>498188</td>
+      <td>NRCS-498188</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>498205</td>
+      <td>MULTIPOLYGON (((-106.98136 38.8663, -106.98188...</td>
+      <td>0.181598</td>
+      <td>0.399993</td>
+      <td>0.000139</td>
+      <td>1.457559</td>
+      <td>4.938634e-13</td>
+      <td>1.520000</td>
+      <td>2.734080e-12</td>
+      <td>0.159737</td>
+      <td>1.413553</td>
+      <td>63.518421</td>
+      <td>22.988158</td>
+      <td>13.493421</td>
+      <td>NRCS</td>
+      <td>498205</td>
+      <td>NRCS-498205</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>498206</td>
+      <td>MULTIPOLYGON (((-106.9782 38.87179, -106.97836...</td>
+      <td>0.181598</td>
+      <td>0.399993</td>
+      <td>0.000139</td>
+      <td>1.457559</td>
+      <td>4.938634e-13</td>
+      <td>1.520000</td>
+      <td>2.734080e-12</td>
+      <td>0.159737</td>
+      <td>1.413553</td>
+      <td>63.518421</td>
+      <td>22.988158</td>
+      <td>13.493421</td>
+      <td>NRCS</td>
+      <td>498206</td>
+      <td>NRCS-498206</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>498208</td>
+      <td>MULTIPOLYGON (((-106.98546 38.87211, -106.9855...</td>
+      <td>0.208316</td>
+      <td>0.428990</td>
+      <td>0.000071</td>
+      <td>1.420938</td>
+      <td>2.830658e-13</td>
+      <td>1.520000</td>
+      <td>1.184189e-12</td>
+      <td>0.185986</td>
+      <td>1.302697</td>
+      <td>40.662797</td>
+      <td>38.201188</td>
+      <td>21.136015</td>
+      <td>NRCS</td>
+      <td>498208</td>
+      <td>NRCS-498208</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>498209</td>
+      <td>MULTIPOLYGON (((-106.9777 38.86864, -106.97773...</td>
+      <td>0.208316</td>
+      <td>0.428990</td>
+      <td>0.000071</td>
+      <td>1.420938</td>
+      <td>2.830658e-13</td>
+      <td>1.520000</td>
+      <td>1.184189e-12</td>
+      <td>0.185986</td>
+      <td>1.302697</td>
+      <td>40.662797</td>
+      <td>38.201188</td>
+      <td>21.136015</td>
+      <td>NRCS</td>
+      <td>498209</td>
+      <td>NRCS-498209</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>498218</td>
+      <td>POLYGON ((-106.98706 38.8434, -106.98621 38.84...</td>
+      <td>0.239708</td>
+      <td>0.491429</td>
+      <td>0.000080</td>
+      <td>1.336891</td>
+      <td>3.047481e-13</td>
+      <td>1.520000</td>
+      <td>1.822373e-13</td>
+      <td>0.217763</td>
+      <td>1.227697</td>
+      <td>29.210470</td>
+      <td>30.763761</td>
+      <td>40.025768</td>
+      <td>NRCS</td>
+      <td>498218</td>
+      <td>NRCS-498218</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>498231</td>
+      <td>MULTIPOLYGON (((-107.01992 38.86516, -107.0199...</td>
+      <td>0.213285</td>
+      <td>0.466663</td>
+      <td>0.000059</td>
+      <td>1.416784</td>
+      <td>3.782943e-13</td>
+      <td>1.070000</td>
+      <td>7.331979e-13</td>
+      <td>0.403218</td>
+      <td>1.197010</td>
+      <td>32.639846</td>
+      <td>41.078960</td>
+      <td>26.281194</td>
+      <td>NRCS</td>
+      <td>498231</td>
+      <td>NRCS-498231</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>509477</td>
+      <td>MULTIPOLYGON (((-107.08069 38.82938, -107.0808...</td>
+      <td>0.175133</td>
+      <td>0.567740</td>
+      <td>0.000103</td>
+      <td>1.383180</td>
+      <td>2.438575e-12</td>
+      <td>1.520000</td>
+      <td>3.039095e-12</td>
+      <td>0.428779</td>
+      <td>0.807465</td>
+      <td>62.072368</td>
+      <td>17.973684</td>
+      <td>19.953947</td>
+      <td>NRCS</td>
+      <td>509477</td>
+      <td>NRCS-509477</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>509479</td>
+      <td>MULTIPOLYGON (((-106.99601 38.8277, -106.99586...</td>
+      <td>0.230885</td>
+      <td>0.378365</td>
+      <td>0.000079</td>
+      <td>1.374540</td>
+      <td>1.031721e-13</td>
+      <td>1.250000</td>
+      <td>3.172415e-12</td>
+      <td>NaN</td>
+      <td>1.524444</td>
+      <td>39.279352</td>
+      <td>38.916498</td>
+      <td>21.804150</td>
+      <td>NRCS</td>
+      <td>509479</td>
+      <td>NRCS-509479</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>509481</td>
+      <td>MULTIPOLYGON (((-107.10589 38.83252, -107.1043...</td>
+      <td>0.230885</td>
+      <td>0.378365</td>
+      <td>0.000079</td>
+      <td>1.374540</td>
+      <td>1.031721e-13</td>
+      <td>1.250000</td>
+      <td>3.172415e-12</td>
+      <td>NaN</td>
+      <td>1.524444</td>
+      <td>39.279352</td>
+      <td>38.916498</td>
+      <td>21.804150</td>
+      <td>NRCS</td>
+      <td>509481</td>
+      <td>NRCS-509481</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>509482</td>
+      <td>MULTIPOLYGON (((-107.09255 38.83101, -107.0931...</td>
+      <td>0.207877</td>
+      <td>0.369886</td>
+      <td>0.000092</td>
+      <td>1.397760</td>
+      <td>1.474479e-13</td>
+      <td>1.205000</td>
+      <td>4.654687e-12</td>
+      <td>NaN</td>
+      <td>1.530585</td>
+      <td>45.389069</td>
+      <td>37.890283</td>
+      <td>16.720648</td>
+      <td>NRCS</td>
+      <td>509482</td>
+      <td>NRCS-509482</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>509513</td>
+      <td>MULTIPOLYGON (((-107.10611 38.87963, -107.1058...</td>
+      <td>0.219597</td>
+      <td>0.445168</td>
+      <td>0.000072</td>
+      <td>1.395746</td>
+      <td>2.727324e-13</td>
+      <td>1.520000</td>
+      <td>9.122162e-13</td>
+      <td>0.237423</td>
+      <td>1.280039</td>
+      <td>38.422252</td>
+      <td>35.742028</td>
+      <td>25.835720</td>
+      <td>NRCS</td>
+      <td>509513</td>
+      <td>NRCS-509513</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>509514</td>
+      <td>MULTIPOLYGON (((-107.00249 38.83035, -107.0020...</td>
+      <td>0.241801</td>
+      <td>0.474101</td>
+      <td>0.000079</td>
+      <td>1.340429</td>
+      <td>2.435161e-13</td>
+      <td>1.520000</td>
+      <td>2.375523e-13</td>
+      <td>0.271630</td>
+      <td>1.274496</td>
+      <td>30.592982</td>
+      <td>31.535307</td>
+      <td>37.871711</td>
+      <td>NRCS</td>
+      <td>509514</td>
+      <td>NRCS-509514</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>509529</td>
+      <td>MULTIPOLYGON (((-107.06282 38.87776, -107.0629...</td>
+      <td>0.196811</td>
+      <td>0.356163</td>
+      <td>0.000157</td>
+      <td>1.406091</td>
+      <td>2.260935e-13</td>
+      <td>1.520000</td>
+      <td>5.850942e-12</td>
+      <td>NaN</td>
+      <td>1.607097</td>
+      <td>63.571711</td>
+      <td>22.369079</td>
+      <td>14.059211</td>
+      <td>NRCS</td>
+      <td>509529</td>
+      <td>NRCS-509529</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>509532</td>
+      <td>MULTIPOLYGON (((-107.08446 38.83002, -107.0851...</td>
+      <td>0.199783</td>
+      <td>0.412306</td>
+      <td>0.000087</td>
+      <td>1.422578</td>
+      <td>2.966015e-13</td>
+      <td>1.520000</td>
+      <td>1.526682e-12</td>
+      <td>0.182238</td>
+      <td>1.356006</td>
+      <td>47.934946</td>
+      <td>34.134907</td>
+      <td>17.930147</td>
+      <td>NRCS</td>
+      <td>509532</td>
+      <td>NRCS-509532</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>509544</td>
+      <td>MULTIPOLYGON (((-107.04457 38.87875, -107.0457...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.520000</td>
+      <td>7.000000e-15</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NRCS</td>
+      <td>509544</td>
+      <td>NRCS-509544</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>509547</td>
+      <td>MULTIPOLYGON (((-107.06405 38.865, -107.06431 ...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.520000</td>
+      <td>4.230700e-11</td>
+      <td>NaN</td>
+      <td>2.030000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NRCS</td>
+      <td>509547</td>
+      <td>NRCS-509547</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>509548</td>
+      <td>MULTIPOLYGON (((-107.04607 38.82944, -107.0456...</td>
+      <td>0.189314</td>
+      <td>0.404765</td>
+      <td>0.000104</td>
+      <td>1.433685</td>
+      <td>3.617371e-13</td>
+      <td>1.520000</td>
+      <td>2.006536e-12</td>
+      <td>0.193350</td>
+      <td>1.379123</td>
+      <td>53.676535</td>
+      <td>31.072368</td>
+      <td>15.251096</td>
+      <td>NRCS</td>
+      <td>509548</td>
+      <td>NRCS-509548</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>509559</td>
+      <td>MULTIPOLYGON (((-107.06648 38.88147, -107.0667...</td>
+      <td>0.210870</td>
+      <td>0.420608</td>
+      <td>0.000078</td>
+      <td>1.410010</td>
+      <td>2.516507e-13</td>
+      <td>0.618125</td>
+      <td>7.504374e-13</td>
+      <td>0.151250</td>
+      <td>1.341513</td>
+      <td>43.240132</td>
+      <td>35.652961</td>
+      <td>21.106908</td>
+      <td>NRCS</td>
+      <td>509559</td>
+      <td>NRCS-509559</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>509561</td>
+      <td>POLYGON ((-107.09952 38.8459, -107.09969 38.84...</td>
+      <td>0.246665</td>
+      <td>0.467696</td>
+      <td>0.000081</td>
+      <td>1.332817</td>
+      <td>2.088819e-13</td>
+      <td>1.396471</td>
+      <td>1.590777e-13</td>
+      <td>0.218625</td>
+      <td>1.305591</td>
+      <td>30.228443</td>
+      <td>31.026630</td>
+      <td>38.744927</td>
+      <td>NRCS</td>
+      <td>509561</td>
+      <td>NRCS-509561</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>509567</td>
+      <td>POLYGON ((-107.00507 38.8277, -107.00534 38.82...</td>
+      <td>0.242574</td>
+      <td>0.482738</td>
+      <td>0.000079</td>
+      <td>1.336289</td>
+      <td>2.612348e-13</td>
+      <td>1.520000</td>
+      <td>1.748267e-13</td>
+      <td>0.186440</td>
+      <td>1.257167</td>
+      <td>28.780573</td>
+      <td>31.506579</td>
+      <td>39.712848</td>
+      <td>NRCS</td>
+      <td>509567</td>
+      <td>NRCS-509567</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>509571</td>
+      <td>MULTIPOLYGON (((-107.01403 38.8277, -107.01549...</td>
+      <td>0.245090</td>
+      <td>0.481450</td>
+      <td>0.000081</td>
+      <td>1.330972</td>
+      <td>2.469105e-13</td>
+      <td>1.520000</td>
+      <td>1.517041e-13</td>
+      <td>0.319721</td>
+      <td>1.269125</td>
+      <td>28.517802</td>
+      <td>30.887384</td>
+      <td>40.594814</td>
+      <td>NRCS</td>
+      <td>509571</td>
+      <td>NRCS-509571</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>509577</td>
+      <td>MULTIPOLYGON (((-107.0234 38.83592, -107.02335...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.520000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NRCS</td>
+      <td>509577</td>
+      <td>NRCS-509577</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>509726</td>
+      <td>POLYGON ((-106.9774 38.88088, -106.97741 38.88...</td>
+      <td>0.169567</td>
+      <td>0.356505</td>
+      <td>0.000202</td>
+      <td>1.548169</td>
+      <td>5.589350e-13</td>
+      <td>1.520000</td>
+      <td>5.317991e-12</td>
+      <td>0.399396</td>
+      <td>1.586579</td>
+      <td>73.750000</td>
+      <td>17.539474</td>
+      <td>8.710526</td>
+      <td>NRCS</td>
+      <td>509726</td>
+      <td>NRCS-509726</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>509733</td>
+      <td>POLYGON ((-106.98406 38.87324, -106.98641 38.8...</td>
+      <td>0.157366</td>
+      <td>0.400499</td>
+      <td>0.000221</td>
+      <td>1.762072</td>
+      <td>1.819618e-12</td>
+      <td>0.860000</td>
+      <td>5.262229e-12</td>
+      <td>0.449752</td>
+      <td>1.423158</td>
+      <td>82.200000</td>
+      <td>9.300000</td>
+      <td>8.500000</td>
+      <td>NRCS</td>
+      <td>509733</td>
+      <td>NRCS-509733</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>509739</td>
+      <td>POLYGON ((-106.98875 38.88562, -106.98912 38.8...</td>
+      <td>0.180715</td>
+      <td>0.378278</td>
+      <td>0.000162</td>
+      <td>1.471752</td>
+      <td>4.414571e-13</td>
+      <td>0.510000</td>
+      <td>1.286655e-12</td>
+      <td>0.425230</td>
+      <td>1.506585</td>
+      <td>67.256098</td>
+      <td>20.512195</td>
+      <td>12.231707</td>
+      <td>NRCS</td>
+      <td>509739</td>
+      <td>NRCS-509739</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>509789</td>
+      <td>MULTIPOLYGON (((-106.97834 38.88014, -106.9784...</td>
+      <td>0.184149</td>
+      <td>0.372988</td>
+      <td>0.000140</td>
+      <td>1.438542</td>
+      <td>3.199534e-13</td>
+      <td>1.520000</td>
+      <td>2.504075e-12</td>
+      <td>0.427204</td>
+      <td>1.515197</td>
+      <td>60.823026</td>
+      <td>26.676974</td>
+      <td>12.500000</td>
+      <td>NRCS</td>
+      <td>509789</td>
+      <td>NRCS-509789</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>509794</td>
+      <td>POLYGON ((-106.9774 38.8732, -106.98227 38.873...</td>
+      <td>0.220962</td>
+      <td>0.383130</td>
+      <td>0.000140</td>
+      <td>1.367408</td>
+      <td>2.004353e-13</td>
+      <td>1.520000</td>
+      <td>1.554090e-12</td>
+      <td>0.415245</td>
+      <td>1.545395</td>
+      <td>60.571711</td>
+      <td>18.441447</td>
+      <td>20.986842</td>
+      <td>NRCS</td>
+      <td>509794</td>
+      <td>NRCS-509794</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>708040</td>
+      <td>POLYGON ((-106.99643 38.8811, -106.99801 38.88...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NRCS</td>
+      <td>708040</td>
+      <td>NRCS-708040</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>3084845</td>
+      <td>POLYGON ((-106.99416 38.8712, -106.99463 38.87...</td>
+      <td>0.214182</td>
+      <td>0.444803</td>
+      <td>0.000063</td>
+      <td>1.416842</td>
+      <td>2.920197e-13</td>
+      <td>1.520000</td>
+      <td>6.113237e-13</td>
+      <td>0.476856</td>
+      <td>1.263443</td>
+      <td>35.464974</td>
+      <td>40.343256</td>
+      <td>24.191769</td>
+      <td>NRCS</td>
+      <td>3084845</td>
+      <td>NRCS-3084845</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot ssurgo porosity, note white inside the domain is NaN values</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">nrcs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;porosity [-]&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;porosity [-]&#39;</span><span class="p">)</span>
+<span class="n">nrcs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;Rosetta porosity [-]&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Rosetta porosity [-]&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Rosetta porosity [-]&#39;)
+</pre></div>
+</div>
+<img alt="../_images/341d3fdab80da8da3be05eb4c6fbd3f831817cce0d79121cecc909ada8f6d5d3.png" src="../_images/341d3fdab80da8da3be05eb4c6fbd3f831817cce0d79121cecc909ada8f6d5d3.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpc</span>
+
+<span class="c1"># plot ssurgo porosity, note white inside the domain is NaN values</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">nrcs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;permeability [m^2]&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">norm</span><span class="o">=</span><span class="n">mpc</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e-16</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">))</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;permeability [m^2]&#39;</span><span class="p">)</span>
+<span class="n">nrcs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;Rosetta permeability [m^2]&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">norm</span><span class="o">=</span><span class="n">mpc</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e-16</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">))</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Rosetta permeability [m^2]&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;Rosetta permeability [m^2]&#39;)
+</pre></div>
+</div>
+<img alt="../_images/4a828d10ad1b2f163f6371eece90beef05e33cec3f4f46652322d24e67e27658.png" src="../_images/4a828d10ad1b2f163f6371eece90beef05e33cec3f4f46652322d24e67e27658.png" />
+</div>
+</div>
+</section>
+<section id="soilgrids-2017">
+<h3>SoilGrids (2017)<a class="headerlink" href="#soilgrids-2017" title="Link to this heading">#</a></h3>
+<p>SoilGrids includes 250m, global rasters of:</p>
+<ul class="simple">
+<li><p>depth to bedrock</p></li>
+<li><p>bulk density</p></li>
+<li><p>texture via percent sand/silt/clay</p></li>
+<li><p>and more…</p></li>
+</ul>
+<p>Effectively everything is available that is needed to run Rosetta to get a full suite of parameters.  Vertically, bulk density and texture information are provided at 7 layers, the deepest starting at 2m.  Data is complete globally, and doesn’t seem to have much missing data except under water bodies.  The only downside is the raster nature of the data – to use this directly we would have to run every pixel through Rosetta and provide fields of Van Genuchten parameters.  We could conceivably use the rasters of porosity and permeability, but it seems more convenient to work by formation instead of as a raster.</p>
+<p>Note that here we use the 2017 product instead of the 2020 product as that has yet to include depth-to-bedrock.  The depth-to-bedrock here seems fairly inaccurate – generally we have stopped using SoilGrids for this reason.</p>
+<p>Therefore we keep this section here in case anyone wants to play with this product, but comment it out.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># SoilGrids</span>
+<span class="c1">#</span>
+<span class="c1"># NOTE: this may not work any more -- we may need to deprecate SoilGrids.</span>
+<span class="c1">#sg_mgr = watershed_workflow.sources.ManagerSoilGrids2017()</span>
+<span class="c1">#sg = sg_mgr.getDataset(watershed)</span>
+
+
+<span class="c1">#print(sg)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>SoilGrids has holes where there is standing water, but we still need soil in these places.  Fill these using a nearest neighbor algorithm.</p>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="toy_problem_stream_aligned_mesh.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Mixed-element Meshing - Toy Problem</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="get_AORC_met_data.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">AORC Data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
