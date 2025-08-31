@@ -1,0 +1,1143 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mixed-element Meshing - Toy Problem &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/toy_problem_stream_aligned_mesh';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Soil Structural Data Comparison" href="comparison_of_soil_structure.html" />
+    <link rel="prev" title="Examples" href="../examples.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../gallery.html">
+    Gallery
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Basic geometry on a toy problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comparison_of_soil_structure.html">Soil structure / subsurface soil data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_AORC_met_data.html">Meteorology data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coweeta_stream_aligned_mesh.html">Example: Mixed-Element Mesh for Delineated Watershed</a></li>
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="coweeta_ats.html">Complete Workflow for generating ATS input for Coweeta</a></li>
+
+
+
+
+
+
+
+
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surface-meshing">Surface Meshing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh-extrusion">Mesh Extrusion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh-io">Mesh IO</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../examples.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Mixed-element Meshing - Toy Problem</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="mixed-element-meshing-toy-problem">
+<h1>Mixed-element Meshing - Toy Problem<a class="headerlink" href="#mixed-element-meshing-toy-problem" title="Link to this heading">#</a></h1>
+<p>This workflow provides a testbed for testing features of mixed-element mesh wotkflow. The objects of river tree and huc boundary are a created to mimic what we get from NHDPlus. This example tests the case of two rivers, which is rare but still needs to be considered to make the workflow general</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.ui</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## Importing all the package needed to run the workflow</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow</span> 
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.mesh</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.resampling</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.condition</span>
+
+<span class="n">crs</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## NHDPlus input type objects</span>
+
+<span class="c1"># creating watershed polygon</span>
+<span class="n">ws1</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="mi">100</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="mf">4.5</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mf">4.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="p">,[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="s1">&#39;d&#39;</span><span class="p">))</span>
+<span class="n">my_hucs</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+<span class="n">my_hucs</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ws1</span><span class="p">,]</span>
+
+<span class="c1"># creating reaches miminc NHDPlus flowlines</span>
+<span class="n">reach1</span><span class="o">=</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([(</span><span class="mi">200</span><span class="p">,</span><span class="mi">200</span><span class="p">),(</span><span class="mi">200</span><span class="p">,</span><span class="mi">0</span><span class="p">)])</span>
+<span class="n">reach2</span><span class="o">=</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">200</span><span class="p">),(</span><span class="mi">200</span><span class="p">,</span><span class="mi">200</span><span class="p">)])</span>
+<span class="n">reach3</span><span class="o">=</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span> <span class="p">(</span><span class="mi">350</span><span class="p">,</span><span class="mi">400</span><span class="p">),(</span><span class="mi">350</span><span class="p">,</span><span class="mi">300</span><span class="p">),(</span><span class="mi">300</span><span class="p">,</span><span class="mi">300</span><span class="p">),(</span><span class="mi">300</span><span class="p">,</span><span class="mi">200</span><span class="p">),(</span><span class="mi">200</span><span class="p">,</span><span class="mi">200</span><span class="p">)])</span>
+<span class="n">reach4</span><span class="o">=</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([(</span><span class="mi">100</span><span class="p">,</span><span class="mi">400</span><span class="p">),</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mi">300</span><span class="p">)])</span>
+<span class="n">reaches</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+<span class="n">reaches</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="p">[</span><span class="n">reach1</span><span class="p">,</span> <span class="n">reach2</span><span class="p">,</span> <span class="n">reach3</span><span class="p">,</span> <span class="n">reach4</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">createCopy</span><span class="p">(</span><span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;To compare before/after, we often want to create copies.  Note in real workflows most things are done in-place without copies.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">watershed</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(),</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># creating watershed_workflow.split_hucs.SplitHUCs object for demo watershed</span>
+<span class="n">watershed</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">my_hucs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,542 - root - INFO: Removing holes on 1 polygons
+2025-08-30 18:11:33,543 - root - INFO:   -- removed interior
+2025-08-30 18:11:33,543 - root - INFO:   -- union
+2025-08-30 18:11:33,543 - root - INFO: Parsing 1 components for holes
+2025-08-30 18:11:33,543 - root - INFO:   -- complete
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">createRivers</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># copy the originals</span>
+<span class="n">watershed_orig</span><span class="p">,</span> <span class="n">rivers_orig</span> <span class="o">=</span> <span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># simplify the geometry for a &quot;nicer&quot; discrete object, using a uniform sampling strategy</span>
+<span class="n">watershed1</span><span class="p">,</span> <span class="n">rivers1</span> <span class="o">=</span> <span class="n">createCopy</span><span class="p">(</span><span class="n">watershed_orig</span><span class="p">,</span> <span class="n">rivers_orig</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">watershed1</span><span class="p">,</span> <span class="n">rivers1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,555 - root - INFO: 
+2025-08-30 18:11:33,555 - root - INFO: Simplifying
+2025-08-30 18:11:33,556 - root - INFO: ------------------------------
+2025-08-30 18:11:33,556 - root - INFO: None
+2025-08-30 18:11:33,556 - root - INFO: Presimplify to remove colinear, coincident points.
+2025-08-30 18:11:33,557 - root - INFO: None
+2025-08-30 18:11:33,557 - root - INFO: Pruning leaf reaches &lt; 10
+2025-08-30 18:11:33,557 - root - INFO: None
+2025-08-30 18:11:33,557 - root - INFO: Merging internal reaches &lt; 10
+2025-08-30 18:11:33,559 - root - INFO: None
+2025-08-30 18:11:33,560 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,560 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,562 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,562 - root - INFO: 
+2025-08-30 18:11:33,563 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,563 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,563 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,563 - root - INFO: 
+2025-08-30 18:11:33,564 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
+2025-08-30 18:11:33,564 - root - INFO:  -- snapping HUC triple junctions to reaches
+2025-08-30 18:11:33,564 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,565 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,565 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,565 - root - INFO: 
+2025-08-30 18:11:33,565 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,565 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,565 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,566 - root - INFO: 
+2025-08-30 18:11:33,566 - root - INFO: None
+2025-08-30 18:11:33,566 - root - INFO:  -- snapping reach endpoints to HUC boundaries
+2025-08-30 18:11:33,567 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,568 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,568 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,568 - root - INFO: 
+2025-08-30 18:11:33,569 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,569 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,570 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,570 - root - INFO: 
+2025-08-30 18:11:33,570 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,570 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,571 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,571 - root - INFO: 
+2025-08-30 18:11:33,571 - root - INFO: None
+2025-08-30 18:11:33,571 - root - INFO:  -- cutting reaches at HUC boundaries
+2025-08-30 18:11:33,571 - root - INFO: intersection found
+2025-08-30 18:11:33,572 - root - INFO:   - cutting reach at external boundary of HUCs:
+2025-08-30 18:11:33,572 - root - INFO:       split HUC boundary ls into 1 pieces
+2025-08-30 18:11:33,572 - root - INFO:       split reach ls into 1 pieces
+2025-08-30 18:11:33,573 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,573 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,573 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,574 - root - INFO: 
+2025-08-30 18:11:33,574 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,574 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,574 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,575 - root - INFO: 
+2025-08-30 18:11:33,575 - root - INFO: None
+2025-08-30 18:11:33,575 - root - INFO: 
+2025-08-30 18:11:33,575 - root - INFO: Simplification Diagnostics
+2025-08-30 18:11:33,576 - root - INFO: ------------------------------
+2025-08-30 18:11:33,576 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,576 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,577 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,577 - root - INFO: 
+2025-08-30 18:11:33,577 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,577 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,577 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,577 - root - INFO: 
+2025-08-30 18:11:33,577 - root - INFO: None
+2025-08-30 18:11:33,578 - root - INFO: 
+2025-08-30 18:11:33,578 - root - INFO: Resampling HUC and river
+2025-08-30 18:11:33,578 - root - INFO: ------------------------------
+2025-08-30 18:11:33,578 - root - INFO:  -- resampling HUCs based on uniform target 10
+2025-08-30 18:11:33,579 - root - INFO: None
+2025-08-30 18:11:33,579 - root - INFO:  -- resampling reaches based on uniform target 10
+2025-08-30 18:11:33,581 - root - INFO: None
+2025-08-30 18:11:33,581 - root - INFO: 
+2025-08-30 18:11:33,581 - root - INFO: Resampling Diagnostics
+2025-08-30 18:11:33,582 - root - INFO: ------------------------------
+2025-08-30 18:11:33,582 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,582 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,582 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,582 - root - INFO: 
+2025-08-30 18:11:33,583 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,583 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,583 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,583 - root - INFO: 
+2025-08-30 18:11:33,583 - root - INFO: None
+2025-08-30 18:11:33,583 - root - INFO: 
+2025-08-30 18:11:33,583 - root - INFO: Clean up sharp angles, both internally and at junctions.
+2025-08-30 18:11:33,584 - root - INFO: ------------------------------
+2025-08-30 18:11:33,586 - root - INFO: SSA1: None
+2025-08-30 18:11:33,587 - root - INFO: SSA2: None
+2025-08-30 18:11:33,588 - root - INFO: SSA3: None
+2025-08-30 18:11:33,590 - root - INFO: SSA4: None
+2025-08-30 18:11:33,590 - root - INFO: SSA1: None
+2025-08-30 18:11:33,590 - root - INFO: SSA2: None
+2025-08-30 18:11:33,591 - root - INFO: SSA3: None
+2025-08-30 18:11:33,592 - root - INFO: SSA4: None
+2025-08-30 18:11:33,592 - root - INFO: Cleaned up 0 sharp angles.
+2025-08-30 18:11:33,592 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,592 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,593 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,593 - root - INFO: 
+2025-08-30 18:11:33,593 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,593 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,593 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,593 - root - INFO: 
+2025-08-30 18:11:33,593 - root - INFO: None
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># simplify the geometry using a distance-function based resampling</span>
+<span class="n">watershed2</span><span class="p">,</span> <span class="n">rivers2</span> <span class="o">=</span> <span class="n">createCopy</span><span class="p">(</span><span class="n">watershed_orig</span><span class="p">,</span> <span class="n">rivers_orig</span><span class="p">)</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">simplify</span><span class="p">(</span><span class="n">watershed2</span><span class="p">,</span> <span class="n">rivers2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="n">keep_points</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,596 - root - INFO: 
+2025-08-30 18:11:33,596 - root - INFO: Simplifying
+2025-08-30 18:11:33,597 - root - INFO: ------------------------------
+2025-08-30 18:11:33,597 - root - INFO: None
+2025-08-30 18:11:33,597 - root - INFO: Presimplify to remove colinear, coincident points.
+2025-08-30 18:11:33,597 - root - INFO: None
+2025-08-30 18:11:33,599 - root - INFO: Pruning leaf reaches &lt; 10
+2025-08-30 18:11:33,600 - root - INFO: None
+2025-08-30 18:11:33,600 - root - INFO: Merging internal reaches &lt; 10
+2025-08-30 18:11:33,600 - root - INFO: None
+2025-08-30 18:11:33,601 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,601 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,601 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,602 - root - INFO: 
+2025-08-30 18:11:33,602 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,603 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,603 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,603 - root - INFO: 
+2025-08-30 18:11:33,603 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
+2025-08-30 18:11:33,603 - root - INFO:  -- snapping HUC triple junctions to reaches
+2025-08-30 18:11:33,604 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,605 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,605 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,605 - root - INFO: 
+2025-08-30 18:11:33,605 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,606 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,606 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,606 - root - INFO: 
+2025-08-30 18:11:33,606 - root - INFO: None
+2025-08-30 18:11:33,607 - root - INFO:  -- snapping reach endpoints to HUC boundaries
+2025-08-30 18:11:33,609 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,609 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,610 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,610 - root - INFO: 
+2025-08-30 18:11:33,611 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,611 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,611 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,611 - root - INFO: 
+2025-08-30 18:11:33,612 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,612 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,612 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,612 - root - INFO: 
+2025-08-30 18:11:33,612 - root - INFO: None
+2025-08-30 18:11:33,613 - root - INFO:  -- cutting reaches at HUC boundaries
+2025-08-30 18:11:33,613 - root - INFO: intersection found
+2025-08-30 18:11:33,613 - root - INFO:   - cutting reach at external boundary of HUCs:
+2025-08-30 18:11:33,613 - root - INFO:       split HUC boundary ls into 1 pieces
+2025-08-30 18:11:33,613 - root - INFO:       split reach ls into 1 pieces
+2025-08-30 18:11:33,615 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,615 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,615 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,615 - root - INFO: 
+2025-08-30 18:11:33,616 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,616 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,616 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,616 - root - INFO: 
+2025-08-30 18:11:33,616 - root - INFO: None
+2025-08-30 18:11:33,616 - root - INFO: 
+2025-08-30 18:11:33,617 - root - INFO: Simplification Diagnostics
+2025-08-30 18:11:33,617 - root - INFO: ------------------------------
+2025-08-30 18:11:33,617 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,618 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,618 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,618 - root - INFO: 
+2025-08-30 18:11:33,618 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,618 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,619 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,619 - root - INFO: 
+2025-08-30 18:11:33,619 - root - INFO: None
+2025-08-30 18:11:33,619 - root - INFO: 
+2025-08-30 18:11:33,619 - root - INFO: Resampling HUC and river
+2025-08-30 18:11:33,619 - root - INFO: ------------------------------
+2025-08-30 18:11:33,620 - root - INFO:  -- resampling HUCs based on distance function (50, 10, 150, 50)
+2025-08-30 18:11:33,675 - root - INFO: None
+2025-08-30 18:11:33,676 - root - INFO:  -- resampling reaches based on uniform target 10
+2025-08-30 18:11:33,678 - root - INFO: None
+2025-08-30 18:11:33,678 - root - INFO: 
+2025-08-30 18:11:33,678 - root - INFO: Resampling Diagnostics
+2025-08-30 18:11:33,678 - root - INFO: ------------------------------
+2025-08-30 18:11:33,679 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,679 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,679 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,679 - root - INFO: 
+2025-08-30 18:11:33,679 - root - INFO:   HUC  : min seg length: 	    9.2023159404 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,679 - root - INFO:   HUC  : med seg length: 	   12.0793869794 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,680 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,680 - root - INFO: 
+2025-08-30 18:11:33,680 - root - INFO: None
+2025-08-30 18:11:33,680 - root - INFO: 
+2025-08-30 18:11:33,680 - root - INFO: Clean up sharp angles, both internally and at junctions.
+2025-08-30 18:11:33,680 - root - INFO: ------------------------------
+2025-08-30 18:11:33,682 - root - INFO: SSA1: None
+2025-08-30 18:11:33,683 - root - INFO: SSA2: None
+2025-08-30 18:11:33,684 - root - INFO: SSA3: None
+2025-08-30 18:11:33,685 - root - INFO: SSA4: None
+2025-08-30 18:11:33,686 - root - INFO: SSA1: None
+2025-08-30 18:11:33,686 - root - INFO: SSA2: None
+2025-08-30 18:11:33,686 - root - INFO: SSA3: None
+2025-08-30 18:11:33,687 - root - INFO: SSA4: None
+2025-08-30 18:11:33,687 - root - INFO: Cleaned up 0 sharp angles.
+2025-08-30 18:11:33,687 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2025-08-30 18:11:33,687 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2025-08-30 18:11:33,687 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2025-08-30 18:11:33,687 - root - INFO: 
+2025-08-30 18:11:33,688 - root - INFO:   HUC  : min seg length: 	    9.2023159404 	min geom length: 	 1647.2135955000
+2025-08-30 18:11:33,688 - root - INFO:   HUC  : med seg length: 	   12.0793869794 	med geom length: 	 1647.2135955000
+2025-08-30 18:11:33,688 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
+2025-08-30 18:11:33,688 - root - INFO: 
+2025-08-30 18:11:33,688 - root - INFO: None
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the results</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="n">ws</span><span class="p">,</span> <span class="n">rivs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+    <span class="n">ws</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivs</span><span class="p">:</span>
+        <span class="n">river</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">plot</span><span class="p">(</span><span class="n">watershed_orig</span><span class="p">,</span> <span class="n">rivers_orig</span><span class="p">,</span> <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;original&#39;</span><span class="p">)</span>
+
+<span class="n">plot</span><span class="p">(</span><span class="n">watershed1</span><span class="p">,</span> <span class="n">rivers1</span><span class="p">,</span> <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;uniform resampling&#39;</span><span class="p">)</span>
+
+<span class="n">plot</span><span class="p">(</span><span class="n">watershed2</span><span class="p">,</span> <span class="n">rivers2</span><span class="p">,</span> <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;dist-based resampling&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;dist-based resampling&#39;)
+</pre></div>
+</div>
+<img alt="../_images/22a883949c2958f0281388ea4a2657b7f6be984b1ae83b63eab467e3a437749c.png" src="../_images/22a883949c2958f0281388ea4a2657b7f6be984b1ae83b63eab467e3a437749c.png" />
+</div>
+</div>
+<section id="surface-meshing">
+<h2>Surface Meshing<a class="headerlink" href="#surface-meshing" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## Triangulation</span>
+<span class="n">refine_d0</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">refine_d1</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">refine_A0</span> <span class="o">=</span> <span class="mi">82</span>
+<span class="n">refine_A1</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">d0</span> <span class="o">=</span> <span class="n">refine_d0</span><span class="p">;</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">refine_d1</span>
+<span class="n">A0</span> <span class="o">=</span> <span class="n">refine_A0</span><span class="p">;</span> <span class="n">A1</span> <span class="o">=</span> <span class="n">refine_A1</span> 
+
+<span class="c1"># Refine triangles if they get too acute</span>
+<span class="n">min_angle</span> <span class="o">=</span> <span class="mi">32</span> <span class="c1"># degrees</span>
+
+<span class="c1"># width of reach by stream order (order:width) or integer</span>
+<span class="n">widths</span> <span class="o">=</span> <span class="mf">5.0</span>
+
+<span class="c1"># created two versions of the discrete watershed and rivers -- let&#39;s use the second one</span>
+<span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span> <span class="o">=</span> <span class="n">createCopy</span><span class="p">(</span><span class="n">watershed2</span><span class="p">,</span> <span class="n">rivers2</span><span class="p">)</span>
+
+<span class="c1">#info = watershed_workflow.tessalateRiverAligned(watershed, rivers, river_width=widths, diagnostics=True)</span>
+
+<span class="n">m2</span><span class="p">,</span> <span class="n">areas</span><span class="p">,</span> <span class="n">dists</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">tessalateRiverAligned</span><span class="p">(</span><span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">river_width</span><span class="o">=</span><span class="n">widths</span><span class="p">,</span>
+                                              <span class="n">refine_min_angle</span><span class="o">=</span><span class="n">min_angle</span><span class="p">,</span> <span class="n">refine_distance</span><span class="o">=</span><span class="p">[</span><span class="n">d0</span><span class="p">,</span><span class="n">A0</span><span class="p">,</span><span class="n">d1</span><span class="p">,</span><span class="n">A1</span><span class="p">],</span>
+                                              <span class="n">tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">diagnostics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,023 - root - INFO: 
+2025-08-30 18:11:34,023 - root - INFO: Stream-aligned Meshing
+2025-08-30 18:11:34,024 - root - INFO: ------------------------------
+2025-08-30 18:11:34,024 - root - INFO: Creating stream-aligned mesh...
+2025-08-30 18:11:34,031 - root - INFO: Adjusting HUC to match reaches at outlet
+2025-08-30 18:11:34,037 - root - INFO: 
+2025-08-30 18:11:34,038 - root - INFO: Triangulation
+2025-08-30 18:11:34,038 - root - INFO: ------------------------------
+2025-08-30 18:11:34,041 - root - INFO: Triangulating...
+2025-08-30 18:11:34,041 - root - INFO:    277 points and 278 facets
+2025-08-30 18:11:34,041 - root - INFO:  checking graph consistency
+2025-08-30 18:11:34,042 - root - INFO:  tolerance is set to 0.1
+2025-08-30 18:11:34,042 - root - INFO:  building graph data structures
+2025-08-30 18:11:34,043 - root - INFO:  triangle.build...
+2025-08-30 18:11:34,128 - root - INFO:   ...built: 872 mesh points and 1467 triangles
+2025-08-30 18:11:34,129 - root - INFO: Plotting triangulation diagnostics
+2025-08-30 18:11:34,156 - root - INFO:   min area = 20.711983156357746
+2025-08-30 18:11:34,157 - root - INFO:   max area = 878.7740910490738
+</pre></div>
+</div>
+<img alt="../_images/b6eaa2a9b08201c4badebb9135d8834b99ba9dfb8a01d70e34309ee5148ad211.png" src="../_images/b6eaa2a9b08201c4badebb9135d8834b99ba9dfb8a01d70e34309ee5148ad211.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the mesh</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plot</span><span class="p">(</span><span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+<span class="n">df_mesh</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="p">[</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">conn</span><span class="p">])</span>
+<span class="n">df_mesh</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+        
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
+</pre></div>
+</div>
+<img alt="../_images/c74bb2beb1f2d9d1cc6b2d139f84bb357b42237cdb6f6f0cfbb0c968e6b9de4c.png" src="../_images/c74bb2beb1f2d9d1cc6b2d139f84bb357b42237cdb6f6f0cfbb0c968e6b9de4c.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mls</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">([</span><span class="n">reach</span><span class="o">.</span><span class="n">linestring</span> <span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span> <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="o">.</span><span class="n">preOrder</span><span class="p">()])</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">mls</span><span class="p">)</span> <span class="k">for</span>  <span class="n">coord</span> <span class="ow">in</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># providing elevations to each point of the mesh (real case this would come from DEMs)</span>
+<span class="n">points3</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">),</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">points3</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span>
+<span class="n">points3</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span><span class="mi">9</span><span class="o">+</span><span class="n">dist</span><span class="o">/</span><span class="mi">200</span><span class="o">+</span><span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="mi">400</span> <span class="c1"># grad</span>
+
+<span class="n">m2</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">points3</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># depress the river corridor to burn in streams</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">conditionRiverMesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="n">depress_by</span><span class="p">):</span>
+    <span class="n">m2_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">reach</span> <span class="ow">in</span> <span class="n">river</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reach</span><span class="p">[</span><span class="s1">&#39;elems&#39;</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)):</span>
+                <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="n">j</span><span class="p">]][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m2_copy</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">elem</span><span class="p">[</span><span class="n">j</span><span class="p">]][</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">depress_by</span>
+
+<span class="k">for</span> <span class="n">river</span> <span class="ow">in</span> <span class="n">rivers</span><span class="p">:</span>
+    <span class="n">conditionRiverMesh</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">river</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plotting surface mesh with elevations</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Get elevation data range</span>
+<span class="n">elev_min</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">elev_max</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">coords</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="c1"># Create normalized colormap</span>
+<span class="n">norm</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">elev_min</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">elev_max</span><span class="p">)</span>
+<span class="n">mp</span> <span class="o">=</span> <span class="n">m2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">facecolors</span><span class="o">=</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;terrain&#39;</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">norm</span><span class="p">)</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mp</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;surface mesh with elevations&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;datalim&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Surface Mesh with Elevations&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/f621015b31bc346645e7bbb1c7fd83791d7d3c713fa75a5a580969d9beb39bea.png" src="../_images/f621015b31bc346645e7bbb1c7fd83791d7d3c713fa75a5a580969d9beb39bea.png" />
+</div>
+</div>
+</section>
+<section id="mesh-extrusion">
+<h2>Mesh Extrusion<a class="headerlink" href="#mesh-extrusion" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">## **** Creating a 3D mesh</span>
+
+<span class="c1"># this is oversimplified case where we wille xtrude this mesh in 3D with 10 layers of prescribed thicknesses</span>
+
+<span class="n">total_thickness</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">dzs</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.25</span><span class="p">,</span><span class="mf">1.25</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">dzs</span><span class="p">))</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">dzs</span><span class="p">)</span><span class="o">==</span><span class="n">total_thickness</span><span class="p">)</span>
+
+<span class="c1"># layer extrusion</span>
+<span class="c1"># -- data structures needed for extrusion</span>
+<span class="n">layer_types</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">layer_data</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">layer_ncells</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">layer_mat_ids</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">dz</span> <span class="ow">in</span> <span class="n">dzs</span><span class="p">:</span>
+    <span class="n">depth</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dz</span>
+    <span class="n">layer_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;constant&#39;</span><span class="p">)</span>
+    <span class="n">layer_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dz</span><span class="p">)</span>
+    <span class="n">layer_ncells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">layer_mat_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+  
+    <span class="n">depth</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dz</span>
+
+<span class="c1"># print the summary</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarizeExtrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
+                                            <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,518 - root - INFO: Cell summary:
+2025-08-30 18:11:34,518 - root - INFO: ------------------------------------------------------------
+2025-08-30 18:11:34,519 - root - INFO: l_id	| c_id	|mat_id	| dz		| z_top
+2025-08-30 18:11:34,519 - root - INFO: ------------------------------------------------------------
+2025-08-30 18:11:34,519 - root - INFO:  00 	| 00 	| 1000 	|   0.100000 	|   0.000000
+2025-08-30 18:11:34,519 - root - INFO:  01 	| 01 	| 1000 	|   0.200000 	|   0.100000
+2025-08-30 18:11:34,520 - root - INFO:  02 	| 02 	| 1000 	|   0.200000 	|   0.300000
+2025-08-30 18:11:34,520 - root - INFO:  03 	| 03 	| 1000 	|   0.250000 	|   0.500000
+2025-08-30 18:11:34,520 - root - INFO:  04 	| 04 	| 1000 	|   0.250000 	|   0.750000
+2025-08-30 18:11:34,520 - root - INFO:  05 	| 05 	| 1000 	|   0.250000 	|   1.000000
+2025-08-30 18:11:34,520 - root - INFO:  06 	| 06 	| 1000 	|   0.250000 	|   1.250000
+2025-08-30 18:11:34,520 - root - INFO:  07 	| 07 	| 1000 	|   1.000000 	|   1.500000
+2025-08-30 18:11:34,521 - root - INFO:  08 	| 08 	| 1000 	|   1.250000 	|   2.500000
+2025-08-30 18:11:34,521 - root - INFO:  09 	| 09 	| 1000 	|   1.250000 	|   3.750000
+2025-08-30 18:11:34,521 - root - INFO:  10 	| 10 	| 1000 	|   2.000000 	|   5.000000
+2025-08-30 18:11:34,521 - root - INFO:  11 	| 11 	| 1000 	|   3.000000 	|   7.000000
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>10.0
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># extrude</span>
+<span class="n">m3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
+                                             <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mesh-io">
+<h2>Mesh IO<a class="headerlink" href="#mesh-io" title="Link to this heading">#</a></h2>
+<p>Save the mesh file as an Exodus II file.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># saving mesh as exodus file</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">)</span>
+
+<span class="n">m3</span><span class="o">.</span><span class="n">writeExodus</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,616 - root - INFO: adding side set: 1
+2025-08-30 18:11:34,622 - root - INFO: adding side set: 2
+2025-08-30 18:11:34,624 - root - INFO: adding side set: 3
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>You are using exodus.py v 1.20.10 (seacas-py3), a python wrapper of some of the exodus library.
+
+Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 National Technology &amp;
+Engineering Solutions of Sandia, LLC (NTESS).  Under the terms of
+Contract DE-NA0003525 with NTESS, the U.S. Government retains certain
+rights in this software.
+
+Opening exodus file: demo_mixed_element_mesh.exo
+Closing exodus file: demo_mixed_element_mesh.exo
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../examples.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Examples</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="comparison_of_soil_structure.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Soil Structural Data Comparison</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
