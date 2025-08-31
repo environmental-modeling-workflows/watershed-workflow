@@ -24,9 +24,9 @@ copyright = '2019-202X, UT Battelle, Ethan Coon'
 author = 'Ethan Coon'
 
 # The short X.Y version
-version = 'dev'
+version = 'v2.0'
 # The full version, including alpha/beta/rc tags
-release = 'dev'
+release = 'v2.0.6ff0ab1'
 
 
 # -- General configuration ---------------------------------------------------
