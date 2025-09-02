@@ -21,35 +21,10 @@ WORKDIR ${HOME}/tmp
 RUN mkdir ${HOME}/tmp/environments
 COPY environments/create_envs.py environments/create_envs.py 
 
-# # linux-arm64 does not have a pycares package -- build it locally
-# # Detect architecture and build if needed
-# # note, these CANNOT be mamba, so use conda explicitly
-# RUN arch=$(uname -m) && \
-#     if [ "$arch" = "aarch64" ]; then \
-#         echo "Building pycares from source for aarch64..."; \
-#         conda install -y conda-build; \
-#         conda skeleton pypi pycares; \
-#         awk '/^requirements:/ { \
-#                 print; \
-#                 print "  build:"; \
-#                 print "    - python"; \
-#                 print "    - pip"; \
-#                 print "    - setuptools"; \
-#                 print "    - cffi >=1.5.0"; \
-#                 print "    - wheel"; \
-#                 print "    - gcc"; \
-#                 next \
-#             } \
-#             { print }' pycares/meta.yaml > meta.new.yaml; \
-#         mv meta.new.yaml pycares/meta.yaml; \
-#         conda build pycares; \
-#     fi
-
-
 # compilers
 USER root
 RUN apt-get update --yes && \
-    apt-get install --yes --no-install-recommends gcc gfortran g++ make cmake && \
+    apt-get install --yes --no-install-recommends gcc gfortran g++ make cmake ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     apt-get autoremove -y
