@@ -285,7 +285,7 @@ class SplitHUCs:
         """Open a map!"""
         if column == names.ID and names.ID not in self.df:
             newname = names.ID+"_as_column"
-            if newname not in df:
+            if newname not in self.df:
                 self.df[newname] = self.df.index.astype('string')
             column = names.ID+"_as_column"
 
