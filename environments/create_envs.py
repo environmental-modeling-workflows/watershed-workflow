@@ -1,7 +1,7 @@
 """A script to help (re-)generate conda environments for Watershed Workflow."""
 
 # packages required for running WW
-PACKAGES_BASE=['python',
+PACKAGES_BASE=['python<3.13',
                'numpy',
                'matplotlib',
                'scipy',
