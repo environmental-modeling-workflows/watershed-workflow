@@ -26,6 +26,7 @@ import shapely
 import warnings
 import functools
 import pandas
+import geopandas as gpd
 from matplotlib import collections as mpc
 
 import watershed_workflow.crs
@@ -438,6 +439,14 @@ class Mesh2D:
         # toss geometry cache
         if hasattr(self, '_centroids'):
             del self._centroids
+            
+
+    def toGeoDataFrame(self) -> gpd.GeoDataFrame:
+        """Convert the mesh to a GeoDataFrame with each cell as a row."""
+        vert_sets = [[self.coords[i, 0:2] for i in face] for face in self.conn]
+        polygons = [shapely.geometry.Polygon(verts) for verts in vert_sets]
+        return gpd.GeoDataFrame(geometry=polygons)
+
 
     def plot(self,
              facecolors=None,
