@@ -443,7 +443,7 @@ class Mesh2D:
 
     def toGeoDataFrame(self) -> gpd.GeoDataFrame:
         """Convert the mesh to a GeoDataFrame with each cell as a row."""
-        vert_sets = [[self.coords[i, 0:2] for i in face] for face in self.conn]
+        vert_sets = [[self.coords[i, 0:2] for i in conn] for conn in self.conn]
         polygons = [shapely.geometry.Polygon(verts) for verts in vert_sets]
         return gpd.GeoDataFrame(geometry=polygons)
 
