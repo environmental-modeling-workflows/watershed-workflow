@@ -441,11 +441,19 @@ class Mesh2D:
             del self._centroids
             
 
-    def toGeoDataFrame(self) -> gpd.GeoDataFrame:
+    def to_dataframe(self, include_labeled_sets : bool = False) -> gpd.GeoDataFrame:
         """Convert the mesh to a GeoDataFrame with each cell as a row."""
         vert_sets = [[self.coords[i, 0:2] for i in conn] for conn in self.conn]
         polygons = [shapely.geometry.Polygon(verts) for verts in vert_sets]
-        return gpd.GeoDataFrame(geometry=polygons)
+
+        gdf = gpd.GeoDataFrame(self.cell_data, geometry=polygons, crs=self.crs)
+
+        if include_labeled_sets:
+            for ls in self.labeled_sets:
+                if ls.entity == 'CELL':
+                    df[f'{ls.name} : {ls.setid}'] = gdf.index.isin(ls.ent_ids)
+
+        return df
 
 
     def plot(self,
