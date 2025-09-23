@@ -31,7 +31,7 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 ## Installation
 
-[Visit our Installation documentation.](https://environmental-modeling-workflows.github.io/watershed-workflow/build/html/install.html)
+[Visit our Installation documentation.](https://environmental-modeling-workflows.github.io/watershed-workflow/stable/install.html)
 
 ## For more...
 
