@@ -13,7 +13,7 @@ In that case, simply ensure that ${AMANZI_TPLS_DIR}/SEACAS/lib is in
 your PYTHONPATH.
 
 """
-
+from __future__ import annotations
 from typing import Optional, List, Tuple, Dict, Any, Callable
 
 import os
@@ -50,15 +50,15 @@ except Exception:
 #
 def cache(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
     """A caching decorator for instance methods.
-    
+
     This decorator caches the result of a method call in an instance attribute.
     Note: Only works with __dict__ classes, not slotted classes.
-    
+
     Parameters
     ----------
     func : Callable[[Any], Any]
         The function to cache.
-        
+
     Returns
     -------
     Callable[[Any], Any]
@@ -84,12 +84,12 @@ class SideSet:
 
     def validate(self, cell_faces: List[List[int]]) -> None:
         """Validate the side set against cell faces.
-        
+
         Parameters
         ----------
         cell_faces : List[List[int]]
             List of cell face connections.
-            
+
         Raises
         ------
         AssertionError
@@ -112,14 +112,14 @@ class LabeledSet:
 
     def validate(self, size: int, is_tuple: bool = False) -> None:
         """Validate the labeled set.
-        
+
         Parameters
         ----------
         size : int
             Expected size for validation.
         is_tuple : bool, optional
             Whether entities are tuples (edges). Default is False.
-            
+
         Raises
         ------
         AssertionError
@@ -145,14 +145,14 @@ class _ExtrusionHelper:
 
     def col_to_id(self, column: int, z_cell: int) -> int:
         """Maps 2D cell ID and index in the vertical to a 3D cell ID.
-        
+
         Parameters
         ----------
         column : int
             2D cell ID.
         z_cell : int
             Index in the vertical direction.
-            
+
         Returns
         -------
         int
@@ -162,14 +162,14 @@ class _ExtrusionHelper:
 
     def vertex_to_id(self, vertex: int, z_vertex: int) -> int:
         """Maps 2D vertex ID and index in the vertical to a 3D vertex ID.
-        
+
         Parameters
         ----------
         vertex : int
             2D vertex ID.
         z_vertex : int
             Index in the vertical direction.
-            
+
         Returns
         -------
         int
@@ -179,14 +179,14 @@ class _ExtrusionHelper:
 
     def edge_to_id(self, edge: int, z_cell: int) -> int:
         """Maps 2D edge hash and index in the vertical to a 3D face ID of a vertical face.
-        
+
         Parameters
         ----------
         edge : int
             2D edge hash.
         z_cell : int
             Index in the vertical direction.
-            
+
         Returns
         -------
         int
@@ -209,6 +209,9 @@ class Mesh2D:
         List of labeled sets to add to the mesh.
     crs : CRS
         Keep this as a property for future reference.
+    cell_data : Optional[pandas.DataFrame]
+        A DataFrame of length len(conn) including assorted cell-based
+        data.
     eps : float, optional=0.01
         A small measure of length between coords.
     check_handedness : bool, optional=True
@@ -226,10 +229,10 @@ class Mesh2D:
     _conn = attr.ib()
     labeled_sets: List[LabeledSet] = attr.ib(factory=list)
     crs: Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    _cell_data: Optional[pandas.DataFrame] = attr.ib(default=None)
     eps: float = attr.ib(default=0.001)
     _check_handedness: bool = attr.ib(default=True)
     _validate: bool = attr.ib(default=False)
-    cell_data: Optional[pandas.DataFrame] = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         if self._check_handedness:
@@ -246,7 +249,7 @@ class Mesh2D:
     @property
     def dim(self) -> int:
         """Spatial dimension of the mesh.
-        
+
         Returns
         -------
         int
@@ -257,7 +260,7 @@ class Mesh2D:
     @property
     def num_cells(self) -> int:
         """Number of cells in the mesh.
-        
+
         Returns
         -------
         int
@@ -268,7 +271,7 @@ class Mesh2D:
     @property
     def num_vertices(self) -> int:
         """Number of vertices in the mesh.
-        
+
         Returns
         -------
         int
@@ -279,7 +282,7 @@ class Mesh2D:
     @property
     def num_edges(self) -> int:
         """Number of edges in the mesh.
-        
+
         Returns
         -------
         int
@@ -294,14 +297,14 @@ class Mesh2D:
     @staticmethod
     def edge_hash(i: int, j: int) -> Tuple[int, int]:
         """Hashes edges in a direction-independent way.
-        
+
         Parameters
         ----------
         i : int
             First vertex index.
         j : int
             Second vertex index.
-            
+
         Returns
         -------
         Tuple[int, int]
@@ -312,12 +315,14 @@ class Mesh2D:
     @property
     @cache
     def edge_counts(self):
+        """A dictionary where keys are edges and values are the number of cells that edge touches."""
         items = self.edges_to_cells.items()
         return dict((e, len(v)) for (e, v) in items)
 
     @property
     @cache
     def edges_to_cells(self):
+        """A dictionary from edge to lists of cells that edge touches."""
         e2c = collections.defaultdict(list)
         for i, c in enumerate(self.conn):
             for e in self.cell_edges(c):
@@ -326,12 +331,12 @@ class Mesh2D:
 
     def cell_edges(self, conn: List[int]):
         """Generator for edges of a cell.
-        
+
         Parameters
         ----------
         conn : List[int]
             Cell connectivity (vertex indices).
-            
+
         Yields
         ------
         Tuple[int, int]
@@ -339,6 +344,17 @@ class Mesh2D:
         """
         for i in range(len(conn)):
             yield self.edge_hash(conn[i], conn[(i+1) % len(conn)])
+
+    @property
+    @cache
+    def cell_to_cells(self):
+        """A list of length ncells, each entry is a list of neighboring cells."""
+        c2c = [list() for c in range(len(self.conn))]
+        for e, clist in self.edges_to_cells.items():
+            if len(clist) == 2:
+                c2c[clist[0]].append(clist[1])
+                c2c[clist[1]].append(clist[0])
+        return c2c
 
     @property
     @cache
@@ -368,6 +384,12 @@ class Mesh2D:
     @cache
     def boundary_vertices(self):
         return [e[0] for e in self.boundary_edges]
+
+    @property
+    def cell_data(self):
+        if self._cell_data is None:
+            self._cell_data = pandas.DataFrame(index=range(len(self.conn)))
+        return self._cell_data
 
     def checkHandedness(self) -> None:
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
@@ -465,6 +487,7 @@ class Mesh2D:
              norm=None,
              colorbar=True,
              **kwargs) -> mpc.PolyCollection:
+
         """Plot the flattened 2D mesh."""
         from matplotlib import pyplot as plt
 
@@ -508,23 +531,118 @@ class Mesh2D:
 
         return gons
 
-    def writeVTK(self, filename: str) -> None:
-        """Writes to VTK.
-        
+    def partition(self, nparts : int, reorder : bool = True) -> Mesh2D:
+        """Partitions the mesh, adding a cell_data column for partition number.
+
         Parameters
         ----------
-        filename : str
-            Output VTK filename.
+        nparts : int
+          Number of parts to partition cells into.
+        reorder : bool, optional
+          If True, also creates a new mesh in the partition ordering.
+          Default is True.
+
+        Returns
+        -------
+        Mesh2D
+          If reorder, the partitioned and reordered mesh; otherwise
+          returns self, which includes partition info in cell_data.
+
         """
-        import watershed_workflow.vtk_io
-        assert (all(len(c) == 3 for c in self.conn))
-        watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
+        import pymetis
+
+        # convert to adjacency arrays, based on cells
+        xadj = [0]
+        adjncy = []
+        for c2c in self.cell_to_cells:
+            xadj.append(xadj[-1] + len(c2c))
+            adjncy.extend(c2c)
+
+        adj = pymetis.CSRAdjacency(xadj, adjncy)
+        ncuts, parts = pymetis.part_graph(nparts, adjacency=adj)
+        self.cell_data['partition'] = parts
+
+        if reorder:
+            new_order = sorted(range(len(self.conn)), key=lambda c : parts[c])
+            return self.reorder(new_order)
+        else:
+            return self
+
+
+    def reorder(self, new_cell_order) -> Mesh2D:
+        """Creates a new mesh with reordered cells.
+
+        Parameters
+        ----------
+        new_order : list[int]
+          A list of length num_cells, indicating the new ordering of
+          existing cell indices.  The new mesh's cell 0 will be self's
+          new_cell_order[0] cell.
+
+        Returns
+        -------
+        Mesh2D
+          The reordered mesh.
+
+        Note this also tries to reorder the vertex coordinates in a
+        sane way, by reiterating over cell vertices and renumbering.
+        Edges are naturally reordered in the new mesh.
+
+        """
+        # check the input -- bad input would result in confusing errors
+        if len(new_cell_order) != self.num_cells:
+            raise ValueError('New order should be a list of length num_cells')
+        if len(set(new_cell_order)) != self.num_cells:
+            raise ValueError('New order should be a unique list the cells')
+        if max(new_cell_order) != self.num_cells - 1:
+            raise ValueError('New order include integers ranging from [0, num_cells)')
+        if min(new_cell_order) != 0:
+            raise ValueError('New order include integers ranging from [0, num_cells)')
+
+        # compute the new connections, reordering vertices
+        new_conns = []
+
+        forward_cell_map = dict()
+        forward_vertex_map = collections.defaultdict(lambda : len(forward_vertex_map))
+        for i_new, i_old in enumerate(new_cell_order):
+            forward_cell_map[i_old] = i_new
+            conn = self.conn[i_old]
+            new_conns.append([forward_vertex_map[v] for v in conn])
+
+        # reorder the coordinates according to reordered vertices
+        new_coords = -np.ones_like(self.coords)
+        for v,vn in forward_vertex_map.items():
+            new_coords[vn] = self.coords[v]
+
+        # create new labeled sets
+        new_labeled_sets = []
+        for ls in self.labeled_sets:
+            if ls.entity == 'CELL':
+                new_ids = list(sorted(forward_cell_map[c] for c in ls.ent_ids))
+            elif ls.entity == 'FACE':
+                new_ids = list(sorted(
+                    self.edge_hash(forward_vertex_map[e[0]], forward_vertex_map[e[1]])
+                    for e in ls.ent_ids))
+            elif ls.entity == 'VERTEX':
+                new_ids = list(sorted(forward_vertex_map[v] for v in ls.ent_ids))
+            new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, new_ids, ls.to_extrude))
+
+        # permute any cell_data
+        if self.cell_data is not None:
+            new_cell_data = self.cell_data.iloc[new_cell_order].reset_index(drop=True)
+        else:
+            new_cell_data = None
+
+        return self.__class__(new_coords, new_conns, new_labeled_sets, self.crs,
+                              new_cell_data, self.eps, True, True)
+
 
     def transform(self,
                   mat: Optional[np.ndarray] = None,
                   shift: Optional[np.ndarray] = None) -> None:
+
         """Transform a 2D mesh.
-        
+
         Parameters
         ----------
         mat : np.ndarray, optional
@@ -549,6 +667,18 @@ class Mesh2D:
 
         # toss geometry cache
         self.clearGeometryCache()
+
+    def writeVTK(self, filename: str) -> None:
+        """Writes to VTK.
+
+        Parameters
+        ----------
+        filename : str
+            Output VTK filename.
+        """
+        import watershed_workflow.vtk_io
+        assert (all(len(c) == 3 for c in self.conn))
+        watershed_workflow.vtk_io.write(filename, self.coords, { 'triangle': np.array(self.conn) })
 
     @classmethod
     def read_VTK(cls, filename):
@@ -1028,6 +1158,8 @@ class Mesh3D:
         Array of length num_cells that specifies material IDs
     crs : CRS
         Keep the coordinate system for reference.
+    cell_data : dict | pandas.DataFrame
+        Extra cell-based data, stored as a dataframe.
     eps : float, optional=0.01
         A small measure of length between coords.
 
@@ -1041,8 +1173,9 @@ class Mesh3D:
 
     labeled_sets: List[LabeledSet] = attr.ib(factory=list)
     side_sets: List[SideSet] = attr.ib(factory=list)
-    material_ids: List[np.ndarray] = attr.ib(factory=list)
+    material_ids: np.ndarray = attr.ib(default=None)
     crs: Optional[watershed_workflow.crs.CRS] = attr.ib(default=None)
+    _cell_data: Optional[pandas.DataFrame] = attr.ib(default=None)
     eps: float = attr.ib(default=0.001)
     _validate: bool = attr.ib(default=False)
 
@@ -1059,8 +1192,8 @@ class Mesh3D:
         return self._cell_to_face_conn
 
     @property
-    def material_ids_list(self):
-        return sorted(list(set(self.material_ids)))
+    def unique_material_ids(self):
+        return list(np.unique(self.material_ids))
 
     @property
     def dim(self):
@@ -1078,6 +1211,60 @@ class Mesh3D:
     def num_faces(self):
         return len(self.face_to_vertex_conn)
 
+
+    @property
+    @cache
+    def barycentric_centroids(self):
+
+        def _bary_centroid(m3, c):
+            cverts = set(v for f in m3.cell_to_face_conn[c] for v in m3.face_to_vertex_conn[f])
+            ccoords = np.array([m3.coords[v] for v in cverts])
+
+            bary_c = ccoords.mean(axis=0)
+            return bary_c
+
+        return np.array([_bary_centroid(self, c) for c in range(self.num_cells)])
+
+    @property
+    @cache
+    def mstk_centroids(self):
+        def _mstk_centroid(m3, c):
+            cverts = set(v for f in m3.cell_to_face_conn[c] for v in m3.face_to_vertex_conn[f])
+            ccoords = np.array([m3.coords[v] for v in cverts])
+
+            bary_c = ccoords.mean(axis=0)
+
+            volume = 0
+            ccentroid = np.array([0.,0.,0.])
+    
+            for f in m3.cell_to_face_conn[c]:
+                f2v = m3.face_to_vertex_conn[f]
+                fcoords = np.array([m3.coords[v] for v in f2v])
+                bary_f = fcoords.mean(axis=0)
+
+                # for each edge of the face, form the tet corresponding to the two edge points, the bary center of f, and the bary center of c.  Weight the centroid sum by the volume of that tet.
+                for i in range(len(f2v)):
+                    tet_centroid = (bary_c + bary_f + fcoords[i] + fcoords[(i+1)%len(f2v)]) / 4
+                    v1 = fcoords[i] - bary_c
+                    v2 = fcoords[(i+1)%len(f2v)] - bary_c
+                    v3 = bary_f - bary_c
+                    tet_vol = np.dot(v3, np.cross(v1,v2))
+
+                    volume += tet_vol
+                    ccentroid += tet_centroid * tet_vol
+
+            ccentroid = ccentroid / volume
+            return ccentroid
+        
+        return np.array([_mstk_centroid(self, c) for c in range(self.num_cells)])
+        
+    
+    @property
+    def cell_data(self):
+        if self._cell_data is None:
+            self._cell_data = pandas.DataFrame(index=range(len(self.conn)))
+        return self._cell_data
+
     def validate(self) -> None:
         """Checks the validity of the mesh, or throws an AssertionError."""
         # validate coords
@@ -1093,7 +1280,7 @@ class Mesh3D:
         assert (max(c for conn in self.cell_to_face_conn for c in conn)
                 < len(self.face_to_vertex_conn))
 
-        # validate labeled_sets and side sets
+        # validate uniqueness of labeled_set and side set IDs
         ls_ss_ids = [ls.setid for ls in self.labeled_sets] + \
             [ss.setid for ss in self.side_sets]
         assert (len(set(ls_ss_ids)) == len(ls_ss_ids))
@@ -1104,15 +1291,15 @@ class Mesh3D:
             elif ls.entity == 'VERTEX':
                 size = self.num_vertices
             else:
-                assert (False)  # no face or edge sets
+                raise ValueError("Mesh3D.validate: only 'CELL' or 'VERTEX' sets are supported -- face sets are supported as side sets")
             ls.validate(size, False)
 
         for ss in self.side_sets:
             ss.validate(self.cell_to_face_conn)
 
         # validate material ids
-        assert (self.material_ids is not None)
-        assert (len(self.material_ids) == len(self.cell_to_face_conn))
+        assert self.material_ids is not None
+        assert len(self.material_ids) == len(self.cell_to_face_conn)
 
     def getNextAvailableLabeledSetID(self) -> int:
         """Returns next available LS id."""
@@ -1127,9 +1314,9 @@ class Mesh3D:
 
         Note, this just writes the topology/geometry information, for
         WEDGE type meshes (extruded triangles).  No labeled sets are
-        written.  Prefer to use write_exodus() for a fully featured
+        written.  Prefer to use writeExodus() for a fully featured
         mesh.
-        
+
         Parameters
         ----------
         filename : str
@@ -1146,15 +1333,23 @@ class Mesh3D:
             wedges.append(self.face_to_vertex_conn[fup] + self.face_to_vertex_conn[fdn])
         watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
 
-    def writeExodus(self, filename: str, face_block_mode: str = "one block") -> None:
+    def writeExodus(self, filename: str,
+                    element_block_mode: str = "one block") -> None:
         """Write the 3D mesh to ExodusII using arbitrary polyhedra spec.
-        
+
         Parameters
         ----------
         filename : str
             Output Exodus filename.
-        face_block_mode : str, optional
-            Face block mode. Default is "one block".
+        element_block_mode : str, optional
+
+            - "one block" (default): preserves sequential columnar
+              ordering of elements by writing all elements to a single
+              element block, and treating material IDs as element
+              sets.
+            - "material id" (old method): one element block per
+              material ID -- reorders cells by material ID.
+
         """
         if exodus is None:
             raise ImportError(
@@ -1167,89 +1362,41 @@ class Mesh3D:
         # put elems in with blocks, which renumbers the elems, so we
         # have to track sidesets.  Therefore we keep a map of old elem
         # to new elem ordering
-        #
-        # also, though not required by the spec, paraview and visit
-        # seem to crash if num_face_blocks != num_elem_blocks.  So
-        # make face blocks here too, which requires renumbering the faces.
 
         # -- first pass, form all element blocks and make the map from old-to-new
-        new_to_old_elems = []
-        elem_blks = []
-        for i_m, m_id in enumerate(self.material_ids_list):
-            # split out elems of this material, save new_to_old map
-            elems_tuple = [(i, c) for (i, c) in enumerate(self.cell_to_face_conn)
-                           if self.material_ids[i] == m_id]
-            new_to_old_elems.extend([i for (i, c) in elems_tuple])
-            elems = [c for (i, c) in elems_tuple]
-            elem_blks.append(elems)
+        if element_block_mode == "one block":
+            mat_ids_as_sets = True
+            old_to_new_elems = list(enumerate(range(len(self.cell_to_face_conn))))
+            elem_blks = [self.cell_to_face_conn,]
+            elem_blk_ids = [9,]
 
-        old_to_new_elems = sorted([(old, i) for (i, old) in enumerate(new_to_old_elems)],
-                                  key=lambda a: a[0])
+        elif element_block_mode.lower() == "material id":
+            mat_ids_as_sets = False
+            new_to_old_elems = []
+            elem_blks = []
+            elem_blk_ids = self.unique_material_ids
+            for i_m, m_id in enumerate(self.unique_material_ids):
+                # split out elems of this material, save new_to_old map
+                elems_tuple = [(i, c) for (i, c) in enumerate(self.cell_to_face_conn)
+                               if self.material_ids[i] == m_id]
+                new_to_old_elems.extend([i for (i, c) in elems_tuple])
+                elems = [c for (i, c) in elems_tuple]
+                elem_blks.append(elems)
+
+            old_to_new_elems = sorted([(old, i) for (i, old) in enumerate(new_to_old_elems)],
+                                      key=lambda a: a[0])
+
+        else:
+            raise ValueError(f'Invalid element_block_mode "{element_block_mode}", valid are "one block" and "material id"')
 
         # -- deal with faces, form all face blocks and make the map from old-to-new
-        face_blks = []
-        if face_block_mode == "one block":
-            # no reordering of faces needed
-            face_blks.append(self.face_to_vertex_conn)
+        face_blks = [self.face_to_vertex_conn,]
 
-        elif face_block_mode == "n blocks, not duplicated":
-            used_faces = np.zeros((len(self.face_to_vertex_conn), ), 'bool')
-            new_to_old_faces = []
-            for i_m, m_id in enumerate(self.material_ids_list):
-                # split out faces of this material, save new_to_old map
-                def used(f):
-                    result = used_faces[f]
-                    used_faces[f] = True
-                    return result
-
-                elem_blk = elem_blks[i_m]
-                faces_tuple = [(f, self.face_to_vertex_conn[f]) for c in elem_blk
-                               for (j, f) in enumerate(c) if not used(f)]
-                new_to_old_faces.extend([j for (j, f) in faces_tuple])
-                faces = [f for (j, f) in faces_tuple]
-                face_blks.append(faces)
-
-            # get the renumbering in the elems
-            old_to_new_faces = sorted([(old, j) for (j, old) in enumerate(new_to_old_faces)],
-                                      key=lambda a: a[0])
-            elem_blks = [[[old_to_new_faces[f][1] for f in c] for c in elem_blk]
-                         for elem_blk in elem_blks]
-
-        elif face_block_mode == "n blocks, duplicated":
-            elem_blks_new = []
-            offset = 0
-            for i_m, m_id in enumerate(self.material_ids_list):
-                used_faces = np.zeros((len(self.face_to_vertex_conn), ), 'bool')
-
-                def used(f):
-                    result = used_faces[f]
-                    used_faces[f] = True
-                    return result
-
-                elem_blk = elem_blks[i_m]
-
-                tuple_old_f = [(f, self.face_to_vertex_conn[f]) for c in elem_blk for f in c
-                               if not used(f)]
-                tuple_new_old_f = [(new, old, f) for (new, (old, f)) in enumerate(tuple_old_f)]
-
-                old_to_new_blk = np.zeros((len(self.face_to_vertex_conn), ), 'i') - 1
-                for new, old, f in tuple_new_old_f:
-                    old_to_new_blk[old] = new + offset
-
-                elem_blk_new = [[old_to_new_blk[f] for f in c] for c in elem_blk]
-                #offset = offset + len(ftuple_new)
-
-                elem_blks_new.append(elem_blk_new)
-                face_blks.append([f for i, j, f in tuple_new_old_f])
-            elem_blks = elem_blks_new
-        elif face_block_mode == "one block, repeated":
-            # no reordering of faces needed, just repeat
-            for eblock in elem_blks:
-                face_blks.append(self.face_to_vertex_conn)
-        else:
-            raise RuntimeError(
-                "Invalid face_block_mode: '%s', valid='one block', 'n blocks, duplicated', 'n blocks, not duplicated'"
-                % face_block_mode)
+        # add material IDs as labeled element sets
+        if mat_ids_as_sets:
+            for mat_id in self.unique_material_ids:
+                mat_id_cells = np.where(self.material_ids == mat_id)[0]
+                self.labeled_sets.append(LabeledSet(f"material ID {mat_id}", mat_id, 'CELL', mat_id_cells))
 
         # open the mesh file
         num_elems = sum(len(elem_blk) for elem_blk in elem_blks)
@@ -1280,15 +1427,27 @@ class Mesh3D:
             e.put_node_count_per_face(i_blk + 1, np.array([len(f) for f in face_blk]))
             e.put_face_node_conn(i_blk + 1, np.array(face_raveled) + 1)
 
+        # set up variables
+        if hasattr(self, 'cell_data') and 'partition' in self.cell_data:
+            e.set_element_variable_number(1)
+            e.put_element_variable_name('partition', 1)
+            e.put_time(1, 0.0)
+
         # put the elem blocks
-        assert len(elem_blks) == len(self.material_ids_list)
-        for i_blk, (m_id, elem_blk) in enumerate(zip(self.material_ids_list, elem_blks)):
+        for i_blk, (elem_blk_id, elem_blk) in enumerate(zip(elem_blk_ids, elem_blks)):
             elems_raveled = [f for c in elem_blk for f in c]
 
-            e.put_polyhedra_elem_blk(m_id, len(elem_blk), len(elems_raveled), 0)
-            e.put_elem_blk_name(m_id, 'MATERIAL_ID_%d' % m_id)
-            e.put_face_count_per_polyhedra(m_id, np.array([len(c) for c in elem_blk]))
-            e.put_elem_face_conn(m_id, np.array(elems_raveled) + 1)
+            # put the block
+            e.put_polyhedra_elem_blk(elem_blk_id, len(elem_blk), len(elems_raveled), 0)
+            e.put_elem_blk_name(elem_blk_id, f'ELEM_BLK_{elem_blk_id}')
+            e.put_face_count_per_polyhedra(elem_blk_id, np.array([len(c) for c in elem_blk]))
+            e.put_elem_face_conn(elem_blk_id, np.array(elems_raveled) + 1)
+
+            # add cell_data as variables
+            if hasattr(self, 'cell_data') and 'partition' in self.cell_data:
+                logging.info(f'writing partition data as variable')
+                values = list(self.cell_data['partition'].astype(float))
+                e.put_element_variable_values(elem_blk_id, 'partition', 1, values)
 
         # add sidesets
         for ss in self.side_sets:
@@ -1306,15 +1465,15 @@ class Mesh3D:
         # add labeled sets
         for ls in self.labeled_sets:
             if ls.entity == 'CELL':
-                if hasattr(e, 'put_elem_set_params'):
+                if hasattr(e, 'put_set_indices'):
                     logging.info(f'adding elem set: {ls.setid}')
                     new_elem_list = sorted([old_to_new_elems[elem][1] for elem in ls.ent_ids])
-                    e.put_elem_set_params(ls.setid, len(new_elem_list), None)
-                    e.put_elem_set_name(ls.setid, ls.name)
-                    e.put_elem_set(ls.setid, np.array(new_elem_list) + 1)
+                    e.put_set_params('EX_ELEM_SET', ls.setid, len(new_elem_list), None)
+                    e.put_set_name('EX_ELEM_SET', ls.setid, ls.name)
+                    e.put_set_indices('EX_ELEM_SET', ls.setid, np.array(new_elem_list) + 1)
                 else:
                     logging.warning(
-                        f'not writing elem_set: {ls.setid} because this exodus installation does not write element sets'
+                        f'not writing elem_set: {ls.setid} because exodus installation at {exodus.__file__} does not write element sets'
                     )
             else:
                 warnings.warn(f'Cannot write labeled set of type {ls.entity}')
@@ -1359,7 +1518,7 @@ class Mesh3D:
         downward in the vertical.  The cell dz is uniform horizontally
         and vertically through the layer in all but the 'snapped'
         case, where it is uniform vertically but not horizontally.
-        
+
         Parameters
         ----------
         mesh2D : Mesh2D
@@ -1647,6 +1806,12 @@ class Mesh3D:
                     side_list = [cells[c].index(f) for (f, c) in zip(face_list, elem_list)]
                 side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
 
+        # make the cell data
+        cell_data = None
+        if hasattr(mesh2D, 'cell_data') and mesh2D.cell_data is not None:
+            if 'partition' in mesh2D.cell_data:
+                cell_data = pandas.DataFrame({'partition' : np.concatenate([mesh2D.cell_data.loc[c, 'partition'] * np.ones((ncells_tall,), 'i') for c in range(mesh2D.num_cells)])})
+
         # reshape coords
         coords = coords.reshape(nvertices_total, 3)
 
@@ -1657,7 +1822,9 @@ class Mesh3D:
                  material_ids=material_ids,
                  side_sets=side_sets,
                  labeled_sets=labeled_sets,
-                 crs=mesh2D.crs)
+                 crs=mesh2D.crs,
+                 cell_data=cell_data
+                 )
         return m3
 
 
@@ -1797,13 +1964,13 @@ def createSubmesh(m2 : Mesh2D,
 
 
 def mergeMeshes(meshes: List[Mesh2D]) -> Mesh2D:
-    """ Combines multiple 2D meshes into a single mesh. 
+    """ Combines multiple 2D meshes into a single mesh.
 
     It is assumed that the meshes to be combined have common vertices
     on the shared edge (no steiner points). labeledsets should be added
-    after merging the mesh. Option of merging pre-existing labeledsets 
+    after merging the mesh. Option of merging pre-existing labeledsets
     in the to-be-merged meshes will be added soon
-    
+
     Parameters
     ----------
     meshes : list(mesh.Mesh2D)
