@@ -1195,6 +1195,54 @@ class Mesh3D:
     def num_faces(self):
         return len(self.face_to_vertex_conn)
 
+
+    @property
+    @cache
+    def barycentric_centroids(self):
+
+        def _bary_centroid(m3, c):
+            cverts = set(v for f in m3.cell_to_face_conn[c] for v in m3.face_to_vertex_conn[f])
+            ccoords = np.array([m3.coords[v] for v in cverts])
+
+            bary_c = ccoords.mean(axis=0)
+            return bary_c
+
+        return np.array([_bary_centroid(self, c) for c in range(self.num_cells)])
+
+    @property
+    @cache
+    def mstk_centroids(self):
+        def _mstk_centroid(m3, c):
+            cverts = set(v for f in m3.cell_to_face_conn[c] for v in m3.face_to_vertex_conn[f])
+            ccoords = np.array([m3.coords[v] for v in cverts])
+
+            bary_c = ccoords.mean(axis=0)
+
+            volume = 0
+            ccentroid = np.array([0.,0.,0.])
+    
+            for f in m3.cell_to_face_conn[c]:
+                f2v = m3.face_to_vertex_conn[f]
+                fcoords = np.array([m3.coords[v] for v in f2v])
+                bary_f = fcoords.mean(axis=0)
+
+                # for each edge of the face, form the tet corresponding to the two edge points, the bary center of f, and the bary center of c.  Weight the centroid sum by the volume of that tet.
+                for i in range(len(f2v)):
+                    tet_centroid = (bary_c + bary_f + fcoords[i] + fcoords[(i+1)%len(f2v)]) / 4
+                    v1 = fcoords[i] - bary_c
+                    v2 = fcoords[(i+1)%len(f2v)] - bary_c
+                    v3 = bary_f - bary_c
+                    tet_vol = np.dot(v3, np.cross(v1,v2))
+
+                    volume += tet_vol
+                    ccentroid += tet_centroid * tet_vol
+
+            ccentroid = ccentroid / volume
+            return ccentroid
+        
+        return np.array([_mstk_centroid(self, c) for c in range(self.num_cells)])
+        
+    
     @property
     def cell_data(self):
         if self._cell_data is None:
