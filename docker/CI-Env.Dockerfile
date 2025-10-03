@@ -42,16 +42,9 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
-RUN apt-get install git patch
+COPY environments/exodus_py.patch /opt/conda/envs/${env_name}/src/exodus_py.patch
 RUN git clone -b v2025-08-28 --depth=1 https://github.com/gsjaardema/seacas/ seacas
- 
-#  && sed -i '/const int NC_SZIP_NN/ i\#ifdef NC_SZIP_NN\n#undef NC_SZIP_NN\n#endif' \
-#   /opt/conda/envs/${env_name}/src/seacas/packages/seacas/libraries/exodus/src/ex_utils.c
-
-# patch
-WORKDIR /opt/conda/envs/${env_name}/src/seacas
-COPY environments/exodus_py.patch /opt/conda/envs/${env_name}/src/seacas/exodus_py.patch
-RUN patch -p0 /opt/conda/envs/${env_name}/src/seacas/exodus_py.patch
+RUN git apply ../exodus_py.patch
 
 # configure
 WORKDIR /ww/tmp
