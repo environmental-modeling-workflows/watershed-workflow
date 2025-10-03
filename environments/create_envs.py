@@ -28,7 +28,7 @@ PACKAGES_BASE=['python<3.13',
                's3fs',
                'zarr',
                'metis',
-               'pymetis',
+               'pymetis>=2025',
                ]
 
 # extra packages needed in the WW env when building for a user
