@@ -54,7 +54,7 @@ WORKDIR /ww/tmp
 COPY docker/configure-seacas.sh /ww/tmp/configure-seacas.sh
 RUN chmod +x /ww/tmp/configure-seacas.sh
 WORKDIR /ww/tmp/seacas-build
-RUN ${CONDA_BIN} run -n watershed_workflow_tools ../configure-seacas.sh
+RUN ${CONDA_BIN} run -n watershed_workflow_CI ../configure-seacas.sh
 RUN make -j4 install
 
 # exodus installs its wrappers in an invalid place for python...
