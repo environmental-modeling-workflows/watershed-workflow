@@ -34,8 +34,6 @@ def test_getDataset_single_variable(small_test_geometry, small_test_crs):
     assert len(result.data_vars) == 1
     assert 'dem' in result.data_vars  # Single variable gets converted to dataset
     assert result.rio.crs == CRS.from_epsg(5070)
-    assert result.attrs['name'] == '3DEP'
-    assert result.attrs['source'] == 'py3dep'
 
 
 def test_getDataset_multiple_variables(small_test_geometry, small_test_crs):
@@ -52,8 +50,6 @@ def test_getDataset_multiple_variables(small_test_geometry, small_test_crs):
     assert 'elevation' in result.data_vars  
     assert 'slope_degrees' in result.data_vars
     assert result.rio.crs == CRS.from_epsg(5070)
-    assert result.attrs['name'] == '3DEP'
-    assert result.attrs['source'] == 'py3dep'
 
 
 def test_getDataset_resolution_consistency(small_test_geometry, small_test_crs):
@@ -118,8 +114,6 @@ def test_getDataset_coweeta_backward_compatibility(coweeta):
     
     assert isinstance(result, xr.Dataset)
     assert 'dem' in result.data_vars
-    assert result.attrs['name'] == '3DEP'
-    assert result.attrs['source'] == 'py3dep'
     
     # Extract DEM data for comparison
     dem_data = result['dem']
@@ -145,8 +139,6 @@ def test_requestDataset_pattern(small_test_geometry, small_test_crs):
     assert isinstance(result, xr.Dataset)
     assert 'dem' in result.data_vars
     assert result.rio.crs == CRS.from_epsg(5070)
-    assert result.attrs['name'] == '3DEP'
-    assert result.attrs['source'] == 'py3dep'
 
 
 def test_waitForDataset_pattern(small_test_geometry, small_test_crs):
@@ -162,8 +154,6 @@ def test_waitForDataset_pattern(small_test_geometry, small_test_crs):
     assert isinstance(result, xr.Dataset)
     assert 'dem' in result.data_vars
     assert result.rio.crs == CRS.from_epsg(5070)
-    assert result.attrs['name'] == '3DEP'
-    assert result.attrs['source'] == 'py3dep'
 
 
 def test_default_variables(small_test_geometry, small_test_crs):

@@ -44,7 +44,7 @@ class Manager3DEP(manager_dataset.ManagerDataset):
         default_variables = ['DEM']
         
         # Initialize base class with native properties
-        super().__init__('3DEP', 'py3dep', resolution_in_degrees, in_crs, out_crs,
+        super().__init__(f'3DEP {resolution}m', 'py3dep', resolution_in_degrees, in_crs, out_crs,
                          None, None, valid_variables, default_variables)
 
     def _requestDataset(self, request : manager_dataset.ManagerDataset.Request

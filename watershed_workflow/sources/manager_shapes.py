@@ -231,7 +231,8 @@ class ManagerShapes(abc.ABC):
             raise ValueError(f"GeoDataFrame from {self.name} does not have CRS defined")
         
         # Assert that derived class provided standard ID column
-        assert names.ID in df.columns, f"Derived class {self.__class__.__name__} must provide {names.ID} column in _addStandardNames()"
+        assert names.ID in df.columns, f"Derived class {self.__class__.__name__} must provide {names.ID} " \
+            f"column in _addStandardNames()"
         
         # Ensure standard name column exists
         if names.NAME not in df.columns:
@@ -269,7 +270,8 @@ class ManagerShapes(abc.ABC):
             if remove_third_dimension:
                 # often we end up with mixed data -- some 2D, some 3D, which makes
                 # it hard to deal with intersections.  Remove all z coordinates.
-                df[col] = df[col].apply(watershed_workflow.utils.removeThirdDimension)
+                is_none_mask = df[col].notna()
+                df.loc[is_none_mask, col] = df.loc[is_none_mask, col].apply(watershed_workflow.utils.removeThirdDimension)
 
             # change the crs
             if out_crs is not None:
