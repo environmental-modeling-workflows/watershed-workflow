@@ -42,8 +42,8 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
-RUN apt-get install git
-RUN git clone -b v2025-08-28 --depth=1 https://github.com/gsjaardema/seacas/ seacas #\
+RUN apt-get install git patch
+RUN git clone -b v2025-08-28 --depth=1 https://github.com/gsjaardema/seacas/ seacas
  
 #  && sed -i '/const int NC_SZIP_NN/ i\#ifdef NC_SZIP_NN\n#undef NC_SZIP_NN\n#endif' \
 #   /opt/conda/envs/${env_name}/src/seacas/packages/seacas/libraries/exodus/src/ex_utils.c
