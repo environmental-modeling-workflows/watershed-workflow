@@ -27,6 +27,7 @@ PACKAGES_BASE=['python<3.13',
                'py3dep',
                's3fs',
                'zarr',
+               'metis',
                'pymetis',
                ]
 
