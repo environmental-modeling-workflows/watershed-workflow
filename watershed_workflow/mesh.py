@@ -1263,7 +1263,7 @@ class Mesh3D:
         assert (max(c for conn in self.cell_to_face_conn for c in conn)
                 < len(self.face_to_vertex_conn))
 
-        # validate labeled_sets and side sets
+        # validate uniqueness of labeled_set and side set IDs
         ls_ss_ids = [ls.setid for ls in self.labeled_sets] + \
             [ss.setid for ss in self.side_sets]
         assert (len(set(ls_ss_ids)) == len(ls_ss_ids))
@@ -1274,7 +1274,7 @@ class Mesh3D:
             elif ls.entity == 'VERTEX':
                 size = self.num_vertices
             else:
-                assert (False)  # no face or edge sets
+                raise ValueError("Mesh3D.validate: only 'CELL' or 'VERTEX' sets are supported -- face sets are supported as side sets")
             ls.validate(size, False)
 
         for ss in self.side_sets:
@@ -1458,7 +1458,6 @@ class Mesh3D:
                     logging.warning(
                         f'not writing elem_set: {ls.setid} because exodus installation at {exodus.__file__} does not write element sets'
                     )
-                    assert False
             else:
                 warnings.warn(f'Cannot write labeled set of type {ls.entity}')
 
