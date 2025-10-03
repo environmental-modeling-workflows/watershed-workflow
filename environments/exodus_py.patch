@@ -1,407 +1,534 @@
 diff --git a/packages/seacas/scripts/exodus3.in.py b/packages/seacas/scripts/exodus3.in.py
-index 3fc5c45..65144fe 100644
+index f49af28f7..7d6a676ef 100644
 --- a/packages/seacas/scripts/exodus3.in.py
 +++ b/packages/seacas/scripts/exodus3.in.py
-@@ -1,5 +1,5 @@
- """
--exodus.py v 1.20.9 (seacas-py3) is a python wrapper of some of the exodus library
-+exodus.py v 1.20.10 (seacas-py3) is a python wrapper of some of the exodus library
- (Python 3 Version)
+@@ -2343,7 +2343,7 @@ class exodus:
+             numVals = self.num_nodes()
+         elif objType in ['EX_ELEM_BLOCK', 'EX_FACE_BLOCK', 'EX_EDGE_BLOCK']:
+             (_elemType, numVals, _nodesPerElem, _numAttr) = self.__ex_get_block(objType, entityId)
+-        elif objType in ['EX_NODE_SET', 'EX_EDGE_SET', 'EX_FACE_SET', 'EX_SIDE_SET']:
++        elif objType in ['EX_NODE_SET', 'EX_EDGE_SET', 'EX_FACE_SET', 'EX_SIDE_SET', 'EX_ELEM_SET']:
+             (numVals, _numDistFactInSet) = self.__ex_get_set_param(objType, entityId)
  
- Exodus is a common database for multiple application codes (mesh
-@@ -70,10 +70,10 @@ from enum import Enum
+         return numVals
+@@ -3411,6 +3411,462 @@ class exodus:
+         """
+         return self.__ex_put_prop('EX_ELEM_BLOCK', object_id, name, value)
  
- EXODUS_PY_COPYRIGHT_AND_LICENSE = __doc__
- 
--EXODUS_PY_VERSION = "1.20.9 (seacas-py3)"
-+EXODUS_PY_VERSION = "1.20.10 (seacas-py3)"
- 
- EXODUS_PY_COPYRIGHT = """
--You are using exodus.py v 1.20.9 (seacas-py3), a python wrapper of some of the exodus library.
-+You are using exodus.py v 1.20.10 (seacas-py3), a python wrapper of some of the exodus library.
- 
- Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 National Technology &
- Engineering Solutions of Sandia, LLC (NTESS).  Under the terms of
-@@ -83,10 +83,12 @@ rights in this software.
- 
- EXODUS_PY_CONTACTS = """
- Authors:
-+  Mario LoPrinzi   (mvlopri@sandia.gov)
-+  Greg Sjaardema   (gdsjaar@sandia.gov)
-+
-   Timothy Shelton  (trshelt@sandia.gov)
-   Michael Veilleux (mgveill@sandia.gov)
-   David Littlewood (djlittl@sandia.gov)
--  Greg Sjaardema   (gdsjaar@sandia.gov)
- """
- 
- # show the banner on first use
-@@ -381,7 +383,7 @@ class ex_entity_type(Enum):
-     EX_ELEM_BLOCK
-          element block property code
-     EX_ELEM_SET
--         face set property code
-+         element set property code
-     EX_SIDE_SET
-          side set property code
-     EX_ELEM_MAP
-@@ -587,6 +589,7 @@ class ex_attribute(ctypes.Structure):
- #
- 
- class exodus:
 +    
-     """
-     The exodus model abstraction
-     """
-@@ -680,7 +683,10 @@ class exodus:
-             if init_params is not None:
-                 self.init_params = init_params
-                 if title is not None:
--                    self.init_params.title = title
-+                    if type(title) is str:
-+                        self.init_params.title = title.encode('ascii')
-+                    else:
-+                        self.init_params.title = title
-                 self.put_info_ext(self.init_params)
-             else:
-                 if numNodeSets is None:
-@@ -2316,9 +2322,7 @@ class exodus:
- 
-     def get_assembly(self, object_id):
-         """
--        reads the assembly parameters and assembly data for one assembly
--        \param   exoid                   exodus file id
--        \param  *assembly                ex_assembly structure
-+        reads the assembly parameters and assembly data for one assembly 
-         """
-         assem = ex_assembly(id=object_id)
-         self.__ex_get_assembly(assem)
-@@ -2329,9 +2333,8 @@ class exodus:
- 
-     def get_assemblies(self, object_ids):
-         """
--        reads the assembly parameters and assembly data for n assemblies
--        \param   exoid                   exodus file id
--        \param  *assembly                ex_assembly structure
-+        reads the assembly parameters and assembly data for all assemblies 
-+        with ids in object_ids
-         """
-         assemblies = [ex_assembly(id=object_id) for object_id in object_ids]
-         assems = (ex_assembly * len(assemblies))(*assemblies)
-@@ -2346,16 +2349,12 @@ class exodus:
-     def put_assembly(self, assembly):
-         """
-         writes the assembly parameters and assembly data for one assembly
--        \param   exoid                   exodus file id
--        \param  *assembly                ex_assembly structure
-         """
-         self.__ex_put_assembly(assembly)
- 
-     def put_assemblies(self, assemblies):
-         """
--        writes the assembly parameters and assembly data for n assemblies
--        \param   exoid                   exodus file id
--        \param  *assembly                ex_assembly structure
-+        writes the assembly parameters and assembly data for multiple assemblies
-         """
-         self.__ex_put_assemblies(assemblies)
- 
-@@ -2378,8 +2377,6 @@ class exodus:
-     def get_blob(self, object_id):
-         """
-         reads the blob parameters and blob data for one blob
--        \param   exoid                   exodus file id
--        \param  *blob                    ex_blob structure
-         """
-         assem = ex_blob(id=object_id)
-         self.__ex_get_blob(assem)
-@@ -3295,7 +3292,7 @@ class exodus:
-         """
-         node_set_ids = self.get_ids('EX_NODE_SET')
-         assert object_id in node_set_ids
--        node_set_nodes = self.__ex_get_node_set(object_id)
-+        node_set_nodes = self.__ex_get_set('EX_NODE_SET', object_id)
-         node_set_nodes = list(node_set_nodes)
-         if self.use_numpy:
-             node_set_nodes = self.np.array(node_set_nodes)
-@@ -3316,7 +3313,7 @@ class exodus:
-             <int>        node_set_id  node set *ID* (not *INDEX*)
-             <list<int>>  ns_nodes
-         """
--        self.__ex_put_node_set(object_id, nodeSetNodes)
-+        self.__ex_put_set('EX_NODE_SET', object_id, nodeSetNodes)
- 
++    # --------------------------------------------------------------------
++    #
++    # generic set functions
++    #
++    # --------------------------------------------------------------------
++
++    def num_sets(self, object_type):
++        """
++        get the number of sets of a given type in the model
++
++        >>> num_node_sets = exo.num_sets('EX_NODE_SET')
++
++        Returns
++        -------
++            <int>  num_sets
++        """
++        ex_map = {'EX_NODE_SET' : 'num_node_sets',
++                  'EX_EDGE_SET' : 'num_edge_sets',
++                  'EX_FACE_SET' : 'num_face_sets',
++                  'EX_SIDE_SET' : 'num_side_sets',
++                  'EX_ELEM_SET' : 'num_elem_sets'}
++
++        return getattr(self.init_params, ex_map[object_type])
++
++    # --------------------------------------------------------------------
++
++    def get_set_params(self, object_type, object_id):
++        """
++        get number of entities and distribution factors (e.g. nodal
++        'weights') in the specified set
++
++        >>> num_ns_nodes, num_ns_dist_facts =
++        ...     exo.get_set_params('EX_NODE_SET', node_set_id)
++
++        Parameters
++        ----------
++        set_id : int
++            set *ID* (not *INDEX*)
++
++        Returns
++        -------
++        num_set_entities : int
++        num_set_dist_facts : int
++        """
++        (numSetEntities, numSetDistFacts) = self.__ex_get_set_param(object_type, object_id)
++        return numSetEntities, numSetDistFacts
++
++    # --------------------------------------------------------------------
++
++    def put_set_params(self, object_type, object_id, numSetEntity, numSetDistFacts=None):
++        """
++        initialize a new set of the specified type
++
++        >>> exo.put_set_params('EX_NODE_SET', node_set_id,
++        ...                 num_ns_nodes, num_ns_dist_facts)
++
++        Parameters
++        ----------
++        set_id : int
++            set *ID* (not *INDEX*)
++        num_set_entity : int
++            number of nodes/edges/faces/elements to be added to set
++        num_dist_facts : int, optional
++            number of distribution factors (e.g. nodal 'weights') --
++            must be equal to zero or num_set_entity
++        """
++        if numSetDistFacts is None:
++            numSetDistFacts = numSetEntity
++        assert numSetDistFacts in (0, numSetEntity)
++        self.__ex_put_set_param(object_type, object_id, numSetEntity, numSetDistFacts)
++
++    # --------------------------------------------------------------------
++
++    def get_set_name(self, object_type, object_id):
++        """
++        get the name of a set
++
++        >>> set_name = exo.get_set_name('EX_NODE_SET', node_set_id)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id       node set *ID* (not *INDEX*)
++
++        Returns
++        -------
++            <string>  set_name
++        """
++        return self.__ex_get_name(object_type, object_id)
++
++    # --------------------------------------------------------------------
++
++    def put_set_name(self, object_type, object_id, name):
++        """
++        store the name of a set
++
++        >>> exo.put_set_name('EX_NODE_SET', node_set_id, node_set_name)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     node_set_id    node set *ID* (not *INDEX*)
++            <string>  node_set_name
++        """
++        self.__ex_put_name(object_type, object_id, name)
++
++    # --------------------------------------------------------------------
++
++    def get_set_names(self, object_type):
++        """
++        get a list of all set names of a given type ordered by set *INDEX*;
++        (see `exodus.get_ids` for explanation of the
++        difference between set *ID* and set *INDEX*)
++
++        >>> node_set_names = exo.get_set_names('EX_NODE_SET')
++
++        Returns
++        -------
++            <string>        object_type
++            <list<string>>  set_names
++        """
++        return self.__ex_get_names(object_type)
++
++    # --------------------------------------------------------------------
++
++    def put_set_names(self, object_type, names):
++        """
++        store a list of all set names ordered by set *INDEX*;
++        (see `exodus.get_ids` for explanation of the
++        difference between set *ID* and set *INDEX*)
++
++        >>> exo.put_set_names('EX_NODE_SET', node_set_names)
++
++        Parameters
++        ----------
++            <string>        object_type
++            <list<string>>  set_names
++        """
++        self.__ex_put_names(object_type, names)
++
++    # --------------------------------------------------------------------
++
++    def num_entities_in_set(self, object_type, object_id):
++        """
++        get the number of entities in a set
++
++        >>> num_ns_nodes = exo.num_entities_in_set('EX_NODE_SET', node_set_id)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id  set *ID* (not *INDEX*)
++
++        Returns
++        -------
++            <int>  num_entities_in_set
++        """
++        indices = self.get_set_indices(object_type, object_id)
++        return len(entities)
++
++    # --------------------------------------------------------------------
++
++    def get_set_indices(self, object_type, object_id):
++        """
++        get the list of *INDICES* in a set
++        (see `exodus.get_id_map` for explanation of *INDEX*
++        versus *ID*)
++
++        >>> ns_nodes = exo.get_set_indices('EX_NODE_SET', node_set_id)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id  set *ID* (not *INDEX*)
++
++        Returns
++        -------
++
++            if array_type == 'ctype':
++              <list<int>>  indices
++
++            if array_type == 'numpy':
++              <np_array<int>>  indices
++        """
++        set_ids = self.get_ids(object_type)
++        assert object_id in set_ids
++        indices = self.__ex_get_set_indices(object_type, object_id)
++        indices = list(indices)
++        if self.use_numpy:
++            indices = self.np.array(indices)
++        return indices
++
++    # --------------------------------------------------------------------
++
++    def put_set_indices(self, object_type, object_id, indices):
++        """
++        store a set by its id and the list of *INDICES* in
++        the set (see `exodus.get_id_map` for explanation of
++        *INDEX* versus *ID*)
++
++        >>> exo.put_set_indices('EX_NODE_SET', node_set_id, ns_nodes)
++
++        Parameters
++        ----------
++            <string>     object_type
++            <int>        set_id      set *ID* (not *INDEX*)
++            <list<int>>  indices
++        """
++        self.__ex_put_set_indices(object_type, object_id, indices)
++
++    # --------------------------------------------------------------------
++
++    def get_set_dist_facts(self, object_type, object_id):
++        """
++        get the list of distribution factors for entities in a set
++
++        >>> ns_dist_facts = exo.get_set_dist_facts('EX_NODE_SET', node_set_id)
++
++        Parameters
++        ----------
++            <string>     object_type
++            <int>        set_id      set *ID* (not *INDEX*)
++
++        Returns
++        -------
++
++            if array_type == 'ctype':
++              <list<float>>  dist_facts  a list of distribution factors,
++                e.g. 'weights'
++
++            if array_type == 'numpy':
++              <np_array<double>>  dist_facts  a list of distribution
++                factors, e.g. 'weights'
++        """
++        set_dfs = self.__ex_get_set_dist_fact(object_type, object_id)
++        set_dfs = list(set_dfs)
++        if self.use_numpy:
++            set_dfs = self.np.array(set_dfs)
++        return set_dfs
++
++    # --------------------------------------------------------------------
++
++    def put_set_dist_fact(self, object_type, object_id, setDistFact):
++        """
++        store the list of distribution factors for entities in a set
++
++        >>> exo.put_set_dist_fact('EX_NODE_SET', node_set_id, ns_dist_facts)
++
++        Parameters
++        ----------
++            <string>       object_type
++            <int>          set_id      set *ID* (not *INDEX*)
++            <list<float>>  dist_facts  a list of distribution factors,
++              e.g. 'weights'
++        """
++        self.__ex_put_set_dist_fact(object_type, object_id, setDistFact)
++
++    # --------------------------------------------------------------------
++
++    def get_set_variable_number(self, object_type):
++        """
++        get the number of set variables in the model
++
++        >>> num_nsvars = exo.get_set_variable_number('EX_NODE_SET')
++
++        Parameters
++        ----------
++            <string> object_type
++
++        Returns
++        -------
++            <int>    num_nsvars
++        """
++        return self.__ex_get_variable_param(object_type).value
++
++    # --------------------------------------------------------------------
++
++    def set_set_variable_number(self, object_type, number):
++        """
++        update the number of set variables in the model
++
++        >>> status = exo.set_set_variable_number(num_vars)
++
++        Parameters
++        ----------
++            <string> object_type
++            <int>    num_vars
++
++        Returns
++        -------
++        status : bool
++            True = successful execution
++        """
++        self.__ex_put_variable_param(object_type, number)
++        return True
++
++    # --------------------------------------------------------------------
++
++    def get_set_variable_names(self, object_type):
++        """
++        get the list of set variable names in the model
++
++        >>> nsvar_names = exo.get_node_set_variable_names('EX_NODE_SET')
++
++        Parameters
++        ----------
++            <string> object_type
++
++        Returns
++        -------
++              <list<string>>  var_names
++        """
++        if self.__ex_get_variable_param(object_type).value == 0:
++            return []
++        return self.__ex_get_variable_names(object_type)
++
++
++    # --------------------------------------------------------------------
++
++    def get_partial_set_variable_values(self, object_type, object_id, name, step, start_index, num_indices):
++        """
++        get list of set variable values for a specified set,
++        set variable name, and time step; the list has
++        one variable value per index in the set
++
++        >>> var_vals =
++        ...   exo.get_set_variable_values('EX_NODE_SET', node_set_id,
++        ...    nsvar_name, time_step)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id        set *ID* (not *INDEX*)
++            <string>  var_name      name of set variable
++            <int>     time_step     1-based index of time step
++            <int>     start_index   1-based index of index to start returning data
++            <int>     num_indices   number of indices to return data for.
++
++        Returns
++        -------
++
++            if array_type == 'ctype':
++              <list<ctypes.c_double>>  var_vals
++
++            if array_type == 'numpy':
++              <np_array<double>>  var_vals
++        """
++        names = self.get_variable_names(object_type)
++        var_id = names.index(name) + 1
++        values = self.__ex_get_partial_var(step, object_type, var_id, object_id, start_index, num_indices)
++
++        values = list(values)
++        if self.use_numpy:
++            values = self.np.array(values)
++        return values
++
++    # --------------------------------------------------------------------
++
++    def get_all_set_params(self, object_type):
++        """
++        get total number of indices and distribution factors (e.g. 
++        'weights') combined among all sets of a given type
++
++        >>> tot_num_indices,
++        ... tot_num_dist_facts = exo.get_all_set_params('EX_NODE_SET')
++
++        Parameters
++        ----------
++            <string>  object_type
++
++        Returns
++        -------
++            <int>  tot_num_indices
++            <int>  tot_num_dist_facts
++        """
++        setIds = self.__ex_get_ids(object_type)
++        totNumSetIndices, totNumSetDistFacts = 0, 0
++        for setId in setIds:
++            (numSetIndices, numSetDistFacts) = self.__ex_get_set_param(object_type, nodeSetId)
++            totNumSetIndices += numSetIndices
++            totNumSetDistFacts += numSetDistFacts
++        return totNumSetIndices, totNumSetDistFacts
++
++    # --------------------------------------------------------------------
++
++    def get_set_property_names(self, object_type):
++        """
++        get the list of node set property names for all node sets in
++        the model
++
++        >>> nsprop_names = exo.get_set_property_names('EX_NODE_SET')
++
++        Parameters
++        ----------
++            <string>  object_type
++
++        Returns
++        -------
++            <list<string>>  prop_names
++        """
++        if object_type == 'EX_ELEM_SET':
++            inq_type = 'EX_INQ_ELS_PROP'
++        else:
++            ent_type = object_type.split('_')[1]
++            inq_type = f'EX_INQ_{ent_type[0]}S_PROP'
++
++        names = self.__ex_get_prop_names(object_type, inq_type)
++        return list(names)
++
++    # --------------------------------------------------------------------
++
++    def get_set_property_value(self, object_type, object_id, name):
++        """
++        get set property value (an integer) for a specified set and
++        set property name
++
++        >>> nsprop_val = exo.get_set_property_value('EX_NODE_SET', node_set_id, nsprop_name)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id       set *ID* (not *INDEX*)
++            <string>  prop_name
++
++        Returns
++        -------
++            <int>  prop_val
++        """
++        propVal = self.__ex_get_prop(object_type, object_id, name)
++        return int(propVal)
++
++    # --------------------------------------------------------------------
++
++    def put_set_property_value(self, object_type, object_id, name, value):
++        """
++        store a set property name and its integer value for a set
++
++        >>> status = exo.put_set_property_value('EX_NODE_SET', node_set_id,
++        ...                   nsprop_name, nsprop_val)
++
++        Parameters
++        ----------
++            <string>  object_type
++            <int>     set_id      set *ID* (not *INDEX*)
++            <string>  prop_name
++            <int>     prop_val
++
++        Returns
++        -------
++        status : bool
++            True = successful execution
++        """
++        return self.__ex_put_prop(object_type, object_id, name, value)
++
++
      # --------------------------------------------------------------------
  
-@@ -4320,6 +4317,200 @@ class exodus:
-         """
-         return self.__ex_put_prop('EX_SIDE_SET', object_id, name, value)
- 
-+
-+    #
-+    # elemsets
-+    #
-+    # --------------------------------------------------------------------
-+
-+    def num_elem_sets(self):
-+        """
-+        get the number of elem sets in the model
-+
-+        >>> num_elem_sets = exo.num_elem_sets()
-+
-+        Returns
-+        -------
-+            <int>  num_elem_sets
-+        """
-+        return self.numElemSets.value
-+
-+    # --------------------------------------------------------------------
-+
-+    def get_elem_set_ids(self):
-+        """
-+        get mapping of exodus elem set index to user- or application-
-+        defined elem set id; elem_set_ids is ordered
-+        by the *INDEX* ordering, a 1-based system going from
-+        1 to exo.num_elem_sets(), used by exodus for storage
-+        and input/output of array data stored on the elem sets; a
-+        user or application can optionally use a separate elem set
-+        *ID* numbering system, so the elem_set_ids array points to the
-+        elem set *ID* for each elem set *INDEX*
-+
-+        >>> elem_set_ids = exo.get_ids('EX_ELEM_SET')
-+
-+        Returns
-+        -------
-+
-+            if array_type == 'ctype':
-+              <list<int>>  elem_set_ids
-+
-+            if array_type == 'numpy':
-+              <np_array<int>>  elem_set_ids
-+        """
-+        return self.get_ids('EX_ELEM_SET')
-+
-+    # --------------------------------------------------------------------
-+
-+    def get_elem_set_name(self, object_id):
-+        """
-+        get the name of a elem set
-+
-+        >>> elem_set_name = exo.get_elem_set_name(elem_set_id)
-+
-+        Parameters
-+        ----------
-+            <int>  elem_set_id  elem set *ID* (not *INDEX*)
-+
-+        Returns
-+        -------
-+            <string>  elem_set_name
-+        """
-+        return self.__ex_get_name('EX_ELEM_SET', object_id)
-+
-+    # --------------------------------------------------------------------
-+
-+    def put_elem_set_name(self, object_id, name):
-+        """
-+        store the name of a elem set
-+
-+        >>> exo.put_elem_set_name(elem_set_id, elem_set_name)
-+
-+        Parameters
-+        ----------
-+            <int>     elem_set_id    elem set *ID* (not *INDEX*)
-+            <string>  elem_set_name
-+        """
-+        self.__ex_put_name('EX_ELEM_SET', object_id, name)
-+
-+    # --------------------------------------------------------------------
-+
-+    def get_elem_set_names(self):
-+        """
-+        get a list of all elem set names ordered by elem set *INDEX*;
-+        (see `exodus.get_ids` for explanation of the
-+        difference between elem set *ID* and elem set *INDEX*)
-+
-+        >>> elem_set_names = exo.get_elem_set_names()
-+
-+        Returns
-+        -------
-+            <list<string>>  elem_set_names
-+        """
-+        elemSetNames = self.__ex_get_names('EX_ELEM_SET')
-+        return elemSetNames
-+
-+    # --------------------------------------------------------------------
-+
-+    def put_elem_set_names(self, names):
-+        """
-+        store a list of all elem set names ordered by elem set *INDEX*;
-+        (see `exodus.get_ids` for explanation of the
-+        difference between elem set *ID* and elem set *INDEX*)
-+
-+        >>> exo.put_elem_set_names(elem_set_names)
-+
-+        Parameters
-+        ----------
-+            <list<string>>  elem_set_names
-+        """
-+        self.__ex_put_names('EX_ELEM_SET', names)
-+
-+    # --------------------------------------------------------------------
-+
-+    def num_elems_in_elem_set(self, object_id):
-+        """
-+        get the number of elems in a elem set
-+
-+        >>> num_ns_elems = exo.num_elems_in_elem_set(elem_set_id)
-+
-+        Parameters
-+        ----------
-+            <int>  elem_set_id  elem set *ID* (not *INDEX*)
-+
-+        Returns
-+        -------
-+            <int>  num_ns_elems
-+        """
-+        elem_set_elems = self.get_elem_set_elems(object_id)
-+        return len(elem_set_elems)
-+
-+    # --------------------------------------------------------------------
-+
-+    def get_elem_set_elems(self, object_id):
-+        """
-+        get the list of elem *INDICES* in a elem set
-+        (see `exodus.get_id_map` for explanation of elem *INDEX*
-+        versus elem *ID*)
-+
-+        >>> ns_elems = exo.get_elem_set_elems(elem_set_id)
-+
-+        Parameters
-+        ----------
-+            <int>  elem_set_id  elem set *ID* (not *INDEX*)
-+
-+        Returns
-+        -------
-+
-+            if array_type == 'ctype':
-+              <list<int>>  ns_elems
-+
-+            if array_type == 'numpy':
-+              <np_array<int>>  ns_elems
-+        """
-+        elem_set_ids = self.get_ids('EX_ELEM_SET')
-+        assert object_id in elem_set_ids
-+        elem_set_elems = self.__ex_get_set('EX_ELEM_SET', object_id)
-+        elem_set_elems = list(elem_set_elems)
-+        if self.use_numpy:
-+            elem_set_elems = self.np.array(elem_set_elems)
-+        return elem_set_elems
-+
-+    # --------------------------------------------------------------------
-+
-+    def put_elem_set(self, object_id, elemSetElems):
-+        """
-+        store a elem set by its id and the list of elem *INDICES* in
-+        the elem set (see `exodus.get_id_map` for explanation of elem
-+        *INDEX* versus elem *ID*)
-+
-+        >>> exo.put_elem_set(elem_set_id, ns_elems)
-+
-+        Parameters
-+        ----------
-+            <int>        elem_set_id  elem set *ID* (not *INDEX*)
-+            <list<int>>  ns_elems
-+        """
-+        self.__ex_put_set('EX_ELEM_SET', object_id, elemSetElems)
-+
-+    # --------------------------------------------------------------------
-+
-+    def get_elem_set_params(self, object_id):
-+        """ See `exodus.put_set_params` """
-+
-+        (numSetElems, numSetDistFacts) = self.__ex_get_set_param('EX_ELEM_SET', object_id)
-+        return numSetElems, numSetDistFacts
-+
-+    # --------------------------------------------------------------------
-+
-+    def put_elem_set_params(self, object_id, numSetElems, numSetDistFacts=None):
-+        """ See `exodus.put_set_params` """
-+        if numSetDistFacts is None:
-+            numSetDistFacts = numSetElems
-+        assert numSetDistFacts in (0, numSetElems)
-+        self.__ex_put_set_param('EX_ELEM_SET', object_id, numSetElems, numSetDistFacts)
-+        
      #
-     # global variables
-     #
-@@ -5266,33 +5457,6 @@ class exodus:
+@@ -5553,6 +6009,32 @@ class exodus:
  
          EXODUS_LIB.ex_put_attribute(self.fileId, att)
  
--    # --------------------------------------------------------------------
--
--    def __ex_get_node_set(self, nodeSetId):
--        node_set_id = ctypes.c_longlong(nodeSetId)
--        num_node_set_nodes = self.__ex_get_set_param('EX_NODE_SET', nodeSetId)[0]
--        if num_node_set_nodes == 0:
--            return []
--        if EXODUS_LIB.ex_int64_status(self.fileId) & EX_BULK_INT64_API:
--            set_nodes = (ctypes.c_longlong * num_node_set_nodes)()
--        else:
--            set_nodes = (ctypes.c_int * num_node_set_nodes)()
--        EXODUS_LIB.ex_get_node_set(self.fileId, node_set_id, ctypes.byref(set_nodes))
--        return set_nodes
--
--    # --------------------------------------------------------------------
--
--    def __ex_put_node_set(self, nodeSetId, nodeSetNodes):
--        node_set_id = ctypes.c_longlong(nodeSetId)
--        if EXODUS_LIB.ex_int64_status(self.fileId) & EX_BULK_INT64_API:
--            node_set_nodes = (ctypes.c_longlong * len(nodeSetNodes))()
--            for i, node_set_node in enumerate(nodeSetNodes):
--                node_set_nodes[i] = ctypes.c_longlong(node_set_node)
--        else:
--            node_set_nodes = (ctypes.c_int * len(nodeSetNodes))()
--            for i, node_set_node in enumerate(nodeSetNodes):
--                node_set_nodes[i] = ctypes.c_int(node_set_node)
--        EXODUS_LIB.ex_put_node_set(self.fileId, node_set_id, node_set_nodes)
- 
-     # --------------------------------------------------------------------
- 
-@@ -5891,6 +6055,36 @@ class exodus:
- 
-     # --------------------------------------------------------------------
- 
-+    def __ex_get_set(self, objType, setId):
++    def __ex_get_set_indices(self, objType, setId):
 +        set_id = ctypes.c_longlong(setId)
-+        num_set_entities = self.__ex_get_set_param(objType, setId)[0]
-+        if num_set_entities == 0:
++        obj_type = ctypes.c_int(get_entity_type(objType))
++        num_indices = self.__ex_get_set_param(objType, setId)[0]
++        if num_indices == 0:
 +            return []
 +        if EXODUS_LIB.ex_int64_status(self.fileId) & EX_BULK_INT64_API:
-+            set_entities = (ctypes.c_longlong * num_set_entities)()
++            set_inds = (ctypes.c_longlong * num_indices)()
 +        else:
-+            set_entities = (ctypes.c_int * num_set_entities)()
-+        EXODUS_LIB.ex_get_set(self.fileId, obj_type, set_id, ctypes.byref(set_entities))
-+        return set_entities
++            set_inds = (ctypes.c_int * num_indices)()
++        EXODUS_LIB.ex_get_set(self.fileId, obj_type, set_id, ctypes.byref(set_inds))
++        return set_inds
 +
-+    # --------------------------------------------------------------------
++    def __ex_put_set_indices(self, objType, setId, setIndices):
++        set_id = ctypes.c_longlong(setId)
++        obj_type = ctypes.c_int(get_entity_type(objType))
++        if EXODUS_LIB.ex_int64_status(self.fileId) & EX_BULK_INT64_API:
++            set_indices = (ctypes.c_longlong * len(setIndices))()
++            for i, index in enumerate(setIndices):
++                set_indices[i] = ctypes.c_longlong(index)
++        else:
++            set_indices = (ctypes.c_int * len(setIndices))()
++            for i, index in enumerate(setIndices):
++                set_indices[i] = ctypes.c_int(index)
++        EXODUS_LIB.ex_put_set(self.fileId, obj_type, set_id, set_indices, None)
 +
-+    def __ex_put_set(self, objType, setId, setEntities):
+     def __ex_get_node_set(self, nodeSetId):
+         node_set_id = ctypes.c_longlong(nodeSetId)
+         num_node_set_nodes = self.__ex_get_set_param('EX_NODE_SET', nodeSetId)[0]
+@@ -5577,6 +6059,24 @@ class exodus:
+                 node_set_nodes[i] = ctypes.c_int(node_set_node)
+         EXODUS_LIB.ex_put_set(self.fileId, ctypes.c_int(get_entity_type('EX_NODE_SET')), node_set_id, node_set_nodes, None)
+ 
++    def __ex_get_set_dist_fact(self, objType, setId):
 +        obj_type = ctypes.c_int(get_entity_type(objType))
 +        set_id = ctypes.c_longlong(setId)
-+        if EXODUS_LIB.ex_int64_status(self.fileId) & EX_BULK_INT64_API:
-+            set_entities = (ctypes.c_longlong * len(setEntities))()
-+            for i, set_entity in enumerate(setEntities):
-+                set_entities[i] = ctypes.c_longlong(set_entity)
-+        else:
-+            set_entities = (ctypes.c_int * len(setEntities))()
-+            for i, set_entity in enumerate(setEntities):
-+                set_entities[i] = ctypes.c_int(set_entity)
-+        EXODUS_LIB.ex_put_set(self.fileId, obj_type, set_id, set_entities)
++        num_set_indices = self.__ex_get_set_param(objType, setId)[0]
++        set_dfs = (ctypes.c_double * num_set_indices)()
++        EXODUS_LIB.ex_get_set_dist_fact(
++            self.fileId, obj_type, set_id, ctypes.byref(set_dfs))
++        return set_dfs
 +
-+    
-+    # --------------------------------------------------------------------
++    def __ex_put_set_dist_fact(self, objType, setId, setDistFact):
++        obj_type = ctypes.c_int(get_entity_type(objType))
++        set_id = ctypes.c_longlong(setId)
++        set_dist_fact = (ctypes.c_double * len(setDistFact))()
++        for i, dist_fact in enumerate(setDistFact):
++            set_dist_fact[i] = ctypes.c_double(dist_fact)
++        EXODUS_LIB.ex_put_set_dist_fact(
++            self.fileId, obj_type, set_id, set_dist_fact)
 +
-     def __ex_get_side_set(self, sideSetId):
-         side_set_id = ctypes.c_longlong(sideSetId)
-         (num_side_in_set, _num_dist_fact_in_set) = self.__ex_get_set_param('EX_SIDE_SET', sideSetId)
+     def __ex_get_node_set_dist_fact(self, nodeSetId):
+         node_set_id = ctypes.c_longlong(nodeSetId)
+         num_node_set_nodes = self.__ex_get_set_param('EX_NODE_SET', nodeSetId)[0]

@@ -42,17 +42,19 @@ ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
 # get the source
 WORKDIR /opt/conda/envs/${env_name}/src
-RUN apt-get install git
-RUN git clone -b v2021-10-11 --depth=1 https://github.com/gsjaardema/seacas/ seacas \
-  && sed -i '/const int NC_SZIP_NN/ i\#ifdef NC_SZIP_NN\n#undef NC_SZIP_NN\n#endif' \
-    /opt/conda/envs/${env_name}/src/seacas/packages/seacas/libraries/exodus/src/ex_utils.c
+RUN git clone -b v2025-08-28 --depth=1 https://github.com/gsjaardema/seacas/ seacas
+
+# apply the patch
+COPY environments/exodus_py.patch /opt/conda/envs/${env_name}/src/exodus_py.patch
+WORKDIR /opt/conda/envs/${env_name}/src/seacas
+RUN git apply ../exodus_py.patch
 
 # configure
 WORKDIR /ww/tmp
 COPY docker/configure-seacas.sh /ww/tmp/configure-seacas.sh
 RUN chmod +x /ww/tmp/configure-seacas.sh
 WORKDIR /ww/tmp/seacas-build
-RUN ${CONDA_BIN} run -n watershed_workflow_tools ../configure-seacas.sh
+RUN ${CONDA_BIN} run -n watershed_workflow_CI ../configure-seacas.sh
 RUN make -j4 install
 
 # exodus installs its wrappers in an invalid place for python...
