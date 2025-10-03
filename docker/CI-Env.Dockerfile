@@ -13,35 +13,10 @@ WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
 RUN mkdir environments
 
-# linux-arm64 does not have a pycares package -- build it locally
-# Detect architecture and build if needed
-RUN arch=$(uname -m) && \
-    if [ "$arch" = "aarch64" ]; then \
-        echo "Building pycares from source for aarch64..."; \
-        conda install -y conda-build; \
-        conda skeleton pypi pycares; \
-        awk '/^requirements:/ { \
-                print; \
-                print "  build:"; \
-                print "    - python"; \
-                print "    - pip"; \
-                print "    - setuptools"; \
-                print "    - cffi >=1.5.0"; \
-                print "    - wheel"; \
-                print "    - gcc"; \
-                next \
-            } \
-            { print }' pycares/meta.yaml > meta.new.yaml; \
-        mv meta.new.yaml pycares/meta.yaml; \
-        echo "!!!ran awk!!!"; \
-        cat pycares/meta.yaml; \
-        conda build pycares; \
-    fi
-
 # Create the environment
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
-    --env-type=CI --with-tools-env=watershed_workflow_tools --use-local ${env_name}
+    --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
 
 ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
 ENV PATH="$COMPILERS/bin:$PATH"
