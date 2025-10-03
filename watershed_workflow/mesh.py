@@ -514,7 +514,7 @@ class Mesh2D:
 
         return gons
 
-    def partition(self, nparts : int, reorder : bool = False) -> Mesh2D | None:
+    def partition(self, nparts : int, reorder : bool = True) -> Mesh2D:
         """Partitions the mesh, adding a cell_data column for partition number.
 
         Parameters
@@ -523,14 +523,13 @@ class Mesh2D:
           Number of parts to partition cells into.
         reorder : bool, optional
           If True, also creates a new mesh in the partition ordering.
-          Default is False.
+          Default is True.
 
         Returns
         -------
-        None
-          If not reorder.
         Mesh2D
-          If reorder, the partitioned and reordered mesh.
+          If reorder, the partitioned and reordered mesh; otherwise
+          returns self, which includes partition info in cell_data.
 
         """
         import pymetis
@@ -550,7 +549,7 @@ class Mesh2D:
             new_order = sorted(range(len(self.conn)), key=lambda c : parts[c])
             return self.reorder(new_order)
         else:
-            return
+            return self
 
 
     def reorder(self, new_cell_order) -> Mesh2D:
