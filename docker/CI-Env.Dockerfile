@@ -18,8 +18,8 @@ RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
     --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
 
-ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
-ENV PATH="$COMPILERS/bin:$PATH"
+# test the environment
+RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas"
 
 #
 # Stage 2 -- add in the pip
@@ -31,10 +31,16 @@ COPY requirements.txt /ww/tmp/requirements.txt
 
 RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
 
+# test the environment
+RUN ${CONDA_BIN} run --name ${env_name} python -c "import meshpy"
+
 #
 # Stage 3 -- add in Exodus
 #
 FROM ww_env_pip_ci AS ww_env_exodus_ci
+
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
+ENV PATH="$COMPILERS/bin:$PATH"
 
 ENV PATH=/opt/conda/envs/watershed_workflow_tools/bin:${PATH}
 ENV SEACAS_DIR="/opt/conda/envs/${env_name}"
@@ -62,3 +68,5 @@ RUN make -j4 install
 RUN SITE_PACKAGES=$(conda run -n ${env_name} python -c "import site; print(site.getsitepackages()[0])") && \
     cp /opt/conda/envs/${env_name}/lib/exodus3.py ${SITE_PACKAGES}
 
+# test the environment
+RUN ${CONDA_BIN} run --name ${env_name} python -c "import exodus3"
