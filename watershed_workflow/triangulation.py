@@ -336,6 +336,15 @@ def refineByPolygons(polygons, areas):
 
     return refine
 
+def refineByStreamTriangles(river_corrs):
+    """Returns a refinement function for triangles that have all three vertices on stream mesh."""
+    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+
+    def refine(vertices, area):
+        return all(riv_corr.intersects(shapely.geometry.Point(p)) for p in vertices)
+
+    return refine
+
 
 def refineByMaxEdgeLength(edge_length):
     """Returns a refinement function based on max edge length, for use with Triangle."""
