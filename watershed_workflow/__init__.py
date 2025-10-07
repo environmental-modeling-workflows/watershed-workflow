@@ -391,6 +391,7 @@ def triangulate(hucs : SplitHUCs,
                 rivers : Optional[List[River]] = None,
                 internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
                 hole_points : Optional[List[shapely.geometry.Point]] = None,
+                additional_vertices : Optional[List[Tuple[float, float]]] = None,
                 diagnostics : bool = False,
                 verbosity : int = 1,
                 tol : float = 1.0,
@@ -422,6 +423,8 @@ def triangulate(hucs : SplitHUCs,
         be present in the edges of the triangulation.
     hole_points : list(shapely.Point), optional
         List of points inside the polygons to be left as holes/voids (excluded from mesh)
+    additional_vertices : list(Tuple[float, float]), optional
+        List of points to be inlcuded in the triangulation.
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     tol : float, optional
@@ -502,6 +505,7 @@ def triangulate(hucs : SplitHUCs,
         hucs,
         internal_boundaries=internal_boundaries,
         hole_points=hole_points,
+        additional_vertices=additional_vertices,
         tol=tol,
         verbose=verbose,
         refinement_func=my_refine_func,
@@ -569,6 +573,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           rivers : List[River],
                           river_width : Any,
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
+                          hole_points : Optional[List[Tuple[float, float]]] = None,
+                          additional_vertices : Optional[List[Tuple[float, float]]] = None,
                           as_mesh : bool = True,
                           debug : bool = False,
                           **kwargs) -> \
@@ -594,10 +600,12 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     river_n_quads : int, optional
        Number of quads across the river.  Currently only 1 is
        supported (the default).
-    hole_points : list(shapely.Point), optional
-        List of points inside the polygons to be left as holes/voids (excluded from mesh)
     internal_boundaries : list[shapely.Polygon], optional
        List of internal boundaries to embed in the domain, e.g. waterbodies.
+    additional_hole_points : list(Tuple[float, float]), optional
+        List of points inside the polygons to be left as holes/voids (excluded from mesh)
+    additional_vertices : list(Tuple[float, float]), optional
+        List of points to be inlcuded in the triangulation.
     diagnostics : bool, optional
        If true, prints extra diagnostic info.
     ax : matplotlib Axes object, optional
@@ -630,8 +638,12 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         ax = None
 
-    river_coords, river_elems, river_corridors, hole_points, intersections = \
+    river_coords, river_elems, river_corridors, river_corridor_hole_points, intersections = \
         watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
+    if hole_points is not None:
+        hole_points = river_corridor_hole_points + hole_points
+    else:
+        hole_points = river_corridor_hole_points
     if debug:
         plt.show()
     if intersections is not None:
@@ -644,7 +656,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         internal_boundaries = river_corridors + internal_boundaries
         
     tri_res = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
-                                              hole_points, as_mesh=False, **kwargs)
+                                              hole_points, additional_vertices, as_mesh=False, **kwargs)
 
     assert not isinstance(tri_res, watershed_workflow.mesh.Mesh2D)
     assert not isinstance(tri_res[0], watershed_workflow.mesh.Mesh2D)
