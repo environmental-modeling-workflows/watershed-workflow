@@ -1,7 +1,7 @@
 """A script to help (re-)generate conda environments for Watershed Workflow."""
 
 # packages required for running WW
-PACKAGES_BASE=['python<3.13',
+PACKAGES_BASE=['python<3.13',           # limited for cert issues in docker containers
                'numpy',
                'matplotlib',
                'scipy',
@@ -23,12 +23,12 @@ PACKAGES_BASE=['python<3.13',
                'ipympl',
                'ipykernel',
                'pynhd',
-               'pygeohydro>0.18',
+               'pygeohydro>0.18',       # modern stack/API with pycares
                'py3dep',
                's3fs',
                'zarr',
                'metis',
-               'pymetis>=2025',
+               'pymetis>=2025'          # arm64 builds are correct
                ]
 
 # extra packages needed in the WW env when building for a user

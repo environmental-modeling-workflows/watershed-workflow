@@ -8,6 +8,15 @@ LABEL Description="Base env for CI of Watershed Workflow"
 ARG env_name=watershed_workflow_CI
 ENV CONDA_BIN=mamba
 
+# figure out and print out conda platform info
+ARG TARGETARCH
+ARG TARGETOS
+
+RUN echo "TARGETARCH=${TARGETARCH}" && \
+    echo "TARGETOS=${TARGETOS}" && \
+    uname -m && \
+    conda info | grep platform
+
 # copy over create_envs
 WORKDIR /ww/tmp
 COPY environments/create_envs.py /ww/tmp/create_envs.py 
