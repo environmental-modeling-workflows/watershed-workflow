@@ -885,3 +885,54 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
         assert False, "Cannot fix nonconvexity?"
 
     return e_coords
+
+
+def getTriangleSplitVertices(stream_triangles, river_corrs):
+    """Find additional points to split stream triangles.
+    
+    Parameters
+    ----------
+    stream_triangles : list of tuples
+        List of triangle vertices.
+    river_corrs : list of shapely.geometry.Polygon
+        List of river corridor polygons.
+    """
+    river_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+    additional_vertices = []
+
+    for tri_verts in stream_triangles:
+        assert len(tri_verts) == 3
+
+        # Get midpoints of each edge
+        midpoints = [
+            shapely.geometry.Point(
+                watershed_workflow.utils.computeMidpoint(tri_verts[i], tri_verts[(i+1) % 3]))
+            for i in range(3)
+        ]
+        
+        # Check which midpoints lie on river corridors
+        off_corridor = list(
+            filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
+
+        if len(off_corridor) == 1:
+            edge_i = off_corridor[0][0]
+            edge_midpoint = watershed_workflow.utils.computeMidpoint(tri_verts[edge_i],
+                                                              tri_verts[(edge_i+1) % 3])
+            additional_vertices.append(edge_midpoint)
+                
+        elif len(off_corridor) == 2:
+            edge_lengths = [
+                watershed_workflow.utils.computeDistance(tri_verts[off_corridor[i][0]], 
+                                                    tri_verts[(off_corridor[i][0]+1) % 3])
+                for i in range(2)
+            ]          
+            # Select the midpoint on the longer edge
+            longer_edge_index = edge_lengths.index(max(edge_lengths))
+            edge_i = off_corridor[longer_edge_index][0]
+            edge_midpoint = watershed_workflow.utils.computeMidpoint(tri_verts[edge_i],
+                                                                tri_verts[(edge_i+1) % 3])
+            additional_vertices.append(edge_midpoint)
+     
+    # Remove coinciding points
+    unique_vertices = list(set(additional_vertices))
+    return unique_vertices
