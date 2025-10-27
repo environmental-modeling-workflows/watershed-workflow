@@ -30,6 +30,10 @@ RUN --mount=type=cache,target=/opt/conda/pkgs \
 # test the environment
 RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas"
 
+# set compilers from watershed_workflow_tools environment
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
+ENV PATH="${COMPILERS}/bin:${PATH}"
+
 #
 # Stage 2 -- add in the pip
 #
@@ -37,12 +41,6 @@ FROM ww_env_base_ci AS ww_env_pip_ci
 
 WORKDIR /ww/tmp
 COPY requirements.txt /ww/tmp/requirements.txt
-
-# compilers are required to build meshpy in requirements.txt -- open
-# ticket to create linux-aarch64 for meshpy on conda-forge.
-ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
-ENV PATH="${COMPILERS}/bin:${PATH}"
-
 
 RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
 
