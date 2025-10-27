@@ -38,6 +38,12 @@ FROM ww_env_base_ci AS ww_env_pip_ci
 WORKDIR /ww/tmp
 COPY requirements.txt /ww/tmp/requirements.txt
 
+# compilers are required to build meshpy in requirements.txt -- open
+# ticket to create linux-aarch64 for meshpy on conda-forge.
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
+ENV PATH="${COMPILERS}/bin:${PATH}"
+
+
 RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
 
 # test the environment
@@ -48,10 +54,6 @@ RUN ${CONDA_BIN} run --name ${env_name} python -c "import meshpy"
 #
 FROM ww_env_pip_ci AS ww_env_exodus_ci
 
-ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
-ENV PATH="$COMPILERS/bin:$PATH"
-
-ENV PATH=/opt/conda/envs/watershed_workflow_tools/bin:${PATH}
 ENV SEACAS_DIR="/opt/conda/envs/${env_name}"
 ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
 
