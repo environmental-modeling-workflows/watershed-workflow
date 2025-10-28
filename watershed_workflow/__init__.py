@@ -503,7 +503,7 @@ def triangulate(hucs : SplitHUCs,
         refine_funcs.append(
             watershed_workflow.triangulation.refineByMaxEdgeLength(refine_max_edge_length))
     if handle_stream_triangles != None:
-        river_corrs = internal_boundaries ### FIX ME -- should point to river_corridors only
+        river_corrs = internal_boundaries[:len(rivers)]
         logging.info("Stream triangles: refining using standard refinement criteria ")
         refine_funcs.append(
             watershed_workflow.triangulation.refineByStreamTriangles(river_corrs))
