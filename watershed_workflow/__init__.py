@@ -638,7 +638,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
        supported (the default).
     internal_boundaries : list[shapely.Polygon], optional
        List of internal boundaries to embed in the domain, e.g. waterbodies.
-    additional_hole_points : list(Tuple[float, float]), optional
+    hole_points : list(Tuple[float, float]), optional
         List of points inside the polygons to be left as holes/voids (excluded from mesh)
     additional_vertices : list(Tuple[float, float]), optional
         List of points to be inlcuded in the triangulation.
