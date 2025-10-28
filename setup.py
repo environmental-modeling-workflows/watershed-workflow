@@ -42,7 +42,7 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
 
 
 setup(
-    name='watershed-workflow',
+    name='watershed_workflow',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="Workflow tool that synthesizes datasets for use in integrated hydrologic models.",
