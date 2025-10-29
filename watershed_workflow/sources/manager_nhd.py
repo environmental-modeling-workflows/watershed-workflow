@@ -70,7 +70,7 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
                  dataset_name: str,
                  layer: Optional[str] = None,
                  catchments: Optional[bool] = True,
-                 fewer_columns : Optional[bool] = True,
+                 fewer_columns : Optional[bool] = False,
                  ):
         """Initialize NHD manager.
         

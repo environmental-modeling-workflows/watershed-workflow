@@ -100,7 +100,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
 
     def __init__(self):
         # AORC native data properties
-        native_start = cftime.datetime(2007, 1, 1, calendar='standard')
+        native_start = cftime.datetime(1980, 1, 1, calendar='standard')
         native_end = cftime.datetime(2024, 12, 31, calendar='standard')
         native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
         native_resolution = 0.00833333  # ~1km in degrees (approximately 1km at mid-latitudes)
@@ -120,7 +120,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         
         # File naming for cached downloads
         self.names = filenames.Names(self.name, 'meteorology', 'aorc',
-                                     'aorc_{start_year}-{end_year}_{north}x{west}_{south}x{east}.nc')
+                                     'aorc_{start_year}-{end_year}_{north}x{west}-{south}x{east}{temporal_resampling}.nc')
 
         # Check directory structure
         os.makedirs(self.names.folder_name(), exist_ok=True)
@@ -135,6 +135,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
                   geometry : shapely.geometry.Polygon,
                   start_year : int,
                   end_year : int,
+                  temporal_resampling : Optional[str] = None,
                   force : bool = False) -> str:
         """Download AORC data for geometry and time range from S3 Zarr.
 
@@ -163,12 +164,19 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         bounds = self._cleanBounds(geometry)
         
         # get the subset filename
+        if temporal_resampling is None:
+            temporal_resampling_str = ''
+        else:
+            temporal_resampling_str = f'_{temporal_resampling}'
+        
         filename = self.names.file_name(start_year=start_year,
                                         end_year=end_year,
                                         east=bounds[0],
                                         south=bounds[1],
                                         west=bounds[2],
-                                        north=bounds[3])
+                                        north=bounds[3],
+                                        temporal_resampling=temporal_resampling_str,
+                                        )
 
 
         if (not os.path.exists(filename)) or force:
@@ -177,33 +185,42 @@ class ManagerAORC(manager_dataset.ManagerDataset):
                 root=f"{self.URL}/{dataset_year}.zarr", s3=s3_out, check=False
             ) for dataset_year in dataset_years]
             
-
-            # dask.config.set(temporary_directory=self.names.folder_name())
-            # client = dask.distributed.Client()
             ds_multi_year = xr.open_mfdataset(fileset, engine='zarr')
-
-            print(f'Variable size: {ds_multi_year.nbytes/1e12:.1f} TB')
-            print(ds_multi_year)
+            logging.info(f'Full dataset size: {ds_multi_year.nbytes/1e12:.1f} TB')
+            logging.info(ds_multi_year)
+            logging.info('')
 
             # Subset the dataset to the bounding box
-            print('Subsetting:')
-            print(f'  lon: {bounds[0], bounds[2]}')
-            print(f'  lat: {bounds[1], bounds[3]}')
+            logging.info('Subsetting:')
+            logging.info(f'  lon: {bounds[0], bounds[2]}')
+            logging.info(f'  lat: {bounds[1], bounds[3]}')
             ds_subset = ds_multi_year.sel(longitude=slice(bounds[0], bounds[2]),
                                           latitude=slice(bounds[1], bounds[3]))
-            print(f'Variable size: {ds_subset.nbytes/1e9:.3f} GB')
+            logging.info(f'Spatial subset dataset size: {ds_subset.nbytes/1e9:.3f} GB')
+            logging.info(ds_subset)
+            logging.info('')
 
-            ds_subset = ds_subset.compute()
-            ds_subset.to_netcdf(filename)
-            # client.close()
+            if temporal_resampling is not None:
+                ds_temporal = ds_subset.resample(time=temporal_resampling).mean()
+                logging.info(f'Resampling in time: {temporal_resampling}')
+                logging.info(f'Temporal resampled dataset size: {ds_temporal.nbytes/1e9:.3f} GB')
+                logging.info(ds_temporal)
+                logging.info('')
+            else:
+                ds_temporal = ds_subset
+
+            ds_temporal.to_netcdf(filename)
+            logging.info(f"Write to file: {filename}")
         
         else:
-            print(f"  Using existing: {filename}")
+            logging.info(f"  Using existing: {filename}")
 
         return filename
 
     
-    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+    def _requestDataset(self,
+                        request : manager_dataset.ManagerDataset.Request,
+                        temporal_resampling : Optional[str] = None, 
                         ) -> manager_dataset.ManagerDataset.Request:
         """Request AORC data - ready upon download completion.
         
@@ -211,11 +228,15 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         ----------
         request : ManagerDataset.Request
             Request object containing geometry, dates, and variables.
+        temporal_resampling : Optional[str]
+            Resample in time according to this time string, e.g. '1D',
+            taking the mean
             
         Returns
         -------
         ManagerDataset.Request
             New AORC request object with filename and is_ready flag set.
+
         """
         assert request.start is not None
         assert request.end is not None
@@ -229,7 +250,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
                 f"Provided start year {start_year} is after provided end year {end_year}")
 
         # Download data to cache (this may take time)
-        filename = self._download(request.geometry, start_year, end_year, force=False)
+        filename = self._download(request.geometry, start_year, end_year, temporal_resampling=temporal_resampling, force=False)
         
         # Create new AORC-specific request with filename
         aorc_request = self.Request(request, filename)
@@ -237,7 +258,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         return aorc_request
 
 
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request, chunk_time=None) -> xr.Dataset:
         """Implementation of abstract method to fetch AORC data.
 
         Parameters
@@ -251,15 +272,14 @@ class ManagerAORC(manager_dataset.ManagerDataset):
             Dataset containing the requested AORC data.
         """
         # Open cached dataset
-        dataset = xr.open_dataset(request.filename)
+        if chunk_time:
+            dataset = xr.open_dataset(request.filename, chunks={"time" : chunk_time})
+        else:
+            dataset = xr.open_dataset(request.filename)
         
         # Filter to requested variables only
         if request.variables != self.valid_variables:
             # Only keep requested variables
             dataset = dataset[request.variables]
         
-        # Ensure CRS is properly set
-        if hasattr(dataset, 'rio') and dataset.rio.crs is None:
-            dataset = dataset.rio.write_crs(self.native_crs_out)
-            
         return dataset

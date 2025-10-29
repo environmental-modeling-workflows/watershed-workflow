@@ -180,20 +180,25 @@ def addWatershedAndOutletRegions(m2 : Mesh2D,
     if exterior_outlet:
         if hasattr(hucs, "exterior_outlet"):
             exterior_outlet_point = hucs.exterior_outlet
+            logging.info(f'Exterior outlet point (from attribute): {exterior_outlet_point}')
         else:
             try:
-                boundary = hucs.exterior()
+                boundary = hucs.exterior.exterior
             except AttributeError:
-                boundary = shapely.ops.unary_union(hucs)
+                boundary = shapely.ops.unary_union(hucs).exterior
             exterior_outlet_point = next(outlet for outlet in hucs.df[names.OUTLET]
                                          if outlet.buffer(500).intersects(boundary))
+            logging.info(f'Exterior outlet point (from search): {exterior_outlet_point}')
 
         outlet_faces = [e for e in m2.boundary_edges if isInsideBall(exterior_outlet_point, e)]
         edges = [(int(e[0]), int(e[1])) for e in outlet_faces]
-        ls2 = watershed_workflow.mesh.LabeledSet('surface domain outlet',
-                                                 m2.getNextAvailableLabeledSetID(), 'FACE', edges)
-        ls2.to_extrude = True
-        m2.labeled_sets.append(ls2)
+        if len(edges) == 0:
+            logging.warn('...unable to find any outlet edges')
+        else:
+            ls2 = watershed_workflow.mesh.LabeledSet('surface domain outlet',
+                                                     m2.getNextAvailableLabeledSetID(), 'FACE', edges)
+            ls2.to_extrude = True
+            m2.labeled_sets.append(ls2)
 
 
 def addRiverCorridorRegions(m2 : Mesh2D,
