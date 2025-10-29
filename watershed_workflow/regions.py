@@ -216,11 +216,7 @@ def addRiverCorridorRegions(m2 : Mesh2D,
         assert (len(labels) == len(rivers))
 
     for label, river in zip(labels, rivers):
-        gid_start = river[names.ELEMS_GID_START]
-        river_elements = list()
-        for node in river.preOrder():
-            river_elements.extend(range(gid_start, gid_start + len(node[names.ELEMS])))
-            gid_start += len(node[names.ELEMS])
+        river_elements = [i for r in river.preOrder() for i in range(r[names.ELEMS_GID_START], r[names.ELEMS_GID_START] + len(r[names.ELEMS]))]
 
         if len(river_elements) > 0:
             setid2 = m2.getNextAvailableLabeledSetID()
@@ -247,7 +243,7 @@ def addStreamOrderRegions(m2 : Mesh2D,
         for reach in river.preOrder():
             order = reach[names.ORDER]
             regions[order].extend(range(reach[names.ELEMS_GID_START], reach[names.ELEMS_GID_START] + len(reach[names.ELEMS])))
-
+              
     labels = [f'stream order {order}' for order in regions.keys()]
     partitions = [regions[order] for order in regions.keys()]
 
@@ -256,7 +252,7 @@ def addStreamOrderRegions(m2 : Mesh2D,
             setid2 = m2.getNextAvailableLabeledSetID()
             ls2 = watershed_workflow.mesh.LabeledSet(label, setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
-
+            
 
 def addReachIDRegions(m2 : Mesh2D,
                      river : River):
