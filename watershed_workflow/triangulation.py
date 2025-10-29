@@ -164,6 +164,7 @@ class NodesEdges:
 def triangulate(hucs: watershed_workflow.split_hucs.SplitHUCs,
                 internal_boundaries: Optional[List[shapely.geometry.LineString]] = None,
                 hole_points: Optional[List[shapely.geometry.Point]] = None,
+                additional_vertices: Optional[List[Tuple[float, float]]] = None,
                 tol: float = 1.0,
                 **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
@@ -181,6 +182,8 @@ def triangulate(hucs: watershed_workflow.split_hucs.SplitHUCs,
         must be included in the mesh.
     hole_points : list(shapely.Point), optional
         List of points inside the polygons to be left as holes/voids (excluded from mesh).
+    additional_vertices : list(Tuple[float, float]), optional
+        List of points to be included in the triangulation.
     tol : float, optional
         Set tolerance for minimum distance between two nodes. The unit
         is the same as that of the watershed's CRS. The default is 1.
@@ -208,6 +211,10 @@ def triangulate(hucs: watershed_workflow.split_hucs.SplitHUCs,
     logging.info(" building graph data structures")
     info = meshpy.triangle.MeshInfo()
     nodes = np.array(list(nodes_edges.nodes))
+    
+    # add additional vertices if provided
+    if additional_vertices is not None:
+        nodes = np.vstack((nodes, additional_vertices))
 
     pdata = [tuple([float(c) for c in p]) for p in nodes]
     info.set_points(pdata)
@@ -326,6 +333,15 @@ def refineByPolygons(polygons, areas):
                     return True
 
         return False
+
+    return refine
+
+def refineByStreamTriangles(river_corrs):
+    """Returns a refinement function for triangles that have all three vertices on stream mesh."""
+    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
+
+    def refine(vertices, area):
+        return all(riv_corr.intersects(shapely.geometry.Point(p)) for p in vertices)
 
     return refine
 
