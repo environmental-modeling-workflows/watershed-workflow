@@ -242,8 +242,7 @@ def addStreamOrderRegions(m2 : Mesh2D,
     for river in rivers:
         for reach in river.preOrder():
             order = reach[names.ORDER]
-            regions[order].extend(range(reach[names.ELEMS_GID_START], reach[names.ELEMS_GID_START] + len(reach[names.ELEMS])))
-              
+            regions[order].extend(range(reach[names.ELEMS_GID_START], reach[names.ELEMS_GID_START] + len(reach[names.ELEMS])))  
     labels = [f'stream order {order}' for order in regions.keys()]
     partitions = [regions[order] for order in regions.keys()]
 
@@ -253,7 +252,6 @@ def addStreamOrderRegions(m2 : Mesh2D,
             ls2 = watershed_workflow.mesh.LabeledSet(label, setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
             
-
 def addReachIDRegions(m2 : Mesh2D,
                      river : River):
     """Add labeled sets to m2 for reaches of each stream order .
