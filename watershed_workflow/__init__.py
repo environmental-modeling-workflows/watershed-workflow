@@ -710,11 +710,12 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     elems = tri_elems + river_elems
     # note, all river verts are in the tri_verts, listed first, and in the same order!
     coords = tri_coords
-    
+
     river_gid_start = len(tri_elems)
     for river in rivers:
         river.df[names.ELEMS_GID_START] = river_gid_start
-        river_gid_start += len(river.df[names.ELEMS])
+        all_elems = [elem for node in river.preOrder() for elem in node[names.ELEMS]]
+        river_gid_start += len(all_elems)
 
     # We could now recover the polygon linestrings in SplitHUCs, but don't... TBD --ETC
 

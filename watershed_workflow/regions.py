@@ -216,7 +216,11 @@ def addRiverCorridorRegions(m2 : Mesh2D,
         assert (len(labels) == len(rivers))
 
     for label, river in zip(labels, rivers):
-        river_elements = [i for r in river.preOrder() for i in range(r[names.ELEMS_GID_START], r[names.ELEMS_GID_START] + len(r[names.ELEMS]))]
+        gid_start = river[names.ELEMS_GID_START]
+        river_elements = list()
+        for node in river.preOrder():
+            river_elements.extend(range(gid_start, gid_start + len(node[names.ELEMS])))
+            gid_start += len(node[names.ELEMS])
 
         if len(river_elements) > 0:
             setid2 = m2.getNextAvailableLabeledSetID()
