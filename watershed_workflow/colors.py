@@ -12,6 +12,7 @@ except ImportError:
                   Tuple[float, float, float, float],  # RGBA
                   ]
 
+import logging
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -564,9 +565,9 @@ def _createColormapCreator(
 
         indices = sorted(set(indices))
 
-        print("making colormap with:", indices)
+        logging.debug("making colormap with:", indices)
         values = [all_colors[k][1] for k in indices]
-        print("making colormap with colors:", values)
+        logging.debug("making colormap with colors:", values)
         cmap = matplotlib.colors.ListedColormap(values)
         ticks = [i - 0.5 for i in indices] + [indices[-1] + 0.5, ]
         norm = matplotlib.colors.BoundaryNorm(ticks, len(ticks) - 1)
@@ -640,7 +641,8 @@ def createIndexedColorbar(ncolors: int,
     if labels is not None:
         assert (len(labels) == ncolors)
 
-    cmap = cm_discrete(ncolors, cmap)
+    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+        cmap = cm_discrete(ncolors, cmap)
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
     mappable.set_array([])
     mappable.set_clim(-0.5, ncolors + 0.5)

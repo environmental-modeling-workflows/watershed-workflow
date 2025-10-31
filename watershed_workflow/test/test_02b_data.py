@@ -991,7 +991,7 @@ class TestAverageAcrossYearsDataFrame:
     def test_default_all_numeric_columns(self, sample_multiyear_df):
         """Test averaging all numeric columns by default."""
         result = wwd.computeAverageYear_DataFrame(
-            sample_multiyear_df, 'time', 2025, 1
+            sample_multiyear_df, cftime.DatetimeNoLeap(2025, 1, 1), 1, 'time'
         )
         
         # Should only include time and numeric columns
@@ -1006,7 +1006,7 @@ class TestAverageAcrossYearsDataFrame:
     def test_averaging_accuracy(self, sample_multiyear_df):
         """Test that averaging is mathematically correct."""
         result = wwd.computeAverageYear_DataFrame(
-            sample_multiyear_df, 'time', 2025, 1
+            sample_multiyear_df, cftime.DatetimeNoLeap(2025, 1, 1), 1
         )
         
         # For day 1: values are 0, 1, 2 → average = 1
@@ -1020,7 +1020,7 @@ class TestAverageAcrossYearsDataFrame:
     def test_multiple_years_output(self, sample_multiyear_df):
         """Test repeating pattern for multiple years."""
         result = wwd.computeAverageYear_DataFrame(
-            sample_multiyear_df, 'time', 2025, 3
+            sample_multiyear_df, cftime.DatetimeNoLeap(2025, 1, 1), 3
         )
         
         # Should have 3 years of data
@@ -1043,7 +1043,7 @@ class TestAverageAcrossYearsDataFrame:
         })
 
         with pytest.raises(ValueError, match="No numeric columns"):
-            result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
+            result = wwd.computeAverageYear_DataFrame(df, cftime.DatetimeNoLeap(2025, 1, 1), 1)
     
     def test_nan_handling(self):
         """Test handling of NaN values in averaging."""
@@ -1061,7 +1061,7 @@ class TestAverageAcrossYearsDataFrame:
                     values.append(float(doy))
         
         df = pd.DataFrame({'time': dates, 'value': values})
-        result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
+        result = wwd.computeAverageYear_DataFrame(df, cftime.DatetimeNoLeap(2025, 1, 1), 1)
         
         # Day 2 should average only non-NaN values: (2 + 2) / 2 = 2
         day2_value = result.loc[1, 'value']
@@ -1079,7 +1079,7 @@ class TestAverageAcrossYearsDataFrame:
                 values.append(doy)
         
         df = pd.DataFrame({'time': dates, 'value': values})
-        result = wwd.computeAverageYear_DataFrame(df, 'time', 2025, 1)
+        result = wwd.computeAverageYear_DataFrame(df, cftime.DatetimeNoLeap(2025, 1, 1), 1)
         
         # Should have 73 entries (365/5)
         assert len(result) == 73

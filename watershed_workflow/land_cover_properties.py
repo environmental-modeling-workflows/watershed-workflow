@@ -55,22 +55,17 @@ def computeTimeSeries(lai: xarray.DataArray,
         lai = lai.rio.clip([polygon, ], polygon_crs, drop=True, invert=False)
         lc = lc.rio.clip([polygon, ], polygon_crs, drop=True, invert=False)
 
-    # find the unique land cover types
-    if unique_lc is None:
-        unique_lc = list(np.unique(lc.values[~np.isnan(lc.values)]))
-        
-    # average lai for all pixels in the mask and of the lc type
-    df = pd.DataFrame()
-    df['time'] = lai['time']
+    # find the class-based means
+    space_dims = lc.dims
+    stacked_space_dims = 'stacked_'+'_'.join(space_dims)
+    
+    lai_with_class = lai.assign_coords(class_=lc)
+    lai_class_mean = lai_with_class.groupby('class_').mean(dim=stacked_space_dims)
 
-    assert len(lc.shape) == 2
-    for ilc in unique_lc:
-        time_series = [
-            lai.values[itime][np.where(lc.values == ilc)].mean()
-            for itime in range(len(lai['time']))
-        ]
-        col_name = watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0]
-        df[f'{col_name} LAI [-]'] = time_series
+    # average lai for all pixels in the mask and of the lc type
+    df = pd.DataFrame({watershed_workflow.sources.manager_modis_appeears.colors[int(ilc)][0] + ' LAI [-]' :
+                       lai_class_mean[:,i] for (i,ilc) in enumerate(lai_class_mean['class_'])})
+    df['time'] = lai['time']
     return df
 
 
