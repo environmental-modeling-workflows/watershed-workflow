@@ -162,7 +162,7 @@ class SplitHUCs:
         # save the exterior outlet
         if exterior_outlet is not None:
             assert isinstance(exterior_outlet, shapely.geometry.Point)
-        self.exterior_outlet = exterior_outlet
+            self.exterior_outlet = exterior_outlet
 
         # initialize
         shapes = df['geometry']

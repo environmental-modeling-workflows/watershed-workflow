@@ -13,6 +13,7 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from . import utils as source_utils
 
 
 class ManagerRaster(manager_dataset.ManagerDataset):
@@ -66,8 +67,7 @@ class ManagerRaster(manager_dataset.ManagerDataset):
         # first download -- this is done here and not in _request so
         # that we can set the resolution and CRS for input geometry
         # manipulation.
-        if not os.path.isfile(self.filename) and self.url is not None:
-            self._download()
+        self._download()
 
         if not self._file_preprocessed:
             # Inspect raster to get native properties

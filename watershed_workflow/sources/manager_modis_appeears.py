@@ -121,7 +121,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         import cftime
         native_resolution = 500.0 * 9.e-6 # in native_crs
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')  
-        native_end = cftime.datetime(2021, 1, 1, calendar='standard')
+        native_end = cftime.datetime(2024, 1, 1, calendar='standard')
         native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
         valid_variables = ['LAI', 'LULC']
         default_variables = ['LAI', 'LULC']
@@ -338,6 +338,8 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
     def _download(self, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Downloads the data for the provided request."""
+        os.makedirs(self.names.folder_name(), exist_ok=True)
+
         if len(request.urls) == 0:
             ready = self._checkBundleURL(request)
         else:
@@ -383,7 +385,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         return data
 
     
-    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
+    def _requestDataset(self,
+                        request: manager_dataset.ManagerDataset.Request,
+                        task_id : Optional[str] = None
                         ) -> manager_dataset.ManagerDataset.Request:
         """Request MODIS data from AppEEARS - may not be ready immediately.
         
@@ -429,8 +433,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         else:
             logging.info('... building request.')
 
-            # Need to create AppEEARS request
-            task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
+            if task_id is None:
+                # Need to create AppEEARS request
+                task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
         
             # Create MODIS-specific request with AppEEARS task info
             modis_request = self.Request(

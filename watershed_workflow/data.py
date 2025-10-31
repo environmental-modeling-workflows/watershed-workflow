@@ -55,13 +55,15 @@ def convertTimesToCFTime(time_values: Sequence[ValidTime]) -> npt.NDArray[cftime
         return np.array(time_values)
 
     if isinstance(sample_time, (np.datetime64, datetime.datetime)):
-        time_values = pd.to_datetime(time_values).tolist()
+        time_values_pd = pd.to_datetime(time_values).tolist()
+    else:
+        time_values_pd = time_values
 
-    if not isinstance(time_values[0], pd.Timestamp):
+    if not isinstance(time_values_pd[0], pd.Timestamp):
         raise TypeError(f'Cannot convert items of type {type(time_values[0])} to cftime.')
 
     # convert pd.Timestamp to cftime
-    res = [cftime.DatetimeGregorian(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond) for t in time_values]
+    res = [cftime.DatetimeGregorian(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond) for t in time_values_pd]
     return np.array(res)
 
 
@@ -112,9 +114,9 @@ def createNoleapMask(time_values : Sequence[ValidTime]
         
     Returns
     -------
-    Sequence[cftime.DatetimeNoLeap]
+    np.ndarray[cftime.DatetimeNoLeap]
         Time values converted to cftime format with leap days filtered.
-    List[bool]
+    np.ndarray[bool]
         Boolean mask where True indicates non-leap days.
     """
     # no times --> no leap days
@@ -701,8 +703,11 @@ def interpolateToRegular(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
 #
 # Compute an annual average
 #
-def _computeAverageYear(ds: xr.Dataset, time_dim: str, start_date: cftime.datetime,
-                        output_nyears: int) -> Tuple[xr.Dataset, List[cftime.datetime]]:
+def _computeAverageYear(ds: xr.Dataset,
+                        start_date: cftime.DatetimeNoLeap,
+                        output_nyears: int,
+                        time_dim: str,
+                        ) -> Tuple[xr.Dataset, List[cftime.datetime]]:
     """
     Compute annual average for a Dataset and generate output times.
     
@@ -710,12 +715,12 @@ def _computeAverageYear(ds: xr.Dataset, time_dim: str, start_date: cftime.dateti
     ----------
     ds : xr.Dataset
         Input Dataset with cftime noleap calendar dates.
-    time_dim : str
-        Name of the time dimension.
-    start_date : cftime.datetime
+    start_date : cftime.DatetimeNoLeap
         Start date for the output time series.
     output_nyears : int
         Number of years to repeat the averaged pattern.
+    time_dim : str
+        Name of the time dimension.
         
     Returns
     -------
@@ -726,7 +731,7 @@ def _computeAverageYear(ds: xr.Dataset, time_dim: str, start_date: cftime.dateti
     """
     # Calculate day of year for each time point
     time_values = ds[time_dim].values
-    doys = np.array([(date - cftime.DatetimeNoLeap(date.year, 1, 1)).days + 1
+    doys = np.array([((date - start_date).days) % 365
                      for date in time_values])
 
     # Get unique days of year
@@ -743,10 +748,8 @@ def _computeAverageYear(ds: xr.Dataset, time_dim: str, start_date: cftime.dateti
     output_doys = []
 
     for year_offset in range(output_nyears):
-        current_year = start_date.year + year_offset
-
         for doy in unique_doys:
-            date = cftime.DatetimeNoLeap(current_year, 1, 1) + datetime.timedelta(days=int(doy - 1))
+            date = start_date + datetime.timedelta(days=(year_offset*365 + int(doy)))
             output_times.append(date)
             output_doys.append(doy)
 
@@ -796,10 +799,10 @@ def _parseStartDate(
 
 
 def computeAverageYear_DataFrame(df: pd.DataFrame,
+                                 start_date: cftime.DatetimeNoLeap,
+                                 output_nyears: int,
                                  time_column: str = 'time',
-                                 start_date: Union[str, datetime.datetime,
-                                                   cftime.datetime] = '2020-1-1',
-                                 output_nyears: int = 2) -> pd.DataFrame:
+                                 ) -> pd.DataFrame:
     """
     Average DataFrame values across years and repeat for specified number of years.
     
@@ -807,12 +810,12 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
     ----------
     df : pandas.DataFrame
         Input DataFrame with cftime noleap calendar dates at 1- or 5-day intervals.
-    time_column : str
-        Name of the column containing cftime datetime objects.
-    start_date : str, datetime, or cftime.datetime
-        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    start_date : cftime.DatetimeNoLeap
+        Start date for the output time series.
     output_nyears : int
         Number of years to repeat the averaged pattern.
+    time_column : str
+        Name of the column containing cftime datetime objects.
         
     Returns
     -------
@@ -842,17 +845,16 @@ def computeAverageYear_DataFrame(df: pd.DataFrame,
     ds = _convertDataFrameToDataset(df, time_column)
 
     # Compute averages using shared function
-    averaged_ds, output_times = _computeAverageYear(ds, time_column, start_cftime, output_nyears)
+    averaged_ds, output_times = _computeAverageYear(ds, start_cftime, output_nyears, time_column)
 
     # Convert back to DataFrame
     return _convertDatasetToDataFrame(averaged_ds, time_column, output_times)
 
 
 def computeAverageYear_DataArray(da: xr.DataArray,
+                                 start_date: cftime.DatetimeNoLeap,
+                                 output_nyears: int,
                                  time_dim: str = 'time',
-                                 start_date: Union[str, datetime.datetime,
-                                                   cftime.datetime] = '2020-1-1',
-                                 output_nyears: int = 2,
                                  ) -> xr.DataArray:
     """
     Average DataArray values across years and repeat for specified number of years.
@@ -861,8 +863,8 @@ def computeAverageYear_DataArray(da: xr.DataArray,
     ----------
     da : xr.DataArray
         Input DataArray with cftime noleap calendar dates at 1- or 5-day intervals.
-    start_date : str, datetime, or cftime.datetime
-        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    start_date : cftime.DatetimeNoLeap
+        Start date for the output time series.
     output_nyears : int
         Number of years to repeat the averaged pattern.
     time_dim : str, optional
@@ -898,7 +900,7 @@ def computeAverageYear_DataArray(da: xr.DataArray,
     temp_ds = xr.Dataset({da.name or 'data': da})
 
     # Compute averages using shared function
-    averaged_ds, output_times = _computeAverageYear(temp_ds, time_dim, start_cftime, output_nyears)
+    averaged_ds, output_times = _computeAverageYear(temp_ds, start_cftime, output_nyears, time_dim)
 
     # Extract the DataArray
     result = averaged_ds[da.name or 'data']
@@ -914,10 +916,9 @@ def computeAverageYear_DataArray(da: xr.DataArray,
 
 
 def computeAverageYear_Dataset(ds: xr.Dataset,
+                               start_date: cftime.DatetimeNoLeap,
+                               output_nyears: int,
                                time_dim: str = 'time',
-                               start_date: Union[str, datetime.datetime,
-                                                 cftime.datetime] = '2020-1-1',
-                               output_nyears: int = 2,
                                variables: Optional[List[str]] = None) -> xr.Dataset:
     """
     Average Dataset values across years and repeat for specified number of years.
@@ -926,8 +927,8 @@ def computeAverageYear_Dataset(ds: xr.Dataset,
     ----------
     ds : xr.Dataset
         Input Dataset with cftime noleap calendar dates at 1- or 5-day intervals.
-    start_date : str, datetime, or cftime.datetime
-        Start date for the output time series. If string, should be 'YYYY-MM-DD' format.
+    start_date : cftime.DatetimeNoLeap
+        Start date for the output time series.
     output_nyears : int
         Number of years to repeat the averaged pattern.
     time_dim : str, optional
@@ -977,8 +978,8 @@ def computeAverageYear_Dataset(ds: xr.Dataset,
 
     if vars_with_time:
         # Compute averages using shared function
-        averaged_ds, output_times = _computeAverageYear(ds_to_avg, time_dim, start_cftime,
-                                                        output_nyears)
+        averaged_ds, output_times = _computeAverageYear(ds_to_avg, start_cftime,
+                                                        output_nyears, time_dim)
 
         # Assign the output times
         result = averaged_ds.assign_coords({ time_dim: output_times })
@@ -1005,36 +1006,39 @@ def computeAverageYear_Dataset(ds: xr.Dataset,
 
 
 @overload
-def computeAverageYear(data: xr.Dataset,
-                       time_column: str,
-                       start_year: int,
-                       output_nyears: int) -> xr.Dataset:
+def computeAverageYear(data : xr.Dataset,
+                       start_date : cftime.DatetimeNoLeap,
+                       output_nyears : int,
+                       time_column : str,
+                       ) -> xr.Dataset:
     ...
 
 
 @overload
 def computeAverageYear(data: xr.DataArray,
+                       start_date : cftime.DatetimeNoLeap,
+                       output_nyears: int,
                        time_column: str,
-                       start_year: int,
-                       output_nyears: int) -> xr.DataArray:
+                       ) -> xr.DataArray:
     ...
 
 
 @overload
 def computeAverageYear(data: pd.DataFrame,
+                       start_date : cftime.DatetimeNoLeap,
+                       output_nyears: int,
                        time_column: str,
-                       start_year: int,
-                       output_nyears: int) -> pd.DataFrame:
+                       ) -> pd.DataFrame:
     ...
 
 
 def computeAverageYear(
         data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
-        time_column: str,
-        start_year: int,
-        output_nyears: int) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
-    """
-    Average data values across years and repeat for specified number of years.
+        start_date: cftime.DatetimeNoLeap,
+        output_nyears: int,
+        time_column: str = 'time',
+        ) -> Union[pd.DataFrame, xr.DataArray, xr.Dataset]:
+    """Average data values across years and repeat for specified number of years.
     
     This function automatically selects the appropriate implementation based on the
     input data type: DataFrame, DataArray, or Dataset.
@@ -1043,14 +1047,15 @@ def computeAverageYear(
     ----------
     data : pandas.DataFrame, xr.DataArray, or xr.Dataset
         Input data with cftime noleap calendar dates at 1- or 5-day intervals.
-    time_column : str, optional
-        For DataFrame: Name of the time column (required).
-        For Dataset: Name of the time dimension (default: 'time').
-        For DataArray: Ignored (always uses 'time' dimension).
-    start_year : int
-        Start year for the output time series.
+    start_date : cftime.DatetimeNoLeap
+        Starting date for the output average year.  Note this must be
+        365 day calendar, because the typical year will be in 365 day
+        calendar.
     output_nyears : int, optional
         Number of years to repeat the averaged pattern. Default is 1.
+    time_column : str, optional
+        Name of the time column (for DataFrames) or dimension (for
+        DataArrays or Datasets).  Default is 'time'.
         
     Returns
     -------
@@ -1082,20 +1087,19 @@ def computeAverageYear(
     For Datasets
         - Variables without the time dimension are preserved unchanged
         - All attributes and encodings are preserved
+
     """
-    start_date = cftime.DatetimeNoLeap(start_year, 1, 1)
     if isinstance(data, pd.DataFrame):
         if time_column is None:
             raise TypeError("time_column parameter is required for DataFrame input")
-        return computeAverageYear_DataFrame(data, time_column, start_date, output_nyears)
+        return computeAverageYear_DataFrame(data, start_date, output_nyears, time_column)
 
     elif isinstance(data, xr.DataArray):
-        return computeAverageYear_DataArray(data, time_column, start_date, output_nyears)
+        return computeAverageYear_DataArray(data, start_date, output_nyears, time_column)
 
     elif isinstance(data, xr.Dataset):
         # Dataset can use custom time dimension name
-        time_dim = time_column or time_column
-        return computeAverageYear_Dataset(data, time_dim, start_date, output_nyears)
+        return computeAverageYear_Dataset(data, start_date, output_nyears, time_column)
 
     else:
         raise TypeError(f"Input data must be a pandas DataFrame, xr DataArray, or xr Dataset. "

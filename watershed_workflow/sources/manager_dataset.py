@@ -147,8 +147,8 @@ class ManagerDataset(abc.ABC):
 
     def requestDataset(self, geometry, geometry_crs=None,
                        start=None, end=None, variables=None,
-                       out_crs=None, resampling=None
-                       ):
+                       out_crs=None, resampling=None,
+                       **kwargs):
         """Establish a request for a dataset for the given geometry and time range.
 
         Parameters
@@ -189,7 +189,7 @@ class ManagerDataset(abc.ABC):
         request.resampling = resampling if resampling is not None else 'nearest'
 
         # Get dataset
-        request = self._requestDataset(request)
+        request = self._requestDataset(request, **kwargs)
         return request
 
     
@@ -198,9 +198,9 @@ class ManagerDataset(abc.ABC):
         return request.is_ready
 
 
-    def fetchRequest(self, request : Request) -> xr.Dataset:
+    def fetchRequest(self, request : Request, **kwargs) -> xr.Dataset:
         """Fetch the request and get the actual data."""
-        data = self._fetchDataset(request)
+        data = self._fetchDataset(request, **kwargs)
         data = self._postprocessDataset(request, data)
         return data
 
@@ -245,6 +245,7 @@ class ManagerDataset(abc.ABC):
     def getDataset(self, geometry, geometry_crs=None,
                    start=None, end=None, variables=None,
                    out_crs=None, resampling=None,
+                   **kwargs
                    ):
         """Get dataset for the given geometry and time range.
 
@@ -269,7 +270,7 @@ class ManagerDataset(abc.ABC):
         xr.Dataset
             Dataset for the requested geometry and time range.
         """
-        request = self.requestDataset(geometry, geometry_crs, start, end, variables, out_crs, resampling)
+        request = self.requestDataset(geometry, geometry_crs, start, end, variables, out_crs, **kwargs)
         data = self.waitForDataset(request)
         return data
 

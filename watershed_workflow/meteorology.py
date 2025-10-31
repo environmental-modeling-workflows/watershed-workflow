@@ -150,3 +150,83 @@ def convertAORCToATS(dat: xr.Dataset,
         dout = watershed_workflow.data.filterLeapDay_DataFrame(dout)
 
     return dout
+
+
+def computeTypicalYear(dat: xr.Dataset,
+                       repeat_nyears : int,
+                       transition_temperature: float = 0.,
+                       time_dim: str = 'time',
+                       ) -> xr.Dataset:
+    """Given an ATS-format meteorology dataset, this computes a typical year.
+
+    - computes day-of-year averages of vapor pressure, air temp, radiation
+    - computes median year of total precip and uses that year for total precip
+    - allocates precip to snow and rain
+    - replicates nyears times
+
+    Parameters
+    ----------
+    dat : xr.Dataset
+      ATS-format, daily averaged meterology data.
+    repeat_nyears : int
+      Number of years to replicate the data.  Note that first day of
+      the returned dataset will be dat['time'][0] - repeat_nyears
+    transition_temperature : float
+      Temperature to transition from snow to rain [C].  Default is 0 C.
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset with ATS-standard names/units met forcing for a typical year.
+
+    """
+    logging.info('Computing a typical year.')
+
+    # must be done in noleap calendar
+    dat = watershed_workflow.data.filterLeapDay(dat, time_dim)
+
+    # must be done in an fixed number of whole years
+    nwhole_years_in_days = dat.sizes[time_dim] // 365 * 365
+    dat = dat.isel({time_dim: slice(0, nwhole_years_in_days)})
+
+    # compute total precip
+    precip = dat['precipitation rain [m s^-1]'] + dat['precipitation snow [m SWE s^-1]']
+
+    # drop precip and compute doy-averaged quantities for remainder
+    din = dat.drop_vars(['precipitation rain [m s^-1]', 'precipitation snow [m SWE s^-1]'])
+    start_date = din[time_dim].values[0] - datetime.timedelta(days=365*repeat_nyears)
+    dout = watershed_workflow.data.computeAverageYear(din, start_date, repeat_nyears, time_dim)
+
+    # find the median precip year and insert this into dout
+    # -- create a year-block based on the initial day
+    block = xr.DataArray(
+        np.arange(len(precip.time)) // 365,
+        dims=time_dim,
+        name="year_block"
+    )
+    precip_blocks = precip.assign_coords(year_block=block)
+
+    # -- sum within each block over all days and spatial dims
+    annual_precip = precip_blocks.groupby("year_block").sum(dim=(time_dim,"x","y"))
+
+    # -- find the median...
+    # note -- don't use np.median here... for even number of years it will not appear.  Instead, sort and take the halfway point
+    median_i = sorted(((i,v) for (i,v) in enumerate(annual_precip)), key=lambda x : x[1])[len(annual_precip)//2][0]
+
+    typical_precip = precip.isel({time_dim: slice(median_i * 365, (median_i+1)*365)})
+
+    # repeat nyears times
+    tiled = xr.concat([typical_precip] * repeat_nyears, dim="repeat")
+    tiled = tiled.stack(time_new=("repeat", time_dim))
+    tiled = tiled.drop_vars(time_dim)
+    tiled = tiled.rename(time_new=time_dim)
+    tiled[time_dim] = dout[time_dim]
+
+    # allocate precip
+    dout['precipitation rain [m s^-1]'], dout['precipitation snow [m SWE s^-1]'] = \
+        allocatePrecipitation(tiled, dout['air temperature [K]'], transition_temperature)
+
+    return dout
+    
+
+

@@ -1,6 +1,6 @@
 """Used to warp shapefiles and rasters into new coordinate systems."""
 
-from typing import Tuple
+from typing import Tuple, Optional 
 import shutil
 import numpy as np
 import logging
@@ -177,9 +177,12 @@ def shplys(shps: list, old_crs: CRS, new_crs: CRS) -> list:
 
 def dataset(ds: xr.Dataset,
             target_crs: CRS,
-            resampling_method: str = "nearest") -> xr.Dataset:
-    """
-    Reproject an xarray Dataset from its current CRS to a target CRS using rioxarray.
+            resampling_method: str = "nearest",
+            time_chunk_size : Optional[int] = None,
+            tmp_file_prefix : Optional[str] = None,
+            time_column : str = "time",
+            ) -> xr.Dataset:
+    """Reproject an xarray Dataset from its current CRS to a target CRS using rioxarray.
     Maintains the same width and height as the original dataset.
     
     Parameters
@@ -190,6 +193,16 @@ def dataset(ds: xr.Dataset,
         Target coordinate reference system as a pyproj.CRS object
     resampling_method : str, default "nearest"
         Resampling method for reprojection (nearest, bilinear, cubic, etc.)
+    time_chunk_size : Optional[int]
+        If provided, the warp is done in chunks, writing to tmp zarr
+        and netcdf files in the process, and returned as a lazy-opened
+        Dataset.  Combined with a chunked ds, this reduces the memory
+        demands and avoids loading the full dataset into memory.
+    tmp_file_prefix : Optional[str]
+        If time_chunk_size is provided, tmp_file_prefix.zarr will be
+        created to store the temporary file.  If tmp_file_prefix
+        endswith '.nc', the temporary zarr will get written as a
+        netCDF file of this name.
         
     Returns
     -------
@@ -206,8 +219,8 @@ def dataset(ds: xr.Dataset,
     >>> # Reproject to Albers Equal Area
     >>> target_crs = CRS.from_epsg(5070)
     >>> ds_projected = dataset(ds, target_crs=target_crs)
-    """
 
+    """
     # Get source CRS from the dataset
     source_crs = ds.rio.crs
     if source_crs is None:
@@ -218,8 +231,58 @@ def dataset(ds: xr.Dataset,
     for var in ds_copy:
         ds_copy[var] = ds_copy[var].rio.write_crs(source_crs)
 
-    # Reproject dataset
-    ds_reprojected = ds_copy.rio.reproject(target_crs,
-                                           resampling=getattr(rasterio.enums.Resampling,
-                                                              resampling_method))
+    if time_chunk_size is None:
+        # Reproject dataset
+        ds_reprojected = ds_copy.rio.reproject(target_crs,
+                                               resampling=getattr(rasterio.enums.Resampling,
+                                                                  resampling_method))
+    else:
+        # Determine the output grid once, using any one variable as a template
+        sample = next(iter(ds.data_vars))
+        template = ds[sample]
+
+        # keep roughly same resolution
+        isel_kwargs = { time_column : 0 }
+        target_template = template.isel(**isel_kwargs).rio.reproject(target_crs)
+
+        # Save spatial coords and transform for later
+        out_x = target_template.x
+        out_y = target_template.y
+        ny, nx = len(out_y), len(out_x)
+
+        # initialize empty Zarr store with correct y/x shape and zero-length time
+        init_vars = {}
+        for name, da in ds.data_vars.items():
+            init_vars[name] = ((time_column, "y", "x"),
+                               np.empty((0, ny, nx), dtype=da.dtype),
+                               da.attrs)
+
+        # Use a simple empty sequence for time coords (xarray accepts this)
+        init = xr.Dataset(init_vars, coords={time_column: np.array([], dtype=template[time_column].dtype), "x": out_x, "y": out_y})
+        init.to_zarr(tmp_file_prefix+'.zarr', mode="w")
+
+        # loop over time chunks, reprojecting and appending to the zarr store
+        n_time = ds.dims[time_column]
+        for start in range(0, n_time, time_chunk_size):
+            stop = min(start + time_chunk_size, n_time)
+            block = ds.isel(time=slice(start, stop))
+
+            reprojected = {}
+            for name, da in block.data_vars.items():
+                # rioxarray will reproject each 3-D chunk (time,y,x)
+                reprojected[name] = da.rio.reproject_match(target_template)
+
+            xr.Dataset(reprojected).to_zarr(
+                tmp_file_prefix+'.zarr',
+                append_dim=time_column
+            )
+
+
+        ds_reprojected = xr.open_zarr(tmp_file_prefix+'.zarr')
+        ds_reprojected[time_column] = ds[time_column]
+
+        if tmp_file_prefix.endswith('.nc'):
+            ds_reprojected.to_netcdf(tmp_file_prefix)
+            ds_reprojected = xr.open_dataset(tmp_file_prefix, chunks = { time_column : time_chunk_size })
+            
     return ds_reprojected
