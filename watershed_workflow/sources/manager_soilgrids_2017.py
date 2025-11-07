@@ -147,8 +147,9 @@ class ManagerSoilGrids2017(manager_dataset.ManagerDataset):
             
             # Add units and description as attributes
             if base_var == 'BDTICM':
-                da.attrs['units'] = 'cm'
+                da.attrs['units'] = 'm'
                 da.attrs['description'] = 'Absolute depth to continuous, unfractured bedrock'
+                da = da/100 # convert cm to m
             elif base_var == 'BLDFIE':
                 da.attrs['units'] = 'kg m^-3'
                 da.attrs['description'] = 'Bulk density of fine earth'
