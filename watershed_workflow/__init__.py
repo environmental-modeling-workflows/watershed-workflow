@@ -183,7 +183,8 @@ def reduceRivers(rivers : List[River],
 
     if prune_by_area > 0.0:
         logging.info(f"Removing rivers with area < {prune_by_area}")
-        rivers = [r for r in rivers if r.properties[area_property] > prune_by_area]
+        rivers2 = [r for r in rivers if r.properties[area_property] > prune_by_area]
+        logging.info(f" ... removed {len(rivers) - len(rivers2)} rivers")
 
     if remove_diversions and remove_braided_divergences:
         rivers = watershed_workflow.river_tree.filterDivergences(rivers)
@@ -321,8 +322,18 @@ def simplify(hucs : SplitHUCs,
     
     logging.info(" -- cutting reaches at HUC boundaries")
     watershed_workflow.hydrography.cutAndSnapCrossings(hucs, rivers, reach_segment_target_length)
+
     for river in rivers:
-        assert river.isContinuous()
+        if not river.isContinuous():
+            river.resetDataFrame()
+            ax = river.plot(color='k')
+            for node in river:
+                if not node.isLocallyContinuous():
+                    coords = np.array(list(node['geometry'].coords))
+                    ax.plot(coords[:,0], coords[:,1], 'r')
+            plt.show()
+            raise RuntimeError('Not continuous river')
+                    
     watershed_workflow.utils.logMinMaxMedianSegment((r.linestring for river in rivers for r in river), "reach")
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
@@ -335,7 +346,7 @@ def simplify(hucs : SplitHUCs,
     watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
     logging.info(rivers[0].df.crs)
-    
+
     # resample
     logging.info("")
     logging.info("Resampling HUC and river")
@@ -352,7 +363,7 @@ def simplify(hucs : SplitHUCs,
         watershed_workflow.resampling.resampleSplitHUCs(hucs, reach_segment_target_length, keep_points=keep_points)
 
     logging.info(rivers[0].df.crs)
-
+    
     if resample_by_reach_property:
         logging.info(f" -- resampling reaches based on TARGET_SEGMENT_LENGTH property")
         watershed_workflow.resampling.resampleRivers(rivers, keep_points=keep_points)
@@ -374,7 +385,7 @@ def simplify(hucs : SplitHUCs,
         watershed_workflow.utils.logMinMaxMedianSegment(hucs.linestrings, "HUC  ")
 
     logging.info(rivers[0].df.crs)
-        
+    
     # fix bad angles
     logging.info("")
     logging.info("Clean up sharp angles, both internally and at junctions.")

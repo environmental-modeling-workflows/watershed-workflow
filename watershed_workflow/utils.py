@@ -743,8 +743,9 @@ class CutError(Exception):
         self.cutline = cutline
 
 
-def cut(
-    line1: shapely.geometry.LineString, line2: shapely.geometry.LineString
+def cut(line1: shapely.geometry.LineString,
+        line2: shapely.geometry.LineString,
+        eps : float = 1.e-8
 ) -> Tuple[List[shapely.geometry.LineString], List[shapely.geometry.LineString]]:
     """Cut two LineStrings at their intersection point.
     
@@ -758,11 +759,96 @@ def cut(
     Returns
     -------
     tuple of list
-        Tuple containing (line1_segments, line2_segments) where each is a list
-        of LineString segments created by the cut operation.
+        Tuple containing (line1_segments, line2_segments) where each
+        is a list of LineString segments created by the cut operation.
+        Note the ordering is enforced to be such that coordinate
+        ordering is preserved.
+
     """
-    return list(shapely.ops.split(line1, line2).geoms), \
-        list(shapely.ops.split(line2, line1).geoms)
+    l1_geoms = list(shapely.ops.split(line1, line2).geoms)
+    l2_geoms = list(shapely.ops.split(line2, line1).geoms)
+
+    # permute if needed
+    def _permute(l0, l0_geoms):
+        if len(l0_geoms) == 1:
+            l0g = l0_geoms[0]
+            d0 = computeDistance(l0.coords[0], l0g.coords[0])
+            d1 = computeDistance(l0.coords[0], l0g.coords[-1])
+
+            if d1 < d0 and d1 < eps:
+                return [reverseLineString(l0g),]
+            elif d0 < eps:
+                return l0_geoms
+            else:
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 1')
+
+        elif len(l0_geoms) == 2:
+            res = []
+            l0g = l0_geoms[0]
+            l1g = l0_geoms[1]
+
+            # find closest point of the 4 endpoints to the 0th endpoint of l0
+            d0 = computeDistance(l0.coords[0], l0g.coords[0])
+            d1 = computeDistance(l0.coords[0], l0g.coords[-1])
+            d2 = computeDistance(l0.coords[0], l1g.coords[0])
+            d3 = computeDistance(l0.coords[0], l1g.coords[-1])
+            dmin = min([d0, d1, d2, d3])
+
+            # orient the first segment off of the closest point
+            if d0 == dmin and d0 < eps:
+                l00_is_0 = True
+                res.append(l0g)
+            elif d1 == dmin and d1 < eps:
+                l00_is_0 = True
+                res.append(reverseLineString(l0g))
+            elif d2 == dmin and d2 < eps:
+                l00_is_0 = False
+                res.append(l1g)
+            elif d3 == dmin and d3 < eps:
+                l00_is_0 = False
+                res.append(reverseLineString(l1g))
+            else:
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 2')
+
+            # find closest point of the 4 endpoints to the last endpoint of l0
+            d0 = computeDistance(l0.coords[-1], l0g.coords[0])
+            d1 = computeDistance(l0.coords[-1], l0g.coords[-1])
+            d2 = computeDistance(l0.coords[-1], l1g.coords[0])
+            d3 = computeDistance(l0.coords[-1], l1g.coords[-1])
+            dmin = min([d0, d1, d2, d3])
+
+            # orient the second segment off of the closest point
+            if d0 == dmin and d0 < eps:
+                if l00_is_0:
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 3')
+                res.append(reverseLineString(l0g))
+            elif d1 == dmin and d1 < eps:
+                if l00_is_0:
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 4')
+                res.append(l0g)
+            elif d2 == dmin and d2 < eps:
+                if not l00_is_0:
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 5')
+                res.append(reverseLineString(l1g))
+            elif d3 == dmin and d3 < eps:
+                if not l00_is_0:
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 6')
+                res.append(l1g)
+            else:
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 7')
+
+            if computeDistance(res[0].coords[-1], res[1].coords[0]) > eps:
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 8')
+            return res
+
+        else:
+            raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 9')
+
+    return _permute(line1, l1_geoms), _permute(line2, l2_geoms)
+        
+    
+
+    
 
 
 # def cut(line : shapely.geometry.LineString,

@@ -324,19 +324,23 @@ class SplitHUCs:
         if marker:
             # don't reuse -- some versions keep the various *_kwds
             # dictionaries by reference
-            kwargs2 = copy.deepcopy(kwargs)
+            # kwargs2 = copy.deepcopy(kwargs)
+            # kwargs2.pop('vmin')
+            # kwargs2.pop('vmax')
+            # kwargs2.pop('cmap')
+            kwargs2 = dict(style_kwds=copy.deepcopy(style_kwds))
             
-            # explore the coordinates too!
+            # explore the coordinates too!  But do so by segment, not by watershed
             marker_kwds = kwargs2.setdefault('marker_kwds', dict())
             marker_kwds.setdefault('radius', 10)
             kwargs2['style_kwds']['fillOpacity'] = 1
 
-            if names.ID in self.df:
-                new_id_name = names.ID+'-copy'
-            else:
-                new_id_name = names.ID
 
-            marker_df = self.df.set_geometry([shapely.geometry.MultiPoint(poly.exterior.coords) for poly in self.df.geometry]) \
+            df = gpd.GeoDataFrame({names.ID : list(self.linestrings.handles())},
+                                  geometry=list(self.linestrings.values()), crs=self.crs)
+            new_id_name = names.ID+'-copy'
+
+            marker_df = df.set_geometry([shapely.geometry.MultiPoint(ls.coords) for ls in df.geometry]) \
                                .explode(index_parts=True).reset_index(names=[new_id_name, 'coord'])
 
             for disp_mode in ['tooltip', 'popup']:
@@ -346,7 +350,7 @@ class SplitHUCs:
                     kwargs2[disp_mode].insert(0,'coord')
                     kwargs2[disp_mode].insert(0,names.ID)
 
-            m = marker_df.explore(column=column, m=m, name=name+' coordinates', **kwargs2)
+            m = marker_df.explore(column=names.ID, m=m, name=name+' coordinates', **kwargs2)
         return m
         
     

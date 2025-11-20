@@ -15,4 +15,5 @@ blank_line_before_nested_class_or_def = false
 [tool.mypy]
 disable_error_code = ['import-untyped', 'import-not-found']
 
-
+[tool.setuptools.package-data]
+watershed_workflow = ["nlcd_default_properties.csv"]
