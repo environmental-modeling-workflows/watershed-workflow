@@ -319,7 +319,7 @@ def plotLAI(df: pd.DataFrame,
     plt.show()
 
 
-nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "nlcd_default_properties.csv")
+nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "data" / "nlcd_land_cover_properties.csv")
     
 def getDefaultProperties(indices, model='NLCD'):
     """Sets default properties for each index, label in nlcd_dict"""
