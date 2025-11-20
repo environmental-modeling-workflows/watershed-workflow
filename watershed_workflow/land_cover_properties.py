@@ -9,6 +9,7 @@ import rasterio
 import datetime
 import xarray
 import shapely
+import importlib
 
 import watershed_workflow.warp
 import watershed_workflow.plot
@@ -275,7 +276,8 @@ def removeNullLAI(nlcd_lai: pd.DataFrame,
 
 def plotLAI(df: pd.DataFrame,
             indices: str = 'NLCD',
-            ax: Optional[matplotlib.axes.Axes] = None) -> None:
+            ax: Optional[matplotlib.axes.Axes] = None,
+            **kwargs) -> None:
     """Plots time series of land cover data.
 
     Parameters
@@ -310,8 +312,20 @@ def plotLAI(df: pd.DataFrame,
             name = column.strip(' LAI [-]')
             index = info.indices[name]
             color = info.colors[index][1]
-            ax.plot(lai_date, df[column], color=color, label=column)
+            ax.plot(lai_date, df[column], color=color, label=column, **kwargs)
     ax.set_ylabel('Leaf Area Index [-]')
     ax.set_xlabel('time')
     ax.legend()
     plt.show()
+
+
+nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "nlcd_default_properties.csv")
+    
+def getDefaultProperties(indices, model='NLCD'):
+    """Sets default properties for each index, label in nlcd_dict"""
+    if model == 'NLCD':
+        return nlcd_default_properties[default_properties['NLCD index'].isin(indices)].copy()
+    elif model == 'MODIS':
+        raise ValueError('MODIS default properties are not yet implemented.')
+    else:
+        raise ValueError(f'{model} default properties are not implemented.')

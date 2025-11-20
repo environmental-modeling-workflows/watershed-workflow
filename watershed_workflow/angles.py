@@ -11,11 +11,14 @@ from scipy import interpolate
 from scipy.spatial import cKDTree
 import shapely
 import abc
+from matplotlib import pyplot as plt
 
 import watershed_workflow.utils
+import watershed_workflow.colors
 from watershed_workflow.utils import reverseLineString
 from watershed_workflow.river_tree import River
 from watershed_workflow.split_hucs import SplitHUCs
+from watershed_workflow.sources import standard_names as names
 
 
 def _getAngles(linestrings : List[shapely.geometry.LineString]) -> np.ndarray:
@@ -400,7 +403,17 @@ def smoothUpstreamSharpAngles(hucs : SplitHUCs | None,
     if len(touches) == 0: return False
 
     linestrings = [touch[1] for touch in touches]
-    angles = _getAngles(linestrings)
+    try:
+        angles = _getAngles(linestrings)
+    except AssertionError:
+        fig, ax = plt.subplots(1, 1)
+        hucs.plot(color='k', ax=ax)
+        watershed_workflow.plot.linestringWithCoords(reach.linestring, marker='x', color='grey', ax=ax)
+
+        for child, color in zip(reach.children, watershed_workflow.colors.enumerated_palettes[1]):
+            watershed_workflow.plot.linestringWithCoords(child.linestring, marker='x', color=color, ax=ax)
+        plt.show()
+        raise RuntimeError(f'smoothUpstreamSharpAngles input data is bad -- angles upstream of reach {reach[names.ID]} are invalid')
 
     if len(angles) > 4:
         logging.info(f"Considering lots of angles at {linestrings[0].coords[-1]}:")
