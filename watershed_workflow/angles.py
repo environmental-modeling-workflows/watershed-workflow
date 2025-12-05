@@ -73,19 +73,22 @@ def smoothSharpAngles(hucs : SplitHUCs,
         junction_min_angle = min_angle
 
     count = smoothHUCsSharpAngles(hucs, min_angle, junction_min_angle)
+    logging.info(f" ... cleaned up {count} sharp angles on HUCs.")
         
-    for river in rivers:
-        logging.info(f'SSA1: {river.df.crs}')
-        count += smoothOutletSharpAngles(hucs, river, junction_min_angle)
-        
-        logging.info(f'SSA2: {river.df.crs}')
+    for ri, river in enumerate(rivers):
+        lcount = smoothOutletSharpAngles(hucs, river, junction_min_angle)
+        logging.info(f" ... cleaned up {lcount} sharp angles at outlets on river {ri}.")
+        count += lcount
+
+        rcount = 0
         for reach in river:
             lcount, reach.linestring = smoothInternalSharpAngles(reach.linestring, min_angle)
-            count += lcount
-        logging.info(f'SSA3: {river.df.crs}')
+            rcount += lcount
         for reach in river:
-            count += smoothUpstreamSharpAngles(hucs, reach, junction_min_angle)
-        logging.info(f'SSA4: {river.df.crs}')
+            rcount += smoothUpstreamSharpAngles(hucs, reach, junction_min_angle)
+        logging.info(f" ... cleaned up {rcount} internal sharp angles on river {ri}.")
+        count += rcount
+        
     return count
 
                 
