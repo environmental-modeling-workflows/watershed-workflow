@@ -319,13 +319,16 @@ def plotLAI(df: pd.DataFrame,
     plt.show()
 
 
-nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "data" / "nlcd_land_cover_properties.csv")
+nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "data" / "nlcd_land_cover_properties.csv").set_index('indices')
     
 def getDefaultProperties(indices, model='NLCD'):
     """Sets default properties for each index, label in nlcd_dict"""
     if model == 'NLCD':
-        return nlcd_default_properties[default_properties['NLCD index'].isin(indices)].copy()
+        return nlcd_default_properties[nlcd_default_properties.index.isin(indices)].copy()
     elif model == 'MODIS':
         raise ValueError('MODIS default properties are not yet implemented.')
     else:
         raise ValueError(f'{model} default properties are not implemented.')
+
+
+mannings_n_by_stream_order = pd.read_csv(importlib.resources.files("watershed_workflow") / "data" / "manning_n_by_stream_order.csv").set_index('order')
