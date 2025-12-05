@@ -173,7 +173,8 @@ def smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
         lcount, new_linestring = _smoothInternalSharpAngles(linestring, min_angle)
         count += lcount
         done = len(new_linestring.coords) == len(linestring.coords)
-    return count, new_linestring
+        linestring = new_linestring
+    return count, linestring
 
 
 def _spreadAngles(linestrings : List[shapely.geometry.LineString],
