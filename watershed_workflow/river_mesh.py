@@ -42,6 +42,7 @@ def _isNonoverlapping(points: np.ndarray, elems: List[List[int]], tol: float = 1
     shps = [shapely.geometry.Polygon(points[e]) for e in elems]
     total_area = shapely.unary_union(shps).area
     summed_area = sum(shp.area for shp in shps)
+    logging.info(f'  is nonoverlapping?  total_area = {total_area}, summed_area = {summed_area}')
     return abs(total_area - summed_area) < tol
 
 
@@ -166,7 +167,7 @@ def createRiversMesh(hucs : SplitHUCs,
     coords: List[np.ndarray] = []
     corridors: List[shapely.geometry.Polygon] = []
     hole_points: List[shapely.geometry.Point] = []
-    i = 0
+    coords_gid_start = 0
     elems_gid_start = 0
 
     for river in rivers:
@@ -189,8 +190,11 @@ def createRiversMesh(hucs : SplitHUCs,
         corridors.append(shapely.geometry.Polygon(lcoords))
 
         # shift to get a global ordering
-        if i != 0:
-            lelems = [[j + i for j in e] for e in lelems]
+        if coords_gid_start != 0:
+            lelems = [[j + coords_gid_start for j in e] for e in lelems]
+        for reach in river:
+            reach[names.ELEMS][:] = [[j + coords_gid_start for j in e] for e in reach[names.ELEMS]]
+        coords_gid_start += len(lcoords)
 
         elems.extend(lelems)
         coords.append(lcoords)
