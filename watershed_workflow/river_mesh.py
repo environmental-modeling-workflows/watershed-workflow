@@ -198,7 +198,6 @@ def createRiversMesh(hucs : SplitHUCs,
 
         elems.extend(lelems)
         coords.append(lcoords)
-        i += len(lcoords)
 
     if ax is not None:
         hucs.plotAsLinestrings(color='k', marker='x', ax=ax)
