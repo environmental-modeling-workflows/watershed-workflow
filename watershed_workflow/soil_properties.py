@@ -305,7 +305,7 @@ def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
                             max_permeability: float = np.inf,
                             max_vg_alpha: float = np.inf,
                             residual_saturation: float = 0.01,
-                            van_genuchten_n: float = 2.0) -> gpd.GeoDataFrame:
+                            van_genuchten_n: float = 1.5) -> gpd.GeoDataFrame:
     """GLHYMPs properties need their units changed and variables renamed.
 
     Parameters
@@ -360,39 +360,75 @@ def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
     return properties
 
 
-def dropDuplicates(df: pd.DataFrame) -> pd.DataFrame:
-    """Search for duplicate soils which differ only by ID, and rename them, returning a new df.
-
+def dropDuplicates(df: pd.DataFrame,
+                   varying_columns: List[str]) -> pd.DataFrame:
+    """Removes duplicate rows by merging rows with identical values in all columns except those specified.
+    
+    Rows are considered duplicates if they have identical values in all columns
+    except those listed in varying_columns. For duplicate rows, the varying columns
+    are aggregated into tuples containing all values from the merged rows.
+    
+    For GeoDataFrames, the geometry column is automatically unioned using unary_union
+    and cannot be included in varying_columns.
+    
     Parameters
     ----------
-    df : pd.DataFrame
-      A data frame that contains only properties (e.g. permeability,
-      porosity, WRM) and is indexed by some native ID.
-
+    df : pd.DataFrame or gpd.GeoDataFrame
+        The input DataFrame to process.
+    varying_columns : list of str
+        Column names that are allowed to vary within duplicate groups. Values
+        from these columns will be collected into tuples. Cannot include the
+        geometry column for GeoDataFrames.
+    
     Returns
     -------
-    df_new : pd.DataFrame
-      After this is called, df_new will:
-
-      1. have a new column, named by df's index name, containing a tuple of all
-         of the original indices that had the same properties.
-      2. be reduced in number of rows relative to df such that soil
-         properties are now unique
-
+    pd.DataFrame or gpd.GeoDataFrame
+        A new DataFrame with duplicate rows merged. Returns the same type as
+        the input (GeoDataFrame preserves CRS if applicable).
+    
+    Raises
+    ------
+    ValueError
+        If varying_columns includes the geometry column for a GeoDataFrame.
     """
-    df_new = df.copy()
+    # Check if it's a GeoDataFrame
+    is_geo = hasattr(df, 'geometry') and df.geometry is not None
+    
+    if is_geo:
+        geom_col = df.geometry.name
+        # Geometry column cannot be in varying_columns for GeoDataFrame
+        if geom_col in varying_columns:
+            raise ValueError(f"Geometry column '{geom_col}' cannot be in varying_columns for GeoDataFrame")
+    
+    # Columns that must be identical for rows to be merged
+    grouping_cols = [col for col in df.columns if col not in varying_columns]
+    
+    # Remove geometry from grouping cols if it's a GeoDataFrame
+    if is_geo and geom_col in grouping_cols:
+        grouping_cols.remove(geom_col)
+    
+    # Group by the identical columns
+    grouped = df.groupby(grouping_cols, dropna=False, sort=False)
+    
+    # Build aggregation dictionary
+    agg_dict = {}
+    
+    # Collect varying columns, creating a new string version
+    for col in varying_columns:
+        agg_dict[col] = lambda x: '_'.join([str(y) for y in x])
+    
+    # Union geometries if GeoDataFrame
+    if is_geo:
+        from shapely.ops import unary_union
+        agg_dict[geom_col] = lambda x: unary_union(x.tolist())
+    
+    # Apply aggregation and reset index
+    result = grouped.agg(agg_dict).reset_index()
+    
+    # Preserve GeoDataFrame type
+    if is_geo:
+        from geopandas import GeoDataFrame
+        result = GeoDataFrame(result, geometry=geom_col, crs=df.crs)
+    
+    return result
 
-    grouped = list(df_new.groupby(list(df_new)).apply(lambda x: tuple(x.index)))
-    df_new.drop_duplicates(inplace=True)
-    df_new.reset_index(inplace=True)
-
-    grouped_reordered = [next(g for g in grouped if i in g) for i in df_new[df.index.name]]
-    df_new[df.index.name] = grouped_reordered
-
-    # error checkign!
-    common_cols = [col for col in df if col in df_new]
-    for ind in df.index:
-        new_ind = next(e for e in df_new.index if ind in df_new.loc[e, df.index.name])
-        for col in common_cols:
-            assert (df.loc[ind, col] == df_new.loc[new_ind, col])
-    return df_new
