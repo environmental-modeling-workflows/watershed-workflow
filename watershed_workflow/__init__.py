@@ -517,7 +517,10 @@ def triangulate(hucs : SplitHUCs,
     # split triangles that have all vertices on stream corridors
     river_corrs = internal_boundaries[:len(rivers)]
     logging.info("Splitting stream triangles")
+    original_n_triangles = len(triangles)
     vertices, triangles = watershed_workflow.triangulation.splitStreamTriangles(vertices, triangles, river_corrs)
+    new_n_triangles = len(triangles)
+    logging.info(f"Split {new_n_triangles - original_n_triangles} stream triangles")
 
     if diagnostics:
         logging.info("Plotting triangulation diagnostics")

@@ -455,7 +455,7 @@ def _createSplitTriangles(original_connectivity, edge_index, split_vertex_index)
     opposite_vertex_idx = original_connectivity[(edge_index + 2) % 3]
     
     # Create two triangles connecting the split point to the opposite vertex
-    triangle1 = [split_vertex_index, vertex1_idx, opposite_vertex_idx]
+    triangle1 = [opposite_vertex_idx, vertex1_idx, split_vertex_index]
     triangle2 = [split_vertex_index, vertex2_idx, opposite_vertex_idx]
     
     return [triangle1, triangle2]
