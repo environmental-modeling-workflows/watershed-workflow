@@ -15,175 +15,13 @@ from watershed_workflow.mesh import Mesh2D
 from watershed_workflow.river_tree import River
 import watershed_workflow.data
 
-@attr.s
-class _Point:
-    """POD struct of coordinate and set of neighbors"""
-    coords = attr.ib()
-    neighbors: Set[int] = attr.ib(factory=set, converter=set)
 
-
-def fillPits(m2 : Mesh2D,
-             outletID : Optional[int] = None,
-             algorithm : int = 3) -> None:
-    """Conditions a mesh, IN PLACE, by removing pits.
-    
-    Starts at outlet and works through all coordinates in the mesh,
-    ensuring that there is a path to all vertices of the mesh from the
-    outlet that monotonically increases in elevation.
-
-    Available algorithms (likely all should be equivalent):
-     1: original, 2-pass algorithm
-     2: refactored single-pass algorithm based on sorted lists
-     3: boundary marching method.  Should be the fastest.
-
-    Parameters
-    ----------
-    m2 : mesh.Mesh2D object
-      The mesh to condition.
-    outletID : int, optional
-      If provided, the ID of the point to start conditioning from.  If
-      not provided, will use the boundary vertex with minimal elevation.
-    algorithm : int
-      See above, defaults to 3.
-
-    """
-    # generate a dictionary of ID,Point for all points of the mesh
-    points_dict = dict((i, _Point(c)) for (i, c) in enumerate(m2.coords))
-    for conn in m2.conn:
-        for c in conn:
-            points_dict[c].neighbors.update(conn)
-    for i, p in points_dict.items():
-        p.neighbors.remove(i)
-
-    # set the outlet as minimal boundary elevation
-    if outletID is None:
-        boundary_vertices = m2.boundary_vertices
-        outletID = boundary_vertices[np.argmin(m2.coords[boundary_vertices, 2])]
-
-    if algorithm == 1:
-        fillPits1(points_dict, outletID)
-    elif algorithm == 2:
-        fillPits2(points_dict, outletID)
-    elif algorithm == 3:
-        fillPits3(points_dict, outletID)
-    else:
-        raise RuntimeError('Unknown algorithm "%r"' % (algorithm))
-
-    m2.coords = np.array([p.coords for p in points_dict.values()])
-
-
-def fillPits1(points : Dict[int, _Point],
-              outletID : int) -> None:
-    """This is the origional, 2-pass algorithm, and is likely inefficient."""
-
-    # create a sorted list of elevations, from largest to smallest
-    elev = sorted(list(points.items()), key=lambda id_p: -id_p[1].coords[2])
-
-    visited = set([outletID, ])
-    pits = set()
-    waterway = set([outletID, ])
-
-    # loop over elevation list from small to large
-    while len(elev) != 0:
-        current, current_p = elev.pop()
-        if current in visited:
-            # still in the waterway
-            waterway.add(current)
-            visited.update(current_p.neighbors)
-        else:
-            # not in the waterway, add to pits
-            pits.add(current)
-
-    # post-conditions
-    assert (len(pits.union(waterway)) == len(points))
-
-    # loop over waterway and raise up pits as they touch the waterway
-    waterway_l = sorted([(ID, points[ID]) for ID in waterway], key=lambda id_p: -id_p[1].coords[2])
-    while len(waterway_l) != 0:
-        current, current_p = waterway_l.pop()
-        for n in current_p.neighbors:
-            if n in pits:
-                points[n].coords[2] = max(current_p.coords[2], points[n].coords[2])
-                pits.remove(n)
-                waterway_l.append((n, points[n]))
-
-    # post-conditions
-    assert (len(pits) == 0)
-    return
-
-
-def fillPits2(points : Dict[int, _Point],
-              outletID : int) -> None:
-    """This is a refactored, single pass algorithm that leverages a sorted list."""
-
-    # create a sorted list of elevations, from largest to smallest
-    elev = sortedcontainers.SortedList(list(points.items()), key=lambda id_p: id_p[1].coords[2])
-    waterway = set([outletID, ])
-
-    # loop over elevation list from small to large
-    while len(elev) != 0:
-        current, current_p = elev.pop(0)
-        if current in waterway:
-            # still in the waterway
-            waterway.update(current_p.neighbors)
-        else:
-            # not in the waterway, fill
-            ww_neighbors = [n for n in current_p.neighbors if n in waterway]
-            if len(ww_neighbors) != 0:
-                current_p.coords[2] = min(points[n].coords[2] for n in ww_neighbors)
-            else:
-                current_p.coords[2] = min(points[n].coords[2] for n in current_p.neighbors)
-
-            # push back into elev list with new, higher elevation
-            elev.add((current, current_p))
-    return
-
-
-def fillPits3(points : Dict[int, _Point],
-              outletID : int) -> None:
-    """This algorithm is based on a boundary marching method"""
-    # Waterway is the list of things that are already conditioned and
-    # can be reached.
-    waterway = set()
-
-    # Boundary is an elevation-sorted list of (ID, point) tuples which
-    # are NOT yet in the waterway, but have a neighbor in the
-    # waterway.  Additionally, points in the boundary have been
-    # conditioned such that all boundary points must be at least as
-    # high as the highest elevation in the waterway.
-    boundary = sortedcontainers.SortedList([(outletID, points[outletID]), ],
-                                           key=lambda id_p: id_p[1].coords[2])
-    waterway_max = -1e10
-
-    while len(boundary) > 0:
-        # pop the lowest boundary point and stick it in the waterway
-        next_p = boundary.pop(0)
-        waterway.add(next_p[0])
-
-        # increment the waterway elevation
-        assert (next_p[1].coords[2] >= waterway_max)
-        waterway_max = next_p[1].coords[2]
-
-        # Insert all neighbors (that aren't in the waterway already)
-        # into the boundary, first checking that their elevation is at
-        # least as high as the new waterway elevation.  Note that
-        # there can be no "alternate" pathway to the waterway, as this
-        # pathway would already be in the boundary (somewhere along
-        # that pathway) and therefore would have been popped before
-        # this path due to our sorted elevation boundary list.
-        for n in next_p[1].neighbors:
-            if n not in waterway and (n, points[n]) not in boundary:
-                points[n].coords[2] = max(points[n].coords[2], waterway_max)
-                boundary.add((n, points[n]))
-
-    assert (len(waterway) == len(points))
-    return
-
-
-def fillPitsDual(m2 : Mesh2D,
+def fillPits_marching(m2 : Mesh2D,
                  is_waterbody : Optional[np.ndarray] = None,
                  outlet_edge : Optional[Tuple[int,int]] = None,
-                 eps : float = 1e-3) -> None:
+                 eps : float = 1e-3,
+                 debug : Optional[List[int]] = None,
+                 ) -> None:
     """Conditions the dual of the mesh, IN PLACE, by filling pits.
 
     This ensures the property that, starting with an outlet cell,
@@ -201,176 +39,214 @@ def fillPitsDual(m2 : Mesh2D,
       that may be a depression.  This is important for
       reservoirs/lakes/etc where bathymetry is known and pits are
       physical.
-    outlet_edge : (int,int), optional
+    outlet_edge : Tuple[int,int], optional
       If provided, the point to start conditioning from.  If not
       provided, will use the edge on the boundary of m2 with the
       lowest elevation.
     eps : float, optional=1e-3
       A small vertical displacement for soft tolerances.
+    debug : List[int]
+      A list of cells to debug
 
     """
+    # input processing
+    if debug is None:
+        debug = []
+
+    # place the outlet 
     if outlet_edge is None:
         # determine the outlet edge -- the lowest edge point
-        boundary_edges = m2.boundary_edges
-        outlet_edge = boundary_edges[0]
-        be_elev = (m2.coords[outlet_edge[0], 2] + m2.coords[outlet_edge[1], 2]) / 2.
-
-        for e in boundary_edges[1:]:
-            eh = (m2.coords[e[0], 2] + m2.coords[e[1], 2]) / 2.
-            if eh < be_elev:
-                be_elev = eh
-                outlet_edge = e
+        def computeEdgeCentroid(e):
+            return (m2.coords[[0], 2] + m2.coords[e[1], 2]) / 2. 
+        outlet_edge = min(m2.boundary_edges, key=computeEdgeCentroid)
     outlet_edge = m2.edge_hash(*outlet_edge)
 
-    outlet_cell = m2.edges_to_cells[outlet_edge]
-    assert (len(outlet_cell) == 1)
-    outlet_cell = outlet_cell[0]
+    if is_waterbody is not None:
+        is_waterbody = np.zeros(len(m2.num_cells), 'i')
+        # assert len(is_waterbody) == m2.num_cells
+        # if len(debug):
+        #     logging.info('fillPitDual: putting waterways in boundary...')
 
-    class Waterway:
-        """Waterway is the set of cells that are already conditioned and can be reached."""
+        # for c in range(len(is_waterbody)):
+        #     if is_waterbody[c]:
+        #         # note this calls the private add, which adds without
+        #         # conditioning or putting neighbors in the boundary
+        #         waterway._add(c)
+
+    
+    # Algorithmic design
+    #
+    # The goal is to start from a list of "waterway" cells, which have
+    # fixed node elevations and cannot be changed, and a list of
+    # "boundary" cells, which are options for picking up at any point.
+    #
+    # Cells in the boundary:
+    # - are not conditioned yet
+    # - have at least one edge in the waterway
+    # - are stored in such a way to make getting the lowest elevation
+    #   cell easily
+    # NOTE: cannot be stored in a sortedcontainer because the centroid
+    # may change.  So every time we get the min elevation cell, we
+    # must recompute.
+    class Boundary:
         def __init__(self):
             self.cells = set()
 
-            # Waterway edges is the set of edges whose cells are all in waterway
-            self.edges = set()
+        def __len__(self):
+            return len(self.cells)
+
+        def pop(self):
+            min_c = min(self.cells, key=lambda c : m2.computeCentroid(c)[2])
+            self.cells.remove(min_c)
+            return min_c
+
+        def add(self, c):
+            self.cells.add(c)
+
+    #
+    # Cells in the waterway:
+    # - all cell edges are in the waterway
+    # - all cell nodes are in the waterway
+    # - all cell nodes are fixed -- elevation will not change
+    # - all cell centroids are either conditioned, e.g. they have a
+    #   downhill-flowing path to an outlet, or 
+    class Waterway:
+        """Waterway is the set of cells that are already conditioned and can be reached."""
+        def __init__(self, eps):
+            # cells in the waterway
+            self.cells = set()
+
+            # a set of nodes with at least one edge in the waterway.
+            #
+            # These nodes have already been touched, and therefore
+            # cannot have their elevation changed without breaking
+            # things.
+            self.nodes = set()
+            
+            # set the current high water mark
             self.max_z = -1e10
 
-        def add(self, be):
-            """Add BoundaryEntry object to the waterway"""
-            logging.debug(f"adding cell {be.cell} (z = {be.z})")
-            self.cells.add(be.cell)
-            for e in be.edges:
-                self.edges.add(e)
-            assert (be.z >= self.max_z)
-            self.max_z = be.z
+            # incremental amount each pathway must go up
+            self.eps = eps
 
-    waterway = Waterway()
+            # the boundary of the waterway
+            self.boundary = Boundary()
 
-    class BoundaryEntry:
-        """A cell that is not yet in the waterway, but has at least one edge whose other cell is in the waterway."""
-        def __init__(self, cell, edges):
-            assert (type(cell) is int)
-            assert (0 <= cell < m2.num_cells)
-            assert (type(edges) is list)
-            for e in edges:
-                assert (type(e) is tuple)
+        def _add(self, c):
+            """Add cell to the waterway, but bypass the usual logic.
 
-            self.cell = cell
-            self.edges = edges
-            self.z = m2.computeCentroid(self.cell)[2]
+            Used only for waterbodies.
+            """
+            self.cells.add(c)
 
-    boundary = sortedcontainers.SortedList([BoundaryEntry(outlet_cell, [outlet_edge, ]), ],
-                                           key=lambda be: be.z)
+            for n in m2.conn[c]:
+                self.nodes.add(n)
+                
+        def add(self, c):
+            self.condition(c)
+            self._add(c)
+            c_z = m2.computeCentroid(c)[2]
+            assert c_z >= self.max_z
+            logging.debug(f"adding cell {c} to waterway (conditioned z = {c_z})")
+            self.max_z = c_z
 
-    # masked cells are always in the boundary, allowing them to be picked up as we reach that elevation.
-    if is_waterbody is not None:
-        assert (len(is_waterbody) == m2.num_cells)
-        masked_cells = [BoundaryEntry(c, list()) for (c, mask) in enumerate(is_waterbody) if mask]
-        boundary.update(masked_cells)
-
-    while len(boundary) > 0:
-        # pop the lowest boundary cell and stick its edge and cell
-        next_be = boundary.pop(0)
-        waterway.add(next_be)
-
-        # find all other edges of the cell just added
-        for other_e in m2.cell_edges(m2.conn[next_be.cell]):
-            if other_e in waterway.edges: continue
-
-            # find the cell on the other side of other_e
-            other_e_cells = m2.edges_to_cells[other_e]
-            if len(other_e_cells) == 1:
-                # boundary edge, add it to the waterway
-                assert (next_be.cell == other_e_cells[0])
-                waterway.edges.add(other_e)
-                continue
-
-            assert (len(other_e_cells) == 2)
-            assert (next_be.cell in other_e_cells)
-            if next_be.cell == other_e_cells[0]:
-                other_c = other_e_cells[1]
-            else:
-                assert (next_be.cell == other_e_cells[1])
-                other_c = other_e_cells[0]
-
-            # this would break assumption of what it means to be
-            # in boundary.
-            assert (other_c not in waterway.cells)
-
-            # now we have an other_e, other_c pair to add into
-            # boundary.  But first we may need to condition.
-            other_c_centroid = m2.computeCentroid(other_c)
-            if other_c_centroid[2] < waterway.max_z:
-                other_c_vertices = m2.conn[other_c]
+            # also add neighbors to the boundary
+            for other_c in m2.cell_to_cells[c]:
+                if other_c not in self.cells:
+                    self.boundary.add(other_c)
+                    
+        def condition(self, c):
+            cc = m2.computeCentroid(c)
+            target_z = self.max_z + self.eps
+            if cc[2] < target_z:
+                c_nodes = m2.conn[c]
 
                 # for this to be possible, there must be at least
                 # one free vertex in the vertices of next_c.  By free,
                 # we mean that its elevation can be changed
                 # without breaking everything.  This means that
-                # neither of that vertex's edges can be in
-                # waterway.edges or boundary.
-                #
-                # we also need the fixed (non-free) vertex elevations
+                # none of that vertex's edges can be in
                 fixed_vertex_elevs = dict()
-
-                for e in m2.cell_edges(other_c_vertices):
-                    if (e == other_e) or (e in waterway.edges) or any(
-                        (e == i) for be in boundary for i in be.edges):
-                        if e[0] not in fixed_vertex_elevs:
-                            fixed_vertex_elevs[e[0]] = m2.coords[e[0], 2]
-                        if e[1] not in fixed_vertex_elevs:
-                            fixed_vertex_elevs[e[1]] = m2.coords[e[1], 2]
-                free_vertices = [n for n in other_c_vertices if n not in fixed_vertex_elevs]
+                free_vertices = []
+                for v in c_nodes:
+                    if v in self.nodes:
+                        fixed_vertex_elevs[v] = m2.coords[v,2]
+                    else:
+                        free_vertices.append(v)
 
                 # should not be possible to be both lower
                 # elevation and not have a free vertex, or it would
                 # already be in boundary, and therefore have no
                 # free vertices
-                assert (len(free_vertices) > 0)
+                if len(free_vertices) == 0:
+                    logging.info(f"No free vertices when conditioning cell {c} at z = {cc[2]}")
+                    cell_neighbors = m2.cell_to_cells[c]
+                    for c2c in cell_neighbors:
+                        logging.info(f"  cell_neighbor : {c2c} at z = {m2.computeCentroid(c2c)[2]}")
+                    
+                    raise RuntimeError(f"No free vertices when conditioning cell {c}")
 
-                # calculate the z of the free vertex required to
-                # make the triangle's centroid == waterway_max
+                # this formula is triangle-only -- this means there
+                # can be at most one free vertex, since we just put an
+                # edge in the waterway
                 #
-                # this formula is likely triangle-only?
-                z_free = (waterway.max_z * len(other_c_vertices)
-                          - sum(fixed_vertex_elevs.values())) / len(free_vertices) + eps
+                # it could probably be relaxed to non-triangle, but
+                # then we would have to think about what we wanted the
+                # free_nodes to do -- do they all go up an equal
+                # amount?  All go up to a common, min required
+                # elevation?  What happens when that min required
+                # elevation is less than the max free elevation?
+                assert len(free_vertices) == 1
 
-                # for now, we'll assume triangular.  I'm not sure
-                # what to do if this is bigger than length
-                # 1... something like evenly raise up all free
-                # vertices?  But with triangles, there can only be
-                # one free vertex so it is easy.
-                assert (len(free_vertices) == 1)
+                # calculate the z of the free vertices required to
+                # make the triangle's centroid == waterway_max
+                z_free = (target_z * (len(free_vertices) + len(fixed_vertex_elevs))
+                          - sum(fixed_vertex_elevs.values())) / len(free_vertices)
+
                 logging.debug(
                     f'  moving z vertex {free_vertices[0]} from {m2.coords[free_vertices[0],2]} to {z_free}'
                 )
                 m2.coords[free_vertices[0], 2] = z_free
 
-            # now it is conditioned, add it to the boundary
-            try:
-                # is it already in the boundary?
-                other_be = next(be for be in boundary if be.cell == other_c)
-            except StopIteration:
-                # no, add it
-                logging.debug(f'  adding to boundary: edge: {other_e}  cell: {other_c}')
-                boundary.add(BoundaryEntry(other_c, [other_e, ]))
-            else:
-                # yes, just add this edge to that entry
-                if other_e not in other_be.edges:
-                    other_be.edges.append(other_e)
+        
+    # first put all waterway cells in the waterway.  This will fix the
+    # nodes and edges, but not alter the max_z, nor do any
+    # conditioning.
+    waterway = Waterway(eps)
+
+    # add outlet cell to the waterway
+    outlet_cells = m2.edges_to_cells[outlet_edge]
+    assert len(outlet_cells) == 1
+    outlet_cell = outlet_cells[0]
+    waterway.add(outlet_cell)
+
+    while len(waterway.boundary) > 0:
+        waterway.add(waterway.boundary.pop())
 
     # when this is done, all cells should be in waterway
-    assert (len(waterway.cells) == m2.num_cells)
-    assert (len(waterway.edges) == m2.num_edges)
+    assert len(waterway.cells) == m2.num_cells
 
     # delete the centroid info to force recalculation
     m2.clearGeometryCache()
     return
 
+def isLocalMinima(m2, c):
+    cc = m2.computeCentroid(c)
+    for e in m2.cell_edges(m2.conn[c]):
+        e_cells = m2.edges_to_cells[e]
+        if len(e_cells) > 1:
+            other_c = next(c2 for c2 in e_cells if c2 != c)
+            if m2.computeCentroid(other_c)[2] <= cc[2]:
+                return False
+    return True
 
+def isBoundaryCell(m2, c):
+    return any(len(m2.edges_to_cells[e]) == 1 for e in m2.conn[c])
+
+        
 def identifyLocalMinima(m2 : Mesh2D) -> np.ndarray:
     """For all cells, identify if their centroid elevation is lower than
-    the elevation of all neighbors.
+    the elevation of all neighbors, and it is not on the boundary.
 
     Parameters
     ----------
@@ -383,31 +259,7 @@ def identifyLocalMinima(m2 : Mesh2D) -> np.ndarray:
       Array of 0s and 1s, where 1 indicates a local minima.
 
     """
-    # this is effectively used as a diagnostic
-    res = np.zeros((m2.num_cells, ), )
-    for cell, conn in enumerate(m2.conn):
-        higher = []
-        for e in m2.cell_edges(conn):
-            # find the other cell
-            e_cells = m2.edges_to_cells[e]
-            if len(e_cells) > 1:
-                if e_cells[0] == cell:
-                    other_cell = e_cells[1]
-                elif e_cells[1] == cell:
-                    other_cell = e_cells[0]
-                else:
-                    raise RuntimeError("Mismatch, cell not in edges_to_cells?")
-            else:
-                continue
-            if m2.centroids[other_cell][-1] > m2.centroids[cell][-1]:
-                higher.append(True)
-            else:
-                higher.append(False)
-                break
-        if all(higher):
-            res[cell] = 1
-
-    return res
+    return np.array([isLocalMinima(m2, c) and not isBoundaryCell(m2, c) for c in range(m2.num_cells)])
 
 
 def conditionRiverMeshes(m2 : Mesh2D,
