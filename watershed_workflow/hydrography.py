@@ -181,6 +181,9 @@ def findOutletsByCrossings(hucs: SplitHUCs,
             my_inlet_locs.append(shapely.geometry.Point(inlet[0], inlet[1]))
         inlet_locs[pi] = my_inlet_locs
 
+    outlet_locs = dict(sorted(outlet_locs.items()))
+    inlet_locs = dict(sorted(inlet_locs.items()))
+
     last_outlet_p = crossings_clusters_centroids[last_outlet]
     last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
 
