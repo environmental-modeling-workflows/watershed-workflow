@@ -101,6 +101,16 @@ def findOutletsByCrossings(hucs: SplitHUCs,
     itercount = 0
     done = False
     last_outlet = None
+
+    # First of all, check whether inlet dict (cluster_poly_indices) has a value
+    # with length of 1, if so, assign that cluster as the outlet of that poly and 
+    # meanwhile delete the corresponding {c: [polys]} from the inlet dict.
+    for ci, polys in cluster_poly_indices.items():
+        if len(polys) == 1:
+            outlets[polys[0]] = ci
+    cluster2rm = list(outlets.values())
+    cluster_poly_indices = {c: p for c, p in cluster_poly_indices.items() if c not in cluster2rm}
+
     while not done:
         logging.info(f'Iteration = {itercount}')
         logging.info(f'-----------------')
@@ -131,6 +141,7 @@ def findOutletsByCrossings(hucs: SplitHUCs,
             cluster_poly_indices.pop(ci)
 
         if debug_plot and len(new_outlets) > 0:
+            from matplotlib import pyplot as plt
             fig, ax = plt.subplots(1, 1)
             hucs.plot(color='k', ax=ax)
             river.plot(color='b', ax=ax)
@@ -144,7 +155,6 @@ def findOutletsByCrossings(hucs: SplitHUCs,
                 if ci not in outlets.values() and ci not in new_outlets.values():
                     crossing = crossings_clusters_centroids[ci]
                     ax.scatter([crossing[0], ], [crossing[1], ], s=100, c='k', marker='o')
-            from matplotlib import pyplot as plt
             ax.set_title(f'Outlets after iteration {itercount}')
             plt.show()
 
@@ -170,6 +180,9 @@ def findOutletsByCrossings(hucs: SplitHUCs,
             inlet = crossings_clusters_centroids[ci]
             my_inlet_locs.append(shapely.geometry.Point(inlet[0], inlet[1]))
         inlet_locs[pi] = my_inlet_locs
+
+    outlet_locs = dict(sorted(outlet_locs.items()))
+    inlet_locs = dict(sorted(inlet_locs.items()))
 
     last_outlet_p = crossings_clusters_centroids[last_outlet]
     last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
