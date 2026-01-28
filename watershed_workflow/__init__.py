@@ -403,7 +403,6 @@ def triangulate(hucs : SplitHUCs,
                 internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
                 hole_points : Optional[List[shapely.geometry.Point]] = None,
                 additional_vertices : Optional[List[Tuple[float, float]]] = None,
-                handle_stream_triangles : Optional[str] = None,
                 diagnostics : bool = False,
                 verbosity : int = 1,
                 tol : float = 1.0,
@@ -437,12 +436,6 @@ def triangulate(hucs : SplitHUCs,
         List of points inside the polygons to be left as holes/voids (excluded from mesh)
     additional_vertices : list(Tuple[float, float]), optional
         List of points to be inlcuded in the triangulation.
-    handle_stream_triangles : Optional[Literal['refine', 'enforce']] = None
-        Controls how triangles whose vertices all lie on the stream network are handled.
-        'refine' - passes these triangles to general refinement routines, which may leave
-                   some intact.
-        'enforce' - explicitly identifies and splits all such triangles, performing an
-                    additional triangulation pass to ensure none remain.
     diagnostics : bool, optional
         Plot diagnostics graphs of the triangle refinement.
     tol : float, optional
@@ -513,11 +506,7 @@ def triangulate(hucs : SplitHUCs,
     if refine_max_edge_length != None:
         refine_funcs.append(
             watershed_workflow.triangulation.refineByMaxEdgeLength(refine_max_edge_length))
-    if handle_stream_triangles != None:
-        river_corrs = internal_boundaries[:len(rivers)]
-        logging.info("Stream triangles: refining using standard refinement criteria ")
-        refine_funcs.append(
-            watershed_workflow.triangulation.refineByStreamTriangles(river_corrs))
+
     if refine_polygons != None:
         refine_funcs.append(watershed_workflow.triangulation.refineByPolygons(refine_polygons[0], refine_polygons[1]))
 
@@ -536,30 +525,14 @@ def triangulate(hucs : SplitHUCs,
         enforce_delaunay=enforce_delaunay,
         allow_boundary_steiner=False)
     
-    if handle_stream_triangles == 'enforce':
-        logging.info("Stream triangles: enforcing split via additional triangulation pass with prescribed vertices")
-        stream_triangles = watershed_workflow.identifyStreamTriangles(vertices, triangles, river_corrs)
-        if len(stream_triangles) > 0:
-            if additional_vertices is None:
-                additional_vertices = watershed_workflow.river_mesh.getTriangleSplitVertices(
-                    stream_triangles, river_corrs)
-            else:
-                additional_vertices = additional_vertices + watershed_workflow.river_mesh.getTriangleSplitVertices(
-                    stream_triangles, river_corrs)
-                    
-        # triangulate again with additional points to split stream triangles
-        vertices, triangles = watershed_workflow.triangulation.triangulate(
-            hucs,
-            internal_boundaries=internal_boundaries,
-            hole_points=hole_points,
-            additional_vertices=additional_vertices,
-            tol=tol,
-            verbose=verbose,
-            refinement_func=my_refine_func,
-            min_angle=refine_min_angle,
-            enforce_delaunay=enforce_delaunay,
-            allow_boundary_steiner=False)
-        
+    # split triangles that have all vertices on stream corridors
+    river_corrs = internal_boundaries[:len(rivers)]
+    logging.info("Splitting stream triangles")
+    original_n_triangles = len(triangles)
+    vertices, triangles = watershed_workflow.triangulation.splitStreamTriangles(vertices, triangles, river_corrs)
+    new_n_triangles = len(triangles)
+    logging.info(f"Split {new_n_triangles - original_n_triangles} stream triangles")
+
     if diagnostics:
         logging.info("Plotting triangulation diagnostics")
         if rivers is not None:
@@ -613,7 +586,7 @@ def triangulate(hucs : SplitHUCs,
         return watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
     else:
         return vertices, triangles
-
+    
 
 def tessalateRiverAligned(hucs : SplitHUCs,
                           rivers : List[River],
@@ -621,7 +594,6 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
                           hole_points : Optional[List[Tuple[float, float]]] = None,
                           additional_vertices : Optional[List[Tuple[float, float]]] = None,
-                          handle_stream_triangles : Optional[str] = None,
                           as_mesh : bool = True,
                           debug : bool = False,
                           **kwargs) -> \
@@ -653,12 +625,6 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         List of points inside the polygons to be left as holes/voids (excluded from mesh)
     additional_vertices : list(Tuple[float, float]), optional
         List of points to be inlcuded in the triangulation.
-    handle_stream_triangles : Optional[Literal['refine', 'enforce']] = None
-        Controls how triangles whose vertices all lie on the stream network are handled.
-        'refine' - passes these triangles to general refinement routines, which may leave
-                   some intact.
-        'enforce' - explicitly identifies and splits all such triangles, performing an
-                    additional triangulation pass to ensure none remain.
     diagnostics : bool, optional
        If true, prints extra diagnostic info.
     ax : matplotlib Axes object, optional
@@ -709,7 +675,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         internal_boundaries = river_corridors + internal_boundaries
         
     tri_res = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
-                                              hole_points, additional_vertices, handle_stream_triangles, 
+                                              hole_points, additional_vertices,  
                                               as_mesh=False, **kwargs)
 
     assert not isinstance(tri_res, watershed_workflow.mesh.Mesh2D)
@@ -814,32 +780,3 @@ def makeMap(m):
     folium.plugins.Fullscreen().add_to(m)
     folium.plugins.MeasureControl().add_to(m)
     return m
-
-
-def identifyStreamTriangles(vertices, triangles, river_corrs, buffer_distance=1):
-    """Identifies triangles that are fully within river corridors.
-    
-    Parameters
-    ----------
-    vertices : np.array((n_points, 2), 'd')
-        Array of triangle vertices
-    triangles : np.array((n_tris, 3), 'i')
-        For each triangle, indices into vertices array
-    river_corrs : list[shapely.geometry.Polygon]
-        List of river corridor polygons
-    buffer_distance : float, optional
-        Distance to buffer points when checking intersection with corridors.
-        Default is 1.
-
-    Returns
-    -------
-    list[np.array]
-        List of vertex arrays for triangles that are fully within river corridors
-    """
-    stream_triangles = []
-    riv_corr = shapely.ops.unary_union(river_corrs).buffer(1)
-    for tri in triangles:
-        tri_verts = vertices[tri]
-        if all(riv_corr.intersects(shapely.geometry.Point(p)) for p in tri_verts):
-            stream_triangles.append(tri_verts)
-    return stream_triangles
