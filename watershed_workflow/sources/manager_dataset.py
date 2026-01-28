@@ -431,8 +431,8 @@ class ManagerDataset(abc.ABC):
         # Transform to native input CRS and buffer
         polygon = watershed_workflow.warp.shply(polygon, geometry_crs, self.native_crs_in)
         logging.info(f'Incoming shape area = {polygon.area}')
-        logging.info(f'... buffering incoming shape by = {self.native_resolution}')
-        polygon = polygon.buffer(self.native_resolution)
+        logging.info(f'... buffering incoming shape by three times the native resolution = {3 * self.native_resolution}')
+        polygon = polygon.buffer(3 * self.native_resolution)
         logging.info(f'... buffered shape area = {polygon.area}')
 
         # Parse and validate dates

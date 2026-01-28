@@ -42,6 +42,7 @@ def _isNonoverlapping(points: np.ndarray, elems: List[List[int]], tol: float = 1
     shps = [shapely.geometry.Polygon(points[e]) for e in elems]
     total_area = shapely.unary_union(shps).area
     summed_area = sum(shp.area for shp in shps)
+    logging.info(f'  is nonoverlapping?  total_area = {total_area}, summed_area = {summed_area}')
     return abs(total_area - summed_area) < tol
 
 
@@ -166,7 +167,7 @@ def createRiversMesh(hucs : SplitHUCs,
     coords: List[np.ndarray] = []
     corridors: List[shapely.geometry.Polygon] = []
     hole_points: List[shapely.geometry.Point] = []
-    i = 0
+    coords_gid_start = 0
     elems_gid_start = 0
 
     for river in rivers:
@@ -189,12 +190,14 @@ def createRiversMesh(hucs : SplitHUCs,
         corridors.append(shapely.geometry.Polygon(lcoords))
 
         # shift to get a global ordering
-        if i != 0:
-            lelems = [[j + i for j in e] for e in lelems]
+        if coords_gid_start != 0:
+            lelems = [[j + coords_gid_start for j in e] for e in lelems]
+        for reach in river:
+            reach[names.ELEMS][:] = [[j + coords_gid_start for j in e] for e in reach[names.ELEMS]]
+        coords_gid_start += len(lcoords)
 
         elems.extend(lelems)
         coords.append(lcoords)
-        i += len(lcoords)
 
     if ax is not None:
         hucs.plotAsLinestrings(color='k', marker='x', ax=ax)
@@ -435,12 +438,41 @@ def createRiverMesh(river: River,
 
     assert k == len(coords)
 
-    # check convexity
+    # another pass to check for convexity
     for reach in river:
         for k, elem in enumerate(reach[names.ELEMS]):
             e_coords = coords[elem]
             if not watershed_workflow.utils.isConvex(e_coords):
-                assert k == 0
+                if k != 0:
+                    fig, ax = plt.subplots(1, 1)
+
+                    reaches = [reach, ]
+                    if reach.parent is not None:
+                        reaches.append(reach.parent)
+                    reaches = reaches + list(reach.children)
+                    for r in reaches:
+                        ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
+
+                    for k2, e2 in enumerate(reach.parent[names.ELEMS]):
+                        e_coords2 = coords[e2]
+                        poly2 = shapely.geometry.Polygon(e_coords2)
+                        ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='purple')
+
+                    for lcv_reach in reach.parent.children:
+                        for k2, e2 in enumerate(lcv_reach[names.ELEMS]):
+                            e_coords2 = coords[e2]
+                            poly2 = shapely.geometry.Polygon(e_coords2)
+                            ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='grey')
+                        
+                    poly = shapely.geometry.Polygon(e_coords)
+                    ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'g-x')
+
+                    ls = reach.linestring
+                    ax.plot(ls.xy[0], ls.xy[1], 'r-x')
+                    ax.set_aspect('equal', adjustable='box')
+                    plt.show()
+                    raise RuntimeError(f'Convexity in non-0th ({k})th element of reach {reach.index} with ID {reach[names.ID]}')
+                
                 new_e_coords = fixConvexity(reach, e_coords, computeWidth)
                 for c_index, coord in zip(elem, new_e_coords):
                     coords[c_index] = coord
@@ -520,10 +552,10 @@ def adjustHUCsToRiverMesh(hucs: SplitHUCs, river: River, coords: np.ndarray) -> 
                     # coordinate, and wierd stuff would probably
                     # happen in triangulation anyway.
                     assert touches[touch_i-1][0] is None or touches[touch_i-1][0] < 0, \
-                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+                        f"Neighboring touch at reach {reach.index}, ID {reach[names.ID]} coords {reach.linestring.coords[0]} is wierd"
 
                     assert touches[(touch_i+1)%len(touches)][0] is None or touches[(touch_i+1)%len(touches)][0] < 0, \
-                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+                        f"Neighboring touch at reach {reach.index}, ID {reach[names.ID]} coords {reach.linestring.coords[0]} is wierd"
 
                     # it is a HUC, insert the point
                     new_coord = coords[reach[names.ELEMS][0][point_i]]

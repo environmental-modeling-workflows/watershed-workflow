@@ -1334,7 +1334,7 @@ class Mesh3D:
         watershed_workflow.vtk_io.write(filename, self.coords, { 'wedge': np.array(wedges) })
 
     def writeExodus(self, filename: str,
-                    element_block_mode: str = "one block") -> None:
+                    element_block_mode : str) -> None:
         """Write the 3D mesh to ExodusII using arbitrary polyhedra spec.
 
         Parameters

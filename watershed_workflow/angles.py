@@ -11,11 +11,14 @@ from scipy import interpolate
 from scipy.spatial import cKDTree
 import shapely
 import abc
+from matplotlib import pyplot as plt
 
 import watershed_workflow.utils
+import watershed_workflow.colors
 from watershed_workflow.utils import reverseLineString
 from watershed_workflow.river_tree import River
 from watershed_workflow.split_hucs import SplitHUCs
+from watershed_workflow.sources import standard_names as names
 
 
 def _getAngles(linestrings : List[shapely.geometry.LineString]) -> np.ndarray:
@@ -70,19 +73,22 @@ def smoothSharpAngles(hucs : SplitHUCs,
         junction_min_angle = min_angle
 
     count = smoothHUCsSharpAngles(hucs, min_angle, junction_min_angle)
+    logging.info(f" ... cleaned up {count} sharp angles on HUCs.")
         
-    for river in rivers:
-        logging.info(f'SSA1: {river.df.crs}')
-        count += smoothOutletSharpAngles(hucs, river, junction_min_angle)
-        
-        logging.info(f'SSA2: {river.df.crs}')
+    for ri, river in enumerate(rivers):
+        lcount = smoothOutletSharpAngles(hucs, river, junction_min_angle)
+        logging.info(f" ... cleaned up {lcount} sharp angles at outlets on river {ri}.")
+        count += lcount
+
+        rcount = 0
         for reach in river:
             lcount, reach.linestring = smoothInternalSharpAngles(reach.linestring, min_angle)
-            count += lcount
-        logging.info(f'SSA3: {river.df.crs}')
+            rcount += lcount
         for reach in river:
-            count += smoothUpstreamSharpAngles(hucs, reach, junction_min_angle)
-        logging.info(f'SSA4: {river.df.crs}')
+            rcount += smoothUpstreamSharpAngles(hucs, reach, junction_min_angle)
+        logging.info(f" ... cleaned up {rcount} internal sharp angles on river {ri}.")
+        count += rcount
+        
     return count
 
                 
@@ -167,7 +173,8 @@ def smoothInternalSharpAngles(linestring : shapely.geometry.LineString,
         lcount, new_linestring = _smoothInternalSharpAngles(linestring, min_angle)
         count += lcount
         done = len(new_linestring.coords) == len(linestring.coords)
-    return count, new_linestring
+        linestring = new_linestring
+    return count, linestring
 
 
 def _spreadAngles(linestrings : List[shapely.geometry.LineString],
@@ -400,7 +407,17 @@ def smoothUpstreamSharpAngles(hucs : SplitHUCs | None,
     if len(touches) == 0: return False
 
     linestrings = [touch[1] for touch in touches]
-    angles = _getAngles(linestrings)
+    try:
+        angles = _getAngles(linestrings)
+    except AssertionError:
+        fig, ax = plt.subplots(1, 1)
+        hucs.plot(color='k', ax=ax)
+        watershed_workflow.plot.linestringWithCoords(reach.linestring, marker='x', color='grey', ax=ax)
+
+        for child, color in zip(reach.children, watershed_workflow.colors.enumerated_palettes[1]):
+            watershed_workflow.plot.linestringWithCoords(child.linestring, marker='x', color=color, ax=ax)
+        plt.show()
+        raise RuntimeError(f'smoothUpstreamSharpAngles input data is bad -- angles upstream of reach {reach[names.ID]} are invalid')
 
     if len(angles) > 4:
         logging.info(f"Considering lots of angles at {linestrings[0].coords[-1]}:")
@@ -571,16 +588,11 @@ def _zipperSiblings(reaches : List[River],
     old_downstream_nodes = []
     merged_ds_node = None
     for reach, ls in zip(reaches, linestrings):
-        logging.info(f'zip0: {reach.df.crs}')
         us, ds = reach.split(len(ls.coords)-1)
-        logging.info(f'  us: {us.df.crs}')
-        logging.info(f'  ds: {ds.df.crs}')
         us.moveCoordinate(-1, centroid)
         old_downstream_nodes.append(ds)
 
         if merged_ds_node is None:
             merged_ds_node = ds
         else:
-            logging.info(f'zip1: {ds.df.crs}')
             merged_ds_node = watershed_workflow.river_tree.combineSiblings(merged_ds_node, ds, new_downstream_ls)
-            logging.info(f'zip2: {ds.df.crs}')
