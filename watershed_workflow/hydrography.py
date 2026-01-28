@@ -99,17 +99,23 @@ def findOutletsByCrossings(hucs: SplitHUCs,
     outlets: Dict[int, int] = dict()
     inlets = collections.defaultdict(list)
     itercount = 0
-    done = False
-    last_outlet = None
 
     # First of all, check whether inlet dict (cluster_poly_indices) has a value
     # with length of 1, if so, assign that cluster as the outlet of that poly and 
     # meanwhile delete the corresponding {c: [polys]} from the inlet dict.
+    # If there is only one basin, stop here.
     for ci, polys in cluster_poly_indices.items():
         if len(polys) == 1:
             outlets[polys[0]] = ci
     cluster2rm = list(outlets.values())
     cluster_poly_indices = {c: p for c, p in cluster_poly_indices.items() if c not in cluster2rm}
+    if len(polygons) == 1:
+        done = True
+        last_outlet = list(outlets.values())[0]
+        last_outlet_poly = list(outlets.keys())[0]
+    else:
+        done = False
+        last_outlet = None
 
     while not done:
         logging.info(f'Iteration = {itercount}')
