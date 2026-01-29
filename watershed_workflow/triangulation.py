@@ -375,18 +375,23 @@ def splitStreamTriangles(vertices, triangles, river_corrs):
     triangles : list
         Updated triangles list with split triangles
     """
-    stream_tri_indices = _findStreamTriangles(vertices, triangles, river_corrs)
-
-    for stream_tri_ind in stream_tri_indices:
-        vertices, triangles = _splitSingleTriangle(vertices, triangles, stream_tri_ind, river_corrs)
+    river_buffer = shapely.ops.unary_union(river_corrs).buffer(1)
+    
+    while True:
+        stream_tri_indices = _findStreamTriangles(vertices, triangles, river_buffer)
+        if not stream_tri_indices:
+            break
+        
+        vertices, triangles = _splitSingleStreamTriangle(
+            vertices, triangles, stream_tri_indices[0], river_buffer
+        )
     
     return vertices, triangles
 
 
-def _findStreamTriangles(vertices, triangles, river_corrs):
+def _findStreamTriangles(vertices, triangles, river_buffer):
     """Find triangles where all vertices lie on river corridors."""
     stream_tri_indices = []
-    river_buffer = shapely.ops.unary_union(river_corrs).buffer(1)
     
     for ind, tri in enumerate(triangles):
         tri_verts = vertices[tri]
@@ -396,67 +401,95 @@ def _findStreamTriangles(vertices, triangles, river_corrs):
     return stream_tri_indices
 
 
-def _splitSingleTriangle(vertices, triangles, triangle_index, river_corrs):
+def _splitSingleStreamTriangle(vertices, triangles, triangle_index, river_buffer):
     """Split a single triangle by adding a vertex at the midpoint of an edge."""
     triangle_conn = triangles[triangle_index]
     triangle_verts = vertices[triangle_conn]
     
-    # Find the split point
-    split_point, edge_index = _findTriangleSplitPoint(triangle_verts, river_corrs)
+    # Find the split point and edge
+    split_point, edge_index = _findTriangleSplitPoint(triangle_verts, river_buffer)
+    
+    # Get the edge vertices and find adjacent triangle
+    edge_vertices = (triangle_conn[edge_index], triangle_conn[(edge_index + 1) % 3])
+    edge_hash = tuple(sorted(edge_vertices))
+    adjacent_triangles = _findEdgeSharingTriangleIndices(triangles, edge_hash)
+    
+    # Find the opposite triangle (the one that's not the current triangle)
+    opposite_triangle_index = next(t for t in adjacent_triangles if t != triangle_index)
+    opposite_triangle_conn = triangles[opposite_triangle_index]
     
     # Add the split point to vertices
     vertices = np.vstack([vertices, np.array([split_point])])
     split_vertex_index = len(vertices) - 1
     
-    # Create two new triangles
-    new_triangles = _createSplitTriangles(triangle_conn, edge_index, split_vertex_index)
+    # Find the edge index in the opposite triangle
+    opposite_edge_index = _findEdgeIndexInTriangle(opposite_triangle_conn, edge_hash)
     
-    # Replace the original triangle with the first new triangle
-    triangles[triangle_index] = new_triangles[0]
-    # Add the second new triangle
-    triangles = np.vstack([triangles, [new_triangles[1]]])
+    # Create new triangles for both original triangles
+    new_triangles_current = _createSplitTriangles(triangle_conn, edge_index, split_vertex_index)
+    new_triangles_opposite = _createSplitTriangles(opposite_triangle_conn, opposite_edge_index, split_vertex_index)
+    
+    # Replace original triangles and add new ones
+    triangles[triangle_index] = new_triangles_current[0]
+    triangles[opposite_triangle_index] = new_triangles_opposite[0]
+    triangles = np.vstack([triangles, [new_triangles_current[1]], [new_triangles_opposite[1]]])
     
     return vertices, triangles
 
 
-def _findTriangleSplitPoint(triangle_vertices, river_corrs):
-    # find the point to split a triangle and the edge it lies on.
+def _findTriangleSplitPoint(triangle_vertices, river_buffer):
+    """Find the point to split a triangle and the edge it lies on."""
     if len(triangle_vertices) != 3:
         raise ValueError("Triangle must have exactly 3 vertices")
     
-    river_buffer = shapely.ops.unary_union(river_corrs).buffer(1)
-    
-    # Calculate midpoints for each edge
-    edge_midpoints = []
+    # Calculate midpoints for each edge and check if they're off the corridor
     for i in range(3):
         midpoint = watershed_workflow.utils.computeMidpoint(
             triangle_vertices[i], 
             triangle_vertices[(i + 1) % 3]
         )
-        edge_midpoints.append((i, shapely.geometry.Point(midpoint), midpoint))
+        midpoint_geom = shapely.geometry.Point(midpoint)
+        
+        if not river_buffer.intersects(midpoint_geom):
+            return midpoint, i
     
-    # Find edges whose midpoints are NOT on river corridors
-    off_corridor_edges = [
-        (edge_idx, point, coords) 
-        for edge_idx, point, coords in edge_midpoints 
-        if not river_buffer.intersects(point)
-    ]
+    # Fallback: if all midpoints are on corridor, use the first edge
+    midpoint = watershed_workflow.utils.computeMidpoint(triangle_vertices[0], triangle_vertices[1])
+    return midpoint, 0
 
-    # Use the edge that's off the corridor
-    edge_index, _, split_point = off_corridor_edges[0]
+
+def _findEdgeSharingTriangleIndices(triangles, edge_hash):
+    """Find triangles that share the same edge."""
+    sharing_triangles = []
     
-    return split_point, edge_index
+    for i, triangle in enumerate(triangles):
+        triangle_edges = [
+            tuple(sorted([triangle[j], triangle[(j + 1) % len(triangle)]]))
+            for j in range(len(triangle))
+        ]
+        
+        if edge_hash in triangle_edges:
+            sharing_triangles.append(i)
+    
+    return sharing_triangles
+
+
+def _findEdgeIndexInTriangle(triangle_conn, edge_hash):
+    """Find the index of an edge within a triangle's connectivity."""
+    for i in range(len(triangle_conn)):
+        edge = tuple(sorted([triangle_conn[i], triangle_conn[(i + 1) % len(triangle_conn)]]))
+        if edge == edge_hash:
+            return i
+    raise ValueError("Edge not found in triangle")
 
 
 def _createSplitTriangles(original_connectivity, edge_index, split_vertex_index):
-    # create two new triangles from splitting along an edge.
+    """Create two new triangles from splitting along an edge."""
     vertex1_idx = original_connectivity[edge_index]
     vertex2_idx = original_connectivity[(edge_index + 1) % 3]
     opposite_vertex_idx = original_connectivity[(edge_index + 2) % 3]
     
-    # Create two triangles connecting the split point to the opposite vertex
     triangle1 = [opposite_vertex_idx, vertex1_idx, split_vertex_index]
     triangle2 = [split_vertex_index, vertex2_idx, opposite_vertex_idx]
     
     return [triangle1, triangle2]
- 
