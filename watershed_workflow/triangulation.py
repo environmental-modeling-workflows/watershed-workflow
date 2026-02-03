@@ -377,15 +377,30 @@ def splitStreamTriangles(vertices, triangles, river_corrs):
     """
     river_buffer = shapely.ops.unary_union(river_corrs).buffer(1)
     
-    while True:
-        stream_tri_indices = _findStreamTriangles(vertices, triangles, river_buffer)
-        if not stream_tri_indices:
-            break
-        
-        vertices, triangles = _splitSingleStreamTriangle(
-            vertices, triangles, stream_tri_indices[0], river_buffer
-        )
+    stream_queue = list(
+        _findStreamTriangles(vertices, triangles, river_buffer)
+    )
     
+    split_triangles = set()
+
+    while stream_queue:
+        ti = stream_queue.pop()
+
+        # skip if already split (explicitly or implicitly)
+        if ti in split_triangles:
+            continue
+
+        vertices, triangles, new_tris, implicitly_split = _splitSingleStreamTriangle(
+            vertices, triangles, ti, river_buffer
+        )
+
+        # mark all affected triangles as split
+        split_triangles.add(ti)
+        split_triangles.update(implicitly_split)
+
+        for new_tri in new_tris:
+            assert not _isStreamTriangle(vertices, new_tri, river_buffer)
+
     return vertices, triangles
 
 
@@ -394,11 +409,16 @@ def _findStreamTriangles(vertices, triangles, river_buffer):
     stream_tri_indices = []
     
     for ind, tri in enumerate(triangles):
-        tri_verts = vertices[tri]
-        if all(river_buffer.intersects(shapely.geometry.Point(p)) for p in tri_verts):
+        if _isStreamTriangle(vertices, tri, river_buffer):
             stream_tri_indices.append(ind)
-    
+            
     return stream_tri_indices
+
+
+def _isStreamTriangle(vertices, triangle_conn, river_buffer):
+    """Check if a triangle has all vertices on river corridors."""
+    triangle_verts = vertices[triangle_conn]
+    return all(river_buffer.intersects(shapely.geometry.Point(float(p[0]), float(p[1]))) for p in triangle_verts)
 
 
 def _splitSingleStreamTriangle(vertices, triangles, triangle_index, river_buffer):
@@ -413,8 +433,7 @@ def _splitSingleStreamTriangle(vertices, triangles, triangle_index, river_buffer
     edge_vertices = (triangle_conn[edge_index], triangle_conn[(edge_index + 1) % 3])
     edge_hash = tuple(sorted(edge_vertices))
     adjacent_triangles = _findEdgeSharingTriangleIndices(triangles, edge_hash)
-    
-    # Find the opposite triangle (the one that's not the current triangle)
+
     opposite_triangle_index = next(t for t in adjacent_triangles if t != triangle_index)
     opposite_triangle_conn = triangles[opposite_triangle_index]
     
@@ -434,7 +453,7 @@ def _splitSingleStreamTriangle(vertices, triangles, triangle_index, river_buffer
     triangles[opposite_triangle_index] = new_triangles_opposite[0]
     triangles = np.vstack([triangles, [new_triangles_current[1]], [new_triangles_opposite[1]]])
     
-    return vertices, triangles
+    return vertices, triangles, new_triangles_current + new_triangles_opposite, [opposite_triangle_index]
 
 
 def _findTriangleSplitPoint(triangle_vertices, river_buffer):
@@ -448,7 +467,7 @@ def _findTriangleSplitPoint(triangle_vertices, river_buffer):
             triangle_vertices[i], 
             triangle_vertices[(i + 1) % 3]
         )
-        midpoint_geom = shapely.geometry.Point(midpoint)
+        midpoint_geom = shapely.geometry.Point(midpoint[0], midpoint[1])
         
         if not river_buffer.intersects(midpoint_geom):
             return midpoint, i
