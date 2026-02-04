@@ -728,15 +728,16 @@ class CutError(Exception):
     ----------
     message : str
         Error message.
-    line : shapely.geometry.LineString
+    line : shapely.geometry.LineString, optional
         The line being cut.
-    seg : shapely.geometry.LineString
+    seg : shapely.geometry.LineString, optional
         The segment causing issues.
-    cutline : shapely.geometry.LineString
+    cutline : shapely.geometry.LineString, optional
         The cutting line.
     """
-    def __init__(self, message: str, line: shapely.geometry.LineString,
-                 seg: shapely.geometry.LineString, cutline: shapely.geometry.LineString) -> None:
+    def __init__(self, message: str, line: Optional[shapely.geometry.LineString] = None,
+                 seg: Optional[shapely.geometry.LineString] = None, 
+                 cutline: Optional[shapely.geometry.LineString] = None) -> None:
         super(Exception, self).__init__(message)
         self.line = line
         self.seg = seg
@@ -780,7 +781,7 @@ def cut(line1: shapely.geometry.LineString,
             elif d0 < eps:
                 return l0_geoms
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 1')
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 1', l0, None, None)
 
         elif len(l0_geoms) == 2:
             res = []
@@ -808,7 +809,7 @@ def cut(line1: shapely.geometry.LineString,
                 l00_is_0 = False
                 res.append(reverseLineString(l1g))
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 2')
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 2', l0, None, None)
 
             # find closest point of the 4 endpoints to the last endpoint of l0
             d0 = computeDistance(l0.coords[-1], l0g.coords[0])
@@ -820,29 +821,29 @@ def cut(line1: shapely.geometry.LineString,
             # orient the second segment off of the closest point
             if d0 == dmin and d0 < eps:
                 if l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 3')
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 3', l0, None, None)
                 res.append(reverseLineString(l0g))
             elif d1 == dmin and d1 < eps:
                 if l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 4')
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 4', l0, None, None)
                 res.append(l0g)
             elif d2 == dmin and d2 < eps:
                 if not l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 5')
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 5', l0, None, None)
                 res.append(reverseLineString(l1g))
             elif d3 == dmin and d3 < eps:
                 if not l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 6')
+                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 6', l0, None, None)
                 res.append(l1g)
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 7')
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 7', l0, None, None)
 
             if computeDistance(res[0].coords[-1], res[1].coords[0]) > eps:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 8')
+                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 8', l0, None, None)
             return res
 
         else:
-            raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 9')
+            raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 9', l0, None, None)
 
     return _permute(line1, l1_geoms), _permute(line2, l2_geoms)
         
