@@ -87,23 +87,31 @@ def _computeExpectedNumElems(river: River) -> int:
 
 
 def createWidthFunction(
-        arg: Dict[int, float] | Callable[[River, ], float] | float) -> Callable[[River, ], float]:
+        arg: Dict[int, float] | Callable[[River, ], float] | str | float) -> Callable[[River, ], float]:
     """Create a width function from various argument types.
 
     Parameters
     ----------
-    arg : Dict[int, float] | Callable[[int], float] | float
+    arg : Dict[int, float] | Callable[[River], float] | str | float
         Width specification - can be a constant, dictionary mapping stream order to width,
-        or callable function.
+        callable function, or string. If string "from_property", width for each reach is 
+        explicitly provided in properties as "target_width".
 
     Returns
     -------
-    Callable[[int], float]
+    Callable[[River], float]
         Function that computes width for a given reach.
     """
     if isinstance(arg, dict):
         def func(reach):
             return arg[reach[names.ORDER]]
+
+    elif isinstance(arg, str):
+        if arg == "from_property":
+            def func(reach):
+                return reach.properties["target_width"]
+        else:
+            raise ValueError(f"Unknown string argument: {arg}")
 
     elif callable(arg):
         func = arg
@@ -137,7 +145,7 @@ def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> No
 
 def createRiversMesh(hucs : SplitHUCs,
                      rivers : List[River],
-                     computeWidth : Callable[[River,], float],
+                     computeWidth : Dict[int, float] | Callable[[River,], float] | str | float,
                      ax : Optional[matplotlib.axes.Axes] = None) -> \
                      Tuple[np.ndarray,
                            List[List[int]],
@@ -153,8 +161,10 @@ def createRiversMesh(hucs : SplitHUCs,
         Split HUCs object for mesh adjustment.
     rivers : List[River]
         List of river networks to mesh.
-    computeWidth : Callable[[River], float]
-        Function to compute river width.
+    computeWidth : Dict[int, float] | Callable[[River,], float] | str | float
+        Function to compute river width. Can be a dictionary mapping stream order to width,
+        callable function, or string. If string "from_property", width for each reach is 
+        explicitly provided in properties as "target_width".
     ax : matplotlib.axes.Axes, optional
         Axes for debugging plots, by default None.
 
@@ -169,6 +179,8 @@ def createRiversMesh(hucs : SplitHUCs,
     hole_points: List[shapely.geometry.Point] = []
     coords_gid_start = 0
     elems_gid_start = 0
+    
+    computeWidth = createWidthFunction(computeWidth)
 
     for river in rivers:
         # create the mesh
@@ -250,26 +262,14 @@ def createRiverMesh(river: River,
                     elems_gid_start: int = 0):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
-    Parameters:
-    -----------
-    rivers: list(River object)
-        List of river tree along which river meshes are to be created
-    widths: float or dict or callable or boolean 
-       Width of the quads, either a float or a dictionary providing a
-       {StreamOrder : width} mapping.
-       Or a function (callable) that computer width using node properties
-       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
-    enforce_convexity: boolean 
-        If true, enforce convexity of the pentagons/hexagons at the
-        junctions.
-    ax : matplotlib Axes object, optional
-        For debugging -- plots troublesome reaches as quad elements are
-        generated to find tricky areas.
-    label : bool, optional = True
-        If true and ax is provided, animates the debugging plot with
-        reach ID labels as the user hovers over the plot.  Requires a
-        widget backend for matplotlib.
-    
+    Parameters
+    ----------
+    river : River
+        River tree along which river mesh is to be created.
+    computeWidth : Callable[[River, ], float]
+        Function that computes the width for a given reach.
+    elems_gid_start : int, optional
+        Starting global ID for elements, by default 0.
     Returns
     -------
     corrs: list(shapely.geometry.Polygon)
