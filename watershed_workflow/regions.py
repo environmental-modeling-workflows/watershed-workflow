@@ -46,7 +46,8 @@ def addSurfaceRegions(m2 : Mesh2D,
 
 def addPolygonalRegions(m2 : Mesh2D,
                         polygons : SplitHUCs | List[Tuple[shapely.Polygon, str]],
-                        volume : bool = False) -> List[List[int]]:
+                        volume : bool = False,
+                        return_partitions : bool = False) -> Optional[List[List[int]]]:
     """Label m2 with region(s) for each polygon.
 
     Always adds a surface region; if volume also adds a volume region
@@ -56,20 +57,30 @@ def addPolygonalRegions(m2 : Mesh2D,
     ----------
     m2 : mesh.Mesh2D
       The mesh to label.
-    polygons : SplitHUCs | List[shapely.Polygon]
-      The polygons covering each watershed.
+    polygons : SplitHUCs | List[Tuple[shapely.Polygon, str]]
+      The polygons covering each region. Either a SplitHUCs object or
+      a list of tuples containing (polygon, name) pairs.
     volume : bool, optional
       If true, also add the volumetric region below the polygon that
       will be extruded in a 3D mesh eventually.
+    return_partitions : bool, optional
+      If true, return the list of cell indices for each polygon.
+      Default is False.
 
     Returns
     -------
-    partitions : List[List[int]]
+    partitions : List[List[int]] or None
       A list of length polygons, each entry of which is the list of
-      cell indices in that polygon.
+      cell indices in that polygon. Only returned if return_partitions is True.
     """
     if isinstance(polygons, SplitHUCs):
         polygons = list(zip(polygons.df['geometry'], polygons.df[names.NAME]))
+    elif isinstance(polygons, list):
+        # polygons should already be a list of (polygon, name) tuples
+        pass
+    else:
+        raise ValueError("polygons must be either SplitHUCs or List[Tuple[shapely.Polygon, str]]")
+    
     logging.info(f"Adding regions for {len(polygons)} polygons")
 
     partitions : List[List[int]] = [list() for p in polygons]
@@ -98,7 +109,9 @@ def addPolygonalRegions(m2 : Mesh2D,
             ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
-    return partitions
+    if return_partitions:
+        return partitions
+    return None
 
 
 def addWatershedAndOutletRegions(m2 : Mesh2D,
@@ -129,7 +142,7 @@ def addWatershedAndOutletRegions(m2 : Mesh2D,
 
     """
     # this adds sets for all m2 cells in each polygon of hucs
-    partitions = addPolygonalRegions(m2, hucs, volume=True)
+    partitions = addPolygonalRegions(m2, hucs, volume=True, return_partitions=True)
 
     # add a set for the boundary of each polygon and the outlet
     #
