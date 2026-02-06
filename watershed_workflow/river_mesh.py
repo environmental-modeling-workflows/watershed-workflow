@@ -86,43 +86,6 @@ def _computeExpectedNumElems(river: River) -> int:
     return sum(len(reach.linestring.coords) - 1 for reach in river)
 
 
-def createWidthFunction(
-        arg: Dict[int, float] | Callable[[River, ], float] | str | float) -> Callable[[River, ], float]:
-    """Create a width function from various argument types.
-
-    Parameters
-    ----------
-    arg : Dict[int, float] | Callable[[River], float] | str | float
-        Width specification - can be a constant, dictionary mapping stream order to width,
-        callable function, or string. If string "from_property", width for each reach is 
-        explicitly provided in properties as "target_width".
-
-    Returns
-    -------
-    Callable[[River], float]
-        Function that computes width for a given reach.
-    """
-    if isinstance(arg, dict):
-        def func(reach):
-            return arg[reach[names.ORDER]]
-
-    elif isinstance(arg, str):
-        if arg == "from_property":
-            def func(reach):
-                return reach.properties["target_width"]
-        else:
-            raise ValueError(f"Unknown string argument: {arg}")
-
-    elif callable(arg):
-        func = arg
-
-    else:
-        def func(reach):
-            return arg
-
-    return func
-
-
 def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> None:
     """Plot the river and elements for a debugging plot.
 
@@ -145,7 +108,7 @@ def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> No
 
 def createRiversMesh(hucs : SplitHUCs,
                      rivers : List[River],
-                     computeWidth : Dict[int, float] | Callable[[River,], float] | str | float,
+                     computeWidth : Callable[[River], float],
                      ax : Optional[matplotlib.axes.Axes] = None) -> \
                      Tuple[np.ndarray,
                            List[List[int]],
@@ -161,10 +124,10 @@ def createRiversMesh(hucs : SplitHUCs,
         Split HUCs object for mesh adjustment.
     rivers : List[River]
         List of river networks to mesh.
-    computeWidth : Dict[int, float] | Callable[[River,], float] | str | float
-        Function to compute river width. Can be a dictionary mapping stream order to width,
-        callable function, or string. If string "from_property", width for each reach is 
-        explicitly provided in properties as "target_width".
+    computeWidth : Callable[[River], float]
+        Function to compute the river width for each reach (given as a River object).
+        This callable can either return a constant value, or dynamically fetch a value 
+        based on stream order, properties, or a user-defined rule.
     ax : matplotlib.axes.Axes, optional
         Axes for debugging plots, by default None.
 
@@ -179,8 +142,6 @@ def createRiversMesh(hucs : SplitHUCs,
     hole_points: List[shapely.geometry.Point] = []
     coords_gid_start = 0
     elems_gid_start = 0
-    
-    computeWidth = createWidthFunction(computeWidth)
 
     for river in rivers:
         # create the mesh

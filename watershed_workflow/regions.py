@@ -389,6 +389,7 @@ def findDischargeEdgesCells(m2, discharge_point, include_cells=True, buffer_widt
               discharge_quad_id = c
               break   
     if discharge_quad is None:
+        logging.warning(f"No discharge quad found for point {discharge_point}")
         return []
 
     # get bank nodes and construct edges

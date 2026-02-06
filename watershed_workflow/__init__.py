@@ -590,7 +590,7 @@ def triangulate(hucs : SplitHUCs,
 
 def tessalateRiverAligned(hucs : SplitHUCs,
                           rivers : List[River],
-                          river_width : Any,
+                          river_width : Callable[[River], float],
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
                           hole_points : Optional[List[Tuple[float, float]]] = None,
                           additional_vertices : Optional[List[Tuple[float, float]]] = None,
@@ -611,11 +611,10 @@ def tessalateRiverAligned(hucs : SplitHUCs,
        required by the river corridor.
     rivers : list[River]
        The rivers to mesh with quads
-    river_width : float or dict or callable or boolean 
-       Width of the quads, either a float or a dictionary providing a
-       {StreamOrder : width} mapping.
-       Or a function (callable) that computer width using node properties
-       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
+    river_width : Callable[[River], float]
+        Function to compute the river width for each reach (given as a River object).
+        This callable can either return a constant value, or dynamically fetch a value 
+        based on stream order, properties, or a user-defined rule.
     river_n_quads : int, optional
        Number of quads across the river.  Currently only 1 is
        supported (the default).
@@ -650,7 +649,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
 
     # generate the quads
     logging.info('Creating stream-aligned mesh...')
-    computeWidth = watershed_workflow.river_mesh.createWidthFunction(river_width)
+    assert callable(river_width), "river_width must be a callable"
+    computeWidth = river_width
 
     if debug:
         fig, ax = plt.subplots(1,1)
