@@ -433,27 +433,39 @@ def _splitSingleStreamTriangle(vertices, triangles, triangle_index, river_buffer
     edge_vertices = (triangle_conn[edge_index], triangle_conn[(edge_index + 1) % 3])
     edge_hash = tuple(sorted(edge_vertices))
     adjacent_triangles = _findEdgeSharingTriangleIndices(triangles, edge_hash)
-
-    opposite_triangle_index = next(t for t in adjacent_triangles if t != triangle_index)
-    opposite_triangle_conn = triangles[opposite_triangle_index]
+    
+    if len(adjacent_triangles) != 2:
+        adjacent_triangle_exists = False
+    else:
+        adjacent_triangle_exists = True
     
     # Add the split point to vertices
     vertices = np.vstack([vertices, np.array([split_point])])
     split_vertex_index = len(vertices) - 1
     
-    # Find the edge index in the opposite triangle
-    opposite_edge_index = _findEdgeIndexInTriangle(opposite_triangle_conn, edge_hash)
-    
-    # Create new triangles for both original triangles
+    # Create new triangles for the current triangle
     new_triangles_current = _createSplitTriangles(triangle_conn, edge_index, split_vertex_index)
-    new_triangles_opposite = _createSplitTriangles(opposite_triangle_conn, opposite_edge_index, split_vertex_index)
     
-    # Replace original triangles and add new ones
-    triangles[triangle_index] = new_triangles_current[0]
-    triangles[opposite_triangle_index] = new_triangles_opposite[0]
-    triangles = np.vstack([triangles, [new_triangles_current[1]], [new_triangles_opposite[1]]])
-    
-    return vertices, triangles, new_triangles_current + new_triangles_opposite, [opposite_triangle_index]
+    if adjacent_triangle_exists:
+        opposite_triangle_index = next(t for t in adjacent_triangles if t != triangle_index)    
+        opposite_triangle_conn = triangles[opposite_triangle_index]
+        opposite_edge_index = _findEdgeIndexInTriangle(opposite_triangle_conn, edge_hash)
+        
+        # Create new triangles for the adjacent triangle
+        new_triangles_opposite = _createSplitTriangles(opposite_triangle_conn, opposite_edge_index, split_vertex_index)
+        
+        # Replace original triangles and add new ones
+        triangles[triangle_index] = new_triangles_current[0]
+        triangles[opposite_triangle_index] = new_triangles_opposite[0]
+        triangles = np.vstack([triangles, [new_triangles_current[1]], [new_triangles_opposite[1]]])
+        
+        return vertices, triangles, new_triangles_current + new_triangles_opposite, [opposite_triangle_index]
+    else:
+        # Only split the current triangle (boundary edge case)
+        triangles[triangle_index] = new_triangles_current[0]
+        triangles = np.vstack([triangles, [new_triangles_current[1]]])
+        
+        return vertices, triangles, new_triangles_current, []
 
 
 def _findTriangleSplitPoint(triangle_vertices, river_buffer):
