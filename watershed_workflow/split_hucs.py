@@ -286,7 +286,7 @@ class SplitHUCs:
         if column == names.ID and names.ID not in self.df:
             newname = names.ID+"_as_column"
             if newname not in self.df:
-                self.df[newname] = self.df.index.astype('string')
+                self.df[newname] = self.df.index.astype('float')
             column = names.ID+"_as_column"
 
         kwargs.setdefault('tooltip', False)
@@ -306,8 +306,11 @@ class SplitHUCs:
 
         kwargs.setdefault('cmap', matplotlib.colors.ListedColormap(watershed_workflow.colors.xkcd_muted))
         kwargs.setdefault('legend', True)
-        kwargs.setdefault('vmin', self.df[column].values.min())
-        kwargs.setdefault('vmax', self.df[column].values.max())
+        try:
+            kwargs.setdefault('vmin', self.df[column].values.min())
+            kwargs.setdefault('vmax', self.df[column].values.max())
+        except TypeError:
+            pass
 
         # style
         style_kwds = kwargs.setdefault('style_kwds', dict())

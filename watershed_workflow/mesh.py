@@ -28,6 +28,7 @@ import functools
 import pandas
 import geopandas as gpd
 from matplotlib import collections as mpc
+import copy
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -371,19 +372,23 @@ class Mesh2D:
                 new_e = next(e for e in be if e[0] == be_ordered[-1][1])
                 be.remove(new_e)
             except StopIteration:
-                new_e = next(e for e in be if e[1] == be_ordered[-1][1])
+                try:
+                    new_e = next(e for e in be if e[1] == be_ordered[-1][1])
+                except StopIteration:
+                    raise RuntimeError("Invalid set of boundary edges on mesh -- is the mesh domain simply connected?")
                 be.remove(new_e)
                 new_e = tuple(reversed(new_e))
 
             be_ordered.append(new_e)
             done = len(be) == 0
-        assert (be_ordered[-1][-1] == be_ordered[0][0])
-        return be_ordered
+        assert be_ordered[-1][-1] == be_ordered[0][0]
+        return [self.edge_hash(be[0], be[1]) for be in be_ordered]
 
     @property
     @cache
     def boundary_vertices(self):
-        return [e[0] for e in self.boundary_edges]
+        return list(set(e[0] for e in self.boundary_edges) & \
+                    set(e[1] for e in self.boundary_edges))
 
     @property
     def cell_data(self):
@@ -439,13 +444,47 @@ class Mesh2D:
             i += 1
         return int(i)
 
+    def computeCellFromVertex(self, vertex_vals, c) -> np.ndarray:
+        """Computes a centroid based on vertex values.
+       
+        This simply allows other elevations to be used to compute
+        cell-valued centroids.
+        """
+        return np.array([vertex_vals[v] for v in self.conn[c]]).mean()
+        
     def computeCentroid(self, c) -> np.ndarray:
+
         """Computes, based on coords, the centroid of a cell with ID c.
 
         Note this ALWAYS recomputes the value, not using the cache.
         """
         points = np.array([self.coords[i] for i in self.conn[c]])
-        return points.mean(axis=0)
+        if len(points) == 3:
+            return points.mean(axis=0)
+        else:
+            bary_c = points.mean(axis=0)
+            area = 0
+            ccentroid = np.array([0.,0.,0.])
+
+            cell_edges = list(self.cell_edges(self.conn[c]))
+            assert len(cell_edges) > 2
+            for e in cell_edges:
+                sub_tri_coords = np.array([self.coords[e[0]],
+                                           self.coords[e[1]],
+                                           bary_c
+                                           ])
+                sub_tri_area = watershed_workflow.utils.computeTriangleArea(sub_tri_coords[0,0:2],
+                                                                    sub_tri_coords[1,0:2],
+                                                                    sub_tri_coords[2,0:2],)
+                sub_tri_area = abs(sub_tri_area)
+                assert 1e10 > sub_tri_area > 0.
+                sub_tri_centroid = sub_tri_coords.mean(axis=0)
+                area += sub_tri_area
+                ccentroid += sub_tri_centroid * sub_tri_area
+
+            assert area > 0.
+            ccentroid = ccentroid / area
+            return ccentroid            
 
     @property
     @cache
@@ -530,6 +569,85 @@ class Mesh2D:
             plt.colorbar(gons, ax=ax)
 
         return gons
+
+    def plotVertices(self,
+                     vertex_values,
+                     ax=None,
+                     cmap=None,
+                     vmin=None,
+                     vmax=None,
+                     norm=None,
+                     s=None,
+                     colorbar=True,
+                     label=None,
+                     **kwargs):
+        """Plot vertex-based data as a scatter plot.
+
+        Parameters
+        ----------
+        vertex_values : array-like
+            Values at each vertex (length must equal num_vertices)
+        ax : matplotlib.Axes, optional
+            Axes to plot on. If None, creates new figure/axes.
+        cmap : str or matplotlib.colors.Colormap, optional
+            Colormap for mapping values to colors. Default is 'viridis'.
+        vmin, vmax : float, optional
+            Min and max values for color mapping. If None, uses data range.
+        norm : matplotlib.colors.Normalize, optional
+            Normalization for color mapping. If None, uses linear normalization.
+        s : float, optional
+            Marker size. If None, automatically computed based on mesh size.
+        colorbar : bool, optional
+            If True, adds colorbar. Default is True.
+        label : str, optional
+            Label for colorbar.
+        **kwargs : dict
+            Additional keyword arguments passed to scatter()
+
+        Returns
+        -------
+        PathCollection
+            The scatter plot collection
+        """
+        from matplotlib import pyplot as plt
+
+        # Validate input
+        if len(vertex_values) != self.num_vertices:
+            raise ValueError(f"vertex_values length ({len(vertex_values)}) must match "
+                           f"num_vertices ({self.num_vertices})")
+
+        # Set defaults
+        if cmap is None:
+            cmap = 'viridis'
+        if norm is None:
+            norm = plt.Normalize(vmin=vmin, vmax=vmax)
+        if isinstance(cmap, str):
+            cmap = plt.colormaps[cmap]
+
+        # Determine marker size based on mesh size
+        # Make markers bigger for small meshes
+        if s is None:
+            s = max(10, min(100, 5000 / self.num_vertices))
+
+        # Create axes if needed
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        # Create scatter plot
+        scatter = ax.scatter(self.coords[:, 0], self.coords[:, 1],
+                            c=vertex_values, cmap=cmap, norm=norm, s=s, **kwargs)
+
+        # ax.set_aspect('equal')
+        # ax.autoscale_view()
+
+        # Add colorbar if requested
+        if colorbar:
+            cbar = plt.colorbar(scatter, ax=ax)
+            if label:
+                cbar.set_label(label)
+
+        return scatter
+
 
     def partition(self, nparts : int, reorder : bool = True) -> Mesh2D:
         """Partitions the mesh, adding a cell_data column for partition number.
@@ -2042,3 +2160,99 @@ def mergeTwoMeshes(mesh1: Mesh2D, mesh2: Mesh2D) -> Mesh2D:
     #     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh2.labeled_sets
 
     return m2_combined
+
+
+def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
+    """Make a new mesh by refining a triangular cell.
+
+    Note that cell c must be:
+    - a triangle
+    - that is not on the boundary
+    - whose neighboring cells are also triangles
+
+    """
+    if len(m2.labeled_sets) != 0:
+        raise ValueError("This algorithm does not correctly deal with labeled sets.")
+    if len(m2.conn[c]) != 3:
+        raise ValueError("Only triangles may be refined.")
+    if any(e in m2.boundary_edges for e in m2.cell_edges(m2.conn[c])):
+        raise ValueError("Only non-boundary triangles may be refined.")
+    if not all(len(m2.conn[n]) == 3 for n in m2.cell_to_cells[c]):
+        raise ValueError("Only triangles whose neighbors are also triangles may be refined.")
+
+    old_edges = list(m2.cell_edges(m2.conn[c]))
+    
+    new_coords = np.array([(m2.coords[e[0]] + m2.coords[e[1]])/ 2. for e in old_edges])
+    assert len(new_coords) == 3 # only triangles please!
+    all_coords = np.concatenate([m2.coords, new_coords])
+   
+    # this triangle gets split into 4
+    new_conn = []
+    # the center triangle...
+    new_conn.append(list(range(len(m2.coords), len(m2.coords)+3)))
+    
+    # the three external ones, one per vertex
+    for i,e1 in enumerate(old_edges):
+        e2 = old_edges[(i+1)%3]
+        v1 = len(m2.coords) + i
+        v2 = len(m2.coords) + (i + 1)%3
+        v3 = e1[0] if e1[0] in e2 else e1[1]
+        assert v3 in e2
+        new_conn.append([v1, v2, v3])        
+
+    # refine neighboring cells -- each a triangle that gets split in 2
+    neighbors = m2.cell_to_cells[c]
+    for i, e in enumerate(old_edges):
+        # find the neighbor through edge e
+        ecells = m2.edges_to_cells[e]
+        assert len(ecells) == 2
+        n = ecells[0] if ecells[1] == c else ecells[1]
+
+        # find the node NOT in e
+        for v in m2.conn[n]:
+            if v not in e:
+                # add the two new conn
+                new_conn.append([e[0], len(m2.coords) + i, v])
+                new_conn.append([e[1], len(m2.coords) + i, v])
+
+    # remove the old cells
+    all_conn = copy.copy(m2.conn)
+    removed_cells = [c,] + neighbors
+    for cc in reversed(sorted(removed_cells)):
+        all_conn.pop(cc)
+    all_conn.extend(new_conn)
+
+    logging.debug(f' ... removing {len(removed_cells)}, adding {len(new_conn)} cells')
+    logging.debug(f' ... adding {len(new_coords)} vertices')
+    return watershed_workflow.mesh.Mesh2D(all_coords, all_conn, crs=m2.crs)
+        
+
+def refineTriangles(m2 : Mesh2D, to_refine : List[int]) -> Mesh2D:
+    """Refine a set of triangles, making a new mesh.
+
+    Note that cell in to_refine must be:
+    - a triangle
+    - that is not on the boundary
+    - whose neighboring cells are also triangles
+    - distinct -- for each pair of cells c1,c2 in to_refine, the set
+      of c1 and its neighbors must not overlap with the set of c2 and
+      its neighbors.
+
+    """
+    logging.info(f'Refining {len(to_refine)} triangles -- topology will change!')
+    # make sure they are nonoverlapping
+    affected = []
+    for c in to_refine:
+        affected.append(c)
+        affected.extend(list(m2.cell_to_cells[c]))
+        
+    if len(set(affected)) != 4 * len(to_refine):
+        raise ValueError('Cells in to_refine plus their neighbors are not distinct.')
+    
+    to_refine_conn = [m2.conn[c] for c in to_refine]
+    m2r = m2
+    for conn in to_refine_conn:
+        c = next(i for (i, test_conn) in enumerate(m2r.conn) if len(conn) == len(test_conn) and all( j == k for (j,k) in zip(conn, test_conn)))   
+        m2r = refineTriangle(m2r, c)
+
+    return m2r, affected

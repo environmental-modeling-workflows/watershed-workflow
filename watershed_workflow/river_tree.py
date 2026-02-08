@@ -528,7 +528,7 @@ class River(watershed_workflow.tinytree.Tree):
     # Methods that act on the network and its properties
     #
     def accumulate(self, to_accumulate: str, to_save: Optional[str] = None, op: Callable = sum):
-        """Accumulates a property across the river tree.
+        """Accumulates a property from children to trunk.
         
         Parameters
         ----------
@@ -551,6 +551,14 @@ class River(watershed_workflow.tinytree.Tree):
             self[to_save] = val
         return val
 
+    def distribute(self, to_distribute: str, seed : Optional[float] = 0., to_save: Optional[str] = None, op: Callable = sum):
+        """The opposite of accumulate, distributes a property from trunk to children."""
+        val = op([seed, self[to_distribute]])
+        if to_save is not None:
+            self[to_save] = val
+        for child in self.children:
+            child.distribute(to_distribute, val, to_save, op)
+    
     def getNode(self, index: int | str) -> River | None:
         """return node for a given index"""
         try:
