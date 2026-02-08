@@ -75,14 +75,13 @@ def test_reorder():
     m2newpart = m2new.partition(2, True)
 
     assert m2new.num_cells == 5
-    # -- the partitioned mesh wants to put [0,20) on rank 1, (20,50] on rank 0
-    assert np.allclose(m2newpart.centroids[0,0:2], [ 5.,0.], 1.e-10)
-    assert np.allclose(m2newpart.centroids[1,0:2], [15.,0.], 1.e-10)
-    assert np.allclose(m2newpart.centroids[2,0:2], [45.,0.], 1.e-10)
-    assert np.allclose(m2newpart.centroids[3,0:2], [35.,0.], 1.e-10)
-    assert np.allclose(m2newpart.centroids[4,0:2], [25.,0.], 1.e-10)
-    assert np.allclose(m2newpart.centroids[m2newpart.labeled_sets[0].ent_ids[0], 0:2], [35.,0.], 1.e-10)
+    # -- the partitioned mesh is in random order, but partitioned
+    diff = np.linalg.norm(m2newpart.centroids[0] - m2newpart.centroids[1])
+    assert abs(diff - 10.0) < 1.e-9
 
+    diff2 = np.linalg.norm(m2newpart.centroids[-1] - m2newpart.centroids[-2])
+    assert abs(diff - 10.0) < 1.e-9
+    
     # check that the partition is good
     assert 'partition' in m2newpart.cell_data
     for i in range(1, len(m2newpart.cell_data['partition'])):

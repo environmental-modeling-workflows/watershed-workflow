@@ -684,7 +684,7 @@ class River(watershed_workflow.tinytree.Tree):
         # reindex to a preOrdered listing
         # -- save the old index as ID
         if names.ID not in new_df.columns:
-            new_df[names.ID] = new_df.index
+            new_df[names.ID] = new_df.index.astype('str')
 
         # -- create a new index
         assert 'new_preorder_index' not in new_df.columns

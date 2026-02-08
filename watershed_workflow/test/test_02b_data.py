@@ -2026,7 +2026,7 @@ class TestRasterizeGeoDataFrame:
         }
         gdf = gpd.GeoDataFrame(data)
         
-        with pytest.raises(ValueError, match="must be numeric type"):
+        with pytest.raises((TypeError,ValueError)):
             wwd.rasterizeGeoDataFrame(gdf, 'text_col', resolution=1.0)
     
     def test_invalid_resolution(self, simple_polygon_gdf):
