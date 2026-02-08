@@ -89,13 +89,13 @@ def addPolygonalRegions(m2 : Mesh2D,
             # add a region, denoting this one as "to extrude".  This
             # will become the volume region
             setid = m2.getNextAvailableLabeledSetID()
-            ls = watershed_workflow.mesh.LabeledSet(label, int(setid), 'CELL', part)
+            ls = watershed_workflow.mesh.LabeledSet(str(label), int(setid), 'CELL', part)
             m2.labeled_sets.append(ls)
             ls.to_extrude = True
 
             # add a second region, denoting this one as the top surface of faces
             setid2 = m2.getNextAvailableLabeledSetID()
-            ls2 = watershed_workflow.mesh.LabeledSet(label + ' surface', setid2, 'CELL', part)
+            ls2 = watershed_workflow.mesh.LabeledSet(str(label) + ' surface', setid2, 'CELL', part)
             m2.labeled_sets.append(ls2)
 
     return partitions

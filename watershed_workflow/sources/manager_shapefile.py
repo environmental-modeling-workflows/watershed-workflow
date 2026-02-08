@@ -53,7 +53,7 @@ class ManagerShapefile(manager_shapes.ManagerShapes):
         name = f'shapefile: "{os.path.basename(filename)}"'
 
         # Use id_name or 'ID' as native_id_field
-        native_id_field = id_name if id_name is not None else 'ID'
+        native_id_field = id_name if id_name is not None else names.ID
 
         if url is not None:
             # url is the source
@@ -191,7 +191,7 @@ class ManagerShapefile(manager_shapes.ManagerShapes):
         else:
             # For row-based access or when ID field doesn't exist, use row indices
             df[names.ID] = range(len(df))
-        
+
         # No other standard name mappings for generic shapefiles
         return df
     

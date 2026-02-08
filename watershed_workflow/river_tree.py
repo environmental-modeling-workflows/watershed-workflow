@@ -326,6 +326,8 @@ class River(watershed_workflow.tinytree.Tree):
                 upstream_props[names.DOWNSTREAM_HYDROSEQ] = self[names.HYDROSEQ]
 
         if names.ID in self.properties:
+            if self.df[names.ID].dtype != 'string':
+                self.df[names.ID] = self.df[names.ID].astype('string')
             ID = self[names.ID]
             upstream_props[names.ID] = str(ID) + 'a'
             self[names.ID] = str(ID) + 'b'

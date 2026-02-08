@@ -233,12 +233,11 @@ class ManagerShapes(abc.ABC):
         # Assert that derived class provided standard ID column
         assert names.ID in df.columns, f"Derived class {self.__class__.__name__} must provide {names.ID} " \
             f"column in _addStandardNames()"
-        assert df[names.ID].dtype == 'string'
         
         # Ensure standard name column exists
         if names.NAME not in df.columns:
             # Generate names from ID if not provided
-            df[names.NAME] = df[names.ID]
+            df[names.NAME] = df[names.ID].astype('string')
         
         # Filter by geometry intersection if requested (using unbuffered geometry)
         # Note that filter is only done by the primary geometry column
