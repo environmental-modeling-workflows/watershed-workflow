@@ -674,9 +674,16 @@ def _findBankVerticesFromEdge(m2 : Mesh2D,
     """
     cell_ids = m2.edges_to_cells[edge]
     cells_to_edge = [m2.conn[cell_id] for cell_id in cell_ids]
-    cells_to_edge.remove(elem)
+    try:
+        cells_to_edge.remove(elem)
+    except ValueError:
+        # could be flipped due to handedness
+        cells_to_edge.remove(list(reversed(elem)))
     bank_tri = cells_to_edge[0]
-    vertex_id = (set(bank_tri) - set(edge)).pop()
-    return vertex_id
+    non_edge_verts = set(bank_tri) - set(edge)
+    if len(non_edge_verts) != 1:
+        raise RuntimeError('Expected to find a triangle, found a polygon?')
+    return non_edge_verts.pop()
+
 
 
