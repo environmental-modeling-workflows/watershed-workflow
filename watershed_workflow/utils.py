@@ -766,162 +766,63 @@ def cut(line1: shapely.geometry.LineString,
         ordering is preserved.
 
     """
-    l1_geoms = list(shapely.ops.split(line1, line2).geoms)
-    l2_geoms = list(shapely.ops.split(line2, line1).geoms)
-
     # permute if needed
     def _permute(l0, l0_geoms):
-        if len(l0_geoms) == 1:
-            l0g = l0_geoms[0]
-            d0 = computeDistance(l0.coords[0], l0g.coords[0])
-            d1 = computeDistance(l0.coords[0], l0g.coords[-1])
-
-            if d1 < d0 and d1 < eps:
-                return [reverseLineString(l0g),]
-            elif d0 < eps:
-                return l0_geoms
+        def computeDistanceToEndpoints(coord, line):
+            d0 = computeDistance(coord, line.coords[0])
+            d1 = computeDistance(coord, line.coords[-1])
+            if d0 < d1:
+                return [d0, 0]
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 1', l0, None, None)
+                return [d1, -1]
 
-        elif len(l0_geoms) == 2:
-            res = []
-            l0g = l0_geoms[0]
-            l1g = l0_geoms[1]
+        def findMin(coord, coord2, lines, negate=False):
+            distances = [tuple([i,] + computeDistanceToEndpoints(coord, line)) for (i,line) in enumerate(lines)]
+            min_d = min(d[1] for d in distances)
+            all_with_min_d = [d for d in distances if d[1] == min_d]
+            if len(all_with_min_d) == 1:
+                return all_with_min_d[0]
+            elif len(all_with_min_d) == 2:
+                # break the tie by dotting with normal
+                ds = np.array(coord2) - np.array(coord1)
+                ds = ds / np.linalg.norm(ds)
+                if negate:
+                    ds = -ds
 
-            # find closest point of the 4 endpoints to the 0th endpoint of l0
-            d0 = computeDistance(l0.coords[0], l0g.coords[0])
-            d1 = computeDistance(l0.coords[0], l0g.coords[-1])
-            d2 = computeDistance(l0.coords[0], l1g.coords[0])
-            d3 = computeDistance(l0.coords[0], l1g.coords[-1])
-            dmin = min([d0, d1, d2, d3])
+                def ds_of_d(d):
+                    if d[2] == 0:
+                        ds2 = np.array(lines[d[0]].coords[1]) - np.array(lines[d[0]].coords[0])
+                    else:
+                        ds2 = np.array(lines[d[0]].coords[-2]) - np.array(lines[d[0]].coords[-1])
+                    return ds2 / np.linalg.norm(ds2)
 
-            # orient the first segment off of the closest point
-            if d0 == dmin and d0 < eps:
-                l00_is_0 = True
-                res.append(l0g)
-            elif d1 == dmin and d1 < eps:
-                l00_is_0 = True
-                res.append(reverseLineString(l0g))
-            elif d2 == dmin and d2 < eps:
-                l00_is_0 = False
-                res.append(l1g)
-            elif d3 == dmin and d3 < eps:
-                l00_is_0 = False
-                res.append(reverseLineString(l1g))
+                return max(all_with_min_d, key=lambda d : np.dot(ds_of_d(d), ds))
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 2', l0, None, None)
+                raise CutError('Cutting resulting in multiple matches?  Error 1')
 
-            # find closest point of the 4 endpoints to the last endpoint of l0
-            d0 = computeDistance(l0.coords[-1], l0g.coords[0])
-            d1 = computeDistance(l0.coords[-1], l0g.coords[-1])
-            d2 = computeDistance(l0.coords[-1], l1g.coords[0])
-            d3 = computeDistance(l0.coords[-1], l1g.coords[-1])
-            dmin = min([d0, d1, d2, d3])
-
-            # orient the second segment off of the closest point
-            if d0 == dmin and d0 < eps:
-                if l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 3', l0, None, None)
-                res.append(reverseLineString(l0g))
-            elif d1 == dmin and d1 < eps:
-                if l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 4', l0, None, None)
-                res.append(l0g)
-            elif d2 == dmin and d2 < eps:
-                if not l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 5', l0, None, None)
-                res.append(reverseLineString(l1g))
-            elif d3 == dmin and d3 < eps:
-                if not l00_is_0:
-                    raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 6', l0, None, None)
-                res.append(l1g)
+        permuted_geoms = []
+        coord = l0.coords[0]
+        coord1 = l0.coords[1]
+        negate = False
+        while len(l0_geoms) > 0:
+            tp = findMin(coord, coord1, l0_geoms, negate)
+            i, dist, point = tp
+            ls = l0_geoms.pop(i)
+            if dist > 1.e-8:
+                raise CutError('Cutting resulted in no match for endpoints?  Error 2')
+            if point == 0:
+                permuted_geoms.append(ls)
             else:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 7', l0, None, None)
+                permuted_geoms.append(reverseLineString(ls))
 
-            if computeDistance(res[0].coords[-1], res[1].coords[0]) > eps:
-                raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 8', l0, None, None)
-            return res
+            coord = permuted_geoms[-1].coords[-1]
+            coord1 = permuted_geoms[-1].coords[-2]
+            negate = True
+        return permuted_geoms
 
-        else:
-            raise CutError('Cutting resulted in lines that do not share an endpoint with the original line? Error 9', l0, None, None)
-
+    l1_geoms = list(shapely.ops.split(line1, line2).geoms)
+    l2_geoms = list(shapely.ops.split(line2, line1).geoms)
     return _permute(line1, l1_geoms), _permute(line2, l2_geoms)
-        
-    
-
-    
-
-
-# def cut(line : shapely.geometry.LineString,
-#         cutline : shapely.geometry.LineString,
-#         tol : float = 1.e-5) -> List[shapely.geometry.LineString]:
-#     def plot():
-#         from matplotlib import pyplot as plt
-#         plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
-#         plt.plot(line.xy[0], line.xy[1], 'g-+', linewidth=3)
-
-#     assert type(line) is shapely.geometry.LineString
-#     assert type(cutline) is shapely.geometry.LineString
-#     assert line.intersects(cutline)
-
-#     segs = []
-#     coords = list(line.coords)
-
-#     segcoords = [coords[0], ]
-#     i = 0
-#     while i < len(coords) - 1:
-#         seg = shapely.geometry.LineString(coords[i:i + 2])
-#         #logging.debug("Intersecting seg %d"%i)
-#         point = seg.intersection(cutline)
-#         if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
-#             #logging.debug("Cut seg no intersection")
-#             segcoords.append(seg.coords[-1])
-#             i += 1
-#         elif type(point) is shapely.geometry.Point:
-#             #logging.debug("Cut intersected at point")
-#             #logging.debug("  inter point: %r"%list(point.coords[0]))
-#             #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-#             #logging.debug("  close? = %r"%(isClose(point, seg.coords[-1], tol)))
-#             if isClose(point, seg.coords[-1], tol):
-#                 # intersects at the far point
-#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-#                 #logging.debug("  appended full linestring: %r"%(list(segs[-1].coords)))
-
-#                 if (i < len(coords) - 2):
-#                     #logging.debug("    (not the end)")
-#                     segcoords = [point, coords[i + 2]]
-#                 else:
-#                     #logging.debug("    (the end)")
-#                     segcoords = [point, ]
-#                 i += 2  # also skip the next seg, which would also
-#                 # intersect at that seg's start point
-#             elif isClose(point, seg.coords[0], tol):
-#                 # intersects at the near point
-#                 if i != 0:
-#                     assert (len(segcoords) > 1)
-#                     segs.append(shapely.geometry.LineString(segcoords[:-1] + [point, ]))
-#                     segcoords = [point, ]
-#                 else:
-#                     assert (len(segcoords) == 1)
-#                     segcoords[0] = point
-#                 segcoords.append(seg.coords[-1])
-#                 i += 1
-#             else:
-#                 # intersects in the middle
-#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-#                 #logging.debug("  appended partial linestring: %r"%(list(segs[-1].coords)))
-#                 segcoords = [point, seg.coords[-1]]
-#                 i += 1
-#         else:
-#             print("Dual/multiple section: type = {}".format(type(point)))
-#             print(" point = {}".format(point))
-#             raise CutError(
-#                 "Dual/multiple intersection in a single seg... ugh!  "
-#                 + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
-
-#     if len(segcoords) > 1:
-#         segs.append(shapely.geometry.LineString(segcoords))
-#     return segs
 
 
 def inNeighborhood(shp1: BaseGeometry, shp2: BaseGeometry, tol: float = 0.1) -> bool:
