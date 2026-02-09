@@ -92,7 +92,6 @@ ALGORITHMS = [
     ('marching old', {'max_iterations' : 5}),
     ('marching', {}),
     ('marching', {'max_iterations' : 5}),
-    ('recommended', {})
 ]
 
 

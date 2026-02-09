@@ -387,7 +387,7 @@ class Mesh2D:
     @property
     @cache
     def boundary_vertices(self):
-        return list(set(e[0] for e in self.boundary_edges) & \
+        return list(set(e[0] for e in self.boundary_edges) | \
                     set(e[1] for e in self.boundary_edges))
 
     @property
