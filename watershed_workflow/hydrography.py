@@ -99,8 +99,24 @@ def findOutletsByCrossings(hucs: SplitHUCs,
     outlets: Dict[int, int] = dict()
     inlets = collections.defaultdict(list)
     itercount = 0
-    done = False
-    last_outlet = None
+
+    # First of all, check whether inlet dict (cluster_poly_indices) has a value
+    # with length of 1, if so, assign that cluster as the outlet of that poly and 
+    # meanwhile delete the corresponding {c: [polys]} from the inlet dict.
+    # If there is only one basin, stop here.
+    for ci, polys in cluster_poly_indices.items():
+        if len(polys) == 1:
+            outlets[polys[0]] = ci
+    cluster2rm = list(outlets.values())
+    cluster_poly_indices = {c: p for c, p in cluster_poly_indices.items() if c not in cluster2rm}
+    if len(polygons) == 1:
+        done = True
+        last_outlet = list(outlets.values())[0]
+        last_outlet_poly = list(outlets.keys())[0]
+    else:
+        done = False
+        last_outlet = None
+
     while not done:
         logging.info(f'Iteration = {itercount}')
         logging.info(f'-----------------')
@@ -131,6 +147,7 @@ def findOutletsByCrossings(hucs: SplitHUCs,
             cluster_poly_indices.pop(ci)
 
         if debug_plot and len(new_outlets) > 0:
+            from matplotlib import pyplot as plt
             fig, ax = plt.subplots(1, 1)
             hucs.plot(color='k', ax=ax)
             river.plot(color='b', ax=ax)
@@ -144,7 +161,6 @@ def findOutletsByCrossings(hucs: SplitHUCs,
                 if ci not in outlets.values() and ci not in new_outlets.values():
                     crossing = crossings_clusters_centroids[ci]
                     ax.scatter([crossing[0], ], [crossing[1], ], s=100, c='k', marker='o')
-            from matplotlib import pyplot as plt
             ax.set_title(f'Outlets after iteration {itercount}')
             plt.show()
 
@@ -170,6 +186,9 @@ def findOutletsByCrossings(hucs: SplitHUCs,
             inlet = crossings_clusters_centroids[ci]
             my_inlet_locs.append(shapely.geometry.Point(inlet[0], inlet[1]))
         inlet_locs[pi] = my_inlet_locs
+
+    outlet_locs = dict(sorted(outlet_locs.items()))
+    inlet_locs = dict(sorted(inlet_locs.items()))
 
     last_outlet_p = crossings_clusters_centroids[last_outlet]
     last_outlet_loc = shapely.geometry.Point(last_outlet_p[0], last_outlet_p[1])
@@ -312,13 +331,30 @@ def cutAndSnapCrossings(hucs: SplitHUCs, rivers: List[River], tol: float) -> Non
         for leaf in river.leaf_nodes:
             _cutAndSnapExteriorCrossing(hucs, leaf, tol)
 
+    for river in rivers:
+        assert river.isContinuous()
+            
     # check interior crossings on all
     for river in rivers:
-        # make a copy as river is modified in-place
-        reaches = list(river)
-        for reach in reaches:
-            _cutAndSnapInteriorCrossing(hucs, reach, tol)
+        # DO NOT make a copy -- we want the iterator in this case to be modified in place!
+        for reach in river:
+            try:
+                assert reach.isLocallyContinuous(), 'prior'
+                _cutAndSnapInteriorCrossing(hucs, reach, tol)
+                assert reach.isLocallyContinuous(), 'after'
+            except AssertionError as err:
+                fig, ax = plt.subplots(1,1)
+                import watershed_workflow.plot
+                ax = watershed_workflow.plot.linestringWithCoords(reach.linestring, marker='x', color='r')
+                for child in reach.children:
+                    watershed_workflow.plot.linestringWithCoords(child.linestring, marker='x', color='m', ax=ax)
+                watershed_workflow.plot.linestringWithCoords(reach.parent.linestring, marker='x', color='b', ax=ax)
+                watershed_workflow.plot.linestringWithCoords(reach.parent.parent.linestring, marker='x', color='c', ax=ax)
+                hucs.plot(ax=ax, color='k')
+                plt.show()
+                raise RuntimeError(f'Failed locally continuous on reach {reach[names.ID]} in cutAndSnapCrossings due to check {err}')
 
+                
 
 def _cutAndSnapExteriorCrossing(hucs: SplitHUCs, reach: River, merge_tol: float) -> None:
     """Cut and snap reach at exterior HUC boundary crossings.
@@ -407,8 +443,16 @@ def _cutAndSnapInteriorCrossing(hucs: SplitHUCs, reach: River, merge_tol: float)
         River reach to process for interior crossings.
     merge_tol : float
         Tolerance for merging operations.
+
+    Returns
+    -------
+    return_code : int
+        0 if no snap
+        1 if endpoint was snapped
+        2 if interior was snapped
     """
     r = reach.linestring
+    return_code = 0
 
     # now deal with crossings of the HUC interior boundary -- in this
     # case, the reach linestring cut, then potentially merged to neighbors
@@ -425,16 +469,30 @@ def _cutAndSnapInteriorCrossing(hucs: SplitHUCs, reach: River, merge_tol: float)
                 logging.info("  - snapping reach at internal boundary of HUCs")
                 if len(new_reach) == 1:
                     reach.linestring = new_reach[0]
+                    logging.info(f'  branch1 on reach {reach[names.ID]}')
+                    return_code = max(return_code, 1)
                 elif len(new_reach) == 2:
-                    logging.info('  branch2')
+                    logging.info(f'  branch2 on reach {reach[names.ID]}')
                     reach.linestring = shapely.geometry.LineString(
                         list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
+                    logging.info(f'  old_r: {list(r.coords)}')
                     logging.info(f'  seg1: {list(new_reach[0].coords)}')
-                    logging.info(f'  seg2: {list(new_reach[1].coords[1:])}')
+                    logging.info(f'  seg2: {list(new_reach[1].coords)}')
                     logging.info(
                         f'  splitting at coord: {len(new_reach[0].coords)-1} of {len(reach.linestring.coords)}'
                     )
                     us, ds = reach.split(len(new_reach[0].coords) - 1)
+                    split = True
+                    logging.info(
+                        f'  into reach (upstream) {us[names.ID]} and reach (downstream) {ds[names.ID]}')
+                    assert us.isLocallyContinuous()
+                    assert ds.isLocallyContinuous()
+                    return_code = max(return_code, 2)
+
+                    # continue with the downstream segment -- upstream
+                    # will be continued in the next iteration
+                    reach = ds
+                    r = reach.linestring
 
                 hucs.linestrings[ls_handle] = new_spine[0]
                 if len(new_spine) > 1:
@@ -442,6 +500,7 @@ def _cutAndSnapInteriorCrossing(hucs: SplitHUCs, reach: River, merge_tol: float)
                     new_handle = hucs.linestrings.append(new_spine[1])
                     spine.append(new_handle)
 
+    return return_code
 
 def snapHUCsJunctions(hucs: SplitHUCs, rivers: List[River], tol: float) -> None:
     """Snaps the junctions of HUC linestrings to endpoints of rivers.

@@ -421,18 +421,6 @@ def conditionRiverMeshes(m2 : Mesh2D,
     for river in rivers:
         conditionRiverMesh(m2, river, *args, **kwargs)
 
-
-def createDepressionFunction(arg):
-    if isinstance(arg, dict):
-        def func(reach):
-            return arg[reach[names.ORDER]]
-    elif isinstance(arg, Callable):
-        func = arg
-    else:
-        def func(reach):
-            return arg
-    return func
-
         
 def conditionRiverMesh(m2 : Mesh2D,
                        river : River,
@@ -441,7 +429,7 @@ def conditionRiverMesh(m2 : Mesh2D,
                        lower : bool = False,
                        bank_integrity_elevation : float = 0.0,
                        depress_headwaters_by : Optional[float] = None,
-                       network_burn_in_depth : Optional[float | Dict[int,float] | Callable[[River,], float]] = None,
+                       network_burn_in_depth : Optional[Callable[[River,], float]] = None,
                        known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
    to ensure connectivity throgh culverts, skips ponds, maintain
@@ -473,12 +461,11 @@ def conditionRiverMesh(m2 : Mesh2D,
         lowered by this number.  The effect is propogated downstream
         only up to where it is needed to maintain topographic gradients
         on the network scale in the network sweep step.
-    network_burn_in_depth: float, dict, or function
-        Like depress_headwaters_by, this also lowers river-mesh elements
-        by this value, but this variant lowers all reaches.  The depth
-        may be provided as a float (uniform lowering), dictionary
-        {stream order : depth to depress by}, or as a function of
-        drainage area.
+    network_burn_in_depth: Callable[[River,], float], optional
+        A function that takes a reach (River object) as input and returns the burn-in 
+        depth for that specific reach. This depth specifies how much to lower the 
+        river-mesh elements below their original elevation. The callable allows for 
+        dynamic calculation based on reach properties, stream order, or custom logic.
     known_depressions: list, optional
         If provided, a list of IDs to not be burned in via the network
         sweep.
@@ -628,12 +615,11 @@ def enforceMonotonicity(river : River,
 
     
 def burnInRiver(river : River,
-                network_burn_in_depth : float | Dict[int,float] | Callable[[River,], float]) -> None:
+                network_burn_in_depth : Callable[[River,], float]) -> None:
     """Reduce reach elevations by a float or function."""
-    depressionFunction = createDepressionFunction(network_burn_in_depth)
     for reach in river:
         coords = np.array(reach.linestring.coords)
-        coords[:,2] = coords[:,2] - depressionFunction(reach)
+        coords[:,2] = coords[:,2] - network_burn_in_depth(reach)
         reach.linestring = shapely.geometry.LineString(coords)
 
         
@@ -688,9 +674,16 @@ def _findBankVerticesFromEdge(m2 : Mesh2D,
     """
     cell_ids = m2.edges_to_cells[edge]
     cells_to_edge = [m2.conn[cell_id] for cell_id in cell_ids]
-    cells_to_edge.remove(elem)
+    try:
+        cells_to_edge.remove(elem)
+    except ValueError:
+        # could be flipped due to handedness
+        cells_to_edge.remove(list(reversed(elem)))
     bank_tri = cells_to_edge[0]
-    vertex_id = (set(bank_tri) - set(edge)).pop()
-    return vertex_id
+    non_edge_verts = set(bank_tri) - set(edge)
+    if len(non_edge_verts) != 1:
+        raise RuntimeError('Expected to find a triangle, found a polygon?')
+    return non_edge_verts.pop()
+
 
 

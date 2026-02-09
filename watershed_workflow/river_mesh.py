@@ -42,6 +42,7 @@ def _isNonoverlapping(points: np.ndarray, elems: List[List[int]], tol: float = 1
     shps = [shapely.geometry.Polygon(points[e]) for e in elems]
     total_area = shapely.unary_union(shps).area
     summed_area = sum(shp.area for shp in shps)
+    logging.info(f'  is nonoverlapping?  total_area = {total_area}, summed_area = {summed_area}')
     return abs(total_area - summed_area) < tol
 
 
@@ -85,35 +86,6 @@ def _computeExpectedNumElems(river: River) -> int:
     return sum(len(reach.linestring.coords) - 1 for reach in river)
 
 
-def createWidthFunction(
-        arg: Dict[int, float] | Callable[[River, ], float] | float) -> Callable[[River, ], float]:
-    """Create a width function from various argument types.
-
-    Parameters
-    ----------
-    arg : Dict[int, float] | Callable[[int], float] | float
-        Width specification - can be a constant, dictionary mapping stream order to width,
-        or callable function.
-
-    Returns
-    -------
-    Callable[[int], float]
-        Function that computes width for a given reach.
-    """
-    if isinstance(arg, dict):
-        def func(reach):
-            return arg[reach[names.ORDER]]
-
-    elif callable(arg):
-        func = arg
-
-    else:
-        def func(reach):
-            return arg
-
-    return func
-
-
 def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> None:
     """Plot the river and elements for a debugging plot.
 
@@ -136,7 +108,7 @@ def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> No
 
 def createRiversMesh(hucs : SplitHUCs,
                      rivers : List[River],
-                     computeWidth : Callable[[River,], float],
+                     computeWidth : Callable[[River], float],
                      ax : Optional[matplotlib.axes.Axes] = None) -> \
                      Tuple[np.ndarray,
                            List[List[int]],
@@ -153,7 +125,9 @@ def createRiversMesh(hucs : SplitHUCs,
     rivers : List[River]
         List of river networks to mesh.
     computeWidth : Callable[[River], float]
-        Function to compute river width.
+        Function to compute the river width for each reach (given as a River object).
+        This callable can either return a constant value, or dynamically fetch a value 
+        based on stream order, properties, or a user-defined rule.
     ax : matplotlib.axes.Axes, optional
         Axes for debugging plots, by default None.
 
@@ -166,7 +140,7 @@ def createRiversMesh(hucs : SplitHUCs,
     coords: List[np.ndarray] = []
     corridors: List[shapely.geometry.Polygon] = []
     hole_points: List[shapely.geometry.Point] = []
-    i = 0
+    coords_gid_start = 0
     elems_gid_start = 0
 
     for river in rivers:
@@ -189,12 +163,14 @@ def createRiversMesh(hucs : SplitHUCs,
         corridors.append(shapely.geometry.Polygon(lcoords))
 
         # shift to get a global ordering
-        if i != 0:
-            lelems = [[j + i for j in e] for e in lelems]
+        if coords_gid_start != 0:
+            lelems = [[j + coords_gid_start for j in e] for e in lelems]
+        for reach in river:
+            reach[names.ELEMS][:] = [[j + coords_gid_start for j in e] for e in reach[names.ELEMS]]
+        coords_gid_start += len(lcoords)
 
         elems.extend(lelems)
         coords.append(lcoords)
-        i += len(lcoords)
 
     if ax is not None:
         hucs.plotAsLinestrings(color='k', marker='x', ax=ax)
@@ -247,26 +223,14 @@ def createRiverMesh(river: River,
                     elems_gid_start: int = 0):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
-    Parameters:
-    -----------
-    rivers: list(River object)
-        List of river tree along which river meshes are to be created
-    widths: float or dict or callable or boolean 
-       Width of the quads, either a float or a dictionary providing a
-       {StreamOrder : width} mapping.
-       Or a function (callable) that computer width using node properties
-       Or boolean, where True means, width for each reach is explicitely provided properties as "width"
-    enforce_convexity: boolean 
-        If true, enforce convexity of the pentagons/hexagons at the
-        junctions.
-    ax : matplotlib Axes object, optional
-        For debugging -- plots troublesome reaches as quad elements are
-        generated to find tricky areas.
-    label : bool, optional = True
-        If true and ax is provided, animates the debugging plot with
-        reach ID labels as the user hovers over the plot.  Requires a
-        widget backend for matplotlib.
-    
+    Parameters
+    ----------
+    river : River
+        River tree along which river mesh is to be created.
+    computeWidth : Callable[[River, ], float]
+        Function that computes the width for a given reach.
+    elems_gid_start : int, optional
+        Starting global ID for elements, by default 0.
     Returns
     -------
     corrs: list(shapely.geometry.Polygon)
@@ -435,12 +399,41 @@ def createRiverMesh(river: River,
 
     assert k == len(coords)
 
-    # check convexity
+    # another pass to check for convexity
     for reach in river:
         for k, elem in enumerate(reach[names.ELEMS]):
             e_coords = coords[elem]
             if not watershed_workflow.utils.isConvex(e_coords):
-                assert k == 0
+                if k != 0:
+                    fig, ax = plt.subplots(1, 1)
+
+                    reaches = [reach, ]
+                    if reach.parent is not None:
+                        reaches.append(reach.parent)
+                    reaches = reaches + list(reach.children)
+                    for r in reaches:
+                        ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
+
+                    for k2, e2 in enumerate(reach.parent[names.ELEMS]):
+                        e_coords2 = coords[e2]
+                        poly2 = shapely.geometry.Polygon(e_coords2)
+                        ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='purple')
+
+                    for lcv_reach in reach.parent.children:
+                        for k2, e2 in enumerate(lcv_reach[names.ELEMS]):
+                            e_coords2 = coords[e2]
+                            poly2 = shapely.geometry.Polygon(e_coords2)
+                            ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='grey')
+                        
+                    poly = shapely.geometry.Polygon(e_coords)
+                    ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'g-x')
+
+                    ls = reach.linestring
+                    ax.plot(ls.xy[0], ls.xy[1], 'r-x')
+                    ax.set_aspect('equal', adjustable='box')
+                    plt.show()
+                    raise RuntimeError(f'Convexity in non-0th ({k})th element of reach {reach.index} with ID {reach[names.ID]}')
+                
                 new_e_coords = fixConvexity(reach, e_coords, computeWidth)
                 for c_index, coord in zip(elem, new_e_coords):
                     coords[c_index] = coord
@@ -520,10 +513,10 @@ def adjustHUCsToRiverMesh(hucs: SplitHUCs, river: River, coords: np.ndarray) -> 
                     # coordinate, and wierd stuff would probably
                     # happen in triangulation anyway.
                     assert touches[touch_i-1][0] is None or touches[touch_i-1][0] < 0, \
-                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+                        f"Neighboring touch at reach {reach.index}, ID {reach[names.ID]} coords {reach.linestring.coords[0]} is wierd"
 
                     assert touches[(touch_i+1)%len(touches)][0] is None or touches[(touch_i+1)%len(touches)][0] < 0, \
-                        f"Neighboring touch at reach {reach.index} coords {reach.linestring.coords[0]} is wierd"
+                        f"Neighboring touch at reach {reach.index}, ID {reach[names.ID]} coords {reach.linestring.coords[0]} is wierd"
 
                     # it is a HUC, insert the point
                     new_coord = coords[reach[names.ELEMS][0][point_i]]
@@ -886,53 +879,3 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
 
     return e_coords
 
-
-def getTriangleSplitVertices(stream_triangles, river_corrs):
-    """Find additional points to split stream triangles.
-    
-    Parameters
-    ----------
-    stream_triangles : list of tuples
-        List of triangle vertices.
-    river_corrs : list of shapely.geometry.Polygon
-        List of river corridor polygons.
-    """
-    river_corr = shapely.ops.unary_union(river_corrs).buffer(1)
-    additional_vertices = []
-
-    for tri_verts in stream_triangles:
-        assert len(tri_verts) == 3
-
-        # Get midpoints of each edge
-        midpoints = [
-            shapely.geometry.Point(
-                watershed_workflow.utils.computeMidpoint(tri_verts[i], tri_verts[(i+1) % 3]))
-            for i in range(3)
-        ]
-        
-        # Check which midpoints lie on river corridors
-        off_corridor = list(
-            filter(lambda ip: not river_corr.intersects(ip[1]), enumerate(midpoints)))
-
-        if len(off_corridor) == 1:
-            edge_i = off_corridor[0][0]
-            edge_midpoint = watershed_workflow.utils.computeMidpoint(tri_verts[edge_i],
-                                                              tri_verts[(edge_i+1) % 3])
-            additional_vertices.append(edge_midpoint)
-                
-        elif len(off_corridor) == 2:
-            edge_lengths = [
-                watershed_workflow.utils.computeDistance(tri_verts[off_corridor[i][0]], 
-                                                    tri_verts[(off_corridor[i][0]+1) % 3])
-                for i in range(2)
-            ]          
-            # Select the midpoint on the longer edge
-            longer_edge_index = edge_lengths.index(max(edge_lengths))
-            edge_i = off_corridor[longer_edge_index][0]
-            edge_midpoint = watershed_workflow.utils.computeMidpoint(tri_verts[edge_i],
-                                                                tri_verts[(edge_i+1) % 3])
-            additional_vertices.append(edge_midpoint)
-     
-    # Remove coinciding points
-    unique_vertices = list(set(additional_vertices))
-    return unique_vertices

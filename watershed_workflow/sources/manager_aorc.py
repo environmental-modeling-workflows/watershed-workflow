@@ -103,7 +103,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         native_start = cftime.datetime(1980, 1, 1, calendar='standard')
         native_end = cftime.datetime(2024, 12, 31, calendar='standard')
         native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
-        native_resolution = 0.00833333  # ~1km in degrees (approximately 1km at mid-latitudes)
+        native_resolution = 0.00833333  # 30 arc-second resolution
         
         # Initialize base class with correct parameter order
         super().__init__(

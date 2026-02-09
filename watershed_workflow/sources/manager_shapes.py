@@ -262,7 +262,15 @@ class ManagerShapes(abc.ABC):
                 if isinstance(shp, shapely.geometry.MultiLineString):
                     return shapely.line_merge(shp)
                 elif isinstance(shp, shapely.geometry.MultiPolygon):
-                    return shapely.union_all(shp.geoms)
+                    valid_geoms = []
+                    for g in shp.geoms:
+                        if not g.is_valid:
+                            g = shapely.make_valid(g)
+                        if isinstance(g, shapely.geometry.MultiPolygon):
+                            valid_geoms.extend(g.geoms)
+                        else:
+                            valid_geoms.append(g)
+                    return shapely.union_all(shapely.geometry.MultiPolygon(valid_geoms))
                 return shp
             df[col] = df[col].apply(_combine)
             

@@ -13,7 +13,7 @@ zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Iterable
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,7 +21,7 @@ from matplotlib import collections as pltc
 from matplotlib import cm as pcm
 import shapely
 from mpl_toolkits.mplot3d import Axes3D
-import geopandas
+import geopandas as gpd
 import itertools
 
 import watershed_workflow.utils
@@ -49,15 +49,15 @@ def _is_iter(obj: Any) -> bool:
     return True
 
 
-def linestringsWithCoords(df: geopandas.GeoDataFrame,
-                          column: Optional[str] = None,
-                          marker: Optional[str] = None,
-                          **kwargs) -> plt.Axes:
+def linestringsWithCoords(df: gpd.GeoDataFrame | Iterable[shapely.geometry.LineString],
+                        column: Optional[str] = None,
+                        marker: Optional[str] = None,
+                        **kwargs) -> plt.Axes:
     """Plot linestrings, but also potentially scatter their coordinates.
 
     Parameters
     ----------
-    df : geopandas.GeoDataFrame
+    df : gpd.GeoDataFrame
         GeoDataFrame containing LineString geometries to plot.
     column : str, optional
         Column name to use for coloring. If None, uses cycled colors.
@@ -71,6 +71,10 @@ def linestringsWithCoords(df: geopandas.GeoDataFrame,
     matplotlib.axes.Axes
         The axes object containing the plot.
     """
+    if not isinstance(df, gpd.GeoDataFrame):
+        df = gpd.GeoDataFrame(geometry=df)
+        column = None
+    
     if marker:
         marker_args = { 'marker': marker }
         if 'markersize' in kwargs:
@@ -100,6 +104,10 @@ def linestringsWithCoords(df: geopandas.GeoDataFrame,
             ax.scatter(seg.xy[0], seg.xy[1], color=color, **marker_args)
 
     return ax
+
+def linestringWithCoords(ls, *args, **kwargs):
+    return linestringsWithCoords(gpd.GeoDataFrame(geometry=[ls,]), 'geometry', *args, **kwargs)
+
 
 
 # plot reaches and modify...
@@ -187,7 +195,7 @@ class Labeler:
             if isinstance(dat, shapely.geometry.base.BaseGeometry) and hasattr(dat, 'properties'):
                 dat = dict(geometry=dat, **dat.properties)
             title = formatter(dat)
-        elif isinstance(data, geopandas.GeoDataFrame):
+        elif isinstance(data, gpd.GeoDataFrame):
             title = formatter(data.iloc[j])
         self.ax.set_title(title)
 

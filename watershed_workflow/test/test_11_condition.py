@@ -290,7 +290,7 @@ def goalpost(watershed_rivers2):
     assert sum(len(r.linestring.coords) for r in river) == 19
 
     def computeWidth(a): return 10
-    m2 = watershed_workflow.tessalateRiverAligned(hucs, [river,], 10, refine_max_area=100)
+    m2 = watershed_workflow.tessalateRiverAligned(hucs, [river,], computeWidth, refine_max_area=100)
 
     # test precondition
     # different tessalates on different machines...?!?
@@ -353,7 +353,8 @@ def test_withDepress(goalpost):
 
     # depress
     watershed_workflow.condition.enforceMonotonicity(river)
-    watershed_workflow.condition.burnInRiver(river, 1)
+    def burnInDepth(reach): return 1
+    watershed_workflow.condition.burnInRiver(river, burnInDepth)
     watershed_workflow.condition.distributeProfileToMesh(m2, river)
     m2.clearGeometryCache()
 

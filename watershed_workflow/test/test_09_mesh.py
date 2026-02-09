@@ -100,7 +100,7 @@ def test_write():
     if os.path.isfile('./mesh.exo'):
         os.remove('./mesh.exo')
     try:
-        m3.writeExodus('./mesh.exo')
+        m3.writeExodus('./mesh.exo', element_block_mode="material id")
     except ImportError:
         warnings.warn('ExodusII is not enabled with this python.')
     else:

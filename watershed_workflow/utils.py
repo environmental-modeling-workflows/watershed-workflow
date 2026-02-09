@@ -728,23 +728,25 @@ class CutError(Exception):
     ----------
     message : str
         Error message.
-    line : shapely.geometry.LineString
+    line : shapely.geometry.LineString, optional
         The line being cut.
-    seg : shapely.geometry.LineString
+    seg : shapely.geometry.LineString, optional
         The segment causing issues.
-    cutline : shapely.geometry.LineString
+    cutline : shapely.geometry.LineString, optional
         The cutting line.
     """
-    def __init__(self, message: str, line: shapely.geometry.LineString,
-                 seg: shapely.geometry.LineString, cutline: shapely.geometry.LineString) -> None:
+    def __init__(self, message: str, line: Optional[shapely.geometry.LineString] = None,
+                 seg: Optional[shapely.geometry.LineString] = None, 
+                 cutline: Optional[shapely.geometry.LineString] = None) -> None:
         super(Exception, self).__init__(message)
         self.line = line
         self.seg = seg
         self.cutline = cutline
 
 
-def cut(
-    line1: shapely.geometry.LineString, line2: shapely.geometry.LineString
+def cut(line1: shapely.geometry.LineString,
+        line2: shapely.geometry.LineString,
+        eps : float = 1.e-8
 ) -> Tuple[List[shapely.geometry.LineString], List[shapely.geometry.LineString]]:
     """Cut two LineStrings at their intersection point.
     
@@ -758,83 +760,69 @@ def cut(
     Returns
     -------
     tuple of list
-        Tuple containing (line1_segments, line2_segments) where each is a list
-        of LineString segments created by the cut operation.
+        Tuple containing (line1_segments, line2_segments) where each
+        is a list of LineString segments created by the cut operation.
+        Note the ordering is enforced to be such that coordinate
+        ordering is preserved.
+
     """
-    return list(shapely.ops.split(line1, line2).geoms), \
-        list(shapely.ops.split(line2, line1).geoms)
+    # permute if needed
+    def _permute(l0, l0_geoms):
+        def computeDistanceToEndpoints(coord, line):
+            d0 = computeDistance(coord, line.coords[0])
+            d1 = computeDistance(coord, line.coords[-1])
+            if d0 < d1:
+                return [d0, 0]
+            else:
+                return [d1, -1]
 
+        def findMin(coord, coord2, lines, negate=False):
+            distances = [tuple([i,] + computeDistanceToEndpoints(coord, line)) for (i,line) in enumerate(lines)]
+            min_d = min(d[1] for d in distances)
+            all_with_min_d = [d for d in distances if d[1] == min_d]
+            if len(all_with_min_d) == 1:
+                return all_with_min_d[0]
+            elif len(all_with_min_d) == 2:
+                # break the tie by dotting with normal
+                ds = np.array(coord2) - np.array(coord1)
+                ds = ds / np.linalg.norm(ds)
+                if negate:
+                    ds = -ds
 
-# def cut(line : shapely.geometry.LineString,
-#         cutline : shapely.geometry.LineString,
-#         tol : float = 1.e-5) -> List[shapely.geometry.LineString]:
-#     def plot():
-#         from matplotlib import pyplot as plt
-#         plt.plot(cutline.xy[0], cutline.xy[1], 'k-x', linewidth=3)
-#         plt.plot(line.xy[0], line.xy[1], 'g-+', linewidth=3)
+                def ds_of_d(d):
+                    if d[2] == 0:
+                        ds2 = np.array(lines[d[0]].coords[1]) - np.array(lines[d[0]].coords[0])
+                    else:
+                        ds2 = np.array(lines[d[0]].coords[-2]) - np.array(lines[d[0]].coords[-1])
+                    return ds2 / np.linalg.norm(ds2)
 
-#     assert type(line) is shapely.geometry.LineString
-#     assert type(cutline) is shapely.geometry.LineString
-#     assert line.intersects(cutline)
+                return max(all_with_min_d, key=lambda d : np.dot(ds_of_d(d), ds))
+            else:
+                raise CutError('Cutting resulting in multiple matches?  Error 1')
 
-#     segs = []
-#     coords = list(line.coords)
+        permuted_geoms = []
+        coord = l0.coords[0]
+        coord1 = l0.coords[1]
+        negate = False
+        while len(l0_geoms) > 0:
+            tp = findMin(coord, coord1, l0_geoms, negate)
+            i, dist, point = tp
+            ls = l0_geoms.pop(i)
+            if dist > 1.e-8:
+                raise CutError('Cutting resulted in no match for endpoints?  Error 2')
+            if point == 0:
+                permuted_geoms.append(ls)
+            else:
+                permuted_geoms.append(reverseLineString(ls))
 
-#     segcoords = [coords[0], ]
-#     i = 0
-#     while i < len(coords) - 1:
-#         seg = shapely.geometry.LineString(coords[i:i + 2])
-#         #logging.debug("Intersecting seg %d"%i)
-#         point = seg.intersection(cutline)
-#         if type(point) is shapely.geometry.LineString and len(point.coords) == 0:
-#             #logging.debug("Cut seg no intersection")
-#             segcoords.append(seg.coords[-1])
-#             i += 1
-#         elif type(point) is shapely.geometry.Point:
-#             #logging.debug("Cut intersected at point")
-#             #logging.debug("  inter point: %r"%list(point.coords[0]))
-#             #logging.debug("  seg final point: %r"%list(seg.coords[-1]))
-#             #logging.debug("  close? = %r"%(isClose(point, seg.coords[-1], tol)))
-#             if isClose(point, seg.coords[-1], tol):
-#                 # intersects at the far point
-#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-#                 #logging.debug("  appended full linestring: %r"%(list(segs[-1].coords)))
+            coord = permuted_geoms[-1].coords[-1]
+            coord1 = permuted_geoms[-1].coords[-2]
+            negate = True
+        return permuted_geoms
 
-#                 if (i < len(coords) - 2):
-#                     #logging.debug("    (not the end)")
-#                     segcoords = [point, coords[i + 2]]
-#                 else:
-#                     #logging.debug("    (the end)")
-#                     segcoords = [point, ]
-#                 i += 2  # also skip the next seg, which would also
-#                 # intersect at that seg's start point
-#             elif isClose(point, seg.coords[0], tol):
-#                 # intersects at the near point
-#                 if i != 0:
-#                     assert (len(segcoords) > 1)
-#                     segs.append(shapely.geometry.LineString(segcoords[:-1] + [point, ]))
-#                     segcoords = [point, ]
-#                 else:
-#                     assert (len(segcoords) == 1)
-#                     segcoords[0] = point
-#                 segcoords.append(seg.coords[-1])
-#                 i += 1
-#             else:
-#                 # intersects in the middle
-#                 segs.append(shapely.geometry.LineString(segcoords + [point, ]))
-#                 #logging.debug("  appended partial linestring: %r"%(list(segs[-1].coords)))
-#                 segcoords = [point, seg.coords[-1]]
-#                 i += 1
-#         else:
-#             print("Dual/multiple section: type = {}".format(type(point)))
-#             print(" point = {}".format(point))
-#             raise CutError(
-#                 "Dual/multiple intersection in a single seg... ugh!  "
-#                 + "Intersection is of type '{}'".format(type(point)), line, seg, cutline)
-
-#     if len(segcoords) > 1:
-#         segs.append(shapely.geometry.LineString(segcoords))
-#     return segs
+    l1_geoms = list(shapely.ops.split(line1, line2).geoms)
+    l2_geoms = list(shapely.ops.split(line2, line1).geoms)
+    return _permute(line1, l1_geoms), _permute(line2, l2_geoms)
 
 
 def inNeighborhood(shp1: BaseGeometry, shp2: BaseGeometry, tol: float = 0.1) -> bool:
