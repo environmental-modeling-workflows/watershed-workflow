@@ -10,7 +10,7 @@ import shapely
 
 from watershed_workflow.split_hucs import SplitHUCs
 from watershed_workflow.river_tree import River
-from watershed_workflow.mesh import Mesh2D
+from watershed_workflow.mesh import Mesh2D, Edge
 
 import watershed_workflow.sources.standard_names as names
 import watershed_workflow.mesh
@@ -403,14 +403,16 @@ def findDischargeEdgesCells(m2, discharge_point, include_cells=True, buffer_widt
     if include_cells:
         discharge_cells=[]
         # edge on the right as we look from the downstream direction
-        edge_r = list(m2.cell_edges(discharge_quad))[0]
-        cell_ids = m2.edges_to_cells[edge_r]
+        quad_edges = [Edge(discharge_quad[i], discharge_quad[(i+1) % len(discharge_quad)])
+                      for i in range(len(discharge_quad))]
+        edge_r = quad_edges[0]
+        cell_ids = m2.edge_cells[edge_r]
         bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
         discharge_cells.append(bank_cell_id)
-        
+
         # edge on the left as we look from the downstream direction
-        edge_l = list(m2.cell_edges(discharge_quad))[-2]
-        cell_ids = m2.edges_to_cells[edge_l]
+        edge_l = quad_edges[-2]
+        cell_ids = m2.edge_cells[edge_l]
         bank_cell_id = next(cell_id for cell_id, conn in zip(cell_ids, [m2.conn[cell_id] for cell_id in cell_ids]) if len(conn) == 3)
         discharge_cells.append(bank_cell_id)
         

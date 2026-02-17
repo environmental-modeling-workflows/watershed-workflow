@@ -12,7 +12,7 @@ import ipywidgets as widgets
 
 import watershed_workflow.sources.standard_names as names
 import watershed_workflow.utils
-from watershed_workflow.mesh import Mesh2D
+from watershed_workflow.mesh import Mesh2D, Edge
 from watershed_workflow.river_tree import River
 import watershed_workflow.data
 
@@ -70,7 +70,7 @@ def _computePitDepth(m2 : Mesh2D,
     if len(m2.cell_to_cells[c]) < len(m2.conn[c]):
         # at least one boundary edge!
         be_z = min((m2.coords[e[0],2] + m2.coords[e[1],2]) / 2 \
-                   for e in m2.cell_edges(m2.conn[c]) if e in m2.boundary_edges)
+                   for e in m2.cell_edges[c] if e in m2.boundary_edges)
         be_pit_depth = be_z - my_z
 
     return other_z - my_z, be_pit_depth
@@ -330,7 +330,9 @@ def plotPitFilling(m2: Mesh2D,
     dz_verts = new_z_verts - old_z_verts
 
     # Extract cell centroid elevations
-    old_z_cells = np.array([m2.computeCellFromVertex(old_z_verts, c) for c in range(m2.num_cells)])
+    old_z_cells = np.array([
+        watershed_workflow.utils.computeCentroid([old_z_verts[v] for v in m2.conn[c]])
+        for c in range(m2.num_cells)])
     new_centroids = m2.centroids
     new_z_cells = new_centroids[:, 2]
     dz_cells = new_z_cells - old_z_cells
@@ -395,25 +397,25 @@ def plotPitFilling(m2: Mesh2D,
 
 
 def _partitionOutletEdges(m2 : Mesh2D,
-                          forced_outlet_edges : Iterable[Tuple[int,int]] | None,
-                          optional_outlet_edges : Iterable[Tuple[int,int]] | None,
-                          divide_edges : Iterable[Tuple[int,int]] | None
-                          ) -> Tuple[Set[Tuple[int,int]],
-                                     Set[Tuple[int,int]],
-                                     Set[Tuple[int,int]]]:
+                          forced_outlet_edges : Iterable[Edge] | None,
+                          optional_outlet_edges : Iterable[Edge] | None,
+                          divide_edges : Iterable[Edge] | None
+                          ) -> Tuple[Set[Edge],
+                                     Set[Edge],
+                                     Set[Edge]]:
     """Process input and partition."""
     if forced_outlet_edges is None:
         forced_outlet_edges = set()
     else:
-        forced_outlet_edges = set(m2.edge_hash(e[0], e[1]) for e in forced_outlet_edges)
+        forced_outlet_edges = set(Edge(e) for e in forced_outlet_edges)
     if optional_outlet_edges is None:
         optional_outlet_edges = set()
     else:
-        optional_outlet_edges = set(m2.edge_hash(e[0], e[1]) for e in optional_outlet_edges)
+        optional_outlet_edges = set(Edge(e) for e in optional_outlet_edges)
     if divide_edges is None:
         divide_edges = set()
     else:
-        divide_edges = set(m2.edge_hash(e[0], e[1]) for e in divide_edges)
+        divide_edges = set(Edge(e) for e in divide_edges)
 
     # make sure they are nonoverlapping, where forced_outlet_edges takes precedence
     divide_edges = divide_edges - forced_outlet_edges
@@ -422,20 +424,20 @@ def _partitionOutletEdges(m2 : Mesh2D,
     # make sure all boundary edges appear somewhere
     for e in m2.boundary_edges:
         if e not in divide_edges and e not in forced_outlet_edges:
-            optional_outlet_edges.add(m2.edge_hash(e[0], e[1]))
+            optional_outlet_edges.add(e)
     return forced_outlet_edges, optional_outlet_edges, divide_edges
 
 
 def _partitionOutletCells(m2: Mesh2D,
-                          forced_outlet_edges : Set[Tuple[int,int]],
-                          optional_outlet_edges : Set[Tuple[int,int]],
-                          divide_edges : Set[Tuple[int,int]]
+                          forced_outlet_edges : Set[Edge],
+                          optional_outlet_edges : Set[Edge],
+                          divide_edges : Set[Edge]
                           ) -> Tuple[Set[int],
                                      Set[int],
                                      Set[int]]:
     """Convert edges to cells."""
     def _toCell(e):
-        cells = m2.edges_to_cells[e]
+        cells = m2.edge_cells[e]
         assert len(cells) == 1
         return cells[0]
 
@@ -681,7 +683,7 @@ def conditionCell(m2: Mesh2D,
     else:
         # Boundary cell - determine fixed vertices and raises
         cell_vertices = set(m2.conn[c])
-        cell_edges = set(m2.cell_edges(m2.conn[c]))
+        cell_edges = set(m2.cell_edges[c])
         boundary_cell_edges = cell_edges & set(m2.boundary_edges)
 
         if cause == 'forced outlet':
@@ -731,9 +733,9 @@ def _fillPits_iterator_decorator(func, method_name):
     def iterated_func(m2: Mesh2D,
                       pits : List[Tuple[int,str,float,float]],
                       preserved_pits: Set[int],
-                      forced_outlet_edges : Set[Tuple[int,int]],
-                      optional_outlet_edges : Set[Tuple[int,int]],
-                      divide_edges : Set[Tuple[int,int]],
+                      forced_outlet_edges : Set[Edge],
+                      optional_outlet_edges : Set[Edge],
+                      divide_edges : Set[Edge],
                       epsilon: float,
                       tol: float,
                       max_iterations: int = 1000,
@@ -768,9 +770,9 @@ def _fillPits_iterator_decorator(func, method_name):
 def fillPits_global(m2: Mesh2D,
                     pits : List[Tuple[int,str,float,float]],
                     preserved_pits: Set[int],
-                    forced_outlet_edges : Set[Tuple[int,int]],
-                    optional_outlet_edges : Set[Tuple[int,int]],
-                    divide_edges : Set[Tuple[int,int]],
+                    forced_outlet_edges : Set[Edge],
+                    optional_outlet_edges : Set[Edge],
+                    divide_edges : Set[Edge],
                     epsilon: float,
                     tol: float,
                     boundary_only: bool = False
@@ -869,9 +871,9 @@ fillPits_global_iterative = _fillPits_iterator_decorator(fillPits_global, "globa
 def fillPits_marching_old(m2: Mesh2D,
                           pits : List[Tuple[int,str,float,float]],
                           preserved_pits: Set[int],
-                          forced_outlet_edges : Set[Tuple[int,int]],
-                          optional_outlet_edges : Set[Tuple[int,int]],
-                          divide_edges : Set[Tuple[int,int]],
+                          forced_outlet_edges : Set[Edge],
+                          optional_outlet_edges : Set[Edge],
+                          divide_edges : Set[Edge],
                           epsilon: float,
                           tol: float,
                           ) -> Mesh2D:
@@ -948,7 +950,7 @@ def fillPits_marching_old(m2: Mesh2D,
             assert 0 <= cell < m2.num_cells
             assert type(edges) is list
             for e in edges:
-                assert (type(e) is tuple)
+                assert isinstance(e, Edge)
 
             self.cell = cell
             self.edges = edges
@@ -957,7 +959,7 @@ def fillPits_marching_old(m2: Mesh2D,
     # Seed boundary with all outlet cells (maintaining cell-edge correspondence)
     boundary_entries = []
     for edge in forced_outlet_edges:
-        cells = m2.edges_to_cells[edge]
+        cells = m2.edge_cells[edge]
         assert len(cells) == 1
         boundary_entries.append(BoundaryEntry(cells[0], [edge,]))
     boundary = sortedcontainers.SortedList(boundary_entries, key=lambda be: be.z)
@@ -973,11 +975,11 @@ def fillPits_marching_old(m2: Mesh2D,
         waterway.add(next_be)
 
         # find all other edges of the cell just added
-        for other_e in m2.cell_edges(m2.conn[next_be.cell]):
+        for other_e in m2.cell_edges[next_be.cell]:
             if other_e in waterway.edges: continue
 
             # find the cell on the other side of other_e
-            other_e_cells = m2.edges_to_cells[other_e]
+            other_e_cells = m2.edge_cells[other_e]
             if len(other_e_cells) == 1:
                 # boundary edge, add it to the waterway
                 assert next_be.cell == other_e_cells[0]
@@ -1023,7 +1025,7 @@ def fillPits_marching_old(m2: Mesh2D,
                 # we also need the fixed (non-free) vertex elevations
                 fixed_vertex_elevs = dict()
 
-                for e in m2.cell_edges(other_c_vertices):
+                for e in m2.cell_edges[other_c]:
                     if (e == other_e) or (e in waterway.edges) or any(
                         (e == i) for be in boundary for i in be.edges):
                         if e[0] not in fixed_vertex_elevs:
@@ -1090,9 +1092,9 @@ fillPits_marching_old_iterative = _fillPits_iterator_decorator(fillPits_marching
 def fillPits_marching(m2: Mesh2D,
                       pits : List[Tuple[int,str,float,float]],
                       preserved_pits: Set[int],
-                      forced_outlet_edges : Set[Tuple[int,int]],
-                      optional_outlet_edges : Set[Tuple[int,int]],
-                      divide_edges : Set[Tuple[int,int]],
+                      forced_outlet_edges : Set[Edge],
+                      optional_outlet_edges : Set[Edge],
+                      divide_edges : Set[Edge],
                       epsilon: float,
                       tol: float,
                       seed_policy : Optional[str | List[str]] = None,
@@ -1349,9 +1351,9 @@ fillPits_marching_iterative = _fillPits_iterator_decorator(fillPits_marching, "m
 def fillPits(m2: Mesh2D,
              method_name: str = 'marching',
              preserved_pits: Optional[Iterable[int]] = None,
-             forced_outlet_edges : Optional[Iterable[Tuple[int,int]]] = None,
-             optional_outlet_edges : Optional[Iterable[Tuple[int,int]]] = None,
-             divide_edges : Optional[Iterable[Tuple[int,int]]] = None,
+             forced_outlet_edges : Optional[Iterable[Edge]] = None,
+             optional_outlet_edges : Optional[Iterable[Edge]] = None,
+             divide_edges : Optional[Iterable[Edge]] = None,
              epsilon: float = 0.0,
              tol : float = 1.e-8,
              plot: bool = False,
@@ -1517,9 +1519,9 @@ def fillPits(m2: Mesh2D,
 
 def conditionMesh(m2 : Mesh2D,
                   preserved_pits: Optional[Iterable[int]] = None,
-                  forced_outlet_edges : Optional[Iterable[Tuple[int,int]]] = None,
-                  optional_outlet_edges : Optional[Iterable[Tuple[int,int]]] = None,
-                  divide_edges : Optional[Iterable[Tuple[int,int]]] = None,
+                  forced_outlet_edges : Optional[Iterable[Edge]] = None,
+                  optional_outlet_edges : Optional[Iterable[Edge]] = None,
+                  divide_edges : Optional[Iterable[Edge]] = None,
                   epsilon: float = 0.0,
                   tol : float = 1.e-8,
                   plot: bool = False,
@@ -1813,26 +1815,27 @@ def enforceBankIntegrity(m2 : Mesh2D,
 
         
 def _findBankVerticesFromElem(m2 : Mesh2D,
-                              elem : List[int]) -> Tuple[int,int]:
+                              elem : List[int]) -> Edge:
     """For a given m2 mesh and id of river-corridor element, returns
     longitudinal edges of the river-corridor element.
 
     """
     # 1st and 2nd-to-last edges -- the last is the downstream, cross-stream edge
-    edge_r = list(m2.cell_edges(elem))[0]
-    edge_l = list(m2.cell_edges(elem))[-2]
+    elem_edges = [Edge(elem[i], elem[(i+1) % len(elem)]) for i in range(len(elem))]
+    edge_r = elem_edges[0]
+    edge_l = elem_edges[-2]
     return _findBankVerticesFromEdge(m2, elem, edge_r), _findBankVerticesFromEdge(m2, elem, edge_l)
 
 
 def _findBankVerticesFromEdge(m2 : Mesh2D,
                               elem : List[int],
-                              edge : Tuple[int,int]) -> int:
+                              edge : Edge) -> int:
     """For a given m2 mesh, id of river-corridor element, and edge,
     returns the bank-vertex id, i.e., for the triangle attached to the
     river-corridor, vertex that does not form the river corridor.
 
     """
-    cell_ids = m2.edges_to_cells[edge]
+    cell_ids = m2.edge_cells[edge]
     cells_to_edge = [m2.conn[cell_id] for cell_id in cell_ids]
     try:
         cells_to_edge.remove(elem)

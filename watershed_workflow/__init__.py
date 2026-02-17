@@ -398,25 +398,22 @@ def simplify(hucs : SplitHUCs,
     logging.info(rivers[0].df.crs)
     
 
-def triangulate(hucs : SplitHUCs,
-                rivers : Optional[List[River]] = None,
-                internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
-                hole_points : Optional[List[shapely.geometry.Point]] = None,
-                additional_vertices : Optional[List[Tuple[float, float]]] = None,
-                diagnostics : bool = False,
-                verbosity : int = 1,
-                tol : float = 1.0,
-                refine_max_area : Optional[float] = None,
-                refine_distance : Optional[Tuple[float,float,float,float]] = None,
-                refine_polygons : Optional[Tuple[List[shapely.geometry.Polygon], List[float]]] = None,
-                refine_max_edge_length : Optional[float] = None,
-                refine_min_angle : Optional[float] = None,
-                enforce_delaunay : bool = False,
-                as_mesh : bool = True) -> \
-                       Tuple[np.ndarray, np.ndarray] | \
-                       watershed_workflow.mesh.Mesh2D | \
-                       Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | \
-                       Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
+def _triangulate(hucs : SplitHUCs,
+                 rivers : Optional[List[River]] = None,
+                 internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
+                 hole_points : Optional[List[shapely.geometry.Point]] = None,
+                 additional_vertices : Optional[List[Tuple[float, float]]] = None,
+                 diagnostics : bool = False,
+                 verbosity : int = 1,
+                 tol : float = 1.0,
+                 refine_max_area : Optional[float] = None,
+                 refine_distance : Optional[Tuple[float,float,float,float]] = None,
+                 refine_polygons : Optional[Tuple[List[shapely.geometry.Polygon], List[float]]] = None,
+                 refine_max_edge_length : Optional[float] = None,
+                 refine_min_angle : Optional[float] = None,
+                 enforce_delaunay : bool = False,
+                 ) ->  Tuple[np.ndarray, np.ndarray] | \
+                       Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Triangulates HUCs and rivers.
 
     Note, refinement of a given triangle is done if any of the provided
@@ -525,15 +522,10 @@ def triangulate(hucs : SplitHUCs,
         enforce_delaunay=enforce_delaunay,
         allow_boundary_steiner=False)
     
-    # split triangles that have all vertices on stream corridors
-    river_corrs = internal_boundaries[:len(rivers)]
-    logging.info("Splitting stream triangles")
-    original_n_triangles = len(triangles)
-    vertices, triangles = watershed_workflow.triangulation.splitStreamTriangles(vertices, triangles, river_corrs)
-    new_n_triangles = len(triangles)
-    logging.info(f"Split {new_n_triangles - original_n_triangles} stream triangles")
-
-    if diagnostics:
+    if not diagnostics:
+        return vertices, triangles
+    
+    else:
         logging.info("Plotting triangulation diagnostics")
         if rivers is not None:
             river_multiline = shapely.ops.unary_union([river.to_mls() for river in rivers])
@@ -576,16 +568,36 @@ def triangulate(hucs : SplitHUCs,
                 plt.xlabel("area [m]")
                 plt.ylabel("count [-]")
 
-        if as_mesh:
-            m2 = watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
-            return m2, areas, distances
-        else:
-            return vertices, triangles, areas, distances
+        return vertices, triangles, areas, distances
     
-    if as_mesh:
-        return watershed_workflow.mesh.Mesh2D(vertices, triangles, crs=hucs.crs)
+
+def triangulate(hucs : SplitHUCs,
+                rivers : Optional[List[River]] = None,
+                internal_boundaries : Optional[List[shapely.geometry.BaseGeometry | River]] = None,
+                hole_points : Optional[List[shapely.geometry.Point]] = None,
+                additional_vertices : Optional[List[Tuple[float, float]]] = None,
+                diagnostics : bool = False,
+                verbosity : int = 1,
+                tol : float = 1.0,
+                refine_max_area : Optional[float] = None,
+                refine_distance : Optional[Tuple[float,float,float,float]] = None,
+                refine_polygons : Optional[Tuple[List[shapely.geometry.Polygon], List[float]]] = None,
+                refine_max_edge_length : Optional[float] = None,
+                refine_min_angle : Optional[float] = None,
+                enforce_delaunay : bool = False,
+                ) ->  watershed_workflow.mesh.Mesh2D | \
+                      Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
+    ret = _triangulate(hucs, rivers, internal_boundaries,
+                       hole_points, additional_vertices, diagnostics,
+                       verbosity, tol, refine_max_area, refine_distance,
+                       refine_polygons, refine_max_edge_length, refine_min_angle,
+                       enforce_delaunay)
+
+    m2 = watershed_workflow.mesh.Mesh2D(ret[0], ret[1], crs=hucs.crs)
+    if len(ret) == 2:
+        return m2
     else:
-        return vertices, triangles
+        return m2, *ret[2:]
     
 
 def tessalateRiverAligned(hucs : SplitHUCs,
@@ -594,13 +606,9 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
                           hole_points : Optional[List[Tuple[float, float]]] = None,
                           additional_vertices : Optional[List[Tuple[float, float]]] = None,
-                          as_mesh : bool = True,
                           debug : bool = False,
                           **kwargs) -> \
-                       Tuple[np.ndarray, List[List[int]]] | \
                        watershed_workflow.mesh.Mesh2D | \
-                       Tuple[np.ndarray, List[List[int]], gpd.GeoDataFrame] | \
-                       Tuple[np.ndarray, List[List[int]], np.ndarray, np.ndarray] | \
                        Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
     """Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.
 
@@ -674,12 +682,10 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         internal_boundaries = river_corridors + internal_boundaries
         
-    tri_res = watershed_workflow.triangulate(hucs, rivers, internal_boundaries,
+    tri_res = watershed_workflow._triangulate(hucs, rivers, internal_boundaries,
                                               hole_points, additional_vertices,  
-                                              as_mesh=False, **kwargs)
+                                              **kwargs)
 
-    assert not isinstance(tri_res, watershed_workflow.mesh.Mesh2D)
-    assert not isinstance(tri_res[0], watershed_workflow.mesh.Mesh2D)
     tri_coords = tri_res[0]
     tri_elems : List[List[int]] = [tri.tolist() for tri in tri_res[1]]
     
@@ -694,21 +700,13 @@ def tessalateRiverAligned(hucs : SplitHUCs,
         river.df[names.ELEMS_GID_START] += river_gid_offset
 
     # We could now recover the polygon linestrings in SplitHUCs, but don't... TBD --ETC
+    m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
+    m2 = watershed_workflow.mesh.refineCorridorTriangles(m2, river_corridors)
 
-    if as_mesh:
-        m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
-        if len(tri_res) > 3:
-            return (m2, tri_res[2], tri_res[3])
-        else:
-            assert len(tri_res) == 2
-            return m2
-        
+    if len(tri_res) > 2:
+        return m2, *tri_res[2:]
     else:
-        if len(tri_res) > 3:
-            return (coords, elems, tri_res[2], tri_res[3])
-        else:
-            assert len(tri_res) == 2
-            return (coords, elems)
+        return m2
 
         
 def elevate(m2 : watershed_workflow.mesh.Mesh2D,

@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
     import geopandas as gpd
     import xarray.core.types
     import matplotlib.axes
+    Point = Iterable[float]
 
     from watershed_workflow.crs import CRS
 
@@ -36,7 +37,7 @@ _tol = 1.e-7
 #
 # Geometric utilities
 #
-def computeDistance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+def computeDistance(p1: Point, p2: Point) -> float:
     """Compute Euclidean distance between two points.
     
     Parameters
@@ -54,17 +55,19 @@ def computeDistance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
-def computeTriangleArea(p1: Tuple[float, float], p2: Tuple[float, float],
-                        p3: Tuple[float, float]) -> float:
+def computeTriangleArea(p1: Point,
+                        p2: Point,
+                        p3: Point,
+                        ) -> float:
     """Compute the area of a triangle given three vertices.
     
     Parameters
     ----------
-    p1 : tuple of float
+    p1 : iterable of float
         First vertex as (x, y) coordinates.
-    p2 : tuple of float
+    p2 : iterable of float
         Second vertex as (x, y) coordinates.
-    p3 : tuple of float
+    p3 : iterable of float
         Third vertex as (x, y) coordinates.
         
     Returns
@@ -76,8 +79,11 @@ def computeTriangleArea(p1: Tuple[float, float], p2: Tuple[float, float],
                   - p2[0] * p1[1])
 
 
-def computeTriangleCentroid(p1: Tuple[float, float], p2: Tuple[float, float],
-                            p3: Tuple[float, float]) -> Tuple[float, float]:
+def computeTriangleCentroid(p1: Point,
+                            p2: Point,
+                            p3: Point,
+                            ) -> Point:
+                            
     """Compute the centroid of a triangle given three vertices.
     
     Parameters
@@ -97,11 +103,11 @@ def computeTriangleCentroid(p1: Tuple[float, float], p2: Tuple[float, float],
     return np.array([p1, p2, p3]).mean(axis=0)
 
 
-def isCollinear(p1: Tuple[float, float],
-                p2: Tuple[float, float],
-                p3: Tuple[float, float],
+def isCollinear(p1: Point,
+                p2: Point,
+                p3: Point,
                 tol: float = 1e-6) -> bool:
-    """Check if three points are collinear within a given tolerance.
+    """Check if three points are collinear in the x-y plane within a given tolerance.
     
     Parameters
     ----------
@@ -124,7 +130,7 @@ def isCollinear(p1: Tuple[float, float],
     return abs(x1*y2 - x2*y1) < tol
 
 
-def computeArea(vertices: Iterable[Tuple[float]]) -> float:
+def computeArea(vertices: Iterable[Point]) -> float:
     """Compute the area of a polygon given its vertices.
     
     Parameters
@@ -140,9 +146,47 @@ def computeArea(vertices: Iterable[Tuple[float]]) -> float:
     area = shapely.geometry.Polygon(vertices).area
     return area
 
+def computeCentroid(points : Iterable[Point]) -> Point:
+    """Compute the centroid of a polygon given its vertices.
 
-def computeAngle(v1: Tuple[float, float] | shapely.geometry.LineString,
-                 v2: Tuple[float, float] | shapely.geometry.LineString) -> float:
+    This uses the method of Amanzi's mesh class, which relies on
+    simply-connected polygons.
+
+    Parameters
+    ----------
+    points : Iterable[ Iterable[float] ]
+        Vertices of the polygon as coordinate tuples.
+        
+    Returns
+    -------
+    Iterable[float]
+        Centroid of the polygon.
+    """
+    if len(points) == 3:
+        return computeTriangleCentroid(*points)
+    else:
+        points = np.array(points)
+        bary_c = points.mean(axis=0)
+        area = 0
+        centroid = np.array([0.,0.,0.])
+
+        for i in range(len(points)):
+            tri_points = [points[i],
+                          points[(i+1)%len(points)],
+                          bary_c]
+            sub_tri_area = computeTriangleArea(*tri_points)
+            assert sub_tri_area > 0., "Negative triangle area -- is the polygon oriented?"
+            sub_tri_centroid = computeTriangleCentroid(*tri_points)
+            area += sub_tri_area
+            centroid += sub_tri_centroid * sub_tri_area
+
+        centroid = centroid / area
+        return centroid
+
+
+def computeAngle(v1: Point | shapely.geometry.LineString,
+                 v2: Point | shapely.geometry.LineString) -> float:
+
     """Compute the angle (in degrees) of v2 relative to v1 in clockwise direction.
     
     Parameters
@@ -187,8 +231,8 @@ def computeAngle(v1: Tuple[float, float] | shapely.geometry.LineString,
     return clockwise_angle
 
 
-def projectVectorAtAngle(v1: Tuple[float, float] | shapely.geometry.LineString, angle: float,
-                         distance: float) -> Tuple[float, float]:
+def projectVectorAtAngle(v1: Point | shapely.geometry.LineString, angle: float,
+                         distance: float) -> Point:
     """Project a vector from v1 at a specified angle and distance.
     
     Parameters
@@ -226,8 +270,8 @@ def projectVectorAtAngle(v1: Tuple[float, float] | shapely.geometry.LineString, 
     return (x2, y2)
 
 
-def computeMidpoint(p1: Tuple[float, float] | np.ndarray,
-                    p2: Tuple[float, float] | np.ndarray) -> Tuple[float, float]:
+def computeMidpoint(p1: Point | np.ndarray,
+                    p2: Point | np.ndarray) -> Point:
     """Compute the midpoint between two points.
     
     Parameters
@@ -245,7 +289,7 @@ def computeMidpoint(p1: Tuple[float, float] | np.ndarray,
     return ((p1[0] + p2[0]) / 2., (p1[1] + p2[1]) / 2.)
 
 
-def findClosestPointIndex(point: Tuple[float, float], points: npt.ArrayLike) -> int:
+def findClosestPointIndex(point: Point, points: npt.ArrayLike) -> int:
     """Find the index of the closest point in an array of points.
     
     Parameters
@@ -509,7 +553,7 @@ def isEmpty(shply: BaseGeometry | None) -> bool:
     return shply is None or shply.is_empty
 
 
-def isConvex(points: Iterable[Tuple[float, float]]) -> bool:
+def isConvex(points: Iterable[Point]) -> bool:
     """Check if a set of points forms a convex polygon.
     
     Parameters
@@ -888,9 +932,9 @@ def intersectPointToSegment(point: shapely.geometry.Point, seg_start: shapely.ge
         return shapely.geometry.Point([ix, iy])
 
 
-def findNearestPoint(point: shapely.geometry.Point | Tuple[float, float],
+def findNearestPoint(point: shapely.geometry.Point | Point,
                      line: shapely.geometry.LineString,
-                     tol: Optional[float] = None) -> Tuple[float, float] | None:
+                     tol: Optional[float] = None) -> Point | None:
     """Find the nearest point on a LineString to a given point.
     
     Parameters
@@ -1049,7 +1093,7 @@ def logMinMaxMedianSegment(iterable: Iterable[shapely.geometry.LineString],
 #
 # fiona utilities -- probably need to go away?
 #
-def generateRings(obj: Any) -> Iterable[List[Tuple[float, float]]]:
+def generateRings(obj: Any) -> Iterable[List[Point]]:
     """Generate coordinate rings from a fiona shape object.
 
     Parameters
@@ -1077,7 +1121,7 @@ def generateRings(obj: Any) -> Iterable[List[Tuple[float, float]]]:
         yield r
 
 
-def generateCoords(obj: Any) -> Iterable[Tuple[float, float]]:
+def generateCoords(obj: Any) -> Iterable[Point]:
     """Generate all coordinates from a fiona geometry object.
 
     Parameters

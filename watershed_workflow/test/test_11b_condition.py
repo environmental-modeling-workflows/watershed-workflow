@@ -292,7 +292,7 @@ def test_real_mesh(algo_name, algo_args):
     # Find the forced outlet: boundary edge whose internal cell is a preserved pit
     forced_outlet_edges = []
     for edge in m2.boundary_edges:
-        cells = m2.edges_to_cells[edge]
+        cells = m2.edge_cells[edge]
         assert len(cells) == 1, f"Boundary edge {edge} has {len(cells)} cells"
         if cells[0] in preserved_pits_set:
             forced_outlet_edges.append(edge)
