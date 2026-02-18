@@ -279,10 +279,14 @@ class SplitHUCs:
     def explore(self,
                 column : str = names.ID,
                 m : Optional[Any] = None,
-                marker : Optional[str] = None,
                 name : str = 'watersheds',
+                marker : Optional[str] = None,
                 **kwargs):
-        """Open a map!"""
+        """Open a map!
+
+        Note that the arguments to this function are NOT matplotlib,
+        and are very strange.  See self.df.explore? for more options.
+        """
         if column == names.ID and names.ID not in self.df:
             newname = names.ID+"_as_column"
             if newname not in self.df:
@@ -303,25 +307,31 @@ class SplitHUCs:
             if p not in default_props and p != 'geometry':
                 default_props.append(p)
         kwargs.setdefault('popup', [names.ID,]+default_props)
-
-        kwargs.setdefault('cmap', matplotlib.colors.ListedColormap(watershed_workflow.colors.xkcd_muted))
         kwargs.setdefault('legend', True)
-        try:
-            kwargs.setdefault('vmin', self.df[column].values.min())
-            kwargs.setdefault('vmax', self.df[column].values.max())
-        except TypeError:
-            pass
 
         # style
         style_kwds = kwargs.setdefault('style_kwds', dict())
-        style_kwds.setdefault('fillOpacity', 0.2)
         style_kwds.setdefault('weight', 5)
+        
+        if (not 'color' in style_kwds or style_kwds['color'] is None) \
+           and not (column in self.df and self.df[column].dtype == 'string'):
+            kwargs.setdefault('cmap', matplotlib.colors.ListedColormap(watershed_workflow.colors.xkcd_muted))
+            try:
+                kwargs.setdefault('vmin', self.df[column].values.min())
+                kwargs.setdefault('vmax', self.df[column].values.max())
+            except (TypeError,AttributeError):
+                pass
+
+            style_kwds.setdefault('fillOpacity', 0.2)
+            style_kwds.setdefault('fillOpacity', 0.2)
 
         # highlight style
         highlight_kwds = kwargs.setdefault('highlight_kwds', dict())
         highlight_kwds.setdefault('fillOpacity', 0.4)
 
         # default explore
+        print('KWARGS:')
+        print(kwargs)
         m = self.df.explore(column=column, m=m, name=name, **kwargs)
 
         if marker:

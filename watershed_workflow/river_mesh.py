@@ -862,7 +862,11 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
         # a 0th or last point should never be non-convex?
         fig, ax = plt.subplots(1, 1)
 
-        reaches = [reach, reach.parent] + list(reach.children)
+        reaches = [reach,]
+        if reach.parent is not None:
+            reaches.append(reach.parent)
+        reaches = reaches + list(reach.children)
+
         for r in reaches:
             ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
 
